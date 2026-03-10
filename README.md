@@ -1,42 +1,58 @@
-# sv
+# Logwiz
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Open-source logging UI for [Quickwit](https://quickwit.io). Search, filter, and visualize your logs with a modern web interface.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Full-text log search with Lucene query syntax
+- Time range filtering with relative and absolute presets
+- Quick filters with field value aggregations
+- Log frequency histogram with severity distribution
+- Configurable field mappings per index
+- User authentication with email/password
+- Shareable queries via URL parameters
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Prerequisites
 
-To recreate this project with the same configuration:
+- [Bun](https://bun.sh)
+- [Docker](https://www.docker.com) (for Quickwit)
 
-```sh
-# recreate this project
-bun x sv@0.12.5 create --template minimal --types ts --add prettier tailwindcss="plugins:typography" drizzle="database:postgresql+postgresql:postgres.js+docker:yes" better-auth="demo:password" devtools-json mcp="ide:claude-code+setup:remote" --install bun .
-```
+## Getting Started
 
-## Developing
+1. **Start Quickwit:**
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+   ```bash
+   docker compose up -d
+   ```
 
-```sh
-npm run dev
+2. **Install dependencies:**
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+   ```bash
+   bun install
+   ```
 
-## Building
+3. **Configure environment:**
 
-To create a production version of your app:
+   ```bash
+   cp .env.example .env
+   ```
 
-```sh
-npm run build
-```
+   Edit `.env` and set `BETTER_AUTH_SECRET` to a random 32-character string.
 
-You can preview the production build with `npm run preview`.
+4. **Push database schema:**
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+   ```bash
+   bun run db:push
+   ```
+
+5. **Start the dev server:**
+
+   ```bash
+   bun run dev
+   ```
+
+   Open [http://localhost:5173](http://localhost:5173).
+
+## License
+
+[GNU AGPL v3](LICENSE)
