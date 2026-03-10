@@ -318,7 +318,7 @@
 									height="12"
 									class="mr-1 text-base-content/40"
 								/>
-								<span class="flex-1 text-left text-xs font-medium text-base-content/70"
+								<span class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70" title={field}
 									>{field}</span
 								>
 								{#if activeFilters[field]?.length}

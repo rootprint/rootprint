@@ -16,7 +16,8 @@
 	import type { ParsedQuery } from '$lib/utils/query-params';
 	import { resolveTimeRange } from '$lib/utils/time';
 	import { computeColumnWidths } from '$lib/utils/column-width';
-	import type { TimeRange } from '$lib/types';
+	import { extractJsonSubFields } from '$lib/utils/fields';
+	import type { TimeRange, IndexField } from '$lib/types';
 	import TimeRangePicker from '$lib/components/TimeRangePicker.svelte';
 	import LogRow from '$lib/components/LogRow.svelte';
 	import FieldPanel from '$lib/components/FieldPanel.svelte';
@@ -66,7 +67,8 @@
 		messageField: 'message'
 	});
 
-	let indexFields = $state<{ name: string; type: string; fast: boolean }[]>([]);
+	let indexFields = $state<IndexField[]>([]);
+	let schemaFields = $state<IndexField[]>([]);
 	let activeFields = $state<string[]>([]);
 	let fieldsLoading = $state(false);
 
@@ -176,6 +178,7 @@
 				getPreference({ indexName })
 			]);
 			indexFields = fields;
+			schemaFields = fields;
 			fieldConfig = config;
 			activeFields = pref.displayFields;
 
@@ -199,6 +202,7 @@
 		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
 		navigateQuery({ index: indexName, filters: {} });
 		aggregations = {};
+		schemaFields = [];
 		loadFieldsForIndex(indexName);
 	}
 
@@ -291,6 +295,27 @@
 				scrollElement?.scrollTo(0, 0);
 			}
 			numHits = result.numHits;
+
+			if (result.hits.length > 0) {
+				const jsonNames = new Set(schemaFields.filter((f) => f.type === 'json').map((f) => f.name));
+				if (jsonNames.size > 0) {
+					const discovered = extractJsonSubFields(result.hits, jsonNames);
+					const nonJson = schemaFields.filter((f) => f.type !== 'json');
+					if (append) {
+						const existingDiscovered = indexFields.filter(
+							(f) => !schemaFields.some((s) => s.name === f.name)
+						);
+						const existingNames = new Set(existingDiscovered.map((f) => f.name));
+						const newDiscovered = discovered.filter((f) => !existingNames.has(f.name));
+						if (newDiscovered.length > 0) {
+							indexFields = [...nonJson, ...existingDiscovered, ...newDiscovered];
+						}
+					} else {
+						indexFields = [...nonJson, ...discovered];
+					}
+				}
+			}
+
 			hasSearched = true;
 		} catch (e) {
 			errorMessage = e instanceof Error ? e.message : 'Search failed';
@@ -386,7 +411,7 @@
 >
 	<div class="flex h-full w-full">
 		<div
-			class="flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r border-base-300 bg-base-100"
+			class="flex h-full w-56 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-base-300 bg-base-100"
 		>
 			<QuickFilterPanel
 				fields={quickFilterFields}

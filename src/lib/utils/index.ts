@@ -19,3 +19,4 @@ export {
 	padHistogramBuckets
 } from './histogram';
 export { computeColumnWidths, MAX_COLUMN_CH } from './column-width';
+export { extractJsonSubFields } from './fields';
