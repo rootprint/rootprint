@@ -51,7 +51,7 @@
 	let histogramData = $state<{ timestamp: number; levels: Record<string, number> }[]>([]);
 	let histogramLoading = $state(false);
 	let chartCollapsed = $state(
-		browser ? localStorage.getItem('logwit:chartCollapsed') === 'true' : false
+		browser ? localStorage.getItem('logwiz:chartCollapsed') === 'true' : false
 	);
 
 	function shareQuery() {
@@ -322,7 +322,7 @@
 	function handleChartToggle() {
 		chartCollapsed = !chartCollapsed;
 		if (browser) {
-			localStorage.setItem('logwit:chartCollapsed', String(chartCollapsed));
+			localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
 		}
 	}
 

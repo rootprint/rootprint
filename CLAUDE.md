@@ -1,6 +1,6 @@
 ## Project Overview
 
-This is opensource logging UI tool, that is based on quickwit.
+Logwiz is an opensource logging UI tool, that is based on quickwit.
 Project uses Svelte 5, and SvelteKit Remote Functions for API.
 Better auth is used for authentication.
 For api calls to quickwit quickwit-js library is used.

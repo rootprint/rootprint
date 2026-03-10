@@ -5,7 +5,7 @@ import { mkdirSync } from 'fs';
 
 mkdirSync('./data', { recursive: true });
 
-const sqlite = new Database('./data/logwit.db');
+const sqlite = new Database('./data/logwiz.db');
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
 

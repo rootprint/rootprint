@@ -12,7 +12,7 @@
 
 <div class="flex h-screen w-screen flex-col">
 	<div class="flex h-12 items-center justify-between border-b border-base-300 bg-base-100 px-4">
-		<a href="/" class="text-lg font-semibold hover:opacity-80">Logwit</a>
+		<a href="/" class="text-lg font-semibold hover:opacity-80">Logwiz</a>
 
 		<div class="dropdown dropdown-end">
 			<div tabindex="0" role="button" class="btn btn-circle btn-ghost btn-sm">
