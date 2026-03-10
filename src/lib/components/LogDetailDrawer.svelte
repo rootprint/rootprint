@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 	import Icon from '@iconify/svelte';
-	import { escapeFilterValue } from '$lib/utils';
+	import { escapeFilterValue } from '$lib/utils/query';
 
 	let {
 		open = $bindable(false),

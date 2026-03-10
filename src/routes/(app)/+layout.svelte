@@ -2,20 +2,12 @@
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
 	import { signOut } from '$lib/api/auth.remote';
+	import { getUserInitials } from '$lib/utils/format';
 
 	let { children } = $props();
 
 	const user = $derived(page.data.user);
-	const initials = $derived(
-		user?.name
-			? user.name
-					.split(' ')
-					.map((n: string) => n[0])
-					.join('')
-					.toUpperCase()
-					.slice(0, 2)
-			: '?'
-	);
+	const initials = $derived(getUserInitials(user?.name));
 </script>
 
 <div class="flex h-screen w-screen flex-col">

@@ -7,7 +7,7 @@ import {
 	searchFieldValuesSchema,
 	searchLogHistogramSchema
 } from '$lib/schemas/logs';
-import { computeHistogramInterval, computeHistogramIntervalSeconds, padHistogramBuckets } from '$lib/histogram';
+import { computeHistogramInterval, computeHistogramIntervalSeconds, padHistogramBuckets } from '$lib/utils/histogram';
 import { AggregationBuilder } from 'quickwit-js';
 import { requireUser } from '$lib/middleware/auth';
 import { getQuickwitClient } from '$lib/server/quickwit';

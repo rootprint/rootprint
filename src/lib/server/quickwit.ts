@@ -1,6 +1,6 @@
 import { QuickwitClient } from 'quickwit-js';
 import { env } from '$env/dynamic/private';
-import { normalizeQuickwitUrl } from '$lib/utils';
+import { normalizeQuickwitUrl } from '$lib/utils/query';
 
 let _client: QuickwitClient | null = null;
 

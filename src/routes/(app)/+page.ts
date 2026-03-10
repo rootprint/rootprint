@@ -1,4 +1,4 @@
-import { deserialize } from '$lib/query-params';
+import { deserialize } from '$lib/utils/query-params';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = ({ url }) => {

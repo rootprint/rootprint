@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { TIME_PRESETS, type TimeRange, type TimezoneMode } from '$lib/types';
-	import { formatTimeRangeLabel } from '$lib/utils';
+	import { formatTimeRangeLabel } from '$lib/utils/time';
 	import Calendar from './Calendar.svelte';
 	import Icon from '@iconify/svelte';
 

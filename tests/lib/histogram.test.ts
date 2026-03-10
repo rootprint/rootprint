@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeHistogramInterval, padHistogramBuckets } from './histogram';
+import { computeHistogramInterval, padHistogramBuckets } from '$lib/utils/histogram';
 
 describe('computeHistogramInterval', () => {
 	it('returns 10s for 5m window', () => {

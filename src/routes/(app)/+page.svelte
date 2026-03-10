@@ -10,12 +10,14 @@
 	import { browser } from '$app/environment';
 	import { goto, afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getNestedValue, formatFieldValue, combineQueryWithFilters } from '$lib/utils';
+	import { getNestedValue, formatFieldValue } from '$lib/utils/format';
+	import { combineQueryWithFilters } from '$lib/utils/query';
+	import { buildQueryUrl, serialize, hasNonDefaultParams } from '$lib/utils/query-params';
+	import type { ParsedQuery } from '$lib/utils/query-params';
+	import { resolveTimeRange } from '$lib/utils/time';
+	import { computeColumnWidths } from '$lib/utils/column-width';
 	import type { TimeRange } from '$lib/types';
-	import { buildQueryUrl, serialize, hasNonDefaultParams } from '$lib/query-params';
-	import type { ParsedQuery } from '$lib/query-params';
 	import TimeRangePicker from '$lib/components/TimeRangePicker.svelte';
-	import { resolveTimeRange } from '$lib/utils';
 	import LogRow from '$lib/components/LogRow.svelte';
 	import FieldPanel from '$lib/components/FieldPanel.svelte';
 	import QuickFilterPanel from '$lib/components/QuickFilterPanel.svelte';
@@ -82,28 +84,14 @@
 
 	let extraFieldNames = $derived(activeFields);
 
-	const MAX_COLUMN_CH = 60;
 	let _maxRawWidths: Record<string, number> = {};
 	let columnWidths = $state<Record<string, number>>({});
 
 	function updateColumnWidths(newLogs: Record<string, unknown>[], fields: string[], reset = false) {
 		if (reset) _maxRawWidths = {};
-
-		for (const field of fields) {
-			if (!(field in _maxRawWidths)) _maxRawWidths[field] = 0;
-			for (const log of newLogs) {
-				const val = getNestedValue(log, field);
-				if (val !== undefined && val !== null) {
-					_maxRawWidths[field] = Math.max(_maxRawWidths[field], formatFieldValue(val).length);
-				}
-			}
-		}
-
-		const widths: Record<string, number> = {};
-		for (const field of fields) {
-			widths[field] = Math.min((_maxRawWidths[field] ?? field.length) + 2, MAX_COLUMN_CH);
-		}
-		columnWidths = widths;
+		const result = computeColumnWidths(newLogs, fields, _maxRawWidths);
+		_maxRawWidths = result.maxRawWidths;
+		columnWidths = result.widths;
 	}
 
 	$effect(() => {

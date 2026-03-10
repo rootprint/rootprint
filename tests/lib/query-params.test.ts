@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { serialize, deserialize, hasNonDefaultParams, buildQueryUrl } from './query-params';
-import type { ParsedQuery } from './query-params';
+import { serialize, deserialize, hasNonDefaultParams, buildQueryUrl } from '$lib/utils/query-params';
+import type { ParsedQuery } from '$lib/utils/query-params';
 
 function defaults(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
 	return {
