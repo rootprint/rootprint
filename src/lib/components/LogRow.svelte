@@ -55,7 +55,12 @@
 	function extractTimestamp(doc: Record<string, unknown>): string {
 		const raw = doc[timestampField];
 		if (!raw) return '';
-		const value = typeof raw === 'number' && raw < 10_000_000_000 ? raw * 1000 : raw;
+		const value =
+			typeof raw === 'number' && raw < 10_000_000_000
+				? raw * 1000
+				: typeof raw === 'number' && raw > 1_000_000_000_000_000
+					? Math.floor(raw / 1_000_000)
+					: raw;
 		const date = new Date(value as string | number);
 		if (isNaN(date.getTime())) return String(raw);
 
@@ -82,7 +87,10 @@
 	function extractMessage(doc: Record<string, unknown>): string {
 		// Try direct nested access first (handles dot notation like "body.text")
 		const nested = getNestedValue(doc, messageField);
-		if (nested !== undefined && nested !== null) return String(nested);
+		if (nested !== undefined && nested !== null) {
+			if (typeof nested === 'object') return JSON.stringify(nested);
+			return String(nested);
+		}
 
 		// If dot-path access failed, try parsing JSON strings along the path
 		// This handles cases like message.text where message is '{"text":"..."}'

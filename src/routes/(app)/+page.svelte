@@ -145,10 +145,16 @@
 				if (urlIdx && indexes.some((i) => i.indexId === urlIdx)) {
 					idx = urlIdx;
 				} else {
-					idx = indexes[0].indexId;
+					const saved = browser ? localStorage.getItem('logwiz:selectedIndex') : null;
+					if (saved && indexes.some((i) => i.indexId === saved)) {
+						idx = saved;
+					} else {
+						idx = indexes[0].indexId;
+					}
 				}
 
 				selectedIndex = idx;
+				if (browser) localStorage.setItem('logwiz:selectedIndex', idx);
 				if (urlIdx !== idx) {
 					navigateQuery({ index: idx });
 				}
@@ -190,6 +196,7 @@
 
 	function handleIndexChange(indexName: string) {
 		selectedIndex = indexName;
+		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
 		navigateQuery({ index: indexName, filters: {} });
 		aggregations = {};
 		loadFieldsForIndex(indexName);
