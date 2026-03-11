@@ -1,6 +1,15 @@
 import { getIndexes, getIndexFields, getIndexConfig } from '$lib/api/indexes.remote';
-import { searchLogs, searchFieldValues, searchLogHistogram } from '$lib/api/logs.remote';
-import { getPreference, saveDisplayFields, saveQuickFilterFields } from '$lib/api/preferences.remote';
+import {
+	searchLogs,
+	searchFieldValues,
+	searchLogHistogram,
+	pollLiveLogs
+} from '$lib/api/logs.remote';
+import {
+	getPreference,
+	saveDisplayFields,
+	saveQuickFilterFields
+} from '$lib/api/preferences.remote';
 import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
@@ -57,6 +66,15 @@ export function createSearchStore(
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, string[]>>({});
 
+	// --- Live mode state ---
+	let isLive = $state(false);
+	let liveIntervalId: ReturnType<typeof setTimeout> | null = null;
+	let lastPollTimestamp = 0;
+	let newLiveLogs = $state(0);
+	let liveErrorShown = false;
+	let lastPollKeys = new Set<string>();
+	let liveSessionId = 0;
+
 	// --- URL sync ---
 	let lastSearchedParams = $state('');
 
@@ -84,11 +102,15 @@ export function createSearchStore(
 		return combineQueryWithFilters(pq.query, pq.filters);
 	}
 
-	function updateColumnWidths(
-		newLogs: Record<string, unknown>[],
-		fields: string[],
-		reset = false
-	) {
+	function docKey(doc: Record<string, unknown>): string {
+		return JSON.stringify(doc);
+	}
+
+	function isActiveLiveSession(sessionId: number): boolean {
+		return isLive && sessionId === liveSessionId;
+	}
+
+	function updateColumnWidths(newLogs: Record<string, unknown>[], fields: string[], reset = false) {
 		if (reset) _maxRawWidths = {};
 		const result = computeColumnWidths(newLogs, fields, _maxRawWidths);
 		_maxRawWidths = result.maxRawWidths;
@@ -167,6 +189,7 @@ export function createSearchStore(
 	}
 
 	function handleIndexChange(indexName: string) {
+		stopLive();
 		selectedIndex = indexName;
 		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
 		navigateQuery({ index: indexName, filters: {} });
@@ -214,6 +237,7 @@ export function createSearchStore(
 	// --- Search ---
 
 	async function search(append = false) {
+		if (isLive) stopLive();
 		if (selectedIndex === null) return;
 
 		loading = true;
@@ -287,9 +311,7 @@ export function createSearchStore(
 			numHits = result.numHits;
 
 			if (result.hits.length > 0) {
-				const jsonNames = new Set(
-					schemaFields.filter((f) => f.type === 'json').map((f) => f.name)
-				);
+				const jsonNames = new Set(schemaFields.filter((f) => f.type === 'json').map((f) => f.name));
 				if (jsonNames.size > 0) {
 					const discovered = extractJsonSubFields(result.hits, jsonNames);
 					const nonJson = schemaFields.filter((f) => f.type !== 'json');
@@ -347,12 +369,119 @@ export function createSearchStore(
 		}
 	}
 
+	// --- Live mode ---
+
+	function stopLive() {
+		liveSessionId += 1;
+		isLive = false;
+		loading = false;
+		newLiveLogs = 0;
+		liveErrorShown = false;
+		lastPollKeys = new Set();
+		if (liveIntervalId !== null) {
+			clearTimeout(liveIntervalId);
+			liveIntervalId = null;
+		}
+	}
+
+	function resetNewLiveLogs() {
+		newLiveLogs = 0;
+	}
+
+	async function pollForNewLogs(sessionId: number) {
+		if (!selectedIndex || !isActiveLiveSession(sessionId)) return;
+
+		const endTs = Math.floor(Date.now() / 1000);
+		// Use a strict forward-moving window so live mode starts from "now"
+		const startTs = Math.max(0, lastPollTimestamp);
+
+		if (startTs >= endTs) return;
+
+		try {
+			const queryText = getQueryText();
+			const result = await pollLiveLogs({
+				indexName: selectedIndex,
+				query: queryText || '*',
+				startTimestamp: startTs,
+				endTimestamp: endTs,
+				limit: 100
+			});
+
+			if (!isActiveLiveSession(sessionId)) return;
+
+			// Deduplicate against previous poll's results (handles 1s overlap)
+			const newHits = result.hits.filter(
+				(hit: Record<string, unknown>) => !lastPollKeys.has(docKey(hit))
+			);
+
+			// Update dedup set for next cycle
+			lastPollKeys = new Set(result.hits.map((hit: Record<string, unknown>) => docKey(hit)));
+
+			if (newHits.length > 0) {
+				logs = [...newHits, ...logs];
+				numHits = numHits + newHits.length;
+				newLiveLogs += newHits.length;
+				updateColumnWidths(newHits, activeFields);
+			}
+
+			lastPollTimestamp = endTs;
+
+			// Clear error state on successful poll
+			if (liveErrorShown) {
+				toast.success('Live mode reconnected');
+				liveErrorShown = false;
+			}
+		} catch (e) {
+			if (!isActiveLiveSession(sessionId)) return;
+			if (!liveErrorShown) {
+				toast.error(getErrorMessage(e, 'Live mode poll failed'));
+				liveErrorShown = true;
+			}
+		}
+	}
+
+	async function schedulePoll(sessionId: number) {
+		if (!isActiveLiveSession(sessionId)) return;
+		await pollForNewLogs(sessionId);
+		if (isActiveLiveSession(sessionId)) {
+			liveIntervalId = setTimeout(() => {
+				void schedulePoll(sessionId);
+			}, 2000);
+		}
+	}
+
+	async function startLive() {
+		if (isLive || !selectedIndex) return;
+
+		const sessionId = liveSessionId + 1;
+		liveSessionId = sessionId;
+
+		isLive = true;
+		newLiveLogs = 0;
+		liveErrorShown = false;
+		lastPollKeys = new Set();
+
+		const nowTs = Math.floor(Date.now() / 1000);
+		lastPollTimestamp = nowTs;
+		searchStartTimestamp = nowTs;
+		searchEndTimestamp = nowTs;
+		logs = [];
+		numHits = 0;
+		hasSearched = true;
+		loading = false;
+		updateColumnWidths([], activeFields, true);
+		options?.onFreshSearch?.();
+
+		if (isActiveLiveSession(sessionId)) {
+			liveIntervalId = setTimeout(() => {
+				void schedulePoll(sessionId);
+			}, 2000);
+		}
+	}
+
 	// --- Field value search ---
 
-	async function searchFieldValuesHandler(
-		field: string,
-		searchTerm: string
-	): Promise<string[]> {
+	async function searchFieldValuesHandler(field: string, searchTerm: string): Promise<string[]> {
 		if (!selectedIndex) return [];
 		const queryText = getQueryText();
 		const currentTimeRange = timeRange;
@@ -361,9 +490,7 @@ export function createSearchStore(
 			field,
 			searchTerm,
 			query: queryText || '*',
-			timeRange: (currentTimeRange.type === 'relative'
-				? currentTimeRange.preset
-				: '15m') as '15m',
+			timeRange: (currentTimeRange.type === 'relative' ? currentTimeRange.preset : '15m') as '15m',
 			startTimestamp: searchStartTimestamp,
 			endTimestamp: searchEndTimestamp
 		});
@@ -399,6 +526,13 @@ export function createSearchStore(
 			untrack(() => {
 				updateColumnWidths(logs, fields, true);
 			});
+		});
+
+		// Cleanup live mode on unmount
+		$effect(() => {
+			return () => {
+				stopLive();
+			};
 		});
 	}
 
@@ -471,6 +605,12 @@ export function createSearchStore(
 		get quickFilterAvailableFields() {
 			return quickFilterAvailableFields;
 		},
+		get isLive() {
+			return isLive;
+		},
+		get newLiveLogs() {
+			return newLiveLogs;
+		},
 
 		// Methods
 		navigateQuery,
@@ -479,6 +619,9 @@ export function createSearchStore(
 		handleQuickFilterFieldsChange,
 		search,
 		searchFieldValues: searchFieldValuesHandler,
-		setupAutoSearch
+		setupAutoSearch,
+		startLive,
+		stopLive,
+		resetNewLiveLogs
 	};
 }

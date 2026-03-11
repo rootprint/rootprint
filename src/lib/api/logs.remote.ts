@@ -5,9 +5,14 @@ import { eq } from 'drizzle-orm';
 import {
 	searchLogsSchema,
 	searchFieldValuesSchema,
-	searchLogHistogramSchema
+	searchLogHistogramSchema,
+	pollLiveLogsSchema
 } from '$lib/schemas/logs';
-import { computeHistogramInterval, computeHistogramIntervalSeconds, padHistogramBuckets } from '$lib/utils/histogram';
+import {
+	computeHistogramInterval,
+	computeHistogramIntervalSeconds,
+	padHistogramBuckets
+} from '$lib/utils/histogram';
 import { AggregationBuilder } from 'quickwit-js';
 import { requireUser } from '$lib/middleware/auth';
 import { getQuickwitClient } from '$lib/server/quickwit';
@@ -152,6 +157,24 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 	}
 });
 
+export const pollLiveLogs = command(pollLiveLogsSchema, async (data) => {
+	requireUser();
+
+	const fields = await resolveFieldConfig(data.indexName);
+	const client = getQuickwitClient();
+	const index = client.index(data.indexName);
+
+	const query = index
+		.query(data.query || '*')
+		.limit(data.limit)
+		.sortBy(`+${fields.timestampField}`)
+		.timeRange(data.startTimestamp, data.endTimestamp);
+
+	const result = await index.search(query);
+
+	return { hits: result.hits };
+});
+
 export const searchLogHistogram = command(searchLogHistogramSchema, async (data) => {
 	requireUser();
 
@@ -161,8 +184,7 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
-	const windowSeconds =
-		endTs !== undefined && startTs !== undefined ? endTs - startTs : 15 * 60;
+	const windowSeconds = endTs !== undefined && startTs !== undefined ? endTs - startTs : 15 * 60;
 	const interval = computeHistogramInterval(windowSeconds);
 
 	const query = index
@@ -190,7 +212,7 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 					doc_count: number;
 					levels?: { buckets?: { key: string; doc_count: number }[] };
 				}[];
-			}
+		  }
 		| undefined;
 
 	// Build a map from normalized timestamp → levels

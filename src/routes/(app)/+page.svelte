@@ -22,6 +22,7 @@
 
 	// --- UI-only state ---
 	let queryInput = $state(data.parsedQuery.query);
+	let isAtTop = $state(true);
 	let wrapMode = $state<'none' | 'wrap' | 'pretty'>('none');
 	let copied = $state(false);
 	let selectedLog = $state<Record<string, unknown> | null>(null);
@@ -54,7 +55,16 @@
 	function handleScroll() {
 		if (!scrollElement) return;
 		const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+
+		isAtTop = scrollTop < 50;
+
+		if (isAtTop && store.isLive) {
+			store.resetNewLiveLogs();
+		}
+
+		// Infinite scroll — disabled during live mode
 		if (
+			!store.isLive &&
 			scrollHeight - scrollTop - clientHeight < 300 &&
 			!store.loading &&
 			store.logs.length < store.numHits
@@ -80,7 +90,7 @@
 >
 	<div class="flex h-full w-full">
 		<div
-			class="flex h-full w-56 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-base-300 bg-base-100"
+			class="flex h-full w-56 shrink-0 flex-col overflow-x-hidden overflow-y-auto border-r border-base-300 bg-base-100"
 		>
 			<QuickFilterPanel
 				fields={store.quickFilterFields}
@@ -116,7 +126,9 @@
 					<div class="join">
 						{#each [['none', 'No wrap'], ['wrap', 'Wrap'], ['pretty', 'Pretty']] as [mode, label] (mode)}
 							<button
-								class="btn join-item btn-sm whitespace-nowrap {wrapMode === mode ? 'btn-accent' : ''}"
+								class="btn join-item whitespace-nowrap btn-sm {wrapMode === mode
+									? 'btn-accent'
+									: ''}"
 								onclick={() => (wrapMode = mode as typeof wrapMode)}
 							>
 								{label}
@@ -129,12 +141,34 @@
 						{copied ? 'Copied!' : 'Share'}
 					</button>
 
-					<TimeRangePicker
-						value={store.timeRange}
-						timezoneMode={store.timezoneMode}
-						onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
-						ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
-					/>
+					<div class={store.isLive ? 'opacity-40' : ''} inert={store.isLive || undefined}>
+						<TimeRangePicker
+							value={store.timeRange}
+							timezoneMode={store.timezoneMode}
+							onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
+							ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
+						/>
+					</div>
+
+					<button
+						class="btn btn-sm {store.isLive ? 'btn-error' : ''}"
+						aria-pressed={store.isLive}
+						aria-label="Toggle live mode"
+						onclick={() => (store.isLive ? store.stopLive() : store.startLive())}
+						disabled={(store.loading && !store.isLive) || !store.selectedIndex}
+					>
+						{#if store.isLive}
+							<span class="relative flex h-2.5 w-2.5">
+								<span
+									class="absolute inline-flex h-full w-full animate-ping rounded-full bg-error-content opacity-75"
+								></span>
+								<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-error-content"></span>
+							</span>
+						{:else}
+							<Icon icon="lucide:radio" width="14" height="14" />
+						{/if}
+						Live
+					</button>
 
 					<button
 						class="btn btn-sm btn-accent"
@@ -162,29 +196,44 @@
 				</div>
 			</div>
 
-			{#if store.hasSearched}
+			{#if store.hasSearched && !store.isLive}
 				<LogFrequencyChart
 					data={store.histogramData}
 					timezoneMode={store.timezoneMode}
 					loading={store.histogramLoading}
 					collapsed={chartCollapsed}
 					ontoggle={handleChartToggle}
-					onbrush={(start, end) => store.navigateQuery({ timeRange: { type: 'absolute', start, end } })}
+					onbrush={(start, end) =>
+						store.navigateQuery({ timeRange: { type: 'absolute', start, end } })}
 				/>
 			{/if}
 
 			<div
 				bind:this={scrollElement}
-				class="min-h-0 flex-1 overflow-auto bg-base-200/30"
+				class="relative min-h-0 flex-1 overflow-auto bg-base-200/30"
 				onscroll={handleScroll}
 			>
+				{#if store.isLive && store.newLiveLogs > 0 && !isAtTop}
+					<button
+						class="btn sticky top-2 left-1/2 z-10 -translate-x-1/2 shadow-lg btn-sm btn-accent"
+						onclick={() => {
+							scrollElement?.scrollTo({ top: 0, behavior: 'smooth' });
+							store.resetNewLiveLogs();
+						}}
+					>
+						<span aria-hidden="true">&#8593;</span>
+						{store.newLiveLogs} new log{store.newLiveLogs === 1 ? '' : 's'}
+					</button>
+				{/if}
 				{#if !store.hasSearched}
 					<div class="flex h-full items-center justify-center">
 						<span class="loading loading-sm loading-spinner"></span>
 					</div>
 				{:else if store.logs.length === 0}
 					<div class="flex h-full items-center justify-center">
-						<p class="text-sm text-base-content/40">No logs found</p>
+						<p class="text-sm text-base-content/40">
+							{store.isLive ? 'Waiting for new logs...' : 'No logs found'}
+						</p>
 					</div>
 				{:else}
 					<div class="w-fit min-w-full">

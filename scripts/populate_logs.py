@@ -412,9 +412,63 @@ def main():
     parser.add_argument("--error-rate", type=float, default=15, help="Percentage of WARN/ERROR/CRITICAL (default: 15)")
     parser.add_argument("--url", default="http://localhost:7280", help="Quickwit base URL")
     parser.add_argument("--batch-size", type=int, default=1000, help="Batch size for ingestion (default: 1000)")
+    parser.add_argument("--live", action="store_true", help="Live mode: continuously emit logs")
+    parser.add_argument("--rate", type=float, default=1, help="Logs per second in live mode (default: 1)")
     args = parser.parse_args()
 
     endpoint = f"{args.url.rstrip('/')}/api/v1/otel-logs-v0_9/ingest"
+
+    if args.live:
+        run_live(endpoint, args.error_rate, args.rate)
+    else:
+        run_batch_ingest(endpoint, args)
+
+
+def run_live(endpoint: str, error_rate: float, rate: float = 1) -> None:
+    """Emit logs at the given rate (logs/sec) with the current timestamp."""
+    if rate <= 0:
+        print("Error: --rate must be positive", file=sys.stderr)
+        sys.exit(1)
+    services = list(SERVICES.keys())
+    count = 0
+    logs_per_batch = max(1, round(rate))
+    tick_interval = logs_per_batch / rate
+    print(f"Live mode: emitting {rate} log/s (Ctrl+C to stop)")
+    session = requests.Session()
+    next_send = time.monotonic()
+    try:
+        while True:
+            docs = []
+            for _ in range(logs_per_batch):
+                service = random.choice(services)
+                severity = pick_severity(error_rate)
+                ts = datetime.now(timezone.utc)
+                docs.append(generate_log(service, severity, ts))
+            last_service, last_severity = service, severity
+            ndjson = "\n".join(json.dumps(doc) for doc in docs)
+            try:
+                resp = session.post(
+                    endpoint,
+                    data=ndjson,
+                    headers={"Content-Type": "application/x-ndjson"},
+                    params={"commit": "force"},
+                    timeout=10,
+                )
+                resp.raise_for_status()
+                count += logs_per_batch
+            except requests.RequestException as e:
+                print(f"\nError: {e}", file=sys.stderr)
+            print(f"\r  Sent {count} logs [{last_severity}] {last_service}: {docs[-1]['body']['message'][:80]}", end="", flush=True)
+            next_send += tick_interval
+            sleep_time = next_send - time.monotonic()
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+    except KeyboardInterrupt:
+        print(f"\nStopped. Sent {count} logs total.")
+
+
+def run_batch_ingest(endpoint: str, args: argparse.Namespace) -> None:
+    """Original batch ingestion mode."""
     batch_size = args.batch_size
     total = args.lines
     total_batches = (total + batch_size - 1) // batch_size
