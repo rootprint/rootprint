@@ -43,7 +43,7 @@
 	}
 </script>
 
-<div class="rounded-lg border border-base-300 bg-base-100">
+<div class="border border-base-300 bg-base-100">
 	<button class="flex w-full items-center gap-2 px-3 py-3 text-left" onclick={toggle}>
 		<Icon
 			icon={expanded ? 'lucide:chevron-down' : 'lucide:chevron-right'}
@@ -59,8 +59,8 @@
 			{#if loading}
 				<span class="loading loading-xs loading-spinner"></span>
 			{:else}
-				<div class="grid grid-cols-3 gap-2">
-					<label class="floating-label">
+				<div class="flex items-end gap-2">
+					<label class="floating-label flex-1">
 						<span>Level Field</span>
 						<input
 							type="text"
@@ -68,7 +68,7 @@
 							bind:value={levelField}
 						/>
 					</label>
-					<label class="floating-label">
+					<label class="floating-label flex-1">
 						<span>Timestamp Field</span>
 						<input
 							type="text"
@@ -76,7 +76,7 @@
 							bind:value={timestampField}
 						/>
 					</label>
-					<label class="floating-label">
+					<label class="floating-label flex-1">
 						<span>Message Field</span>
 						<input
 							type="text"
@@ -84,8 +84,6 @@
 							bind:value={messageField}
 						/>
 					</label>
-				</div>
-				<div class="mt-2 flex justify-end">
 					<button class="btn btn-sm btn-primary" onclick={save} disabled={saving}>
 						{saving ? 'Saving...' : 'Save'}
 					</button>
