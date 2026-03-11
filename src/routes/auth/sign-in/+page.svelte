@@ -34,9 +34,5 @@
 				{signIn.pending ? 'Signing in...' : 'Sign In'}
 			</button>
 		</form>
-
-		<p class="text-center text-sm">
-			Don't have an account? <a href="/auth/sign-up" class="link">Sign up</a>
-		</p>
 	</div>
 </div>

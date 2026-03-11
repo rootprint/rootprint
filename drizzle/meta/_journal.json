@@ -8,6 +8,20 @@
       "when": 1773076086696,
       "tag": "0000_clear_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1773224740801,
+      "tag": "0001_neat_flatman",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773225156781,
+      "tag": "0002_wandering_mercury",
+      "breakpoints": true
     }
   ]
 }

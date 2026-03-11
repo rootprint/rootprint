@@ -8,3 +8,11 @@ export function requireUser() {
 	}
 	return event.locals.user;
 }
+
+export function requireAdmin() {
+	const user = requireUser();
+	if (user.role !== 'admin') {
+		error(403, 'Admin access required');
+	}
+	return user;
+}

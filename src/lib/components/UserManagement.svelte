@@ -1,0 +1,174 @@
+<script lang="ts">
+	import Icon from '@iconify/svelte';
+	import { listUsers, removeUser, setUserRole } from '$lib/api/users.remote';
+	import { page } from '$app/state';
+	import InviteUserModal from './InviteUserModal.svelte';
+
+	let users = $state<
+		{
+			id: string;
+			name: string;
+			email: string;
+			role?: string | null;
+			createdAt: Date;
+			status: 'pending' | 'active';
+			inviteUrl: string | null;
+		}[]
+	>([]);
+	let loaded = $state(false);
+	let errorMessage = $state('');
+	let inviteModalOpen = $state(false);
+	let confirmingRemove = $state<string | null>(null);
+	let copiedUserId = $state<string | null>(null);
+
+	function copyInviteLink(userId: string, url: string) {
+		navigator.clipboard.writeText(url);
+		copiedUserId = userId;
+		setTimeout(() => (copiedUserId = null), 2000);
+	}
+
+	const currentUserId = $derived(page.data.user?.id);
+
+	async function loadUsers() {
+		try {
+			users = await listUsers();
+		} catch (e) {
+			errorMessage = e instanceof Error ? e.message : 'Failed to load users';
+		} finally {
+			loaded = true;
+		}
+	}
+
+	async function handleRoleChange(userId: string, newRole: 'admin' | 'user') {
+		try {
+			await setUserRole({ userId, role: newRole });
+			await loadUsers();
+		} catch (e) {
+			errorMessage = e instanceof Error ? e.message : 'Failed to change role';
+		}
+	}
+
+	async function handleRemove(userId: string) {
+		try {
+			await removeUser({ userId });
+			confirmingRemove = null;
+			await loadUsers();
+		} catch (e) {
+			errorMessage = e instanceof Error ? e.message : 'Failed to remove user';
+		}
+	}
+
+	loadUsers();
+</script>
+
+<div class="flex flex-col gap-4">
+	<div class="flex items-center justify-between">
+		<div>
+			<h3 class="text-sm font-semibold">Users</h3>
+			<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>
+		</div>
+		<button class="btn btn-sm btn-accent" onclick={() => (inviteModalOpen = true)}>
+			<Icon icon="lucide:user-plus" width="16" height="16" />
+			Invite User
+		</button>
+	</div>
+
+	{#if errorMessage}
+		<div class="alert text-sm alert-error">{errorMessage}</div>
+	{/if}
+
+	{#if !loaded}
+		<div class="flex justify-center py-8">
+			<span class="loading loading-sm loading-spinner"></span>
+		</div>
+	{:else}
+		<div class="overflow-x-auto">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Email</th>
+						<th>Status</th>
+						<th>Role</th>
+						<th>Created</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each users as u (u.id)}
+						<tr class:bg-base-200={u.id === currentUserId}>
+							<td class="font-medium">
+								{u.name}
+							</td>
+							<td class="text-base-content/60">{u.email}</td>
+							<td>
+								{#if u.status === 'pending'}
+									<span class="badge badge-warning badge-sm">Pending</span>
+								{:else}
+									<span class="badge badge-success badge-sm">Active</span>
+								{/if}
+							</td>
+							<td>
+								{#if u.id === currentUserId}
+									<span class="badge badge-sm">{u.role === 'admin' ? 'Admin' : 'Member'}</span>
+								{:else}
+									<select
+										class="select select-bordered select-xs w-fit min-w-0"
+										value={u.role ?? 'user'}
+										onchange={(e) =>
+											handleRoleChange(u.id, e.currentTarget.value as 'admin' | 'user')}
+									>
+										<option value="user">Member</option>
+										<option value="admin">Admin</option>
+									</select>
+								{/if}
+							</td>
+							<td class="text-base-content/60">
+								{new Date(u.createdAt).toLocaleDateString()}
+							</td>
+							<td>
+								<div class="flex gap-1">
+									{#if u.status === 'pending' && u.inviteUrl}
+										<button
+											class="btn btn-ghost btn-xs"
+											onclick={() => copyInviteLink(u.id, u.inviteUrl!)}
+											title="Copy invite link"
+										>
+											<Icon
+												icon={copiedUserId === u.id ? 'lucide:check' : 'lucide:link'}
+												width="14"
+												height="14"
+											/>
+										</button>
+									{/if}
+									{#if u.id !== currentUserId}
+										{#if confirmingRemove === u.id}
+											<button class="btn btn-xs btn-error" onclick={() => handleRemove(u.id)}>
+												Confirm
+											</button>
+											<button
+												class="btn btn-ghost btn-xs"
+												onclick={() => (confirmingRemove = null)}
+											>
+												Cancel
+											</button>
+										{:else}
+											<button
+												class="btn text-error btn-ghost btn-xs"
+												onclick={() => (confirmingRemove = u.id)}
+											>
+												<Icon icon="lucide:trash-2" width="14" height="14" />
+											</button>
+										{/if}
+									{/if}
+								</div>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+</div>
+
+<InviteUserModal bind:open={inviteModalOpen} oncreated={loadUsers} />

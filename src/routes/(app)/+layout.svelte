@@ -31,14 +31,16 @@
 					<p class="text-sm font-medium">{user?.name ?? 'User'}</p>
 					<p class="text-xs text-base-content/60">{user?.email ?? ''}</p>
 				</div>
-				<ul class="menu w-full p-2">
-					<li class="w-full">
-						<a href="/administration" class="w-full">
-							<Icon icon="lucide:settings" width="16" height="16" class="opacity-70" />
-							Administration
-						</a>
-					</li>
-				</ul>
+				{#if user?.role === 'admin'}
+					<ul class="menu w-full p-2">
+						<li class="w-full">
+							<a href="/administration" class="w-full">
+								<Icon icon="lucide:settings" width="16" height="16" class="opacity-70" />
+								Administration
+							</a>
+						</li>
+					</ul>
+				{/if}
 				<div class="border-t border-base-300 p-2">
 					<button class="btn w-full justify-start btn-ghost btn-sm" onclick={() => signOut()}>
 						<Icon icon="lucide:log-out" width="16" height="16" class="opacity-70" />

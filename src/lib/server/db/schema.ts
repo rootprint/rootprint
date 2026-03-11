@@ -36,4 +36,15 @@ export const userPreference = sqliteTable(
 	(table) => [uniqueIndex('user_preference_unique').on(table.userId, table.indexName)]
 );
 
+export const inviteToken = sqliteTable('invite_token', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	token: text('token').notNull().unique(),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.default(sql`(unixepoch())`)
+		.notNull()
+});
+
 export * from './auth.schema';
