@@ -1,10 +1,25 @@
 export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-	let current: unknown = obj;
-	for (const key of path.split('.')) {
-		if (current === null || current === undefined || typeof current !== 'object') return undefined;
-		current = (current as Record<string, unknown>)[key];
+	return resolveSegments(obj, path.split('.'));
+}
+
+function resolveSegments(current: unknown, segments: string[]): unknown {
+	if (segments.length === 0) return current;
+	if (current === null || current === undefined || typeof current !== 'object') return undefined;
+
+	const record = current as Record<string, unknown>;
+
+	// Try progressively longer key combinations to handle keys containing dots
+	// e.g. for segments ["resource_attributes", "host", "name"],
+	// tries "resource_attributes" first, then "resource_attributes.host", etc.
+	for (let i = 1; i <= segments.length; i++) {
+		const key = segments.slice(0, i).join('.');
+		if (key in record) {
+			const result = resolveSegments(record[key], segments.slice(i));
+			if (result !== undefined) return result;
+		}
 	}
-	return current;
+
+	return undefined;
 }
 
 export function formatFieldValue(val: unknown): string {
