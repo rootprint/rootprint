@@ -33,9 +33,9 @@
 				</div>
 				<ul class="menu p-2">
 					<li>
-						<a href="/settings">
+						<a href="/administration">
 							<Icon icon="lucide:settings" width="16" height="16" class="opacity-70" />
-							Settings
+							Administration
 						</a>
 					</li>
 				</ul>
