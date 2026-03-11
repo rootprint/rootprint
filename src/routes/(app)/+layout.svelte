@@ -31,9 +31,9 @@
 					<p class="text-sm font-medium">{user?.name ?? 'User'}</p>
 					<p class="text-xs text-base-content/60">{user?.email ?? ''}</p>
 				</div>
-				<ul class="menu p-2">
-					<li>
-						<a href="/administration">
+				<ul class="menu w-full p-2">
+					<li class="w-full">
+						<a href="/administration" class="w-full">
 							<Icon icon="lucide:settings" width="16" height="16" class="opacity-70" />
 							Administration
 						</a>

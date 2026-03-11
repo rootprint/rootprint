@@ -22,8 +22,8 @@
 	loadIndexes();
 </script>
 
-<div class="h-full overflow-y-auto">
-	<div class="w-full px-4 py-8">
+<div class="h-full overflow-y-auto align-middle">
+	<div class="mx-auto max-w-6xl px-4 py-8">
 		<div class="flex items-center justify-between py-4">
 			<div>
 				<h2 class="text-xl font-semibold">Administration</h2>
@@ -44,7 +44,7 @@
 					>
 						<input
 							type="text"
-							class="input input-bordered w-full cursor-not-allowed opacity-50"
+							class="input-bordered input w-full cursor-not-allowed opacity-50"
 							value={quickwitUrl}
 							disabled
 						/>
