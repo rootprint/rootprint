@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { signOut } from '$lib/api/auth.remote';
 	import { getUserInitials } from '$lib/utils/format';
+	import logo from '$lib/assets/logo.png';
 
 	let { children } = $props();
 
@@ -12,7 +13,10 @@
 
 <div class="flex h-screen w-screen flex-col">
 	<div class="flex h-12 items-center justify-between border-b border-base-300 bg-base-100 px-4">
-		<a href="/" class="text-lg font-semibold hover:opacity-80">Logwiz</a>
+		<a href="/" class="flex items-center gap-2 text-lg font-semibold hover:opacity-80">
+			<img src={logo} alt="Logwiz" class="h-6 w-auto object-contain" />
+			Logwiz
+		</a>
 
 		<div class="dropdown dropdown-end">
 			<div tabindex="0" role="button" class="btn btn-circle btn-ghost btn-sm">
