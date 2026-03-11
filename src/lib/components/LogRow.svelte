@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getNestedValue, formatFieldValue } from '$lib/utils/format';
+	import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 
 	let {
@@ -55,33 +56,11 @@
 	function extractTimestamp(doc: Record<string, unknown>): string {
 		const raw = doc[timestampField];
 		if (!raw) return '';
-		const value =
-			typeof raw === 'number' && raw < 10_000_000_000
-				? raw * 1000
-				: typeof raw === 'number' && raw > 1_000_000_000_000_000
-					? Math.floor(raw / 1_000_000)
-					: raw;
-		const date = new Date(value as string | number);
-		if (isNaN(date.getTime())) return String(raw);
 
-		if (timezoneMode === 'utc') {
-			const y = date.getUTCFullYear();
-			const mo = String(date.getUTCMonth() + 1).padStart(2, '0');
-			const d = String(date.getUTCDate()).padStart(2, '0');
-			const h = String(date.getUTCHours()).padStart(2, '0');
-			const mi = String(date.getUTCMinutes()).padStart(2, '0');
-			const s = String(date.getUTCSeconds()).padStart(2, '0');
-			const ms = String(date.getUTCMilliseconds()).padStart(3, '0');
-			return `${y}-${mo}-${d} ${h}:${mi}:${s}.${ms}`;
-		}
-		const y = date.getFullYear();
-		const mo = String(date.getMonth() + 1).padStart(2, '0');
-		const d = String(date.getDate()).padStart(2, '0');
-		const h = String(date.getHours()).padStart(2, '0');
-		const mi = String(date.getMinutes()).padStart(2, '0');
-		const s = String(date.getSeconds()).padStart(2, '0');
-		const ms = String(date.getMilliseconds()).padStart(3, '0');
-		return `${y}-${mo}-${d} ${h}:${mi}:${s}.${ms}`;
+		const ms = typeof raw === 'number' ? normalizeToMs(raw) : new Date(raw as string).getTime();
+
+		if (isNaN(ms)) return String(raw);
+		return formatTimestamp(ms, timezoneMode);
 	}
 
 	function extractMessage(doc: Record<string, unknown>): string {

@@ -4,7 +4,7 @@ import { indexConfig } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { indexNameSchema, saveIndexConfigSchema } from '$lib/schemas/index-config';
 import { getIndexFieldsSchema } from '$lib/schemas/preference';
-import { requireUser } from '$lib/middleware/auth';
+import { requireUser, requireAdmin } from '$lib/middleware/auth';
 import { getQuickwitClient } from '$lib/server/quickwit';
 
 export const getIndexes = query(async () => {
@@ -55,7 +55,7 @@ export const getIndexConfig = command(indexNameSchema, async (indexName) => {
 });
 
 export const saveIndexConfig = command(saveIndexConfigSchema, async (data) => {
-	requireUser();
+	requireAdmin();
 
 	const { indexName, ...fields } = data;
 

@@ -3,6 +3,7 @@
 	import type uPlotLib from 'uplot';
 	import type { TimezoneMode } from '$lib/types';
 	import Icon from '@iconify/svelte';
+	import { formatChartTime, formatChartDate, formatChartTooltip } from '$lib/utils/time';
 
 	let {
 		data,
@@ -91,50 +92,6 @@
 		};
 	});
 
-	function formatTime(ts: number): string {
-		const d = new Date(ts * 1000);
-		if (timezoneMode === 'utc') {
-			const h = String(d.getUTCHours()).padStart(2, '0');
-			const m = String(d.getUTCMinutes()).padStart(2, '0');
-			return `${h}:${m}`;
-		}
-		const h = String(d.getHours()).padStart(2, '0');
-		const m = String(d.getMinutes()).padStart(2, '0');
-		return `${h}:${m}`;
-	}
-
-	function formatDate(ts: number): string {
-		const d = new Date(ts * 1000);
-		if (timezoneMode === 'utc') {
-			const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
-			const day = String(d.getUTCDate()).padStart(2, '0');
-			return `${mo}-${day} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
-		}
-		const mo = String(d.getMonth() + 1).padStart(2, '0');
-		const day = String(d.getDate()).padStart(2, '0');
-		return `${mo}-${day} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-	}
-
-	function formatTooltipTimestamp(ts: number): string {
-		const d = new Date(ts * 1000);
-		if (timezoneMode === 'utc') {
-			const y = d.getUTCFullYear();
-			const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
-			const day = String(d.getUTCDate()).padStart(2, '0');
-			const h = String(d.getUTCHours()).padStart(2, '0');
-			const m = String(d.getUTCMinutes()).padStart(2, '0');
-			const s = String(d.getUTCSeconds()).padStart(2, '0');
-			return `${y}-${mo}-${day} ${h}:${m}:${s}`;
-		}
-		const y = d.getFullYear();
-		const mo = String(d.getMonth() + 1).padStart(2, '0');
-		const day = String(d.getDate()).padStart(2, '0');
-		const h = String(d.getHours()).padStart(2, '0');
-		const m = String(d.getMinutes()).padStart(2, '0');
-		const s = String(d.getSeconds()).padStart(2, '0');
-		return `${y}-${mo}-${day} ${h}:${m}:${s}`;
-	}
-
 	// Tooltip state
 	let tooltipVisible = $state(false);
 	let tooltipLeft = $state(0);
@@ -198,7 +155,8 @@
 		// Determine time span to choose label formatter
 		const timestamps = columnarData.uplot[0];
 		const span = timestamps.length > 1 ? timestamps[timestamps.length - 1] - timestamps[0] : 0;
-		const useDate = span > 24 * 60 * 60;
+		const SECONDS_PER_DAY = 86400;
+		const useDate = span > SECONDS_PER_DAY;
 		// Pad x-range by half a bucket so first/last bars aren't clipped
 		const bucketWidth = timestamps.length > 1 ? timestamps[1] - timestamps[0] : 1;
 		const halfBucket = bucketWidth / 2;
@@ -243,7 +201,7 @@
 					size: 20,
 					space: 120,
 					values: (_u: uPlotLib, splits: number[]) =>
-						splits.map((v) => (useDate ? formatDate(v) : formatTime(v)))
+						splits.map((v) => (useDate ? formatChartDate(v, timezoneMode) : formatChartTime(v, timezoneMode)))
 				},
 				{
 					stroke: '#9ca3af',
@@ -281,7 +239,8 @@
 						const left = u.cursor.left ?? 0;
 						const top = u.cursor.top ?? 0;
 						const overRect = over.getBoundingClientRect();
-						const containerRect = containerEl!.getBoundingClientRect();
+						const containerRect = containerEl?.getBoundingClientRect();
+						if (!containerRect) return;
 
 						const offsetLeft = overRect.left - containerRect.left;
 						const offsetTop = overRect.top - containerRect.top;
@@ -385,7 +344,7 @@
 					style="left: {tooltipLeft}px; top: {tooltipTop}px;"
 				>
 					<div class="mb-1 text-[11px] text-base-content/60">
-						{formatTooltipTimestamp(columnarData.uplot[0][tooltipIdx])}
+						{formatChartTooltip(columnarData.uplot[0][tooltipIdx], timezoneMode)}
 					</div>
 					{#each levels as level, i (level)}
 						{@const count = columnarData.rawSeries[i][tooltipIdx]}

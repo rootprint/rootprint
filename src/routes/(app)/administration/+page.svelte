@@ -2,15 +2,11 @@
 	import { getIndexes } from '$lib/api/indexes.remote';
 	import IndexConfigCard from '$lib/components/IndexConfigCard.svelte';
 	import UserManagement from '$lib/components/UserManagement.svelte';
-	import { page } from '$app/state';
-
 	let activeTab = $state<'users' | 'configuration'>('users');
 
 	let indexes = $state<{ indexId: string; indexUri: string }[]>([]);
 	let loaded = $state(false);
 	let errorMessage = $state('');
-
-	const quickwitUrl = $derived(page.data.quickwitUrl);
 
 	async function loadIndexes() {
 		try {
@@ -66,19 +62,9 @@
 					<div class="px-6 py-6">
 						<h3 class="text-sm font-semibold">Quickwit Connection</h3>
 						<p class="mt-1 text-sm text-base-content/60">
-							The Quickwit instance this Logwiz deployment connects to
+							The Quickwit connection URL is configured via the
+							<code class="text-xs">QUICKWIT_URL</code> environment variable on the server.
 						</p>
-						<div
-							class="tooltip mt-3 w-full"
-							data-tip="Can be changed via the QUICKWIT_URL variable in .env"
-						>
-							<input
-								type="text"
-								class="input-bordered input w-full cursor-not-allowed opacity-50"
-								value={quickwitUrl}
-								disabled
-							/>
-						</div>
 					</div>
 
 					<div class="border-t border-base-300 px-6 py-6">

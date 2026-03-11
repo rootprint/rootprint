@@ -168,9 +168,8 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 				levels[String(lb.key)] = lb.doc_count;
 			}
 		}
-		// Quickwit date_histogram returns keys in milliseconds when the field
-		// uses a datetime format, but in seconds for unix timestamps.
-		// Normalise to seconds: anything above 1e12 (~2001 in ms) is treated as ms.
+		// Quickwit date_histogram returns ms for datetime fields, seconds for unix timestamps.
+		// Anything above 1e12 (~2001 as ms, ~33700 AD as seconds) is treated as milliseconds.
 		const ts = b.key > 1e12 ? Math.floor(b.key / 1000) : b.key;
 		bucketMap.set(ts, levels);
 	}
