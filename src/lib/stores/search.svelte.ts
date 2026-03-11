@@ -12,6 +12,8 @@ import { resolveTimeRange } from '$lib/utils/time';
 import { computeColumnWidths } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import type { IndexField } from '$lib/types';
+import { toast } from 'svelte-sonner';
+import { getErrorMessage } from '$lib/utils/error';
 
 const BATCH_SIZE = 50;
 export const MAX_LOGS = 5000;
@@ -40,7 +42,6 @@ export function createSearchStore(
 	let logs = $state<Record<string, unknown>[]>([]);
 	let numHits = $state(0);
 	let loading = $state(false);
-	let errorMessage = $state('');
 	let hasSearched = $state(false);
 	let searchStartTimestamp = $state<number | undefined>(undefined);
 	let searchEndTimestamp = $state<number | undefined>(undefined);
@@ -134,7 +135,7 @@ export function createSearchStore(
 				loadFieldsForIndex(idx);
 			}
 		} catch (e) {
-			errorMessage = e instanceof Error ? e.message : 'Failed to load indexes';
+			toast.error(getErrorMessage(e, 'Failed to load indexes'));
 		}
 	}
 
@@ -217,7 +218,6 @@ export function createSearchStore(
 		if (selectedIndex === null) return;
 
 		loading = true;
-		errorMessage = '';
 
 		if (!append) {
 			lastSearchedParams = serialize(parsedQuery()).toString();
@@ -299,7 +299,7 @@ export function createSearchStore(
 
 			hasSearched = true;
 		} catch (e) {
-			errorMessage = e instanceof Error ? e.message : 'Search failed';
+			toast.error(getErrorMessage(e, 'Search failed'));
 		} finally {
 			loading = false;
 		}
@@ -426,9 +426,6 @@ export function createSearchStore(
 		},
 		get loading() {
 			return loading;
-		},
-		get errorMessage() {
-			return errorMessage;
 		},
 		get hasSearched() {
 			return hasSearched;

@@ -50,6 +50,7 @@
 		"quickwit-js": "^0.3.0",
 		"shiki": "^4.0.1",
 		"svelte-dnd-action": "^0.9.69",
+		"svelte-sonner": "^1.1.0",
 		"uplot": "^1.6.32",
 		"valibot": "^1.2.0"
 	}

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { createInvite } from '$lib/api/users.remote';
+	import { toast } from 'svelte-sonner';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	let {
 		open = $bindable(false),
@@ -14,18 +16,17 @@
 	let role = $state<'admin' | 'user'>('user');
 	let inviteUrl = $state('');
 	let loading = $state(false);
-	let error = $state('');
 	let copied = $state(false);
 
 	async function handleSubmit() {
 		loading = true;
-		error = '';
 		try {
 			const result = await createInvite({ email, name, role });
 			inviteUrl = result.inviteUrl;
 			oncreated();
+			toast.success(`Invite created for ${name}`);
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to create invite';
+			toast.error(getErrorMessage(e, 'Failed to create invite'));
 		} finally {
 			loading = false;
 		}
@@ -43,7 +44,6 @@
 		name = '';
 		role = 'user';
 		inviteUrl = '';
-		error = '';
 	}
 </script>
 
@@ -79,10 +79,6 @@
 					handleSubmit();
 				}}
 			>
-				{#if error}
-					<div class="alert text-sm alert-error">{error}</div>
-				{/if}
-
 				<label class="floating-label">
 					<span>Name</span>
 					<input

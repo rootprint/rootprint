@@ -1,4 +1,5 @@
 import { command, query, getRequestEvent } from '$app/server';
+import { error } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { inviteToken } from '$lib/server/db/schema';
@@ -6,6 +7,7 @@ import { requireAdmin } from '$lib/middleware/auth';
 import { createInviteSchema, removeUserSchema, setUserRoleSchema } from '$lib/schemas/users';
 import { env } from '$env/dynamic/private';
 import { randomBytes } from 'crypto';
+import { APIError } from 'better-auth/api';
 
 export const listUsers = query(async () => {
 	requireAdmin();
@@ -34,15 +36,23 @@ export const createInvite = command(createInviteSchema, async (data) => {
 
 	const tempPassword = randomBytes(32).toString('hex');
 
-	const created = await auth.api.createUser({
-		headers: event.request.headers,
-		body: {
-			email: data.email,
-			password: tempPassword,
-			name: data.name,
-			role: data.role
+	let created;
+	try {
+		created = await auth.api.createUser({
+			headers: event.request.headers,
+			body: {
+				email: data.email,
+				password: tempPassword,
+				name: data.name,
+				role: data.role
+			}
+		});
+	} catch (e) {
+		if (e instanceof APIError) {
+			error(400, e.message || 'Failed to create user');
 		}
-	});
+		throw e;
+	}
 
 	const token = randomBytes(32).toString('hex');
 	await db.insert(inviteToken).values({
@@ -57,7 +67,7 @@ export const createInvite = command(createInviteSchema, async (data) => {
 export const removeUser = command(removeUserSchema, async (data) => {
 	const admin = requireAdmin();
 	if (data.userId === admin.id) {
-		throw new Error('Cannot remove yourself');
+		error(400, 'Cannot remove yourself');
 	}
 	const event = getRequestEvent();
 	await auth.api.removeUser({
@@ -69,7 +79,7 @@ export const removeUser = command(removeUserSchema, async (data) => {
 export const setUserRole = command(setUserRoleSchema, async (data) => {
 	const admin = requireAdmin();
 	if (data.userId === admin.id) {
-		throw new Error('Cannot change your own role');
+		error(400, 'Cannot change your own role');
 	}
 	const event = getRequestEvent();
 	await auth.api.setRole({

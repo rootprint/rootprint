@@ -3,6 +3,8 @@
 	import { listUsers, removeUser, setUserRole } from '$lib/api/users.remote';
 	import { page } from '$app/state';
 	import InviteUserModal from './InviteUserModal.svelte';
+	import { toast } from 'svelte-sonner';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	let users = $state<
 		{
@@ -16,7 +18,6 @@
 		}[]
 	>([]);
 	let loaded = $state(false);
-	let errorMessage = $state('');
 	let inviteModalOpen = $state(false);
 	let confirmingRemove = $state<string | null>(null);
 	let copiedUserId = $state<string | null>(null);
@@ -33,7 +34,7 @@
 		try {
 			users = await listUsers();
 		} catch (e) {
-			errorMessage = e instanceof Error ? e.message : 'Failed to load users';
+			toast.error(getErrorMessage(e, 'Failed to load users'));
 		} finally {
 			loaded = true;
 		}
@@ -43,8 +44,9 @@
 		try {
 			await setUserRole({ userId, role: newRole });
 			await loadUsers();
+			toast.success(`Role updated to ${newRole === 'admin' ? 'Admin' : 'Member'}`);
 		} catch (e) {
-			errorMessage = e instanceof Error ? e.message : 'Failed to change role';
+			toast.error(getErrorMessage(e, 'Failed to change role'));
 		}
 	}
 
@@ -52,9 +54,10 @@
 		try {
 			await removeUser({ userId });
 			confirmingRemove = null;
-			await loadUsers();
+			users = users.filter((u) => u.id !== userId);
+			toast.success('User removed');
 		} catch (e) {
-			errorMessage = e instanceof Error ? e.message : 'Failed to remove user';
+			toast.error(getErrorMessage(e, 'Failed to remove user'));
 		}
 	}
 
@@ -72,10 +75,6 @@
 			Invite User
 		</button>
 	</div>
-
-	{#if errorMessage}
-		<div class="alert text-sm alert-error">{errorMessage}</div>
-	{/if}
 
 	{#if !loaded}
 		<div class="flex justify-center py-8">

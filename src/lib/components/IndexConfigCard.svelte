@@ -1,5 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import { toast } from 'svelte-sonner';
+	import { getErrorMessage } from '$lib/utils/error';
 	import { getIndexConfig, saveIndexConfig } from '$lib/api/indexes.remote';
 
 	let { indexId }: { indexId: string } = $props();
@@ -22,6 +24,9 @@
 				timestampField = config.timestampField;
 				messageField = config.messageField;
 				loaded = true;
+			} catch (e) {
+				toast.error(getErrorMessage(e, 'Failed to load config'));
+				expanded = false;
 			} finally {
 				loading = false;
 			}
@@ -37,6 +42,9 @@
 				timestampField,
 				messageField
 			});
+			toast.success('Configuration saved');
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to save config'));
 		} finally {
 			saving = false;
 		}

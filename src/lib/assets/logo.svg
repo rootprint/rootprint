@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 775 497" fill="#000">
+  <!-- Top bar with pointed/arrow right end -->
+  <path d="M30,57 H510 L575,117 L510,177 H30 C13,177 0,164 0,147 V87 C0,70 13,57 30,57 Z"/>
+  <!-- 4-pointed star merging with top bar arrow -->
+  <path d="M625,2 L656,85 L743,117 L656,149 L625,233 L594,149 L507,117 L594,85 Z"/>
+  <!-- Middle bar with fully rounded ends -->
+  <rect x="5" y="211" width="623" height="111" rx="56" ry="56"/>
+  <!-- Bottom bar with fully rounded ends -->
+  <rect x="5" y="374" width="623" height="120" rx="60" ry="60"/>
+</svg>

@@ -179,11 +179,7 @@
 				class="min-h-0 flex-1 overflow-auto bg-base-200/30"
 				onscroll={handleScroll}
 			>
-				{#if store.errorMessage}
-					<div class="p-4">
-						<div class="alert text-sm alert-error">{store.errorMessage}</div>
-					</div>
-				{:else if !store.hasSearched}
+				{#if !store.hasSearched}
 					<div class="flex h-full items-center justify-center">
 						<span class="loading loading-sm loading-spinner"></span>
 					</div>
