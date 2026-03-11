@@ -17,7 +17,6 @@
 	} = $props();
 
 	let open = $state(false);
-	let view = $state<'presets' | 'custom'>('presets');
 	let container = $state<HTMLDivElement | null>(null);
 
 	// Custom date range state
@@ -39,9 +38,6 @@
 
 	function toggle() {
 		open = !open;
-		if (open) {
-			view = value.type === 'absolute' ? 'custom' : 'presets';
-		}
 	}
 
 	function close() {
@@ -109,13 +105,13 @@
 			class="absolute top-full right-0 z-50 mt-1 max-h-[calc(100vh-120px)] overflow-y-auto rounded-lg border border-base-300 bg-base-100 shadow-lg"
 			onclick={(e) => e.stopPropagation()}
 		>
-			{#if view === 'presets'}
+			<div class="flex">
 				<!-- Preset list -->
-				<div class="w-72 py-1">
+				<div class="w-48 border-r border-base-300 py-1">
 					{#each TIME_PRESETS as preset (preset.code)}
 						{@const isActive = value.type === 'relative' && value.preset === preset.code}
 						<button
-							class="flex w-full items-center justify-between px-4 py-2 text-sm hover:bg-base-200 {isActive
+							class="flex w-full items-center justify-between px-4 py-1.5 text-sm hover:bg-base-200 {isActive
 								? 'bg-primary/10 text-primary'
 								: ''}"
 							onclick={() => selectPreset(preset.code)}
@@ -124,29 +120,14 @@
 							<span class="text-xs text-base-content/40">{preset.code}</span>
 						</button>
 					{/each}
-
-					<div class="mt-1 border-t border-base-300 pt-1">
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm hover:bg-base-200 {value.type ===
-							'absolute'
-								? 'text-primary'
-								: ''}"
-							onclick={() => (view = 'custom')}
-						>
-							Custom Date Range
-						</button>
-					</div>
 				</div>
-			{:else}
+
 				<!-- Custom date range -->
 				<div class="p-3">
 					<div class="mb-2 flex items-center justify-between">
-						<button class="btn gap-1 btn-ghost btn-xs" onclick={() => (view = 'presets')}>
-							<Icon icon="mdi:arrow-left" class="text-sm" />
-							Back to presets
-						</button>
+						<span class="text-xs font-medium text-base-content/60">Custom Range</span>
 						<button
-							class="btn btn-sm btn-primary"
+							class="btn btn-xs btn-primary"
 							disabled={!fromDate || !toDate}
 							onclick={applyCustomRange}
 						>
@@ -186,7 +167,7 @@
 						</div>
 					</div>
 				</div>
-			{/if}
+			</div>
 
 			<!-- Timezone footer -->
 			<div class="flex items-center justify-between border-t border-base-300 px-4 py-2 text-xs">
