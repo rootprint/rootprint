@@ -49,7 +49,6 @@
 		if (value === null || value === undefined) return;
 		const str = Array.isArray(value) ? JSON.stringify(value) : String(value);
 		onfilter?.(key, escapeFilterValue(str), exclude);
-		open = false;
 	}
 
 	let activeTab = $state<(typeof tabs)[number]['id']>('parameters');

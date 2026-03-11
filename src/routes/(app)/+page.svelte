@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createSearchStore, MAX_LOGS } from '$lib/stores/search.svelte';
+	import { createSearchStore } from '$lib/stores/search.svelte';
 	import { browser } from '$app/environment';
 	import { afterNavigate } from '$app/navigation';
 	import type { TimeRange } from '$lib/types';
@@ -57,8 +57,7 @@
 		if (
 			scrollHeight - scrollTop - clientHeight < 300 &&
 			!store.loading &&
-			store.logs.length < store.numHits &&
-			store.logs.length < MAX_LOGS
+			store.logs.length < store.numHits
 		) {
 			store.search(true);
 		}

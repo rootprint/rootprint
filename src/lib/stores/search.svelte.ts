@@ -16,7 +16,6 @@ import { toast } from 'svelte-sonner';
 import { getErrorMessage } from '$lib/utils/error';
 
 const BATCH_SIZE = 50;
-export const MAX_LOGS = 5000;
 
 export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
@@ -278,7 +277,7 @@ export function createSearchStore(
 
 			if (append) {
 				const combined = [...logs, ...result.hits];
-				logs = combined.length > MAX_LOGS ? combined.slice(-MAX_LOGS) : combined;
+				logs = combined;
 				updateColumnWidths(result.hits, currentActiveFields);
 			} else {
 				logs = result.hits;
