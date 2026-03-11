@@ -48,7 +48,7 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
-	const query = index
+	let query = index
 		.query(data.query || '*')
 		.limit(data.limit)
 		.offset(data.offset)
@@ -58,31 +58,57 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 		query.timeRange(startTs, endTs);
 	}
 
-	if (data.quickFilterFields?.length) {
-		for (const field of data.quickFilterFields) {
+	let filterFields = data.quickFilterFields ?? [];
+	const unsupportedFilterFields: string[] = [];
+
+	// Retry loop: if a field isn't a fast field, remove it and retry
+	while (true) {
+		for (const field of filterFields) {
 			query.agg(field, AggregationBuilder.terms(field, { size: 50 }));
 		}
-	}
 
-	const result = await index.search(query);
+		try {
+			const result = await index.search(query);
 
-	const aggregations: Record<string, string[]> = {};
-	if (result.aggregations) {
-		for (const [field, agg] of Object.entries(result.aggregations)) {
-			const bucketAgg = agg as { buckets?: { key: string }[] };
-			if (bucketAgg.buckets) {
-				aggregations[field] = bucketAgg.buckets.map((b) => String(b.key));
+			const aggregations: Record<string, string[]> = {};
+			if (result.aggregations) {
+				for (const [field, agg] of Object.entries(result.aggregations)) {
+					const bucketAgg = agg as { buckets?: { key: string }[] };
+					if (bucketAgg.buckets) {
+						aggregations[field] = bucketAgg.buckets.map((b) => String(b.key));
+					}
+				}
 			}
+
+			return {
+				hits: result.hits,
+				numHits: result.num_hits,
+				startTimestamp: startTs,
+				endTimestamp: endTs,
+				aggregations,
+				unsupportedFilterFields
+			};
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : '';
+			const match = msg.match(/Field "(.+?)" is not configured as a fast field/);
+			if (match) {
+				const badField = match[1];
+				unsupportedFilterFields.push(badField);
+				filterFields = filterFields.filter((f) => f !== badField);
+				// Rebuild query without the bad field's aggregation
+				query = index
+					.query(data.query || '*')
+					.limit(data.limit)
+					.offset(data.offset)
+					.sortBy(`+${fields.timestampField}`);
+				if (startTs !== undefined && endTs !== undefined) {
+					query.timeRange(startTs, endTs);
+				}
+				continue;
+			}
+			throw e;
 		}
 	}
-
-	return {
-		hits: result.hits,
-		numHits: result.num_hits,
-		startTimestamp: startTs,
-		endTimestamp: endTs,
-		aggregations
-	};
 });
 
 export const searchFieldValues = command(searchFieldValuesSchema, async (data) => {
@@ -105,17 +131,25 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 		query.timeRange(startTs, endTs);
 	}
 
-	const result = await index.search(query);
+	try {
+		const result = await index.search(query);
 
-	const bucketAgg = result.aggregations?.[data.field] as
-		| { buckets?: { key: string }[] }
-		| undefined;
-	const searchLower = data.searchTerm.toLowerCase();
-	const values = (bucketAgg?.buckets?.map((b) => String(b.key)) ?? []).filter((v) =>
-		v.toLowerCase().includes(searchLower)
-	);
+		const bucketAgg = result.aggregations?.[data.field] as
+			| { buckets?: { key: string }[] }
+			| undefined;
+		const searchLower = data.searchTerm.toLowerCase();
+		const values = (bucketAgg?.buckets?.map((b) => String(b.key)) ?? []).filter((v) =>
+			v.toLowerCase().includes(searchLower)
+		);
 
-	return { values };
+		return { values, unsupported: false };
+	} catch (e) {
+		const msg = e instanceof Error ? e.message : '';
+		if (msg.includes('is not configured as a fast field')) {
+			return { values: [], unsupported: true };
+		}
+		throw e;
+	}
 });
 
 export const searchLogHistogram = command(searchLogHistogramSchema, async (data) => {

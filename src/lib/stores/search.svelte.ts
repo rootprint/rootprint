@@ -249,6 +249,18 @@ export function createSearchStore(
 			searchStartTimestamp = result.startTimestamp;
 			searchEndTimestamp = result.endTimestamp;
 
+			if (result.unsupportedFilterFields?.length) {
+				const bad = result.unsupportedFilterFields;
+				const names = bad.join(', ');
+				toast.error(
+					`Filter field${bad.length > 1 ? 's' : ''} ${names} cannot be used as a filter (not a fast field in Quickwit)`
+				);
+				quickFilterFields = quickFilterFields.filter((f) => !bad.includes(f));
+				if (selectedIndex) {
+					saveQuickFilterFields({ indexName: selectedIndex, fields: quickFilterFields });
+				}
+			}
+
 			if (!append && result.aggregations) {
 				const hasActiveFiltersNow = Object.keys(activeFilters).length > 0;
 				if (!hasActiveFiltersNow) {
@@ -356,6 +368,9 @@ export function createSearchStore(
 			startTimestamp: searchStartTimestamp,
 			endTimestamp: searchEndTimestamp
 		});
+		if (result.unsupported) {
+			toast.error(`Field "${field}" cannot be searched (not a fast field in Quickwit)`);
+		}
 		return result.values;
 	}
 
