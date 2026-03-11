@@ -128,6 +128,15 @@ export function createSearchStore(
 		});
 	}
 
+	function runQuery(query: string) {
+		const pq = parsedQuery();
+		if (query !== pq.query) {
+			navigateQuery({ query }, true);
+		} else {
+			search();
+		}
+	}
+
 	// --- Index loading ---
 
 	async function loadIndexes() {
@@ -614,6 +623,7 @@ export function createSearchStore(
 
 		// Methods
 		navigateQuery,
+		runQuery,
 		handleIndexChange,
 		handleFieldsChange,
 		handleQuickFilterFieldsChange,

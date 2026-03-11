@@ -154,7 +154,14 @@
 						class="btn btn-sm {store.isLive ? 'btn-error' : ''}"
 						aria-pressed={store.isLive}
 						aria-label="Toggle live mode"
-						onclick={() => (store.isLive ? store.stopLive() : store.startLive())}
+						onclick={() => {
+							if (store.isLive) {
+								store.stopLive();
+								store.search();
+							} else {
+								store.startLive();
+							}
+						}}
 						disabled={(store.loading && !store.isLive) || !store.selectedIndex}
 					>
 						{#if store.isLive}
@@ -172,7 +179,7 @@
 
 					<button
 						class="btn btn-sm btn-accent"
-						onclick={() => store.navigateQuery({ query: queryInput }, true)}
+						onclick={() => store.runQuery(queryInput)}
 						disabled={store.loading || !store.selectedIndex}
 					>
 						<Icon icon="lucide:play" width="14" height="14" />
