@@ -25,10 +25,7 @@
 		{ id: 'json', label: 'JSON', icon: 'lucide:braces' }
 	] as const;
 
-	function flattenObject(
-		obj: Record<string, unknown>,
-		prefix = ''
-	): [string, unknown][] {
+	function flattenObject(obj: Record<string, unknown>, prefix = ''): [string, unknown][] {
 		const result: [string, unknown][] = [];
 		for (const [key, value] of Object.entries(obj)) {
 			const fullKey = prefix ? `${prefix}.${key}` : key;
@@ -95,7 +92,7 @@
 				</button>
 			</div>
 
-			<div role="tablist" class="tabs tabs-border px-4">
+			<div role="tablist" class="tabs-border tabs px-4">
 				{#each tabs as tab (tab.id)}
 					<button
 						role="tab"
@@ -112,26 +109,19 @@
 			<div class="flex-1 overflow-auto p-4">
 				{#if activeTab === 'json'}
 					{#if hit}
-						<div class="bg-base-200 rounded-box relative">
-							<button
-								class="btn btn-ghost btn-xs absolute top-2 right-2 z-10"
-								onclick={copyJson}
-							>
-								<Icon
-									icon={copied ? 'lucide:check' : 'lucide:copy'}
-									width="14"
-									height="14"
-								/>
+						<div class="relative rounded-box bg-base-200">
+							<button class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs" onclick={copyJson}>
+								<Icon icon={copied ? 'lucide:check' : 'lucide:copy'} width="14" height="14" />
 							</button>
 							<div class="flex font-['Roboto_Mono',monospace] text-sm">
 								<div
-									class="text-base-content/30 select-none border-r border-base-300 py-3 pr-3 pl-3 text-right"
+									class="border-r border-base-300 py-3 pr-3 pl-3 text-right text-base-content/30 select-none"
 								>
 									{#each jsonLines as _, i (i)}
 										<div class="leading-relaxed">{i + 1}</div>
 									{/each}
 								</div>
-								<div class="flex-1 overflow-x-auto py-3 pl-3 pr-3">
+								<div class="flex-1 overflow-x-auto py-3 pr-3 pl-3">
 									<JsonHighlight code={prettyJson} />
 								</div>
 							</div>
@@ -150,27 +140,39 @@
 							<tbody>
 								{#each flatParams as [key, value] (key)}
 									<tr class="group">
-										<td class="pr-0 py-0 align-middle">
+										<td class="py-0 pr-0 align-middle">
 											{#if value !== null && value !== undefined}
-												<div class="flex gap-0 items-center">
+												<div class="flex items-center gap-0">
 													<button
-														class="btn btn-ghost btn-xs btn-square min-h-0 h-5 w-5"
+														class="btn btn-square h-5 min-h-0 w-5 btn-ghost btn-xs"
 														title="Filter for value"
 														onclick={() => handleFilter(key, value, false)}
 													>
-														<Icon icon="lucide:plus-circle" width="12" height="12" class="text-success" />
+														<Icon
+															icon="lucide:plus-circle"
+															width="12"
+															height="12"
+															class="text-success"
+														/>
 													</button>
 													<button
-														class="btn btn-ghost btn-xs btn-square min-h-0 h-5 w-5"
+														class="btn btn-square h-5 min-h-0 w-5 btn-ghost btn-xs"
 														title="Filter out value"
 														onclick={() => handleFilter(key, value, true)}
 													>
-														<Icon icon="lucide:minus-circle" width="12" height="12" class="text-error" />
+														<Icon
+															icon="lucide:minus-circle"
+															width="12"
+															height="12"
+															class="text-error"
+														/>
 													</button>
 												</div>
 											{/if}
 										</td>
-										<td class="font-['Roboto_Mono',monospace] text-xs text-base-content/70 pl-1">{key}</td>
+										<td class="pl-1 font-['Roboto_Mono',monospace] text-xs text-base-content/70"
+											>{key}</td
+										>
 										<td class="font-['Roboto_Mono',monospace] text-xs break-all">
 											{#if value === null || value === undefined}
 												<span class="text-base-content/30 italic">null</span>

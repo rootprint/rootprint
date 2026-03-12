@@ -6,13 +6,13 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     volumes:
       - ./.quickwit/minio-data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,20 +39,19 @@ services:
         condition: service_completed_successfully
     environment:
       QW_S3_ENDPOINT: http://minio:9000
-      QW_S3_FORCE_PATH_STYLE_ACCESS: "true"
+      QW_S3_FORCE_PATH_STYLE_ACCESS: 'true'
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_REGION: us-east-1
     ports:
-      - "7280:7280"   # REST API + Web UI
-      - "7281:7281"   # gRPC
+      - '7280:7280' # REST API + Web UI
+      - '7281:7281' # gRPC
     volumes:
       - ./quickwit.yaml:/quickwit/config/quickwit.yaml:ro
       - ./.quickwit/qwdata:/quickwit/qwdata
-    command: ["run"]
+    command: ['run']
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7280/health/livez"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:7280/health/livez']
       interval: 10s
       timeout: 5s
       retries: 10
-

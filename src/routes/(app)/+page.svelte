@@ -10,6 +10,7 @@
 	import Icon from '@iconify/svelte';
 	import LogDetailDrawer from '$lib/components/LogDetailDrawer.svelte';
 	import LogFrequencyChart from '$lib/components/LogFrequencyChart.svelte';
+	import RightSidebar from '$lib/components/RightSidebar.svelte';
 
 	let { data } = $props();
 
@@ -29,6 +30,9 @@
 	let drawerOpen = $state(false);
 	let chartCollapsed = $state(
 		browser ? localStorage.getItem('logwiz:chartCollapsed') === 'true' : false
+	);
+	let historyOpen = $state(
+		browser ? localStorage.getItem('logwiz:historyOpen') === 'true' : false
 	);
 
 	// --- UI event handlers ---
@@ -69,7 +73,7 @@
 			!store.loading &&
 			store.logs.length < store.numHits
 		) {
-			store.search(true);
+			store.search({ append: true });
 		}
 	}
 
@@ -136,7 +140,18 @@
 						{/each}
 					</div>
 
-					<button class="btn ml-auto btn-sm" onclick={shareQuery}>
+					<button
+						class="btn ml-auto btn-sm {historyOpen ? 'btn-active' : ''}"
+						onclick={() => {
+							historyOpen = !historyOpen;
+							if (browser) localStorage.setItem('logwiz:historyOpen', String(historyOpen));
+						}}
+						title="Toggle search history"
+					>
+						<Icon icon="lucide:clock" width="14" height="14" />
+					</button>
+
+					<button class="btn btn-sm" onclick={shareQuery}>
 						<Icon icon="lucide:share-2" width="14" height="14" />
 						{copied ? 'Copied!' : 'Share'}
 					</button>
@@ -269,5 +284,12 @@
 				{/if}
 			</div>
 		</div>
+
+		{#if historyOpen}
+			<RightSidebar
+				indexName={store.selectedIndex}
+				onrestore={(params) => store.navigateQuery(params, true)}
+			/>
+		{/if}
 	</div>
 </LogDetailDrawer>

@@ -47,4 +47,20 @@ export const inviteToken = sqliteTable('invite_token', {
 		.notNull()
 });
 
+export const searchHistory = sqliteTable('search_history', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	indexName: text('index_name').notNull(),
+	query: text('query').notNull().default(''),
+	timeRange: text('time_range', { mode: 'json' })
+		.$type<{ type: string; start?: number; end?: number; preset?: string }>()
+		.notNull(),
+	filters: text('filters', { mode: 'json' }).$type<Record<string, string[]>>().notNull(),
+	executedAt: integer('executed_at', { mode: 'timestamp' })
+		.default(sql`(unixepoch())`)
+		.notNull()
+});
+
 export * from './auth.schema';

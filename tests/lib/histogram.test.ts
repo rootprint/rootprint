@@ -60,9 +60,7 @@ describe('padHistogramBuckets', () => {
 	});
 
 	it('pads before and after Quickwit buckets to fill the window', () => {
-		const bucketMap = new Map<number, Record<string, number>>([
-			[120, { INFO: 3 }]
-		]);
+		const bucketMap = new Map<number, Record<string, number>>([[120, { INFO: 3 }]]);
 		const result = padHistogramBuckets(bucketMap, 95, 145, 10);
 		expect(result).toEqual([
 			{ timestamp: 100, levels: {} },
@@ -85,9 +83,7 @@ describe('padHistogramBuckets', () => {
 	});
 
 	it('handles single bucket using fallback interval', () => {
-		const bucketMap = new Map<number, Record<string, number>>([
-			[110, { WARN: 1 }]
-		]);
+		const bucketMap = new Map<number, Record<string, number>>([[110, { WARN: 1 }]]);
 		const result = padHistogramBuckets(bucketMap, 100, 130, 10);
 		expect(result).toEqual([
 			{ timestamp: 100, levels: {} },

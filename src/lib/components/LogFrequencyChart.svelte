@@ -201,7 +201,9 @@
 					size: 20,
 					space: 120,
 					values: (_u: uPlotLib, splits: number[]) =>
-						splits.map((v) => (useDate ? formatChartDate(v, timezoneMode) : formatChartTime(v, timezoneMode)))
+						splits.map((v) =>
+							useDate ? formatChartDate(v, timezoneMode) : formatChartTime(v, timezoneMode)
+						)
 				},
 				{
 					stroke: '#9ca3af',

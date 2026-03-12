@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { formatTimestamp, formatChartTime, formatChartDate, formatChartTooltip, normalizeToMs } from '$lib/utils/time';
+import {
+	formatTimestamp,
+	formatChartTime,
+	formatChartDate,
+	formatChartTooltip,
+	normalizeToMs
+} from '$lib/utils/time';
 
 describe('formatTimestamp', () => {
 	// Use a known timestamp: 2024-06-15 14:30:45.123 UTC

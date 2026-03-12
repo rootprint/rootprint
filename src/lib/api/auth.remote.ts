@@ -31,10 +31,7 @@ export const signOut = command(async () => {
 });
 
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
-	const [invite] = await db
-		.select()
-		.from(inviteToken)
-		.where(eq(inviteToken.token, data.token));
+	const [invite] = await db.select().from(inviteToken).where(eq(inviteToken.token, data.token));
 
 	if (!invite) {
 		invalid(issue.token('Invalid or already used invite link'));

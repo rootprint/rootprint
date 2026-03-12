@@ -10,6 +10,7 @@ import {
 	saveDisplayFields,
 	saveQuickFilterFields
 } from '$lib/api/preferences.remote';
+import { recordSearch } from '$lib/api/history.remote';
 import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
@@ -133,7 +134,7 @@ export function createSearchStore(
 		if (query !== pq.query) {
 			navigateQuery({ query }, true);
 		} else {
-			search();
+			search({ recordHistory: true });
 		}
 	}
 
@@ -245,7 +246,9 @@ export function createSearchStore(
 
 	// --- Search ---
 
-	async function search(append = false) {
+	async function search(opts?: { append?: boolean; recordHistory?: boolean }) {
+		const append = opts?.append ?? false;
+		const recordHistory = opts?.recordHistory ?? false;
 		if (isLive) stopLive();
 		if (selectedIndex === null) return;
 
@@ -340,6 +343,16 @@ export function createSearchStore(
 			}
 
 			hasSearched = true;
+
+			// Record to search history (fire-and-forget)
+			if (recordHistory && selectedIndex) {
+				recordSearch({
+					indexName: selectedIndex,
+					query: parsedQuery().query,
+					timeRange,
+					filters: activeFilters
+				}).catch(() => {});
+			}
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Search failed'));
 		} finally {
@@ -525,8 +538,9 @@ export function createSearchStore(
 			if (fieldsLoading) return;
 
 			if (hasSearched || hasNonDefaultParams(parsed)) {
+				const shouldRecord = hasSearched;
 				lastSearchedParams = currentParams;
-				search();
+				search({ recordHistory: shouldRecord });
 			}
 		});
 

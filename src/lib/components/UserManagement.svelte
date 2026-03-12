@@ -102,9 +102,9 @@
 							<td class="text-base-content/60">{u.email}</td>
 							<td>
 								{#if u.status === 'pending'}
-									<span class="badge badge-warning badge-sm">Pending</span>
+									<span class="badge badge-sm badge-warning">Pending</span>
 								{:else}
-									<span class="badge badge-success badge-sm">Active</span>
+									<span class="badge badge-sm badge-success">Active</span>
 								{/if}
 							</td>
 							<td>
@@ -112,7 +112,7 @@
 									<span class="badge badge-sm">{u.role === 'admin' ? 'Admin' : 'Member'}</span>
 								{:else}
 									<select
-										class="select select-bordered select-xs w-fit min-w-0"
+										class="select-bordered select w-fit min-w-0 select-xs"
 										value={u.role ?? 'user'}
 										onchange={(e) =>
 											handleRoleChange(u.id, e.currentTarget.value as 'admin' | 'user')}

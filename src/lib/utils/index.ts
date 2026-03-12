@@ -6,12 +6,7 @@ export {
 	buildFilterClause,
 	combineQueryWithFilters
 } from './query';
-export {
-	serialize,
-	deserialize,
-	buildQueryUrl,
-	hasNonDefaultParams
-} from './query-params';
+export { serialize, deserialize, buildQueryUrl, hasNonDefaultParams } from './query-params';
 export type { ParsedQuery } from './query-params';
 export {
 	computeHistogramInterval,

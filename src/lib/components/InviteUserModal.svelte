@@ -59,7 +59,7 @@
 				<div class="flex gap-2">
 					<input
 						type="text"
-						class="input input-bordered input-sm flex-1 font-mono text-xs"
+						class="input-bordered input input-sm flex-1 font-mono text-xs"
 						value={inviteUrl}
 						readonly
 					/>
@@ -103,7 +103,7 @@
 
 				<label class="form-control w-full">
 					<span class="label"><span class="label-text">Role</span></span>
-					<select class="select select-bordered w-full" bind:value={role}>
+					<select class="select-bordered select w-full" bind:value={role}>
 						<option value="user">Member</option>
 						<option value="admin">Admin</option>
 					</select>

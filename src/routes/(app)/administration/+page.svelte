@@ -29,7 +29,7 @@
 			</div>
 		</div>
 
-		<div role="tablist" class="tabs tabs-border mb-6">
+		<div role="tablist" class="tabs-border mb-6 tabs">
 			<button
 				role="tab"
 				class="tab"
