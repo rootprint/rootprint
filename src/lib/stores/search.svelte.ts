@@ -351,7 +351,7 @@ export function createSearchStore(
 					query: parsedQuery().query,
 					timeRange,
 					filters: activeFilters
-				}).catch(() => {});
+				}).catch((e) => console.warn('Failed to record search history', e));
 			}
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Search failed'));
@@ -538,9 +538,8 @@ export function createSearchStore(
 			if (fieldsLoading) return;
 
 			if (hasSearched || hasNonDefaultParams(parsed)) {
-				const shouldRecord = hasSearched;
 				lastSearchedParams = currentParams;
-				search({ recordHistory: shouldRecord });
+				search();
 			}
 		});
 

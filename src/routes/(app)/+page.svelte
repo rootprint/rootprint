@@ -114,7 +114,7 @@
 			/>
 		</div>
 
-		<div class="flex min-w-0 flex-1 flex-col">
+		<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
 			<div class="border-b border-base-300 bg-base-100 px-4 py-3">
 				<div class="flex w-full items-center gap-2">
 					<select
@@ -285,11 +285,11 @@
 			</div>
 		</div>
 
-		{#if historyOpen}
+		<div class="h-full" class:hidden={!historyOpen}>
 			<RightSidebar
 				indexName={store.selectedIndex}
 				onrestore={(params) => store.navigateQuery(params, true)}
 			/>
-		{/if}
+		</div>
 	</div>
 </LogDetailDrawer>
