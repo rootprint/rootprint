@@ -78,6 +78,7 @@ export function createSearchStore(
 
 	// --- URL sync ---
 	let lastSearchedParams = $state('');
+	let pendingRecordHistory = false;
 
 	// --- Derived state ---
 	let timeRange = $derived(parsedQuery().timeRange);
@@ -129,6 +130,7 @@ export function createSearchStore(
 	function runQuery(query: string) {
 		const pq = parsedQuery();
 		if (query !== pq.query) {
+			pendingRecordHistory = true;
 			navigateQuery({ query }, true);
 		} else {
 			search({ recordHistory: true });
@@ -543,7 +545,9 @@ export function createSearchStore(
 
 			if (hasSearched || hasNonDefaultParams(parsed)) {
 				lastSearchedParams = currentParams;
-				search();
+				const recordHistory = pendingRecordHistory;
+				pendingRecordHistory = false;
+				search({ recordHistory });
 			}
 		});
 
