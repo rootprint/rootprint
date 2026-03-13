@@ -39,7 +39,9 @@ export const getIndexFields = command(getIndexFieldsSchema, async (data) => {
 		return result;
 	}
 
-	return flattenFields(fieldMappings);
+	const commitTimeoutSecs = metadata.index_config.indexing_settings?.commit_timeout_secs ?? 30;
+
+	return { fields: flattenFields(fieldMappings), commitTimeoutSecs };
 });
 
 export const getIndexConfig = command(indexNameSchema, async (indexName) => {

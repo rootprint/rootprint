@@ -69,11 +69,12 @@ export function createSearchStore(
 	// --- Live mode state ---
 	let isLive = $state(false);
 	let liveIntervalId: ReturnType<typeof setTimeout> | null = null;
-	let lastPollTimestamp = 0;
+	let liveStartedAt = 0;
 	let newLiveLogs = $state(0);
 	let liveErrorShown = false;
 	let lastPollKeys = new Set<string>();
 	let liveSessionId = 0;
+	let commitBufferSecs = 45; // updated from index metadata
 
 	// --- URL sync ---
 	let lastSearchedParams = $state('');
@@ -169,13 +170,14 @@ export function createSearchStore(
 	async function loadFieldsForIndex(indexName: string) {
 		fieldsLoading = true;
 		try {
-			const [fields, config, pref] = await Promise.all([
+			const [indexFieldsResult, config, pref] = await Promise.all([
 				getIndexFields({ indexName }),
 				getIndexConfig(indexName),
 				getPreference({ indexName })
 			]);
-			indexFields = fields;
-			schemaFields = fields;
+			indexFields = indexFieldsResult.fields;
+			schemaFields = indexFieldsResult.fields;
+			commitBufferSecs = indexFieldsResult.commitTimeoutSecs + 15;
 			fieldConfig = config;
 			activeFields = pref.displayFields;
 
@@ -418,8 +420,8 @@ export function createSearchStore(
 		if (!selectedIndex || !isActiveLiveSession(sessionId)) return;
 
 		const endTs = Math.floor(Date.now() / 1000);
-		// Use a strict forward-moving window so live mode starts from "now"
-		const startTs = Math.max(0, lastPollTimestamp);
+		// Look back by commit buffer to catch logs committed after their timestamp
+		const startTs = Math.max(liveStartedAt, endTs - commitBufferSecs);
 
 		if (startTs >= endTs) return;
 
@@ -449,8 +451,6 @@ export function createSearchStore(
 				newLiveLogs += newHits.length;
 				updateColumnWidths(logs, activeFields);
 			}
-
-			lastPollTimestamp = endTs;
 
 			// Clear error state on successful poll
 			if (liveErrorShown) {
@@ -488,7 +488,7 @@ export function createSearchStore(
 		lastPollKeys = new Set();
 
 		const nowTs = Math.floor(Date.now() / 1000);
-		lastPollTimestamp = nowTs;
+		liveStartedAt = nowTs;
 		searchStartTimestamp = nowTs;
 		searchEndTimestamp = nowTs;
 		logs = [];
