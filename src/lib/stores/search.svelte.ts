@@ -61,7 +61,6 @@ export function createSearchStore(
 	let histogramRequestId = 0;
 
 	// --- Column widths ---
-	let _maxRawWidths: Record<string, number> = {};
 	let columnWidths = $state<Record<string, number>>({});
 
 	// --- Aggregations ---
@@ -111,11 +110,8 @@ export function createSearchStore(
 		return isLive && sessionId === liveSessionId;
 	}
 
-	function updateColumnWidths(newLogs: Record<string, unknown>[], fields: string[], reset = false) {
-		if (reset) _maxRawWidths = {};
-		const result = computeColumnWidths(newLogs, fields, _maxRawWidths);
-		_maxRawWidths = result.maxRawWidths;
-		columnWidths = result.widths;
+	function updateColumnWidths(newLogs: Record<string, unknown>[], fields: string[]) {
+		columnWidths = computeColumnWidths(newLogs, fields);
 	}
 
 	// --- Navigation ---
@@ -210,17 +206,31 @@ export function createSearchStore(
 
 	// --- Field change handlers ---
 
-	let saveTimeout: ReturnType<typeof setTimeout>;
-	function handleFieldsChange(fields: string[]) {
-		clearTimeout(saveTimeout);
-		saveTimeout = setTimeout(() => {
-			if (selectedIndex) {
-				saveDisplayFields({ indexName: selectedIndex, fields });
-			}
-		}, 500);
+	function debounce(fn: () => void, ms: number) {
+		let timer: ReturnType<typeof setTimeout>;
+		return () => {
+			clearTimeout(timer);
+			timer = setTimeout(fn, ms);
+		};
 	}
 
-	let quickFilterSaveTimeout: ReturnType<typeof setTimeout>;
+	const debouncedSaveFields = debounce(() => {
+		if (selectedIndex) {
+			saveDisplayFields({ indexName: selectedIndex, fields: activeFields });
+		}
+	}, 500);
+
+	function handleFieldsChange(_fields: string[]) {
+		debouncedSaveFields();
+	}
+
+	const debouncedSaveQuickFilters = debounce(() => {
+		if (selectedIndex) {
+			saveQuickFilterFields({ indexName: selectedIndex, fields: quickFilterFields });
+		}
+		if (hasSearched) search();
+	}, 500);
+
 	function handleQuickFilterFieldsChange(fields: string[]) {
 		const levelField = fieldConfig.levelField;
 		const otherFields = fields.filter((f) => f !== levelField);
@@ -235,13 +245,7 @@ export function createSearchStore(
 		if (JSON.stringify(cleanedFilters) !== JSON.stringify(activeFilters)) {
 			navigateQuery({ filters: cleanedFilters });
 		}
-		clearTimeout(quickFilterSaveTimeout);
-		quickFilterSaveTimeout = setTimeout(() => {
-			if (selectedIndex) {
-				saveQuickFilterFields({ indexName: selectedIndex, fields });
-			}
-			if (hasSearched) search();
-		}, 500);
+		debouncedSaveQuickFilters();
 	}
 
 	// --- Search ---
@@ -314,10 +318,10 @@ export function createSearchStore(
 			if (append) {
 				const combined = [...logs, ...result.hits];
 				logs = combined;
-				updateColumnWidths(result.hits, currentActiveFields);
+				updateColumnWidths(combined, currentActiveFields);
 			} else {
 				logs = result.hits;
-				updateColumnWidths(result.hits, currentActiveFields, true);
+				updateColumnWidths(result.hits, currentActiveFields);
 				options?.onFreshSearch?.();
 			}
 			numHits = result.numHits;
@@ -443,7 +447,7 @@ export function createSearchStore(
 				logs = [...newHits, ...logs];
 				numHits = numHits + newHits.length;
 				newLiveLogs += newHits.length;
-				updateColumnWidths(newHits, activeFields);
+				updateColumnWidths(logs, activeFields);
 			}
 
 			lastPollTimestamp = endTs;
@@ -491,7 +495,7 @@ export function createSearchStore(
 		numHits = 0;
 		hasSearched = true;
 		loading = false;
-		updateColumnWidths([], activeFields, true);
+		updateColumnWidths([], activeFields);
 		options?.onFreshSearch?.();
 
 		if (isActiveLiveSession(sessionId)) {
@@ -546,7 +550,7 @@ export function createSearchStore(
 		$effect(() => {
 			const fields = activeFields;
 			untrack(() => {
-				updateColumnWidths(logs, fields, true);
+				updateColumnWidths(logs, fields);
 			});
 		});
 

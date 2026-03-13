@@ -52,16 +52,27 @@ function pad3(n: number): string {
 	return String(n).padStart(3, '0');
 }
 
+function parts(ms: number, tz: TimezoneMode) {
+	const d = new Date(ms);
+	const utc = tz === 'utc';
+	return {
+		Y: utc ? d.getUTCFullYear() : d.getFullYear(),
+		M: pad2((utc ? d.getUTCMonth() : d.getMonth()) + 1),
+		D: pad2(utc ? d.getUTCDate() : d.getDate()),
+		h: pad2(utc ? d.getUTCHours() : d.getHours()),
+		m: pad2(utc ? d.getUTCMinutes() : d.getMinutes()),
+		s: pad2(utc ? d.getUTCSeconds() : d.getSeconds()),
+		ms: pad3(utc ? d.getUTCMilliseconds() : d.getMilliseconds())
+	};
+}
+
 /**
  * Format a millisecond timestamp to "YYYY-MM-DD HH:MM:SS.mmm".
  * Used by LogRow for the timestamp column.
  */
 export function formatTimestamp(ms: number, timezone: TimezoneMode): string {
-	const d = new Date(ms);
-	if (timezone === 'utc') {
-		return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}.${pad3(d.getUTCMilliseconds())}`;
-	}
-	return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${pad3(d.getMilliseconds())}`;
+	const p = parts(ms, timezone);
+	return `${p.Y}-${p.M}-${p.D} ${p.h}:${p.m}:${p.s}.${p.ms}`;
 }
 
 /**
@@ -69,11 +80,8 @@ export function formatTimestamp(ms: number, timezone: TimezoneMode): string {
  * Used by the chart x-axis for short time ranges.
  */
 export function formatChartTime(tsSec: number, timezone: TimezoneMode): string {
-	const d = new Date(tsSec * 1000);
-	if (timezone === 'utc') {
-		return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
-	}
-	return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+	const p = parts(tsSec * 1000, timezone);
+	return `${p.h}:${p.m}`;
 }
 
 /**
@@ -81,11 +89,8 @@ export function formatChartTime(tsSec: number, timezone: TimezoneMode): string {
  * Used by the chart x-axis for longer time ranges.
  */
 export function formatChartDate(tsSec: number, timezone: TimezoneMode): string {
-	const d = new Date(tsSec * 1000);
-	if (timezone === 'utc') {
-		return `${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
-	}
-	return `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+	const p = parts(tsSec * 1000, timezone);
+	return `${p.M}-${p.D} ${p.h}:${p.m}`;
 }
 
 /**
@@ -93,9 +98,6 @@ export function formatChartDate(tsSec: number, timezone: TimezoneMode): string {
  * Used by the chart tooltip.
  */
 export function formatChartTooltip(tsSec: number, timezone: TimezoneMode): string {
-	const d = new Date(tsSec * 1000);
-	if (timezone === 'utc') {
-		return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
-	}
-	return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+	const p = parts(tsSec * 1000, timezone);
+	return `${p.Y}-${p.M}-${p.D} ${p.h}:${p.m}:${p.s}`;
 }

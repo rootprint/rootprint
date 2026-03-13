@@ -16,7 +16,7 @@ import {
 import { AggregationBuilder } from 'quickwit-js';
 import { requireUser } from '$lib/middleware/auth';
 import { getQuickwitClient } from '$lib/server/quickwit';
-import { TIME_PRESETS } from '$lib/types';
+import { resolveTimeRange } from '$lib/utils/time';
 import { formatFieldValue } from '$lib/utils/field-resolver';
 
 function resolveTimestamps(data: {
@@ -27,12 +27,8 @@ function resolveTimestamps(data: {
 	if (data.startTimestamp !== undefined && data.endTimestamp !== undefined) {
 		return { startTs: data.startTimestamp, endTs: data.endTimestamp };
 	}
-	const preset = TIME_PRESETS.find((p) => p.code === data.timeRange);
-	if (preset) {
-		const endTs = Math.floor(Date.now() / 1000);
-		return { startTs: endTs - preset.seconds, endTs };
-	}
-	return { startTs: undefined, endTs: undefined };
+	const { startTs, endTs } = resolveTimeRange({ type: 'relative', preset: data.timeRange });
+	return { startTs: startTs ?? undefined, endTs: endTs ?? undefined };
 }
 
 async function resolveFieldConfig(indexName: string) {

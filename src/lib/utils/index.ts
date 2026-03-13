@@ -1,13 +1,8 @@
 export { resolveTimeRange, formatTimeRangeLabel } from './time';
 export { getUserInitials } from './format';
-export { resolve, resolveFieldValue, formatFieldValue } from './field-resolver';
+export { resolveFieldValue, formatFieldValue } from './field-resolver';
 export type { Formatter } from './field-resolver';
-export {
-	normalizeQuickwitUrl,
-	escapeFilterValue,
-	buildFilterClause,
-	combineQueryWithFilters
-} from './query';
+export { escapeFilterValue, buildFilterClause, combineQueryWithFilters } from './query';
 export { serialize, deserialize, buildQueryUrl, hasNonDefaultParams } from './query-params';
 export type { ParsedQuery } from './query-params';
 export {

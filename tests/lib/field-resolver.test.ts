@@ -1,38 +1,38 @@
 import { describe, it, expect } from 'vitest';
-import { resolve, resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
+import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 import type { Formatter } from '$lib/utils/field-resolver';
 
-describe('resolve', () => {
+describe('resolveFieldValue (basic resolution)', () => {
 	it('resolves a top-level key', () => {
-		expect(resolve({ level: 'error' }, 'level')).toBe('error');
+		expect(resolveFieldValue({ level: 'error' }, 'level')).toBe('error');
 	});
 
 	it('resolves a nested dot-path', () => {
-		expect(resolve({ a: { b: { c: 'deep' } } }, 'a.b.c')).toBe('deep');
+		expect(resolveFieldValue({ a: { b: { c: 'deep' } } }, 'a.b.c')).toBe('deep');
 	});
 
 	it('handles keys containing literal dots', () => {
-		expect(resolve({ 'a.b': { c: 'val' } }, 'a.b.c')).toBe('val');
+		expect(resolveFieldValue({ 'a.b': { c: 'val' } }, 'a.b.c')).toBe('val');
 	});
 
 	it('prefers exact nested match over dotted key', () => {
-		expect(resolve({ a: { b: 'nested' }, 'a.b': 'dotted' }, 'a.b')).toBe('nested');
+		expect(resolveFieldValue({ a: { b: 'nested' }, 'a.b': 'dotted' }, 'a.b')).toBe('nested');
 	});
 
 	it('returns undefined for missing path', () => {
-		expect(resolve({ a: 1 }, 'b')).toBeUndefined();
+		expect(resolveFieldValue({ a: 1 }, 'b')).toBeUndefined();
 	});
 
 	it('returns undefined when traversing through null', () => {
-		expect(resolve({ a: null }, 'a.b')).toBeUndefined();
+		expect(resolveFieldValue({ a: null }, 'a.b')).toBeUndefined();
 	});
 
 	it('returns undefined when traversing through a primitive', () => {
-		expect(resolve({ a: 42 }, 'a.b')).toBeUndefined();
+		expect(resolveFieldValue({ a: 42 }, 'a.b')).toBeUndefined();
 	});
 
 	it('returns the value when it is null (top-level)', () => {
-		expect(resolve({ a: null }, 'a')).toBeNull();
+		expect(resolveFieldValue({ a: null }, 'a')).toBeNull();
 	});
 });
 

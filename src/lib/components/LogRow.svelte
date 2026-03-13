@@ -49,10 +49,6 @@
 		}
 	}
 
-	function severityLabel(severity: string): string {
-		return severity.toUpperCase();
-	}
-
 	function extractTimestamp(doc: Record<string, unknown>): string {
 		const raw = doc[timestampField];
 		if (!raw) return '';
@@ -66,18 +62,6 @@
 	function extractMessage(doc: Record<string, unknown>): string {
 		const raw = resolveFieldValue(doc, messageField);
 		return raw != null ? formatFieldValue(raw) : JSON.stringify(doc);
-	}
-
-	function formatContent(doc: Record<string, unknown>, mode: 'none' | 'wrap' | 'pretty'): string {
-		const message = extractMessage(doc);
-		if (mode === 'pretty') {
-			try {
-				return JSON.stringify(JSON.parse(message), null, 2);
-			} catch {
-				return message;
-			}
-		}
-		return message;
 	}
 
 	const severity = $derived(extractSeverity(hit));
@@ -123,7 +107,7 @@
 		<span
 			class="py-px pl-2 text-base-content/80 {wrapMode !== 'none'
 				? 'break-all whitespace-pre-wrap'
-				: 'whitespace-nowrap'}">{formatContent(hit, wrapMode)}</span
+				: 'whitespace-nowrap'}">{extractMessage(hit)}</span
 		>
 	{/if}
 </div>

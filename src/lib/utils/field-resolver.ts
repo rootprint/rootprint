@@ -1,9 +1,5 @@
 export type Formatter = (value: unknown) => string;
 
-export function resolve(obj: Record<string, unknown>, path: string): unknown {
-	return resolveSegments(obj, path.split('.'));
-}
-
 function resolveSegments(current: unknown, segments: string[]): unknown {
 	if (segments.length === 0) return current;
 	if (current === null || current === undefined || typeof current !== 'object') return undefined;
@@ -19,6 +15,10 @@ function resolveSegments(current: unknown, segments: string[]): unknown {
 	}
 
 	return undefined;
+}
+
+function resolve(obj: Record<string, unknown>, path: string): unknown {
+	return resolveSegments(obj, path.split('.'));
 }
 
 export function resolveFieldValue(
