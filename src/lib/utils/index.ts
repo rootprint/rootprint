@@ -1,5 +1,7 @@
 export { resolveTimeRange, formatTimeRangeLabel } from './time';
-export { getNestedValue, formatFieldValue, getUserInitials } from './format';
+export { getUserInitials } from './format';
+export { resolve, resolveFieldValue, formatFieldValue } from './field-resolver';
+export type { Formatter } from './field-resolver';
 export {
 	normalizeQuickwitUrl,
 	escapeFilterValue,

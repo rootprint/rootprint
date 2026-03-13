@@ -1,6 +1,7 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 	import Icon from '@iconify/svelte';
+	import { formatFieldValue } from '$lib/utils/field-resolver';
 	import { escapeFilterValue } from '$lib/utils/query';
 
 	let {
@@ -39,8 +40,7 @@
 
 	function handleFilter(key: string, value: unknown, exclude: boolean) {
 		if (value === null || value === undefined) return;
-		const str = Array.isArray(value) ? JSON.stringify(value) : String(value);
-		onfilter?.(key, escapeFilterValue(str), exclude);
+		onfilter?.(key, escapeFilterValue(formatFieldValue(value)), exclude);
 	}
 
 	let activeTab = $state<(typeof tabs)[number]['id']>('parameters');
@@ -180,10 +180,8 @@
 									<td class="font-['Roboto_Mono',monospace] text-xs break-all">
 										{#if value === null || value === undefined}
 											<span class="text-base-content/30 italic">null</span>
-										{:else if Array.isArray(value)}
-											{JSON.stringify(value)}
 										{:else}
-											{String(value)}
+											{formatFieldValue(value)}
 										{/if}
 									</td>
 								</tr>

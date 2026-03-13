@@ -1,4 +1,4 @@
-import { getNestedValue, formatFieldValue } from './format';
+import { resolveFieldValue, formatFieldValue } from './field-resolver';
 
 export const MAX_COLUMN_CH = 60;
 
@@ -12,9 +12,9 @@ export function computeColumnWidths(
 	for (const field of fields) {
 		if (!(field in maxRawWidths)) maxRawWidths[field] = 0;
 		for (const log of logs) {
-			const val = getNestedValue(log, field);
-			if (val !== undefined && val !== null) {
-				maxRawWidths[field] = Math.max(maxRawWidths[field], formatFieldValue(val).length);
+			const str = formatFieldValue(resolveFieldValue(log, field));
+			if (str) {
+				maxRawWidths[field] = Math.max(maxRawWidths[field], str.length);
 			}
 		}
 	}

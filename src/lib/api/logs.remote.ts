@@ -17,6 +17,7 @@ import { AggregationBuilder } from 'quickwit-js';
 import { requireUser } from '$lib/middleware/auth';
 import { getQuickwitClient } from '$lib/server/quickwit';
 import { TIME_PRESETS } from '$lib/types';
+import { formatFieldValue } from '$lib/utils/field-resolver';
 
 function resolveTimestamps(data: {
 	startTimestamp?: number;
@@ -80,7 +81,7 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 				for (const [field, agg] of Object.entries(result.aggregations)) {
 					const bucketAgg = agg as { buckets?: { key: string }[] };
 					if (bucketAgg.buckets) {
-						aggregations[field] = bucketAgg.buckets.map((b) => String(b.key));
+						aggregations[field] = bucketAgg.buckets.map((b) => formatFieldValue(b.key));
 					}
 				}
 			}
@@ -143,7 +144,7 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 			| { buckets?: { key: string }[] }
 			| undefined;
 		const searchLower = data.searchTerm.toLowerCase();
-		const values = (bucketAgg?.buckets?.map((b) => String(b.key)) ?? []).filter((v) =>
+		const values = (bucketAgg?.buckets?.map((b) => formatFieldValue(b.key)) ?? []).filter((v) =>
 			v.toLowerCase().includes(searchLower)
 		);
 

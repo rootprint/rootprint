@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getNestedValue, formatFieldValue } from '$lib/utils/format';
+	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 	import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 
@@ -26,8 +26,8 @@
 	} = $props();
 
 	function extractSeverity(doc: Record<string, unknown>): string {
-		const raw = (doc[levelField] ?? 'unknown') as string;
-		return raw.toString().toLowerCase();
+		const raw = resolveFieldValue(doc, levelField);
+		return (raw != null ? String(raw) : 'unknown').toLowerCase();
 	}
 
 	function severityBorderColor(severity: string): string {
@@ -64,38 +64,8 @@
 	}
 
 	function extractMessage(doc: Record<string, unknown>): string {
-		// Try direct nested access first (handles dot notation like "body.text")
-		const nested = getNestedValue(doc, messageField);
-		if (nested !== undefined && nested !== null) {
-			if (typeof nested === 'object') return JSON.stringify(nested);
-			return String(nested);
-		}
-
-		// If dot-path access failed, try parsing JSON strings along the path
-		// This handles cases like message.text where message is '{"text":"..."}'
-		if (messageField.includes('.')) {
-			const parts = messageField.split('.');
-			let current: unknown = doc;
-			for (const part of parts) {
-				if (current === null || current === undefined) break;
-				if (typeof current === 'string') {
-					try {
-						current = JSON.parse(current);
-					} catch {
-						break;
-					}
-				}
-				if (typeof current === 'object') {
-					current = (current as Record<string, unknown>)[part];
-				} else {
-					current = undefined;
-					break;
-				}
-			}
-			if (current !== undefined && current !== null) return String(current);
-		}
-
-		return JSON.stringify(doc);
+		const raw = resolveFieldValue(doc, messageField);
+		return raw != null ? formatFieldValue(raw) : JSON.stringify(doc);
 	}
 
 	function formatContent(doc: Record<string, unknown>, mode: 'none' | 'wrap' | 'pretty'): string {
@@ -108,10 +78,6 @@
 			}
 		}
 		return message;
-	}
-
-	function isError(sev: string): boolean {
-		return sev === 'error' || sev === 'fatal' || sev === 'critical';
 	}
 
 	const severity = $derived(extractSeverity(hit));
@@ -146,7 +112,7 @@
 		<span
 			class="inline-block shrink-0 truncate py-px pl-2 align-top"
 			style="width: {columnWidths[field] ?? 'auto'}ch"
-			>{formatFieldValue(getNestedValue(hit, field))}</span
+			>{formatFieldValue(resolveFieldValue(hit, field))}</span
 		>
 	{/each}
 	{#if prettyJson}
