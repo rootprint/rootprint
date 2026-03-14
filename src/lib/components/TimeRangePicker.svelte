@@ -174,13 +174,13 @@
 				<Icon icon="mdi:clock-outline" class="text-sm text-base-content/50" />
 				<div class="join">
 					<button
-						class="btn join-item btn-xs {timezoneMode === 'utc' ? 'btn-primary' : ''}"
+						class="btn join-item btn-xs {timezoneMode === 'utc' ? 'btn-accent' : ''}"
 						onclick={() => ontimezonechange('utc')}
 					>
 						UTC
 					</button>
 					<button
-						class="btn join-item btn-xs {timezoneMode === 'local' ? 'btn-primary' : ''}"
+						class="btn join-item btn-xs {timezoneMode === 'local' ? 'btn-accent' : ''}"
 						onclick={() => ontimezonechange('local')}
 					>
 						Browser time
