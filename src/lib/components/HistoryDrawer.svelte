@@ -8,11 +8,13 @@
 	let {
 		open,
 		indexName,
+		historyVersion = 0,
 		onrestore,
 		onclose
 	}: {
 		open: boolean;
 		indexName: string | null;
+		historyVersion?: number;
 		onrestore: (params: Partial<ParsedQuery>) => void;
 		onclose: () => void;
 	} = $props();
@@ -50,7 +52,10 @@
 	}
 
 	$effect(() => {
-		if (open && indexName) load();
+		if (open && indexName) {
+			void historyVersion;
+			load();
+		}
 	});
 
 	function formatRelativeTime(date: Date): string {

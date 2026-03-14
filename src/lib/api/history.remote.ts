@@ -12,6 +12,26 @@ import { requireUser } from '$lib/middleware/auth';
 
 const MAX_HISTORY_PER_USER = 100;
 
+function normalizeForDedup(data: {
+	query: string;
+	timeRange: { type: string; start?: number; end?: number; preset?: string };
+	filters: Record<string, string[]>;
+}): string {
+	const sortedFilters = Object.keys(data.filters)
+		.sort()
+		.map((k) => [k, [...data.filters[k]].sort()]);
+	const tr = Object.keys(data.timeRange)
+		.sort()
+		.reduce(
+			(acc, k) => {
+				acc[k] = (data.timeRange as Record<string, unknown>)[k];
+				return acc;
+			},
+			{} as Record<string, unknown>
+		);
+	return JSON.stringify({ q: data.query, tr, f: sortedFilters });
+}
+
 export const getHistory = query(getHistorySchema, async (data) => {
 	const user = requireUser();
 
@@ -36,12 +56,7 @@ export const recordSearch = command(recordSearchSchema, async (data) => {
 		.orderBy(desc(searchHistory.executedAt))
 		.limit(1);
 
-	if (
-		latest &&
-		latest.query === data.query &&
-		JSON.stringify(latest.timeRange) === JSON.stringify(data.timeRange) &&
-		JSON.stringify(latest.filters) === JSON.stringify(data.filters)
-	) {
+	if (latest && normalizeForDedup(latest) === normalizeForDedup(data)) {
 		return;
 	}
 

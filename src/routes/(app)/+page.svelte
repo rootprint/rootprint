@@ -52,7 +52,7 @@
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
-			store.navigateQuery({ query: queryInput }, true);
+			store.runQuery(queryInput);
 		}
 	}
 
@@ -277,6 +277,7 @@
 		<HistoryDrawer
 			open={historyOpen}
 			indexName={store.selectedIndex}
+			historyVersion={store.historyVersion}
 			onrestore={(params) => store.navigateQuery(params, true)}
 			onclose={() => {
 				historyOpen = false;

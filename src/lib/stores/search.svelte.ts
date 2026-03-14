@@ -78,7 +78,7 @@ export function createSearchStore(
 
 	// --- URL sync ---
 	let lastSearchedParams = $state('');
-	let pendingRecordHistory = false;
+	let historyVersion = $state(0);
 
 	// --- Derived state ---
 	let timeRange = $derived(parsedQuery().timeRange);
@@ -130,11 +130,25 @@ export function createSearchStore(
 	function runQuery(query: string) {
 		const pq = parsedQuery();
 		if (query !== pq.query) {
-			pendingRecordHistory = true;
 			navigateQuery({ query }, true);
 		} else {
-			search({ recordHistory: true });
+			search();
 		}
+		recordCurrentSearch(query);
+	}
+
+	function recordCurrentSearch(query: string) {
+		if (!selectedIndex) return;
+		recordSearch({
+			indexName: selectedIndex,
+			query,
+			timeRange,
+			filters: activeFilters
+		})
+			.then(() => {
+				historyVersion++;
+			})
+			.catch((e) => console.warn('Failed to record search history', e));
 	}
 
 	// --- Index loading ---
@@ -254,9 +268,8 @@ export function createSearchStore(
 
 	// --- Search ---
 
-	async function search(opts?: { append?: boolean; recordHistory?: boolean }) {
+	async function search(opts?: { append?: boolean }) {
 		const append = opts?.append ?? false;
-		const recordHistory = opts?.recordHistory ?? false;
 		if (isLive) stopLive();
 		if (selectedIndex === null) return;
 
@@ -351,16 +364,6 @@ export function createSearchStore(
 			}
 
 			hasSearched = true;
-
-			// Record to search history (fire-and-forget)
-			if (recordHistory && selectedIndex) {
-				recordSearch({
-					indexName: selectedIndex,
-					query: parsedQuery().query,
-					timeRange,
-					filters: activeFilters
-				}).catch((e) => console.warn('Failed to record search history', e));
-			}
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Search failed'));
 		} finally {
@@ -545,9 +548,7 @@ export function createSearchStore(
 
 			if (hasSearched || hasNonDefaultParams(parsed)) {
 				lastSearchedParams = currentParams;
-				const recordHistory = pendingRecordHistory;
-				pendingRecordHistory = false;
-				search({ recordHistory });
+				search();
 			}
 		});
 
@@ -640,6 +641,9 @@ export function createSearchStore(
 		},
 		get newLiveLogs() {
 			return newLiveLogs;
+		},
+		get historyVersion() {
+			return historyVersion;
 		},
 
 		// Methods
