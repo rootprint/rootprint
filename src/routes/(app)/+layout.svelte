@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/api/auth.remote';
 	import { getUserInitials } from '$lib/utils/format';
 	import logo from '$lib/assets/logo.png';
@@ -46,7 +47,7 @@
 					</ul>
 				{/if}
 				<div class="border-t border-base-300 p-2">
-					<button class="btn w-full justify-start btn-ghost btn-sm" onclick={() => signOut()}>
+					<button class="btn w-full justify-start btn-ghost btn-sm" onclick={async () => { await signOut(); goto('/auth/sign-in'); }}>
 						<Icon icon="lucide:log-out" width="16" height="16" class="opacity-70" />
 						Log out
 					</button>

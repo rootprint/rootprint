@@ -27,7 +27,6 @@ export const signIn = form(signInSchema, async (data, issue) => {
 export const signOut = command(async () => {
 	const event = getRequestEvent();
 	await auth.api.signOut({ headers: event.request.headers });
-	redirect(303, '/auth/sign-in');
 });
 
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
