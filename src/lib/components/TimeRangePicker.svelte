@@ -90,14 +90,20 @@
 <div class="relative" bind:this={container}>
 	<!-- Trigger button -->
 	<button class="btn gap-1 border-base-content/20 bg-base-100 font-normal btn-sm" onclick={toggle}>
-		<span class="badge badge-outline border-black/30 px-1 badge-sm text-[10px] font-semibold text-center leading-none">
+		<span class="text-sm">{buttonLabel}</span>
+		<span
+			class="badge badge-outline border-base-300 bg-base-200 text-center badge-sm text-[10px] leading-none font-semibold"
+		>
 			{timezoneMode === 'utc' ? 'UTC' : 'LOCAL'}
 		</span>
-		<span class="text-sm">{buttonLabel}</span>
-		<Icon
-			icon="mdi:chevron-down"
-			class="text-base transition-transform {open ? 'rotate-180' : ''}"
-		/>
+		<span
+			class="badge badge-outline border-base-300 bg-base-200 text-center badge-sm text-[10px] leading-none font-semibold"
+		>
+			<Icon
+				icon="mdi:chevron-down"
+				class="text-base transition-transform {open ? 'rotate-180' : ''}"
+			/>
+		</span>
 	</button>
 
 	<!-- Dropdown panel -->
