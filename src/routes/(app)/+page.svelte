@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { createSearchStore } from '$lib/stores/search.svelte';
 	import { browser } from '$app/environment';
-	import { afterNavigate } from '$app/navigation';
 	import type { TimeRange } from '$lib/types';
 	import TimeRangePicker from '$lib/components/TimeRangePicker.svelte';
 	import LogRow from '$lib/components/LogRow.svelte';
@@ -22,7 +21,9 @@
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
-	let queryInput = $state(data.parsedQuery.query);
+	let inputFocused = $state(false);
+	let localBuffer = $state('');
+	let queryInput = $derived(inputFocused ? localBuffer : data.parsedQuery.query);
 	let isAtTop = $state(true);
 	let wrapMode = $state<'none' | 'wrap' | 'pretty'>('none');
 	let copied = $state(false);
@@ -56,6 +57,15 @@
 		}
 	}
 
+	function handleFocus() {
+		localBuffer = data.parsedQuery.query;
+		inputFocused = true;
+	}
+
+	function handleBlur() {
+		inputFocused = false;
+	}
+
 	function handleScroll() {
 		if (!scrollElement) return;
 		const { scrollTop, scrollHeight, clientHeight } = scrollElement;
@@ -77,9 +87,6 @@
 		}
 	}
 
-	afterNavigate(() => {
-		queryInput = data.parsedQuery.query;
-	});
 </script>
 
 <div class="flex h-full w-full">
@@ -162,7 +169,7 @@
 					onclick={() => {
 						if (store.isLive) {
 							store.stopLive();
-							store.search();
+							store.bumpSearch('user');
 						} else {
 							store.startLive();
 						}
@@ -197,7 +204,10 @@
 					type="text"
 					class="input-bordered input input-sm min-w-0 flex-1"
 					placeholder="Lucene query (e.g. level:error AND service:api)"
-					bind:value={queryInput}
+					value={queryInput}
+					oninput={(e) => { localBuffer = e.currentTarget.value; }}
+					onfocus={handleFocus}
+					onblur={handleBlur}
 					onkeydown={handleKeydown}
 				/>
 				{#if store.hasSearched}
@@ -278,7 +288,7 @@
 			open={historyOpen}
 			indexName={store.selectedIndex}
 			historyVersion={store.historyVersion}
-			onrestore={(params) => store.navigateQuery(params, true)}
+			onrestore={(params) => store.navigateQuery(params, { push: true, intent: 'restore' })}
 			onclose={() => {
 				historyOpen = false;
 				if (browser) localStorage.setItem('logwiz:historyOpen', 'false');
@@ -291,9 +301,5 @@
 	bind:open={drawerOpen}
 	hit={selectedLog}
 	timestampField={store.fieldConfig.timestampField}
-	onfilter={(key, value, exclude) => {
-		const clause = exclude ? `NOT ${key}:${value}` : `${key}:${value}`;
-		queryInput = queryInput ? `${queryInput} AND ${clause}` : clause;
-		store.navigateQuery({ query: queryInput }, true);
-	}}
+	onfilter={(key, value, exclude) => store.addFilterClause(key, value, exclude)}
 />

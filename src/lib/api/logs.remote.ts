@@ -22,13 +22,28 @@ import { formatFieldValue } from '$lib/utils/field-resolver';
 function resolveTimestamps(data: {
 	startTimestamp?: number;
 	endTimestamp?: number;
-	timeRange: string;
-}): { startTs: number | undefined; endTs: number | undefined } {
-	if (data.startTimestamp !== undefined && data.endTimestamp !== undefined) {
-		return { startTs: data.startTimestamp, endTs: data.endTimestamp };
+	timeRange?: string;
+}): { startTs: number; endTs: number } {
+	const hasStart = data.startTimestamp !== undefined;
+	const hasEnd = data.endTimestamp !== undefined;
+
+	// Both absolute timestamps provided — use them
+	if (hasStart && hasEnd) {
+		return { startTs: data.startTimestamp!, endTs: data.endTimestamp! };
 	}
-	const { startTs, endTs } = resolveTimeRange({ type: 'relative', preset: data.timeRange });
-	return { startTs: startTs ?? undefined, endTs: endTs ?? undefined };
+
+	// Partial absolute input — reject, don't silently fall back
+	if (hasStart !== hasEnd) {
+		throw new Error('Both startTimestamp and endTimestamp must be provided together');
+	}
+
+	// Relative preset — validated by schema picklist, but defend against unknown presets
+	const preset = data.timeRange ?? '15m';
+	const resolved = resolveTimeRange({ type: 'relative', preset });
+	if (resolved.startTs === undefined || resolved.endTs === undefined) {
+		throw new Error(`Unknown time range preset: ${preset}`);
+	}
+	return { startTs: resolved.startTs, endTs: resolved.endTs };
 }
 
 async function resolveFieldConfig(indexName: string) {
@@ -56,9 +71,7 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 		.offset(data.offset)
 		.sortBy(`+${fields.timestampField}`);
 
-	if (startTs !== undefined && endTs !== undefined) {
-		query.timeRange(startTs, endTs);
-	}
+	query.timeRange(startTs, endTs);
 
 	let filterFields = data.quickFilterFields ?? [];
 	const unsupportedFilterFields: string[] = [];
@@ -103,9 +116,7 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 					.limit(data.limit)
 					.offset(data.offset)
 					.sortBy(`+${fields.timestampField}`);
-				if (startTs !== undefined && endTs !== undefined) {
-					query.timeRange(startTs, endTs);
-				}
+				query.timeRange(startTs, endTs);
 				continue;
 			}
 			throw e;
@@ -129,9 +140,7 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 		.limit(0)
 		.agg(data.field, AggregationBuilder.terms(data.field, { size: 50 }));
 
-	if (startTs !== undefined && endTs !== undefined) {
-		query.timeRange(startTs, endTs);
-	}
+	query.timeRange(startTs, endTs);
 
 	try {
 		const result = await index.search(query);
@@ -181,7 +190,7 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
-	const windowSeconds = endTs !== undefined && startTs !== undefined ? endTs - startTs : 15 * 60;
+	const windowSeconds = endTs - startTs;
 	const interval = computeHistogramInterval(windowSeconds);
 
 	const query = index
@@ -196,9 +205,7 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 			})
 		);
 
-	if (startTs !== undefined && endTs !== undefined) {
-		query.timeRange(startTs, endTs);
-	}
+	query.timeRange(startTs, endTs);
 
 	const result = await index.search(query);
 
@@ -231,12 +238,7 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 	const intervalSec = computeHistogramIntervalSeconds(windowSeconds);
 	let buckets: { timestamp: number; levels: Record<string, number> }[];
 
-	if (startTs !== undefined && endTs !== undefined) {
-		buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
-	} else {
-		// No time bounds — just return what Quickwit gave us
-		buckets = [...bucketMap].map(([ts, levels]) => ({ timestamp: ts, levels }));
-	}
+	buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
 
 	return { buckets };
 });

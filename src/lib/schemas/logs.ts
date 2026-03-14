@@ -3,7 +3,7 @@ import * as v from 'valibot';
 export const searchLogsSchema = v.object({
 	indexName: v.pipe(v.string(), v.minLength(1)),
 	query: v.string(),
-	timeRange: v.picklist(['5m', '15m', '30m', '1h', '3h', '6h', '1d', '3d', '1w', '1M']),
+	timeRange: v.optional(v.picklist(['5m', '15m', '30m', '1h', '3h', '6h', '1d', '3d', '1w', '1M'])),
 	offset: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	limit: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(200)),
 	startTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
@@ -18,7 +18,7 @@ export const searchFieldValuesSchema = v.object({
 	field: v.pipe(v.string(), v.minLength(1)),
 	searchTerm: v.pipe(v.string(), v.minLength(1)),
 	query: v.optional(v.string()),
-	timeRange: v.picklist(['5m', '15m', '30m', '1h', '3h', '6h', '1d', '3d', '1w', '1M']),
+	timeRange: v.optional(v.picklist(['5m', '15m', '30m', '1h', '3h', '6h', '1d', '3d', '1w', '1M'])),
 	startTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
 });
@@ -28,7 +28,7 @@ export type SearchFieldValuesInput = v.InferOutput<typeof searchFieldValuesSchem
 export const searchLogHistogramSchema = v.object({
 	indexName: v.pipe(v.string(), v.minLength(1)),
 	query: v.string(),
-	timeRange: v.picklist(['5m', '15m', '30m', '1h', '3h', '6h', '1d', '3d', '1w', '1M']),
+	timeRange: v.optional(v.picklist(['5m', '15m', '30m', '1h', '3h', '6h', '1d', '3d', '1w', '1M'])),
 	startTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
 });

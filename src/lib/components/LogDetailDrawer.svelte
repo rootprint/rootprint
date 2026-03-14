@@ -2,8 +2,6 @@
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 	import Icon from '@iconify/svelte';
 	import { formatFieldValue } from '$lib/utils/field-resolver';
-	import { escapeFilterValue } from '$lib/utils/query';
-
 	let {
 		open = $bindable(false),
 		hit = null,
@@ -40,7 +38,7 @@
 
 	function handleFilter(key: string, value: unknown, exclude: boolean) {
 		if (value === null || value === undefined) return;
-		onfilter?.(key, escapeFilterValue(formatFieldValue(value)), exclude);
+		onfilter?.(key, formatFieldValue(value), exclude);
 	}
 
 	let activeTab = $state<(typeof tabs)[number]['id']>('parameters');

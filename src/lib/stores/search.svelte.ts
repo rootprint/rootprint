@@ -15,17 +15,19 @@ import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { combineQueryWithFilters } from '$lib/utils/query';
-import { buildQueryUrl, serialize, hasNonDefaultParams } from '$lib/utils/query-params';
+import { combineQueryWithFilters, escapeFilterValue } from '$lib/utils/query';
+import { buildQueryUrl, serialize } from '$lib/utils/query-params';
 import type { ParsedQuery } from '$lib/utils/query-params';
-import { resolveTimeRange } from '$lib/utils/time';
 import { computeColumnWidths } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
+import type { SearchLogsInput } from '$lib/schemas/logs';
 import type { IndexField } from '$lib/types';
 import { toast } from 'svelte-sonner';
 import { getErrorMessage } from '$lib/utils/error';
 
 const BATCH_SIZE = 50;
+
+type SearchIntent = 'user' | 'append' | 'fieldChange' | 'restore';
 
 export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
@@ -77,8 +79,12 @@ export function createSearchStore(
 	let commitBufferSecs = 45; // updated from index metadata
 
 	// --- URL sync ---
-	let lastSearchedParams = $state('');
 	let historyVersion = $state(0);
+
+	// --- Search intent & version ---
+	let searchVersion = $state(0);
+	let pendingIntent: SearchIntent = 'user';
+	let lastSearchedKey = '';
 
 	// --- Derived state ---
 	let timeRange = $derived(parsedQuery().timeRange);
@@ -116,12 +122,21 @@ export function createSearchStore(
 		columnWidths = computeColumnWidths(newLogs, fields);
 	}
 
+	function bumpSearch(intent: SearchIntent = 'user') {
+		pendingIntent = intent;
+		searchVersion++;
+	}
+
 	// --- Navigation ---
 
-	function navigateQuery(partial: Partial<ParsedQuery>, push = false) {
+	function navigateQuery(
+		partial: Partial<ParsedQuery>,
+		opts?: { push?: boolean; intent?: SearchIntent }
+	) {
+		pendingIntent = opts?.intent ?? 'user';
 		const url = buildQueryUrl(page.url.searchParams, partial);
 		goto(url, {
-			replaceState: !push,
+			replaceState: !opts?.push,
 			keepFocus: true,
 			noScroll: true
 		});
@@ -130,11 +145,10 @@ export function createSearchStore(
 	function runQuery(query: string) {
 		const pq = parsedQuery();
 		if (query !== pq.query) {
-			navigateQuery({ query }, true);
+			navigateQuery({ query }, { push: true });
 		} else {
-			search();
+			bumpSearch('user');
 		}
-		recordCurrentSearch(query);
 	}
 
 	function recordCurrentSearch(query: string) {
@@ -184,6 +198,7 @@ export function createSearchStore(
 	}
 
 	async function loadFieldsForIndex(indexName: string) {
+		pendingIntent = 'fieldChange';
 		fieldsLoading = true;
 		try {
 			const [indexFieldsResult, config, pref] = await Promise.all([
@@ -202,7 +217,7 @@ export function createSearchStore(
 				pref.quickFilterFields.length > 0 ? pref.quickFilterFields : [levelField]
 			).filter((f) => f !== levelField);
 			quickFilterFields = [levelField, ...savedFields];
-			search();
+			// search() removed — auto-search fires when fieldsLoading becomes false
 		} catch {
 			indexFields = [];
 			activeFields = [];
@@ -216,9 +231,10 @@ export function createSearchStore(
 		stopLive();
 		selectedIndex = indexName;
 		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
-		navigateQuery({ index: indexName, filters: {} });
 		aggregations = {};
 		schemaFields = [];
+		fieldsLoading = true; // block auto-search until new fields load
+		navigateQuery({ index: indexName, filters: {} });
 		loadFieldsForIndex(indexName);
 	}
 
@@ -246,7 +262,6 @@ export function createSearchStore(
 		if (selectedIndex) {
 			saveQuickFilterFields({ indexName: selectedIndex, fields: quickFilterFields });
 		}
-		if (hasSearched) search();
 	}, 500);
 
 	function handleQuickFilterFieldsChange(fields: string[]) {
@@ -262,43 +277,47 @@ export function createSearchStore(
 		);
 		if (JSON.stringify(cleanedFilters) !== JSON.stringify(activeFilters)) {
 			navigateQuery({ filters: cleanedFilters });
+		} else if (hasSearched) {
+			bumpSearch('fieldChange');
 		}
 		debouncedSaveQuickFilters();
 	}
 
 	// --- Search ---
 
-	async function search(opts?: { append?: boolean }) {
+	async function search(opts?: { append?: boolean; intent?: SearchIntent }) {
 		const append = opts?.append ?? false;
+		const intent = opts?.intent ?? 'user';
 		if (isLive) stopLive();
 		if (selectedIndex === null) return;
 
 		loading = true;
 
-		if (!append) {
-			lastSearchedParams = serialize(parsedQuery()).toString();
-		}
-
 		try {
 			const queryText = getQueryText();
 			const currentTimeRange = timeRange;
-			const resolved = resolveTimeRange(currentTimeRange);
 			const currentActiveFields = activeFields;
 
+			// Build time params — presets go to server, absolute timestamps sent directly
+			let timeParams: Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>;
+			if (append) {
+				timeParams = { startTimestamp: searchStartTimestamp, endTimestamp: searchEndTimestamp };
+			} else if (currentTimeRange.type === 'relative') {
+				timeParams = { timeRange: currentTimeRange.preset as SearchLogsInput['timeRange'] };
+			} else {
+				timeParams = { startTimestamp: currentTimeRange.start, endTimestamp: currentTimeRange.end };
+			}
+
 			if (!append) {
-				fetchHistogram(resolved.startTs, resolved.endTs);
+				fetchHistogram();
 			}
 
 			const result = await searchLogs({
 				indexName: selectedIndex,
 				query: queryText || '*',
-				timeRange: (currentTimeRange.type === 'relative'
-					? currentTimeRange.preset
-					: '15m') as '15m',
+				...timeParams,
 				offset: append ? logs.length : 0,
 				limit: BATCH_SIZE,
-				startTimestamp: append ? searchStartTimestamp : resolved.startTs,
-				endTimestamp: append ? searchEndTimestamp : resolved.endTs,
 				quickFilterFields
 			});
 
@@ -364,6 +383,11 @@ export function createSearchStore(
 			}
 
 			hasSearched = true;
+
+			// Record history for user-initiated fresh searches only
+			if (!append && intent === 'user') {
+				recordCurrentSearch(parsedQuery().query);
+			}
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Search failed'));
 		} finally {
@@ -373,7 +397,7 @@ export function createSearchStore(
 
 	// --- Histogram ---
 
-	async function fetchHistogram(startTs?: number, endTs?: number) {
+	async function fetchHistogram() {
 		if (selectedIndex === null) return;
 
 		const requestId = ++histogramRequestId;
@@ -381,14 +405,18 @@ export function createSearchStore(
 		try {
 			const queryText = getQueryText();
 			const currentTimeRange = timeRange;
+
+			let timeParams: Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>;
+			if (currentTimeRange.type === 'relative') {
+				timeParams = { timeRange: currentTimeRange.preset as SearchLogsInput['timeRange'] };
+			} else {
+				timeParams = { startTimestamp: currentTimeRange.start, endTimestamp: currentTimeRange.end };
+			}
+
 			const result = await searchLogHistogram({
 				indexName: selectedIndex,
 				query: queryText || '*',
-				timeRange: (currentTimeRange.type === 'relative'
-					? currentTimeRange.preset
-					: '15m') as '15m',
-				startTimestamp: startTs,
-				endTimestamp: endTs
+				...timeParams
 			});
 			if (requestId !== histogramRequestId) return;
 			histogramData = result.buckets;
@@ -515,13 +543,11 @@ export function createSearchStore(
 	async function searchFieldValuesHandler(field: string, searchTerm: string): Promise<string[]> {
 		if (!selectedIndex) return [];
 		const queryText = getQueryText();
-		const currentTimeRange = timeRange;
 		const result = await searchFieldValues({
 			indexName: selectedIndex,
 			field,
 			searchTerm,
 			query: queryText || '*',
-			timeRange: (currentTimeRange.type === 'relative' ? currentTimeRange.preset : '15m') as '15m',
 			startTimestamp: searchStartTimestamp,
 			endTimestamp: searchEndTimestamp
 		});
@@ -529,6 +555,14 @@ export function createSearchStore(
 			toast.error(`Field "${field}" cannot be searched (not a fast field in Quickwit)`);
 		}
 		return result.values;
+	}
+
+	function addFilterClause(field: string, value: string, exclude: boolean) {
+		const escaped = escapeFilterValue(value);
+		const clause = exclude ? `NOT ${field}:${escaped}` : `${field}:${escaped}`;
+		const current = parsedQuery().query;
+		const newQuery = current ? `${current} AND ${clause}` : clause;
+		navigateQuery({ query: newQuery }, { push: true });
 	}
 
 	// --- Start loading immediately ---
@@ -540,16 +574,24 @@ export function createSearchStore(
 		$effect(() => {
 			const parsed = parsedQuery();
 			const currentParams = serialize(parsed).toString();
+			const version = searchVersion;
+			const loading = fieldsLoading;
 
-			if (currentParams === lastSearchedParams) return;
+			// Guards — pendingIntent is NOT reset here so it survives
+			// early returns and is available when the effect re-runs
+			if (loading) return;
 			if (parsed.index === null) return;
 			if (parsed.index !== selectedIndex) return;
-			if (fieldsLoading) return;
 
-			if (hasSearched || hasNonDefaultParams(parsed)) {
-				lastSearchedParams = currentParams;
-				search();
-			}
+			// \0 separator cannot appear in URL params, prevents key collisions
+			const key = `${currentParams}\0${version}`;
+			if (key === lastSearchedKey) return;
+
+			// Consume and reset intent only when search actually runs
+			const intent = pendingIntent;
+			pendingIntent = 'user';
+			lastSearchedKey = key;
+			search({ intent });
 		});
 
 		$effect(() => {
@@ -657,6 +699,8 @@ export function createSearchStore(
 		setupAutoSearch,
 		startLive,
 		stopLive,
-		resetNewLiveLogs
+		resetNewLiveLogs,
+		bumpSearch,
+		addFilterClause
 	};
 }
