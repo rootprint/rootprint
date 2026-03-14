@@ -153,15 +153,6 @@
 					{copied ? 'Copied!' : 'Share'}
 				</button>
 
-				<div class={store.isLive ? 'opacity-40' : ''} inert={store.isLive || undefined}>
-					<TimeRangePicker
-						value={store.timeRange}
-						timezoneMode={store.timezoneMode}
-						onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
-						ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
-					/>
-				</div>
-
 				<button
 					class="btn btn-sm {store.isLive ? 'btn-error' : ''}"
 					aria-pressed={store.isLive}
@@ -188,6 +179,15 @@
 					{/if}
 					Live
 				</button>
+
+				<div class={store.isLive ? 'opacity-40' : ''} inert={store.isLive || undefined}>
+					<TimeRangePicker
+						value={store.timeRange}
+						timezoneMode={store.timezoneMode}
+						onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
+						ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
+					/>
+				</div>
 
 				<button
 					class="btn btn-sm btn-accent"
