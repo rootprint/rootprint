@@ -14,3 +14,7 @@ export const setUserRoleSchema = v.object({
 	userId: v.pipe(v.string(), v.minLength(1)),
 	role: v.picklist(['admin', 'user'])
 });
+
+export const regenerateInviteSchema = v.object({
+	userId: v.pipe(v.string(), v.minLength(1))
+});

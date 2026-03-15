@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { listUsers, removeUser, setUserRole } from '$lib/api/users.remote';
+	import { listUsers, removeUser, setUserRole, regenerateInvite } from '$lib/api/users.remote';
 	import { page } from '$app/state';
 	import InviteUserModal from './InviteUserModal.svelte';
 	import { toast } from 'svelte-sonner';
@@ -15,12 +15,27 @@
 			createdAt: Date;
 			status: 'pending' | 'active';
 			inviteUrl: string | null;
+			inviteExpiresAt: Date | null;
 		}[]
 	>([]);
 	let loaded = $state(false);
 	let inviteModalOpen = $state(false);
 	let confirmingRemove = $state<string | null>(null);
 	let copiedUserId = $state<string | null>(null);
+	let regeneratingUserId = $state<string | null>(null);
+
+	async function handleRegenerate(userId: string) {
+		regeneratingUserId = userId;
+		try {
+			await regenerateInvite({ userId });
+			await loadUsers();
+			toast.success('Invite link regenerated');
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to regenerate invite'));
+		} finally {
+			regeneratingUserId = null;
+		}
+	}
 
 	function copyInviteLink(userId: string, url: string) {
 		navigator.clipboard.writeText(url);
@@ -102,9 +117,10 @@
 							<td class="text-base-content/60">{u.email}</td>
 							<td>
 								{#if u.status === 'pending'}
-									<span class="badge badge-sm badge-warning">Pending</span>
+									{@const expired = u.inviteExpiresAt && new Date(u.inviteExpiresAt).getTime() < Date.now()}
+									<span class="badge badge-sm">{expired ? 'Expired' : 'Pending'}</span>
 								{:else}
-									<span class="badge badge-sm badge-success">Active</span>
+									<span class="badge badge-sm">Active</span>
 								{/if}
 							</td>
 							<td>
@@ -127,16 +143,31 @@
 							</td>
 							<td>
 								<div class="flex gap-1">
-									{#if u.status === 'pending' && u.inviteUrl}
+									{#if u.status === 'pending'}
+										{#if u.inviteUrl}
+											<button
+												class="btn btn-ghost btn-xs"
+												onclick={() => copyInviteLink(u.id, u.inviteUrl!)}
+												title="Copy invite link"
+											>
+												<Icon
+													icon={copiedUserId === u.id ? 'lucide:check' : 'lucide:link'}
+													width="14"
+													height="14"
+												/>
+											</button>
+										{/if}
 										<button
 											class="btn btn-ghost btn-xs"
-											onclick={() => copyInviteLink(u.id, u.inviteUrl!)}
-											title="Copy invite link"
+											onclick={() => handleRegenerate(u.id)}
+											title="Regenerate invite link"
+											disabled={regeneratingUserId === u.id}
 										>
 											<Icon
-												icon={copiedUserId === u.id ? 'lucide:check' : 'lucide:link'}
+												icon={regeneratingUserId === u.id ? 'lucide:loader' : 'lucide:refresh-cw'}
 												width="14"
 												height="14"
+												class={regeneratingUserId === u.id ? 'animate-spin' : ''}
 											/>
 										</button>
 									{/if}

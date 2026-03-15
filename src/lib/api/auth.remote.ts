@@ -69,6 +69,11 @@ export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
 		return;
 	}
 
+	if (invite.expiresAt < new Date()) {
+		invalid(issue.token('Invite link has expired. Please ask your administrator for a new invite.'));
+		return;
+	}
+
 	// Direct DB update because auth.api.setUserPassword requires admin session headers,
 	// but this is a public endpoint (invited user has no session yet).
 	// hashPassword is Better Auth's own hashing function, so the hash format is compatible.

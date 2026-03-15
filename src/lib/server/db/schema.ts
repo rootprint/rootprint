@@ -42,6 +42,7 @@ export const inviteToken = sqliteTable('invite_token', {
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	token: text('token').notNull().unique(),
+	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull()

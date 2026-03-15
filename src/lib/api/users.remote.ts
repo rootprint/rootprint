@@ -4,10 +4,13 @@ import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { inviteToken } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/middleware/auth';
-import { createInviteSchema, removeUserSchema, setUserRoleSchema } from '$lib/schemas/users';
+import { createInviteSchema, removeUserSchema, setUserRoleSchema, regenerateInviteSchema } from '$lib/schemas/users';
+import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { randomBytes } from 'crypto';
 import { APIError } from 'better-auth/api';
+
+const INVITE_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 export const listUsers = query(async () => {
 	requireAdmin();
@@ -20,13 +23,17 @@ export const listUsers = query(async () => {
 	const pendingInvites = await db.select().from(inviteToken);
 	const origin = env.ORIGIN ?? 'http://localhost:5173';
 	const inviteMap = new Map(
-		pendingInvites.map((inv) => [inv.userId, `${origin}/auth/setup?token=${inv.token}`])
+		pendingInvites.map((inv) => [
+			inv.userId,
+			{ url: `${origin}/auth/setup?token=${inv.token}`, expiresAt: inv.expiresAt }
+		])
 	);
 
 	return result.users.map((u) => ({
 		...u,
 		status: inviteMap.has(u.id) ? ('pending' as const) : ('active' as const),
-		inviteUrl: inviteMap.get(u.id) ?? null
+		inviteUrl: inviteMap.get(u.id)?.url ?? null,
+		inviteExpiresAt: inviteMap.get(u.id)?.expiresAt ?? null
 	}));
 });
 
@@ -54,10 +61,29 @@ export const createInvite = command(createInviteSchema, async (data) => {
 		throw e;
 	}
 
+	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
 	const token = randomBytes(32).toString('hex');
 	await db.insert(inviteToken).values({
 		userId: created.user.id,
-		token
+		token,
+		expiresAt
+	});
+
+	const origin = env.ORIGIN ?? 'http://localhost:5173';
+	return { inviteUrl: `${origin}/auth/setup?token=${token}` };
+});
+
+export const regenerateInvite = command(regenerateInviteSchema, async (data) => {
+	requireAdmin();
+
+	await db.delete(inviteToken).where(eq(inviteToken.userId, data.userId));
+
+	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
+	const token = randomBytes(32).toString('hex');
+	await db.insert(inviteToken).values({
+		userId: data.userId,
+		token,
+		expiresAt
 	});
 
 	const origin = env.ORIGIN ?? 'http://localhost:5173';
