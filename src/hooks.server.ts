@@ -1,5 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
 import { building } from '$app/environment';
+import { sequence } from '@sveltejs/kit/hooks';
+import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { hashPassword } from 'better-auth/crypto';
@@ -40,6 +42,25 @@ if (!building) {
 	seedDefaultAdmin().catch(console.error);
 }
 
+const authLimiter = new RetryAfterRateLimiter({
+	IP: [5, 'm']
+});
+
+const AUTH_PATHS = ['/auth/sign-in', '/auth/setup', '/api/auth/sign-in'];
+
+const handleRateLimit: Handle = async ({ event, resolve }) => {
+	if (event.request.method === 'POST' && AUTH_PATHS.some((p) => event.url.pathname.startsWith(p))) {
+		const status = await authLimiter.check(event);
+		if (status.limited) {
+			return new Response('Too many requests. Please try again later.', {
+				status: 429,
+				headers: { 'Retry-After': status.retryAfter.toString() }
+			});
+		}
+	}
+	return resolve(event);
+};
+
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
@@ -51,4 +72,4 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	return svelteKitHandler({ event, resolve, auth, building });
 };
 
-export const handle: Handle = handleBetterAuth;
+export const handle = sequence(handleRateLimit, handleBetterAuth);
