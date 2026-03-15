@@ -32,9 +32,7 @@
 	let chartCollapsed = $state(
 		browser ? localStorage.getItem('logwiz:chartCollapsed') === 'true' : false
 	);
-	let historyOpen = $state(
-		browser ? localStorage.getItem('logwiz:historyOpen') === 'true' : false
-	);
+	let historyOpen = $state(browser ? localStorage.getItem('logwiz:historyOpen') === 'true' : false);
 
 	// --- UI event handlers ---
 
@@ -86,7 +84,6 @@
 			store.search({ append: true });
 		}
 	}
-
 </script>
 
 <div class="flex h-full w-full">
@@ -127,9 +124,7 @@
 				<div class="join">
 					{#each [['none', 'No wrap'], ['wrap', 'Wrap'], ['pretty', 'Pretty']] as [mode, label] (mode)}
 						<button
-							class="btn join-item whitespace-nowrap btn-sm {wrapMode === mode
-								? 'btn-accent'
-								: ''}"
+							class="btn join-item whitespace-nowrap btn-sm {wrapMode === mode ? 'btn-accent' : ''}"
 							onclick={() => (wrapMode = mode as typeof wrapMode)}
 						>
 							{label}
@@ -160,7 +155,7 @@
 					onclick={() => {
 						if (store.isLive) {
 							store.stopLive();
-							store.bumpSearch('user');
+							store.bumpSearch();
 						} else {
 							store.startLive();
 						}
@@ -205,7 +200,9 @@
 					class="input-bordered input input-sm min-w-0 flex-1"
 					placeholder="Lucene query (e.g. level:error AND service:api)"
 					value={queryInput}
-					oninput={(e) => { localBuffer = e.currentTarget.value; }}
+					oninput={(e) => {
+						localBuffer = e.currentTarget.value;
+					}}
 					onfocus={handleFocus}
 					onblur={handleBlur}
 					onkeydown={handleKeydown}
@@ -288,7 +285,7 @@
 			open={historyOpen}
 			indexName={store.selectedIndex}
 			historyVersion={store.historyVersion}
-			onrestore={(params) => store.navigateQuery(params, { push: true, intent: 'restore' })}
+			onrestore={(params) => store.navigateQuery(params, { push: true })}
 			onclose={() => {
 				historyOpen = false;
 				if (browser) localStorage.setItem('logwiz:historyOpen', 'false');

@@ -1,17 +1,12 @@
 import { getIndexes, getIndexFields, getIndexConfig } from '$lib/api/indexes.remote';
-import {
-	searchLogs,
-	searchFieldValues,
-	searchLogHistogram,
-	pollLiveLogs
-} from '$lib/api/logs.remote';
+import { searchLogs, searchFieldValues, searchLogHistogram } from '$lib/api/logs.remote';
+import { createLivePoller } from './live-poller.svelte';
 import {
 	getPreference,
 	saveDisplayFields,
 	saveQuickFilterFields
 } from '$lib/api/preferences.remote';
 import { recordSearch } from '$lib/api/history.remote';
-import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
@@ -21,13 +16,11 @@ import type { ParsedQuery } from '$lib/utils/query-params';
 import { computeColumnWidths } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import type { IndexField } from '$lib/types';
+import type { IndexField, TimeRange } from '$lib/types';
 import { toast } from 'svelte-sonner';
 import { getErrorMessage } from '$lib/utils/error';
 
 const BATCH_SIZE = 50;
-
-type SearchIntent = 'user' | 'append' | 'fieldChange' | 'restore';
 
 export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
@@ -63,28 +56,40 @@ export function createSearchStore(
 	let histogramRequestId = 0;
 
 	// --- Column widths ---
-	let columnWidths = $state<Record<string, number>>({});
+	let columnWidths = $derived(computeColumnWidths(logs, activeFields));
 
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, string[]>>({});
 
-	// --- Live mode state ---
-	let isLive = $state(false);
-	let liveIntervalId: ReturnType<typeof setTimeout> | null = null;
-	let liveStartedAt = 0;
-	let newLiveLogs = $state(0);
-	let liveErrorShown = false;
-	let lastPollKeys = new Set<string>();
-	let liveSessionId = 0;
+	// --- Live mode ---
 	let commitBufferSecs = 45; // updated from index metadata
+
+	const livePoller = createLivePoller({
+		getIndex: () => selectedIndex,
+		getQueryText,
+		getCommitBufferSecs: () => commitBufferSecs,
+		onNewLogs: (hits) => {
+			logs = [...hits, ...logs];
+			numHits = numHits + hits.length;
+		},
+		onStart: ({ startTimestamp: st, endTimestamp: et }) => {
+			searchStartTimestamp = st;
+			searchEndTimestamp = et;
+			logs = [];
+			numHits = 0;
+			hasSearched = true;
+			loading = false;
+			options?.onFreshSearch?.();
+		}
+	});
 
 	// --- URL sync ---
 	let historyVersion = $state(0);
 
-	// --- Search intent & version ---
+	// --- Search version ---
 	let searchVersion = $state(0);
-	let pendingIntent: SearchIntent = 'user';
 	let lastSearchedKey = '';
+	let shouldRecordHistory = false;
 
 	// --- Derived state ---
 	let timeRange = $derived(parsedQuery().timeRange);
@@ -110,30 +115,26 @@ export function createSearchStore(
 		return combineQueryWithFilters(pq.query, pq.filters);
 	}
 
-	function docKey(doc: Record<string, unknown>): string {
-		return JSON.stringify(doc);
+	function buildTimeParams(
+		range: TimeRange,
+		override?: { startTimestamp?: number; endTimestamp?: number }
+	): Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'> {
+		if (override) {
+			return { startTimestamp: override.startTimestamp, endTimestamp: override.endTimestamp };
+		}
+		if (range.type === 'relative') {
+			return { timeRange: range.preset as SearchLogsInput['timeRange'] };
+		}
+		return { startTimestamp: range.start, endTimestamp: range.end };
 	}
 
-	function isActiveLiveSession(sessionId: number): boolean {
-		return isLive && sessionId === liveSessionId;
-	}
-
-	function updateColumnWidths(newLogs: Record<string, unknown>[], fields: string[]) {
-		columnWidths = computeColumnWidths(newLogs, fields);
-	}
-
-	function bumpSearch(intent: SearchIntent = 'user') {
-		pendingIntent = intent;
+	function bumpSearch() {
 		searchVersion++;
 	}
 
 	// --- Navigation ---
 
-	function navigateQuery(
-		partial: Partial<ParsedQuery>,
-		opts?: { push?: boolean; intent?: SearchIntent }
-	) {
-		pendingIntent = opts?.intent ?? 'user';
+	function navigateQuery(partial: Partial<ParsedQuery>, opts?: { push?: boolean }) {
 		const url = buildQueryUrl(page.url.searchParams, partial);
 		goto(url, {
 			replaceState: !opts?.push,
@@ -144,10 +145,11 @@ export function createSearchStore(
 
 	function runQuery(query: string) {
 		const pq = parsedQuery();
+		shouldRecordHistory = true;
 		if (query !== pq.query) {
 			navigateQuery({ query }, { push: true });
 		} else {
-			bumpSearch('user');
+			bumpSearch();
 		}
 	}
 
@@ -198,7 +200,6 @@ export function createSearchStore(
 	}
 
 	async function loadFieldsForIndex(indexName: string) {
-		pendingIntent = 'fieldChange';
 		fieldsLoading = true;
 		try {
 			const [indexFieldsResult, config, pref] = await Promise.all([
@@ -278,17 +279,16 @@ export function createSearchStore(
 		if (JSON.stringify(cleanedFilters) !== JSON.stringify(activeFilters)) {
 			navigateQuery({ filters: cleanedFilters });
 		} else if (hasSearched) {
-			bumpSearch('fieldChange');
+			bumpSearch();
 		}
 		debouncedSaveQuickFilters();
 	}
 
 	// --- Search ---
 
-	async function search(opts?: { append?: boolean; intent?: SearchIntent }) {
+	async function search(opts?: { append?: boolean }) {
 		const append = opts?.append ?? false;
-		const intent = opts?.intent ?? 'user';
-		if (isLive) stopLive();
+		if (livePoller.isLive) stopLive();
 		if (selectedIndex === null) return;
 
 		loading = true;
@@ -296,17 +296,13 @@ export function createSearchStore(
 		try {
 			const queryText = getQueryText();
 			const currentTimeRange = timeRange;
-			const currentActiveFields = activeFields;
 
-			// Build time params — presets go to server, absolute timestamps sent directly
-			let timeParams: Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>;
-			if (append) {
-				timeParams = { startTimestamp: searchStartTimestamp, endTimestamp: searchEndTimestamp };
-			} else if (currentTimeRange.type === 'relative') {
-				timeParams = { timeRange: currentTimeRange.preset as SearchLogsInput['timeRange'] };
-			} else {
-				timeParams = { startTimestamp: currentTimeRange.start, endTimestamp: currentTimeRange.end };
-			}
+			const timeParams = append
+				? buildTimeParams(currentTimeRange, {
+						startTimestamp: searchStartTimestamp,
+						endTimestamp: searchEndTimestamp
+					})
+				: buildTimeParams(currentTimeRange);
 
 			if (!append) {
 				fetchHistogram();
@@ -352,12 +348,9 @@ export function createSearchStore(
 			}
 
 			if (append) {
-				const combined = [...logs, ...result.hits];
-				logs = combined;
-				updateColumnWidths(combined, currentActiveFields);
+				logs = [...logs, ...result.hits];
 			} else {
 				logs = result.hits;
-				updateColumnWidths(result.hits, currentActiveFields);
 				options?.onFreshSearch?.();
 			}
 			numHits = result.numHits;
@@ -385,7 +378,8 @@ export function createSearchStore(
 			hasSearched = true;
 
 			// Record history for user-initiated fresh searches only
-			if (!append && intent === 'user') {
+			if (!append && shouldRecordHistory) {
+				shouldRecordHistory = false;
 				recordCurrentSearch(parsedQuery().query);
 			}
 		} catch (e) {
@@ -406,12 +400,7 @@ export function createSearchStore(
 			const queryText = getQueryText();
 			const currentTimeRange = timeRange;
 
-			let timeParams: Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>;
-			if (currentTimeRange.type === 'relative') {
-				timeParams = { timeRange: currentTimeRange.preset as SearchLogsInput['timeRange'] };
-			} else {
-				timeParams = { startTimestamp: currentTimeRange.start, endTimestamp: currentTimeRange.end };
-			}
+			const timeParams = buildTimeParams(currentTimeRange);
 
 			const result = await searchLogHistogram({
 				indexName: selectedIndex,
@@ -430,112 +419,9 @@ export function createSearchStore(
 		}
 	}
 
-	// --- Live mode ---
-
 	function stopLive() {
-		liveSessionId += 1;
-		isLive = false;
+		livePoller.stop();
 		loading = false;
-		newLiveLogs = 0;
-		liveErrorShown = false;
-		lastPollKeys = new Set();
-		if (liveIntervalId !== null) {
-			clearTimeout(liveIntervalId);
-			liveIntervalId = null;
-		}
-	}
-
-	function resetNewLiveLogs() {
-		newLiveLogs = 0;
-	}
-
-	async function pollForNewLogs(sessionId: number) {
-		if (!selectedIndex || !isActiveLiveSession(sessionId)) return;
-
-		const endTs = Math.floor(Date.now() / 1000);
-		// Look back by commit buffer to catch logs committed after their timestamp
-		const startTs = Math.max(liveStartedAt, endTs - commitBufferSecs);
-
-		if (startTs >= endTs) return;
-
-		try {
-			const queryText = getQueryText();
-			const result = await pollLiveLogs({
-				indexName: selectedIndex,
-				query: queryText || '*',
-				startTimestamp: startTs,
-				endTimestamp: endTs,
-				limit: 100
-			});
-
-			if (!isActiveLiveSession(sessionId)) return;
-
-			// Deduplicate against previous poll's results (handles 1s overlap)
-			const newHits = result.hits.filter(
-				(hit: Record<string, unknown>) => !lastPollKeys.has(docKey(hit))
-			);
-
-			// Update dedup set for next cycle
-			lastPollKeys = new Set(result.hits.map((hit: Record<string, unknown>) => docKey(hit)));
-
-			if (newHits.length > 0) {
-				logs = [...newHits, ...logs];
-				numHits = numHits + newHits.length;
-				newLiveLogs += newHits.length;
-				updateColumnWidths(logs, activeFields);
-			}
-
-			// Clear error state on successful poll
-			if (liveErrorShown) {
-				toast.success('Live mode reconnected');
-				liveErrorShown = false;
-			}
-		} catch (e) {
-			if (!isActiveLiveSession(sessionId)) return;
-			if (!liveErrorShown) {
-				toast.error(getErrorMessage(e, 'Live mode poll failed'));
-				liveErrorShown = true;
-			}
-		}
-	}
-
-	async function schedulePoll(sessionId: number) {
-		if (!isActiveLiveSession(sessionId)) return;
-		await pollForNewLogs(sessionId);
-		if (isActiveLiveSession(sessionId)) {
-			liveIntervalId = setTimeout(() => {
-				void schedulePoll(sessionId);
-			}, 2000);
-		}
-	}
-
-	async function startLive() {
-		if (isLive || !selectedIndex) return;
-
-		const sessionId = liveSessionId + 1;
-		liveSessionId = sessionId;
-
-		isLive = true;
-		newLiveLogs = 0;
-		liveErrorShown = false;
-		lastPollKeys = new Set();
-
-		const nowTs = Math.floor(Date.now() / 1000);
-		liveStartedAt = nowTs;
-		searchStartTimestamp = nowTs;
-		searchEndTimestamp = nowTs;
-		logs = [];
-		numHits = 0;
-		hasSearched = true;
-		loading = false;
-		updateColumnWidths([], activeFields);
-		options?.onFreshSearch?.();
-
-		if (isActiveLiveSession(sessionId)) {
-			liveIntervalId = setTimeout(() => {
-				void schedulePoll(sessionId);
-			}, 2000);
-		}
 	}
 
 	// --- Field value search ---
@@ -577,34 +463,20 @@ export function createSearchStore(
 			const version = searchVersion;
 			const loading = fieldsLoading;
 
-			// Guards — pendingIntent is NOT reset here so it survives
-			// early returns and is available when the effect re-runs
 			if (loading) return;
 			if (parsed.index === null) return;
 			if (parsed.index !== selectedIndex) return;
 
-			// \0 separator cannot appear in URL params, prevents key collisions
 			const key = `${currentParams}\0${version}`;
 			if (key === lastSearchedKey) return;
-
-			// Consume and reset intent only when search actually runs
-			const intent = pendingIntent;
-			pendingIntent = 'user';
 			lastSearchedKey = key;
-			search({ intent });
-		});
-
-		$effect(() => {
-			const fields = activeFields;
-			untrack(() => {
-				updateColumnWidths(logs, fields);
-			});
+			search();
 		});
 
 		// Cleanup live mode on unmount
 		$effect(() => {
 			return () => {
-				stopLive();
+				livePoller.cleanup();
 			};
 		});
 	}
@@ -679,10 +551,10 @@ export function createSearchStore(
 			return quickFilterAvailableFields;
 		},
 		get isLive() {
-			return isLive;
+			return livePoller.isLive;
 		},
 		get newLiveLogs() {
-			return newLiveLogs;
+			return livePoller.newLiveLogs;
 		},
 		get historyVersion() {
 			return historyVersion;
@@ -697,9 +569,9 @@ export function createSearchStore(
 		search,
 		searchFieldValues: searchFieldValuesHandler,
 		setupAutoSearch,
-		startLive,
+		startLive: livePoller.start,
 		stopLive,
-		resetNewLiveLogs,
+		resetNewLiveLogs: livePoller.resetNewLiveLogs,
 		bumpSearch,
 		addFilterClause
 	};
