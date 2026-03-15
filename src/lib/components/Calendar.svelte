@@ -19,15 +19,15 @@
 		timezone?: 'utc' | 'local';
 	} = $props();
 
-	let viewYear = $state(0);
-	let viewMonth = $state(0);
-	let initialized = false;
+	let viewYear = $state(month.getFullYear());
+	let viewMonth = $state(month.getMonth());
+	let lastMonth = month;
 
 	$effect(() => {
-		if (!initialized) {
+		if (month !== lastMonth) {
 			viewYear = month.getFullYear();
 			viewMonth = month.getMonth();
-			initialized = true;
+			lastMonth = month;
 		}
 	});
 

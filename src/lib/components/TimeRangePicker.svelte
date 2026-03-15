@@ -24,6 +24,7 @@
 	let toDate = $state<Date | null>(null);
 	let fromTime = $state('00:00');
 	let toTime = $state('23:59');
+	let selectionMode = $state<'from' | 'to'>('from');
 
 	$effect(() => {
 		if (value.type === 'absolute') {
@@ -143,33 +144,59 @@
 						</button>
 					</div>
 
-					<div class="flex gap-4">
-						<div>
-							<span class="mb-1 block text-xs font-medium text-base-content/60">From</span>
-							<Calendar
-								selected={fromDate}
-								onselect={(d) => (fromDate = d)}
-								maxDate={toDate ?? undefined}
-								timezone={timezoneMode}
-							/>
+					<div class="mb-2 flex">
+						<div class="join w-full">
+							<button
+								class="btn join-item btn-xs flex-1 {selectionMode === 'from' ? 'btn-primary' : ''}"
+								onclick={() => (selectionMode = 'from')}
+							>
+								From{fromDate ? `: ${fromDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+							</button>
+							<button
+								class="btn join-item btn-xs flex-1 {selectionMode === 'to' ? 'btn-primary' : ''}"
+								onclick={() => (selectionMode = 'to')}
+							>
+								To{toDate ? `: ${toDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+							</button>
+						</div>
+					</div>
+
+					<Calendar
+						selected={selectionMode === 'from' ? fromDate : toDate}
+						rangeStart={fromDate}
+						rangeEnd={toDate}
+						onselect={(d) => {
+							if (selectionMode === 'from') {
+								fromDate = d;
+								if (toDate && d > toDate) toDate = null;
+								selectionMode = 'to';
+							} else {
+								if (fromDate && d < fromDate) {
+									toDate = fromDate;
+									fromDate = d;
+								} else {
+									toDate = d;
+								}
+							}
+						}}
+						month={selectionMode === 'to' && toDate ? toDate : fromDate ?? new Date()}
+						timezone={timezoneMode}
+					/>
+
+					<div class="mt-2 flex gap-2">
+						<div class="flex-1">
+							<span class="text-xs text-base-content/60">From</span>
 							<input
 								type="time"
-								class="input-bordered input input-xs mt-1 w-full"
+								class="input-bordered input input-xs w-full"
 								bind:value={fromTime}
 							/>
 						</div>
-
-						<div>
-							<span class="mb-1 block text-xs font-medium text-base-content/60">To</span>
-							<Calendar
-								selected={toDate}
-								onselect={(d) => (toDate = d)}
-								minDate={fromDate ?? undefined}
-								timezone={timezoneMode}
-							/>
+						<div class="flex-1">
+							<span class="text-xs text-base-content/60">To</span>
 							<input
 								type="time"
-								class="input-bordered input input-xs mt-1 w-full"
+								class="input-bordered input input-xs w-full"
 								bind:value={toTime}
 							/>
 						</div>
