@@ -87,7 +87,7 @@
 </script>
 
 <svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
-
+// TODO: Rethink how to place this and display
 <div class="relative" bind:this={container}>
 	<!-- Trigger button -->
 	<button class="btn gap-1 border-base-content/20 bg-base-100 font-normal btn-sm" onclick={toggle}>
@@ -147,16 +147,20 @@
 					<div class="mb-2 flex">
 						<div class="join w-full">
 							<button
-								class="btn join-item btn-xs flex-1 {selectionMode === 'from' ? 'btn-primary' : ''}"
+								class="btn join-item flex-1 btn-xs {selectionMode === 'from' ? 'btn-primary' : ''}"
 								onclick={() => (selectionMode = 'from')}
 							>
-								From{fromDate ? `: ${fromDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+								From{fromDate
+									? `: ${fromDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+									: ''}
 							</button>
 							<button
-								class="btn join-item btn-xs flex-1 {selectionMode === 'to' ? 'btn-primary' : ''}"
+								class="btn join-item flex-1 btn-xs {selectionMode === 'to' ? 'btn-primary' : ''}"
 								onclick={() => (selectionMode = 'to')}
 							>
-								To{toDate ? `: ${toDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+								To{toDate
+									? `: ${toDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+									: ''}
 							</button>
 						</div>
 					</div>
@@ -179,7 +183,7 @@
 								}
 							}
 						}}
-						month={selectionMode === 'to' && toDate ? toDate : fromDate ?? new Date()}
+						month={selectionMode === 'to' && toDate ? toDate : (fromDate ?? new Date())}
 						timezone={timezoneMode}
 					/>
 
@@ -194,11 +198,7 @@
 						</div>
 						<div class="flex-1">
 							<span class="text-xs text-base-content/60">To</span>
-							<input
-								type="time"
-								class="input-bordered input input-xs w-full"
-								bind:value={toTime}
-							/>
+							<input type="time" class="input-bordered input input-xs w-full" bind:value={toTime} />
 						</div>
 					</div>
 				</div>
