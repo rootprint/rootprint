@@ -87,7 +87,7 @@
 </script>
 
 <svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
-// TODO: Rethink how to place this and display
+<!-- TODO: Rethink how to place this and display -->
 <div class="relative" bind:this={container}>
 	<!-- Trigger button -->
 	<button class="btn gap-1 border-base-content/20 bg-base-100 font-normal btn-sm" onclick={toggle}>
