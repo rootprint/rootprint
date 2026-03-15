@@ -4,38 +4,32 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { hashPassword } from 'better-auth/crypto';
-import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
-import { user, account } from '$lib/server/db/schema';
-import { count } from 'drizzle-orm';
+import { user } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 async function seedDefaultAdmin() {
-	const [{ total }] = await db.select({ total: count() }).from(user);
-	if (total > 0) return;
+	const [existing] = await db
+		.select({ id: user.id })
+		.from(user)
+		.where(eq(user.role, 'admin'))
+		.limit(1);
+	if (existing) return;
 
-	const email = env.DEFAULT_ADMIN_EMAIL ?? 'logwiz@logwiz.local';
-	const password = env.DEFAULT_ADMIN_PASSWORD ?? 'logwiz123';
-
-	const userId = crypto.randomUUID();
-	const hashedPassword = await hashPassword(password);
-
-	await db.insert(user).values({
-		id: userId,
-		name: 'Admin',
-		email,
-		role: 'admin'
+	await auth.api.createUser({
+		body: {
+			email: 'logwiz@logwiz.local',
+			password: 'logwiz',
+			name: 'Admin',
+			role: 'admin',
+			data: {
+				username: 'logwiz',
+				mustChangePassword: true
+			}
+		}
 	});
 
-	await db.insert(account).values({
-		id: crypto.randomUUID(),
-		accountId: userId,
-		providerId: 'credential',
-		userId,
-		password: hashedPassword
-	});
-
-	console.log(`Default admin created: ${email}`);
+	console.log('Default admin created: logwiz / logwiz');
 }
 
 if (!building) {
@@ -67,6 +61,18 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	if (session) {
 		event.locals.session = session.session;
 		event.locals.user = session.user;
+
+		// Force password change if required
+		if (
+			session.user.mustChangePassword &&
+			!event.url.pathname.startsWith('/auth/change-password') &&
+			!event.url.pathname.startsWith('/api/auth')
+		) {
+			return new Response(null, {
+				status: 302,
+				headers: { Location: '/auth/change-password' }
+			});
+		}
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });

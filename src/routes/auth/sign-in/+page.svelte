@@ -7,17 +7,17 @@
 	<div class="card-body">
 		<h2 class="card-title justify-center text-2xl">Sign In</h2>
 
-		{#each signIn.fields.allIssues() as issue}
+		{#each signIn.fields.allIssues() as issue (issue.message)}
 			<div class="alert text-sm alert-error">{issue.message}</div>
 		{/each}
 
 		<form {...signIn.preflight(signInSchema)} class="flex flex-col gap-4">
 			<label class="floating-label">
-				<span>Email</span>
+				<span>Email or Username</span>
 				<input
-					{...signIn.fields.email.as('email')}
+					{...signIn.fields.identifier.as('text')}
 					class="input input-md w-full"
-					placeholder="Email"
+					placeholder="Email or Username"
 				/>
 			</label>
 

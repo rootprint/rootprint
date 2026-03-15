@@ -1,23 +1,33 @@
 import { form, command, getRequestEvent } from '$app/server';
-import { redirect, invalid } from '@sveltejs/kit';
+import { redirect, invalid, error } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { inviteToken, account } from '$lib/server/db/schema';
-import { signInSchema, setupPasswordSchema } from '$lib/schemas/auth';
+import { inviteToken, account, user } from '$lib/server/db/schema';
+import { signInSchema, setupPasswordSchema, changePasswordSchema } from '$lib/schemas/auth';
+import { requireUser } from '$lib/middleware/auth';
 import { APIError } from 'better-auth/api';
 import { hashPassword } from 'better-auth/crypto';
 import { eq, and } from 'drizzle-orm';
 
 export const signIn = form(signInSchema, async (data, issue) => {
 	const event = getRequestEvent();
+	const isEmail = data.identifier.includes('@');
+
 	try {
-		await auth.api.signInEmail({
-			body: { email: data.email, password: data._password },
-			headers: event.request.headers
-		});
+		if (isEmail) {
+			await auth.api.signInEmail({
+				body: { email: data.identifier, password: data._password },
+				headers: event.request.headers
+			});
+		} else {
+			await auth.api.signInUsername({
+				body: { username: data.identifier, password: data._password },
+				headers: event.request.headers
+			});
+		}
 	} catch (error) {
 		if (error instanceof APIError) {
-			invalid(issue.email(error.message || 'Invalid email or password'));
+			invalid(issue.identifier(error.message || 'Invalid credentials'));
 		}
 		throw error;
 	}
@@ -27,6 +37,28 @@ export const signIn = form(signInSchema, async (data, issue) => {
 export const signOut = command(async () => {
 	const event = getRequestEvent();
 	await auth.api.signOut({ headers: event.request.headers });
+});
+
+export const changePassword = form(changePasswordSchema, async (data) => {
+	const currentUser = requireUser();
+
+	if (!currentUser.mustChangePassword) {
+		error(403, 'Password change not required');
+	}
+
+	const hashedPassword = await hashPassword(data._password);
+
+	await db
+		.update(account)
+		.set({ password: hashedPassword })
+		.where(and(eq(account.userId, currentUser.id), eq(account.providerId, 'credential')));
+
+	await db
+		.update(user)
+		.set({ mustChangePassword: false })
+		.where(eq(user.id, currentUser.id));
+
+	redirect(303, '/');
 });
 
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
