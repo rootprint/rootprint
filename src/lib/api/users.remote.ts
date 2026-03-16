@@ -6,11 +6,11 @@ import { inviteToken } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/middleware/auth';
 import { createInviteSchema, removeUserSchema, setUserRoleSchema, regenerateInviteSchema } from '$lib/schemas/users';
 import { eq } from 'drizzle-orm';
-import { env } from '$env/dynamic/private';
+import { config } from '$lib/server/config';
 import { randomBytes } from 'crypto';
 import { APIError } from 'better-auth/api';
 
-const INVITE_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
+const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
 
 export const listUsers = query(async () => {
 	requireAdmin();
@@ -21,7 +21,7 @@ export const listUsers = query(async () => {
 	});
 
 	const pendingInvites = await db.select().from(inviteToken);
-	const origin = env.ORIGIN ?? 'http://localhost:5173';
+	const origin = config.origin;
 	const inviteMap = new Map(
 		pendingInvites.map((inv) => [
 			inv.userId,
@@ -61,7 +61,7 @@ export const createInvite = command(createInviteSchema, async (data) => {
 		throw e;
 	}
 
-	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
+	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
 	const token = randomBytes(32).toString('hex');
 	await db.insert(inviteToken).values({
 		userId: created.user.id,
@@ -69,7 +69,7 @@ export const createInvite = command(createInviteSchema, async (data) => {
 		expiresAt
 	});
 
-	const origin = env.ORIGIN ?? 'http://localhost:5173';
+	const origin = config.origin;
 	return { inviteUrl: `${origin}/auth/setup?token=${token}` };
 });
 
@@ -78,7 +78,7 @@ export const regenerateInvite = command(regenerateInviteSchema, async (data) => 
 
 	await db.delete(inviteToken).where(eq(inviteToken.userId, data.userId));
 
-	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
+	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
 	const token = randomBytes(32).toString('hex');
 	await db.insert(inviteToken).values({
 		userId: data.userId,
@@ -86,7 +86,7 @@ export const regenerateInvite = command(regenerateInviteSchema, async (data) => 
 		expiresAt
 	});
 
-	const origin = env.ORIGIN ?? 'http://localhost:5173';
+	const origin = config.origin;
 	return { inviteUrl: `${origin}/auth/setup?token=${token}` };
 });
 

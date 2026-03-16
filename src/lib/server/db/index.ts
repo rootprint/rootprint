@@ -3,10 +3,12 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import Database from 'better-sqlite3';
 import * as schema from './schema';
 import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+import { config } from '$lib/server/config';
 
-mkdirSync('./data', { recursive: true });
+mkdirSync(dirname(config.databasePath), { recursive: true });
 
-const sqlite = new Database('./data/logwiz.db');
+const sqlite = new Database(config.databasePath);
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
 

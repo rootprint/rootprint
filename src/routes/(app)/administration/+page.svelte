@@ -64,7 +64,7 @@
 						<h3 class="text-sm font-semibold">Quickwit Connection</h3>
 						<p class="mt-1 text-sm text-base-content/60">
 							The Quickwit connection URL is configured via the
-							<code class="text-xs">QUICKWIT_URL</code> environment variable on the server.
+							<code class="text-xs">LOGWIZ_QUICKWIT_URL</code> environment variable on the server.
 						</p>
 					</div>
 
@@ -80,7 +80,7 @@
 							</div>
 						{:else if indexes.length === 0}
 							<p class="mt-3 text-sm text-base-content/60">
-								No indexes found. Check that QUICKWIT_URL is configured correctly.
+								No indexes found. Check that LOGWIZ_QUICKWIT_URL is configured correctly.
 							</p>
 						{:else}
 							<div class="mt-3 flex flex-col gap-1">

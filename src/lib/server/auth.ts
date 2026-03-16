@@ -2,13 +2,13 @@ import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { admin, username } from 'better-auth/plugins';
-import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
+import { config } from '$lib/server/config';
 
 export const auth = betterAuth({
-	baseURL: env.ORIGIN,
-	secret: env.BETTER_AUTH_SECRET,
+	baseURL: config.origin,
+	secret: config.secret,
 	emailAndPassword: { enabled: true, disableSignUp: true },
 	database: drizzleAdapter(db, { provider: 'sqlite' }),
 	user: {
@@ -21,16 +21,16 @@ export const auth = betterAuth({
 	},
 	rateLimit: {
 		enabled: true,
-		window: 60,
-		max: 100,
+		window: config.rateLimitWindow,
+		max: config.rateLimitMax,
 		customRules: {
 			'/sign-in/email': {
-				window: 60,
-				max: 5
+				window: config.rateLimitWindow,
+				max: config.signinRateLimitMax
 			},
 			'/sign-in/username': {
-				window: 60,
-				max: 5
+				window: config.rateLimitWindow,
+				max: config.signinRateLimitMax
 			}
 		}
 	},

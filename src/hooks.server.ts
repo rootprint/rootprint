@@ -7,6 +7,17 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { config, validateConfig, getGeneratedPassword } from '$lib/server/config';
+
+if (!building) {
+	validateConfig();
+
+	const generatedPassword = getGeneratedPassword();
+	if (generatedPassword) {
+		console.log(`[logwiz] Generated admin password: ${generatedPassword}`);
+		console.log(`[logwiz] Set LOGWIZ_ADMIN_PASSWORD to use a fixed password.`);
+	}
+}
 
 async function seedDefaultAdmin() {
 	const [existing] = await db
@@ -18,18 +29,18 @@ async function seedDefaultAdmin() {
 
 	await auth.api.createUser({
 		body: {
-			email: 'logwiz@logwiz.local',
-			password: 'logwiz',
+			email: config.adminEmail,
+			password: config.adminPassword,
 			name: 'Admin',
 			role: 'admin',
 			data: {
-				username: 'logwiz',
+				username: config.adminUsername,
 				mustChangePassword: true
 			}
 		}
 	});
 
-	console.log('Default admin created: logwiz / logwiz');
+	console.log(`Default admin created: ${config.adminUsername} / ${config.adminEmail}`);
 }
 
 if (!building) {
@@ -37,7 +48,7 @@ if (!building) {
 }
 
 const authLimiter = new RetryAfterRateLimiter({
-	IP: [5, 'm']
+	IP: [config.signinRateLimitMax, 'm']
 });
 
 const AUTH_PATHS = ['/auth/sign-in', '/auth/setup', '/api/auth/sign-in'];
