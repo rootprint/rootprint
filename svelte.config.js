@@ -6,6 +6,12 @@ const config = {
 		adapter: adapter(),
 		experimental: {
 			remoteFunctions: true
+		},
+		csp: {
+			mode: 'auto',
+			directives: {
+				'script-src': ['self']
+			}
 		}
 	},
 	compilerOptions: {

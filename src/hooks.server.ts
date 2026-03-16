@@ -78,4 +78,38 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	return svelteKitHandler({ event, resolve, auth, building });
 };
 
-export const handle = sequence(handleRateLimit, handleBetterAuth);
+// IMPORTANT: Must be first in sequence() so headers are applied to all responses,
+// including 429s from rate limiting and 302 auth redirects.
+// Downstream hooks must use `new Response()` (mutable headers), not `Response.redirect()`.
+const handleSecurityHeaders: Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+
+	// Read existing CSP (contains script-src with nonce from kit.csp), then append
+	const existingCsp = response.headers.get('content-security-policy') ?? '';
+	const additionalCsp = [
+		"default-src 'self'",
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+		"font-src 'self' https://fonts.gstatic.com",
+		"img-src 'self' data:",
+		"connect-src 'self' https://api.iconify.design",
+		"object-src 'none'",
+		"frame-ancestors 'none'",
+		"base-uri 'self'",
+		"form-action 'self'"
+	].join('; ');
+	response.headers.set(
+		'content-security-policy',
+		existingCsp ? `${existingCsp}; ${additionalCsp}` : additionalCsp
+	);
+
+	response.headers.set('X-Content-Type-Options', 'nosniff');
+	response.headers.set('X-Frame-Options', 'DENY');
+	response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+	response.headers.set('X-XSS-Protection', '0');
+	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+	return response;
+};
+
+export const handle = sequence(handleSecurityHeaders, handleRateLimit, handleBetterAuth);
