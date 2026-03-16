@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, uniqueIndex, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { user } from './auth.schema';
 
@@ -63,5 +63,24 @@ export const searchHistory = sqliteTable('search_history', {
 		.default(sql`(unixepoch())`)
 		.notNull()
 });
+
+export const savedQuery = sqliteTable(
+	'saved_query',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		indexName: text('index_name').notNull(),
+		name: text('name').notNull(),
+		description: text('description'),
+		query: text('query').notNull().default(''),
+		filters: text('filters', { mode: 'json' }).$type<Record<string, string[]>>().notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.default(sql`(unixepoch())`)
+			.notNull()
+	},
+	(table) => [index('saved_query_user_index').on(table.userId, table.indexName)]
+);
 
 export * from './auth.schema';

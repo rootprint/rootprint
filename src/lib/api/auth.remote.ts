@@ -53,10 +53,7 @@ export const changePassword = form(changePasswordSchema, async (data) => {
 		.set({ password: hashedPassword })
 		.where(and(eq(account.userId, currentUser.id), eq(account.providerId, 'credential')));
 
-	await db
-		.update(user)
-		.set({ mustChangePassword: false })
-		.where(eq(user.id, currentUser.id));
+	await db.update(user).set({ mustChangePassword: false }).where(eq(user.id, currentUser.id));
 
 	redirect(303, '/');
 });
@@ -70,7 +67,9 @@ export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
 	}
 
 	if (invite.expiresAt < new Date()) {
-		invalid(issue.token('Invite link has expired. Please ask your administrator for a new invite.'));
+		invalid(
+			issue.token('Invite link has expired. Please ask your administrator for a new invite.')
+		);
 		return;
 	}
 

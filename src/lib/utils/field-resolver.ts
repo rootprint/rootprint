@@ -21,10 +21,7 @@ function resolve(obj: Record<string, unknown>, path: string): unknown {
 	return resolveSegments(obj, path.split('.'));
 }
 
-export function resolveFieldValue(
-	hit: Record<string, unknown>,
-	path: string
-): unknown | undefined {
+export function resolveFieldValue(hit: Record<string, unknown>, path: string): unknown | undefined {
 	// Try direct resolve first
 	const direct = resolve(hit, path);
 	if (direct !== undefined) return direct;

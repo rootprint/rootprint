@@ -4,7 +4,12 @@ import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { inviteToken } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/middleware/auth';
-import { createInviteSchema, removeUserSchema, setUserRoleSchema, regenerateInviteSchema } from '$lib/schemas/users';
+import {
+	createInviteSchema,
+	removeUserSchema,
+	setUserRoleSchema,
+	regenerateInviteSchema
+} from '$lib/schemas/users';
 import { eq } from 'drizzle-orm';
 import { config } from '$lib/server/config';
 import { randomBytes } from 'crypto';

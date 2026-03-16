@@ -47,7 +47,13 @@
 					</ul>
 				{/if}
 				<div class="border-t border-base-300 p-2">
-					<button class="btn w-full justify-start btn-ghost btn-sm" onclick={async () => { await signOut(); goto('/auth/sign-in'); }}>
+					<button
+						class="btn w-full justify-start btn-ghost btn-sm"
+						onclick={async () => {
+							await signOut();
+							goto('/auth/sign-in');
+						}}
+					>
 						<Icon icon="lucide:log-out" width="16" height="16" class="opacity-70" />
 						Log out
 					</button>

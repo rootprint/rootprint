@@ -117,7 +117,8 @@
 							<td class="text-base-content/60">{u.email}</td>
 							<td>
 								{#if u.status === 'pending'}
-									{@const expired = u.inviteExpiresAt && new Date(u.inviteExpiresAt).getTime() < Date.now()}
+									{@const expired =
+										u.inviteExpiresAt && new Date(u.inviteExpiresAt).getTime() < Date.now()}
 									<span class="badge badge-sm">{expired ? 'Expired' : 'Pending'}</span>
 								{:else}
 									<span class="badge badge-sm">Active</span>

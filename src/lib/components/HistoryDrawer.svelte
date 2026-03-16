@@ -1,9 +1,11 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { getHistory, deleteHistoryEntry, clearHistory } from '$lib/api/history.remote';
+	import { getSavedQueries, deleteSavedQuery } from '$lib/api/saved-queries.remote';
 	import { type TimeRange } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
 	import type { ParsedQuery } from '$lib/utils/query-params';
+	import SaveQueryModal from './SaveQueryModal.svelte';
 
 	let {
 		open,
@@ -23,7 +25,7 @@
 
 	const tabs = [
 		{ id: 'history' as const, label: 'History', icon: 'lucide:clock', enabled: true },
-		{ id: 'saved' as const, label: 'Saved', icon: 'lucide:bookmark', enabled: false },
+		{ id: 'saved' as const, label: 'Saved', icon: 'lucide:bookmark', enabled: true },
 		{ id: 'shared' as const, label: 'Shared', icon: 'lucide:users', enabled: false }
 	];
 
@@ -38,6 +40,22 @@
 
 	let entries = $state<HistoryEntry[]>([]);
 	let loading = $state(false);
+
+	type SavedEntry = {
+		id: number;
+		indexName: string;
+		name: string;
+		description: string | null;
+		query: string;
+		filters: Record<string, string[]>;
+		createdAt: Date;
+	};
+
+	let savedEntries = $state<SavedEntry[]>([]);
+	let savedLoading = $state(false);
+	let savedVersion = $state(0);
+	let savingEntry = $state<HistoryEntry | null>(null);
+	let saveModalOpen = $state(false);
 
 	async function load() {
 		if (!indexName) return;
@@ -75,11 +93,18 @@
 		return Object.values(filters).reduce((sum, v) => sum + v.length, 0);
 	}
 
-	function restore(entry: HistoryEntry) {
+	function restoreHistory(entry: HistoryEntry) {
 		onrestore({
 			query: entry.query,
 			filters: entry.filters,
 			timeRange: entry.timeRange
+		});
+	}
+
+	function restoreSaved(entry: SavedEntry) {
+		onrestore({
+			query: entry.query,
+			filters: entry.filters
 		});
 	}
 
@@ -93,6 +118,41 @@
 		await clearHistory({ indexName });
 		entries = [];
 	}
+
+	async function loadSaved() {
+		if (!indexName) return;
+		savedLoading = true;
+		try {
+			savedEntries = (await getSavedQueries({ indexName })) as SavedEntry[];
+		} catch {
+			savedEntries = [];
+		} finally {
+			savedLoading = false;
+		}
+	}
+
+	$effect(() => {
+		if (open && activeTab === 'saved' && indexName) {
+			void savedVersion;
+			loadSaved();
+		}
+	});
+
+	async function removeSaved(id: number) {
+		await deleteSavedQuery({ id });
+		savedEntries = savedEntries.filter((e) => e.id !== id);
+	}
+
+	function bookmark(entry: HistoryEntry) {
+		savingEntry = entry;
+		saveModalOpen = true;
+	}
+
+	$effect(() => {
+		if (!saveModalOpen) {
+			savingEntry = null;
+		}
+	});
 </script>
 
 {#if open}
@@ -142,11 +202,11 @@
 								class="group flex w-full cursor-pointer flex-col gap-0.5 border-b border-base-300/50 px-3 py-2 text-left hover:bg-base-200"
 								role="button"
 								tabindex="0"
-								onclick={() => restore(entry)}
+								onclick={() => restoreHistory(entry)}
 								onkeydown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
 										e.preventDefault();
-										restore(entry);
+										restoreHistory(entry);
 									}
 								}}
 							>
@@ -154,6 +214,21 @@
 									<span class="flex-1 truncate text-xs font-medium">
 										{entry.query || '*'}
 									</span>
+									<button
+										class="btn p-0 opacity-20 btn-ghost btn-xs group-hover:opacity-60"
+										onclick={(e) => {
+											e.stopPropagation();
+											bookmark(entry);
+										}}
+										title="Save query"
+									>
+										<Icon
+											icon="lucide:bookmark"
+											width="12"
+											height="12"
+											class="hover:text-warning"
+										/>
+									</button>
 									<button
 										class="btn p-0 opacity-0 btn-ghost btn-xs group-hover:opacity-100"
 										onclick={(e) => {
@@ -180,6 +255,81 @@
 					</div>
 				{/if}
 			{/if}
+			{#if activeTab === 'saved'}
+				{#if savedLoading}
+					<div class="flex items-center justify-center py-4">
+						<span class="loading loading-sm loading-spinner"></span>
+					</div>
+				{:else if savedEntries.length === 0}
+					<div class="px-3 py-3">
+						<p class="text-[11px] text-base-content/30">No saved queries yet</p>
+					</div>
+				{:else}
+					<div class="flex flex-col">
+						{#each savedEntries as entry (entry.id)}
+							{@const count = filterCount(entry.filters)}
+							<div
+								class="group flex w-full cursor-pointer flex-col gap-0.5 border-b border-base-300/50 px-3 py-2 text-left hover:bg-base-200"
+								role="button"
+								tabindex="0"
+								onclick={() => restoreSaved(entry)}
+								onkeydown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										restoreSaved(entry);
+									}
+								}}
+							>
+								<div class="flex items-center gap-1">
+									<Icon
+										icon="lucide:bookmark"
+										width="12"
+										height="12"
+										class="shrink-0 text-warning"
+									/>
+									<span class="flex-1 truncate text-xs font-medium">
+										{entry.name}
+									</span>
+									<button
+										class="btn p-0 opacity-0 btn-ghost btn-xs group-hover:opacity-100"
+										onclick={(e) => {
+											e.stopPropagation();
+											removeSaved(entry.id);
+										}}
+										title="Remove saved query"
+									>
+										<Icon icon="lucide:x" width="12" height="12" />
+									</button>
+								</div>
+								<div class="flex items-center gap-1.5 pl-4 text-[10px] text-base-content/40">
+									<span class="truncate">{entry.query || '*'}</span>
+									{#if count > 0}
+										<span class="badge badge-xs">{count} filter{count > 1 ? 's' : ''}</span>
+									{/if}
+								</div>
+								{#if entry.description}
+									<div class="truncate pl-4 text-[10px] text-base-content/30 italic">
+										{entry.description}
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/if}
+			{/if}
 		</div>
+		<SaveQueryModal
+			bind:open={saveModalOpen}
+			entry={savingEntry
+				? {
+						indexName: savingEntry.indexName,
+						query: savingEntry.query,
+						filters: savingEntry.filters
+					}
+				: null}
+			onsaved={() => {
+				savedVersion++;
+			}}
+		/>
 	</div>
 {/if}

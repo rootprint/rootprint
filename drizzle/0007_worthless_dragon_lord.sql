@@ -1,0 +1,1 @@
+ALTER TABLE `saved_query` DROP COLUMN `time_range`;

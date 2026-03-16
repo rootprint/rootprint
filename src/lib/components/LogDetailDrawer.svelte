@@ -104,15 +104,8 @@
 			{#if activeTab === 'json'}
 				{#if hit}
 					<div class="relative rounded-box bg-base-200">
-						<button
-							class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs"
-							onclick={copyJson}
-						>
-							<Icon
-								icon={copied ? 'lucide:check' : 'lucide:copy'}
-								width="14"
-								height="14"
-							/>
+						<button class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs" onclick={copyJson}>
+							<Icon icon={copied ? 'lucide:check' : 'lucide:copy'} width="14" height="14" />
 						</button>
 						<div class="flex font-['Roboto_Mono',monospace] text-sm">
 							<div
@@ -171,8 +164,7 @@
 											</div>
 										{/if}
 									</td>
-									<td
-										class="pl-1 font-['Roboto_Mono',monospace] text-xs text-base-content/70"
+									<td class="pl-1 font-['Roboto_Mono',monospace] text-xs text-base-content/70"
 										>{key}</td
 									>
 									<td class="font-['Roboto_Mono',monospace] text-xs break-all">
