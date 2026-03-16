@@ -457,6 +457,13 @@ export function createSearchStore(
 	// --- Setup auto-search effect (must be called in component context) ---
 
 	function setupAutoSearch() {
+		// Restore index in URL when it's lost (e.g. clicking the logo link)
+		$effect(() => {
+			if (urlIndex === null && selectedIndex !== null && indexes.length > 0) {
+				navigateQuery({ index: selectedIndex });
+			}
+		});
+
 		$effect(() => {
 			const parsed = parsedQuery();
 			const currentParams = serialize(parsed).toString();
