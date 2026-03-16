@@ -156,6 +156,16 @@
 </script>
 
 {#if open}
+	<!-- Backdrop -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="absolute inset-0 z-10 bg-black/50"
+		onclick={onclose}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') onclose();
+		}}
+	></div>
+
 	<div
 		class="absolute top-0 right-0 z-20 flex h-full w-xl flex-col border-l border-base-300 bg-base-100 shadow-lg"
 	>
