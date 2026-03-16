@@ -29,8 +29,7 @@ export const saveQuery = command(saveQuerySchema, async (data) => {
 		indexName: data.indexName,
 		name: data.name,
 		description: data.description,
-		query: data.query,
-		filters: data.filters
+		query: data.query
 	});
 });
 

@@ -12,7 +12,6 @@
 		entry: {
 			indexName: string;
 			query: string;
-			filters: Record<string, string[]>;
 		} | null;
 		onsaved?: () => void;
 	} = $props();
@@ -36,8 +35,7 @@
 				indexName: entry.indexName,
 				name,
 				description: description || undefined,
-				query: entry.query,
-				filters: entry.filters
+				query: entry.query
 			});
 			toast.success('Query saved');
 			onsaved();
@@ -55,9 +53,6 @@
 		description = '';
 	}
 
-	function filterCount(filters: Record<string, string[]>): number {
-		return Object.values(filters).reduce((sum, v) => sum + v.length, 0);
-	}
 </script>
 
 <dialog class="modal" class:modal-open={open}>
@@ -103,12 +98,6 @@
 							<span class="text-base-content/40">Query:</span>
 							{entry.query || '*'}
 						</div>
-						{#if filterCount(entry.filters) > 0}
-							<div>
-								<span class="text-base-content/40">Filters:</span>
-								{filterCount(entry.filters)} active
-							</div>
-						{/if}
 					</div>
 				</div>
 

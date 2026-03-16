@@ -47,7 +47,6 @@
 		name: string;
 		description: string | null;
 		query: string;
-		filters: Record<string, string[]>;
 		createdAt: Date;
 	};
 
@@ -99,13 +98,14 @@
 			filters: entry.filters,
 			timeRange: entry.timeRange
 		});
+		onclose();
 	}
 
 	function restoreSaved(entry: SavedEntry) {
 		onrestore({
-			query: entry.query,
-			filters: entry.filters
+			query: entry.query
 		});
+		onclose();
 	}
 
 	async function remove(id: number) {
@@ -159,23 +159,21 @@
 	<div
 		class="absolute top-0 right-0 z-20 flex h-full w-xl flex-col border-l border-base-300 bg-base-100 shadow-lg"
 	>
-		<div class="flex items-center justify-between border-b border-base-300 px-3 py-1.5">
-			<div class="flex flex-1">
+		<div class="flex items-center justify-between border-b border-base-300 px-3">
+			<div role="tablist" class="tabs-border tabs">
 				{#each tabs as tab (tab.id)}
 					<button
-						class="flex-1 px-1 py-1.5 text-[10px] font-medium transition-colors
-							{activeTab === tab.id ? 'border-b-2 border-primary text-primary' : 'text-base-content/40'}
-							{!tab.enabled ? 'cursor-not-allowed opacity-30' : 'hover:text-base-content/70'}"
+						role="tab"
+						class="tab gap-1.5"
+						class:tab-active={activeTab === tab.id}
+						disabled={!tab.enabled}
+						title={tab.enabled ? tab.label : `${tab.label} (coming soon)`}
 						onclick={() => {
 							if (tab.enabled) activeTab = tab.id;
 						}}
-						disabled={!tab.enabled}
-						title={tab.enabled ? tab.label : `${tab.label} (coming soon)`}
 					>
-						<div class="flex items-center justify-center gap-1">
-							<Icon icon={tab.icon} width="12" height="12" />
-							{tab.label}
-						</div>
+						<Icon icon={tab.icon} width="12" height="12" />
+						{tab.label}
 					</button>
 				{/each}
 			</div>
@@ -267,7 +265,6 @@
 				{:else}
 					<div class="flex flex-col">
 						{#each savedEntries as entry (entry.id)}
-							{@const count = filterCount(entry.filters)}
 							<div
 								class="group flex w-full cursor-pointer flex-col gap-0.5 border-b border-base-300/50 px-3 py-2 text-left hover:bg-base-200"
 								role="button"
@@ -281,12 +278,6 @@
 								}}
 							>
 								<div class="flex items-center gap-1">
-									<Icon
-										icon="lucide:bookmark"
-										width="12"
-										height="12"
-										class="shrink-0 text-warning"
-									/>
 									<span class="flex-1 truncate text-xs font-medium">
 										{entry.name}
 									</span>
@@ -301,14 +292,11 @@
 										<Icon icon="lucide:x" width="12" height="12" />
 									</button>
 								</div>
-								<div class="flex items-center gap-1.5 pl-4 text-[10px] text-base-content/40">
+								<div class="flex items-center gap-1.5 text-[10px] text-base-content/40">
 									<span class="truncate">{entry.query || '*'}</span>
-									{#if count > 0}
-										<span class="badge badge-xs">{count} filter{count > 1 ? 's' : ''}</span>
-									{/if}
 								</div>
 								{#if entry.description}
-									<div class="truncate pl-4 text-[10px] text-base-content/30 italic">
+									<div class="truncate text-[10px] text-base-content/30 italic">
 										{entry.description}
 									</div>
 								{/if}
@@ -323,8 +311,7 @@
 			entry={savingEntry
 				? {
 						indexName: savingEntry.indexName,
-						query: savingEntry.query,
-						filters: savingEntry.filters
+						query: savingEntry.query
 					}
 				: null}
 			onsaved={() => {

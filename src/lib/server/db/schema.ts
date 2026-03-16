@@ -75,7 +75,6 @@ export const savedQuery = sqliteTable(
 		name: text('name').notNull(),
 		description: text('description'),
 		query: text('query').notNull().default(''),
-		filters: text('filters', { mode: 'json' }).$type<Record<string, string[]>>().notNull(),
 		createdAt: integer('created_at', { mode: 'timestamp' })
 			.default(sql`(unixepoch())`)
 			.notNull()
