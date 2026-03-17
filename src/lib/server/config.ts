@@ -1,5 +1,7 @@
 import { env } from '$env/dynamic/private';
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
 
 export interface Config {
 	// Required
@@ -38,19 +40,30 @@ function parseIntWithDefault(value: string | undefined, defaultValue: number): n
 	return parsed;
 }
 
+function resolveSecret(dataDir: string): string {
+	const secretPath = resolve(dataDir, '.secret');
+	if (existsSync(secretPath)) {
+		const existing = readFileSync(secretPath, 'utf-8').trim();
+		if (existing.length >= 32) return existing;
+	}
+	const generated = randomBytes(32).toString('hex');
+	mkdirSync(dataDir, { recursive: true });
+	writeFileSync(secretPath, generated, { mode: 0o600 });
+	console.warn(`[logwiz] Generated auth secret at ${secretPath}`);
+	return generated;
+}
+
 let _config: Config | null = null;
 let _generatedPassword: string | null = null;
 
 export function buildConfig(): Config {
 	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL', 'QUICKWIT_URL');
-	const secret = readEnv('LOGWIZ_SECRET', 'BETTER_AUTH_SECRET');
-	const origin = readEnv('LOGWIZ_ORIGIN', 'ORIGIN');
+	const origin = readEnv('ORIGIN', 'LOGWIZ_ORIGIN');
 
 	// Validate required vars — collect all errors
 	const missing: string[] = [];
 	if (!quickwitUrl) missing.push('LOGWIZ_QUICKWIT_URL');
-	if (!secret) missing.push('LOGWIZ_SECRET');
-	if (!origin) missing.push('LOGWIZ_ORIGIN');
+	if (!origin) missing.push('ORIGIN');
 
 	if (missing.length > 0) {
 		throw new Error(
@@ -59,15 +72,12 @@ export function buildConfig(): Config {
 		);
 	}
 
-	// Validate secret length
-	if (secret!.length < 32) {
-		throw new Error(
-			`[logwiz] LOGWIZ_SECRET must be at least 32 characters (got ${secret!.length}).`
-		);
-	}
+	// Resolve secret: read from data dir, auto-generate on first run
+	const databasePath = readEnv('LOGWIZ_DATABASE_PATH') ?? './data/logwiz.db';
+	const dataDir = dirname(resolve(databasePath));
+	const secret = resolveSecret(dataDir);
 
 	// Optional vars with defaults
-	const databasePath = readEnv('LOGWIZ_DATABASE_PATH') ?? './data/logwiz.db';
 	const adminEmail = readEnv('LOGWIZ_ADMIN_EMAIL') ?? 'logwiz@logwiz.local';
 	const adminUsername = readEnv('LOGWIZ_ADMIN_USERNAME') ?? 'logwiz';
 

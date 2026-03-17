@@ -3,8 +3,8 @@ version: 0.8
 cluster_id: quickwit-local
 node_id: quickwit-node-1
 
-metastore_uri: s3://quickwit/indexes
-default_index_root_uri: s3://quickwit/indexes
+metastore_uri: file:///quickwit/qwdata/indexes
+default_index_root_uri: file:///quickwit/qwdata/indexes
 
 listen_address: 0.0.0.0
 

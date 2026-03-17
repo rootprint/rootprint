@@ -22,7 +22,6 @@
 	},
 	"devDependencies": {
 		"@better-auth/cli": "~1.4.21",
-		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/typography": "^0.5.19",
@@ -36,6 +35,7 @@
 		"prettier-plugin-svelte": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"svelte": "^5.51.0",
+		"svelte-adapter-bun": "^1.0.1",
 		"svelte-check": "^4.4.2",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",
