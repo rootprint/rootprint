@@ -8,13 +8,13 @@ function inferType(value: unknown): string {
 
 export function extractJsonSubFields(
 	hits: Record<string, unknown>[],
-	jsonFieldNames: Set<string>
+	jsonFields: Map<string, boolean>
 ): IndexField[] {
-	const discovered = new Map<string, string>();
+	const discovered = new Map<string, { type: string; fast: boolean }>();
 
 	const MAX_DEPTH = 10;
 
-	function walk(obj: unknown, prefix: string, depth = 0) {
+	function walk(obj: unknown, prefix: string, fast: boolean, depth = 0) {
 		if (depth > MAX_DEPTH) return;
 		if (obj === null || obj === undefined || typeof obj !== 'object' || Array.isArray(obj)) return;
 		for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
@@ -25,23 +25,23 @@ export function extractJsonSubFields(
 				typeof value === 'object' &&
 				!Array.isArray(value)
 			) {
-				walk(value, fullPath, depth + 1);
+				walk(value, fullPath, fast, depth + 1);
 			} else if (!discovered.has(fullPath)) {
-				discovered.set(fullPath, inferType(value));
+				discovered.set(fullPath, { type: inferType(value), fast });
 			}
 		}
 	}
 
 	for (const hit of hits) {
-		for (const fieldName of jsonFieldNames) {
+		for (const [fieldName, fast] of jsonFields) {
 			const value = hit[fieldName];
 			if (value !== null && value !== undefined && typeof value === 'object') {
-				walk(value, fieldName);
+				walk(value, fieldName, fast);
 			}
 		}
 	}
 
 	return Array.from(discovered.entries())
 		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([name, type]) => ({ name, type, fast: false }));
+		.map(([name, { type, fast }]) => ({ name, type, fast }));
 }

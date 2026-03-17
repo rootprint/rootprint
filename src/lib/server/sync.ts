@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { qwIndex, qwFieldMapping, qwSource } from '$lib/server/db/schema';
-import { eq, count, and, notInArray } from 'drizzle-orm';
+import { eq, count, and, notInArray, or, isNull } from 'drizzle-orm';
 import type { FieldMapping } from 'quickwit-js';
 import { getQuickwitClient } from '$lib/server/quickwit';
 
@@ -90,11 +90,32 @@ export function getFieldConfig(indexId: string) {
 		.where(eq(qwIndex.indexId, indexId))
 		.all();
 
+	const internalId = row?.id ?? null;
+
+	const fastJsonFields: string[] = [];
+	if (internalId !== null) {
+		const rows = db
+			.select({ name: qwFieldMapping.name })
+			.from(qwFieldMapping)
+			.where(
+				and(
+					eq(qwFieldMapping.indexId, internalId),
+					eq(qwFieldMapping.type, 'json'),
+					or(eq(qwFieldMapping.fast, true), isNull(qwFieldMapping.fast))
+				)
+			)
+			.all();
+		for (const r of rows) {
+			fastJsonFields.push(r.name);
+		}
+	}
+
 	return {
-		id: row?.id ?? null,
+		id: internalId,
 		levelField: row?.levelField ?? 'level',
 		timestampField: row?.timestampField ?? 'timestamp',
-		messageField: row?.messageField ?? 'message'
+		messageField: row?.messageField ?? 'message',
+		fastJsonFields
 	};
 }
 

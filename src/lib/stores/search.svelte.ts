@@ -356,9 +356,9 @@ export function createSearchStore(
 			numHits = result.numHits;
 
 			if (result.hits.length > 0) {
-				const jsonNames = new Set(schemaFields.filter((f) => f.type === 'json').map((f) => f.name));
-				if (jsonNames.size > 0) {
-					const discovered = extractJsonSubFields(result.hits, jsonNames);
+				const jsonFields = new Map(schemaFields.filter((f) => f.type === 'json').map((f) => [f.name, f.fast] as const));
+				if (jsonFields.size > 0) {
+					const discovered = extractJsonSubFields(result.hits, jsonFields);
 					const nonJson = schemaFields.filter((f) => f.type !== 'json');
 					if (append) {
 						const existingDiscovered = indexFields.filter(

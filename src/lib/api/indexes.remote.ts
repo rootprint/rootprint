@@ -45,7 +45,11 @@ export const getIndexFields = query(getIndexFieldsSchema, async (data) => {
 	const commitTimeoutSecs = settings?.commit_timeout_secs ?? 30;
 
 	return {
-		fields: fields.map((f) => ({ name: f.name, type: f.type, fast: f.fast === true })),
+		fields: fields.map((f) => ({
+			name: f.name,
+			type: f.type,
+			fast: f.type === 'json' ? f.fast !== false : f.fast === true
+		})),
 		commitTimeoutSecs
 	};
 });

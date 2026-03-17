@@ -49,7 +49,8 @@ function resolveTimestamps(data: {
 
 async function partitionFastFields(
 	internalId: number | null,
-	requestedFields: string[]
+	requestedFields: string[],
+	fastJsonFields: string[]
 ): Promise<{ fast: string[]; unsupported: string[] }> {
 	if (requestedFields.length === 0) return { fast: [], unsupported: [] };
 	if (internalId === null) return { fast: [], unsupported: requestedFields };
@@ -66,6 +67,14 @@ async function partitionFastFields(
 		);
 
 	const fastSet = new Set(fastRows.map((r) => r.name));
+
+	// Fallback: sub-paths of fast JSON fields are also fast
+	for (const f of requestedFields) {
+		if (!fastSet.has(f) && fastJsonFields.some((j) => f.startsWith(`${j}.`))) {
+			fastSet.add(f);
+		}
+	}
+
 	return {
 		fast: requestedFields.filter((f) => fastSet.has(f)),
 		unsupported: requestedFields.filter((f) => !fastSet.has(f))
@@ -83,7 +92,8 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 
 	const { fast: filterFields, unsupported: unsupportedFilterFields } = await partitionFastFields(
 		config.id,
-		data.quickFilterFields ?? []
+		data.quickFilterFields ?? [],
+		config.fastJsonFields
 	);
 
 	const query = index
@@ -105,7 +115,9 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 		for (const [field, agg] of Object.entries(result.aggregations)) {
 			const bucketAgg = agg as { buckets?: { key: string }[] };
 			if (bucketAgg.buckets) {
-				aggregations[field] = bucketAgg.buckets.map((b) => formatFieldValue(b.key));
+				aggregations[field] = bucketAgg.buckets
+					.map((b) => formatFieldValue(b.key))
+					.filter((v) => v !== '');
 			}
 		}
 	}
@@ -124,7 +136,7 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 	requireUser();
 
 	const config = getFieldConfig(data.indexId);
-	const { unsupported } = await partitionFastFields(config.id, [data.field]);
+	const { unsupported } = await partitionFastFields(config.id, [data.field], config.fastJsonFields);
 	if (unsupported.length > 0) {
 		return { values: [], unsupported: true };
 	}
@@ -150,8 +162,8 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 		| { buckets?: { key: string }[] }
 		| undefined;
 	const searchLower = data.searchTerm.toLowerCase();
-	const values = (bucketAgg?.buckets?.map((b) => formatFieldValue(b.key)) ?? []).filter((v) =>
-		v.toLowerCase().includes(searchLower)
+	const values = (bucketAgg?.buckets?.map((b) => formatFieldValue(b.key)) ?? []).filter(
+		(v) => v !== '' && v.toLowerCase().includes(searchLower)
 	);
 
 	return { values, unsupported: false };
