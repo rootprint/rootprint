@@ -38,7 +38,7 @@ export const getHistory = query(getHistorySchema, async (data) => {
 	const entries = await db
 		.select()
 		.from(searchHistory)
-		.where(and(eq(searchHistory.userId, user.id), eq(searchHistory.indexName, data.indexName)))
+		.where(and(eq(searchHistory.userId, user.id), eq(searchHistory.indexName, data.indexId)))
 		.orderBy(desc(searchHistory.executedAt))
 		.limit(50);
 
@@ -52,7 +52,7 @@ export const recordSearch = command(recordSearchSchema, async (data) => {
 	const [latest] = await db
 		.select()
 		.from(searchHistory)
-		.where(and(eq(searchHistory.userId, user.id), eq(searchHistory.indexName, data.indexName)))
+		.where(and(eq(searchHistory.userId, user.id), eq(searchHistory.indexName, data.indexId)))
 		.orderBy(desc(searchHistory.executedAt))
 		.limit(1);
 
@@ -62,7 +62,7 @@ export const recordSearch = command(recordSearchSchema, async (data) => {
 
 	await db.insert(searchHistory).values({
 		userId: user.id,
-		indexName: data.indexName,
+		indexName: data.indexId,
 		query: data.query,
 		timeRange: data.timeRange,
 		filters: data.filters
@@ -95,10 +95,10 @@ export const deleteHistoryEntry = command(deleteHistoryEntrySchema, async (data)
 export const clearHistory = command(clearHistorySchema, async (data) => {
 	const user = requireUser();
 
-	if (data.indexName) {
+	if (data.indexId) {
 		await db
 			.delete(searchHistory)
-			.where(and(eq(searchHistory.userId, user.id), eq(searchHistory.indexName, data.indexName)));
+			.where(and(eq(searchHistory.userId, user.id), eq(searchHistory.indexName, data.indexId)));
 	} else {
 		await db.delete(searchHistory).where(eq(searchHistory.userId, user.id));
 	}

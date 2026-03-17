@@ -15,7 +15,7 @@ export const getSavedQueries = query(getSavedQueriesSchema, async (data) => {
 	const entries = await db
 		.select()
 		.from(savedQuery)
-		.where(and(eq(savedQuery.userId, user.id), eq(savedQuery.indexName, data.indexName)))
+		.where(and(eq(savedQuery.userId, user.id), eq(savedQuery.indexName, data.indexId)))
 		.orderBy(desc(savedQuery.createdAt));
 
 	return entries;
@@ -26,7 +26,7 @@ export const saveQuery = command(saveQuerySchema, async (data) => {
 
 	await db.insert(savedQuery).values({
 		userId: user.id,
-		indexName: data.indexName,
+		indexName: data.indexId,
 		name: data.name,
 		description: data.description,
 		query: data.query

@@ -105,7 +105,7 @@ export function createSearchStore(
 		new Set([fieldConfig.timestampField, fieldConfig.messageField])
 	);
 	let quickFilterAvailableFields = $derived(
-		indexFields.filter((f) => !quickFilterExcludedFields.has(f.name))
+		indexFields.filter((f) => f.fast && !quickFilterExcludedFields.has(f.name))
 	);
 
 	// --- Internal helpers ---
@@ -156,7 +156,7 @@ export function createSearchStore(
 	function recordCurrentSearch(query: string) {
 		if (!selectedIndex) return;
 		recordSearch({
-			indexName: selectedIndex,
+			indexId: selectedIndex,
 			query,
 			timeRange,
 			filters: activeFilters
@@ -203,9 +203,9 @@ export function createSearchStore(
 		fieldsLoading = true;
 		try {
 			const [indexFieldsResult, config, pref] = await Promise.all([
-				getIndexFields({ indexName }),
+				getIndexFields({ indexId: indexName }),
 				getIndexConfig(indexName),
-				getPreference({ indexName })
+				getPreference({ indexId: indexName })
 			]);
 			indexFields = indexFieldsResult.fields;
 			schemaFields = indexFieldsResult.fields;
@@ -251,7 +251,7 @@ export function createSearchStore(
 
 	const debouncedSaveFields = debounce(() => {
 		if (selectedIndex) {
-			saveDisplayFields({ indexName: selectedIndex, fields: activeFields });
+			saveDisplayFields({ indexId: selectedIndex, fields: activeFields });
 		}
 	}, 500);
 
@@ -261,7 +261,7 @@ export function createSearchStore(
 
 	const debouncedSaveQuickFilters = debounce(() => {
 		if (selectedIndex) {
-			saveQuickFilterFields({ indexName: selectedIndex, fields: quickFilterFields });
+			saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields });
 		}
 	}, 500);
 
@@ -309,7 +309,7 @@ export function createSearchStore(
 			}
 
 			const result = await searchLogs({
-				indexName: selectedIndex,
+				indexId: selectedIndex,
 				query: queryText || '*',
 				...timeParams,
 				offset: append ? logs.length : 0,
@@ -328,7 +328,7 @@ export function createSearchStore(
 				);
 				quickFilterFields = quickFilterFields.filter((f) => !bad.includes(f));
 				if (selectedIndex) {
-					saveQuickFilterFields({ indexName: selectedIndex, fields: quickFilterFields });
+					saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields });
 				}
 			}
 
@@ -403,7 +403,7 @@ export function createSearchStore(
 			const timeParams = buildTimeParams(currentTimeRange);
 
 			const result = await searchLogHistogram({
-				indexName: selectedIndex,
+				indexId: selectedIndex,
 				query: queryText || '*',
 				...timeParams
 			});
@@ -430,7 +430,7 @@ export function createSearchStore(
 		if (!selectedIndex) return [];
 		const queryText = getQueryText();
 		const result = await searchFieldValues({
-			indexName: selectedIndex,
+			indexId: selectedIndex,
 			field,
 			searchTerm,
 			query: queryText || '*',

@@ -8,16 +8,7 @@ import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { config, validateConfig, getGeneratedPassword } from '$lib/server/config';
-
-if (!building) {
-	validateConfig();
-
-	const generatedPassword = getGeneratedPassword();
-	if (generatedPassword) {
-		console.log(`[logwiz] Generated admin password: ${generatedPassword}`);
-		console.log(`[logwiz] Set LOGWIZ_ADMIN_PASSWORD to use a fixed password.`);
-	}
-}
+import { syncIndexesFromQuickwit } from '$lib/server/sync';
 
 async function seedDefaultAdmin() {
 	const [existing] = await db
@@ -40,11 +31,26 @@ async function seedDefaultAdmin() {
 		}
 	});
 
-	console.log(`Default admin created: ${config.adminUsername} / ${config.adminEmail}`);
+	console.log(`[logwiz] Default admin created: ${config.adminUsername} / ${config.adminEmail}`);
 }
 
 if (!building) {
-	seedDefaultAdmin().catch(console.error);
+	validateConfig();
+
+	const generatedPassword = getGeneratedPassword();
+	if (generatedPassword) {
+		console.log(`[logwiz] Generated admin password: ${generatedPassword}`);
+		console.log(`[logwiz] Set LOGWIZ_ADMIN_PASSWORD to use a fixed password.`);
+	}
+
+	await seedDefaultAdmin().catch(console.error);
+
+	try {
+		const summaries = await syncIndexesFromQuickwit();
+		console.log(`[logwiz] Synced ${summaries.length} indexes from Quickwit`);
+	} catch (e) {
+		console.warn('[logwiz] Failed to sync indexes from Quickwit:', e);
+	}
 }
 
 const authLimiter = new RetryAfterRateLimiter({

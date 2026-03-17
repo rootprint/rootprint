@@ -1,11 +1,3 @@
-export type IndexConfig = {
-	id: number;
-	indexName: string;
-	levelField: string;
-	timestampField: string;
-	messageField: string;
-};
-
 export type RelativeTimeRange = { type: 'relative'; preset: string };
 export type AbsoluteTimeRange = { type: 'absolute'; start: number; end: number };
 export type TimeRange = RelativeTimeRange | AbsoluteTimeRange;

@@ -10,7 +10,7 @@
 	}: {
 		open: boolean;
 		entry: {
-			indexName: string;
+			indexId: string;
 			query: string;
 		} | null;
 		onsaved?: () => void;
@@ -32,7 +32,7 @@
 		loading = true;
 		try {
 			await saveQuery({
-				indexName: entry.indexName,
+				indexId: entry.indexId,
 				name,
 				description: description || undefined,
 				query: entry.query

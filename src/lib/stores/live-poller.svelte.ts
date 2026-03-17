@@ -55,7 +55,7 @@ export function createLivePoller(config: LivePollerConfig) {
 		try {
 			const queryText = config.getQueryText();
 			const result = await pollLiveLogs({
-				indexName: index,
+				indexId: index,
 				query: queryText || '*',
 				startTimestamp: startTs,
 				endTimestamp: endTs,

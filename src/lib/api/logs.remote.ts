@@ -1,7 +1,8 @@
 import { command } from '$app/server';
 import { db } from '$lib/server/db';
-import { indexConfig } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { qwFieldMapping } from '$lib/server/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
+import { getFieldConfig } from '$lib/server/sync';
 import {
 	searchLogsSchema,
 	searchFieldValuesSchema,
@@ -46,89 +47,90 @@ function resolveTimestamps(data: {
 	return { startTs: resolved.startTs, endTs: resolved.endTs };
 }
 
-async function resolveFieldConfig(indexName: string) {
-	const [config] = await db.select().from(indexConfig).where(eq(indexConfig.indexName, indexName));
+async function partitionFastFields(
+	internalId: number | null,
+	requestedFields: string[]
+): Promise<{ fast: string[]; unsupported: string[] }> {
+	if (requestedFields.length === 0) return { fast: [], unsupported: [] };
+	if (internalId === null) return { fast: [], unsupported: requestedFields };
 
+	const fastRows = await db
+		.select({ name: qwFieldMapping.name })
+		.from(qwFieldMapping)
+		.where(
+			and(
+				eq(qwFieldMapping.indexId, internalId),
+				eq(qwFieldMapping.fast, true),
+				inArray(qwFieldMapping.name, requestedFields)
+			)
+		);
+
+	const fastSet = new Set(fastRows.map((r) => r.name));
 	return {
-		levelField: config?.levelField ?? 'level',
-		timestampField: config?.timestampField ?? 'timestamp',
-		messageField: config?.messageField ?? 'message'
+		fast: requestedFields.filter((f) => fastSet.has(f)),
+		unsupported: requestedFields.filter((f) => !fastSet.has(f))
 	};
 }
 
 export const searchLogs = command(searchLogsSchema, async (data) => {
 	requireUser();
 
-	const fields = await resolveFieldConfig(data.indexName);
+	const config = getFieldConfig(data.indexId);
 	const client = getQuickwitClient();
-	const index = client.index(data.indexName);
+	const index = client.index(data.indexId);
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
-	let query = index
+	const { fast: filterFields, unsupported: unsupportedFilterFields } = await partitionFastFields(
+		config.id,
+		data.quickFilterFields ?? []
+	);
+
+	const query = index
 		.query(data.query || '*')
 		.limit(data.limit)
 		.offset(data.offset)
-		.sortBy(`+${fields.timestampField}`);
+		.sortBy(`+${config.timestampField}`);
 
 	query.timeRange(startTs, endTs);
 
-	let filterFields = data.quickFilterFields ?? [];
-	const unsupportedFilterFields: string[] = [];
+	for (const field of filterFields) {
+		query.agg(field, AggregationBuilder.terms(field, { size: 50 }));
+	}
 
-	// Retry loop: if a field isn't a fast field, remove it and retry
-	while (true) {
-		for (const field of filterFields) {
-			query.agg(field, AggregationBuilder.terms(field, { size: 50 }));
-		}
+	const result = await index.search(query);
 
-		try {
-			const result = await index.search(query);
-
-			const aggregations: Record<string, string[]> = {};
-			if (result.aggregations) {
-				for (const [field, agg] of Object.entries(result.aggregations)) {
-					const bucketAgg = agg as { buckets?: { key: string }[] };
-					if (bucketAgg.buckets) {
-						aggregations[field] = bucketAgg.buckets.map((b) => formatFieldValue(b.key));
-					}
-				}
+	const aggregations: Record<string, string[]> = {};
+	if (result.aggregations) {
+		for (const [field, agg] of Object.entries(result.aggregations)) {
+			const bucketAgg = agg as { buckets?: { key: string }[] };
+			if (bucketAgg.buckets) {
+				aggregations[field] = bucketAgg.buckets.map((b) => formatFieldValue(b.key));
 			}
-
-			return {
-				hits: result.hits,
-				numHits: result.num_hits,
-				startTimestamp: startTs,
-				endTimestamp: endTs,
-				aggregations,
-				unsupportedFilterFields
-			};
-		} catch (e) {
-			const msg = e instanceof Error ? e.message : '';
-			const match = msg.match(/Field "(.+?)" is not configured as a fast field/);
-			if (match) {
-				const badField = match[1];
-				unsupportedFilterFields.push(badField);
-				filterFields = filterFields.filter((f) => f !== badField);
-				// Rebuild query without the bad field's aggregation
-				query = index
-					.query(data.query || '*')
-					.limit(data.limit)
-					.offset(data.offset)
-					.sortBy(`+${fields.timestampField}`);
-				query.timeRange(startTs, endTs);
-				continue;
-			}
-			throw e;
 		}
 	}
+
+	return {
+		hits: result.hits,
+		numHits: result.num_hits,
+		startTimestamp: startTs,
+		endTimestamp: endTs,
+		aggregations,
+		unsupportedFilterFields
+	};
 });
 
 export const searchFieldValues = command(searchFieldValuesSchema, async (data) => {
 	requireUser();
 
+	const config = getFieldConfig(data.indexId);
+	const { unsupported } = await partitionFastFields(config.id, [data.field]);
+	if (unsupported.length > 0) {
+		return { values: [], unsupported: true };
+	}
+
 	const client = getQuickwitClient();
-	const index = client.index(data.indexName);
+	const index = client.index(data.indexId);
 
 	const baseQuery = data.query?.trim();
 	const combinedQuery = baseQuery && baseQuery !== '*' ? baseQuery : '*';
@@ -142,38 +144,30 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 
 	query.timeRange(startTs, endTs);
 
-	try {
-		const result = await index.search(query);
+	const result = await index.search(query);
 
-		const bucketAgg = result.aggregations?.[data.field] as
-			| { buckets?: { key: string }[] }
-			| undefined;
-		const searchLower = data.searchTerm.toLowerCase();
-		const values = (bucketAgg?.buckets?.map((b) => formatFieldValue(b.key)) ?? []).filter((v) =>
-			v.toLowerCase().includes(searchLower)
-		);
+	const bucketAgg = result.aggregations?.[data.field] as
+		| { buckets?: { key: string }[] }
+		| undefined;
+	const searchLower = data.searchTerm.toLowerCase();
+	const values = (bucketAgg?.buckets?.map((b) => formatFieldValue(b.key)) ?? []).filter((v) =>
+		v.toLowerCase().includes(searchLower)
+	);
 
-		return { values, unsupported: false };
-	} catch (e) {
-		const msg = e instanceof Error ? e.message : '';
-		if (msg.includes('is not configured as a fast field')) {
-			return { values: [], unsupported: true };
-		}
-		throw e;
-	}
+	return { values, unsupported: false };
 });
 
 export const pollLiveLogs = command(pollLiveLogsSchema, async (data) => {
 	requireUser();
 
-	const fields = await resolveFieldConfig(data.indexName);
+	const config = getFieldConfig(data.indexId);
 	const client = getQuickwitClient();
-	const index = client.index(data.indexName);
+	const index = client.index(data.indexId);
 
 	const query = index
 		.query(data.query || '*')
 		.limit(data.limit)
-		.sortBy(`+${fields.timestampField}`)
+		.sortBy(`+${config.timestampField}`)
 		.timeRange(data.startTimestamp, data.endTimestamp);
 
 	const result = await index.search(query);
@@ -184,9 +178,9 @@ export const pollLiveLogs = command(pollLiveLogsSchema, async (data) => {
 export const searchLogHistogram = command(searchLogHistogramSchema, async (data) => {
 	requireUser();
 
-	const fields = await resolveFieldConfig(data.indexName);
+	const config = getFieldConfig(data.indexId);
 	const client = getQuickwitClient();
-	const index = client.index(data.indexName);
+	const index = client.index(data.indexId);
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
@@ -198,9 +192,9 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 		.limit(0)
 		.agg(
 			'histogram',
-			AggregationBuilder.dateHistogram(fields.timestampField, interval, {
+			AggregationBuilder.dateHistogram(config.timestampField, interval, {
 				aggs: {
-					levels: AggregationBuilder.terms(fields.levelField, { size: 20 })
+					levels: AggregationBuilder.terms(config.levelField, { size: 20 })
 				}
 			})
 		);
@@ -236,9 +230,7 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 
 	// Pad with empty buckets to cover the full time window
 	const intervalSec = computeHistogramIntervalSeconds(windowSeconds);
-	let buckets: { timestamp: number; levels: Record<string, number> }[];
-
-	buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
+	const buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
 
 	return { buckets };
 });

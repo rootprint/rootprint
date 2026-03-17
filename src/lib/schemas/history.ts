@@ -1,13 +1,13 @@
 import * as v from 'valibot';
 
-const indexNameField = v.pipe(v.string(), v.minLength(1));
+const indexIdField = v.pipe(v.string(), v.minLength(1));
 
 export const getHistorySchema = v.object({
-	indexName: indexNameField
+	indexId: indexIdField
 });
 
 export const recordSearchSchema = v.object({
-	indexName: indexNameField,
+	indexId: indexIdField,
 	query: v.string(),
 	timeRange: v.union([
 		v.object({ type: v.literal('relative'), preset: v.string() }),
@@ -21,5 +21,5 @@ export const deleteHistoryEntrySchema = v.object({
 });
 
 export const clearHistorySchema = v.object({
-	indexName: v.optional(v.pipe(v.string(), v.minLength(1)))
+	indexId: v.optional(v.pipe(v.string(), v.minLength(1)))
 });

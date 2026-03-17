@@ -9,13 +9,13 @@
 
 	let {
 		open,
-		indexName,
+		indexId,
 		historyVersion = 0,
 		onrestore,
 		onclose
 	}: {
 		open: boolean;
-		indexName: string | null;
+		indexId: string | null;
 		historyVersion?: number;
 		onrestore: (params: Partial<ParsedQuery>) => void;
 		onclose: () => void;
@@ -57,10 +57,10 @@
 	let saveModalOpen = $state(false);
 
 	async function load() {
-		if (!indexName) return;
+		if (!indexId) return;
 		loading = true;
 		try {
-			entries = (await getHistory({ indexName })) as HistoryEntry[];
+			entries = (await getHistory({ indexId })) as HistoryEntry[];
 		} catch {
 			entries = [];
 		} finally {
@@ -69,7 +69,7 @@
 	}
 
 	$effect(() => {
-		if (open && indexName) {
+		if (open && indexId) {
 			void historyVersion;
 			load();
 		}
@@ -114,16 +114,16 @@
 	}
 
 	async function clearAll() {
-		if (!indexName) return;
-		await clearHistory({ indexName });
+		if (!indexId) return;
+		await clearHistory({ indexId });
 		entries = [];
 	}
 
 	async function loadSaved() {
-		if (!indexName) return;
+		if (!indexId) return;
 		savedLoading = true;
 		try {
-			savedEntries = (await getSavedQueries({ indexName })) as SavedEntry[];
+			savedEntries = (await getSavedQueries({ indexId })) as SavedEntry[];
 		} catch {
 			savedEntries = [];
 		} finally {
@@ -132,7 +132,7 @@
 	}
 
 	$effect(() => {
-		if (open && activeTab === 'saved' && indexName) {
+		if (open && activeTab === 'saved' && indexId) {
 			void savedVersion;
 			loadSaved();
 		}
@@ -320,7 +320,7 @@
 			bind:open={saveModalOpen}
 			entry={savingEntry
 				? {
-						indexName: savingEntry.indexName,
+						indexId: savingEntry.indexName,
 						query: savingEntry.query
 					}
 				: null}

@@ -283,7 +283,7 @@
 
 		<HistoryDrawer
 			open={historyOpen}
-			indexName={store.selectedIndex}
+			indexId={store.selectedIndex}
 			historyVersion={store.historyVersion}
 			onrestore={(params) => store.navigateQuery(params, { push: true })}
 			onclose={() => {
