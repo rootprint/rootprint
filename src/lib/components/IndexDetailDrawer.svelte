@@ -353,9 +353,9 @@
 					</div>
 				{:else if activeTab === 'config'}
 					<!-- CONFIG TAB -->
-					<h3 class="mb-1 text-sm font-semibold">Logwit Configuration</h3>
+					<h3 class="mb-1 text-sm font-semibold">Logwiz Configuration</h3>
 					<p class="mb-4 text-xs text-base-content/50">
-						Map Quickwit fields to Logwit display roles
+						Map Quickwit fields to Logwiz display roles
 					</p>
 					<div class="flex flex-col gap-4">
 						<div>

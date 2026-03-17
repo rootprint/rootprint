@@ -28,7 +28,7 @@ export const qwIndex = sqliteTable('qw_index', {
 	ingestSettings: text('ingest_settings', { mode: 'json' }),
 	retention: text('retention', { mode: 'json' }),
 	rawFieldMappings: text('raw_field_mappings', { mode: 'json' }),
-	// App-level (Logwit-specific)
+	// App-level (Logwiz-specific)
 	levelField: text('level_field').notNull().default('level'),
 	messageField: text('message_field').notNull().default('message'),
 	createdAt: integer('created_at', { mode: 'timestamp' })
