@@ -130,7 +130,7 @@ export async function syncIndexesFromQuickwit() {
 	const allIndexes = await client.listIndexes();
 	const syncedIndexIds = allIndexes.map((m) => m.index_config.index_id);
 
-	// All DB operations are synchronous (better-sqlite3 requirement)
+	// All DB operations are synchronous (SQLite driver is synchronous)
 	db.transaction((tx) => {
 		for (const meta of allIndexes) {
 			const cfg = meta.index_config as Record<string, any>;
