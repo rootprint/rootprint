@@ -2,13 +2,14 @@ import { command, query, getRequestEvent } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { inviteToken } from '$lib/server/db/schema';
+import { inviteToken, user } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/middleware/auth';
 import {
 	createInviteSchema,
 	removeUserSchema,
 	setUserRoleSchema,
-	regenerateInviteSchema
+	regenerateInviteSchema,
+	resetPasswordSchema
 } from '$lib/schemas/users';
 import { eq } from 'drizzle-orm';
 import { config } from '$lib/server/config';
@@ -117,4 +118,24 @@ export const setUserRole = command(setUserRoleSchema, async (data) => {
 		headers: event.request.headers,
 		body: { userId: data.userId, role: data.role }
 	});
+});
+
+export const resetPassword = command(resetPasswordSchema, async (data) => {
+	const admin = requireAdmin();
+	if (data.userId === admin.id) {
+		error(400, 'Cannot reset your own password');
+	}
+	const event = getRequestEvent();
+	try {
+		await auth.api.setUserPassword({
+			headers: event.request.headers,
+			body: { userId: data.userId, newPassword: data._password }
+		});
+	} catch (e) {
+		if (e instanceof APIError) {
+			error(400, e.message || 'Failed to reset password');
+		}
+		throw e;
+	}
+	await db.update(user).set({ mustChangePassword: true }).where(eq(user.id, data.userId));
 });

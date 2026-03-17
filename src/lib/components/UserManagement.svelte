@@ -3,6 +3,7 @@
 	import { listUsers, removeUser, setUserRole, regenerateInvite } from '$lib/api/users.remote';
 	import { page } from '$app/state';
 	import InviteUserModal from './InviteUserModal.svelte';
+	import ResetPasswordModal from './ResetPasswordModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
 
@@ -23,6 +24,8 @@
 	let confirmingRemove = $state<string | null>(null);
 	let copiedUserId = $state<string | null>(null);
 	let regeneratingUserId = $state<string | null>(null);
+	let resetModalOpen = $state(false);
+	let resetTargetUser = $state<{ id: string; name: string }>({ id: '', name: '' });
 
 	async function handleRegenerate(userId: string) {
 		regeneratingUserId = userId;
@@ -172,6 +175,18 @@
 											/>
 										</button>
 									{/if}
+									{#if u.status === 'active' && u.id !== currentUserId}
+										<button
+											class="btn btn-ghost btn-xs"
+											onclick={() => {
+												resetTargetUser = { id: u.id, name: u.name };
+												resetModalOpen = true;
+											}}
+											title="Reset password"
+										>
+											<Icon icon="lucide:key-round" width="14" height="14" />
+										</button>
+									{/if}
 									{#if u.id !== currentUserId}
 										{#if confirmingRemove === u.id}
 											<button class="btn btn-xs btn-error" onclick={() => handleRemove(u.id)}>
@@ -203,3 +218,9 @@
 </div>
 
 <InviteUserModal bind:open={inviteModalOpen} oncreated={loadUsers} />
+<ResetPasswordModal
+	bind:open={resetModalOpen}
+	userId={resetTargetUser.id}
+	userName={resetTargetUser.name}
+	onreset={loadUsers}
+/>

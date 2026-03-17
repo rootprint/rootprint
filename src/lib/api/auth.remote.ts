@@ -3,7 +3,7 @@ import { redirect, invalid, error } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { inviteToken, account, user } from '$lib/server/db/schema';
-import { signInSchema, setupPasswordSchema, changePasswordSchema } from '$lib/schemas/auth';
+import { signInSchema, setupPasswordSchema, changePasswordSchema, changeOwnPasswordSchema } from '$lib/schemas/auth';
 import { requireUser } from '$lib/middleware/auth';
 import { APIError } from 'better-auth/api';
 import { hashPassword } from 'better-auth/crypto';
@@ -86,4 +86,24 @@ export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
 	await db.delete(inviteToken).where(eq(inviteToken.id, invite.id));
 
 	redirect(303, '/auth/sign-in');
+});
+
+export const changeOwnPassword = command(changeOwnPasswordSchema, async (data) => {
+	requireUser();
+	const event = getRequestEvent();
+	try {
+		await auth.api.changePassword({
+			headers: event.request.headers,
+			body: {
+				currentPassword: data._currentPassword,
+				newPassword: data._password,
+				revokeOtherSessions: false
+			}
+		});
+	} catch (e) {
+		if (e instanceof APIError) {
+			error(400, e.message === 'Invalid password' ? 'Current password is incorrect' : (e.message || 'Failed to change password'));
+		}
+		throw e;
+	}
 });

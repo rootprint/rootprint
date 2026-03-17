@@ -4,12 +4,14 @@
 	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/api/auth.remote';
 	import { getUserInitials } from '$lib/utils/format';
+	import ChangePasswordModal from '$lib/components/ChangePasswordModal.svelte';
 	import logo from '$lib/assets/logo.png';
 
 	let { children } = $props();
 
 	const user = $derived(page.data.user);
 	const initials = $derived(getUserInitials(user?.name));
+	let changePasswordOpen = $state(false);
 </script>
 
 <div class="flex h-screen w-screen flex-col">
@@ -46,6 +48,14 @@
 						</li>
 					</ul>
 				{/if}
+				<ul class="menu w-full p-2">
+					<li class="w-full">
+						<button class="w-full" onclick={() => (changePasswordOpen = true)}>
+							<Icon icon="lucide:lock" width="16" height="16" class="opacity-70" />
+							Change password
+						</button>
+					</li>
+				</ul>
 				<div class="border-t border-base-300 p-2">
 					<button
 						class="btn w-full justify-start btn-ghost btn-sm"
@@ -66,3 +76,5 @@
 		{@render children()}
 	</div>
 </div>
+
+<ChangePasswordModal bind:open={changePasswordOpen} />
