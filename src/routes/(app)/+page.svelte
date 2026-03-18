@@ -10,6 +10,7 @@
 	import LogDetailDrawer from '$lib/components/LogDetailDrawer.svelte';
 	import LogFrequencyChart from '$lib/components/LogFrequencyChart.svelte';
 	import HistoryDrawer from '$lib/components/HistoryDrawer.svelte';
+	import ExportDropdown from '$lib/components/ExportDropdown.svelte';
 
 	let { data } = $props();
 
@@ -147,6 +148,14 @@
 					<Icon icon="lucide:share-2" width="14" height="14" />
 					{copied ? 'Copied!' : 'Share'}
 				</button>
+
+				<ExportDropdown
+					logs={store.logs}
+					indexId={store.selectedIndex}
+					timestampField={store.fieldConfig.timestampField}
+					levelField={store.fieldConfig.levelField}
+					messageField={store.fieldConfig.messageField}
+				/>
 
 				<button
 					class="btn btn-sm {store.isLive ? 'btn-error' : ''}"

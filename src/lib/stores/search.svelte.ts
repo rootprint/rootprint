@@ -566,7 +566,6 @@ export function createSearchStore(
 		get historyVersion() {
 			return historyVersion;
 		},
-
 		// Methods
 		navigateQuery,
 		runQuery,

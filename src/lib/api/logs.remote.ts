@@ -246,3 +246,4 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 
 	return { buckets };
 });
+
