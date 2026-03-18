@@ -67,7 +67,7 @@
 {#if open}
 	<!-- Backdrop -->
 	<div
-		class="absolute inset-0 z-10 bg-black/50"
+		class="fixed inset-0 z-10 bg-black/50"
 		role="button"
 		tabindex="-1"
 		aria-label="close drawer"
@@ -78,7 +78,7 @@
 	></div>
 
 	<!-- Panel -->
-	<div class="absolute top-0 right-0 z-20 flex h-full w-[50vw] flex-col border-l border-base-300 bg-base-100 shadow-lg">
+	<div class="fixed top-0 right-0 z-20 flex h-full w-full flex-col border-l border-base-300 bg-base-100 shadow-lg md:w-[50vw]">
 		<div class="flex items-center justify-between border-b border-base-300 px-3">
 			<div role="tablist" class="tabs-border tabs">
 				{#each tabs as tab (tab.id)}
