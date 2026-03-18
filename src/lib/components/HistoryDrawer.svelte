@@ -200,7 +200,7 @@
 					</div>
 				{:else if entries.length === 0}
 					<div class="px-3 py-3">
-						<p class="text-[11px] text-base-content/30">No search history yet</p>
+						<p class="text-[11px] text-base-content/50">No search history yet</p>
 					</div>
 				{:else}
 					<div class="flex flex-col">
@@ -248,7 +248,7 @@
 										<Icon icon="lucide:x" width="12" height="12" />
 									</button>
 								</div>
-								<div class="flex items-center gap-1.5 text-[10px] text-base-content/40">
+								<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
 									<span class="truncate">{formatTimeRangeLabel(entry.timeRange, 'local')}</span>
 									{#if count > 0}
 										<span class="badge badge-xs">{count} filter{count > 1 ? 's' : ''}</span>
@@ -270,7 +270,7 @@
 					</div>
 				{:else if savedEntries.length === 0}
 					<div class="px-3 py-3">
-						<p class="text-[11px] text-base-content/30">No saved queries yet</p>
+						<p class="text-[11px] text-base-content/50">No saved queries yet</p>
 					</div>
 				{:else}
 					<div class="flex flex-col">
@@ -302,11 +302,11 @@
 										<Icon icon="lucide:x" width="12" height="12" />
 									</button>
 								</div>
-								<div class="flex items-center gap-1.5 text-[10px] text-base-content/40">
+								<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
 									<span class="truncate">{entry.query || '*'}</span>
 								</div>
 								{#if entry.description}
-									<div class="truncate text-[10px] text-base-content/30 italic">
+									<div class="truncate text-[10px] text-base-content/50 italic">
 										{entry.description}
 									</div>
 								{/if}

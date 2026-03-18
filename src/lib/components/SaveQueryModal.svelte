@@ -90,12 +90,12 @@
 				</label>
 
 				<div class="rounded-box bg-base-200 px-3 py-2 text-xs">
-					<div class="mb-1 text-[10px] font-medium text-base-content/40 uppercase">
+					<div class="mb-1 text-[10px] font-medium text-base-content/60 uppercase">
 						Query details
 					</div>
 					<div class="flex flex-col gap-0.5 text-base-content/60">
 						<div>
-							<span class="text-base-content/40">Query:</span>
+							<span class="text-base-content/60">Query:</span>
 							{entry.query || '*'}
 						</div>
 					</div>

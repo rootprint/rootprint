@@ -259,7 +259,7 @@
 				</div>
 			{:else if store.logs.length === 0}
 				<div class="flex h-full items-center justify-center">
-					<p class="text-sm text-base-content/40">
+					<p class="text-sm text-base-content/60">
 						{store.isLive ? 'Waiting for new logs...' : 'No logs found'}
 					</p>
 				</div>

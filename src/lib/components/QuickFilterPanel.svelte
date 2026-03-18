@@ -187,7 +187,7 @@
 					icon={collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'}
 					width="14"
 					height="14"
-					class="mr-1 text-base-content/40"
+					class="mr-1 text-base-content/60"
 				/>
 				<h3
 					class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
@@ -206,7 +206,7 @@
 					onclick={clearAllFilters}
 					title="Clear all filters"
 				>
-					<Icon icon="lucide:x" width="14" height="14" class="text-base-content/40" />
+					<Icon icon="lucide:x" width="14" height="14" class="text-base-content/60" />
 				</button>
 			{/if}
 			{#if availableFields.length > 0}
@@ -219,7 +219,7 @@
 						icon={configMode ? 'lucide:check' : 'lucide:settings'}
 						width="14"
 						height="14"
-						class="text-base-content/40"
+						class="text-base-content/60"
 					/>
 				</button>
 			{/if}
@@ -231,7 +231,7 @@
 					<div class="border-t border-base-300/50 p-2">
 						<p class="mb-1 text-xs font-medium text-base-content/50">Active</p>
 						{#if configFields.length === 0}
-							<p class="px-1 py-2 text-xs text-base-content/30">No filter fields</p>
+							<p class="px-1 py-2 text-xs text-base-content/50">No filter fields</p>
 						{:else}
 							<div class="flex flex-col gap-1">
 								{#each pinnedConfigFields as field (field.id)}
@@ -240,7 +240,7 @@
 											icon="lucide:pin"
 											width="12"
 											height="12"
-											class="shrink-0 text-base-content/30"
+											class="shrink-0 text-base-content/50"
 										/>
 										<span class="flex-1 truncate">{field.name}</span>
 									</div>
@@ -261,7 +261,7 @@
 												icon="lucide:grip-vertical"
 												width="12"
 												height="12"
-												class="shrink-0 cursor-grab text-base-content/40"
+												class="shrink-0 cursor-grab text-base-content/60"
 											/>
 											<span class="flex-1 truncate">{field.name}</span>
 											<button
@@ -290,10 +290,10 @@
 											icon="lucide:plus"
 											width="12"
 											height="12"
-											class="shrink-0 text-base-content/40"
+											class="shrink-0 text-base-content/60"
 										/>
 										<span class="truncate">{field.name}</span>
-										<span class="ml-auto text-[10px] text-base-content/30">{field.type}</span>
+										<span class="ml-auto text-[10px] text-base-content/50">{field.type}</span>
 									</button>
 								{/each}
 							</div>
@@ -302,7 +302,7 @@
 				</div>
 			{:else if fields.length === 0}
 				<div class="px-3 pb-3">
-					<p class="text-[11px] text-base-content/30">Click the gear icon to add filter fields</p>
+					<p class="text-[11px] text-base-content/50">Click the gear icon to add filter fields</p>
 				</div>
 			{:else}
 				<div class="flex flex-col">
@@ -316,7 +316,7 @@
 									icon={openSections.has(field) ? 'lucide:chevron-down' : 'lucide:chevron-right'}
 									width="12"
 									height="12"
-									class="mr-1 text-base-content/40"
+									class="mr-1 text-base-content/60"
 								/>
 								<span
 									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70"
@@ -343,10 +343,10 @@
 									{#if loadingFields.has(field)}
 										<div class="flex items-center gap-2 py-1">
 											<span class="loading loading-xs loading-spinner"></span>
-											<span class="text-[11px] text-base-content/30">Searching...</span>
+											<span class="text-[11px] text-base-content/50">Searching...</span>
 										</div>
 									{:else if getDisplayValues(field).length === 0}
-										<p class="py-1 text-[11px] text-base-content/30">
+										<p class="py-1 text-[11px] text-base-content/50">
 											{searchTerms[field]?.trim()
 												? 'No matching values'
 												: 'Run a search to see values'}

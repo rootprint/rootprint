@@ -265,7 +265,7 @@
 									<td>
 										<div class="font-medium">{field.name}</div>
 										{#if field.description}
-											<div class="text-[10px] text-base-content/40">
+											<div class="text-[10px] text-base-content/60">
 												{field.description}
 											</div>
 										{/if}
@@ -277,21 +277,21 @@
 										{#if field.fast}
 											<span class="text-success">✓</span>
 										{:else}
-											<span class="text-base-content/30">—</span>
+											<span class="text-base-content/50">—</span>
 										{/if}
 									</td>
 									<td>
 										{#if field.indexed}
 											<span class="text-success">✓</span>
 										{:else}
-											<span class="text-base-content/30">—</span>
+											<span class="text-base-content/50">—</span>
 										{/if}
 									</td>
 									<td>
 										{#if field.stored}
 											<span class="text-success">✓</span>
 										{:else}
-											<span class="text-base-content/30">—</span>
+											<span class="text-base-content/50">—</span>
 										{/if}
 									</td>
 									<td class="text-base-content/60">{field.record ?? '—'}</td>

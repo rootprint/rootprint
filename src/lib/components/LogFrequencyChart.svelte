@@ -317,14 +317,14 @@
 				icon={collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'}
 				width="14"
 				height="14"
-				class="text-base-content/40"
+				class="text-base-content/60"
 			/>
 			<span class="text-xs font-semibold tracking-wider text-base-content/80 uppercase">
 				Frequency chart
 			</span>
 		</button>
 		{#if loading}
-			<span class="loading loading-xs loading-spinner text-base-content/40"></span>
+			<span class="loading loading-xs loading-spinner text-base-content/60"></span>
 		{/if}
 	</div>
 

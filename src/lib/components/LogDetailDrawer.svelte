@@ -107,7 +107,7 @@
 						</button>
 						<div class="flex font-['Roboto_Mono',monospace] text-sm">
 							<div
-								class="border-r border-base-300 py-3 pr-3 pl-3 text-right text-base-content/30 select-none"
+								class="border-r border-base-300 py-3 pr-3 pl-3 text-right text-base-content/50 select-none"
 							>
 								{#each jsonLines as _, i (i)}
 									<div class="leading-relaxed">{i + 1}</div>
@@ -167,7 +167,7 @@
 									>
 									<td class="font-['Roboto_Mono',monospace] text-xs break-all">
 										{#if value === null || value === undefined}
-											<span class="text-base-content/30 italic">null</span>
+											<span class="text-base-content/50 italic">null</span>
 										{:else}
 											{formatFieldValue(value)}
 										{/if}

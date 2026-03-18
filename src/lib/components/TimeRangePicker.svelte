@@ -92,7 +92,7 @@
 	<!-- Trigger button -->
 	<button class="btn gap-2 border-base-content/20 bg-base-100 font-normal btn-sm" onclick={toggle}>
 		<span class="text-sm">{buttonLabel}</span>
-		<span class="text-base-content/30">|</span>
+		<span class="text-base-content/50">|</span>
 		<span class="text-sm text-base-content/70">
 			{timezoneMode === 'utc' ? 'UTC' : 'Local'}
 			<span class="text-[10px] ml-0.5 {open ? 'inline-block rotate-180' : ''}">▾</span>
@@ -118,7 +118,7 @@
 							onclick={() => selectPreset(preset.code)}
 						>
 							<span>{preset.label}</span>
-							<span class="text-xs text-base-content/40">{preset.code}</span>
+							<span class="text-xs text-base-content/60">{preset.code}</span>
 						</button>
 					{/each}
 				</div>

@@ -54,7 +54,7 @@
 				icon={collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'}
 				width="14"
 				height="14"
-				class="mr-1 text-base-content/40"
+				class="mr-1 text-base-content/60"
 			/>
 			<h3
 				class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
@@ -75,7 +75,7 @@
 					icon={configMode ? 'lucide:check' : 'lucide:settings'}
 					width="14"
 					height="14"
-					class="text-base-content/40"
+					class="text-base-content/60"
 				/>
 			</button>
 		{/if}
@@ -88,7 +88,7 @@
 	{:else if !collapsed}
 		{#if activeFields.length === 0 && !configMode}
 			<div class="px-3 py-3">
-				<p class="text-[11px] text-base-content/30">Click the gear icon to add display fields</p>
+				<p class="text-[11px] text-base-content/50">Click the gear icon to add display fields</p>
 			</div>
 		{:else}
 			<div class="flex flex-col">
@@ -97,7 +97,7 @@
 						<p class="mb-1 text-xs font-medium text-base-content/50">Active</p>
 					{/if}
 					{#if dndItems.length === 0}
-						<p class="px-1 py-2 text-xs text-base-content/30">No extra fields</p>
+						<p class="px-1 py-2 text-xs text-base-content/50">No extra fields</p>
 					{:else}
 						<div
 							use:dndzone={{ items: dndItems, flipDurationMs: 150, type: 'active-fields' }}
@@ -111,7 +111,7 @@
 										icon="lucide:grip-vertical"
 										width="12"
 										height="12"
-										class="shrink-0 cursor-grab text-base-content/40"
+										class="shrink-0 cursor-grab text-base-content/60"
 									/>
 									<span class="flex-1 truncate">{field.name}</span>
 									{#if configMode}
@@ -141,10 +141,10 @@
 										icon="lucide:plus"
 										width="12"
 										height="12"
-										class="shrink-0 text-base-content/40"
+										class="shrink-0 text-base-content/60"
 									/>
 									<span class="truncate">{field.name}</span>
-									<span class="ml-auto text-[10px] text-base-content/30">{field.type}</span>
+									<span class="ml-auto text-[10px] text-base-content/50">{field.type}</span>
 								</button>
 							{/each}
 						</div>

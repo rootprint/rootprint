@@ -91,7 +91,7 @@
 		}
 	}}
 >
-	<span class="shrink-0 py-px text-base-content/40">{extractTimestamp(hit)}</span>
+	<span class="shrink-0 py-px text-base-content/60">{extractTimestamp(hit)}</span>
 	{#each extraFields as field (field)}
 		<span
 			class="inline-block shrink-0 truncate py-px pl-2 align-top"

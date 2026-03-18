@@ -85,7 +85,7 @@
 									{#if idx.mode}
 										<span class="badge badge-sm">{idx.mode}</span>
 									{:else}
-										<span class="text-base-content/30">—</span>
+										<span class="text-base-content/50">—</span>
 									{/if}
 								</td>
 								<td>{idx.fieldCount}</td>
