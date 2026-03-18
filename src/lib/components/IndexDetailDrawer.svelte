@@ -362,29 +362,25 @@
 							<label class="mb-1 block text-xs font-medium" for="levelField"
 								>Level Field</label
 							>
-							<select
+							<input
 								id="levelField"
-								class="select-bordered select select-sm w-full"
+								type="text"
+								class="input-bordered input input-sm w-full"
 								bind:value={configLevelField}
-							>
-								{#each detail.fields as field (field.name)}
-									<option value={field.name}>{field.name}</option>
-								{/each}
-							</select>
+								placeholder="e.g. level, severity"
+							/>
 						</div>
 						<div>
 							<label class="mb-1 block text-xs font-medium" for="messageField">
 								Message Field
 							</label>
-							<select
+							<input
 								id="messageField"
-								class="select-bordered select select-sm w-full"
+								type="text"
+								class="input-bordered input input-sm w-full"
 								bind:value={configMessageField}
-							>
-								{#each detail.fields as field (field.name)}
-									<option value={field.name}>{field.name}</option>
-								{/each}
-							</select>
+								placeholder="e.g. message, body.message"
+							/>
 						</div>
 						<div>
 							<button
