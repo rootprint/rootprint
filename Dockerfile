@@ -18,6 +18,7 @@ COPY --from=build /app/build ./build
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/package.json /app/bun.lock ./
 RUN bun install --frozen-lockfile --ignore-scripts --production
+RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 3000
 

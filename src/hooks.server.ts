@@ -7,7 +7,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { config, validateConfig, getGeneratedPassword } from '$lib/server/config';
+import { config, validateConfig } from '$lib/server/config';
 import { syncIndexesFromQuickwit } from '$lib/server/sync';
 
 async function seedDefaultAdmin() {
@@ -36,12 +36,6 @@ async function seedDefaultAdmin() {
 
 if (!building) {
 	validateConfig();
-
-	const generatedPassword = getGeneratedPassword();
-	if (generatedPassword) {
-		console.log(`[logwiz] Generated admin password: ${generatedPassword}`);
-		console.log(`[logwiz] Set LOGWIZ_ADMIN_PASSWORD to use a fixed password.`);
-	}
 
 	await seedDefaultAdmin().catch(console.error);
 

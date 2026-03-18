@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { randomUUID, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname, resolve } from 'path';
 
@@ -54,7 +54,6 @@ function resolveSecret(dataDir: string): string {
 }
 
 let _config: Config | null = null;
-let _generatedPassword: string | null = null;
 
 export function buildConfig(): Config {
 	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL', 'QUICKWIT_URL');
@@ -81,14 +80,7 @@ export function buildConfig(): Config {
 	const adminEmail = readEnv('LOGWIZ_ADMIN_EMAIL') ?? 'logwiz@logwiz.local';
 	const adminUsername = readEnv('LOGWIZ_ADMIN_USERNAME') ?? 'logwiz';
 
-	const adminPasswordEnv = readEnv('LOGWIZ_ADMIN_PASSWORD');
-	let adminPassword: string;
-	if (adminPasswordEnv) {
-		adminPassword = adminPasswordEnv;
-	} else {
-		adminPassword = randomUUID();
-		_generatedPassword = adminPassword;
-	}
+	const adminPassword = readEnv('LOGWIZ_ADMIN_PASSWORD') ?? 'logwiz';
 
 	const inviteExpiryHours = parseIntWithDefault(readEnv('LOGWIZ_INVITE_EXPIRY_HOURS'), 48);
 	const rateLimitWindow = parseIntWithDefault(readEnv('LOGWIZ_RATE_LIMIT_WINDOW'), 60);
@@ -102,7 +94,7 @@ export function buildConfig(): Config {
 	if (!readEnv('LOGWIZ_ADMIN_EMAIL')) optionalDefaults.push(['LOGWIZ_ADMIN_EMAIL', adminEmail]);
 	if (!readEnv('LOGWIZ_ADMIN_USERNAME'))
 		optionalDefaults.push(['LOGWIZ_ADMIN_USERNAME', adminUsername]);
-	if (!adminPasswordEnv) optionalDefaults.push(['LOGWIZ_ADMIN_PASSWORD', '(generated)']);
+	if (!readEnv('LOGWIZ_ADMIN_PASSWORD')) optionalDefaults.push(['LOGWIZ_ADMIN_PASSWORD', '"logwiz" (default)']);
 	if (!readEnv('LOGWIZ_INVITE_EXPIRY_HOURS'))
 		optionalDefaults.push(['LOGWIZ_INVITE_EXPIRY_HOURS', inviteExpiryHours]);
 	if (!readEnv('LOGWIZ_RATE_LIMIT_WINDOW'))
@@ -132,10 +124,6 @@ export function buildConfig(): Config {
 		rateLimitMax,
 		signinRateLimitMax
 	});
-}
-
-export function getGeneratedPassword(): string | null {
-	return _generatedPassword;
 }
 
 export function validateConfig(): Config {
