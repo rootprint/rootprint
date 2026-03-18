@@ -110,17 +110,15 @@
 								<Copy size={14} />
 							{/if}
 						</button>
-						<div class="flex font-['Roboto_Mono',monospace] text-sm">
-							<div
-								class="border-r border-base-300 py-3 pr-3 pl-3 text-right text-base-content/50 select-none"
-							>
-								{#each jsonLines as _, i (i)}
-									<div class="leading-relaxed">{i + 1}</div>
-								{/each}
-							</div>
-							<div class="flex-1 overflow-x-auto py-3 pr-3 pl-3">
-								<JsonHighlight code={prettyJson} />
-							</div>
+						<div class="py-3 font-['Roboto_Mono',monospace] text-sm">
+							{#each jsonLines as line, i (i)}
+								<div class="flex leading-relaxed">
+									<div class="w-10 shrink-0 border-r border-base-300 pr-3 text-right text-base-content/50 select-none">{i + 1}</div>
+									<div class="flex-1 break-all whitespace-pre-wrap pl-3 pr-3">
+										<JsonHighlight code={line} />
+									</div>
+								</div>
+							{/each}
 						</div>
 					</div>
 				{/if}

@@ -1,59 +1,54 @@
 <script lang="ts">
-	import { createHighlighterCore } from 'shiki/core';
-	import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-	import type { HighlighterCore } from 'shiki/core';
+	type Token = { type: 'key' | 'string' | 'number' | 'boolean' | 'null' | 'punctuation' | 'whitespace'; value: string };
+
+	const TOKEN_RE = /"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[{}[\]:,]|\s+/g;
+
+	const CLASS_MAP: Record<Token['type'], string> = {
+		key: 'text-info',
+		string: 'text-success',
+		number: 'text-warning',
+		boolean: 'text-error',
+		null: 'text-base-content/50',
+		punctuation: 'text-base-content/30',
+		whitespace: ''
+	};
 
 	let { code }: { code: string } = $props();
 
-	let highlightedHtml = $state('');
-
-	let highlighterPromise: Promise<HighlighterCore> | null = null;
-
-	function getHighlighter(): Promise<HighlighterCore> {
-		if (!highlighterPromise) {
-			highlighterPromise = createHighlighterCore({
-				themes: [import('@shikijs/themes/github-light')],
-				langs: [import('@shikijs/langs/json')],
-				engine: createJavaScriptRegexEngine()
-			});
+	function tokenize(json: string): Token[] {
+		const tokens: Token[] = [];
+		let match;
+		TOKEN_RE.lastIndex = 0;
+		while ((match = TOKEN_RE.exec(json)) !== null) {
+			const value = match[0];
+			let type: Token['type'];
+			if (value.startsWith('"')) type = 'string';
+			else if (/^-?\d/.test(value)) type = 'number';
+			else if (value === 'true' || value === 'false') type = 'boolean';
+			else if (value === 'null') type = 'null';
+			else if (/^\s+$/.test(value)) type = 'whitespace';
+			else type = 'punctuation';
+			tokens.push({ type, value });
 		}
-		return highlighterPromise;
+		for (let i = 0; i < tokens.length; i++) {
+			if (tokens[i].type === 'string') {
+				for (let j = i + 1; j < tokens.length; j++) {
+					if (tokens[j].type === 'whitespace') continue;
+					if (tokens[j].type === 'punctuation' && tokens[j].value === ':') {
+						tokens[i].type = 'key';
+					}
+					break;
+				}
+			}
+		}
+		return tokens;
 	}
 
-	async function highlight(source: string) {
-		try {
-			const highlighter = await getHighlighter();
-			highlightedHtml = highlighter.codeToHtml(source, {
-				lang: 'json',
-				theme: 'github-light'
-			});
-		} catch {
-			highlightedHtml = '';
-		}
-	}
-
-	$effect(() => {
-		highlight(code);
-	});
+	let tokens = $derived(tokenize(code.trimEnd()));
 </script>
 
-{#if highlightedHtml}
-	<div class="shiki-wrapper">
-		{@html highlightedHtml}
-	</div>
+{#if tokens.length}
+	<pre class="break-all whitespace-pre-wrap">{#each tokens as token}<span class={CLASS_MAP[token.type]}>{token.value}</span>{/each}</pre>
 {:else}
 	<pre class="break-all whitespace-pre-wrap">{code}</pre>
 {/if}
-
-<style>
-	.shiki-wrapper :global(pre) {
-		background: transparent !important;
-		margin: 0;
-		padding: 0;
-	}
-	.shiki-wrapper :global(code) {
-		font-family: inherit;
-		font-size: inherit;
-		line-height: inherit;
-	}
-</style>

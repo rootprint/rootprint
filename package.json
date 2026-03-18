@@ -47,7 +47,6 @@
 		"daisyui": "^5.5.19",
 		"lucide-svelte": "^0.577.0",
 		"quickwit-js": "^0.3.0",
-		"shiki": "^4.0.1",
 		"svelte-dnd-action": "^0.9.69",
 		"svelte-sonner": "^1.1.0",
 		"sveltekit-rate-limiter": "^0.7.0",
