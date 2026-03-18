@@ -1,4 +1,4 @@
-import { command } from '$app/server';
+import { query } from '$app/server';
 import { db } from '$lib/server/db';
 import { qwFieldMapping } from '$lib/server/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
@@ -81,7 +81,7 @@ async function partitionFastFields(
 	};
 }
 
-export const searchLogs = command(searchLogsSchema, async (data) => {
+export const searchLogs = query(searchLogsSchema, async (data) => {
 	requireUser();
 
 	const config = getFieldConfig(data.indexId);
@@ -132,7 +132,7 @@ export const searchLogs = command(searchLogsSchema, async (data) => {
 	};
 });
 
-export const searchFieldValues = command(searchFieldValuesSchema, async (data) => {
+export const searchFieldValues = query(searchFieldValuesSchema, async (data) => {
 	requireUser();
 
 	const config = getFieldConfig(data.indexId);
@@ -169,7 +169,7 @@ export const searchFieldValues = command(searchFieldValuesSchema, async (data) =
 	return { values, unsupported: false };
 });
 
-export const pollLiveLogs = command(pollLiveLogsSchema, async (data) => {
+export const pollLiveLogs = query(pollLiveLogsSchema, async (data) => {
 	requireUser();
 
 	const config = getFieldConfig(data.indexId);
@@ -187,7 +187,7 @@ export const pollLiveLogs = command(pollLiveLogsSchema, async (data) => {
 	return { hits: result.hits };
 });
 
-export const searchLogHistogram = command(searchLogHistogramSchema, async (data) => {
+export const searchLogHistogram = query(searchLogHistogramSchema, async (data) => {
 	requireUser();
 
 	const config = getFieldConfig(data.indexId);
