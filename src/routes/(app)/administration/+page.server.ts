@@ -1,7 +1,8 @@
 import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export function load(event) {
+export const load: PageServerLoad = (event) => {
 	if (event.locals.user?.role !== 'admin') {
-		redirect(302, '/');
+		throw redirect(302, '/');
 	}
-}
+};

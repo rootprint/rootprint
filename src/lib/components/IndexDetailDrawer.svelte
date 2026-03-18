@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
 	import { getLocalIndexDetail, saveIndexConfig } from '$lib/api/indexes.remote';
+	import { formatEpochLocale } from '$lib/utils/time';
 
 	let {
 		open = $bindable(false)
@@ -82,11 +83,6 @@
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (open && e.key === 'Escape') close();
-	}
-
-	function formatTimestamp(ts: number | null | undefined): string {
-		if (!ts) return '—';
-		return new Date(ts * 1000).toLocaleString();
 	}
 
 	function formatRetention(ret: unknown): string {
@@ -189,7 +185,7 @@
 						{@render kvItem('Mode', detail.mode)}
 						{@render kvItem('Timestamp Field', detail.timestampField)}
 						{@render kvItem('Version', detail.version)}
-						{@render kvItem('Created', formatTimestamp(detail.createTimestamp))}
+						{@render kvItem('Created', formatEpochLocale(detail.createTimestamp))}
 						{@render kvItem('Store Source', detail.storeSource)}
 						{@render kvItem('Store Doc Size', detail.storeDocumentSize)}
 						{@render kvItem('Index Field Presence', detail.indexFieldPresence)}

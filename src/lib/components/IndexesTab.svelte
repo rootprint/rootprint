@@ -3,6 +3,7 @@
 	import { getErrorMessage } from '$lib/utils/error';
 	import { getLocalIndexes } from '$lib/api/indexes.remote';
 	import IndexDetailDrawer from './IndexDetailDrawer.svelte';
+	import { formatEpochDate } from '$lib/utils/time';
 
 	type IndexSummary = {
 		id: number;
@@ -31,11 +32,6 @@
 	function openDrawer(indexId: string) {
 		drawerOpen = true;
 		drawerRef?.loadDetail(indexId);
-	}
-
-	function formatDate(ts: number | null): string {
-		if (!ts) return '—';
-		return new Date(ts * 1000).toLocaleDateString();
 	}
 
 	load();
@@ -90,7 +86,7 @@
 								</td>
 								<td>{idx.fieldCount}</td>
 								<td>{idx.sourceCount}</td>
-								<td class="text-base-content/50">{formatDate(idx.createTimestamp)}</td>
+								<td class="text-base-content/50">{formatEpochDate(idx.createTimestamp)}</td>
 							</tr>
 						{/each}
 					</tbody>

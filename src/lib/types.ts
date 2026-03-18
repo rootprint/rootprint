@@ -1,5 +1,5 @@
-export type RelativeTimeRange = { type: 'relative'; preset: string };
-export type AbsoluteTimeRange = { type: 'absolute'; start: number; end: number };
+type RelativeTimeRange = { type: 'relative'; preset: string };
+type AbsoluteTimeRange = { type: 'absolute'; start: number; end: number };
 export type TimeRange = RelativeTimeRange | AbsoluteTimeRange;
 
 export type TimezoneMode = 'utc' | 'local';
@@ -18,3 +18,5 @@ export const TIME_PRESETS = [
 ] as const;
 
 export type IndexField = { name: string; type: string; fast: boolean };
+
+export type LogEntry = { key: number; hit: Record<string, unknown> };

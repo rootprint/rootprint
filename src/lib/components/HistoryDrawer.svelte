@@ -6,6 +6,7 @@
 	import { formatTimeRangeLabel } from '$lib/utils/time';
 	import type { ParsedQuery } from '$lib/utils/query-params';
 	import SaveQueryModal from './SaveQueryModal.svelte';
+	import { formatRelativeTime } from '$lib/utils/format';
 
 	let {
 		open,
@@ -74,19 +75,6 @@
 			load();
 		}
 	});
-
-	function formatRelativeTime(date: Date): string {
-		const now = Date.now();
-		const diff = now - date.getTime();
-		const seconds = Math.floor(diff / 1000);
-		if (seconds < 60) return 'just now';
-		const minutes = Math.floor(seconds / 60);
-		if (minutes < 60) return `${minutes}m ago`;
-		const hours = Math.floor(minutes / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
 
 	function filterCount(filters: Record<string, string[]>): number {
 		return Object.values(filters).reduce((sum, v) => sum + v.length, 0);

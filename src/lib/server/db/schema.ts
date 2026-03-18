@@ -37,6 +37,7 @@ export const qwIndex = sqliteTable('qw_index', {
 	updatedAt: integer('updated_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull()
+		.$onUpdate(() => new Date())
 });
 
 // Flattened field mappings — one row per field per index
@@ -102,6 +103,7 @@ export const userPreference = sqliteTable(
 		updatedAt: integer('updated_at', { mode: 'timestamp' })
 			.default(sql`(unixepoch())`)
 			.notNull()
+			.$onUpdate(() => new Date())
 	},
 	(table) => [uniqueIndex('user_preference_unique').on(table.userId, table.indexName)]
 );
@@ -116,7 +118,10 @@ export const inviteToken = sqliteTable('invite_token', {
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull()
-});
+}, (table) => [
+	index('invite_token_user').on(table.userId),
+	index('invite_token_expires').on(table.expiresAt)
+]);
 
 export const searchHistory = sqliteTable('search_history', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
@@ -132,7 +137,10 @@ export const searchHistory = sqliteTable('search_history', {
 	executedAt: integer('executed_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull()
-});
+}, (table) => [
+	index('search_history_user_executed').on(table.userId, table.executedAt),
+	index('search_history_user_index_executed').on(table.userId, table.indexName, table.executedAt)
+]);
 
 export const savedQuery = sqliteTable(
 	'saved_query',

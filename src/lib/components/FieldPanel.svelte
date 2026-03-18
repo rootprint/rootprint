@@ -11,7 +11,7 @@
 	}: {
 		availableFields: IndexField[];
 		activeFields: string[];
-		onchange?: (fields: string[]) => void;
+		onchange?: () => void;
 		loading?: boolean;
 	} = $props();
 
@@ -33,17 +33,17 @@
 	function handleDndFinalize(e: CustomEvent<{ items: typeof dndItems }>) {
 		dndItems = e.detail.items;
 		activeFields = dndItems.map((f) => f.name);
-		onchange?.(activeFields);
+		onchange?.();
 	}
 
 	function addField(name: string) {
 		activeFields = [...activeFields, name];
-		onchange?.(activeFields);
+		onchange?.();
 	}
 
 	function removeField(name: string) {
 		activeFields = activeFields.filter((f) => f !== name);
-		onchange?.(activeFields);
+		onchange?.();
 	}
 </script>
 

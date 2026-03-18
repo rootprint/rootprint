@@ -32,10 +32,14 @@
 		}
 	}
 
-	function copyLink() {
-		navigator.clipboard.writeText(inviteUrl);
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
+	async function copyLink() {
+		try {
+			await navigator.clipboard.writeText(inviteUrl);
+			copied = true;
+			setTimeout(() => (copied = false), 2000);
+		} catch (e) {
+			toast.error('Failed to copy to clipboard');
+		}
 	}
 
 	function handleClose() {

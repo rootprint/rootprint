@@ -16,7 +16,7 @@ import type { ParsedQuery } from '$lib/utils/query-params';
 import { computeColumnWidths } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import type { IndexField, TimeRange } from '$lib/types';
+import type { IndexField, LogEntry, TimeRange } from '$lib/types';
 import { toast } from 'svelte-sonner';
 import { getErrorMessage } from '$lib/utils/error';
 
@@ -26,6 +26,12 @@ export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
 	options?: { onFreshSearch?: () => void }
 ) {
+	let nextKey = 0;
+
+	function withKeys(hits: Record<string, unknown>[]): LogEntry[] {
+		return hits.map((hit) => ({ key: nextKey++, hit }));
+	}
+
 	// --- Index state ---
 	let indexes = $state<{ indexId: string; indexUri: string }[]>([]);
 	let selectedIndex = $state<string | null>(null);
@@ -43,7 +49,7 @@ export function createSearchStore(
 	let quickFilterFields = $state<string[]>([]);
 
 	// --- Search result state ---
-	let logs = $state<Record<string, unknown>[]>([]);
+	let logs = $state<LogEntry[]>([]);
 	let numHits = $state(0);
 	let loading = $state(false);
 	let hasSearched = $state(false);
@@ -56,7 +62,7 @@ export function createSearchStore(
 	let histogramRequestId = 0;
 
 	// --- Column widths ---
-	let columnWidths = $derived(computeColumnWidths(logs, activeFields));
+	let columnWidths = $derived(computeColumnWidths(logs.map((e) => e.hit), activeFields));
 
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, string[]>>({});
@@ -69,7 +75,7 @@ export function createSearchStore(
 		getQueryText,
 		getCommitBufferSecs: () => commitBufferSecs,
 		onNewLogs: (hits) => {
-			logs = [...hits, ...logs];
+			logs = [...withKeys(hits), ...logs];
 			numHits = numHits + hits.length;
 		},
 		onStart: ({ startTimestamp: st, endTimestamp: et }) => {
@@ -251,17 +257,19 @@ export function createSearchStore(
 
 	const debouncedSaveFields = debounce(() => {
 		if (selectedIndex) {
-			saveDisplayFields({ indexId: selectedIndex, fields: activeFields });
+			saveDisplayFields({ indexId: selectedIndex, fields: activeFields })
+				.catch((e) => toast.error(getErrorMessage(e, 'Failed to save display fields')));
 		}
 	}, 500);
 
-	function handleFieldsChange(_fields: string[]) {
+	function handleFieldsChange() {
 		debouncedSaveFields();
 	}
 
 	const debouncedSaveQuickFilters = debounce(() => {
 		if (selectedIndex) {
-			saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields });
+			saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields })
+				.catch((e) => toast.error(getErrorMessage(e, 'Failed to save quick filter fields')));
 		}
 	}, 500);
 
@@ -348,9 +356,9 @@ export function createSearchStore(
 			}
 
 			if (append) {
-				logs = [...logs, ...result.hits];
+				logs = [...logs, ...withKeys(result.hits)];
 			} else {
-				logs = result.hits;
+				logs = withKeys(result.hits);
 				options?.onFreshSearch?.();
 			}
 			numHits = result.numHits;

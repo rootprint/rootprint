@@ -40,10 +40,14 @@
 		}
 	}
 
-	function copyInviteLink(userId: string, url: string) {
-		navigator.clipboard.writeText(url);
-		copiedUserId = userId;
-		setTimeout(() => (copiedUserId = null), 2000);
+	async function copyInviteLink(userId: string, url: string) {
+		try {
+			await navigator.clipboard.writeText(url);
+			copiedUserId = userId;
+			setTimeout(() => (copiedUserId = null), 2000);
+		} catch (e) {
+			toast.error('Failed to copy to clipboard');
+		}
 	}
 
 	const currentUserId = $derived(page.data.user?.id);

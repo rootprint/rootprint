@@ -101,3 +101,13 @@ export function formatChartTooltip(tsSec: number, timezone: TimezoneMode): strin
 	const p = parts(tsSec * 1000, timezone);
 	return `${p.Y}-${p.M}-${p.D} ${p.h}:${p.m}:${p.s}`;
 }
+
+export function formatEpochLocale(ts: number | null | undefined): string {
+	if (!ts) return '—';
+	return new Date(ts * 1000).toLocaleString();
+}
+
+export function formatEpochDate(ts: number | null | undefined): string {
+	if (!ts) return '—';
+	return new Date(ts * 1000).toLocaleDateString();
+}

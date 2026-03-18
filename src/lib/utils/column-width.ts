@@ -1,6 +1,6 @@
 import { resolveFieldValue, formatFieldValue } from './field-resolver';
 
-export const MAX_COLUMN_CH = 60;
+const MAX_COLUMN_CH = 60;
 const SAMPLE_SIZE = 20;
 
 export function computeColumnWidths(

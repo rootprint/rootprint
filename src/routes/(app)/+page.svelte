@@ -7,6 +7,7 @@
 	import FieldPanel from '$lib/components/FieldPanel.svelte';
 	import QuickFilterPanel from '$lib/components/QuickFilterPanel.svelte';
 	import { Clock, Share2, Radio, Play } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import LogDetailDrawer from '$lib/components/LogDetailDrawer.svelte';
 	import LogFrequencyChart from '$lib/components/LogFrequencyChart.svelte';
 	import HistoryDrawer from '$lib/components/HistoryDrawer.svelte';
@@ -36,10 +37,14 @@
 
 	// --- UI event handlers ---
 
-	function shareQuery() {
-		navigator.clipboard.writeText(window.location.href);
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
+	async function shareQuery() {
+		try {
+			await navigator.clipboard.writeText(window.location.href);
+			copied = true;
+			setTimeout(() => (copied = false), 2000);
+		} catch (e) {
+			toast.error('Failed to copy to clipboard');
+		}
 	}
 
 	function handleChartToggle() {
@@ -134,7 +139,7 @@
 				</button>
 
 				<ExportDropdown
-					logs={store.logs}
+					logs={store.logs.map((e) => e.hit)}
 					indexId={store.selectedIndex}
 					timestampField={store.fieldConfig.timestampField}
 					levelField={store.fieldConfig.levelField}
@@ -244,9 +249,9 @@
 				</div>
 			{:else}
 				<div class="w-fit min-w-full">
-					{#each store.logs as hit, i (i)}
+					{#each store.logs as entry (entry.key)}
 						<LogRow
-							{hit}
+							hit={entry.hit}
 							{wrapMode}
 							timezoneMode={store.timezoneMode}
 							levelField={store.fieldConfig.levelField}
@@ -255,7 +260,7 @@
 							extraFields={store.activeFields}
 							columnWidths={store.columnWidths}
 							onclick={() => {
-								selectedLog = hit;
+								selectedLog = entry.hit;
 								drawerOpen = true;
 							}}
 						/>

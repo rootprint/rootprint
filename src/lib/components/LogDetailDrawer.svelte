@@ -2,6 +2,7 @@
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 	import { ListTree, Braces, X, CirclePlus, CircleMinus, Check, Copy } from 'lucide-svelte';
 	import { formatFieldValue } from '$lib/utils/field-resolver';
+	import { toast } from 'svelte-sonner';
 	let {
 		open = $bindable(false),
 		hit = null,
@@ -56,9 +57,13 @@
 	const jsonLines = $derived(prettyJson.split('\n'));
 
 	async function copyJson() {
-		await navigator.clipboard.writeText(prettyJson);
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
+		try {
+			await navigator.clipboard.writeText(prettyJson);
+			copied = true;
+			setTimeout(() => (copied = false), 2000);
+		} catch (e) {
+			toast.error('Failed to copy to clipboard');
+		}
 	}
 </script>
 

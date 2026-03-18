@@ -23,7 +23,7 @@ export const searchFieldValuesSchema = v.object({
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
 });
 
-export type SearchFieldValuesInput = v.InferOutput<typeof searchFieldValuesSchema>;
+type SearchFieldValuesInput = v.InferOutput<typeof searchFieldValuesSchema>;
 
 export const searchLogHistogramSchema = v.object({
 	indexId: v.pipe(v.string(), v.minLength(1)),
@@ -33,7 +33,7 @@ export const searchLogHistogramSchema = v.object({
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
 });
 
-export type SearchLogHistogramInput = v.InferOutput<typeof searchLogHistogramSchema>;
+type SearchLogHistogramInput = v.InferOutput<typeof searchLogHistogramSchema>;
 
 export const pollLiveLogsSchema = v.object({
 	indexId: v.pipe(v.string(), v.minLength(1)),
@@ -43,5 +43,5 @@ export const pollLiveLogsSchema = v.object({
 	limit: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(200))
 });
 
-export type PollLiveLogsInput = v.InferOutput<typeof pollLiveLogsSchema>;
+type PollLiveLogsInput = v.InferOutput<typeof pollLiveLogsSchema>;
 

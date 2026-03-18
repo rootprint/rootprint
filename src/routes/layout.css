@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import 'uplot/dist/uPlot.min.css';
-@plugin '@tailwindcss/typography';
 @plugin 'daisyui';
 
 @plugin 'daisyui/theme' {

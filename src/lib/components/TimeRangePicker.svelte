@@ -176,7 +176,6 @@
 							}
 						}}
 						month={selectionMode === 'to' && toDate ? toDate : (fromDate ?? new Date())}
-						timezone={timezoneMode}
 					/>
 
 					<div class="mt-2 flex gap-2">

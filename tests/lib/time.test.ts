@@ -4,7 +4,9 @@ import {
 	formatChartTime,
 	formatChartDate,
 	formatChartTooltip,
-	normalizeToMs
+	normalizeToMs,
+	formatEpochLocale,
+	formatEpochDate
 } from '$lib/utils/time';
 
 describe('formatTimestamp', () => {
@@ -84,5 +86,41 @@ describe('formatChartTooltip', () => {
 	it('formats YYYY-MM-DD HH:MM:SS in local time', () => {
 		const result = formatChartTooltip(tsSec, 'local');
 		expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+	});
+});
+
+describe('formatEpochLocale', () => {
+	it('returns em dash for null', () => {
+		expect(formatEpochLocale(null)).toBe('—');
+	});
+	it('returns em dash for undefined', () => {
+		expect(formatEpochLocale(undefined)).toBe('—');
+	});
+	it('returns em dash for zero', () => {
+		expect(formatEpochLocale(0)).toBe('—');
+	});
+	it('formats epoch seconds to locale string', () => {
+		const ts = Date.UTC(2024, 5, 15, 14, 30, 45) / 1000;
+		const result = formatEpochLocale(ts);
+		expect(result).toBeTruthy();
+		expect(result).not.toBe('—');
+	});
+});
+
+describe('formatEpochDate', () => {
+	it('returns em dash for null', () => {
+		expect(formatEpochDate(null)).toBe('—');
+	});
+	it('returns em dash for undefined', () => {
+		expect(formatEpochDate(undefined)).toBe('—');
+	});
+	it('returns em dash for zero', () => {
+		expect(formatEpochDate(0)).toBe('—');
+	});
+	it('formats epoch seconds to date string', () => {
+		const ts = Date.UTC(2024, 5, 15, 14, 30, 45) / 1000;
+		const result = formatEpochDate(ts);
+		expect(result).toBeTruthy();
+		expect(result).not.toBe('—');
 	});
 });

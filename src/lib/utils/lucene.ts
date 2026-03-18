@@ -3,8 +3,6 @@ export type QueryContext =
 	| { type: 'value'; field: string; fragment: string; start: number; end: number }
 	| { type: 'none' };
 
-const OPERATORS = ['AND', 'OR', 'NOT'];
-
 export function getQueryContext(query: string, cursorPos: number): QueryContext {
 	// Check if cursor is inside a quoted string
 	let inQuote = false;

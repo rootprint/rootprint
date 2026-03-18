@@ -6,8 +6,7 @@
 		maxDate,
 		rangeStart,
 		rangeEnd,
-		onselect,
-		timezone = 'local'
+		onselect
 	}: {
 		selected?: Date | null;
 		month?: Date;
@@ -16,7 +15,6 @@
 		rangeStart?: Date | null;
 		rangeEnd?: Date | null;
 		onselect: (date: Date) => void;
-		timezone?: 'utc' | 'local';
 	} = $props();
 
 	let viewYear = $state(month.getFullYear());

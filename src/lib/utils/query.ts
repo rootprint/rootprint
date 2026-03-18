@@ -1,10 +1,3 @@
-/**
- * QuickwitClient adds /api/v1 internally, so strip it if present in user-provided URLs.
- */
-export function normalizeQuickwitUrl(url: string): string {
-	return url.replace(/\/api\/v1\/?$/, '');
-}
-
 export function escapeFilterValue(value: string): string {
 	if (/[\s:()[\]{}!+\-~^"\\*?/&|]/.test(value)) {
 		return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
@@ -17,7 +10,7 @@ export function escapeFilterValue(value: string): string {
  * E.g. { level: ["error", "warn"], service: ["api"] }
  * → '(level:error OR level:warn) AND service:api'
  */
-export function buildFilterClause(filters: Record<string, string[]>): string {
+function buildFilterClause(filters: Record<string, string[]>): string {
 	const clauses: string[] = [];
 	for (const [field, values] of Object.entries(filters)) {
 		if (!values.length) continue;
