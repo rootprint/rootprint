@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import { Clock, Bookmark, Users, X } from 'lucide-svelte';
 	import { getHistory, deleteHistoryEntry, clearHistory } from '$lib/api/history.remote';
 	import { getSavedQueries, deleteSavedQuery } from '$lib/api/saved-queries.remote';
 	import { type TimeRange } from '$lib/types';
@@ -24,9 +24,9 @@
 	let activeTab = $state<'history' | 'saved' | 'shared'>('history');
 
 	const tabs = [
-		{ id: 'history' as const, label: 'History', icon: 'lucide:clock', enabled: true },
-		{ id: 'saved' as const, label: 'Saved', icon: 'lucide:bookmark', enabled: true },
-		{ id: 'shared' as const, label: 'Shared', icon: 'lucide:users', enabled: false }
+		{ id: 'history' as const, label: 'History', icon: Clock, enabled: true },
+		{ id: 'saved' as const, label: 'Saved', icon: Bookmark, enabled: true },
+		{ id: 'shared' as const, label: 'Shared', icon: Users, enabled: false }
 	];
 
 	type HistoryEntry = {
@@ -172,6 +172,7 @@
 		<div class="flex items-center justify-between border-b border-base-300 px-3">
 			<div role="tablist" class="tabs-border tabs">
 				{#each tabs as tab (tab.id)}
+					{@const TabIcon = tab.icon}
 					<button
 						role="tab"
 						class="tab gap-1.5"
@@ -182,13 +183,13 @@
 							if (tab.enabled) activeTab = tab.id;
 						}}
 					>
-						<Icon icon={tab.icon} width="12" height="12" />
+						<TabIcon size={12} />
 						{tab.label}
 					</button>
 				{/each}
 			</div>
 			<button class="btn btn-square btn-ghost btn-xs" onclick={onclose} title="Close">
-				<Icon icon="lucide:x" width="14" height="14" />
+				<X size={14} />
 			</button>
 		</div>
 
@@ -230,12 +231,7 @@
 										}}
 										title="Save query"
 									>
-										<Icon
-											icon="lucide:bookmark"
-											width="12"
-											height="12"
-											class="hover:text-warning"
-										/>
+										<Bookmark size={12} class="hover:text-warning" />
 									</button>
 									<button
 										class="btn p-0 opacity-0 btn-ghost btn-xs group-hover:opacity-100"
@@ -245,7 +241,7 @@
 										}}
 										title="Remove from history"
 									>
-										<Icon icon="lucide:x" width="12" height="12" />
+										<X size={12} />
 									</button>
 								</div>
 								<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
@@ -299,7 +295,7 @@
 										}}
 										title="Remove saved query"
 									>
-										<Icon icon="lucide:x" width="12" height="12" />
+										<X size={12} />
 									</button>
 								</div>
 								<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { dndzone } from 'svelte-dnd-action';
-	import Icon from '@iconify/svelte';
+	import { ChevronRight, ChevronDown, Check, Settings, GripVertical, X, Plus } from 'lucide-svelte';
 	import type { IndexField } from '$lib/types';
 
 	let {
@@ -50,12 +50,11 @@
 <div class="flex flex-col bg-base-100">
 	<div class="flex items-center border-b border-base-300 px-3 py-2">
 		<button class="flex flex-1 items-center" onclick={() => (collapsed = !collapsed)}>
-			<Icon
-				icon={collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'}
-				width="14"
-				height="14"
-				class="mr-1 text-base-content/60"
-			/>
+			{#if collapsed}
+				<ChevronRight size={14} class="mr-1 text-base-content/60" />
+			{:else}
+				<ChevronDown size={14} class="mr-1 text-base-content/60" />
+			{/if}
 			<h3
 				class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
 			>
@@ -71,12 +70,11 @@
 				}}
 				title={configMode ? 'Done configuring' : 'Configure display fields'}
 			>
-				<Icon
-					icon={configMode ? 'lucide:check' : 'lucide:settings'}
-					width="14"
-					height="14"
-					class="text-base-content/60"
-				/>
+				{#if configMode}
+				<Check size={14} class="text-base-content/60" />
+			{:else}
+				<Settings size={14} class="text-base-content/60" />
+			{/if}
 			</button>
 		{/if}
 	</div>
@@ -107,19 +105,14 @@
 						>
 							{#each dndItems as field (field.id)}
 								<div class="flex items-center gap-1 rounded bg-base-200 px-2 py-1 text-xs">
-									<Icon
-										icon="lucide:grip-vertical"
-										width="12"
-										height="12"
-										class="shrink-0 cursor-grab text-base-content/60"
-									/>
+									<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/60" />
 									<span class="flex-1 truncate">{field.name}</span>
 									{#if configMode}
 										<button
 											class="btn p-0 btn-ghost btn-xs"
 											onclick={() => removeField(field.name)}
 										>
-											<Icon icon="lucide:x" width="12" height="12" />
+											<X size={12} />
 										</button>
 									{/if}
 								</div>
@@ -137,12 +130,7 @@
 									class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-base-200"
 									onclick={() => addField(field.name)}
 								>
-									<Icon
-										icon="lucide:plus"
-										width="12"
-										height="12"
-										class="shrink-0 text-base-content/60"
-									/>
+									<Plus size={12} class="shrink-0 text-base-content/60" />
 									<span class="truncate">{field.name}</span>
 									<span class="ml-auto text-[10px] text-base-content/50">{field.type}</span>
 								</button>

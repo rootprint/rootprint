@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import type uPlotLib from 'uplot';
 	import type { TimezoneMode } from '$lib/types';
-	import Icon from '@iconify/svelte';
+	import { ChevronRight, ChevronDown } from 'lucide-svelte';
 	import { formatChartTime, formatChartDate, formatChartTooltip } from '$lib/utils/time';
 
 	let {
@@ -313,12 +313,11 @@
 <div class="border-b border-base-300">
 	<div class="flex items-center gap-2 px-3 py-1.5">
 		<button class="flex items-center gap-1" onclick={ontoggle}>
-			<Icon
-				icon={collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'}
-				width="14"
-				height="14"
-				class="text-base-content/60"
-			/>
+			{#if collapsed}
+				<ChevronRight size={14} class="text-base-content/60" />
+			{:else}
+				<ChevronDown size={14} class="text-base-content/60" />
+			{/if}
 			<span class="text-xs font-semibold tracking-wider text-base-content/80 uppercase">
 				Frequency chart
 			</span>

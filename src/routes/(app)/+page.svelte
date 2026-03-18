@@ -6,11 +6,12 @@
 	import LogRow from '$lib/components/LogRow.svelte';
 	import FieldPanel from '$lib/components/FieldPanel.svelte';
 	import QuickFilterPanel from '$lib/components/QuickFilterPanel.svelte';
-	import Icon from '@iconify/svelte';
+	import { Clock, Share2, Radio, Play } from 'lucide-svelte';
 	import LogDetailDrawer from '$lib/components/LogDetailDrawer.svelte';
 	import LogFrequencyChart from '$lib/components/LogFrequencyChart.svelte';
 	import HistoryDrawer from '$lib/components/HistoryDrawer.svelte';
 	import ExportDropdown from '$lib/components/ExportDropdown.svelte';
+	import QueryInput from '$lib/components/QueryInput.svelte';
 
 	let { data } = $props();
 
@@ -22,9 +23,7 @@
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
-	let inputFocused = $state(false);
-	let localBuffer = $state('');
-	let queryInput = $derived(inputFocused ? localBuffer : data.parsedQuery.query);
+	let queryInputRef = $state<ReturnType<typeof QueryInput>>();
 	let isAtTop = $state(true);
 	let wrapMode = $state<'none' | 'wrap' | 'pretty'>('none');
 	let copied = $state(false);
@@ -48,21 +47,6 @@
 		if (browser) {
 			localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
 		}
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
-			store.runQuery(queryInput);
-		}
-	}
-
-	function handleFocus() {
-		localBuffer = data.parsedQuery.query;
-		inputFocused = true;
-	}
-
-	function handleBlur() {
-		inputFocused = false;
 	}
 
 	function handleScroll() {
@@ -141,11 +125,11 @@
 					}}
 					title="Toggle search history"
 				>
-					<Icon icon="lucide:clock" width="14" height="14" />
+					<Clock size={14} />
 				</button>
 
 				<button class="btn btn-sm" onclick={shareQuery}>
-					<Icon icon="lucide:share-2" width="14" height="14" />
+					<Share2 size={14} />
 					{copied ? 'Copied!' : 'Share'}
 				</button>
 
@@ -179,7 +163,7 @@
 							<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-error-content"></span>
 						</span>
 					{:else}
-						<Icon icon="lucide:radio" width="14" height="14" />
+						<Radio size={14} />
 					{/if}
 					Live
 				</button>
@@ -195,26 +179,21 @@
 
 				<button
 					class="btn btn-sm btn-accent"
-					onclick={() => store.runQuery(queryInput)}
+					onclick={() => queryInputRef?.submit()}
 					disabled={store.loading || !store.selectedIndex}
 				>
-					<Icon icon="lucide:play" width="14" height="14" />
+					<Play size={14} />
 					{store.loading && !store.logs.length ? 'Running...' : 'Run query'}
 				</button>
 			</div>
 
 			<div class="mt-2 flex w-full items-center gap-2">
-				<input
-					type="text"
-					class="input-bordered input input-sm min-w-0 flex-1"
-					placeholder="Lucene query (e.g. level:error AND service:api)"
-					value={queryInput}
-					oninput={(e) => {
-						localBuffer = e.currentTarget.value;
-					}}
-					onfocus={handleFocus}
-					onblur={handleBlur}
-					onkeydown={handleKeydown}
+				<QueryInput
+					bind:this={queryInputRef}
+					externalValue={data.parsedQuery.query}
+					fields={store.indexFields}
+					onsubmit={(query) => store.runQuery(query)}
+					onsearchvalues={store.searchFieldValues}
 				/>
 				{#if store.hasSearched}
 					<span class="text-xs whitespace-nowrap text-base-content/50"

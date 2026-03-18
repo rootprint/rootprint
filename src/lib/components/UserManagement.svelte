@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import { UserPlus, Check, Link, RefreshCw, Loader, KeyRound, Trash2 } from 'lucide-svelte';
 	import { listUsers, removeUser, setUserRole, regenerateInvite } from '$lib/api/users.remote';
 	import { page } from '$app/state';
 	import InviteUserModal from './InviteUserModal.svelte';
@@ -89,7 +89,7 @@
 			<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>
 		</div>
 		<button class="btn btn-sm btn-accent" onclick={() => (inviteModalOpen = true)}>
-			<Icon icon="lucide:user-plus" width="16" height="16" />
+			<UserPlus size={16} />
 			Invite User
 		</button>
 	</div>
@@ -154,11 +154,11 @@
 												onclick={() => copyInviteLink(u.id, u.inviteUrl!)}
 												title="Copy invite link"
 											>
-												<Icon
-													icon={copiedUserId === u.id ? 'lucide:check' : 'lucide:link'}
-													width="14"
-													height="14"
-												/>
+												{#if copiedUserId === u.id}
+											<Check size={14} />
+										{:else}
+											<Link size={14} />
+										{/if}
 											</button>
 										{/if}
 										<button
@@ -167,12 +167,11 @@
 											title="Regenerate invite link"
 											disabled={regeneratingUserId === u.id}
 										>
-											<Icon
-												icon={regeneratingUserId === u.id ? 'lucide:loader' : 'lucide:refresh-cw'}
-												width="14"
-												height="14"
-												class={regeneratingUserId === u.id ? 'animate-spin' : ''}
-											/>
+											{#if regeneratingUserId === u.id}
+											<Loader size={14} class="animate-spin" />
+										{:else}
+											<RefreshCw size={14} />
+										{/if}
 										</button>
 									{/if}
 									{#if u.status === 'active' && u.id !== currentUserId}
@@ -184,7 +183,7 @@
 											}}
 											title="Reset password"
 										>
-											<Icon icon="lucide:key-round" width="14" height="14" />
+											<KeyRound size={14} />
 										</button>
 									{/if}
 									{#if u.id !== currentUserId}
@@ -203,7 +202,7 @@
 												class="btn text-error btn-ghost btn-xs"
 												onclick={() => (confirmingRemove = u.id)}
 											>
-												<Icon icon="lucide:trash-2" width="14" height="14" />
+												<Trash2 size={14} />
 											</button>
 										{/if}
 									{/if}

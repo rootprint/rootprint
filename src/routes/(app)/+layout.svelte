@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import { Settings, Lock, LogOut } from 'lucide-svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/api/auth.remote';
@@ -42,7 +42,7 @@
 					<ul class="menu w-full p-2">
 						<li class="w-full">
 							<a href="/administration" class="w-full">
-								<Icon icon="lucide:settings" width="16" height="16" class="opacity-70" />
+								<Settings size={16} class="opacity-70" />
 								Administration
 							</a>
 						</li>
@@ -51,7 +51,7 @@
 				<ul class="menu w-full p-2">
 					<li class="w-full">
 						<button class="w-full" onclick={() => (changePasswordOpen = true)}>
-							<Icon icon="lucide:lock" width="16" height="16" class="opacity-70" />
+							<Lock size={16} class="opacity-70" />
 							Change password
 						</button>
 					</li>
@@ -64,7 +64,7 @@
 							goto('/auth/sign-in');
 						}}
 					>
-						<Icon icon="lucide:log-out" width="16" height="16" class="opacity-70" />
+						<LogOut size={16} class="opacity-70" />
 						Log out
 					</button>
 				</div>

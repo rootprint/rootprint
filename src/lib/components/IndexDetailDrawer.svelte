@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import { Info, ListTree, Plug, Settings, X } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
 	import { getLocalIndexDetail, saveIndexConfig } from '$lib/api/indexes.remote';
@@ -13,10 +13,10 @@
 	let indexId = $state('');
 
 	const tabs = [
-		{ id: 'details', label: 'Details', icon: 'lucide:info' },
-		{ id: 'fields', label: 'Fields', icon: 'lucide:list-tree' },
-		{ id: 'sources', label: 'Sources', icon: 'lucide:plug' },
-		{ id: 'config', label: 'Config', icon: 'lucide:settings' }
+		{ id: 'details', label: 'Details', icon: Info },
+		{ id: 'fields', label: 'Fields', icon: ListTree },
+		{ id: 'sources', label: 'Sources', icon: Plug },
+		{ id: 'config', label: 'Config', icon: Settings }
 	] as const;
 
 	type TabId = (typeof tabs)[number]['id'];
@@ -122,19 +122,20 @@
 		<div class="flex items-center justify-between border-b border-base-300 px-3">
 			<div role="tablist" class="tabs-border tabs">
 				{#each tabs as tab (tab.id)}
+					{@const TabIcon = tab.icon}
 					<button
 						role="tab"
 						class="tab gap-1.5"
 						class:tab-active={activeTab === tab.id}
 						onclick={() => (activeTab = tab.id)}
 					>
-						<Icon icon={tab.icon} width="14" height="14" />
+						<TabIcon size={14} />
 						{tab.label}
 					</button>
 				{/each}
 			</div>
 			<button class="btn btn-square btn-ghost btn-xs" onclick={close} title="Close">
-				<Icon icon="lucide:x" width="14" height="14" />
+				<X size={14} />
 			</button>
 		</div>
 

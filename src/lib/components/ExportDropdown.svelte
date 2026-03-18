@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { formatAsJson, formatAsCsv, formatAsText, downloadFile } from '$lib/utils/export';
-	import Icon from '@iconify/svelte';
+	import { Download } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let {
@@ -71,7 +71,7 @@
 		disabled={logs.length === 0}
 		onclick={() => (dropdownOpen = !dropdownOpen)}
 	>
-		<Icon icon="lucide:download" width="14" height="14" />
+		<Download size={14} />
 		Export
 	</button>
 
@@ -100,7 +100,7 @@
 				disabled={logs.length === 0 || !indexId}
 				onclick={handleExport}
 			>
-				<Icon icon="lucide:download" width="14" height="14" />
+				<Download size={14} />
 				Export {logs.length.toLocaleString()} logs
 			</button>
 		</div>

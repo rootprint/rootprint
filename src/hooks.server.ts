@@ -102,7 +102,7 @@ const handleSecurityHeaders: Handle = async ({ event, resolve }) => {
 		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 		"font-src 'self' https://fonts.gstatic.com",
 		"img-src 'self' data:",
-		"connect-src 'self' https://api.iconify.design",
+		"connect-src 'self'",
 		"object-src 'none'",
 		"frame-ancestors 'none'",
 		"base-uri 'self'",

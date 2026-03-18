@@ -1,6 +1,6 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
-	import Icon from '@iconify/svelte';
+	import { ListTree, Braces, X, CirclePlus, CircleMinus, Check, Copy } from 'lucide-svelte';
 	import { formatFieldValue } from '$lib/utils/field-resolver';
 	let {
 		open = $bindable(false),
@@ -15,8 +15,8 @@
 	} = $props();
 
 	const tabs = [
-		{ id: 'parameters', label: 'Parameters', icon: 'lucide:list-tree' },
-		{ id: 'json', label: 'JSON', icon: 'lucide:braces' }
+		{ id: 'parameters', label: 'Parameters', icon: ListTree },
+		{ id: 'json', label: 'JSON', icon: Braces }
 	] as const;
 
 	function flattenObject(obj: Record<string, unknown>, prefix = ''): [string, unknown][] {
@@ -82,19 +82,20 @@
 		<div class="flex items-center justify-between border-b border-base-300 px-3">
 			<div role="tablist" class="tabs-border tabs">
 				{#each tabs as tab (tab.id)}
+					{@const TabIcon = tab.icon}
 					<button
 						role="tab"
 						class="tab gap-1.5"
 						class:tab-active={activeTab === tab.id}
 						onclick={() => (activeTab = tab.id)}
 					>
-						<Icon icon={tab.icon} width="14" height="14" />
+						<TabIcon size={14} />
 						{tab.label}
 					</button>
 				{/each}
 			</div>
 			<button class="btn btn-square btn-ghost btn-xs" onclick={close} title="Close">
-				<Icon icon="lucide:x" width="14" height="14" />
+				<X size={14} />
 			</button>
 		</div>
 
@@ -103,7 +104,11 @@
 				{#if hit}
 					<div class="relative rounded-box bg-base-200">
 						<button class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs" onclick={copyJson}>
-							<Icon icon={copied ? 'lucide:check' : 'lucide:copy'} width="14" height="14" />
+							{#if copied}
+								<Check size={14} />
+							{:else}
+								<Copy size={14} />
+							{/if}
 						</button>
 						<div class="flex font-['Roboto_Mono',monospace] text-sm">
 							<div
@@ -140,10 +145,8 @@
 													title="Filter for value"
 													onclick={() => handleFilter(key, value, false)}
 												>
-													<Icon
-														icon="lucide:plus-circle"
-														width="12"
-														height="12"
+													<CirclePlus
+														size={12}
 														class="text-success"
 													/>
 												</button>
@@ -152,10 +155,8 @@
 													title="Filter out value"
 													onclick={() => handleFilter(key, value, true)}
 												>
-													<Icon
-														icon="lucide:minus-circle"
-														width="12"
-														height="12"
+													<CircleMinus
+														size={12}
 														class="text-error"
 													/>
 												</button>

@@ -44,8 +44,8 @@
 		"vitest": "^4.0.18"
 	},
 	"dependencies": {
-		"@iconify/svelte": "^5.2.1",
 		"daisyui": "^5.5.19",
+		"lucide-svelte": "^0.577.0",
 		"quickwit-js": "^0.3.0",
 		"shiki": "^4.0.1",
 		"svelte-dnd-action": "^0.9.69",

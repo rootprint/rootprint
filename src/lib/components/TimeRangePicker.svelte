@@ -2,7 +2,7 @@
 	import { TIME_PRESETS, type TimeRange, type TimezoneMode } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
 	import Calendar from './Calendar.svelte';
-	import Icon from '@iconify/svelte';
+	import { Clock } from 'lucide-svelte';
 
 	let {
 		value = { type: 'relative', preset: '15m' } as TimeRange,
@@ -198,7 +198,7 @@
 
 			<!-- Timezone footer -->
 			<div class="flex items-center justify-between border-t border-base-300 px-4 py-2 text-xs">
-				<Icon icon="mdi:clock-outline" class="text-sm text-base-content/50" />
+				<Clock size={14} class="text-base-content/50" />
 				<div class="join">
 					<button
 						class="btn join-item btn-xs {timezoneMode === 'utc' ? 'btn-accent' : ''}"

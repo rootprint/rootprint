@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import { ChevronRight, ChevronDown, X, Check, Settings, Pin, GripVertical, Plus } from 'lucide-svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { dndzone } from 'svelte-dnd-action';
 	import type { IndexField } from '$lib/types';
@@ -183,12 +183,11 @@
 	<div class="border-b border-base-300">
 		<div class="flex items-center px-3 py-2">
 			<button class="flex flex-1 items-center" onclick={() => (collapsed = !collapsed)}>
-				<Icon
-					icon={collapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'}
-					width="14"
-					height="14"
-					class="mr-1 text-base-content/60"
-				/>
+				{#if collapsed}
+					<ChevronRight size={14} class="mr-1 text-base-content/60" />
+				{:else}
+					<ChevronDown size={14} class="mr-1 text-base-content/60" />
+				{/if}
 				<h3
 					class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
 				>
@@ -206,7 +205,7 @@
 					onclick={clearAllFilters}
 					title="Clear all filters"
 				>
-					<Icon icon="lucide:x" width="14" height="14" class="text-base-content/60" />
+					<X size={14} class="text-base-content/60" />
 				</button>
 			{/if}
 			{#if availableFields.length > 0}
@@ -215,12 +214,11 @@
 					onclick={() => (configMode ? exitConfigMode() : enterConfigMode())}
 					title={configMode ? 'Done configuring' : 'Configure filter fields'}
 				>
-					<Icon
-						icon={configMode ? 'lucide:check' : 'lucide:settings'}
-						width="14"
-						height="14"
-						class="text-base-content/60"
-					/>
+					{#if configMode}
+					<Check size={14} class="text-base-content/60" />
+				{:else}
+					<Settings size={14} class="text-base-content/60" />
+				{/if}
 				</button>
 			{/if}
 		</div>
@@ -236,12 +234,7 @@
 							<div class="flex flex-col gap-1">
 								{#each pinnedConfigFields as field (field.id)}
 									<div class="flex items-center gap-1 rounded bg-base-200 px-2 py-1 text-xs">
-										<Icon
-											icon="lucide:pin"
-											width="12"
-											height="12"
-											class="shrink-0 text-base-content/50"
-										/>
+										<Pin size={12} class="shrink-0 text-base-content/50" />
 										<span class="flex-1 truncate">{field.name}</span>
 									</div>
 								{/each}
@@ -257,18 +250,13 @@
 								>
 									{#each draggableConfigFields as field (field.id)}
 										<div class="flex items-center gap-1 rounded bg-base-200 px-2 py-1 text-xs">
-											<Icon
-												icon="lucide:grip-vertical"
-												width="12"
-												height="12"
-												class="shrink-0 cursor-grab text-base-content/60"
-											/>
+											<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/60" />
 											<span class="flex-1 truncate">{field.name}</span>
 											<button
 												class="btn p-0 btn-ghost btn-xs"
 												onclick={() => removeConfigField(field.name)}
 											>
-												<Icon icon="lucide:x" width="12" height="12" />
+												<X size={12} />
 											</button>
 										</div>
 									{/each}
@@ -286,12 +274,7 @@
 										class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-base-200"
 										onclick={() => addConfigField(field.name)}
 									>
-										<Icon
-											icon="lucide:plus"
-											width="12"
-											height="12"
-											class="shrink-0 text-base-content/60"
-										/>
+										<Plus size={12} class="shrink-0 text-base-content/60" />
 										<span class="truncate">{field.name}</span>
 										<span class="ml-auto text-[10px] text-base-content/50">{field.type}</span>
 									</button>
@@ -312,12 +295,11 @@
 								class="flex w-full items-center px-3 py-1.5"
 								onclick={() => toggleSection(field)}
 							>
-								<Icon
-									icon={openSections.has(field) ? 'lucide:chevron-down' : 'lucide:chevron-right'}
-									width="12"
-									height="12"
-									class="mr-1 text-base-content/60"
-								/>
+								{#if openSections.has(field)}
+								<ChevronDown size={12} class="mr-1 text-base-content/60" />
+							{:else}
+								<ChevronRight size={12} class="mr-1 text-base-content/60" />
+							{/if}
 								<span
 									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70"
 									title={field}>{field}</span
