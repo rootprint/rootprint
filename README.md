@@ -14,6 +14,7 @@ Quickwit is a powerful log search engine, but its built-in UI is minimal. Logwiz
 - **Live tailing** — stream new logs in real-time
 - **User management** — invite-based access control with admin/user roles
 - **Configurable field mappings** — customize which fields display per index
+- **Traceback formatting** — syntax-highlighted Python stacktraces with automatic detection
 
 ## Quick Start
 
@@ -79,6 +80,27 @@ Set environment variables in `docker-compose.yml` under the `logwiz` service.
    ```
 
 3. A new admin is seeded automatically with the default credentials (`logwiz`/`logwiz`). You'll be prompted to change the password on first login.
+
+## Index Configuration
+
+Each Quickwit index can be configured in the admin panel (click an index in Settings → Config tab) to map fields to Logwiz display roles:
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| **Level Field** | `level` | Field containing the log severity (e.g., `level`, `severity`, `severity_text`) |
+| **Message Field** | `message` | Field containing the log message body (e.g., `message`, `body.message`) |
+| **Traceback Field** | *(empty)* | Field containing stacktrace/traceback data (e.g., `message.traceback`, `attributes.exception.stacktrace`) |
+
+All fields support **dot-notation paths** for nested or JSON-in-string values (e.g., `body.error.stacktrace`).
+
+### Traceback Display
+
+When a traceback field is configured and a log entry contains traceback data, a **Traceback** tab appears in the log detail drawer (click any log row to open it). The traceback is rendered with syntax highlighting:
+
+- **Python tracebacks** — file paths, line numbers, function names, and exception types are color-coded. Chained exceptions (`During handling of...`, `Caused by:`) are visually separated.
+- **Other formats** — displayed as plain monospace text. Additional language support can be added in the future.
+
+**OTel compatibility:** For OpenTelemetry-native indexes, set the traceback field to `attributes.exception.stacktrace` to display exception stacktraces captured by OTel instrumentation.
 
 ## Local Development
 

@@ -96,7 +96,7 @@
 						role="tab"
 						class="tab gap-1.5"
 						class:tab-active={activeTab === tab.id}
-						onclick={() => (activeTab = tab.id)}
+						onclick={() => (activeTab = tab.id as typeof activeTab)}
 					>
 						<TabIcon size={14} />
 						{tab.label}

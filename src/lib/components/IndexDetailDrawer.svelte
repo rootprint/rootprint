@@ -382,21 +382,21 @@
 								placeholder="e.g. message, body.message"
 							/>
 						</div>
-					<div>
-						<label class="mb-1 block text-xs font-medium" for="tracebackField">
-							Traceback Field
-						</label>
-						<input
-							id="tracebackField"
-							type="text"
-							class="input-bordered input input-sm w-full"
-							bind:value={configTracebackField}
-							placeholder="e.g. message.traceback, attributes.exception.stacktrace"
-						/>
-						<p class="mt-1 text-[10px] text-base-content/40">
-							Dot-notation path to the field containing stacktrace/traceback data
-						</p>
-					</div>
+						<div>
+							<label class="mb-1 block text-xs font-medium" for="tracebackField">
+								Traceback Field
+							</label>
+							<input
+								id="tracebackField"
+								type="text"
+								class="input-bordered input input-sm w-full"
+								bind:value={configTracebackField}
+								placeholder="e.g. message.traceback, attributes.exception.stacktrace"
+							/>
+							<p class="mt-1 text-[10px] text-base-content/40">
+								Dot-notation path to the field containing stacktrace/traceback data
+							</p>
+						</div>
 						<div>
 							<button
 								class="btn btn-sm btn-accent"
