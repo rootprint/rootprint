@@ -99,7 +99,8 @@ export const getLocalIndexDetail = query(indexIdSchema, async (indexId) => {
 			defaultSearchFields: qwIndex.defaultSearchFields,
 			retention: qwIndex.retention,
 			levelField: qwIndex.levelField,
-			messageField: qwIndex.messageField
+			messageField: qwIndex.messageField,
+			tracebackField: qwIndex.tracebackField
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId));

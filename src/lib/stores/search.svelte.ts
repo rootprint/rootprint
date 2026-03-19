@@ -37,10 +37,16 @@ export function createSearchStore(
 	let selectedIndex = $state<string | null>(null);
 
 	// --- Field config state ---
-	let fieldConfig = $state({
+	let fieldConfig = $state<{
+		levelField: string;
+		timestampField: string;
+		messageField: string;
+		tracebackField: string | null;
+	}>({
 		levelField: 'level',
 		timestampField: 'timestamp',
-		messageField: 'message'
+		messageField: 'message',
+		tracebackField: null
 	});
 	let indexFields = $state<IndexField[]>([]);
 	let schemaFields = $state<IndexField[]>([]);

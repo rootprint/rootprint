@@ -30,6 +30,7 @@
 	// Config form state
 	let configLevelField = $state('');
 	let configMessageField = $state('');
+	let configTracebackField = $state('');
 	let saving = $state(false);
 
 	let requestId = 0;
@@ -48,6 +49,7 @@
 			if (detail) {
 				configLevelField = detail.levelField ?? 'level';
 				configMessageField = detail.messageField ?? 'message';
+				configTracebackField = detail.tracebackField ?? '';
 			}
 		} catch (e) {
 			if (thisRequest !== requestId) return;
@@ -67,7 +69,8 @@
 			await saveIndexConfig({
 				indexId: indexId,
 				levelField: configLevelField,
-				messageField: configMessageField
+				messageField: configMessageField,
+				tracebackField: configTracebackField
 			});
 			toast.success('Index configuration saved');
 		} catch (e) {
@@ -379,6 +382,21 @@
 								placeholder="e.g. message, body.message"
 							/>
 						</div>
+					<div>
+						<label class="mb-1 block text-xs font-medium" for="tracebackField">
+							Traceback Field
+						</label>
+						<input
+							id="tracebackField"
+							type="text"
+							class="input-bordered input input-sm w-full"
+							bind:value={configTracebackField}
+							placeholder="e.g. message.traceback, attributes.exception.stacktrace"
+						/>
+						<p class="mt-1 text-[10px] text-base-content/40">
+							Dot-notation path to the field containing stacktrace/traceback data
+						</p>
+					</div>
 						<div>
 							<button
 								class="btn btn-sm btn-accent"

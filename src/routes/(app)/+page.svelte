@@ -291,5 +291,6 @@
 	bind:open={drawerOpen}
 	hit={selectedLog}
 	timestampField={store.fieldConfig.timestampField}
+	tracebackField={store.fieldConfig.tracebackField}
 	onfilter={(key, value, exclude) => store.addFilterClause(key, value, exclude)}
 />

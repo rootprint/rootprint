@@ -31,6 +31,7 @@ export const qwIndex = sqliteTable('qw_index', {
 	// App-level (Logwiz-specific)
 	levelField: text('level_field').notNull().default('level'),
 	messageField: text('message_field').notNull().default('message'),
+	tracebackField: text('traceback_field'),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull(),

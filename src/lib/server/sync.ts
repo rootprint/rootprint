@@ -84,7 +84,8 @@ export function getFieldConfig(indexId: string) {
 			id: qwIndex.id,
 			levelField: qwIndex.levelField,
 			timestampField: qwIndex.timestampField,
-			messageField: qwIndex.messageField
+			messageField: qwIndex.messageField,
+			tracebackField: qwIndex.tracebackField
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId))
@@ -115,6 +116,7 @@ export function getFieldConfig(indexId: string) {
 		levelField: row?.levelField ?? 'level',
 		timestampField: row?.timestampField ?? 'timestamp',
 		messageField: row?.messageField ?? 'message',
+		tracebackField: row?.tracebackField ?? null,
 		fastJsonFields
 	};
 }

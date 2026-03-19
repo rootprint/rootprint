@@ -1,25 +1,41 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
-	import { ListTree, Braces, X, CirclePlus, CircleMinus, Check, Copy } from 'lucide-svelte';
-	import { formatFieldValue } from '$lib/utils/field-resolver';
+	import { ListTree, Braces, X, CirclePlus, CircleMinus, Check, Copy, Bug } from 'lucide-svelte';
+	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
+	import TracebackView from '$lib/components/TracebackView.svelte';
 	import { flattenObject } from '$lib/utils/log-helpers';
 	import { toast } from 'svelte-sonner';
 	let {
 		open = $bindable(false),
 		hit = null,
 		timestampField = 'timestamp',
+		tracebackField = null as string | null,
 		onfilter
 	}: {
 		open: boolean;
 		hit: Record<string, unknown> | null;
 		timestampField?: string;
+		tracebackField?: string | null;
 		onfilter?: (key: string, value: string, exclude: boolean) => void;
 	} = $props();
 
-	const tabs = [
-		{ id: 'parameters', label: 'Parameters', icon: ListTree },
-		{ id: 'json', label: 'JSON', icon: Braces }
-	] as const;
+	const tracebackContent = $derived.by(() => {
+		if (!hit || !tracebackField) return null;
+		const raw = resolveFieldValue(hit, tracebackField);
+		if (typeof raw !== 'string' || raw.trim() === '') return null;
+		return raw;
+	});
+
+	const tabs = $derived.by(() => {
+		const base: { id: string; label: string; icon: typeof ListTree }[] = [
+			{ id: 'parameters', label: 'Parameters', icon: ListTree },
+			{ id: 'json', label: 'JSON', icon: Braces }
+		];
+		if (tracebackContent) {
+			base.push({ id: 'traceback', label: 'Traceback', icon: Bug });
+		}
+		return base;
+	});
 
 	const flatParams = $derived(
 		hit ? flattenObject(hit).filter(([key]) => key !== timestampField) : []
@@ -30,7 +46,7 @@
 		onfilter?.(key, formatFieldValue(value), exclude);
 	}
 
-	let activeTab = $state<(typeof tabs)[number]['id']>('parameters');
+	let activeTab = $state<'parameters' | 'json' | 'traceback'>('parameters');
 	let copied = $state(false);
 
 	function close() {
@@ -168,6 +184,10 @@
 							{/each}
 						</tbody>
 					</table>
+				{/if}
+			{:else if activeTab === 'traceback'}
+				{#if tracebackContent}
+					<TracebackView traceback={tracebackContent} />
 				{/if}
 			{/if}
 		</div>
