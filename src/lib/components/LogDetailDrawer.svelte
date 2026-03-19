@@ -2,6 +2,7 @@
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 	import { ListTree, Braces, X, CirclePlus, CircleMinus, Check, Copy } from 'lucide-svelte';
 	import { formatFieldValue } from '$lib/utils/field-resolver';
+	import { flattenObject } from '$lib/utils/log-helpers';
 	import { toast } from 'svelte-sonner';
 	let {
 		open = $bindable(false),
@@ -19,19 +20,6 @@
 		{ id: 'parameters', label: 'Parameters', icon: ListTree },
 		{ id: 'json', label: 'JSON', icon: Braces }
 	] as const;
-
-	function flattenObject(obj: Record<string, unknown>, prefix = ''): [string, unknown][] {
-		const result: [string, unknown][] = [];
-		for (const [key, value] of Object.entries(obj)) {
-			const fullKey = prefix ? `${prefix}.${key}` : key;
-			if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-				result.push(...flattenObject(value as Record<string, unknown>, fullKey));
-			} else {
-				result.push([fullKey, value]);
-			}
-		}
-		return result;
-	}
 
 	const flatParams = $derived(
 		hit ? flattenObject(hit).filter(([key]) => key !== timestampField) : []

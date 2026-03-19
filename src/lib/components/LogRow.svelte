@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
-	import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
+	import {
+		extractSeverity,
+		severityBorderColor,
+		extractTimestamp
+	} from '$lib/utils/log-helpers';
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 
 	let {
@@ -15,7 +19,7 @@
 		onclick = () => {}
 	}: {
 		hit: Record<string, unknown>;
-		wrapMode: 'none' | 'wrap' | 'pretty';
+		wrapMode: 'none' | 'wrap';
 		levelField?: string;
 		timestampField?: string;
 		messageField?: string;
@@ -25,49 +29,15 @@
 		onclick?: () => void;
 	} = $props();
 
-	function extractSeverity(doc: Record<string, unknown>): string {
-		const raw = resolveFieldValue(doc, levelField);
-		return (raw != null ? String(raw) : 'unknown').toLowerCase();
-	}
-
-	function severityBorderColor(severity: string): string {
-		switch (severity) {
-			case 'error':
-			case 'fatal':
-			case 'critical':
-				return 'border-l-error';
-			case 'warn':
-			case 'warning':
-				return 'border-l-warning';
-			case 'debug':
-			case 'trace':
-				return 'border-l-accent';
-			case 'info':
-				return 'border-l-info';
-			default:
-				return 'border-l-base-content/30';
-		}
-	}
-
-	function extractTimestamp(doc: Record<string, unknown>): string {
-		const raw = doc[timestampField];
-		if (!raw) return '';
-
-		const ms = typeof raw === 'number' ? normalizeToMs(raw) : new Date(raw as string).getTime();
-
-		if (isNaN(ms)) return String(raw);
-		return formatTimestamp(ms, timezoneMode);
-	}
-
 	function extractMessage(doc: Record<string, unknown>): string {
 		const raw = resolveFieldValue(doc, messageField);
 		return raw != null ? formatFieldValue(raw) : JSON.stringify(doc);
 	}
 
-	const severity = $derived(extractSeverity(hit));
+	const severity = $derived(extractSeverity(hit, levelField));
 
 	const prettyJson = $derived.by(() => {
-		if (wrapMode !== 'pretty') return null;
+		if (wrapMode !== 'wrap') return null;
 		const message = extractMessage(hit);
 		try {
 			return JSON.stringify(JSON.parse(message), null, 2);
@@ -91,7 +61,7 @@
 		}
 	}}
 >
-	<span class="shrink-0 py-px text-base-content/60">{extractTimestamp(hit)}</span>
+	<span class="shrink-0 py-px text-base-content/60">{extractTimestamp(hit, timestampField, timezoneMode)}</span>
 	{#each extraFields as field (field)}
 		<span
 			class="inline-block shrink-0 truncate py-px pl-2 align-top"

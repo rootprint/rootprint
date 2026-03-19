@@ -105,7 +105,7 @@ export const searchLogs = query(searchLogsSchema, async (data) => {
 	query.timeRange(startTs, endTs);
 
 	for (const field of filterFields) {
-		query.agg(field, AggregationBuilder.terms(field, { size: 50 }));
+		query.agg(field, AggregationBuilder.terms(field, { size: 100 }));
 	}
 
 	const result = await index.search(query);
@@ -152,7 +152,7 @@ export const searchFieldValues = query(searchFieldValuesSchema, async (data) => 
 	const query = index
 		.query(combinedQuery)
 		.limit(0)
-		.agg(data.field, AggregationBuilder.terms(data.field, { size: 50 }));
+		.agg(data.field, AggregationBuilder.terms(data.field, { size: 100 }));
 
 	query.timeRange(startTs, endTs);
 
@@ -246,4 +246,3 @@ export const searchLogHistogram = query(searchLogHistogramSchema, async (data) =
 
 	return { buckets };
 });
-

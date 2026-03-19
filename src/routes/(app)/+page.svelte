@@ -26,7 +26,7 @@
 	// --- UI-only state ---
 	let queryInputRef = $state<ReturnType<typeof QueryInput>>();
 	let isAtTop = $state(true);
-	let wrapMode = $state<'none' | 'wrap' | 'pretty'>('none');
+	let wrapMode = $state<'none' | 'wrap'>('none');
 	let copied = $state(false);
 	let selectedLog = $state<Record<string, unknown> | null>(null);
 	let drawerOpen = $state(false);
@@ -112,7 +112,7 @@
 				</select>
 
 				<div class="join">
-					{#each [['none', 'No wrap'], ['wrap', 'Wrap'], ['pretty', 'Pretty']] as [mode, label] (mode)}
+					{#each [['none', 'No wrap'], ['wrap', 'Wrap']] as [mode, label] (mode)}
 						<button
 							class="btn join-item whitespace-nowrap btn-sm {wrapMode === mode ? 'btn-accent' : ''}"
 							onclick={() => (wrapMode = mode as typeof wrapMode)}
