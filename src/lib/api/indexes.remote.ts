@@ -1,7 +1,7 @@
 import { query, command } from '$app/server';
 import { db } from '$lib/server/db';
 import { qwIndex, qwFieldMapping, qwSource } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, like, not } from 'drizzle-orm';
 import { saveIndexConfigSchema, indexIdSchema } from '$lib/schemas/index-config';
 import { getIndexFieldsSchema } from '$lib/schemas/preference';
 import { requireUser, requireAdmin } from '$lib/middleware/auth';
@@ -11,7 +11,8 @@ export const getIndexes = query(async () => {
 	requireUser();
 	const rows = await db
 		.select({ indexId: qwIndex.indexId, indexUri: qwIndex.indexUri })
-		.from(qwIndex);
+		.from(qwIndex)
+		.where(not(like(qwIndex.indexId, 'otel-traces-%')));
 
 	return rows.map((r) => ({
 		indexId: r.indexId,

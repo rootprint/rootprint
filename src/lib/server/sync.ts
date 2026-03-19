@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { qwIndex, qwFieldMapping, qwSource } from '$lib/server/db/schema';
-import { eq, count, and, notInArray, or, isNull } from 'drizzle-orm';
+import { eq, count, and, notInArray, or, isNull, like, not } from 'drizzle-orm';
 import type { FieldMapping } from 'quickwit-js';
 import { getQuickwitClient } from '$lib/server/quickwit';
 
@@ -45,6 +45,7 @@ export function getIndexSummaries() {
 			createTimestamp: qwIndex.createTimestamp
 		})
 		.from(qwIndex)
+		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
 		.all();
 
 	const fieldCounts = db
@@ -160,8 +161,16 @@ export async function syncIndexesFromQuickwit() {
 			const doc = cfg.doc_mapping;
 			const values = buildIndexValues(meta, cfg, doc);
 
+			const otelDefaults = cfg.index_id.startsWith('otel-logs-')
+				? {
+						levelField: 'severity_text',
+						messageField: 'body',
+						tracebackField: 'attributes.exception.stacktrace'
+					}
+				: {};
+
 			tx.insert(qwIndex)
-				.values({ indexId: cfg.index_id, ...values })
+				.values({ indexId: cfg.index_id, ...values, ...otelDefaults })
 				.onConflictDoUpdate({
 					target: qwIndex.indexId,
 					set: { ...values, updatedAt: new Date() }

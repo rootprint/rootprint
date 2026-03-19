@@ -57,7 +57,7 @@ let _config: Config | null = null;
 
 export function buildConfig(): Config {
 	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL', 'QUICKWIT_URL');
-	const origin = readEnv('ORIGIN', 'LOGWIZ_ORIGIN');
+	const origin = readEnv('ORIGIN');
 
 	// Validate required vars — collect all errors
 	const missing: string[] = [];
