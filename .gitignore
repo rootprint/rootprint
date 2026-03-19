@@ -25,6 +25,9 @@ Thumbs.db
 
 .superpowers
 
+# Coverage
+coverage/
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
