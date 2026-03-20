@@ -1,7 +1,11 @@
 <script lang="ts">
-	type Token = { type: 'key' | 'string' | 'number' | 'boolean' | 'null' | 'punctuation' | 'whitespace'; value: string };
+	type Token = {
+		type: 'key' | 'string' | 'number' | 'boolean' | 'null' | 'punctuation' | 'whitespace';
+		value: string;
+	};
 
-	const TOKEN_RE = /"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[{}[\]:,]|\s+/g;
+	const TOKEN_RE =
+		/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[{}[\]:,]|\s+/g;
 
 	const CLASS_MAP: Record<Token['type'], string> = {
 		key: 'text-info',
@@ -48,7 +52,9 @@
 </script>
 
 {#if tokens.length}
-	<pre class="break-all whitespace-pre-wrap">{#each tokens as token}<span class={CLASS_MAP[token.type]}>{token.value}</span>{/each}</pre>
+	<pre class="break-all whitespace-pre-wrap">{#each tokens as token}<span
+				class={CLASS_MAP[token.type]}>{token.value}</span
+			>{/each}</pre>
 {:else}
 	<pre class="break-all whitespace-pre-wrap">{code}</pre>
 {/if}

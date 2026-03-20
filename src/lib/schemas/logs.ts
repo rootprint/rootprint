@@ -44,4 +44,3 @@ export const pollLiveLogsSchema = v.object({
 });
 
 type PollLiveLogsInput = v.InferOutput<typeof pollLiveLogsSchema>;
-

@@ -170,7 +170,7 @@
 						{#snippet kvItem(label: string, value: string | null | undefined | boolean)}
 							<div>
 								<div
-									class="text-[10px] font-semibold uppercase tracking-wider text-base-content/50"
+									class="text-[10px] font-semibold tracking-wider text-base-content/50 uppercase"
 								>
 									{label}
 								</div>
@@ -198,7 +198,7 @@
 					{#if detail.tagFields && detail.tagFields.length > 0}
 						<div class="mt-4 border-t border-base-300 pt-4">
 							<div
-								class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-base-content/50"
+								class="mb-2 text-[10px] font-semibold tracking-wider text-base-content/50 uppercase"
 							>
 								Tag Fields
 							</div>
@@ -214,7 +214,7 @@
 					{#if detail.defaultSearchFields && detail.defaultSearchFields.length > 0}
 						<div class="mt-3">
 							<div
-								class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-base-content/50"
+								class="mb-2 text-[10px] font-semibold tracking-wider text-base-content/50 uppercase"
 							>
 								Default Search Fields
 							</div>
@@ -229,7 +229,7 @@
 					<!-- Retention -->
 					<div class="mt-4 border-t border-base-300 pt-4">
 						<div
-							class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-base-content/50"
+							class="mb-1 text-[10px] font-semibold tracking-wider text-base-content/50 uppercase"
 						>
 							Retention
 						</div>
@@ -239,11 +239,11 @@
 					<!-- Index URI -->
 					<div class="mt-3">
 						<div
-							class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-base-content/50"
+							class="mb-1 text-[10px] font-semibold tracking-wider text-base-content/50 uppercase"
 						>
 							Index URI
 						</div>
-						<div class="text-xs text-base-content/70 break-all">{detail.indexUri ?? '—'}</div>
+						<div class="text-xs break-all text-base-content/70">{detail.indexUri ?? '—'}</div>
 					</div>
 				{:else if activeTab === 'fields'}
 					<!-- FIELDS TAB -->
@@ -324,17 +324,17 @@
 								</div>
 								<div class="grid grid-cols-3 gap-2 text-xs">
 									<div>
-										<div class="text-[10px] uppercase text-base-content/50">Input Format</div>
+										<div class="text-[10px] text-base-content/50 uppercase">Input Format</div>
 										<div class="text-base-content/70">{source.inputFormat ?? '—'}</div>
 									</div>
 									<div>
-										<div class="text-[10px] uppercase text-base-content/50">Pipelines</div>
+										<div class="text-[10px] text-base-content/50 uppercase">Pipelines</div>
 										<div class="text-base-content/70">
 											{source.numPipelines ?? 0} / {source.desiredNumPipelines ?? 0} desired
 										</div>
 									</div>
 									<div>
-										<div class="text-[10px] uppercase text-base-content/50">Max Per Indexer</div>
+										<div class="text-[10px] text-base-content/50 uppercase">Max Per Indexer</div>
 										<div class="text-base-content/70">
 											{source.maxNumPipelinesPerIndexer ?? '—'}
 										</div>
@@ -342,10 +342,13 @@
 								</div>
 								{#if source.params}
 									<div class="mt-2 border-t border-base-300 pt-2">
-										<div class="mb-1 text-[10px] uppercase text-base-content/50">Params</div>
+										<div class="mb-1 text-[10px] text-base-content/50 uppercase">Params</div>
 										<pre
-											class="overflow-x-auto rounded bg-base-200 p-2 font-['Roboto_Mono',monospace] text-[10px] text-base-content/70"
-										>{JSON.stringify(source.params, null, 2)}</pre>
+											class="overflow-x-auto rounded bg-base-200 p-2 font-['Roboto_Mono',monospace] text-[10px] text-base-content/70">{JSON.stringify(
+												source.params,
+												null,
+												2
+											)}</pre>
 									</div>
 								{/if}
 							</div>
@@ -359,9 +362,7 @@
 					</p>
 					<div class="flex flex-col gap-4">
 						<div>
-							<label class="mb-1 block text-xs font-medium" for="levelField"
-								>Level Field</label
-							>
+							<label class="mb-1 block text-xs font-medium" for="levelField">Level Field</label>
 							<input
 								id="levelField"
 								type="text"
@@ -398,11 +399,7 @@
 							</p>
 						</div>
 						<div>
-							<button
-								class="btn btn-sm btn-accent"
-								onclick={handleSaveConfig}
-								disabled={saving}
-							>
+							<button class="btn btn-sm btn-accent" onclick={handleSaveConfig} disabled={saving}>
 								{#if saving}
 									<span class="loading loading-xs loading-spinner"></span>
 									Saving...

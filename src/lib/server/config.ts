@@ -94,7 +94,8 @@ export function buildConfig(): Config {
 	if (!readEnv('LOGWIZ_ADMIN_EMAIL')) optionalDefaults.push(['LOGWIZ_ADMIN_EMAIL', adminEmail]);
 	if (!readEnv('LOGWIZ_ADMIN_USERNAME'))
 		optionalDefaults.push(['LOGWIZ_ADMIN_USERNAME', adminUsername]);
-	if (!readEnv('LOGWIZ_ADMIN_PASSWORD')) optionalDefaults.push(['LOGWIZ_ADMIN_PASSWORD', '"logwiz" (default)']);
+	if (!readEnv('LOGWIZ_ADMIN_PASSWORD'))
+		optionalDefaults.push(['LOGWIZ_ADMIN_PASSWORD', '"logwiz" (default)']);
 	if (!readEnv('LOGWIZ_INVITE_EXPIRY_HOURS'))
 		optionalDefaults.push(['LOGWIZ_INVITE_EXPIRY_HOURS', inviteExpiryHours]);
 	if (!readEnv('LOGWIZ_RATE_LIMIT_WINDOW'))

@@ -68,7 +68,12 @@ export function createSearchStore(
 	let histogramRequestId = 0;
 
 	// --- Column widths ---
-	let columnWidths = $derived(computeColumnWidths(logs.map((e) => e.hit), activeFields));
+	let columnWidths = $derived(
+		computeColumnWidths(
+			logs.map((e) => e.hit),
+			activeFields
+		)
+	);
 
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, string[]>>({});
@@ -263,8 +268,9 @@ export function createSearchStore(
 
 	const debouncedSaveFields = debounce(() => {
 		if (selectedIndex) {
-			saveDisplayFields({ indexId: selectedIndex, fields: activeFields })
-				.catch((e) => toast.error(getErrorMessage(e, 'Failed to save display fields')));
+			saveDisplayFields({ indexId: selectedIndex, fields: activeFields }).catch((e) =>
+				toast.error(getErrorMessage(e, 'Failed to save display fields'))
+			);
 		}
 	}, 500);
 
@@ -274,8 +280,9 @@ export function createSearchStore(
 
 	const debouncedSaveQuickFilters = debounce(() => {
 		if (selectedIndex) {
-			saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields })
-				.catch((e) => toast.error(getErrorMessage(e, 'Failed to save quick filter fields')));
+			saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields }).catch((e) =>
+				toast.error(getErrorMessage(e, 'Failed to save quick filter fields'))
+			);
 		}
 	}, 500);
 
@@ -370,7 +377,9 @@ export function createSearchStore(
 			numHits = result.numHits;
 
 			if (result.hits.length > 0) {
-				const jsonFields = new Map(schemaFields.filter((f) => f.type === 'json').map((f) => [f.name, f.fast] as const));
+				const jsonFields = new Map(
+					schemaFields.filter((f) => f.type === 'json').map((f) => [f.name, f.fast] as const)
+				);
 				if (jsonFields.size > 0) {
 					const discovered = extractJsonSubFields(result.hits, jsonFields);
 					const nonJson = schemaFields.filter((f) => f.type !== 'json');

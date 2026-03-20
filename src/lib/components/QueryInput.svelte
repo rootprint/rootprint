@@ -99,8 +99,7 @@
 			newCursorPos = ctx.start + insertion.length;
 		}
 
-		localBuffer =
-			localBuffer.slice(0, ctx.start) + insertion + localBuffer.slice(ctx.end);
+		localBuffer = localBuffer.slice(0, ctx.start) + insertion + localBuffer.slice(ctx.end);
 		showDropdown = false;
 		suggestions = [];
 		selectedIndex = -1;
@@ -198,7 +197,7 @@
 	<input
 		bind:this={inputEl}
 		type="text"
-		class="input-bordered input input-sm min-w-0 w-full"
+		class="input-bordered input input-sm w-full min-w-0"
 		class:input-error={validationError}
 		placeholder="Lucene query (e.g. level:error AND service:api)"
 		value={displayValue}
@@ -220,7 +219,7 @@
 			class="absolute top-full left-0 z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded-box border border-base-300 bg-base-100 shadow-lg"
 		>
 			{#if lastContext.type === 'value'}
-				<li class="px-3 py-1 text-xs uppercase tracking-wide text-base-content/60">
+				<li class="px-3 py-1 text-xs tracking-wide text-base-content/60 uppercase">
 					Values for {lastContext.field}
 				</li>
 			{/if}

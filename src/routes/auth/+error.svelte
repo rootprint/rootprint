@@ -7,8 +7,8 @@
 		<p class="text-6xl font-bold text-base-content/20">{page.status}</p>
 		<h1 class="card-title">Something went wrong</h1>
 		<p class="text-sm text-base-content/60">An unexpected error occurred. Please try again.</p>
-		<div class="card-actions mt-2">
-			<a href="/auth/sign-in" class="btn btn-neutral btn-sm">Back to sign in</a>
+		<div class="mt-2 card-actions">
+			<a href="/auth/sign-in" class="btn btn-sm btn-neutral">Back to sign in</a>
 		</div>
 	</div>
 </div>

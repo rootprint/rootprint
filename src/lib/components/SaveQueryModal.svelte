@@ -52,7 +52,6 @@
 		name = '';
 		description = '';
 	}
-
 </script>
 
 <dialog class="modal" class:modal-open={open}>

@@ -1,0 +1,12 @@
+{
+	"languages": {
+		"JavaScript": {
+			"formatter": {
+				"external": {
+					"command": "prettier",
+					"arguments": ["--stdin-filepath", "{buffer_path}"]
+				}
+			}
+		}
+	}
+}

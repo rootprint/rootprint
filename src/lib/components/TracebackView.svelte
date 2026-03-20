@@ -37,7 +37,7 @@
 		{#if highlighted}
 			{@html highlighted}
 		{:else}
-			<pre class="whitespace-pre-wrap break-all text-base-content/80">{traceback}</pre>
+			<pre class="break-all whitespace-pre-wrap text-base-content/80">{traceback}</pre>
 		{/if}
 	</div>
 </div>

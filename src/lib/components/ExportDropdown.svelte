@@ -24,7 +24,10 @@
 
 	function generateFilename(ext: string): string {
 		const now = new Date();
-		const ts = now.toISOString().replace(/[:]/g, '-').replace(/\.\d+Z$/, 'Z');
+		const ts = now
+			.toISOString()
+			.replace(/[:]/g, '-')
+			.replace(/\.\d+Z$/, 'Z');
 		return `logwit-${indexId}-${ts}.${ext}`;
 	}
 
@@ -81,7 +84,7 @@
 			class="dropdown-content z-20 mt-1 w-64 rounded-lg border border-base-300 bg-base-100 p-3 shadow-lg"
 			onkeydown={(e) => e.key === 'Escape' && (dropdownOpen = false)}
 		>
-			<div class="mb-2 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+			<div class="mb-2 text-xs font-semibold tracking-wider text-base-content/50 uppercase">
 				Format
 			</div>
 			<div class="join mb-3 w-full">

@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { ChevronRight, ChevronDown, X, Check, Settings, Pin, GripVertical, Plus } from 'lucide-svelte';
+	import {
+		ChevronRight,
+		ChevronDown,
+		X,
+		Check,
+		Settings,
+		Pin,
+		GripVertical,
+		Plus
+	} from 'lucide-svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { dndzone } from 'svelte-dnd-action';
 	import type { IndexField } from '$lib/types';
@@ -215,10 +224,10 @@
 					title={configMode ? 'Done configuring' : 'Configure filter fields'}
 				>
 					{#if configMode}
-					<Check size={14} class="text-base-content/60" />
-				{:else}
-					<Settings size={14} class="text-base-content/60" />
-				{/if}
+						<Check size={14} class="text-base-content/60" />
+					{:else}
+						<Settings size={14} class="text-base-content/60" />
+					{/if}
 				</button>
 			{/if}
 		</div>
@@ -296,10 +305,10 @@
 								onclick={() => toggleSection(field)}
 							>
 								{#if openSections.has(field)}
-								<ChevronDown size={12} class="mr-1 text-base-content/60" />
-							{:else}
-								<ChevronRight size={12} class="mr-1 text-base-content/60" />
-							{/if}
+									<ChevronDown size={12} class="mr-1 text-base-content/60" />
+								{:else}
+									<ChevronRight size={12} class="mr-1 text-base-content/60" />
+								{/if}
 								<span
 									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70"
 									title={field}>{field}</span

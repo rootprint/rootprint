@@ -52,18 +52,18 @@ Set environment variables in `docker-compose.yml` under the `logwiz` service.
 
 ### Environment variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `LOGWIZ_QUICKWIT_URL` | Yes | — | Quickwit API endpoint |
-| `ORIGIN` | Yes | — | Server's public URL |
-| `LOGWIZ_DATABASE_PATH` | No | `./data/logwiz.db` | Path to SQLite database |
-| `LOGWIZ_ADMIN_EMAIL` | No | `logwiz@logwiz.local` | Default admin email |
-| `LOGWIZ_ADMIN_USERNAME` | No | `logwiz` | Default admin username |
-| `LOGWIZ_ADMIN_PASSWORD` | No | `logwiz` | Default admin password |
-| `LOGWIZ_INVITE_EXPIRY_HOURS` | No | `48` | Invite token expiry (hours) |
-| `LOGWIZ_RATE_LIMIT_WINDOW` | No | `60` | Rate limit window (seconds) |
-| `LOGWIZ_RATE_LIMIT_MAX` | No | `100` | Max requests per window |
-| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No | `5` | Max sign-in attempts per window |
+| Variable                       | Required | Default               | Description                     |
+| ------------------------------ | -------- | --------------------- | ------------------------------- |
+| `LOGWIZ_QUICKWIT_URL`          | Yes      | —                     | Quickwit API endpoint           |
+| `ORIGIN`                       | Yes      | —                     | Server's public URL             |
+| `LOGWIZ_DATABASE_PATH`         | No       | `./data/logwiz.db`    | Path to SQLite database         |
+| `LOGWIZ_ADMIN_EMAIL`           | No       | `logwiz@logwiz.local` | Default admin email             |
+| `LOGWIZ_ADMIN_USERNAME`        | No       | `logwiz`              | Default admin username          |
+| `LOGWIZ_ADMIN_PASSWORD`        | No       | `logwiz`              | Default admin password          |
+| `LOGWIZ_INVITE_EXPIRY_HOURS`   | No       | `48`                  | Invite token expiry (hours)     |
+| `LOGWIZ_RATE_LIMIT_WINDOW`     | No       | `60`                  | Rate limit window (seconds)     |
+| `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`                 | Max requests per window         |
+| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                   | Max sign-in attempts per window |
 
 ### Resetting the admin password
 
@@ -85,11 +85,11 @@ Set environment variables in `docker-compose.yml` under the `logwiz` service.
 
 Each Quickwit index can be configured in the admin panel (click an index in Settings → Config tab) to map fields to Logwiz display roles:
 
-| Field | Default | Description |
-|-------|---------|-------------|
-| **Level Field** | `level` | Field containing the log severity (e.g., `level`, `severity`, `severity_text`) |
-| **Message Field** | `message` | Field containing the log message body (e.g., `message`, `body.message`) |
-| **Traceback Field** | *(empty)* | Field containing stacktrace/traceback data (e.g., `message.traceback`, `attributes.exception.stacktrace`) |
+| Field               | Default   | Description                                                                                               |
+| ------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
+| **Level Field**     | `level`   | Field containing the log severity (e.g., `level`, `severity`, `severity_text`)                            |
+| **Message Field**   | `message` | Field containing the log message body (e.g., `message`, `body.message`)                                   |
+| **Traceback Field** | _(empty)_ | Field containing stacktrace/traceback data (e.g., `message.traceback`, `attributes.exception.stacktrace`) |
 
 All fields support **dot-notation paths** for nested or JSON-in-string values (e.g., `body.error.stacktrace`).
 

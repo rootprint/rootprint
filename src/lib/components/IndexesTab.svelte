@@ -72,10 +72,7 @@
 					</thead>
 					<tbody>
 						{#each indexes as idx (idx.indexId)}
-							<tr
-								class="cursor-pointer hover:bg-base-200"
-								onclick={() => openDrawer(idx.indexId)}
-							>
+							<tr class="cursor-pointer hover:bg-base-200" onclick={() => openDrawer(idx.indexId)}>
 								<td class="font-medium">{idx.indexId}</td>
 								<td>
 									{#if idx.mode}

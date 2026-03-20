@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
-	import {
-		extractSeverity,
-		severityBorderColor,
-		extractTimestamp
-	} from '$lib/utils/log-helpers';
+	import { extractSeverity, severityBorderColor, extractTimestamp } from '$lib/utils/log-helpers';
 	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
 
 	let {
@@ -61,7 +57,9 @@
 		}
 	}}
 >
-	<span class="shrink-0 py-px text-base-content/60">{extractTimestamp(hit, timestampField, timezoneMode)}</span>
+	<span class="shrink-0 py-px text-base-content/60"
+		>{extractTimestamp(hit, timestampField, timezoneMode)}</span
+	>
 	{#each extraFields as field (field)}
 		<span
 			class="inline-block shrink-0 truncate py-px pl-2 align-top"

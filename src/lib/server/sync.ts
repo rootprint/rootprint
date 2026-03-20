@@ -122,7 +122,11 @@ export function getFieldConfig(indexId: string) {
 	};
 }
 
-function buildIndexValues(meta: Record<string, any>, cfg: Record<string, any>, doc: Record<string, any>) {
+function buildIndexValues(
+	meta: Record<string, any>,
+	cfg: Record<string, any>,
+	doc: Record<string, any>
+) {
 	return {
 		indexUid: meta.index_uid,
 		indexUri: cfg.index_uri ?? null,
@@ -218,10 +222,7 @@ export async function syncIndexesFromQuickwit() {
 			if (fieldNames.length > 0) {
 				tx.delete(qwFieldMapping)
 					.where(
-						and(
-							eq(qwFieldMapping.indexId, parentId),
-							notInArray(qwFieldMapping.name, fieldNames)
-						)
+						and(eq(qwFieldMapping.indexId, parentId), notInArray(qwFieldMapping.name, fieldNames))
 					)
 					.run();
 			} else {
@@ -265,12 +266,7 @@ export async function syncIndexesFromQuickwit() {
 			const sourceIds = sources.map((s) => s.source_id);
 			if (sourceIds.length > 0) {
 				tx.delete(qwSource)
-					.where(
-						and(
-							eq(qwSource.indexId, parentId),
-							notInArray(qwSource.sourceId, sourceIds)
-						)
-					)
+					.where(and(eq(qwSource.indexId, parentId), notInArray(qwSource.sourceId, sourceIds)))
 					.run();
 			} else {
 				tx.delete(qwSource).where(eq(qwSource.indexId, parentId)).run();
@@ -279,9 +275,7 @@ export async function syncIndexesFromQuickwit() {
 
 		// Remove indexes no longer in Quickwit (cascades to field mappings and sources)
 		if (syncedIndexIds.length > 0) {
-			tx.delete(qwIndex)
-				.where(notInArray(qwIndex.indexId, syncedIndexIds))
-				.run();
+			tx.delete(qwIndex).where(notInArray(qwIndex.indexId, syncedIndexIds)).run();
 		} else {
 			tx.delete(qwIndex).run();
 		}

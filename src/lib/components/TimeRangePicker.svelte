@@ -95,7 +95,7 @@
 		<span class="text-base-content/50">|</span>
 		<span class="text-sm text-base-content/70">
 			{timezoneMode === 'utc' ? 'UTC' : 'Local'}
-			<span class="text-[10px] ml-0.5 {open ? 'inline-block rotate-180' : ''}">▾</span>
+			<span class="ml-0.5 text-[10px] {open ? 'inline-block rotate-180' : ''}">▾</span>
 		</span>
 	</button>
 

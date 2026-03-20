@@ -159,10 +159,10 @@
 												title="Copy invite link"
 											>
 												{#if copiedUserId === u.id}
-											<Check size={14} />
-										{:else}
-											<Link size={14} />
-										{/if}
+													<Check size={14} />
+												{:else}
+													<Link size={14} />
+												{/if}
 											</button>
 										{/if}
 										<button
@@ -172,10 +172,10 @@
 											disabled={regeneratingUserId === u.id}
 										>
 											{#if regeneratingUserId === u.id}
-											<Loader size={14} class="animate-spin" />
-										{:else}
-											<RefreshCw size={14} />
-										{/if}
+												<Loader size={14} class="animate-spin" />
+											{:else}
+												<RefreshCw size={14} />
+											{/if}
 										</button>
 									{/if}
 									{#if u.status === 'active' && u.id !== currentUserId}

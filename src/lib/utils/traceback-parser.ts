@@ -15,8 +15,7 @@ function escapeHtml(s: string): string {
 
 const PYTHON_DETECT = /Traceback \(most recent call last\):/;
 
-const PYTHON_FRAME =
-	/^(\s+File\s+)"([^"]+)",\s+line\s+(\d+),\s+in\s+(.+)$/;
+const PYTHON_FRAME = /^(\s+File\s+)"([^"]+)",\s+line\s+(\d+),\s+in\s+(.+)$/;
 
 const PYTHON_EXCEPTION =
 	/^([A-Za-z_][\w.]*(?:Error|Exception|Warning|Exit|Interrupt|Failure|Fault|Abort|KeyboardInterrupt|SystemExit|StopIteration|StopAsyncIteration|GeneratorExit))(?::\s*(.*))?$/;
@@ -47,9 +46,7 @@ const pythonFormatter: TracebackFormatter = {
 			}
 
 			if (trimmed === 'Traceback (most recent call last):') {
-				parts.push(
-					`<div class="text-base-content/50">${escapeHtml(trimmed)}</div>`
-				);
+				parts.push(`<div class="text-base-content/50">${escapeHtml(trimmed)}</div>`);
 				continue;
 			}
 
@@ -75,9 +72,7 @@ const pythonFormatter: TracebackFormatter = {
 				parts.push(
 					`<div class="mt-2 rounded border-l-3 border-error bg-error/5 px-3 py-1.5">` +
 						`<span class="font-semibold text-error">${escapeHtml(exType)}</span>` +
-						(exMsg
-							? `<span class="text-base-content/60">: ${escapeHtml(exMsg)}</span>`
-							: '') +
+						(exMsg ? `<span class="text-base-content/60">: ${escapeHtml(exMsg)}</span>` : '') +
 						`</div>`
 				);
 				continue;
@@ -95,9 +90,7 @@ const pythonFormatter: TracebackFormatter = {
 				continue;
 			}
 
-			parts.push(
-				`<div class="text-base-content/70">${escapeHtml(line)}</div>`
-			);
+			parts.push(`<div class="text-base-content/70">${escapeHtml(line)}</div>`);
 		}
 
 		return parts.join('\n');

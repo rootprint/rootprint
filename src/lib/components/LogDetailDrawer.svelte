@@ -87,7 +87,9 @@
 	></div>
 
 	<!-- Panel -->
-	<div class="fixed top-0 right-0 z-20 flex h-full w-full flex-col border-l border-base-300 bg-base-100 shadow-lg md:w-[50vw]">
+	<div
+		class="fixed top-0 right-0 z-20 flex h-full w-full flex-col border-l border-base-300 bg-base-100 shadow-lg md:w-[50vw]"
+	>
 		<div class="flex items-center justify-between border-b border-base-300 px-3">
 			<div role="tablist" class="tabs-border tabs">
 				{#each tabs as tab (tab.id)}
@@ -122,8 +124,12 @@
 						<div class="py-3 font-['Roboto_Mono',monospace] text-sm">
 							{#each jsonLines as line, i (i)}
 								<div class="flex leading-relaxed">
-									<div class="w-10 shrink-0 border-r border-base-300 pr-3 text-right text-base-content/50 select-none">{i + 1}</div>
-									<div class="flex-1 break-all whitespace-pre-wrap pl-3 pr-3">
+									<div
+										class="w-10 shrink-0 border-r border-base-300 pr-3 text-right text-base-content/50 select-none"
+									>
+										{i + 1}
+									</div>
+									<div class="flex-1 pr-3 pl-3 break-all whitespace-pre-wrap">
 										<JsonHighlight code={line} />
 									</div>
 								</div>
@@ -152,20 +158,14 @@
 													title="Filter for value"
 													onclick={() => handleFilter(key, value, false)}
 												>
-													<CirclePlus
-														size={12}
-														class="text-success"
-													/>
+													<CirclePlus size={12} class="text-success" />
 												</button>
 												<button
 													class="btn btn-square h-5 min-h-0 w-5 btn-ghost btn-xs"
 													title="Filter out value"
 													onclick={() => handleFilter(key, value, true)}
 												>
-													<CircleMinus
-														size={12}
-														class="text-error"
-													/>
+													<CircleMinus size={12} class="text-error" />
 												</button>
 											</div>
 										{/if}

@@ -157,7 +157,7 @@ describe('config', () => {
 			const { buildConfig } = await importConfig();
 			const cfg = buildConfig();
 			expect(() => {
-				(cfg as Record<string, unknown>).quickwitUrl = 'changed';
+				(cfg as unknown as Record<string, unknown>).quickwitUrl = 'changed';
 			}).toThrow();
 			warnSpy.mockRestore();
 		});

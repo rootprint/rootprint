@@ -71,10 +71,10 @@
 				title={configMode ? 'Done configuring' : 'Configure display fields'}
 			>
 				{#if configMode}
-				<Check size={14} class="text-base-content/60" />
-			{:else}
-				<Settings size={14} class="text-base-content/60" />
-			{/if}
+					<Check size={14} class="text-base-content/60" />
+				{:else}
+					<Settings size={14} class="text-base-content/60" />
+				{/if}
 			</button>
 		{/if}
 	</div>

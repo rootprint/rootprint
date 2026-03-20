@@ -109,39 +109,47 @@ export const userPreference = sqliteTable(
 	(table) => [uniqueIndex('user_preference_unique').on(table.userId, table.indexName)]
 );
 
-export const inviteToken = sqliteTable('invite_token', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	token: text('token').notNull().unique(),
-	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.default(sql`(unixepoch())`)
-		.notNull()
-}, (table) => [
-	index('invite_token_user').on(table.userId),
-	index('invite_token_expires').on(table.expiresAt)
-]);
+export const inviteToken = sqliteTable(
+	'invite_token',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		token: text('token').notNull().unique(),
+		expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.default(sql`(unixepoch())`)
+			.notNull()
+	},
+	(table) => [
+		index('invite_token_user').on(table.userId),
+		index('invite_token_expires').on(table.expiresAt)
+	]
+);
 
-export const searchHistory = sqliteTable('search_history', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	indexName: text('index_name').notNull(),
-	query: text('query').notNull().default(''),
-	timeRange: text('time_range', { mode: 'json' })
-		.$type<{ type: string; start?: number; end?: number; preset?: string }>()
-		.notNull(),
-	filters: text('filters', { mode: 'json' }).$type<Record<string, string[]>>().notNull(),
-	executedAt: integer('executed_at', { mode: 'timestamp' })
-		.default(sql`(unixepoch())`)
-		.notNull()
-}, (table) => [
-	index('search_history_user_executed').on(table.userId, table.executedAt),
-	index('search_history_user_index_executed').on(table.userId, table.indexName, table.executedAt)
-]);
+export const searchHistory = sqliteTable(
+	'search_history',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		indexName: text('index_name').notNull(),
+		query: text('query').notNull().default(''),
+		timeRange: text('time_range', { mode: 'json' })
+			.$type<{ type: string; start?: number; end?: number; preset?: string }>()
+			.notNull(),
+		filters: text('filters', { mode: 'json' }).$type<Record<string, string[]>>().notNull(),
+		executedAt: integer('executed_at', { mode: 'timestamp' })
+			.default(sql`(unixepoch())`)
+			.notNull()
+	},
+	(table) => [
+		index('search_history_user_executed').on(table.userId, table.executedAt),
+		index('search_history_user_index_executed').on(table.userId, table.indexName, table.executedAt)
+	]
+);
 
 export const savedQuery = sqliteTable(
 	'saved_query',
