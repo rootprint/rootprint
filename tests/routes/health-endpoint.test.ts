@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('$lib/server/quickwit', () => ({ getQuickwitClient: () => ({}) }));
+
 import { _createHealthHandler } from '../../src/routes/api/health/+server';
 
 describe('GET /api/health', () => {
