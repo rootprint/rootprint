@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
-	import { getErrorMessage } from '$lib/utils/error';
-	import { getLocalIndexes } from '$lib/api/indexes.remote';
 	import IndexDetailDrawer from './IndexDetailDrawer.svelte';
 	import { formatEpochDate } from '$lib/utils/time';
 
@@ -14,47 +11,28 @@
 		createTimestamp: number | null;
 	};
 
-	let indexes = $state<IndexSummary[]>([]);
-	let loaded = $state(false);
+	let { indexes }: { indexes: IndexSummary[] } = $props();
 	let drawerRef = $state<IndexDetailDrawer>();
 	let drawerOpen = $state(false);
-
-	async function load() {
-		try {
-			indexes = await getLocalIndexes();
-		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to load indexes'));
-		} finally {
-			loaded = true;
-		}
-	}
 
 	function openDrawer(indexId: string) {
 		drawerOpen = true;
 		drawerRef?.loadDetail(indexId);
 	}
-
-	load();
 </script>
 
 <div class="card border border-base-300 bg-base-100">
 	<div class="card-body p-0">
 		<div class="px-6 py-4">
 			<h3 class="text-sm font-semibold">Indexes</h3>
-			{#if loaded}
-				<p class="mt-0.5 text-xs text-base-content/50">
-					{indexes.length > 0
-						? `${indexes.length} index${indexes.length === 1 ? '' : 'es'} synced from Quickwit`
-						: 'No indexes synced yet'}
-				</p>
-			{/if}
+			<p class="mt-0.5 text-xs text-base-content/50">
+				{indexes.length > 0
+					? `${indexes.length} index${indexes.length === 1 ? '' : 'es'} synced from Quickwit`
+					: 'No indexes synced yet'}
+			</p>
 		</div>
 
-		{#if !loaded}
-			<div class="flex justify-center border-t border-base-300 py-8">
-				<span class="loading loading-sm loading-spinner"></span>
-			</div>
-		{:else if indexes.length === 0}
+		{#if indexes.length === 0}
 			<div class="border-t border-base-300 px-6 py-8 text-center">
 				<p class="text-sm text-base-content/50">No indexes synced yet.</p>
 			</div>

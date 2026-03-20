@@ -283,3 +283,124 @@ export async function syncIndexesFromQuickwit() {
 
 	return getIndexSummaries();
 }
+
+export function getIndexes() {
+	const rows = db
+		.select({ indexId: qwIndex.indexId, indexUri: qwIndex.indexUri })
+		.from(qwIndex)
+		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
+		.all();
+
+	return rows.map((r) => ({
+		indexId: r.indexId,
+		indexUri: r.indexUri ?? ''
+	}));
+}
+
+export function getIndexFields(indexId: string) {
+	const [idx] = db
+		.select({
+			id: qwIndex.id,
+			indexingSettings: qwIndex.indexingSettings
+		})
+		.from(qwIndex)
+		.where(eq(qwIndex.indexId, indexId))
+		.all();
+
+	if (!idx) return { fields: [], commitTimeoutSecs: 30 };
+
+	const fields = db
+		.select({
+			name: qwFieldMapping.name,
+			type: qwFieldMapping.type,
+			fast: qwFieldMapping.fast
+		})
+		.from(qwFieldMapping)
+		.where(eq(qwFieldMapping.indexId, idx.id))
+		.all();
+
+	const settings = idx.indexingSettings as { commit_timeout_secs?: number } | null;
+	const commitTimeoutSecs = settings?.commit_timeout_secs ?? 30;
+
+	return {
+		fields: fields.map((f) => ({
+			name: f.name,
+			type: f.type,
+			fast: f.type === 'json' ? f.fast !== false : f.fast === true
+		})),
+		commitTimeoutSecs
+	};
+}
+
+export function getIndexConfig(indexId: string) {
+	const { id: _, ...config } = getFieldConfig(indexId);
+	return config;
+}
+
+export async function saveIndexConfig(indexId: string, fields: Record<string, unknown>) {
+	await db
+		.update(qwIndex)
+		.set({ ...fields, updatedAt: new Date() })
+		.where(eq(qwIndex.indexId, indexId));
+}
+
+export function getIndexDetail(indexId: string) {
+	const [idx] = db
+		.select({
+			id: qwIndex.id,
+			indexId: qwIndex.indexId,
+			indexUid: qwIndex.indexUid,
+			indexUri: qwIndex.indexUri,
+			version: qwIndex.version,
+			createTimestamp: qwIndex.createTimestamp,
+			timestampField: qwIndex.timestampField,
+			mode: qwIndex.mode,
+			indexFieldPresence: qwIndex.indexFieldPresence,
+			storeSource: qwIndex.storeSource,
+			storeDocumentSize: qwIndex.storeDocumentSize,
+			tagFields: qwIndex.tagFields,
+			defaultSearchFields: qwIndex.defaultSearchFields,
+			retention: qwIndex.retention,
+			levelField: qwIndex.levelField,
+			messageField: qwIndex.messageField,
+			tracebackField: qwIndex.tracebackField
+		})
+		.from(qwIndex)
+		.where(eq(qwIndex.indexId, indexId))
+		.all();
+
+	if (!idx) return null;
+
+	const fields = db
+		.select({
+			name: qwFieldMapping.name,
+			type: qwFieldMapping.type,
+			fast: qwFieldMapping.fast,
+			indexed: qwFieldMapping.indexed,
+			stored: qwFieldMapping.stored,
+			record: qwFieldMapping.record,
+			tokenizer: qwFieldMapping.tokenizer,
+			description: qwFieldMapping.description
+		})
+		.from(qwFieldMapping)
+		.where(eq(qwFieldMapping.indexId, idx.id))
+		.all();
+
+	const sources = db
+		.select({
+			sourceId: qwSource.sourceId,
+			sourceType: qwSource.sourceType,
+			enabled: qwSource.enabled,
+			inputFormat: qwSource.inputFormat,
+			numPipelines: qwSource.numPipelines,
+			desiredNumPipelines: qwSource.desiredNumPipelines,
+			maxNumPipelinesPerIndexer: qwSource.maxNumPipelinesPerIndexer,
+			params: qwSource.params
+		})
+		.from(qwSource)
+		.where(eq(qwSource.indexId, idx.id))
+		.all();
+
+	const { id: _, ...detail } = idx;
+	return { ...detail, fields, sources };
+}

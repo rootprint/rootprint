@@ -2,6 +2,7 @@
 	import UserManagement from '$lib/components/UserManagement.svelte';
 	import IndexesTab from '$lib/components/IndexesTab.svelte';
 
+	let { data } = $props();
 	let activeTab = $state<'users' | 'indexes'>('users');
 </script>
 
@@ -34,9 +35,9 @@
 		</div>
 
 		{#if activeTab === 'users'}
-			<UserManagement />
+			<UserManagement users={data.users} />
 		{:else}
-			<IndexesTab />
+			<IndexesTab indexes={data.indexSummaries} />
 		{/if}
 	</div>
 </div>

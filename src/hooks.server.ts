@@ -8,7 +8,7 @@ import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { config, validateConfig } from '$lib/server/config';
-import { syncIndexesFromQuickwit } from '$lib/server/sync';
+import { syncIndexesFromQuickwit } from '$lib/server/services/index.service';
 
 async function seedDefaultAdmin() {
 	const [existing] = await db

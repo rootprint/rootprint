@@ -1,37 +1,29 @@
 <script lang="ts">
 	import { UserPlus, Check, Link, RefreshCw, Loader, KeyRound, Trash2 } from 'lucide-svelte';
-	import { listUsers, removeUser, setUserRole, regenerateInvite } from '$lib/api/users.remote';
+	import { setUserRole, regenerateInvite } from '$lib/api/users.remote';
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import InviteUserModal from './InviteUserModal.svelte';
 	import ResetPasswordModal from './ResetPasswordModal.svelte';
+	import RemoveUserModal from './RemoveUserModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
+	import type { User } from '$lib/types';
 
-	let users = $state<
-		{
-			id: string;
-			name: string;
-			email: string;
-			role?: string | null;
-			createdAt: Date;
-			status: 'pending' | 'active';
-			inviteUrl: string | null;
-			inviteExpiresAt: Date | null;
-		}[]
-	>([]);
-	let loaded = $state(false);
+	let { users }: { users: User[] } = $props();
 	let inviteModalOpen = $state(false);
-	let confirmingRemove = $state<string | null>(null);
 	let copiedUserId = $state<string | null>(null);
 	let regeneratingUserId = $state<string | null>(null);
 	let resetModalOpen = $state(false);
 	let resetTargetUser = $state<{ id: string; name: string }>({ id: '', name: '' });
+	let removeModalOpen = $state(false);
+	let removeTargetUser = $state<{ id: string; name: string }>({ id: '', name: '' });
 
 	async function handleRegenerate(userId: string) {
 		regeneratingUserId = userId;
 		try {
 			await regenerateInvite({ userId });
-			await loadUsers();
+			await invalidateAll();
 			toast.success('Invite link regenerated');
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Failed to regenerate invite'));
@@ -52,60 +44,33 @@
 
 	const currentUserId = $derived(page.data.user?.id);
 
-	async function loadUsers() {
-		try {
-			users = await listUsers();
-		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to load users'));
-		} finally {
-			loaded = true;
-		}
-	}
-
 	async function handleRoleChange(userId: string, newRole: 'admin' | 'user') {
 		try {
 			await setUserRole({ userId, role: newRole });
-			await loadUsers();
+			await invalidateAll();
 			toast.success(`Role updated to ${newRole === 'admin' ? 'Admin' : 'Member'}`);
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Failed to change role'));
 		}
 	}
-
-	async function handleRemove(userId: string) {
-		try {
-			await removeUser({ userId });
-			confirmingRemove = null;
-			users = users.filter((u) => u.id !== userId);
-			toast.success('User removed');
-		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to remove user'));
-		}
-	}
-
-	loadUsers();
 </script>
 
 <div class="card border border-base-300 bg-base-100">
-<div class="card-body">
-<div class="flex flex-col gap-4">
-	<div class="flex items-center justify-between">
-		<div>
-			<h3 class="text-sm font-semibold">Users</h3>
-			<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>
+	<div class="card-body p-0">
+		<div class="px-6 py-4">
+			<div class="flex items-center justify-between">
+				<div>
+					<h3 class="text-sm font-semibold">Users</h3>
+					<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>
+				</div>
+				<button class="btn btn-sm btn-accent" onclick={() => (inviteModalOpen = true)}>
+					<UserPlus size={16} />
+					Invite User
+				</button>
+			</div>
 		</div>
-		<button class="btn btn-sm btn-accent" onclick={() => (inviteModalOpen = true)}>
-			<UserPlus size={16} />
-			Invite User
-		</button>
-	</div>
 
-	{#if !loaded}
-		<div class="flex justify-center py-8">
-			<span class="loading loading-sm loading-spinner"></span>
-		</div>
-	{:else}
-		<div class="overflow-x-auto">
+		<div class="overflow-x-auto border-t border-base-300">
 			<table class="table table-sm">
 				<thead>
 					<tr>
@@ -118,49 +83,37 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each users as u (u.id)}
-						<tr class:bg-base-200={u.id === currentUserId}>
+					{#each users as user (user.id)}
+						<tr>
 							<td class="font-medium">
-								{u.name}
+								{user.name}
 							</td>
-							<td class="text-base-content/60">{u.email}</td>
+							<td class="text-base-content/60">{user.email}</td>
 							<td>
-								{#if u.status === 'pending'}
+								{#if user.status === 'pending'}
 									{@const expired =
-										u.inviteExpiresAt && new Date(u.inviteExpiresAt).getTime() < Date.now()}
+										user.inviteExpiresAt && new Date(user.inviteExpiresAt).getTime() < Date.now()}
 									<span class="badge badge-sm">{expired ? 'Expired' : 'Pending'}</span>
 								{:else}
 									<span class="badge badge-sm">Active</span>
 								{/if}
 							</td>
 							<td>
-								{#if u.id === currentUserId}
-									<span class="badge badge-sm">{u.role === 'admin' ? 'Admin' : 'Member'}</span>
-								{:else}
-									<select
-										class="select-bordered select w-fit min-w-0 select-xs"
-										value={u.role ?? 'user'}
-										onchange={(e) =>
-											handleRoleChange(u.id, e.currentTarget.value as 'admin' | 'user')}
-									>
-										<option value="user">Member</option>
-										<option value="admin">Admin</option>
-									</select>
-								{/if}
+								<span class="badge badge-sm">{user.role === 'admin' ? 'Admin' : 'Member'}</span>
 							</td>
 							<td class="text-base-content/60">
-								{new Date(u.createdAt).toLocaleDateString()}
+								{new Date(user.createdAt).toLocaleDateString()}
 							</td>
 							<td>
 								<div class="flex gap-1">
-									{#if u.status === 'pending'}
-										{#if u.inviteUrl}
+									{#if user.status === 'pending'}
+										{#if user.inviteUrl}
 											<button
 												class="btn btn-ghost btn-xs"
-												onclick={() => copyInviteLink(u.id, u.inviteUrl!)}
+												onclick={() => copyInviteLink(user.id, user.inviteUrl!)}
 												title="Copy invite link"
 											>
-												{#if copiedUserId === u.id}
+												{#if copiedUserId === user.id}
 													<Check size={14} />
 												{:else}
 													<Link size={14} />
@@ -169,22 +122,22 @@
 										{/if}
 										<button
 											class="btn btn-ghost btn-xs"
-											onclick={() => handleRegenerate(u.id)}
+											onclick={() => handleRegenerate(user.id)}
 											title="Regenerate invite link"
-											disabled={regeneratingUserId === u.id}
+											disabled={regeneratingUserId === user.id}
 										>
-											{#if regeneratingUserId === u.id}
+											{#if regeneratingUserId === user.id}
 												<Loader size={14} class="animate-spin" />
 											{:else}
 												<RefreshCw size={14} />
 											{/if}
 										</button>
 									{/if}
-									{#if u.status === 'active' && u.id !== currentUserId}
+									{#if user.status === 'active' && user.id !== currentUserId}
 										<button
 											class="btn btn-ghost btn-xs"
 											onclick={() => {
-												resetTargetUser = { id: u.id, name: u.name };
+												resetTargetUser = { id: user.id, name: user.name };
 												resetModalOpen = true;
 											}}
 											title="Reset password"
@@ -192,25 +145,17 @@
 											<KeyRound size={14} />
 										</button>
 									{/if}
-									{#if u.id !== currentUserId}
-										{#if confirmingRemove === u.id}
-											<button class="btn btn-xs btn-error" onclick={() => handleRemove(u.id)}>
-												Confirm
-											</button>
-											<button
-												class="btn btn-ghost btn-xs"
-												onclick={() => (confirmingRemove = null)}
-											>
-												Cancel
-											</button>
-										{:else}
-											<button
-												class="btn text-error btn-ghost btn-xs"
-												onclick={() => (confirmingRemove = u.id)}
-											>
-												<Trash2 size={14} />
-											</button>
-										{/if}
+									{#if user.id !== currentUserId}
+										<button
+											class="btn text-error btn-ghost btn-xs"
+											onclick={() => {
+												removeTargetUser = { id: user.id, name: user.name };
+												removeModalOpen = true;
+											}}
+											title="Remove user"
+										>
+											<Trash2 size={14} />
+										</button>
 									{/if}
 								</div>
 							</td>
@@ -219,15 +164,19 @@
 				</tbody>
 			</table>
 		</div>
-	{/if}
-</div>
 
-<InviteUserModal bind:open={inviteModalOpen} oncreated={loadUsers} />
-<ResetPasswordModal
-	bind:open={resetModalOpen}
-	userId={resetTargetUser.id}
-	userName={resetTargetUser.name}
-	onreset={loadUsers}
-/>
-</div>
+		<InviteUserModal bind:open={inviteModalOpen} oncreated={() => invalidateAll()} />
+		<ResetPasswordModal
+			bind:open={resetModalOpen}
+			userId={resetTargetUser.id}
+			userName={resetTargetUser.name}
+			onreset={() => invalidateAll()}
+		/>
+		<RemoveUserModal
+			bind:open={removeModalOpen}
+			userId={removeTargetUser.id}
+			userName={removeTargetUser.name}
+			onremove={() => invalidateAll()}
+		/>
+	</div>
 </div>

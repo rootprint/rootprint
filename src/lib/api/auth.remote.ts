@@ -1,8 +1,5 @@
 import { form, command, getRequestEvent } from '$app/server';
 import { redirect, invalid, error } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import { inviteToken, account, user } from '$lib/server/db/schema';
 import {
 	signInSchema,
 	setupPasswordSchema,
@@ -11,8 +8,7 @@ import {
 } from '$lib/schemas/auth';
 import { requireUser } from '$lib/middleware/auth';
 import { APIError } from 'better-auth/api';
-import { hashPassword } from 'better-auth/crypto';
-import { eq, and } from 'drizzle-orm';
+import * as authService from '$lib/server/services/auth.service';
 
 export const signIn = form(signInSchema, async (data, issue) => {
 	const event = getRequestEvent();
@@ -20,28 +16,22 @@ export const signIn = form(signInSchema, async (data, issue) => {
 
 	try {
 		if (isEmail) {
-			await auth.api.signInEmail({
-				body: { email: data.identifier, password: data._password },
-				headers: event.request.headers
-			});
+			await authService.signInEmail(event.request.headers, data.identifier, data._password);
 		} else {
-			await auth.api.signInUsername({
-				body: { username: data.identifier, password: data._password },
-				headers: event.request.headers
-			});
+			await authService.signInUsername(event.request.headers, data.identifier, data._password);
 		}
-	} catch (error) {
-		if (error instanceof APIError) {
-			invalid(issue.identifier(error.message || 'Invalid credentials'));
+	} catch (e) {
+		if (e instanceof APIError) {
+			invalid(issue.identifier(e.message || 'Invalid credentials'));
 		}
-		throw error;
+		throw e;
 	}
 	redirect(303, '/');
 });
 
 export const signOut = command(async () => {
 	const event = getRequestEvent();
-	await auth.api.signOut({ headers: event.request.headers });
+	await authService.signOut(event.request.headers);
 });
 
 export const changePassword = form(changePasswordSchema, async (data) => {
@@ -51,45 +41,23 @@ export const changePassword = form(changePasswordSchema, async (data) => {
 		error(403, 'Password change not required');
 	}
 
-	const hashedPassword = await hashPassword(data._password);
-
-	await db
-		.update(account)
-		.set({ password: hashedPassword })
-		.where(and(eq(account.userId, currentUser.id), eq(account.providerId, 'credential')));
-
-	await db.update(user).set({ mustChangePassword: false }).where(eq(user.id, currentUser.id));
+	await authService.changeForcedPassword(currentUser.id, data._password);
 
 	redirect(303, '/');
 });
 
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
-	const [invite] = await db.select().from(inviteToken).where(eq(inviteToken.token, data.token));
-
-	if (!invite) {
-		invalid(issue.token('Invalid or already used invite link'));
-		return;
-	}
-
-	if (invite.expiresAt < new Date()) {
+	const result = await authService.setupPassword(data.token, data._password);
+	if (!('success' in result)) {
 		invalid(
-			issue.token('Invite link has expired. Please ask your administrator for a new invite.')
+			issue.token(
+				result.error === 'expired_token'
+					? 'Invite link has expired. Please ask your administrator for a new invite.'
+					: 'Invalid or already used invite link'
+			)
 		);
 		return;
 	}
-
-	// Direct DB update because auth.api.setUserPassword requires admin session headers,
-	// but this is a public endpoint (invited user has no session yet).
-	// hashPassword is Better Auth's own hashing function, so the hash format is compatible.
-	const hashedPassword = await hashPassword(data._password);
-
-	await db
-		.update(account)
-		.set({ password: hashedPassword })
-		.where(and(eq(account.userId, invite.userId), eq(account.providerId, 'credential')));
-
-	await db.delete(inviteToken).where(eq(inviteToken.id, invite.id));
-
 	redirect(303, '/auth/sign-in');
 });
 
@@ -97,14 +65,11 @@ export const changeOwnPassword = command(changeOwnPasswordSchema, async (data) =
 	requireUser();
 	const event = getRequestEvent();
 	try {
-		await auth.api.changePassword({
-			headers: event.request.headers,
-			body: {
-				currentPassword: data._currentPassword,
-				newPassword: data._password,
-				revokeOtherSessions: false
-			}
-		});
+		await authService.changeOwnPassword(
+			event.request.headers,
+			data._currentPassword,
+			data._password
+		);
 	} catch (e) {
 		if (e instanceof APIError) {
 			error(

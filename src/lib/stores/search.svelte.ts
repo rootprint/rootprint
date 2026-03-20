@@ -1,4 +1,4 @@
-import { getIndexes, getIndexFields, getIndexConfig } from '$lib/api/indexes.remote';
+import { getIndexFields, getIndexConfig } from '$lib/api/indexes.remote';
 import { searchLogs, searchFieldValues, searchLogHistogram } from '$lib/api/logs.remote';
 import { createLivePoller } from './live-poller.svelte';
 import {
@@ -24,6 +24,7 @@ const BATCH_SIZE = 50;
 
 export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
+	initialIndexes: { indexId: string; indexUri: string }[],
 	options?: { onFreshSearch?: () => void }
 ) {
 	let nextKey = 0;
@@ -33,7 +34,7 @@ export function createSearchStore(
 	}
 
 	// --- Index state ---
-	let indexes = $state<{ indexId: string; indexUri: string }[]>([]);
+	let indexes = $state(initialIndexes);
 	let selectedIndex = $state<string | null>(null);
 
 	// --- Field config state ---
@@ -186,33 +187,29 @@ export function createSearchStore(
 
 	// --- Index loading ---
 
-	async function loadIndexes() {
-		try {
-			indexes = await getIndexes();
-			if (indexes.length > 0 && selectedIndex === null) {
-				const urlIdx = urlIndex;
+	function initIndexes() {
+		if (!browser) return;
+		if (indexes.length > 0 && selectedIndex === null) {
+			const urlIdx = urlIndex;
 
-				let idx: string;
-				if (urlIdx && indexes.some((i) => i.indexId === urlIdx)) {
-					idx = urlIdx;
+			let idx: string;
+			if (urlIdx && indexes.some((i) => i.indexId === urlIdx)) {
+				idx = urlIdx;
+			} else {
+				const saved = localStorage.getItem('logwiz:selectedIndex');
+				if (saved && indexes.some((i) => i.indexId === saved)) {
+					idx = saved;
 				} else {
-					const saved = browser ? localStorage.getItem('logwiz:selectedIndex') : null;
-					if (saved && indexes.some((i) => i.indexId === saved)) {
-						idx = saved;
-					} else {
-						idx = indexes[0].indexId;
-					}
+					idx = indexes[0].indexId;
 				}
-
-				selectedIndex = idx;
-				if (browser) localStorage.setItem('logwiz:selectedIndex', idx);
-				if (urlIdx !== idx) {
-					navigateQuery({ index: idx });
-				}
-				loadFieldsForIndex(idx);
 			}
-		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to load indexes'));
+
+			selectedIndex = idx;
+			localStorage.setItem('logwiz:selectedIndex', idx);
+			if (urlIdx !== idx) {
+				navigateQuery({ index: idx });
+			}
+			loadFieldsForIndex(idx);
 		}
 	}
 
@@ -475,7 +472,7 @@ export function createSearchStore(
 	}
 
 	// --- Start loading immediately ---
-	loadIndexes();
+	initIndexes();
 
 	// --- Setup auto-search effect (must be called in component context) ---
 

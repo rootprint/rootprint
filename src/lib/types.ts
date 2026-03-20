@@ -20,3 +20,14 @@ export const TIME_PRESETS = [
 export type IndexField = { name: string; type: string; fast: boolean };
 
 export type LogEntry = { key: number; hit: Record<string, unknown> };
+
+export type User = {
+	id: string;
+	name: string;
+	email: string;
+	role?: string | null;
+	createdAt: Date;
+	status: 'pending' | 'active';
+	inviteUrl: string | null;
+	inviteExpiresAt: Date | null;
+};

@@ -18,7 +18,7 @@
 
 	let scrollElement = $state<HTMLDivElement | null>(null);
 
-	const store = createSearchStore(() => data.parsedQuery, {
+	const store = createSearchStore(() => data.parsedQuery, data.indexes, {
 		onFreshSearch: () => scrollElement?.scrollTo(0, 0)
 	});
 	store.setupAutoSearch();

@@ -1,42 +1,23 @@
 import { command, query } from '$app/server';
-import { db } from '$lib/server/db';
-import { savedQuery } from '$lib/server/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
 import {
 	getSavedQueriesSchema,
 	saveQuerySchema,
 	deleteSavedQuerySchema
 } from '$lib/schemas/saved-queries';
 import { requireUser } from '$lib/middleware/auth';
+import * as savedQueryService from '$lib/server/services/saved-query.service';
 
 export const getSavedQueries = query(getSavedQueriesSchema, async (data) => {
 	const user = requireUser();
-
-	const entries = await db
-		.select()
-		.from(savedQuery)
-		.where(and(eq(savedQuery.userId, user.id), eq(savedQuery.indexName, data.indexId)))
-		.orderBy(desc(savedQuery.createdAt));
-
-	return entries;
+	return savedQueryService.getSavedQueries(user.id, data.indexId);
 });
 
 export const saveQuery = command(saveQuerySchema, async (data) => {
 	const user = requireUser();
-
-	await db.insert(savedQuery).values({
-		userId: user.id,
-		indexName: data.indexId,
-		name: data.name,
-		description: data.description,
-		query: data.query
-	});
+	await savedQueryService.saveQuery(user.id, data);
 });
 
 export const deleteSavedQuery = command(deleteSavedQuerySchema, async (data) => {
 	const user = requireUser();
-
-	await db
-		.delete(savedQuery)
-		.where(and(eq(savedQuery.id, data.id), eq(savedQuery.userId, user.id)));
+	await savedQueryService.deleteSavedQuery(user.id, data.id);
 });
