@@ -163,10 +163,10 @@ export function createSearchStore(
 	function runQuery(query: string) {
 		const pq = parsedQuery();
 		shouldRecordHistory = true;
-		if (query !== pq.query) {
-			navigateQuery({ query }, { push: true });
-		} else {
+		if (query === pq.query) {
 			bumpSearch();
+		} else {
+			navigateQuery({ query }, { push: true });
 		}
 	}
 
@@ -355,9 +355,7 @@ export function createSearchStore(
 
 			if (!append && result.aggregations) {
 				const hasActiveFiltersNow = Object.keys(activeFilters).length > 0;
-				if (!hasActiveFiltersNow) {
-					aggregations = result.aggregations;
-				} else {
+				if (hasActiveFiltersNow) {
 					const merged = { ...aggregations };
 					for (const [field, values] of Object.entries(result.aggregations)) {
 						if (!(field in merged)) {
@@ -365,6 +363,8 @@ export function createSearchStore(
 						}
 					}
 					aggregations = merged;
+				} else {
+					aggregations = result.aggregations;
 				}
 			}
 

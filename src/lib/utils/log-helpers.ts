@@ -1,10 +1,10 @@
-import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
+import { resolveFieldValue } from '$lib/utils/field-resolver';
 import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
 import type { TimezoneMode } from '$lib/types';
 
 export function extractSeverity(doc: Record<string, unknown>, levelField: string): string {
 	const raw = resolveFieldValue(doc, levelField);
-	return (raw != null ? String(raw) : 'unknown').toLowerCase();
+	return (raw == null ? 'unknown' : String(raw)).toLowerCase();
 }
 
 export function severityBorderColor(severity: string): string {

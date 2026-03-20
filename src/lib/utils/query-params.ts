@@ -72,12 +72,12 @@ function decodeFilterValues(raw: string): string[] {
 	if (!raw) return [];
 	const values: string[] = [];
 	let current = '';
-	for (let i = 0; i < raw.length; i++) {
-		if (raw[i] === ',') {
+	for (const element of raw) {
+		if (element === ',') {
 			values.push(current.replaceAll('%2C', ',').replaceAll('%25', '%'));
 			current = '';
 		} else {
-			current += raw[i];
+			current += element;
 		}
 	}
 	values.push(current.replaceAll('%2C', ',').replaceAll('%25', '%'));

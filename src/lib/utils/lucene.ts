@@ -115,7 +115,7 @@ export function validateQuery(query: string): string | null {
 	if (current) tokens.push(current);
 
 	// Strip parentheses from tokens for operator checking
-	const cleaned = tokens.map((t) => t.replace(/[()]/g, '').trim()).filter(Boolean);
+	const cleaned = tokens.map((t) => t.replaceAll(/[()]/g, '').trim()).filter(Boolean);
 
 	if (cleaned.length === 0) return null;
 
@@ -125,7 +125,7 @@ export function validateQuery(query: string): string | null {
 	}
 
 	// Check dangling operator at end
-	const last = cleaned[cleaned.length - 1];
+	const last = cleaned.at(-1);
 	if (last === 'AND' || last === 'OR' || last === 'NOT') {
 		return `Expected expression after '${last}'`;
 	}

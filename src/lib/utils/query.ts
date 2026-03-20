@@ -1,6 +1,6 @@
 export function escapeFilterValue(value: string): string {
 	if (/[\s:()[\]{}!+\-~^"\\*?/&|]/.test(value)) {
-		return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+		return `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
 	}
 	return value;
 }
