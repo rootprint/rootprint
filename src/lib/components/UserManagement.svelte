@@ -86,6 +86,8 @@
 	loadUsers();
 </script>
 
+<div class="card border border-base-300 bg-base-100">
+<div class="card-body">
 <div class="flex flex-col gap-4">
 	<div class="flex items-center justify-between">
 		<div>
@@ -227,3 +229,5 @@
 	userName={resetTargetUser.name}
 	onreset={loadUsers}
 />
+</div>
+</div>

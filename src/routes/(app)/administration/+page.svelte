@@ -34,11 +34,7 @@
 		</div>
 
 		{#if activeTab === 'users'}
-			<div class="card border border-base-300 bg-base-100">
-				<div class="card-body">
-					<UserManagement />
-				</div>
-			</div>
+			<UserManagement />
 		{:else}
 			<IndexesTab />
 		{/if}
