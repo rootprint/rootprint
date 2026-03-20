@@ -32,8 +32,13 @@
 			const end = new Date(value.end * 1000);
 			fromDate = start;
 			toDate = end;
-			fromTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-			toTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+			const utc = timezoneMode === 'utc';
+			const sh = utc ? start.getUTCHours() : start.getHours();
+			const sm = utc ? start.getUTCMinutes() : start.getMinutes();
+			const eh = utc ? end.getUTCHours() : end.getHours();
+			const em = utc ? end.getUTCMinutes() : end.getMinutes();
+			fromTime = `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`;
+			toTime = `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
 		}
 	});
 
@@ -55,20 +60,25 @@
 		const [fh, fm] = fromTime.split(':').map(Number);
 		const [th, tm] = toTime.split(':').map(Number);
 
-		const start = new Date(fromDate);
-		start.setHours(fh, fm, 0, 0);
-		const end = new Date(toDate);
-		end.setHours(th, tm, 59, 999);
+		let startMs: number;
+		let endMs: number;
 
 		if (timezoneMode === 'utc') {
-			start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
-			end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+			startMs = Date.UTC(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), fh, fm, 0, 0);
+			endMs = Date.UTC(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), th, tm, 59, 999);
+		} else {
+			const start = new Date(fromDate);
+			start.setHours(fh, fm, 0, 0);
+			const end = new Date(toDate);
+			end.setHours(th, tm, 59, 999);
+			startMs = start.getTime();
+			endMs = end.getTime();
 		}
 
 		onchange({
 			type: 'absolute',
-			start: Math.floor(start.getTime() / 1000),
-			end: Math.floor(end.getTime() / 1000)
+			start: Math.floor(startMs / 1000),
+			end: Math.floor(endMs / 1000)
 		});
 		close();
 	}
