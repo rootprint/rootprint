@@ -10,10 +10,10 @@ function normalizeForDedup(data: {
 	filters: Record<string, string[]>;
 }): string {
 	const sortedFilters = Object.keys(data.filters)
-		.sort()
-		.map((k) => [k, [...data.filters[k]].sort()]);
+		.sort((a, b) => a.localeCompare(b))
+		.map((k) => [k, [...data.filters[k]].sort((a, b) => a.localeCompare(b))]);
 	const tr = Object.keys(data.timeRange)
-		.sort()
+		.sort((a, b) => a.localeCompare(b))
 		.reduce(
 			(acc, k) => {
 				acc[k] = (data.timeRange as Record<string, unknown>)[k];
