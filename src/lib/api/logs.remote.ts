@@ -1,4 +1,4 @@
-import { query } from '$app/server';
+import { query, command } from '$app/server';
 import {
 	searchLogsSchema,
 	searchFieldValuesSchema,
@@ -8,7 +8,7 @@ import {
 import { requireUser } from '$lib/middleware/auth';
 import * as logService from '$lib/server/services/log.service';
 
-export const searchLogs = query(searchLogsSchema, async (data) => {
+export const searchLogs = command(searchLogsSchema, async (data) => {
 	requireUser();
 	return logService.searchLogs(data);
 });
@@ -23,7 +23,7 @@ export const pollLiveLogs = query(pollLiveLogsSchema, async (data) => {
 	return logService.pollLiveLogs(data);
 });
 
-export const searchLogHistogram = query(searchLogHistogramSchema, async (data) => {
+export const searchLogHistogram = command(searchLogHistogramSchema, async (data) => {
 	requireUser();
 	return logService.searchLogHistogram(data);
 });

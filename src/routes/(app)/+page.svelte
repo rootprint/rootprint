@@ -126,7 +126,6 @@
 					class="btn ml-auto btn-sm {historyOpen ? 'btn-active' : ''}"
 					onclick={() => {
 						historyOpen = !historyOpen;
-						if (browser) localStorage.setItem('logwiz:historyOpen', String(historyOpen));
 					}}
 					title="Toggle search history"
 				>

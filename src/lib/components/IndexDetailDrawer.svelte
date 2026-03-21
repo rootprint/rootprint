@@ -1,17 +1,19 @@
 <script lang="ts">
 	import { Info, ListTree, Plug, Settings, X } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { getErrorMessage } from '$lib/utils/error';
-	import { getLocalIndexDetail, saveIndexConfig } from '$lib/api/indexes.remote';
+	import { saveIndexConfig } from '$lib/api/indexes.remote';
 	import { formatEpochLocale } from '$lib/utils/time';
+	import type { PageData } from '../../routes/(app)/administration/$types';
+
+	type IndexDetail = PageData['indexDetails'][number];
 
 	let {
-		open = $bindable(false)
+		open = $bindable(false),
+		detail
 	}: {
 		open: boolean;
+		detail: IndexDetail | null;
 	} = $props();
-
-	let indexId = $state('');
 
 	const tabs = [
 		{ id: 'details', label: 'Details', icon: Info },
@@ -23,62 +25,34 @@
 	type TabId = (typeof tabs)[number]['id'];
 
 	let activeTab = $state<TabId>('details');
-	let detail = $state<Awaited<ReturnType<typeof getLocalIndexDetail>> | null>(null);
-	let loading = $state(false);
 	let fieldFilter = $state('');
 
-	// Config form state
-	let configLevelField = $state('');
-	let configMessageField = $state('');
-	let configTracebackField = $state('');
-	let saving = $state(false);
-
-	let requestId = 0;
-
-	export async function loadDetail(id: string) {
-		const thisRequest = ++requestId;
-		indexId = id;
-		loading = true;
-		detail = null;
-		activeTab = 'details';
-		fieldFilter = '';
-		try {
-			const result = await getLocalIndexDetail(indexId);
-			if (thisRequest !== requestId) return;
-			detail = result;
-			if (detail) {
-				configLevelField = detail.levelField ?? 'level';
-				configMessageField = detail.messageField ?? 'message';
-				configTracebackField = detail.tracebackField ?? '';
-			}
-		} catch (e) {
-			if (thisRequest !== requestId) return;
-			toast.error(getErrorMessage(e, 'Failed to load index details'));
-		} finally {
-			if (thisRequest === requestId) loading = false;
+	// Reset UI state when detail changes
+	$effect(() => {
+		if (detail) {
+			activeTab = 'details';
+			fieldFilter = '';
 		}
-	}
+	});
+
+	// Create isolated form instance per index
+	const configForm = $derived(detail ? saveIndexConfig.for(detail.indexId) : null);
+
+	// Pre-populate form fields when detail changes
+	$effect(() => {
+		if (detail && configForm) {
+			configForm.fields.set({
+				indexId: detail.indexId,
+				levelField: detail.levelField ?? 'level',
+				messageField: detail.messageField ?? 'message',
+				tracebackField: detail.tracebackField ?? ''
+			});
+		}
+	});
 
 	const filteredFields = $derived(
 		detail?.fields.filter((f) => f.name.toLowerCase().includes(fieldFilter.toLowerCase())) ?? []
 	);
-
-	async function handleSaveConfig() {
-		saving = true;
-		try {
-			await saveIndexConfig({
-				indexId: indexId,
-				levelField: configLevelField,
-				messageField: configMessageField,
-				tracebackField: configTracebackField
-			});
-			toast.success('Index configuration saved');
-		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to save configuration'));
-		} finally {
-			saving = false;
-		}
-	}
 
 	function close() {
 		open = false;
@@ -139,11 +113,7 @@
 		</div>
 
 		<!-- Content -->
-		{#if loading}
-			<div class="flex flex-1 items-center justify-center">
-				<span class="loading loading-sm loading-spinner"></span>
-			</div>
-		{:else if !detail}
+		{#if !detail}
 			<div class="flex flex-1 items-center justify-center">
 				<p class="text-sm text-base-content/50">Index not found</p>
 			</div>
@@ -360,55 +330,65 @@
 					<p class="mb-4 text-xs text-base-content/50">
 						Map Quickwit fields to Logwiz display roles
 					</p>
-					<div class="flex flex-col gap-4">
-						<div>
-							<label class="mb-1 block text-xs font-medium" for="levelField">Level Field</label>
-							<input
-								id="levelField"
-								type="text"
-								class="input-bordered input input-sm w-full"
-								bind:value={configLevelField}
-								placeholder="e.g. level, severity"
-							/>
-						</div>
-						<div>
-							<label class="mb-1 block text-xs font-medium" for="messageField">
-								Message Field
-							</label>
-							<input
-								id="messageField"
-								type="text"
-								class="input-bordered input input-sm w-full"
-								bind:value={configMessageField}
-								placeholder="e.g. message, body.message"
-							/>
-						</div>
-						<div>
-							<label class="mb-1 block text-xs font-medium" for="tracebackField">
-								Traceback Field
-							</label>
-							<input
-								id="tracebackField"
-								type="text"
-								class="input-bordered input input-sm w-full"
-								bind:value={configTracebackField}
-								placeholder="e.g. message.traceback, attributes.exception.stacktrace"
-							/>
-							<p class="mt-1 text-[10px] text-base-content/40">
-								Dot-notation path to the field containing stacktrace/traceback data
-							</p>
-						</div>
-						<div>
-							<button class="btn btn-sm btn-accent" onclick={handleSaveConfig} disabled={saving}>
-								{#if saving}
-									<span class="loading loading-xs loading-spinner"></span>
-									Saving...
-								{:else}
-									Save
-								{/if}
-							</button>
-						</div>
-					</div>
+					{#if configForm}
+						<form
+							{...configForm.enhance(async ({ submit }) => {
+								try {
+									await submit();
+									toast.success('Index configuration saved');
+								} catch (e) {
+									toast.error('Failed to save configuration');
+								}
+							})}
+							class="flex flex-col gap-4"
+						>
+							<input {...configForm.fields.indexId.as('hidden', detail?.indexId ?? '')} />
+							<div>
+								<label class="mb-1 block text-xs font-medium" for="levelField">Level Field</label>
+								<input
+									{...configForm.fields.levelField.as('text')}
+									id="levelField"
+									class="input-bordered input input-sm w-full"
+									placeholder="e.g. level, severity"
+								/>
+							</div>
+							<div>
+								<label class="mb-1 block text-xs font-medium" for="messageField">
+									Message Field
+								</label>
+								<input
+									{...configForm.fields.messageField.as('text')}
+									id="messageField"
+									class="input-bordered input input-sm w-full"
+									placeholder="e.g. message, body.message"
+								/>
+							</div>
+							<div>
+								<label class="mb-1 block text-xs font-medium" for="tracebackField">
+									Traceback Field
+								</label>
+								<input
+									{...configForm.fields.tracebackField.as('text')}
+									id="tracebackField"
+									class="input-bordered input input-sm w-full"
+									placeholder="e.g. message.traceback, attributes.exception.stacktrace"
+								/>
+								<p class="mt-1 text-[10px] text-base-content/40">
+									Dot-notation path to the field containing stacktrace/traceback data
+								</p>
+							</div>
+							<div>
+								<button class="btn btn-sm btn-accent" disabled={!!configForm.pending}>
+									{#if configForm.pending}
+										<span class="loading loading-xs loading-spinner"></span>
+										Saving...
+									{:else}
+										Save
+									{/if}
+								</button>
+							</div>
+						</form>
+					{/if}
 				{/if}
 			</div>
 		{/if}

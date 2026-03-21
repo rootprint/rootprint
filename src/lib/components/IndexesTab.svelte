@@ -1,23 +1,17 @@
 <script lang="ts">
 	import IndexDetailDrawer from './IndexDetailDrawer.svelte';
 	import { formatEpochDate } from '$lib/utils/time';
+	import type { PageData } from '../../routes/(app)/administration/$types';
 
-	type IndexSummary = {
-		id: number;
-		indexId: string;
-		fieldCount: number;
-		sourceCount: number;
-		mode: string | null;
-		createTimestamp: number | null;
-	};
+	type IndexDetail = PageData['indexDetails'][number];
 
-	let { indexes }: { indexes: IndexSummary[] } = $props();
-	let drawerRef = $state<IndexDetailDrawer>();
+	let { indexes }: { indexes: IndexDetail[] } = $props();
 	let drawerOpen = $state(false);
+	let selectedDetail = $state<IndexDetail | null>(null);
 
-	function openDrawer(indexId: string) {
+	function openDrawer(detail: IndexDetail) {
+		selectedDetail = detail;
 		drawerOpen = true;
-		drawerRef?.loadDetail(indexId);
 	}
 </script>
 
@@ -50,7 +44,7 @@
 					</thead>
 					<tbody>
 						{#each indexes as idx (idx.indexId)}
-							<tr class="cursor-pointer hover:bg-base-200" onclick={() => openDrawer(idx.indexId)}>
+							<tr class="cursor-pointer hover:bg-base-200" onclick={() => openDrawer(idx)}>
 								<td class="font-medium">{idx.indexId}</td>
 								<td>
 									{#if idx.mode}
@@ -59,8 +53,8 @@
 										<span class="text-base-content/50">—</span>
 									{/if}
 								</td>
-								<td>{idx.fieldCount}</td>
-								<td>{idx.sourceCount}</td>
+								<td>{idx.fields.length}</td>
+								<td>{idx.sources.length}</td>
 								<td class="text-base-content/50">{formatEpochDate(idx.createTimestamp)}</td>
 							</tr>
 						{/each}
@@ -71,4 +65,4 @@
 	</div>
 </div>
 
-<IndexDetailDrawer bind:open={drawerOpen} bind:this={drawerRef} />
+<IndexDetailDrawer bind:open={drawerOpen} detail={selectedDetail} />

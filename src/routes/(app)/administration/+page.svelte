@@ -37,7 +37,7 @@
 		{#if activeTab === 'users'}
 			<UserManagement users={data.users} />
 		{:else}
-			<IndexesTab indexes={data.indexSummaries} />
+			<IndexesTab indexes={data.indexDetails} />
 		{/if}
 	</div>
 </div>

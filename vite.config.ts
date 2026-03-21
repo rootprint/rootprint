@@ -1,4 +1,3 @@
-/// <reference types="vitest/config" />
 import devtoolsJson from 'vite-plugin-devtools-json';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -9,14 +8,6 @@ export default defineConfig({
 	server: {
 		watch: {
 			ignored: ['**/.quickwit/**']
-		}
-	},
-	test: {
-		include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
-		coverage: {
-			provider: 'v8',
-			reporter: ['lcov', 'text'],
-			reportsDirectory: './coverage'
 		}
 	}
 });

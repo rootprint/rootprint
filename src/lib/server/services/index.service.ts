@@ -404,3 +404,13 @@ export function getIndexDetail(indexId: string) {
 	const { id: _, ...detail } = idx;
 	return { ...detail, fields, sources };
 }
+
+export function getAllIndexDetails() {
+	const indexes = db
+		.select({ indexId: qwIndex.indexId })
+		.from(qwIndex)
+		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
+		.all();
+
+	return indexes.map((r) => getIndexDetail(r.indexId)).filter((d) => d !== null);
+}
