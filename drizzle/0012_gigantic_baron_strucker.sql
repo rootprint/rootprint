@@ -1,0 +1,1 @@
+ALTER TABLE `saved_query` ADD `is_shared` integer DEFAULT false NOT NULL;

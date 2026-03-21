@@ -16,3 +16,15 @@ export const saveQuerySchema = v.object({
 export const deleteSavedQuerySchema = v.object({
 	id: v.number()
 });
+
+export const getSharedQueriesSchema = v.object({
+	indexId: indexIdField
+});
+
+export const shareQuerySchema = v.object({
+	id: v.number()
+});
+
+export const unshareQuerySchema = v.object({
+	id: v.number()
+});

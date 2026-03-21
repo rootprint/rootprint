@@ -1,7 +1,16 @@
 <script lang="ts">
 	import { Clock, Bookmark, Users, X } from 'lucide-svelte';
 	import { getHistory, deleteHistoryEntry, clearHistory } from '$lib/api/history.remote';
-	import { getSavedQueries, deleteSavedQuery } from '$lib/api/saved-queries.remote';
+	import {
+		getSavedQueries,
+		deleteSavedQuery,
+		shareQuery,
+		unshareQuery,
+		getSharedQueries
+	} from '$lib/api/saved-queries.remote';
+	import { page } from '$app/state';
+	import { toast } from 'svelte-sonner';
+	import { getErrorMessage } from '$lib/utils/error';
 	import { type TimeRange } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
 	import type { ParsedQuery } from '$lib/utils/query-params';
@@ -26,7 +35,7 @@
 	const tabs = [
 		{ id: 'history' as const, label: 'History', icon: Clock },
 		{ id: 'saved' as const, label: 'Saved', icon: Bookmark },
-		{ id: 'shared' as const, label: 'Shared', icon: Users, disabled: true }
+		{ id: 'shared' as const, label: 'Shared', icon: Users }
 	];
 
 	type HistoryEntry = {
@@ -47,6 +56,18 @@
 		name: string;
 		description: string | null;
 		query: string;
+		isShared: boolean;
+		createdAt: Date;
+	};
+
+	type SharedEntry = {
+		id: number;
+		userId: string;
+		indexName: string;
+		name: string;
+		description: string | null;
+		query: string;
+		username: string | null;
 		createdAt: Date;
 	};
 
@@ -55,6 +76,22 @@
 	let savedVersion = $state(0);
 	let savingEntry = $state<HistoryEntry | null>(null);
 	let saveModalOpen = $state(false);
+
+	let sharedEntries = $state<SharedEntry[]>([]);
+	let sharedLoading = $state(false);
+	let sharedVersion = $state(0);
+
+	async function loadShared() {
+		if (!indexId) return;
+		sharedLoading = true;
+		try {
+			sharedEntries = (await getSharedQueries({ indexId })) as SharedEntry[];
+		} catch {
+			sharedEntries = [];
+		} finally {
+			sharedLoading = false;
+		}
+	}
 
 	async function load() {
 		if (!indexId) return;
@@ -125,6 +162,13 @@
 		}
 	});
 
+	$effect(() => {
+		if (open && activeTab === 'shared' && indexId) {
+			void sharedVersion;
+			loadShared();
+		}
+	});
+
 	async function removeSaved(id: number) {
 		await deleteSavedQuery({ id });
 		savedEntries = savedEntries.filter((e) => e.id !== id);
@@ -133,6 +177,38 @@
 	function bookmark(entry: HistoryEntry) {
 		savingEntry = entry;
 		saveModalOpen = true;
+	}
+
+	async function toggleShare(entry: SavedEntry) {
+		try {
+			if (entry.isShared) {
+				await unshareQuery({ id: entry.id });
+				entry.isShared = false;
+				toast.success('Query unshared');
+			} else {
+				await shareQuery({ id: entry.id });
+				entry.isShared = true;
+				toast.success('Query shared with team');
+			}
+			sharedVersion++;
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to update sharing'));
+		}
+	}
+
+	function restoreShared(entry: SharedEntry) {
+		onrestore({ query: entry.query });
+		open = false;
+	}
+
+	async function removeShared(id: number) {
+		try {
+			await deleteSavedQuery({ id });
+			sharedEntries = sharedEntries.filter((e) => e.id !== id);
+			toast.success('Shared query deleted');
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to delete query'));
+		}
 	}
 
 	$effect(() => {
@@ -181,7 +257,7 @@
 									}}
 									title="Save query"
 								>
-									<Bookmark size={12} class="hover:text-warning" />
+									<Bookmark size={16} class="hover:text-warning" />
 								</button>
 								<button
 									class="btn p-0 opacity-0 btn-ghost btn-xs group-hover:opacity-100"
@@ -191,7 +267,7 @@
 									}}
 									title="Remove from history"
 								>
-									<X size={12} />
+									<X size={16} />
 								</button>
 							</div>
 							<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
@@ -238,6 +314,16 @@
 									{entry.name}
 								</span>
 								<button
+									class="btn p-0 btn-ghost btn-xs {entry.isShared ? 'opacity-60 text-info' : 'opacity-0 group-hover:opacity-60'}"
+									onclick={(e) => {
+										e.stopPropagation();
+										toggleShare(entry);
+									}}
+									title={entry.isShared ? 'Unshare query' : 'Share with team'}
+								>
+									<Users size={16} />
+								</button>
+								<button
 									class="btn p-0 opacity-0 btn-ghost btn-xs group-hover:opacity-100"
 									onclick={(e) => {
 										e.stopPropagation();
@@ -245,11 +331,68 @@
 									}}
 									title="Remove saved query"
 								>
-									<X size={12} />
+									<X size={16} />
 								</button>
 							</div>
 							<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
 								<span class="truncate">{entry.query || '*'}</span>
+							</div>
+							{#if entry.description}
+								<div class="truncate text-[10px] text-base-content/50 italic">
+									{entry.description}
+								</div>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		{/if}
+		{#if activeTab === 'shared'}
+			{#if sharedLoading}
+				<div class="flex items-center justify-center py-4">
+					<span class="loading loading-sm loading-spinner"></span>
+				</div>
+			{:else if sharedEntries.length === 0}
+				<div class="px-3 py-3">
+					<p class="text-[11px] text-base-content/50">No shared queries yet</p>
+				</div>
+			{:else}
+				<div class="flex flex-col">
+					{#each sharedEntries as entry (entry.id)}
+						<div
+							class="group flex w-full cursor-pointer flex-col gap-0.5 border-b border-base-300/50 px-3 py-2 text-left hover:bg-base-200"
+							role="button"
+							tabindex="0"
+							onclick={() => restoreShared(entry)}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									restoreShared(entry);
+								}
+							}}
+						>
+							<div class="flex items-center gap-1">
+								<span class="flex-1 truncate text-xs font-medium">
+									{entry.name}
+								</span>
+								{#if entry.userId === page.data.user?.id || page.data.user?.role === 'admin'}
+									<button
+										class="btn p-0 opacity-0 btn-ghost btn-xs group-hover:opacity-100"
+										onclick={(e) => {
+											e.stopPropagation();
+											removeShared(entry.id);
+										}}
+										title="Delete shared query"
+									>
+										<X size={16} />
+									</button>
+								{/if}
+							</div>
+							<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
+								<span class="truncate">{entry.query || '*'}</span>
+								<span class="ml-auto shrink-0 badge badge-xs badge-ghost"
+									>{entry.username ?? 'unknown'}</span
+								>
 							</div>
 							{#if entry.description}
 								<div class="truncate text-[10px] text-base-content/50 italic">

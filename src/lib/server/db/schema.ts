@@ -162,6 +162,7 @@ export const savedQuery = sqliteTable(
 		name: text('name').notNull(),
 		description: text('description'),
 		query: text('query').notNull().default(''),
+		isShared: integer('is_shared', { mode: 'boolean' }).default(false).notNull(),
 		createdAt: integer('created_at', { mode: 'timestamp' })
 			.default(sql`(unixepoch())`)
 			.notNull()
