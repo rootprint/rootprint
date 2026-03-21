@@ -60,6 +60,7 @@ export function createSearchStore(
 	let numHits = $state(0);
 	let loading = $state(false);
 	let hasSearched = $state(false);
+	let searchError = $state<string | null>(null);
 	let searchStartTimestamp = $state<number | undefined>(undefined);
 	let searchEndTimestamp = $state<number | undefined>(undefined);
 
@@ -310,6 +311,7 @@ export function createSearchStore(
 		if (selectedIndex === null) return;
 
 		loading = true;
+		searchError = null;
 
 		try {
 			const queryText = getQueryText();
@@ -403,7 +405,12 @@ export function createSearchStore(
 				recordCurrentSearch(parsedQuery().query);
 			}
 		} catch (e) {
-			toast.error(getErrorMessage(e, 'Search failed'));
+			const message = getErrorMessage(e, 'Search failed');
+			searchError = message;
+			logs = [];
+			numHits = 0;
+			hasSearched = true;
+			toast.error(message);
 		} finally {
 			loading = false;
 		}
@@ -457,9 +464,6 @@ export function createSearchStore(
 			startTimestamp: searchStartTimestamp,
 			endTimestamp: searchEndTimestamp
 		});
-		if (result.unsupported) {
-			toast.error(`Field "${field}" cannot be searched (not a fast field in Quickwit)`);
-		}
 		return result.values;
 	}
 
@@ -549,6 +553,9 @@ export function createSearchStore(
 		},
 		get hasSearched() {
 			return hasSearched;
+		},
+		get searchError() {
+			return searchError;
 		},
 		get histogramData() {
 			return histogramData;

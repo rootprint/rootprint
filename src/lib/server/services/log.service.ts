@@ -2,7 +2,8 @@ import { db } from '$lib/server/db';
 import { qwFieldMapping } from '$lib/server/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { getFieldConfig } from '$lib/server/services/index.service';
-import { AggregationBuilder } from 'quickwit-js';
+import { AggregationBuilder, ValidationError } from 'quickwit-js';
+import { error } from '@sveltejs/kit';
 import { getQuickwitClient } from '$lib/server/quickwit';
 import { resolveTimeRange } from '$lib/utils/time';
 import { formatFieldValue } from '$lib/utils/field-resolver';
@@ -70,6 +71,13 @@ async function partitionFastFields(
 	};
 }
 
+function rethrowValidationError(e: unknown): never {
+	if (e instanceof ValidationError) {
+		error(400, e.message);
+	}
+	throw e;
+}
+
 export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: string[] }) {
 	const config = getFieldConfig(data.indexId);
 	const client = getQuickwitClient();
@@ -95,7 +103,7 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 		query.agg(field, AggregationBuilder.terms(field, { size: 100 }));
 	}
 
-	const result = await index.search(query);
+	const result = await index.search(query).catch(rethrowValidationError);
 
 	const aggregations: Record<string, string[]> = {};
 	if (result.aggregations) {
@@ -149,7 +157,7 @@ export async function searchFieldValues(data: {
 
 	query.timeRange(startTs, endTs);
 
-	const result = await index.search(query);
+	const result = await index.search(query).catch(rethrowValidationError);
 
 	const bucketAgg = result.aggregations?.[data.field] as
 		| { buckets?: { key: string }[] }
@@ -179,7 +187,7 @@ export async function pollLiveLogs(data: {
 		.sortBy(`+${config.timestampField}`)
 		.timeRange(data.startTimestamp, data.endTimestamp);
 
-	const result = await index.search(query);
+	const result = await index.search(query).catch(rethrowValidationError);
 
 	return { hits: result.hits };
 }
@@ -214,7 +222,7 @@ export async function searchLogHistogram(data: {
 
 	query.timeRange(startTs, endTs);
 
-	const result = await index.search(query);
+	const result = await index.search(query).catch(rethrowValidationError);
 
 	const histAgg = result.aggregations?.histogram as
 		| {
