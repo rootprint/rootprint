@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/api/auth.remote';
 	import { getUserInitials } from '$lib/utils/format';
-	import ChangePasswordModal from '$lib/components/ChangePasswordModal.svelte';
+	import ChangePasswordModal from '$lib/components/admin/ChangePasswordModal.svelte';
 	import logo from '$lib/assets/logo.png';
 
 	let { children } = $props();

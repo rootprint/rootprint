@@ -1,7 +1,7 @@
 <script lang="ts">
 	import IndexDetailDrawer from './IndexDetailDrawer.svelte';
 	import { formatEpochDate } from '$lib/utils/time';
-	import type { PageData } from '../../routes/(app)/administration/$types';
+	import type { PageData } from '../../../routes/(app)/administration/$types';
 
 	type IndexDetail = PageData['indexDetails'][number];
 

@@ -9,10 +9,10 @@
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
 	import type { User } from '$lib/types';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 
 	let { users }: { users: User[] } = $props();
 	let inviteModalOpen = $state(false);
-	let copiedUserId = $state<string | null>(null);
 	let regeneratingUserId = $state<string | null>(null);
 	let resetModalOpen = $state(false);
 	let resetTargetUser = $state<{ id: string; name: string }>({ id: '', name: '' });
@@ -29,16 +29,6 @@
 			toast.error(getErrorMessage(e, 'Failed to regenerate invite'));
 		} finally {
 			regeneratingUserId = null;
-		}
-	}
-
-	async function copyInviteLink(userId: string, url: string) {
-		try {
-			await navigator.clipboard.writeText(url);
-			copiedUserId = userId;
-			setTimeout(() => (copiedUserId = null), 2000);
-		} catch (e) {
-			toast.error('Failed to copy to clipboard');
 		}
 	}
 
@@ -108,17 +98,19 @@
 								<div class="flex gap-1">
 									{#if user.status === 'pending'}
 										{#if user.inviteUrl}
-											<button
+											<CopyButton
+												text={user.inviteUrl!}
 												class="btn btn-ghost btn-xs"
-												onclick={() => copyInviteLink(user.id, user.inviteUrl!)}
 												title="Copy invite link"
 											>
-												{#if copiedUserId === user.id}
-													<Check size={14} />
-												{:else}
-													<Link size={14} />
-												{/if}
-											</button>
+												{#snippet children({ copied })}
+													{#if copied}
+														<Check size={14} />
+													{:else}
+														<Link size={14} />
+													{/if}
+												{/snippet}
+											</CopyButton>
 										{/if}
 										<button
 											class="btn btn-ghost btn-xs"

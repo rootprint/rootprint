@@ -1,18 +1,13 @@
 <script lang="ts">
 	import { createSearchStore } from '$lib/stores/search.svelte';
 	import { browser } from '$app/environment';
-	import type { TimeRange } from '$lib/types';
-	import TimeRangePicker from '$lib/components/TimeRangePicker.svelte';
-	import LogRow from '$lib/components/LogRow.svelte';
-	import FieldPanel from '$lib/components/FieldPanel.svelte';
-	import QuickFilterPanel from '$lib/components/QuickFilterPanel.svelte';
-	import { Clock, Share2, Radio, Play } from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
-	import LogDetailDrawer from '$lib/components/LogDetailDrawer.svelte';
-	import LogFrequencyChart from '$lib/components/LogFrequencyChart.svelte';
-	import HistoryDrawer from '$lib/components/HistoryDrawer.svelte';
-	import ExportDropdown from '$lib/components/ExportDropdown.svelte';
-	import QueryInput from '$lib/components/QueryInput.svelte';
+	import LogRow from '$lib/components/log/LogRow.svelte';
+	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
+	import QuickFilterPanel from '$lib/components/sidebar/QuickFilterPanel.svelte';
+	import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
+	import LogFrequencyChart from '$lib/components/log/LogFrequencyChart.svelte';
+	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
+	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
 
 	let { data } = $props();
 
@@ -24,10 +19,8 @@
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
-	let queryInputRef = $state<ReturnType<typeof QueryInput>>();
 	let isAtTop = $state(true);
 	let wrapMode = $state<'none' | 'wrap'>('none');
-	let copied = $state(false);
 	let selectedLog = $state<Record<string, unknown> | null>(null);
 	let drawerOpen = $state(false);
 	let chartCollapsed = $state(
@@ -35,24 +28,13 @@
 	);
 	let historyOpen = $state(browser ? localStorage.getItem('logwiz:historyOpen') === 'true' : false);
 
-	// --- UI event handlers ---
+	$effect(() => {
+		if (browser) localStorage.setItem('logwiz:historyOpen', String(historyOpen));
+	});
 
-	async function shareQuery() {
-		try {
-			await navigator.clipboard.writeText(window.location.href);
-			copied = true;
-			setTimeout(() => (copied = false), 2000);
-		} catch (e) {
-			toast.error('Failed to copy to clipboard');
-		}
-	}
-
-	function handleChartToggle() {
-		chartCollapsed = !chartCollapsed;
-		if (browser) {
-			localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
-		}
-	}
+	$effect(() => {
+		if (browser) localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
+	});
 
 	function handleScroll() {
 		if (!scrollElement) return;
@@ -99,121 +81,14 @@
 	</div>
 
 	<div class="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-		<div class="border-b border-base-300 bg-base-100 px-4 py-3">
-			<div class="flex w-full items-center gap-2">
-				<select
-					class="select-bordered select w-48 select-sm"
-					value={store.selectedIndex}
-					onchange={(e) => store.handleIndexChange(e.currentTarget.value)}
-				>
-					{#each store.indexes as idx (idx.indexId)}
-						<option value={idx.indexId}>{idx.indexId}</option>
-					{/each}
-				</select>
-
-				<div class="join">
-					{#each [['none', 'No wrap'], ['wrap', 'Wrap']] as [mode, label] (mode)}
-						<button
-							class="btn join-item whitespace-nowrap btn-sm {wrapMode === mode ? 'btn-accent' : ''}"
-							onclick={() => (wrapMode = mode as typeof wrapMode)}
-						>
-							{label}
-						</button>
-					{/each}
-				</div>
-
-				<button
-					class="btn ml-auto btn-sm {historyOpen ? 'btn-active' : ''}"
-					onclick={() => {
-						historyOpen = !historyOpen;
-					}}
-					title="Toggle search history"
-				>
-					<Clock size={14} />
-				</button>
-
-				<button class="btn btn-sm" onclick={shareQuery}>
-					<Share2 size={14} />
-					{copied ? 'Copied!' : 'Share'}
-				</button>
-
-				<ExportDropdown
-					logs={store.logs.map((e) => e.hit)}
-					indexId={store.selectedIndex}
-					timestampField={store.fieldConfig.timestampField}
-					levelField={store.fieldConfig.levelField}
-					messageField={store.fieldConfig.messageField}
-				/>
-
-				<button
-					class="btn btn-sm {store.isLive ? 'btn-error' : ''}"
-					aria-pressed={store.isLive}
-					aria-label="Toggle live mode"
-					onclick={() => {
-						if (store.isLive) {
-							store.stopLive();
-							store.bumpSearch();
-						} else {
-							store.startLive();
-						}
-					}}
-					disabled={(store.loading && !store.isLive) || !store.selectedIndex}
-				>
-					{#if store.isLive}
-						<span class="relative flex h-2.5 w-2.5">
-							<span
-								class="absolute inline-flex h-full w-full animate-ping rounded-full bg-error-content opacity-75"
-							></span>
-							<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-error-content"></span>
-						</span>
-					{:else}
-						<Radio size={14} />
-					{/if}
-					Live
-				</button>
-
-				<div class={store.isLive ? 'opacity-40' : ''} inert={store.isLive || undefined}>
-					<TimeRangePicker
-						value={store.timeRange}
-						timezoneMode={store.timezoneMode}
-						onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
-						ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
-					/>
-				</div>
-
-				<button
-					class="btn btn-sm btn-accent"
-					onclick={() => queryInputRef?.submit()}
-					disabled={store.loading || !store.selectedIndex}
-				>
-					<Play size={14} />
-					{store.loading && !store.logs.length ? 'Running...' : 'Run query'}
-				</button>
-			</div>
-
-			<div class="mt-2 flex w-full items-center gap-2">
-				<QueryInput
-					bind:this={queryInputRef}
-					externalValue={data.parsedQuery.query}
-					fields={store.indexFields}
-					onsubmit={(query) => store.runQuery(query)}
-					onsearchvalues={store.searchFieldValues}
-				/>
-				{#if store.hasSearched}
-					<span class="text-xs whitespace-nowrap text-base-content/50"
-						>{store.numHits.toLocaleString()} hits</span
-					>
-				{/if}
-			</div>
-		</div>
+		<SearchToolbar {store} bind:wrapMode bind:historyOpen parsedQuery={data.parsedQuery} />
 
 		{#if store.hasSearched && !store.isLive}
 			<LogFrequencyChart
 				data={store.histogramData}
 				timezoneMode={store.timezoneMode}
 				loading={store.histogramLoading}
-				collapsed={chartCollapsed}
-				ontoggle={handleChartToggle}
+				bind:collapsed={chartCollapsed}
 				onbrush={(start, end) =>
 					store.navigateQuery({ timeRange: { type: 'absolute', start, end } })}
 			/>
@@ -274,14 +149,10 @@
 		</div>
 
 		<HistoryDrawer
-			open={historyOpen}
+			bind:open={historyOpen}
 			indexId={store.selectedIndex}
 			historyVersion={store.historyVersion}
 			onrestore={(params) => store.navigateQuery(params, { push: true })}
-			onclose={() => {
-				historyOpen = false;
-				if (browser) localStorage.setItem('logwiz:historyOpen', 'false');
-			}}
 		/>
 	</div>
 </div>

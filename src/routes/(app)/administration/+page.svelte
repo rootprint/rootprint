@@ -1,6 +1,6 @@
 <script lang="ts">
-	import UserManagement from '$lib/components/UserManagement.svelte';
-	import IndexesTab from '$lib/components/IndexesTab.svelte';
+	import UserManagement from '$lib/components/admin/UserManagement.svelte';
+	import IndexesTab from '$lib/components/index/IndexesTab.svelte';
 
 	let { data } = $props();
 	let activeTab = $state<'users' | 'indexes'>('users');

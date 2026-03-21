@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 	import { extractSeverity, severityBorderColor, extractTimestamp } from '$lib/utils/log-helpers';
-	import JsonHighlight from '$lib/components/JsonHighlight.svelte';
+	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
 
 	let {
 		hit,

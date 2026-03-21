@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 	import type { IndexField } from '$lib/types';
 	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
+	import { useDebounce } from '$lib/utils/debounce';
 
 	interface Props {
 		externalValue: string;
@@ -19,9 +20,28 @@
 	let suggestions = $state<string[]>([]);
 	let selectedIndex = $state(-1);
 	let validationError = $state<string | null>(null);
-	let valueDebounceTimer: ReturnType<typeof setTimeout> | undefined;
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let lastContext = $state<ReturnType<typeof getQueryContext>>({ type: 'none' });
+
+	const { debounced: debouncedValueSearch, cleanup: cleanupDebounce } = useDebounce(
+		async (field: string, fragment: string) => {
+			try {
+				suggestions = await onsearchvalues(field, fragment);
+			} catch {
+				suggestions = [];
+			}
+			if (suggestions.length === 1 && suggestions[0] === fragment) {
+				suggestions = [];
+			}
+			showDropdown = suggestions.length > 0;
+			selectedIndex = -1;
+		},
+		300
+	);
+
+	$effect(() => {
+		return () => cleanupDebounce();
+	});
 
 	// Display value: localBuffer when focused, externalValue when not
 	let displayValue = $derived(focused ? localBuffer : externalValue);
@@ -33,19 +53,12 @@
 		}
 	});
 
-	// Cleanup debounce timer on destroy
-	$effect(() => {
-		return () => {
-			if (valueDebounceTimer) clearTimeout(valueDebounceTimer);
-		};
-	});
-
 	// --- Autocomplete logic ---
 
 	function updateSuggestions() {
 		if (!inputEl) return;
 		// Clear any pending value debounce when context changes
-		if (valueDebounceTimer) clearTimeout(valueDebounceTimer);
+		cleanupDebounce();
 		const cursorPos = inputEl.selectionStart ?? localBuffer.length;
 		const ctx = getQueryContext(localBuffer, cursorPos);
 		lastContext = ctx;
@@ -63,19 +76,7 @@
 			showDropdown = suggestions.length > 0;
 			selectedIndex = -1;
 		} else if (ctx.type === 'value') {
-			valueDebounceTimer = setTimeout(async () => {
-				try {
-					suggestions = await onsearchvalues(ctx.field, ctx.fragment);
-				} catch {
-					suggestions = [];
-				}
-				// Hide if the only suggestion exactly matches what's already typed
-				if (suggestions.length === 1 && suggestions[0] === ctx.fragment) {
-					suggestions = [];
-				}
-				showDropdown = suggestions.length > 0;
-				selectedIndex = -1;
-			}, 300);
+			debouncedValueSearch(ctx.field, ctx.fragment);
 		} else {
 			showDropdown = false;
 			suggestions = [];

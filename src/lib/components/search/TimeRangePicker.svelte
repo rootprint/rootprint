@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { TIME_PRESETS, type TimeRange, type TimezoneMode } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
-	import Calendar from './Calendar.svelte';
+	import Calendar from '../ui/Calendar.svelte';
 	import { Clock } from 'lucide-svelte';
 
 	let {
@@ -64,7 +64,15 @@
 		let endMs: number;
 
 		if (timezoneMode === 'utc') {
-			startMs = Date.UTC(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), fh, fm, 0, 0);
+			startMs = Date.UTC(
+				fromDate.getFullYear(),
+				fromDate.getMonth(),
+				fromDate.getDate(),
+				fh,
+				fm,
+				0,
+				0
+			);
 			endMs = Date.UTC(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), th, tm, 59, 999);
 		} else {
 			const start = new Date(fromDate);

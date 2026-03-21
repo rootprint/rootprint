@@ -2,22 +2,20 @@
 	import { browser } from '$app/environment';
 	import type uPlotLib from 'uplot';
 	import type { TimezoneMode } from '$lib/types';
-	import { ChevronRight, ChevronDown } from 'lucide-svelte';
 	import { formatChartTime, formatChartDate, formatChartTooltip } from '$lib/utils/time';
+	import CollapsibleSection from '$lib/components/ui/CollapsibleSection.svelte';
 
 	let {
 		data,
 		timezoneMode,
 		loading,
-		collapsed,
-		ontoggle,
+		collapsed = $bindable(false),
 		onbrush
 	}: {
 		data: { timestamp: number; levels: Record<string, number> }[];
 		timezoneMode: TimezoneMode;
 		loading: boolean;
 		collapsed: boolean;
-		ontoggle: () => void;
 		onbrush: (start: number, end: number) => void;
 	} = $props();
 
@@ -311,23 +309,12 @@
 </script>
 
 <div class="border-b border-base-300">
-	<div class="flex items-center gap-2 px-3 py-1.5">
-		<button class="flex items-center gap-1" onclick={ontoggle}>
-			{#if collapsed}
-				<ChevronRight size={14} class="text-base-content/60" />
-			{:else}
-				<ChevronDown size={14} class="text-base-content/60" />
+	<CollapsibleSection title="Frequency chart" bind:collapsed>
+		{#snippet headerActions()}
+			{#if loading}
+				<span class="loading loading-xs loading-spinner text-base-content/60"></span>
 			{/if}
-			<span class="text-xs font-semibold tracking-wider text-base-content/80 uppercase">
-				Frequency chart
-			</span>
-		</button>
-		{#if loading}
-			<span class="loading loading-xs loading-spinner text-base-content/60"></span>
-		{/if}
-	</div>
-
-	{#if !collapsed}
+		{/snippet}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			bind:this={containerEl}
@@ -363,5 +350,5 @@
 				</div>
 			{/if}
 		</div>
-	{/if}
+	</CollapsibleSection>
 </div>

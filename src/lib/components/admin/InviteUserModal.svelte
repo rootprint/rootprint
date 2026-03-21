@@ -2,6 +2,7 @@
 	import { createInvite } from '$lib/api/users.remote';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 
 	let {
 		open = $bindable(false),
@@ -16,7 +17,6 @@
 	let role = $state<'admin' | 'user'>('user');
 	let inviteUrl = $state('');
 	let loading = $state(false);
-	let copied = $state(false);
 
 	async function handleSubmit() {
 		loading = true;
@@ -29,16 +29,6 @@
 			toast.error(getErrorMessage(e, 'Failed to create invite'));
 		} finally {
 			loading = false;
-		}
-	}
-
-	async function copyLink() {
-		try {
-			await navigator.clipboard.writeText(inviteUrl);
-			copied = true;
-			setTimeout(() => (copied = false), 2000);
-		} catch (e) {
-			toast.error('Failed to copy to clipboard');
 		}
 	}
 
@@ -67,9 +57,11 @@
 						value={inviteUrl}
 						readonly
 					/>
-					<button class="btn btn-sm btn-neutral" onclick={copyLink}>
-						{copied ? 'Copied!' : 'Copy'}
-					</button>
+					<CopyButton text={inviteUrl} class="btn btn-sm btn-neutral">
+						{#snippet children({ copied })}
+							{copied ? 'Copied!' : 'Copy'}
+						{/snippet}
+					</CopyButton>
 				</div>
 				<div class="modal-action">
 					<button class="btn" onclick={handleClose}>Done</button>
