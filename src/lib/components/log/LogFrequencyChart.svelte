@@ -106,6 +106,15 @@
 	async function buildChart() {
 		if (!browser || !chartEl || collapsed || !columnarData) return;
 
+		// Sync width from actual DOM before building — ResizeObserver is async
+		// and may not have fired yet, so chartWidth could still be the 400px default
+		if (containerEl) {
+			const actualWidth = containerEl.clientWidth;
+			if (actualWidth > 0) {
+				chartWidth = actualWidth;
+			}
+		}
+
 		destroyChart();
 
 		if (!uPlotCtor) {
@@ -305,6 +314,23 @@
 		if (chart && chartWidth > 0) {
 			chart.setSize({ width: chartWidth, height: 150 });
 		}
+	});
+
+	// Re-sync chart size when returning to the tab
+	$effect(() => {
+		if (!browser) return;
+
+		const handleVisibility = () => {
+			if (document.visibilityState === 'visible' && chart && containerEl) {
+				const w = containerEl.clientWidth;
+				if (w > 0 && Math.abs(w - chartWidth) > 1) {
+					chartWidth = w;
+				}
+			}
+		};
+
+		document.addEventListener('visibilitychange', handleVisibility);
+		return () => document.removeEventListener('visibilitychange', handleVisibility);
 	});
 </script>
 
