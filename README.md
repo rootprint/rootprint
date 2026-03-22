@@ -64,6 +64,7 @@ Set environment variables in `docker-compose.yml` under the `logwiz` service.
 | `LOGWIZ_RATE_LIMIT_WINDOW`     | No       | `60`                  | Rate limit window (seconds)     |
 | `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`                 | Max requests per window         |
 | `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                   | Max sign-in attempts per window |
+| `LOGWIZ_AUTH_SECRET`           | No       | Auto-generated        | Auth secret (min 32 chars)      |
 
 ### Resetting the admin password
 

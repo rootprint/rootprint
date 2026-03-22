@@ -41,6 +41,14 @@ function parseIntWithDefault(value: string | undefined, defaultValue: number): n
 }
 
 function resolveSecret(dataDir: string): string {
+	const envSecret = readEnv('LOGWIZ_AUTH_SECRET');
+	if (envSecret) {
+		if (envSecret.length >= 32) return envSecret;
+		console.warn(
+			'[logwiz] LOGWIZ_AUTH_SECRET is set but shorter than 32 characters, ignoring'
+		);
+	}
+
 	const secretPath = resolve(dataDir, '.secret');
 	if (existsSync(secretPath)) {
 		const existing = readFileSync(secretPath, 'utf-8').trim();
@@ -104,6 +112,8 @@ export function buildConfig(): Config {
 		optionalDefaults.push(['LOGWIZ_RATE_LIMIT_MAX', rateLimitMax]);
 	if (!readEnv('LOGWIZ_SIGNIN_RATE_LIMIT_MAX'))
 		optionalDefaults.push(['LOGWIZ_SIGNIN_RATE_LIMIT_MAX', signinRateLimitMax]);
+	if (!readEnv('LOGWIZ_AUTH_SECRET'))
+		optionalDefaults.push(['LOGWIZ_AUTH_SECRET', '(file-generated)']);
 
 	if (optionalDefaults.length > 0) {
 		console.warn(
