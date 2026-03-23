@@ -19,7 +19,6 @@
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
-	let isAtTop = $state(true);
 	let wrapMode = $state<'none' | 'wrap'>('none');
 	let selectedLog = $state<Record<string, unknown> | null>(null);
 	let drawerOpen = $state(false);
@@ -40,15 +39,8 @@
 		if (!scrollElement) return;
 		const { scrollTop, scrollHeight, clientHeight } = scrollElement;
 
-		isAtTop = scrollTop < 50;
-
-		if (isAtTop && store.isLive) {
-			store.resetNewLiveLogs();
-		}
-
-		// Infinite scroll — disabled during live mode
+		// Infinite scroll
 		if (
-			!store.isLive &&
 			scrollHeight - scrollTop - clientHeight < 300 &&
 			!store.loading &&
 			store.logs.length < store.numHits
@@ -84,7 +76,7 @@
 	<div class="relative flex min-w-0 flex-1 flex-col overflow-hidden">
 		<SearchToolbar {store} bind:wrapMode bind:historyOpen parsedQuery={data.parsedQuery} />
 
-		{#if store.hasSearched && !store.isLive}
+		{#if store.hasSearched}
 			<LogFrequencyChart
 				data={store.histogramData}
 				timezoneMode={store.timezoneMode}
@@ -100,37 +92,32 @@
 			class="relative min-h-0 flex-1 overflow-auto bg-base-200/30"
 			onscroll={handleScroll}
 		>
-			{#if store.isLive && store.newLiveLogs > 0 && !isAtTop}
-				<button
-					class="btn sticky top-2 left-1/2 z-10 -translate-x-1/2 shadow-lg btn-sm btn-accent"
-					onclick={() => {
-						scrollElement?.scrollTo({ top: 0, behavior: 'smooth' });
-						store.resetNewLiveLogs();
-					}}
-				>
-					<span aria-hidden="true">&#8593;</span>
-					{store.newLiveLogs} new log{store.newLiveLogs === 1 ? '' : 's'}
-				</button>
-			{/if}
 			{#if !store.hasSearched}
 				<div class="flex h-full items-center justify-center">
 					<span class="loading loading-sm loading-spinner"></span>
 				</div>
 			{:else if store.searchError}
 				<div class="flex h-full items-center justify-center">
-					<div class="alert alert-error max-w-md shadow-sm">
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+					<div class="alert max-w-md alert-error shadow-sm">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-5 w-5 shrink-0"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+								clip-rule="evenodd"
+							/>
 						</svg>
 						<span class="text-sm">{store.searchError}</span>
-						<button class="btn btn-sm btn-ghost" onclick={() => store.bumpSearch()}>Retry</button>
+						<button class="btn btn-ghost btn-sm" onclick={() => store.bumpSearch()}>Retry</button>
 					</div>
 				</div>
 			{:else if store.logs.length === 0}
 				<div class="flex h-full items-center justify-center">
-					<p class="text-sm text-base-content/60">
-						{store.isLive ? 'Waiting for new logs...' : 'No logs found'}
-					</p>
+					<p class="text-sm text-base-content/60">No logs found</p>
 				</div>
 			{:else}
 				<div class="w-fit min-w-full">

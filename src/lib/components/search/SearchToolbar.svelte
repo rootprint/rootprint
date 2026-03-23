@@ -6,7 +6,7 @@
 	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { Clock, Share2, Radio, Play } from 'lucide-svelte';
+	import { Clock, Share2, Play } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 
 	let {
@@ -74,41 +74,12 @@
 			messageField={store.fieldConfig.messageField}
 		/>
 
-		<button
-			class="btn btn-sm {store.isLive ? 'btn-error' : ''}"
-			aria-pressed={store.isLive}
-			aria-label="Toggle live mode"
-			onclick={() => {
-				if (store.isLive) {
-					store.stopLive();
-					store.bumpSearch();
-				} else {
-					store.startLive();
-				}
-			}}
-			disabled={(store.loading && !store.isLive) || !store.selectedIndex}
-		>
-			{#if store.isLive}
-				<span class="relative flex h-2.5 w-2.5">
-					<span
-						class="absolute inline-flex h-full w-full animate-ping rounded-full bg-error-content opacity-75"
-					></span>
-					<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-error-content"></span>
-				</span>
-			{:else}
-				<Radio size={14} />
-			{/if}
-			Live
-		</button>
-
-		<div class={store.isLive ? 'opacity-40' : ''} inert={store.isLive || undefined}>
-			<TimeRangePicker
-				value={store.timeRange}
-				timezoneMode={store.timezoneMode}
-				onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
-				ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
-			/>
-		</div>
+		<TimeRangePicker
+			value={store.timeRange}
+			timezoneMode={store.timezoneMode}
+			onchange={(range: TimeRange) => store.navigateQuery({ timeRange: range })}
+			ontimezonechange={(mode) => store.navigateQuery({ timezoneMode: mode })}
+		/>
 
 		<button
 			class="btn btn-sm btn-accent"

@@ -34,13 +34,3 @@ export const searchLogHistogramSchema = v.object({
 });
 
 type SearchLogHistogramInput = v.InferOutput<typeof searchLogHistogramSchema>;
-
-export const pollLiveLogsSchema = v.object({
-	indexId: v.pipe(v.string(), v.minLength(1)),
-	query: v.string(),
-	startTimestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
-	endTimestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
-	limit: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(200))
-});
-
-type PollLiveLogsInput = v.InferOutput<typeof pollLiveLogsSchema>;

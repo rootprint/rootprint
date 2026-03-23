@@ -1,6 +1,5 @@
 import { getIndexFields, getIndexConfig } from '$lib/api/indexes.remote';
 import { searchLogs, searchFieldValues, searchLogHistogram } from '$lib/api/logs.remote';
-import { createLivePoller } from './live-poller.svelte';
 import {
 	getPreference,
 	saveDisplayFields,
@@ -79,28 +78,6 @@ export function createSearchStore(
 
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, string[]>>({});
-
-	// --- Live mode ---
-	let commitBufferSecs = 45; // updated from index metadata
-
-	const livePoller = createLivePoller({
-		getIndex: () => selectedIndex,
-		getQueryText,
-		getCommitBufferSecs: () => commitBufferSecs,
-		onNewLogs: (hits) => {
-			logs = [...withKeys(hits), ...logs];
-			numHits = numHits + hits.length;
-		},
-		onStart: ({ startTimestamp: st, endTimestamp: et }) => {
-			searchStartTimestamp = st;
-			searchEndTimestamp = et;
-			logs = [];
-			numHits = 0;
-			hasSearched = true;
-			loading = false;
-			options?.onFreshSearch?.();
-		}
-	});
 
 	// --- URL sync ---
 	let historyVersion = $state(0);
@@ -224,7 +201,6 @@ export function createSearchStore(
 			]);
 			indexFields = indexFieldsResult.fields;
 			schemaFields = indexFieldsResult.fields;
-			commitBufferSecs = indexFieldsResult.commitTimeoutSecs + 15;
 			fieldConfig = config;
 			activeFields = pref.displayFields;
 
@@ -244,7 +220,6 @@ export function createSearchStore(
 	}
 
 	function handleIndexChange(indexName: string) {
-		stopLive();
 		selectedIndex = indexName;
 		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
 		aggregations = {};
@@ -307,7 +282,6 @@ export function createSearchStore(
 
 	async function search(opts?: { append?: boolean }) {
 		const append = opts?.append ?? false;
-		if (livePoller.isLive) stopLive();
 		if (selectedIndex === null) return;
 
 		loading = true;
@@ -446,11 +420,6 @@ export function createSearchStore(
 		}
 	}
 
-	function stopLive() {
-		livePoller.stop();
-		loading = false;
-	}
-
 	// --- Field value search ---
 
 	async function searchFieldValuesHandler(field: string, searchTerm: string): Promise<string[]> {
@@ -502,13 +471,6 @@ export function createSearchStore(
 			if (key === lastSearchedKey) return;
 			lastSearchedKey = key;
 			search();
-		});
-
-		// Cleanup live mode on unmount
-		$effect(() => {
-			return () => {
-				livePoller.cleanup();
-			};
 		});
 	}
 
@@ -584,12 +546,6 @@ export function createSearchStore(
 		get quickFilterAvailableFields() {
 			return quickFilterAvailableFields;
 		},
-		get isLive() {
-			return livePoller.isLive;
-		},
-		get newLiveLogs() {
-			return livePoller.newLiveLogs;
-		},
 		get historyVersion() {
 			return historyVersion;
 		},
@@ -602,9 +558,6 @@ export function createSearchStore(
 		search,
 		searchFieldValues: searchFieldValuesHandler,
 		setupAutoSearch,
-		startLive: livePoller.start,
-		stopLive,
-		resetNewLiveLogs: livePoller.resetNewLiveLogs,
 		bumpSearch,
 		addFilterClause
 	};

@@ -170,28 +170,6 @@ export async function searchFieldValues(data: {
 	return { values, unsupported: false };
 }
 
-export async function pollLiveLogs(data: {
-	indexId: string;
-	query: string;
-	limit: number;
-	startTimestamp: number;
-	endTimestamp: number;
-}) {
-	const config = getFieldConfig(data.indexId);
-	const client = getQuickwitClient();
-	const index = client.index(data.indexId);
-
-	const query = index
-		.query(data.query || '*')
-		.limit(data.limit)
-		.sortBy(`+${config.timestampField}`)
-		.timeRange(data.startTimestamp, data.endTimestamp);
-
-	const result = await index.search(query).catch(rethrowValidationError);
-
-	return { hits: result.hits };
-}
-
 export async function searchLogHistogram(data: {
 	indexId: string;
 	query: string;

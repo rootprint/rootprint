@@ -60,8 +60,6 @@
 		localStorage.setItem(`logwiz:openSections:${id}`, JSON.stringify([...sections]));
 	}
 
-
-
 	$effect(() => {
 		return () => {
 			for (const timer of Object.values(debounceTimers)) clearTimeout(timer);

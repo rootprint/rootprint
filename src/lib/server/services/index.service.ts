@@ -307,7 +307,7 @@ export function getIndexFields(indexId: string) {
 		.where(eq(qwIndex.indexId, indexId))
 		.all();
 
-	if (!idx) return { fields: [], commitTimeoutSecs: 30 };
+	if (!idx) return { fields: [] };
 
 	const fields = db
 		.select({
@@ -319,16 +319,12 @@ export function getIndexFields(indexId: string) {
 		.where(eq(qwFieldMapping.indexId, idx.id))
 		.all();
 
-	const settings = idx.indexingSettings as { commit_timeout_secs?: number } | null;
-	const commitTimeoutSecs = settings?.commit_timeout_secs ?? 30;
-
 	return {
 		fields: fields.map((f) => ({
 			name: f.name,
 			type: f.type,
 			fast: f.type === 'json' ? f.fast !== false : f.fast === true
-		})),
-		commitTimeoutSecs
+		}))
 	};
 }
 

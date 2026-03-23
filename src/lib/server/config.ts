@@ -44,9 +44,7 @@ function resolveSecret(dataDir: string): string {
 	const envSecret = readEnv('LOGWIZ_AUTH_SECRET');
 	if (envSecret) {
 		if (envSecret.length >= 32) return envSecret;
-		console.warn(
-			'[logwiz] LOGWIZ_AUTH_SECRET is set but shorter than 32 characters, ignoring'
-		);
+		console.warn('[logwiz] LOGWIZ_AUTH_SECRET is set but shorter than 32 characters, ignoring');
 	}
 
 	const secretPath = resolve(dataDir, '.secret');

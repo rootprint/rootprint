@@ -314,7 +314,9 @@
 									{entry.name}
 								</span>
 								<button
-									class="btn p-0 btn-ghost btn-xs {entry.isShared ? 'opacity-60 text-info' : 'opacity-0 group-hover:opacity-60'}"
+									class="btn p-0 btn-ghost btn-xs {entry.isShared
+										? 'text-info opacity-60'
+										: 'opacity-0 group-hover:opacity-60'}"
 									onclick={(e) => {
 										e.stopPropagation();
 										toggleShare(entry);
@@ -390,7 +392,7 @@
 							</div>
 							<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
 								<span class="truncate">{entry.query || '*'}</span>
-								<span class="ml-auto shrink-0 badge badge-xs badge-ghost"
+								<span class="ml-auto badge shrink-0 badge-ghost badge-xs"
 									>{entry.username ?? 'unknown'}</span
 								>
 							</div>
