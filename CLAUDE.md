@@ -1,17 +1,33 @@
-## Project Overview
+# Logwiz
 
-Logwiz is an opensource logging UI tool, that is based on quickwit.
-Project uses Svelte 5, and SvelteKit Remote Functions for API.
-Better auth is used for authentication.
-For api calls to quickwit quickwit-js library is used.
-For styling daisyui is used.
+## Project Overview
+Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io).
+
+- **Frontend**: Svelte 5 with SvelteKit (Remote Functions for API layer)
+- **Auth**: Better Auth
+- **Quickwit API**: `quickwit-js` library
+- **Styling**: DaisyUI (via Tailwind CSS)
 
 ## Project Configuration
+| Setting | Value |
+|---|---|
+| Language | TypeScript |
+| Package Manager | bun |
+| Add-ons | prettier, tailwindcss, drizzle, better-auth, devtools-json, mcp |
 
-- **Language**: TypeScript
-- **Package Manager**: bun
-- **Add-ons**: prettier, tailwindcss, drizzle, better-auth, devtools-json, mcp
+## Rules
 
+### Types
+- All types must be defined in `src/lib/types.ts`.
+
+### Data Loading
+Data loading should be handled in dedicated files alongside the page component(only if possible and not overcomplicated):
+
+| File | When to use |
+|---|---|
+| `+page.server.ts` | Needs secrets, auth, cookies, or private backend access |
+| `+page.ts` | Needs browser-only APIs or client-side state |
+| `+layout.server.ts` | Data shared across many pages |
 ---
 
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:

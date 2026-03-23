@@ -1,13 +1,5 @@
-import type { TimeRange, TimezoneMode } from '$lib/types';
+import type { ParsedQuery, TimeRange, TimezoneMode } from '$lib/types';
 import { TIME_PRESETS } from '$lib/types';
-
-export interface ParsedQuery {
-	index: string | null;
-	query: string;
-	filters: Record<string, string[]>;
-	timeRange: TimeRange;
-	timezoneMode: TimezoneMode;
-}
 
 const DEFAULTS = {
 	query: '',

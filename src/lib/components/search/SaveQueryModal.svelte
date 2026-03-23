@@ -1,19 +1,18 @@
 <script lang="ts">
 	import { saveQuery } from '$lib/api/saved-queries.remote';
+	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
 
 	let {
 		open = $bindable(false),
-		entry,
-		onsaved = () => {}
+		entry
 	}: {
 		open: boolean;
 		entry: {
 			indexId: string;
 			query: string;
 		} | null;
-		onsaved?: () => void;
 	} = $props();
 
 	let name = $state('');
@@ -38,7 +37,7 @@
 				query: entry.query
 			});
 			toast.success('Query saved');
-			onsaved();
+			await invalidateAll();
 			handleClose();
 		} catch (e) {
 			toast.error(getErrorMessage(e, 'Failed to save query'));

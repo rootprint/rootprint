@@ -1,4 +1,4 @@
-export type Formatter = (value: unknown) => string;
+import type { Formatter } from '$lib/types';
 
 function resolveSegments(current: unknown, segments: string[]): unknown {
 	if (segments.length === 0) return current;

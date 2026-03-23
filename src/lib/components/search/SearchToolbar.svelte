@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { createSearchStore } from '$lib/stores/search.svelte';
-	import type { TimeRange } from '$lib/types';
-	import type { ParsedQuery } from '$lib/utils/query-params';
+	import type { ParsedQuery, TimeRange } from '$lib/types';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
 	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';

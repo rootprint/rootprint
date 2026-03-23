@@ -31,3 +31,55 @@ export type User = {
 	inviteUrl: string | null;
 	inviteExpiresAt: Date | null;
 };
+
+export interface ParsedQuery {
+	index: string | null;
+	query: string;
+	filters: Record<string, string[]>;
+	timeRange: TimeRange;
+	timezoneMode: TimezoneMode;
+}
+
+export type QueryContext =
+	| { type: 'field'; fragment: string; start: number; end: number }
+	| { type: 'value'; field: string; fragment: string; start: number; end: number }
+	| { type: 'none' };
+
+export type Formatter = (value: unknown) => string;
+
+export interface TracebackFormatter {
+	detect(text: string): boolean;
+	highlight(text: string): string;
+}
+
+export type HistoryEntry = {
+	id: number;
+	userId: string;
+	indexName: string;
+	query: string;
+	timeRange: TimeRange;
+	filters: Record<string, string[]>;
+	executedAt: Date;
+};
+
+export type SavedQueryEntry = {
+	id: number;
+	userId: string;
+	indexName: string;
+	name: string;
+	description: string | null;
+	query: string;
+	isShared: boolean;
+	createdAt: Date;
+};
+
+export type SharedQueryEntry = {
+	id: number;
+	userId: string;
+	indexName: string;
+	name: string;
+	description: string | null;
+	query: string;
+	username: string | null;
+	createdAt: Date;
+};

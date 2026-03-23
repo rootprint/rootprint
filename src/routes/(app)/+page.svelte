@@ -139,7 +139,9 @@
 		<HistoryDrawer
 			bind:open={historyOpen}
 			indexId={store.selectedIndex}
-			historyVersion={store.historyVersion}
+			history={data.history}
+			savedQueries={data.savedQueries}
+			sharedQueries={data.sharedQueries}
 			onrestore={(params) => store.navigateQuery(params, { push: true })}
 		/>
 	</div>

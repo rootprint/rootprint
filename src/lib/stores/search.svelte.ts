@@ -6,16 +6,16 @@ import {
 	saveQuickFilterFields
 } from '$lib/api/preferences.remote';
 import { recordSearch } from '$lib/api/history.remote';
+import { invalidateAll } from '$app/navigation';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { combineQueryWithFilters, escapeFilterValue } from '$lib/utils/query';
 import { buildQueryUrl, serialize } from '$lib/utils/query-params';
-import type { ParsedQuery } from '$lib/utils/query-params';
 import { computeColumnWidths } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import type { IndexField, LogEntry, TimeRange } from '$lib/types';
+import type { IndexField, LogEntry, ParsedQuery, TimeRange } from '$lib/types';
 import { toast } from 'svelte-sonner';
 import { getErrorMessage } from '$lib/utils/error';
 
@@ -78,9 +78,6 @@ export function createSearchStore(
 
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, string[]>>({});
-
-	// --- URL sync ---
-	let historyVersion = $state(0);
 
 	// --- Search version ---
 	let searchVersion = $state(0);
@@ -158,7 +155,7 @@ export function createSearchStore(
 			filters: activeFilters
 		})
 			.then(() => {
-				historyVersion++;
+				invalidateAll();
 			})
 			.catch((e) => console.warn('Failed to record search history', e));
 	}
@@ -545,9 +542,6 @@ export function createSearchStore(
 		},
 		get quickFilterAvailableFields() {
 			return quickFilterAvailableFields;
-		},
-		get historyVersion() {
-			return historyVersion;
 		},
 		// Methods
 		navigateQuery,

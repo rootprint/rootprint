@@ -1,9 +1,4 @@
-// src/lib/utils/traceback-parser.ts
-
-interface TracebackFormatter {
-	detect(text: string): boolean;
-	highlight(text: string): string;
-}
+import type { TracebackFormatter } from '$lib/types';
 
 function escapeHtml(s: string): string {
 	return s

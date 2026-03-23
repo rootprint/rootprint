@@ -5,7 +5,7 @@ import {
 	hasNonDefaultParams,
 	buildQueryUrl
 } from '$lib/utils/query-params';
-import type { ParsedQuery } from '$lib/utils/query-params';
+import type { ParsedQuery } from '$lib/types';
 
 function defaults(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
 	return {

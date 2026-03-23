@@ -1,7 +1,4 @@
-export type QueryContext =
-	| { type: 'field'; fragment: string; start: number; end: number }
-	| { type: 'value'; field: string; fragment: string; start: number; end: number }
-	| { type: 'none' };
+import type { QueryContext } from '$lib/types';
 
 export function getQueryContext(query: string, cursorPos: number): QueryContext {
 	// Check if cursor is inside a quoted string
