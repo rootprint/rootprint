@@ -3,8 +3,8 @@ import { db } from '$lib/server/db';
 import { inviteToken, user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { config } from '$lib/server/config';
-import { randomBytes } from 'crypto';
 import { APIError } from 'better-auth/api';
+import { randomHex } from '$lib/utils/crypto';
 
 const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
 
@@ -35,7 +35,7 @@ export async function createInvite(
 	headers: Headers,
 	data: { email: string; name: string; role: 'user' | 'admin' }
 ) {
-	const tempPassword = randomBytes(32).toString('hex');
+	const tempPassword = randomHex(32);
 
 	let created;
 	try {
@@ -56,7 +56,7 @@ export async function createInvite(
 	}
 
 	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
-	const token = randomBytes(32).toString('hex');
+	const token = randomHex(32);
 	await db.insert(inviteToken).values({
 		userId: created.user.id,
 		token,
@@ -71,7 +71,7 @@ export async function regenerateInvite(userId: string) {
 	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
 
 	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
-	const token = randomBytes(32).toString('hex');
+	const token = randomHex(32);
 	await db.insert(inviteToken).values({
 		userId,
 		token,

@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/private';
-import { randomBytes } from 'crypto';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname, resolve } from 'path';
+import { randomHex } from '$lib/utils/crypto';
 
 export interface Config {
 	// Required
@@ -54,7 +54,7 @@ function resolveSecret(dataDir: string): string {
 		const existing = readFileSync(secretPath, 'utf-8').trim();
 		if (existing.length >= 32) return existing;
 	}
-	const generated = randomBytes(32).toString('hex');
+	const generated = randomHex(32);
 	mkdirSync(dataDir, { recursive: true });
 	writeFileSync(secretPath, generated, { mode: 0o600 });
 	console.warn(`[logwiz] Generated auth secret at ${secretPath}`);
