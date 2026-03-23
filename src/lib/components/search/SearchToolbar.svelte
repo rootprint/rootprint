@@ -55,6 +55,7 @@
 			title="Toggle search history"
 		>
 			<Clock size={14} />
+			History
 		</button>
 
 		{#if browser}
