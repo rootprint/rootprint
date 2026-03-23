@@ -38,7 +38,7 @@
 </script>
 
 {#if open}
-	<div class="modal modal-open">
+	<div class="modal-open modal">
 		<div class="modal-box" transition:scale={{ start: 0.97, duration: 200 }}>
 			<h3 class="text-lg font-bold">Remove User</h3>
 			<p class="mt-2 text-sm text-base-content/60">

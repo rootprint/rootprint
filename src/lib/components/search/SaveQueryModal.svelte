@@ -55,7 +55,7 @@
 </script>
 
 {#if open}
-	<div class="modal modal-open">
+	<div class="modal-open modal">
 		<div class="modal-box" transition:scale={{ start: 0.97, duration: 200 }}>
 			<h3 class="text-lg font-bold">Save Query</h3>
 
