@@ -21,7 +21,8 @@
 		availableFields = [],
 		onconfigchange,
 		onsearch,
-		pinnedFields = []
+		pinnedFields = [],
+		indexId = null
 	}: {
 		fields: string[];
 		aggregations: Record<string, string[]>;
@@ -31,6 +32,7 @@
 		onconfigchange?: (fields: string[]) => void;
 		onsearch?: (field: string, searchTerm: string) => Promise<string[]>;
 		pinnedFields?: string[];
+		indexId?: string | null;
 	} = $props();
 
 	let collapsed = $state(false);
@@ -43,6 +45,22 @@
 	let loadingFields = new SvelteSet<string>();
 	let expandedFields = new SvelteSet<string>();
 	let debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+	function loadSet(key: string): string[] {
+		try {
+			const raw = localStorage.getItem(key);
+			return raw ? JSON.parse(raw) : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function saveOpenSections(id: string | null, sections: SvelteSet<string>) {
+		if (!id) return;
+		localStorage.setItem(`logwiz:openSections:${id}`, JSON.stringify([...sections]));
+	}
+
+
 
 	$effect(() => {
 		return () => {
@@ -99,12 +117,22 @@
 		return allValues.slice(0, INITIAL_SHOW_COUNT);
 	}
 
-	// Open first section by default, reset on fields change
+	// Restore open/expanded state from localStorage, ensure first field always open
 	$effect(() => {
-		if (fields.length > 0) {
-			openSections.clear();
-			openSections.add(fields[0]);
+		openSections.clear();
+
+		if (fields.length === 0) return;
+
+		if (indexId) {
+			const fieldSet = new Set(fields);
+
+			const savedOpen = loadSet(`logwiz:openSections:${indexId}`);
+			for (const f of savedOpen) {
+				if (fieldSet.has(f)) openSections.add(f);
+			}
 		}
+
+		openSections.add(fields[0]);
 	});
 
 	let pinnedSet = $derived(new Set(pinnedFields));
@@ -157,6 +185,7 @@
 		} else {
 			openSections.add(field);
 		}
+		saveOpenSections(indexId, openSections);
 	}
 
 	function toggleValue(field: string, value: string) {

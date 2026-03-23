@@ -71,6 +71,7 @@
 			onconfigchange={store.handleQuickFilterFieldsChange}
 			onsearch={store.searchFieldValues}
 			pinnedFields={[store.fieldConfig.levelField]}
+			indexId={store.selectedIndex}
 		/>
 		<FieldPanel
 			availableFields={store.panelAvailableFields}
