@@ -16,9 +16,15 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	const [history, savedQueries, sharedQueries] = await Promise.all([
-		historyService.getHistory(userId, indexId) as Promise<HistoryEntry[]>,
-		savedQueryService.getSavedQueries(userId, indexId) as Promise<SavedQueryEntry[]>,
-		savedQueryService.getSharedQueries(indexId) as Promise<SharedQueryEntry[]>
+		(historyService.getHistory(userId, indexId) as Promise<HistoryEntry[]>).catch(
+			() => [] as HistoryEntry[]
+		),
+		(savedQueryService.getSavedQueries(userId, indexId) as Promise<SavedQueryEntry[]>).catch(
+			() => [] as SavedQueryEntry[]
+		),
+		(savedQueryService.getSharedQueries(indexId) as Promise<SharedQueryEntry[]>).catch(
+			() => [] as SharedQueryEntry[]
+		)
 	]);
 
 	return { history, savedQueries, sharedQueries };
