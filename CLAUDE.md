@@ -1,6 +1,7 @@
 # Logwiz
 
 ## Project Overview
+
 Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io).
 
 - **Frontend**: Svelte 5 with SvelteKit (Remote Functions for API layer)
@@ -9,25 +10,29 @@ Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quic
 - **Styling**: DaisyUI (via Tailwind CSS)
 
 ## Project Configuration
-| Setting | Value |
-|---|---|
-| Language | TypeScript |
-| Package Manager | bun |
-| Add-ons | prettier, tailwindcss, drizzle, better-auth, devtools-json, mcp |
+
+| Setting         | Value                                                           |
+| --------------- | --------------------------------------------------------------- |
+| Language        | TypeScript                                                      |
+| Package Manager | bun                                                             |
+| Add-ons         | prettier, tailwindcss, drizzle, better-auth, devtools-json, mcp |
 
 ## Rules
 
 ### Types
+
 - All types must be defined in `src/lib/types.ts`.
 
 ### Data Loading
+
 Data loading should be handled in dedicated files alongside the page component(only if possible and not overcomplicated):
 
-| File | When to use |
-|---|---|
-| `+page.server.ts` | Needs secrets, auth, cookies, or private backend access |
-| `+page.ts` | Needs browser-only APIs or client-side state |
-| `+layout.server.ts` | Data shared across many pages |
+| File                | When to use                                             |
+| ------------------- | ------------------------------------------------------- |
+| `+page.server.ts`   | Needs secrets, auth, cookies, or private backend access |
+| `+page.ts`          | Needs browser-only APIs or client-side state            |
+| `+layout.server.ts` | Data shared across many pages                           |
+
 ---
 
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:

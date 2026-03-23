@@ -59,10 +59,7 @@
 				}}
 			/>
 		{:else if activeTab === 'saved'}
-			<SavedTab
-				entries={savedQueries}
-				onrestore={handleRestore}
-			/>
+			<SavedTab entries={savedQueries} onrestore={handleRestore} />
 		{:else if activeTab === 'shared'}
 			<SharedTab
 				entries={sharedQueries}
