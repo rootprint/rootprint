@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import { scale, fade } from 'svelte/transition';
 
 	let {
 		open = $bindable(false),
@@ -41,80 +42,91 @@
 	}
 </script>
 
-<dialog class="modal" class:modal-open={open}>
-	<div class="modal-box">
-		<h3 class="text-lg font-bold">Invite User</h3>
+{#if open}
+	<div class="modal modal-open">
+		<div class="modal-box" transition:scale={{ start: 0.97, duration: 200 }}>
+			<h3 class="text-lg font-bold">Invite User</h3>
 
-		{#if inviteUrl}
-			<div class="mt-4 flex flex-col gap-3">
-				<p class="text-sm text-base-content/60">
-					Share this link with <strong>{name}</strong> to complete their account setup:
-				</p>
-				<div class="flex gap-2">
-					<input
-						type="text"
-						class="input-bordered input input-sm flex-1 font-mono text-xs"
-						value={inviteUrl}
-						readonly
-					/>
-					<CopyButton text={inviteUrl} class="btn btn-sm btn-neutral">
-						{#snippet children({ copied })}
-							{copied ? 'Copied!' : 'Copy'}
-						{/snippet}
-					</CopyButton>
+			{#if inviteUrl}
+				<div class="mt-4 flex flex-col gap-3">
+					<p class="text-sm text-base-content/60">
+						Share this link with <strong>{name}</strong> to complete their account setup:
+					</p>
+					<div class="flex gap-2">
+						<input
+							type="text"
+							class="input-bordered input input-sm flex-1 font-mono text-xs"
+							value={inviteUrl}
+							readonly
+						/>
+						<CopyButton text={inviteUrl} class="btn btn-sm btn-neutral">
+							{#snippet children({ copied })}
+								{copied ? 'Copied!' : 'Copy'}
+							{/snippet}
+						</CopyButton>
+					</div>
+					<div class="modal-action">
+						<button class="btn" onclick={handleClose}>Done</button>
+					</div>
 				</div>
-				<div class="modal-action">
-					<button class="btn" onclick={handleClose}>Done</button>
-				</div>
-			</div>
-		{:else}
-			<form
-				class="mt-4 flex flex-col gap-3"
-				onsubmit={(e) => {
-					e.preventDefault();
-					handleSubmit();
-				}}
-			>
-				<label class="floating-label">
-					<span>Name</span>
-					<input
-						type="text"
-						class="input input-md w-full"
-						placeholder="Name"
-						bind:value={name}
-						required
-					/>
-				</label>
+			{:else}
+				<form
+					class="mt-4 flex flex-col gap-3"
+					onsubmit={(e) => {
+						e.preventDefault();
+						handleSubmit();
+					}}
+				>
+					<label class="floating-label">
+						<span>Name</span>
+						<input
+							type="text"
+							class="input input-md w-full"
+							placeholder="Name"
+							bind:value={name}
+							required
+						/>
+					</label>
 
-				<label class="floating-label">
-					<span>Email</span>
-					<input
-						type="email"
-						class="input input-md w-full"
-						placeholder="Email"
-						bind:value={email}
-						required
-					/>
-				</label>
+					<label class="floating-label">
+						<span>Email</span>
+						<input
+							type="email"
+							class="input input-md w-full"
+							placeholder="Email"
+							bind:value={email}
+							required
+						/>
+					</label>
 
-				<label class="form-control w-full">
-					<span class="label"><span class="label-text">Role</span></span>
-					<select class="select-bordered select w-full" bind:value={role}>
-						<option value="user">Member</option>
-						<option value="admin">Admin</option>
-					</select>
-				</label>
+					<label class="form-control w-full">
+						<span class="label"><span class="label-text">Role</span></span>
+						<select class="select-bordered select w-full" bind:value={role}>
+							<option value="user">Member</option>
+							<option value="admin">Admin</option>
+						</select>
+					</label>
 
-				<div class="modal-action">
-					<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-					<button type="submit" class="btn btn-neutral" disabled={loading}>
-						{loading ? 'Creating...' : 'Create & Get Link'}
-					</button>
-				</div>
-			</form>
-		{/if}
+					<div class="modal-action">
+						<button type="button" class="btn" onclick={handleClose}>Cancel</button>
+						<button type="submit" class="btn btn-neutral" disabled={loading}>
+							{loading ? 'Creating...' : 'Create & Get Link'}
+						</button>
+					</div>
+				</form>
+			{/if}
+		</div>
+		<div
+			class="modal-backdrop"
+			transition:fade={{ duration: 150 }}
+			role="button"
+			tabindex="-1"
+			onclick={() => (open = false)}
+			onkeydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') open = false;
+			}}
+		>
+			<button>close</button>
+		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop">
-		<button onclick={handleClose}>close</button>
-	</form>
-</dialog>
+{/if}

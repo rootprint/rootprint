@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ChevronRight, ChevronDown } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
+	import { slide } from 'svelte/transition';
 
 	let {
 		title,
@@ -34,5 +35,7 @@
 </div>
 
 {#if !collapsed}
-	{@render children()}
+	<div transition:slide={{ duration: 200 }}>
+		{@render children()}
+	</div>
 {/if}

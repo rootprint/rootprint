@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
+	import { scale, fade } from 'svelte/transition';
 
 	let {
 		open = $bindable(false),
@@ -53,62 +54,73 @@
 	}
 </script>
 
-<dialog class="modal" class:modal-open={open}>
-	<div class="modal-box">
-		<h3 class="text-lg font-bold">Save Query</h3>
+{#if open}
+	<div class="modal modal-open">
+		<div class="modal-box" transition:scale={{ start: 0.97, duration: 200 }}>
+			<h3 class="text-lg font-bold">Save Query</h3>
 
-		{#if entry}
-			<form
-				class="mt-4 flex flex-col gap-3"
-				onsubmit={(e) => {
-					e.preventDefault();
-					handleSubmit();
-				}}
-			>
-				<label class="floating-label">
-					<span>Name</span>
-					<input
-						type="text"
-						class="input input-md w-full"
-						placeholder="Name"
-						bind:value={name}
-						maxlength={200}
-						required
-					/>
-				</label>
+			{#if entry}
+				<form
+					class="mt-4 flex flex-col gap-3"
+					onsubmit={(e) => {
+						e.preventDefault();
+						handleSubmit();
+					}}
+				>
+					<label class="floating-label">
+						<span>Name</span>
+						<input
+							type="text"
+							class="input input-md w-full"
+							placeholder="Name"
+							bind:value={name}
+							maxlength={200}
+							required
+						/>
+					</label>
 
-				<label class="floating-label">
-					<span>Description (optional)</span>
-					<textarea
-						class="textarea w-full textarea-md"
-						placeholder="Description (optional)"
-						bind:value={description}
-						rows={2}
-					></textarea>
-				</label>
+					<label class="floating-label">
+						<span>Description (optional)</span>
+						<textarea
+							class="textarea w-full textarea-md"
+							placeholder="Description (optional)"
+							bind:value={description}
+							rows={2}
+						></textarea>
+					</label>
 
-				<div class="rounded-box bg-base-200 px-3 py-2 text-xs">
-					<div class="mb-1 text-[10px] font-medium text-base-content/60 uppercase">
-						Query details
-					</div>
-					<div class="flex flex-col gap-0.5 text-base-content/60">
-						<div>
-							<span class="text-base-content/60">Query:</span>
-							{entry.query || '*'}
+					<div class="rounded-box bg-base-200 px-3 py-2 text-xs">
+						<div class="mb-1 text-[10px] font-medium text-base-content/60 uppercase">
+							Query details
+						</div>
+						<div class="flex flex-col gap-0.5 text-base-content/60">
+							<div>
+								<span class="text-base-content/60">Query:</span>
+								{entry.query || '*'}
+							</div>
 						</div>
 					</div>
-				</div>
 
-				<div class="modal-action">
-					<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-					<button type="submit" class="btn btn-neutral" disabled={loading}>
-						{loading ? 'Saving...' : 'Save'}
-					</button>
-				</div>
-			</form>
-		{/if}
+					<div class="modal-action">
+						<button type="button" class="btn" onclick={handleClose}>Cancel</button>
+						<button type="submit" class="btn btn-neutral" disabled={loading}>
+							{loading ? 'Saving...' : 'Save'}
+						</button>
+					</div>
+				</form>
+			{/if}
+		</div>
+		<div
+			class="modal-backdrop"
+			transition:fade={{ duration: 150 }}
+			role="button"
+			tabindex="-1"
+			onclick={() => (open = false)}
+			onkeydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') open = false;
+			}}
+		>
+			<button>close</button>
+		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop">
-		<button onclick={handleClose}>close</button>
-	</form>
-</dialog>
+{/if}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
+	import { fly, fade } from 'svelte/transition';
 
 	type Tab = {
 		id: string;
@@ -47,6 +48,7 @@
 
 {#if open}
 	<div
+		transition:fade={{ duration: 150 }}
 		class="fixed inset-0 z-10 bg-black/50"
 		role="button"
 		tabindex="-1"
@@ -58,6 +60,7 @@
 	></div>
 
 	<div
+		transition:fly={{ x: 400, duration: 200 }}
 		class="fixed top-0 right-0 z-20 flex h-full flex-col border-l border-base-300 bg-base-100 shadow-lg {panelClass}"
 	>
 		<div class="flex items-center justify-between border-b border-base-300 px-3">

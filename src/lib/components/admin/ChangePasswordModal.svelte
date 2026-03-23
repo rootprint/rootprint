@@ -2,6 +2,7 @@
 	import { changeOwnPassword } from '$lib/api/auth.remote';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
+	import { scale, fade } from 'svelte/transition';
 
 	let {
 		open = $bindable(false)
@@ -39,61 +40,72 @@
 	}
 </script>
 
-<dialog class="modal" class:modal-open={open}>
-	<div class="modal-box">
-		<h3 class="text-lg font-bold">Change Password</h3>
+{#if open}
+	<div class="modal modal-open">
+		<div class="modal-box" transition:scale={{ start: 0.97, duration: 200 }}>
+			<h3 class="text-lg font-bold">Change Password</h3>
 
-		<form
-			class="mt-4 flex flex-col gap-3"
-			onsubmit={(e) => {
-				e.preventDefault();
-				handleSubmit();
+			<form
+				class="mt-4 flex flex-col gap-3"
+				onsubmit={(e) => {
+					e.preventDefault();
+					handleSubmit();
+				}}
+			>
+				<label class="floating-label">
+					<span>Current Password</span>
+					<input
+						type="password"
+						class="input input-md w-full"
+						placeholder="Current Password"
+						bind:value={currentPassword}
+						required
+					/>
+				</label>
+
+				<label class="floating-label">
+					<span>New Password</span>
+					<input
+						type="password"
+						class="input input-md w-full"
+						placeholder="New Password"
+						bind:value={newPassword}
+						minlength={8}
+						required
+					/>
+				</label>
+
+				<label class="floating-label">
+					<span>Confirm New Password</span>
+					<input
+						type="password"
+						class="input input-md w-full"
+						placeholder="Confirm New Password"
+						bind:value={confirmPassword}
+						minlength={8}
+						required
+					/>
+				</label>
+
+				<div class="modal-action">
+					<button type="button" class="btn" onclick={handleClose}>Cancel</button>
+					<button type="submit" class="btn btn-neutral" disabled={loading}>
+						{loading ? 'Changing...' : 'Change Password'}
+					</button>
+				</div>
+			</form>
+		</div>
+		<div
+			class="modal-backdrop"
+			transition:fade={{ duration: 150 }}
+			role="button"
+			tabindex="-1"
+			onclick={() => (open = false)}
+			onkeydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') open = false;
 			}}
 		>
-			<label class="floating-label">
-				<span>Current Password</span>
-				<input
-					type="password"
-					class="input input-md w-full"
-					placeholder="Current Password"
-					bind:value={currentPassword}
-					required
-				/>
-			</label>
-
-			<label class="floating-label">
-				<span>New Password</span>
-				<input
-					type="password"
-					class="input input-md w-full"
-					placeholder="New Password"
-					bind:value={newPassword}
-					minlength={8}
-					required
-				/>
-			</label>
-
-			<label class="floating-label">
-				<span>Confirm New Password</span>
-				<input
-					type="password"
-					class="input input-md w-full"
-					placeholder="Confirm New Password"
-					bind:value={confirmPassword}
-					minlength={8}
-					required
-				/>
-			</label>
-
-			<div class="modal-action">
-				<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-				<button type="submit" class="btn btn-neutral" disabled={loading}>
-					{loading ? 'Changing...' : 'Change Password'}
-				</button>
-			</div>
-		</form>
+			<button>close</button>
+		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop">
-		<button onclick={handleClose}>close</button>
-	</form>
-</dialog>
+{/if}

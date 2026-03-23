@@ -2,6 +2,7 @@
 	import { removeUser } from '$lib/api/users.remote';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error';
+	import { scale, fade } from 'svelte/transition';
 
 	let {
 		open = $bindable(false),
@@ -36,21 +37,32 @@
 	}
 </script>
 
-<dialog class="modal" class:modal-open={open}>
-	<div class="modal-box">
-		<h3 class="text-lg font-bold">Remove User</h3>
-		<p class="mt-2 text-sm text-base-content/60">
-			Are you sure you want to remove <strong>{userName}</strong>? This action cannot be undone.
-		</p>
+{#if open}
+	<div class="modal modal-open">
+		<div class="modal-box" transition:scale={{ start: 0.97, duration: 200 }}>
+			<h3 class="text-lg font-bold">Remove User</h3>
+			<p class="mt-2 text-sm text-base-content/60">
+				Are you sure you want to remove <strong>{userName}</strong>? This action cannot be undone.
+			</p>
 
-		<div class="modal-action">
-			<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-			<button type="button" class="btn btn-error" disabled={loading} onclick={handleSubmit}>
-				{loading ? 'Removing...' : 'Remove'}
-			</button>
+			<div class="modal-action">
+				<button type="button" class="btn" onclick={handleClose}>Cancel</button>
+				<button type="button" class="btn btn-error" disabled={loading} onclick={handleSubmit}>
+					{loading ? 'Removing...' : 'Remove'}
+				</button>
+			</div>
+		</div>
+		<div
+			class="modal-backdrop"
+			transition:fade={{ duration: 150 }}
+			role="button"
+			tabindex="-1"
+			onclick={() => (open = false)}
+			onkeydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') open = false;
+			}}
+		>
+			<button>close</button>
 		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop">
-		<button onclick={handleClose}>close</button>
-	</form>
-</dialog>
+{/if}
