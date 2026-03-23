@@ -151,11 +151,15 @@
 			if (e.key === 'ArrowDown') {
 				e.preventDefault();
 				selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+				document.getElementById(optionId(selectedIndex))?.scrollIntoView({ block: 'nearest' });
 				return;
 			}
 			if (e.key === 'ArrowUp') {
 				e.preventDefault();
 				selectedIndex = Math.max(selectedIndex - 1, -1);
+				if (selectedIndex >= 0) {
+					document.getElementById(optionId(selectedIndex))?.scrollIntoView({ block: 'nearest' });
+				}
 				return;
 			}
 			if (e.key === 'Tab' && suggestions.length > 0) {
