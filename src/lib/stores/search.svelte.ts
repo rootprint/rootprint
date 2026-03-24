@@ -96,6 +96,7 @@ export function createSearchStore(
 	);
 	let activeFilters = $derived(parsedQuery().filters);
 	let urlIndex = $derived(parsedQuery().index);
+	let sortDirection = $derived(parsedQuery().sortDirection);
 
 	let excludedFields = $derived(
 		new Set([fieldConfig.levelField, fieldConfig.timestampField, fieldConfig.messageField])
@@ -312,7 +313,8 @@ export function createSearchStore(
 				...timeParams,
 				offset: append ? logs.length : 0,
 				limit: BATCH_SIZE,
-				quickFilterFields
+				quickFilterFields,
+				sortDirection
 			});
 
 			searchStartTimestamp = result.startTimestamp;
@@ -448,6 +450,11 @@ export function createSearchStore(
 		navigateQuery({ query: newQuery }, { push: true });
 	}
 
+	function toggleSortDirection() {
+		const current = parsedQuery().sortDirection;
+		navigateQuery({ sortDirection: current === 'desc' ? 'asc' : 'desc' });
+	}
+
 	// --- Start loading immediately ---
 	initIndexes();
 
@@ -544,6 +551,9 @@ export function createSearchStore(
 		get timezoneMode() {
 			return timezoneMode;
 		},
+		get sortDirection() {
+			return sortDirection;
+		},
 		get activeFilters() {
 			return activeFilters;
 		},
@@ -563,6 +573,7 @@ export function createSearchStore(
 		searchFieldValues: searchFieldValuesHandler,
 		setupAutoSearch,
 		bumpSearch,
-		addFilterClause
+		addFilterClause,
+		toggleSortDirection
 	};
 }

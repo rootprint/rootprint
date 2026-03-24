@@ -1,26 +1,43 @@
 <script lang="ts">
+	import { ArrowDown, ArrowUp } from 'lucide-svelte';
+	import type { SortDirection } from '$lib/types';
+
 	let {
 		timestampField = 'timestamp',
 		messageField = 'message',
 		extraFields = [],
 		columnWidths = {},
-		timestampWidth = 0
+		timestampWidth = 0,
+		sortDirection = 'asc',
+		ontogglesort
 	}: {
 		timestampField?: string;
 		messageField?: string;
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
 		timestampWidth?: number;
+		sortDirection?: SortDirection;
+		ontogglesort?: () => void;
 	} = $props();
 </script>
 
 <div
 	class="sticky top-0 z-10 flex items-stretch border-b border-l-4 border-transparent border-b-base-content/10 bg-base-200 pl-3 font-['Roboto_Mono',monospace] text-[13px] font-semibold leading-[22px]"
 >
-	<span
-		class="shrink-0 py-px text-base-content/60"
+	<button
+		type="button"
+		class="flex shrink-0 cursor-pointer items-center gap-1 py-px text-base-content/60 hover:text-base-content transition-colors"
 		style={timestampWidth ? `min-width: ${timestampWidth}ch` : undefined}
-	>{timestampField}</span>
+		title="Sort {sortDirection === 'desc' ? 'oldest first' : 'newest first'}"
+		onclick={ontogglesort}
+	>
+		{timestampField}
+		{#if sortDirection === 'desc'}
+			<ArrowDown class="h-3 w-3" />
+		{:else}
+			<ArrowUp class="h-3 w-3" />
+		{/if}
+	</button>
 	{#each extraFields as field (field)}
 		<span
 			class="inline-block shrink-0 truncate py-px pl-2 align-top"

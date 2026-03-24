@@ -8,7 +8,8 @@ export const searchLogsSchema = v.object({
 	limit: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(200)),
 	startTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
-	quickFilterFields: v.optional(v.array(v.string()))
+	quickFilterFields: v.optional(v.array(v.string())),
+	sortDirection: v.optional(v.picklist(['asc', 'desc']))
 });
 
 export type SearchLogsInput = v.InferOutput<typeof searchLogsSchema>;

@@ -95,7 +95,7 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 		.query(data.query || '*')
 		.limit(data.limit)
 		.offset(data.offset)
-		.sortBy(`+${config.timestampField}`);
+		.sortBy(config.timestampField, data.sortDirection ?? 'asc');
 
 	query.timeRange(startTs, endTs);
 

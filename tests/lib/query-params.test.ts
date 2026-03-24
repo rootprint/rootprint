@@ -14,6 +14,7 @@ function defaults(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
 		filters: {},
 		timeRange: { type: 'relative', preset: '15m' },
 		timezoneMode: 'local',
+		sortDirection: 'asc',
 		...overrides
 	};
 }
@@ -58,6 +59,16 @@ describe('serialize', () => {
 	it('omits default timezone', () => {
 		const params = serialize(defaults());
 		expect(params.has('tz')).toBe(false);
+	});
+
+	it('includes sort when not default', () => {
+		const params = serialize(defaults({ sortDirection: 'desc' }));
+		expect(params.get('sort')).toBe('desc');
+	});
+
+	it('omits default sort direction', () => {
+		const params = serialize(defaults());
+		expect(params.has('sort')).toBe(false);
 	});
 
 	it('serializes filters', () => {
@@ -127,6 +138,16 @@ describe('deserialize', () => {
 		expect(result.timezoneMode).toBe('local');
 	});
 
+	it('parses sort direction', () => {
+		const result = deserialize(new URLSearchParams('sort=asc'));
+		expect(result.sortDirection).toBe('asc');
+	});
+
+	it('falls back to default for invalid sort direction', () => {
+		const result = deserialize(new URLSearchParams('sort=invalid'));
+		expect(result.sortDirection).toBe('asc');
+	});
+
 	it('parses filters', () => {
 		const result = deserialize(new URLSearchParams('f.level=error,warn'));
 		expect(result.filters).toEqual({ level: ['error', 'warn'] });
@@ -151,7 +172,8 @@ describe('roundtrip', () => {
 			query: 'service:api',
 			filters: { level: ['error'], host: ['a,b'] },
 			timeRange: { type: 'relative', preset: '6h' },
-			timezoneMode: 'utc'
+			timezoneMode: 'utc',
+			sortDirection: 'desc'
 		});
 		const result = deserialize(serialize(original));
 		expect(result).toEqual(original);

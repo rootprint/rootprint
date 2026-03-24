@@ -1,10 +1,11 @@
-import type { ParsedQuery, TimeRange, TimezoneMode } from '$lib/types';
+import type { ParsedQuery, SortDirection, TimeRange, TimezoneMode } from '$lib/types';
 import { TIME_PRESETS } from '$lib/types';
 
 const DEFAULTS = {
 	query: '',
 	timeRangePreset: '15m',
-	timezoneMode: 'local' as TimezoneMode
+	timezoneMode: 'local' as TimezoneMode,
+	sortDirection: 'asc' as SortDirection
 };
 
 /** Returns true if the parsed query has non-default search params (query, filters, or absolute time). */
@@ -53,6 +54,11 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 	// Timezone
 	if (state.timezoneMode !== DEFAULTS.timezoneMode) {
 		params.set('tz', state.timezoneMode);
+	}
+
+	// Sort direction
+	if (state.sortDirection !== DEFAULTS.sortDirection) {
+		params.set('sort', state.sortDirection);
 	}
 
 	return params;
@@ -112,7 +118,11 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 	const tz = params.get('tz');
 	const timezoneMode: TimezoneMode = tz === 'utc' || tz === 'local' ? tz : DEFAULTS.timezoneMode;
 
-	return { index, query, filters, timeRange, timezoneMode };
+	// Sort direction
+	const sort = params.get('sort');
+	const sortDirection: SortDirection = sort === 'asc' || sort === 'desc' ? sort : DEFAULTS.sortDirection;
+
+	return { index, query, filters, timeRange, timezoneMode, sortDirection };
 }
 
 /**

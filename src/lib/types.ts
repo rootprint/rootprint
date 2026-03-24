@@ -4,6 +4,8 @@ export type TimeRange = RelativeTimeRange | AbsoluteTimeRange;
 
 export type TimezoneMode = 'utc' | 'local';
 
+export type SortDirection = 'asc' | 'desc';
+
 export const TIME_PRESETS = [
 	{ label: 'Last 5 minutes', code: '5m', seconds: 5 * 60 },
 	{ label: 'Last 15 minutes', code: '15m', seconds: 15 * 60 },
@@ -38,6 +40,7 @@ export interface ParsedQuery {
 	filters: Record<string, string[]>;
 	timeRange: TimeRange;
 	timezoneMode: TimezoneMode;
+	sortDirection: SortDirection;
 }
 
 export type QueryContext =

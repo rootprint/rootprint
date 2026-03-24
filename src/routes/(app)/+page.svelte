@@ -119,6 +119,8 @@
 							extraFields={store.activeFields}
 							columnWidths={store.columnWidths}
 							timestampWidth={store.timestampWidth}
+							sortDirection={store.sortDirection}
+							ontogglesort={store.toggleSortDirection}
 						/>
 					{/if}
 					{#each store.logs as entry (entry.key)}
