@@ -12,7 +12,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { combineQueryWithFilters, escapeFilterValue } from '$lib/utils/query';
 import { buildQueryUrl, serialize } from '$lib/utils/query-params';
-import { computeColumnWidths } from '$lib/utils/column-width';
+import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import type { IndexField, LogEntry, ParsedQuery, TimeRange } from '$lib/types';
@@ -87,6 +87,13 @@ export function createSearchStore(
 	// --- Derived state ---
 	let timeRange = $derived(parsedQuery().timeRange);
 	let timezoneMode = $derived(parsedQuery().timezoneMode);
+	let timestampWidth = $derived(
+		computeTimestampWidth(
+			logs.map((e) => e.hit),
+			fieldConfig.timestampField,
+			timezoneMode
+		)
+	);
 	let activeFilters = $derived(parsedQuery().filters);
 	let urlIndex = $derived(parsedQuery().index);
 
@@ -524,6 +531,9 @@ export function createSearchStore(
 		},
 		get columnWidths() {
 			return columnWidths;
+		},
+		get timestampWidth() {
+			return timestampWidth;
 		},
 		get aggregations() {
 			return aggregations;

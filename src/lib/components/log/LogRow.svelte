@@ -11,6 +11,7 @@
 		messageField = 'message',
 		extraFields = [],
 		columnWidths = {},
+		timestampWidth = 0,
 		timezoneMode = 'local' as 'utc' | 'local',
 		onclick = () => {}
 	}: {
@@ -21,6 +22,7 @@
 		messageField?: string;
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
+		timestampWidth?: number;
 		timezoneMode?: 'utc' | 'local';
 		onclick?: () => void;
 	} = $props();
@@ -57,7 +59,9 @@
 		}
 	}}
 >
-	<span class="shrink-0 py-px text-base-content/60"
+	<span
+		class="shrink-0 py-px text-base-content/60"
+		style={timestampWidth ? `min-width: ${timestampWidth}ch` : undefined}
 		>{extractTimestamp(hit, timestampField, timezoneMode)}</span
 	>
 	{#each extraFields as field (field)}

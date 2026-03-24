@@ -2,6 +2,7 @@
 	import { createSearchStore } from '$lib/stores/search.svelte';
 	import { browser } from '$app/environment';
 	import LogRow from '$lib/components/log/LogRow.svelte';
+	import LogHeader from '$lib/components/log/LogHeader.svelte';
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
 	import QuickFilterPanel from '$lib/components/sidebar/QuickFilterPanel.svelte';
 	import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
@@ -111,6 +112,15 @@
 				</div>
 			{:else}
 				<div class="w-fit min-w-full">
+					{#if wrapMode === 'none'}
+						<LogHeader
+							timestampField={store.fieldConfig.timestampField}
+							messageField={store.fieldConfig.messageField}
+							extraFields={store.activeFields}
+							columnWidths={store.columnWidths}
+							timestampWidth={store.timestampWidth}
+						/>
+					{/if}
 					{#each store.logs as entry (entry.key)}
 						<LogRow
 							hit={entry.hit}
@@ -121,6 +131,7 @@
 							messageField={store.fieldConfig.messageField}
 							extraFields={store.activeFields}
 							columnWidths={store.columnWidths}
+							timestampWidth={store.timestampWidth}
 							onclick={() => {
 								selectedLog = entry.hit;
 								drawerOpen = true;
