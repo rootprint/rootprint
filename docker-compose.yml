@@ -22,7 +22,6 @@ services:
       quickwit:
         condition: service_healthy
     environment:
-      ORIGIN: http://localhost:3000
       LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
       LOGWIZ_DATABASE_PATH: /app/data/logwiz.db
       LOGWIZ_ADMIN_USERNAME: logwiz

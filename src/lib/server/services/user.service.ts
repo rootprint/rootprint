@@ -8,18 +8,23 @@ import { randomHex } from '$lib/utils/crypto';
 
 const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
 
-export async function listUsersWithInvites(headers: Headers) {
+const resolvePublicOrigin = (requestOrigin: string) => config.origin ?? requestOrigin;
+
+const buildInviteUrl = (origin: string, token: string) => `${origin}/auth/setup?token=${token}`;
+
+export async function listUsersWithInvites(headers: Headers, requestOrigin: string) {
+	const publicOrigin = resolvePublicOrigin(requestOrigin);
+
 	const result = await auth.api.listUsers({
 		headers,
 		query: { limit: 100 }
 	});
 
 	const pendingInvites = await db.select().from(inviteToken);
-	const origin = config.origin;
 	const inviteMap = new Map(
 		pendingInvites.map((inv) => [
 			inv.userId,
-			{ url: `${origin}/auth/setup?token=${inv.token}`, expiresAt: inv.expiresAt }
+			{ url: buildInviteUrl(publicOrigin, inv.token), expiresAt: inv.expiresAt }
 		])
 	);
 
@@ -33,8 +38,10 @@ export async function listUsersWithInvites(headers: Headers) {
 
 export async function createInvite(
 	headers: Headers,
-	data: { email: string; name: string; role: 'user' | 'admin' }
+	data: { email: string; name: string; role: 'user' | 'admin' },
+	requestOrigin: string
 ) {
+	const publicOrigin = resolvePublicOrigin(requestOrigin);
 	const tempPassword = randomHex(32);
 
 	let created;
@@ -63,11 +70,11 @@ export async function createInvite(
 		expiresAt
 	});
 
-	const origin = config.origin;
-	return { inviteUrl: `${origin}/auth/setup?token=${token}` };
+	return { inviteUrl: buildInviteUrl(publicOrigin, token) };
 }
 
-export async function regenerateInvite(userId: string) {
+export async function regenerateInvite(userId: string, requestOrigin: string) {
+	const publicOrigin = resolvePublicOrigin(requestOrigin);
 	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
 
 	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
@@ -78,8 +85,7 @@ export async function regenerateInvite(userId: string) {
 		expiresAt
 	});
 
-	const origin = config.origin;
-	return { inviteUrl: `${origin}/auth/setup?token=${token}` };
+	return { inviteUrl: buildInviteUrl(publicOrigin, token) };
 }
 
 export async function removeUser(headers: Headers, adminId: string, userId: string) {

@@ -13,14 +13,14 @@ import * as userService from '$lib/server/services/user.service';
 export const listUsers = query(async () => {
 	requireAdmin();
 	const event = getRequestEvent();
-	return userService.listUsersWithInvites(event.request.headers);
+	return userService.listUsersWithInvites(event.request.headers, event.url.origin);
 });
 
 export const createInvite = command(createInviteSchema, async (data) => {
 	requireAdmin();
 	const event = getRequestEvent();
 	try {
-		return await userService.createInvite(event.request.headers, data);
+		return await userService.createInvite(event.request.headers, data, event.url.origin);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to create user');
 	}
@@ -28,7 +28,8 @@ export const createInvite = command(createInviteSchema, async (data) => {
 
 export const regenerateInvite = command(regenerateInviteSchema, async (data) => {
 	requireAdmin();
-	return userService.regenerateInvite(data.userId);
+	const event = getRequestEvent();
+	return userService.regenerateInvite(data.userId, event.url.origin);
 });
 
 export const removeUser = command(removeUserSchema, async (data) => {

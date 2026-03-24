@@ -30,7 +30,7 @@ Requires [Docker](https://www.docker.com) and [Docker Compose](https://docs.dock
 
 2. **Open Logwiz:**
 
-   Go to [http://localhost:3000](http://localhost:3000). Sign in with username `logwiz` and password `logwiz`. On first login, you'll be prompted to change it.
+   Go to [http://localhost:3000](http://localhost:3000). Sign in with username `logwiz` and password `logwiz`. On first login, you'll be prompted to change it. For non-local deployments, set your own `LOGWIZ_ADMIN_USERNAME`/`LOGWIZ_ADMIN_PASSWORD` before first start.
 
 3. **Ingest sample data:**
 
@@ -44,7 +44,7 @@ Requires [Docker](https://www.docker.com) and [Docker Compose](https://docs.dock
 
 ## Configuration
 
-Set environment variables in `docker-compose.yml` under the `logwiz` service.
+For Docker deployments, set environment variables in `docker-compose.yml` under the `logwiz` service. For local development, use `.env`.
 
 ### Connecting to an existing Quickwit instance
 
@@ -55,7 +55,7 @@ Set environment variables in `docker-compose.yml` under the `logwiz` service.
 | Variable                       | Required | Default               | Description                     |
 | ------------------------------ | -------- | --------------------- | ------------------------------- |
 | `LOGWIZ_QUICKWIT_URL`          | Yes      | —                     | Quickwit API endpoint           |
-| `ORIGIN`                       | Yes      | —                     | Server's public URL             |
+| `ORIGIN`                       | No       | Auto-detected         | Canonical public URL override   |
 | `LOGWIZ_DATABASE_PATH`         | No       | `./data/logwiz.db`    | Path to SQLite database         |
 | `LOGWIZ_ADMIN_EMAIL`           | No       | `logwiz@logwiz.local` | Default admin email             |
 | `LOGWIZ_ADMIN_USERNAME`        | No       | `logwiz`              | Default admin username          |
@@ -65,6 +65,9 @@ Set environment variables in `docker-compose.yml` under the `logwiz` service.
 | `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`                 | Max requests per window         |
 | `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                   | Max sign-in attempts per window |
 | `LOGWIZ_AUTH_SECRET`           | No       | Auto-generated        | Auth secret (min 32 chars)      |
+
+`ORIGIN` is auto-detected from the incoming request URL in typical deployments.
+Set it explicitly when running behind a reverse proxy or when you need a strict canonical URL (e.g. `ORIGIN=https://logs.example.com`).
 
 ### Resetting the admin password
 

@@ -8,7 +8,7 @@ export const load: PageServerLoad = async (event) => {
 		throw error(403, 'Forbidden');
 	}
 
-	const users = await listUsersWithInvites(event.request.headers);
+	const users = await listUsersWithInvites(event.request.headers, event.url.origin);
 	const indexDetails = getAllIndexDetails();
 	return { users, indexDetails };
 };

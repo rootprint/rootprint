@@ -48,7 +48,6 @@ jobs:
       - run: bun run build
         env:
           LOGWIZ_QUICKWIT_URL: http://placeholder:7280/api/v1
-          ORIGIN: http://placeholder:3000
 
   sonarcloud:
     name: SonarCloud

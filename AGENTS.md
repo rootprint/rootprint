@@ -52,7 +52,7 @@ bun run test -- --coverage
 ## CI Parity Checks Before Merge
 
 ```bash
-bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 ORIGIN=http://placeholder:3000 bun run build
+bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 bun run build
 ```
 
 ## Database and Auth Utility Commands
@@ -136,7 +136,9 @@ bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://plac
 
 ## Security and Runtime Notes
 
-- Required env vars for app/build: `LOGWIZ_QUICKWIT_URL`, `ORIGIN`.
+- Required env vars for app/build: `LOGWIZ_QUICKWIT_URL`.
+- `ORIGIN` is optional and auto-detected from the incoming request URL in typical deployments.
+- Set `ORIGIN` explicitly when behind a reverse proxy or when enforcing a strict canonical public URL.
 - Auth and rate-limit behavior is centralized in `src/hooks.server.ts`.
 - Do not bypass `requireUser()` / `requireAdmin()` for protected remote functions.
 

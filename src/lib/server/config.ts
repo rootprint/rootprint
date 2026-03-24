@@ -7,7 +7,7 @@ export interface Config {
 	// Required
 	quickwitUrl: string;
 	secret: string;
-	origin: string;
+	origin?: string;
 	// Optional with defaults
 	databasePath: string;
 	adminEmail: string;
@@ -68,7 +68,6 @@ export function buildConfig(): Config {
 	// Validate required vars — collect all errors
 	const missing: string[] = [];
 	if (!quickwitUrl) missing.push('LOGWIZ_QUICKWIT_URL');
-	if (!origin) missing.push('ORIGIN');
 
 	if (missing.length > 0) {
 		throw new Error(
@@ -123,7 +122,7 @@ export function buildConfig(): Config {
 	return Object.freeze({
 		quickwitUrl: quickwitUrl!,
 		secret: secret!,
-		origin: origin!,
+		origin,
 		databasePath,
 		adminEmail,
 		adminUsername,

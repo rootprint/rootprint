@@ -38,15 +38,19 @@ describe('config', () => {
 		it('throws listing all missing required vars', async () => {
 			const { buildConfig } = await importConfig();
 			expect(() => buildConfig()).toThrow('LOGWIZ_QUICKWIT_URL');
-			expect(() => buildConfig()).toThrow('ORIGIN');
+			expect(() => buildConfig()).not.toThrow('ORIGIN');
 		});
 
-		it('throws when only some required vars are missing', async () => {
+		it('builds config without ORIGIN set', async () => {
 			mockEnv = {
-				LOGWIZ_QUICKWIT_URL: 'http://localhost:7280'
+				LOGWIZ_QUICKWIT_URL: 'http://localhost:7280',
+				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const { buildConfig } = await importConfig();
-			expect(() => buildConfig()).toThrow('ORIGIN');
+			const cfg = buildConfig();
+			expect(cfg.origin).toBeUndefined();
+			warnSpy.mockRestore();
 		});
 
 		it('auto-generates secret on first run', async () => {
@@ -144,6 +148,20 @@ describe('config', () => {
 			expect(cfg.quickwitUrl).toBe('http://old:7280');
 			expect(cfg.origin).toBe('http://old:5173');
 			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATED'));
+			warnSpy.mockRestore();
+		});
+
+		it('prefers ORIGIN over LOGWIZ_ORIGIN when both are set', async () => {
+			mockEnv = {
+				LOGWIZ_QUICKWIT_URL: 'http://localhost:7280',
+				ORIGIN: 'http://new:5173',
+				LOGWIZ_ORIGIN: 'http://old:5173',
+				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
+			};
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const { buildConfig } = await importConfig();
+			const cfg = buildConfig();
+			expect(cfg.origin).toBe('http://new:5173');
 			warnSpy.mockRestore();
 		});
 
