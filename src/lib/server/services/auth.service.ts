@@ -59,6 +59,22 @@ export async function setupPassword(
 	return { success: true };
 }
 
+export async function validateInviteToken(
+	token: string
+): Promise<'valid' | 'invalid_token' | 'expired_token'> {
+	const [invite] = await db.select().from(inviteToken).where(eq(inviteToken.token, token));
+
+	if (!invite) {
+		return 'invalid_token';
+	}
+
+	if (invite.expiresAt < new Date()) {
+		return 'expired_token';
+	}
+
+	return 'valid';
+}
+
 export async function changeOwnPassword(
 	headers: Headers,
 	currentPassword: string,
