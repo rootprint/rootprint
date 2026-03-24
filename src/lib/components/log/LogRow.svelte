@@ -46,7 +46,7 @@
 </script>
 
 <div
-	class="cursor-pointer border-b border-l-4 border-base-content/5 pl-3 font-['Roboto_Mono',monospace] text-[13px] leading-[22px] hover:bg-base-content/[0.07] {severityBorderColor(
+	class="cursor-pointer border-b border-l-4 border-base-content/5 pl-3 font-['Roboto_Mono',monospace] text-[13px] leading-5.5 hover:bg-base-content/[0.07] {severityBorderColor(
 		severity
 	)} {wrapMode === 'none' ? 'flex items-stretch' : ''}"
 	role="button"

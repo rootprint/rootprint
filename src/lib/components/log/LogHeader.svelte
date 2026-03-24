@@ -22,7 +22,7 @@
 </script>
 
 <div
-	class="sticky top-0 z-10 flex items-stretch border-b border-l-4 border-transparent border-b-base-content/10 bg-base-200 pl-3 font-['Roboto_Mono',monospace] text-[13px] leading-[22px] font-semibold"
+	class="sticky top-0 z-10 flex items-stretch border-b border-l-4 border-transparent border-b-base-content/10 bg-base-200 pl-3 font-['Roboto_Mono',monospace] text-[13px] leading-5.5 font-semibold"
 >
 	<button
 		type="button"

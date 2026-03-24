@@ -49,9 +49,7 @@
 					This invite link is invalid or has already been used.
 				{/if}
 			</p>
-			<p class="text-sm text-base-content/60">
-				Please ask your administrator for a new invite.
-			</p>
+			<p class="text-sm text-base-content/60">Please ask your administrator for a new invite.</p>
 		</div>
 	</div>
 {/if}

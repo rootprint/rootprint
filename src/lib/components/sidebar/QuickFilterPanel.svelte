@@ -340,7 +340,7 @@
 									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70"
 									title={field}>{field}</span
 								>
-								</button>
+							</button>
 
 							{#if openSections.has(field)}
 								<div class="px-3 pb-2">
