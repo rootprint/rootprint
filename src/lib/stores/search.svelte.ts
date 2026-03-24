@@ -73,6 +73,7 @@ export function createSearchStore(
 	let histogramData = $state<{ timestamp: number; levels: Record<string, number> }[]>([]);
 	let histogramLoading = $state(false);
 	let histogramRequestId = 0;
+	let searchRequestId = 0;
 
 	// --- Column widths ---
 	let columnWidths = $derived(
@@ -287,6 +288,8 @@ export function createSearchStore(
 		const append = opts?.append ?? false;
 		if (selectedIndex === null) return;
 
+		const requestId = ++searchRequestId;
+
 		loading = true;
 		searchError = null;
 
@@ -314,6 +317,8 @@ export function createSearchStore(
 				quickFilterFields,
 				sortDirection
 			});
+
+			if (requestId !== searchRequestId) return;
 
 			searchStartTimestamp = result.startTimestamp;
 			searchEndTimestamp = result.endTimestamp;
@@ -383,6 +388,7 @@ export function createSearchStore(
 				recordCurrentSearch(parsedQuery().query);
 			}
 		} catch (e) {
+			if (requestId !== searchRequestId) return;
 			const message = getErrorMessage(e, 'Search failed');
 			searchError = message;
 			logs = [];
@@ -390,7 +396,9 @@ export function createSearchStore(
 			hasSearched = true;
 			toast.error(message);
 		} finally {
-			loading = false;
+			if (requestId === searchRequestId) {
+				loading = false;
+			}
 		}
 	}
 
