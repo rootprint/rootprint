@@ -11,7 +11,6 @@ function defaults(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
 	return {
 		index: null,
 		query: '',
-		filters: {},
 		timeRange: { type: 'relative', preset: '15m' },
 		timezoneMode: 'local',
 		sortDirection: 'asc',
@@ -70,26 +69,6 @@ describe('serialize', () => {
 		const params = serialize(defaults());
 		expect(params.has('sort')).toBe(false);
 	});
-
-	it('serializes filters', () => {
-		const params = serialize(defaults({ filters: { level: ['error', 'warn'] } }));
-		expect(params.get('f.level')).toBe('error,warn');
-	});
-
-	it('percent-encodes commas in filter values', () => {
-		const params = serialize(defaults({ filters: { msg: ['a,b', 'c'] } }));
-		expect(params.get('f.msg')).toBe('a%2Cb,c');
-	});
-
-	it('percent-encodes percent signs in filter values', () => {
-		const params = serialize(defaults({ filters: { msg: ['100%'] } }));
-		expect(params.get('f.msg')).toBe('100%25');
-	});
-
-	it('handles filter values with both commas and percents', () => {
-		const params = serialize(defaults({ filters: { msg: ['a%,b'] } }));
-		expect(params.get('f.msg')).toBe('a%25%2Cb');
-	});
 });
 
 describe('deserialize', () => {
@@ -147,22 +126,6 @@ describe('deserialize', () => {
 		const result = deserialize(new URLSearchParams('sort=invalid'));
 		expect(result.sortDirection).toBe('asc');
 	});
-
-	it('parses filters', () => {
-		const result = deserialize(new URLSearchParams('f.level=error,warn'));
-		expect(result.filters).toEqual({ level: ['error', 'warn'] });
-	});
-
-	it('decodes percent-encoded commas in filters', () => {
-		// URLSearchParams auto-decodes %25 → %, so we pass what serialize produces
-		const result = deserialize(new URLSearchParams('f.msg=a%252Cb,c'));
-		expect(result.filters).toEqual({ msg: ['a,b', 'c'] });
-	});
-
-	it('decodes percent-encoded percent signs in filters', () => {
-		const result = deserialize(new URLSearchParams('f.msg=100%25'));
-		expect(result.filters).toEqual({ msg: ['100%'] });
-	});
 });
 
 describe('roundtrip', () => {
@@ -170,7 +133,6 @@ describe('roundtrip', () => {
 		const original = defaults({
 			index: 'otel-logs',
 			query: 'service:api',
-			filters: { level: ['error'], host: ['a,b'] },
 			timeRange: { type: 'relative', preset: '6h' },
 			timezoneMode: 'utc',
 			sortDirection: 'desc'
@@ -202,8 +164,8 @@ describe('hasNonDefaultParams', () => {
 		expect(hasNonDefaultParams(defaults({ query: 'hello' }))).toBe(true);
 	});
 
-	it('returns true when filters exist', () => {
-		expect(hasNonDefaultParams(defaults({ filters: { level: ['error'] } }))).toBe(true);
+	it('returns true when query has clauses', () => {
+		expect(hasNonDefaultParams(defaults({ query: 'level:error' }))).toBe(true);
 	});
 
 	it('returns true for absolute time', () => {

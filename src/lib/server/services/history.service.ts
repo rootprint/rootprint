@@ -7,11 +7,7 @@ const MAX_HISTORY_PER_USER = 100;
 function normalizeForDedup(data: {
 	query: string;
 	timeRange: { type: string; start?: number; end?: number; preset?: string };
-	filters: Record<string, string[]>;
 }): string {
-	const sortedFilters = Object.keys(data.filters)
-		.sort((a, b) => a.localeCompare(b))
-		.map((k) => [k, [...data.filters[k]].sort((a, b) => a.localeCompare(b))]);
 	const tr = Object.keys(data.timeRange)
 		.sort((a, b) => a.localeCompare(b))
 		.reduce(
@@ -21,7 +17,7 @@ function normalizeForDedup(data: {
 			},
 			{} as Record<string, unknown>
 		);
-	return JSON.stringify({ q: data.query, tr, f: sortedFilters });
+	return JSON.stringify({ q: data.query, tr });
 }
 
 export async function getHistory(userId: string, indexId: string) {
@@ -35,7 +31,7 @@ export async function getHistory(userId: string, indexId: string) {
 
 export async function recordSearch(
 	userId: string,
-	data: { indexId: string; query: string; timeRange: any; filters: Record<string, string[]> }
+	data: { indexId: string; query: string; timeRange: any }
 ) {
 	const [latest] = await db
 		.select()
@@ -52,8 +48,7 @@ export async function recordSearch(
 		userId,
 		indexName: data.indexId,
 		query: data.query,
-		timeRange: data.timeRange,
-		filters: data.filters
+		timeRange: data.timeRange
 	});
 
 	const keep = await db

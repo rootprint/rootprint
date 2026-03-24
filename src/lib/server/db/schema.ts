@@ -140,7 +140,6 @@ export const searchHistory = sqliteTable(
 		timeRange: text('time_range', { mode: 'json' })
 			.$type<{ type: string; start?: number; end?: number; preset?: string }>()
 			.notNull(),
-		filters: text('filters', { mode: 'json' }).$type<Record<string, string[]>>().notNull(),
 		executedAt: integer('executed_at', { mode: 'timestamp' })
 			.default(sql`(unixepoch())`)
 			.notNull()

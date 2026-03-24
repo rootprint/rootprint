@@ -10,7 +10,13 @@ import { invalidateAll } from '$app/navigation';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { combineQueryWithFilters, escapeFilterValue } from '$lib/utils/query';
+import {
+	parseClauses,
+	addClause as addClauseUtil,
+	removeClause as removeClauseUtil,
+	hasClause as hasClauseUtil,
+	clearClauses as clearClausesUtil
+} from '$lib/utils/query';
 import { buildQueryUrl, serialize } from '$lib/utils/query-params';
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
@@ -94,7 +100,6 @@ export function createSearchStore(
 			timezoneMode
 		)
 	);
-	let activeFilters = $derived(parsedQuery().filters);
 	let urlIndex = $derived(parsedQuery().index);
 	let sortDirection = $derived(parsedQuery().sortDirection);
 
@@ -111,9 +116,8 @@ export function createSearchStore(
 
 	// --- Internal helpers ---
 
-	function getQueryText() {
-		const pq = parsedQuery();
-		return combineQueryWithFilters(pq.query, pq.filters);
+	function getQueryText(): string {
+		return parsedQuery().query || '*';
 	}
 
 	function buildTimeParams(
@@ -159,8 +163,7 @@ export function createSearchStore(
 		recordSearch({
 			indexId: selectedIndex,
 			query,
-			timeRange,
-			filters: activeFilters
+			timeRange
 		})
 			.then(() => {
 				invalidateAll();
@@ -230,7 +233,7 @@ export function createSearchStore(
 		aggregations = {};
 		schemaFields = [];
 		fieldsLoading = true; // block auto-search until new fields load
-		navigateQuery({ index: indexName, filters: {} });
+		navigateQuery({ index: indexName, query: '' });
 		loadFieldsForIndex(indexName);
 	}
 
@@ -272,12 +275,7 @@ export function createSearchStore(
 		aggregations = Object.fromEntries(
 			Object.entries(aggregations).filter(([k]) => fieldSet.has(k))
 		);
-		const cleanedFilters = Object.fromEntries(
-			Object.entries(activeFilters).filter(([k]) => fieldSet.has(k))
-		);
-		if (JSON.stringify(cleanedFilters) !== JSON.stringify(activeFilters)) {
-			navigateQuery({ filters: cleanedFilters });
-		} else if (hasSearched) {
+		if (hasSearched) {
 			bumpSearch();
 		}
 		debouncedSaveQuickFilters();
@@ -333,8 +331,8 @@ export function createSearchStore(
 			}
 
 			if (!append && result.aggregations) {
-				const hasActiveFiltersNow = Object.keys(activeFilters).length > 0;
-				if (hasActiveFiltersNow) {
+				const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
+				if (hasActiveClauses) {
 					const merged = { ...aggregations };
 					for (const [field, values] of Object.entries(result.aggregations)) {
 						if (!(field in merged)) {
@@ -442,11 +440,22 @@ export function createSearchStore(
 		return result.values;
 	}
 
-	function addFilterClause(field: string, value: string, exclude: boolean) {
-		const escaped = escapeFilterValue(value);
-		const clause = exclude ? `NOT ${field}:${escaped}` : `${field}:${escaped}`;
-		const current = parsedQuery().query;
-		const newQuery = current ? `${current} AND ${clause}` : clause;
+	function addClause(field: string, value: string, exclude = false) {
+		const newQuery = addClauseUtil(parsedQuery().query, field, value, exclude);
+		navigateQuery({ query: newQuery }, { push: true });
+	}
+
+	function removeClause(field: string, value: string, exclude = false) {
+		const newQuery = removeClauseUtil(parsedQuery().query, field, value, exclude);
+		navigateQuery({ query: newQuery }, { push: true });
+	}
+
+	function hasClauseCheck(field: string, value: string, exclude = false): boolean {
+		return hasClauseUtil(parsedQuery().query, field, value, exclude);
+	}
+
+	function clearAllClauses() {
+		const newQuery = clearClausesUtil(parsedQuery().query);
 		navigateQuery({ query: newQuery }, { push: true });
 	}
 
@@ -554,9 +563,6 @@ export function createSearchStore(
 		get sortDirection() {
 			return sortDirection;
 		},
-		get activeFilters() {
-			return activeFilters;
-		},
 		get panelAvailableFields() {
 			return panelAvailableFields;
 		},
@@ -573,7 +579,10 @@ export function createSearchStore(
 		searchFieldValues: searchFieldValuesHandler,
 		setupAutoSearch,
 		bumpSearch,
-		addFilterClause,
+		addClause,
+		removeClause,
+		hasClause: hasClauseCheck,
+		clearClauses: clearAllClauses,
 		toggleSortDirection
 	};
 }

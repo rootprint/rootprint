@@ -59,8 +59,11 @@
 		<QuickFilterPanel
 			fields={store.quickFilterFields}
 			aggregations={store.aggregations}
-			activeFilters={store.activeFilters}
-			onfilter={(filters) => store.navigateQuery({ filters })}
+			query={data.parsedQuery.query}
+			onAddClause={store.addClause}
+			onRemoveClause={store.removeClause}
+			hasClause={store.hasClause}
+			onClearClauses={store.clearClauses}
 			availableFields={store.quickFilterAvailableFields}
 			onconfigchange={store.handleQuickFilterFieldsChange}
 			onsearch={store.searchFieldValues}
@@ -165,5 +168,11 @@
 	hit={selectedLog}
 	timestampField={store.fieldConfig.timestampField}
 	tracebackField={store.fieldConfig.tracebackField}
-	onfilter={(key, value, exclude) => store.addFilterClause(key, value, exclude)}
+	onfilter={(key, value, exclude) => {
+		if (store.hasClause(key, value, exclude)) {
+			store.removeClause(key, value, exclude);
+		} else {
+			store.addClause(key, value, exclude);
+		}
+	}}
 />

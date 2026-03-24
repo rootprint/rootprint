@@ -12,8 +12,7 @@ export const recordSearchSchema = v.object({
 	timeRange: v.union([
 		v.object({ type: v.literal('relative'), preset: v.string() }),
 		v.object({ type: v.literal('absolute'), start: v.number(), end: v.number() })
-	]),
-	filters: v.record(v.string(), v.array(v.string()))
+	])
 });
 
 export const deleteHistoryEntrySchema = v.object({

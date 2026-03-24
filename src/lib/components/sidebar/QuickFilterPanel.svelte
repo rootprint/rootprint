@@ -12,12 +12,16 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { dndzone } from 'svelte-dnd-action';
 	import type { IndexField } from '$lib/types';
+	import { parseClauses } from '$lib/utils/query';
 
 	let {
 		fields,
 		aggregations,
-		activeFilters = $bindable(),
-		onfilter,
+		query,
+		onAddClause,
+		onRemoveClause,
+		hasClause,
+		onClearClauses,
 		availableFields = [],
 		onconfigchange,
 		onsearch,
@@ -26,14 +30,19 @@
 	}: {
 		fields: string[];
 		aggregations: Record<string, string[]>;
-		activeFilters: Record<string, string[]>;
-		onfilter?: (filters: Record<string, string[]>) => void;
+		query: string;
+		onAddClause: (field: string, value: string, exclude?: boolean) => void;
+		onRemoveClause: (field: string, value: string, exclude?: boolean) => void;
+		hasClause: (field: string, value: string, exclude?: boolean) => boolean;
+		onClearClauses: () => void;
 		availableFields?: IndexField[];
 		onconfigchange?: (fields: string[]) => void;
 		onsearch?: (field: string, searchTerm: string) => Promise<string[]>;
 		pinnedFields?: string[];
 		indexId?: string | null;
 	} = $props();
+
+	let clauses = $derived(parseClauses(query));
 
 	let collapsed = $state(false);
 	let openSections = new SvelteSet<string>();
@@ -187,31 +196,22 @@
 	}
 
 	function toggleValue(field: string, value: string) {
-		const current = activeFilters[field] ?? [];
-		const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-
-		const updated = { ...activeFilters };
-		if (next.length === 0) {
-			delete updated[field];
+		if (hasClause(field, value)) {
+			onRemoveClause(field, value);
 		} else {
-			updated[field] = next;
+			onAddClause(field, value);
 		}
-		activeFilters = updated;
-		onfilter?.(updated);
 	}
 
-	let activeFilterCount = $derived(
-		Object.values(activeFilters).reduce((sum, vals) => sum + vals.length, 0)
-	);
+	let activeFilterCount = $derived(clauses.length);
 	let hasAnyFilters = $derived(activeFilterCount > 0);
 
 	function clearAllFilters() {
-		activeFilters = {};
-		onfilter?.({});
+		onClearClauses();
 	}
 
 	function isChecked(field: string, value: string): boolean {
-		return activeFilters[field]?.includes(value) ?? false;
+		return hasClause(field, value);
 	}
 </script>
 
@@ -340,12 +340,7 @@
 									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70"
 									title={field}>{field}</span
 								>
-								{#if activeFilters[field]?.length}
-									<span class="rounded-full bg-primary/10 px-1.5 text-[10px] text-primary">
-										{activeFilters[field].length}
-									</span>
-								{/if}
-							</button>
+								</button>
 
 							{#if openSections.has(field)}
 								<div class="px-3 pb-2">

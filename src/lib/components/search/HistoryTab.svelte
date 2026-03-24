@@ -20,14 +20,9 @@
 		onbookmark: (entry: { indexName: string; query: string }) => void;
 	} = $props();
 
-	function filterCount(filters: Record<string, string[]>): number {
-		return Object.values(filters).reduce((sum, v) => sum + v.length, 0);
-	}
-
 	function restoreHistory(entry: HistoryEntry) {
 		onrestore({
 			query: entry.query,
-			filters: entry.filters,
 			timeRange: entry.timeRange
 		});
 	}
@@ -46,7 +41,6 @@
 
 <DrawerList empty={entries.length === 0} emptyMessage="No search history yet">
 	{#each entries as entry (entry.id)}
-		{@const count = filterCount(entry.filters)}
 		<DrawerRow onclick={() => restoreHistory(entry)}>
 			<div class="flex items-center gap-1">
 				<span class="flex-1 truncate text-xs font-medium">
@@ -75,9 +69,6 @@
 			</div>
 			<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
 				<span class="truncate">{formatTimeRangeLabel(entry.timeRange, 'local')}</span>
-				{#if count > 0}
-					<span class="badge badge-xs">{count} filter{count > 1 ? 's' : ''}</span>
-				{/if}
 				<span class="ml-auto shrink-0">{formatRelativeTime(entry.executedAt)}</span>
 			</div>
 		</DrawerRow>

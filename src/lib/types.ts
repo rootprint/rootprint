@@ -34,10 +34,11 @@ export type User = {
 	inviteExpiresAt: Date | null;
 };
 
+export type Clause = { field: string; value: string; exclude: boolean };
+
 export interface ParsedQuery {
 	index: string | null;
 	query: string;
-	filters: Record<string, string[]>;
 	timeRange: TimeRange;
 	timezoneMode: TimezoneMode;
 	sortDirection: SortDirection;
@@ -61,7 +62,6 @@ export type HistoryEntry = {
 	indexName: string;
 	query: string;
 	timeRange: TimeRange;
-	filters: Record<string, string[]>;
 	executedAt: Date;
 };
 

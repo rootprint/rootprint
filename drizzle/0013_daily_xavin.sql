@@ -1,0 +1,1 @@
+ALTER TABLE `search_history` DROP COLUMN `filters`;

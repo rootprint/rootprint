@@ -27,7 +27,6 @@ describe('+page.server load', () => {
 				indexName: 'logs',
 				query: 'level:error',
 				timeRange: { type: 'relative', preset: '15m' },
-				filters: {},
 				executedAt: new Date('2026-01-01T00:00:00.000Z')
 			}
 		];
