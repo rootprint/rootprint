@@ -1,6 +1,6 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
-	import { ListTree, Braces, CirclePlus, CircleMinus, Bug } from 'lucide-svelte';
+	import { ListTree, Braces, SearchCheck, SearchX, Bug } from 'lucide-svelte';
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
 	import { flattenObject } from '$lib/utils/log-helpers';
@@ -97,14 +97,14 @@
 												title="Filter for value"
 												onclick={() => handleFilter(key, value, false)}
 											>
-												<CirclePlus size={12} class="text-success" />
+												<SearchCheck size={12} />
 											</button>
 											<button
 												class="btn btn-square h-5 min-h-0 w-5 btn-ghost btn-xs"
 												title="Filter out value"
 												onclick={() => handleFilter(key, value, true)}
 											>
-												<CircleMinus size={12} class="text-error" />
+												<SearchX size={12} />
 											</button>
 										</div>
 									{/if}
