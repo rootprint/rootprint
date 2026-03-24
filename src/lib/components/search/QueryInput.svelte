@@ -136,6 +136,10 @@
 		}, 150);
 	}
 
+	export function getValue() {
+		return localBuffer;
+	}
+
 	export function submit() {
 		const error = validateQuery(localBuffer);
 		if (error) {

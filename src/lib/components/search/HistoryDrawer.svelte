@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Clock, Bookmark, Users } from 'lucide-svelte';
 	import { page } from '$app/state';
-	import type { ParsedQuery, HistoryEntry, SavedQueryEntry, SharedQueryEntry } from '$lib/types';
+	import type { ParsedQuery, HistoryEntry, SavedQueryEntry, SharedQueryEntry, DrawerTab } from '$lib/types';
 	import Drawer from '$lib/components/ui/Drawer.svelte';
 	import SaveQueryModal from './SaveQueryModal.svelte';
 	import HistoryTab from './HistoryTab.svelte';
@@ -9,14 +9,14 @@
 	import SharedTab from './SharedTab.svelte';
 
 	let {
-		open = $bindable(false),
+		drawerTab = $bindable(null as DrawerTab | null),
 		indexId,
 		history,
 		savedQueries,
 		sharedQueries,
 		onrestore
 	}: {
-		open: boolean;
+		drawerTab: DrawerTab | null;
 		indexId: string | null;
 		history: HistoryEntry[];
 		savedQueries: SavedQueryEntry[];
@@ -24,7 +24,26 @@
 		onrestore: (params: Partial<ParsedQuery>) => void;
 	} = $props();
 
-	let activeTab = $state<'history' | 'saved' | 'shared'>('history');
+	let activeTab = $state<'history' | 'saved' | 'shared'>(drawerTab ?? 'history');
+	// Bidirectional sync: $derived can't be used because Drawer's bind:open requires a writable value
+	let drawerOpen = $state(drawerTab !== null);
+
+	// drawerTab → open + activeTab
+	$effect(() => {
+		drawerOpen = drawerTab !== null;
+		if (drawerTab) activeTab = drawerTab;
+	});
+
+	// activeTab changed inside drawer → sync back to drawerTab
+	$effect(() => {
+		if (drawerOpen) drawerTab = activeTab;
+	});
+
+	// drawer closed → drawerTab = null
+	$effect(() => {
+		if (!drawerOpen) drawerTab = null;
+	});
+
 	let savingEntry = $state<{ indexName: string; query: string } | null>(null);
 	let saveModalOpen = $state(false);
 
@@ -36,7 +55,7 @@
 
 	function handleRestore(params: Partial<ParsedQuery>) {
 		onrestore(params);
-		open = false;
+		drawerTab = null;
 	}
 
 	$effect(() => {
@@ -46,7 +65,7 @@
 	});
 </script>
 
-<Drawer bind:open {tabs} bind:activeTab panelClass="w-xl">
+<Drawer bind:open={drawerOpen} {tabs} bind:activeTab panelClass="w-xl">
 	<div class="flex-1 overflow-x-hidden overflow-y-auto">
 		{#if activeTab === 'history'}
 			<HistoryTab

@@ -1,24 +1,37 @@
 <script lang="ts">
 	import type { createSearchStore } from '$lib/stores/search.svelte';
-	import type { ParsedQuery, TimeRange } from '$lib/types';
+	import type { ParsedQuery, TimeRange, DrawerTab } from '$lib/types';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
 	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { Clock, Share2, Play } from 'lucide-svelte';
+	import { Clock, Share2, Play, Bookmark, Users, Save } from 'lucide-svelte';
+	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
 	import { browser } from '$app/environment';
 
 	let {
 		store,
 		wrapMode = $bindable('none' as 'none' | 'wrap'),
-		historyOpen = $bindable(false),
+		drawerTab = $bindable(null as DrawerTab | null),
 		parsedQuery
 	}: {
 		store: ReturnType<typeof createSearchStore>;
 		wrapMode: 'none' | 'wrap';
-		historyOpen: boolean;
+		drawerTab: DrawerTab | null;
 		parsedQuery: ParsedQuery;
 	} = $props();
+
+	let saveModalOpen = $state(false);
+
+	const drawerButtons: { id: DrawerTab; icon: typeof Clock; title: string }[] = [
+		{ id: 'history', icon: Clock, title: 'History' },
+		{ id: 'saved', icon: Bookmark, title: 'Saved queries' },
+		{ id: 'shared', icon: Users, title: 'Shared queries' }
+	];
+
+	function toggleDrawer(tab: DrawerTab) {
+		drawerTab = drawerTab === tab ? null : tab;
+	}
 
 	let queryInputRef = $state<ReturnType<typeof QueryInput>>();
 </script>
@@ -46,15 +59,26 @@
 			{/each}
 		</div>
 
+		<div class="join ml-auto">
+			{#each drawerButtons as { id, icon: Icon, title } (id)}
+				<button
+					class="btn join-item btn-sm {drawerTab === id ? 'btn-active' : ''}"
+					onclick={() => toggleDrawer(id)}
+					{title}
+				>
+					<Icon size={14} />
+				</button>
+			{/each}
+		</div>
+
 		<button
-			class="btn ml-auto btn-sm {historyOpen ? 'btn-active' : ''}"
-			onclick={() => {
-				historyOpen = !historyOpen;
-			}}
-			title="Toggle search history"
+			class="btn btn-sm"
+			onclick={() => (saveModalOpen = true)}
+			disabled={!store.selectedIndex}
+			title="Save current query"
 		>
-			<Clock size={14} />
-			History
+			<Save size={14} />
+			Save
 		</button>
 
 		{#if browser}
@@ -105,4 +129,11 @@
 			>
 		{/if}
 	</div>
+
+	<SaveQueryModal
+		bind:open={saveModalOpen}
+		entry={store.selectedIndex
+			? { indexId: store.selectedIndex, query: queryInputRef?.getValue() ?? parsedQuery.query }
+			: null}
+	/>
 </div>

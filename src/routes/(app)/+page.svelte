@@ -10,6 +10,7 @@
 	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
 	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
 	import { CircleX } from 'lucide-svelte';
+	import type { DrawerTab } from '$lib/types';
 
 	let { data } = $props();
 
@@ -27,11 +28,7 @@
 	let chartCollapsed = $state(
 		browser ? localStorage.getItem('logwiz:chartCollapsed') === 'true' : false
 	);
-	let historyOpen = $state(browser ? localStorage.getItem('logwiz:historyOpen') === 'true' : false);
-
-	$effect(() => {
-		if (browser) localStorage.setItem('logwiz:historyOpen', String(historyOpen));
-	});
+	let drawerTab = $state<DrawerTab | null>(null);
 
 	$effect(() => {
 		if (browser) localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
@@ -79,7 +76,7 @@
 	</div>
 
 	<div class="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-		<SearchToolbar {store} bind:wrapMode bind:historyOpen parsedQuery={data.parsedQuery} />
+		<SearchToolbar {store} bind:wrapMode bind:drawerTab parsedQuery={data.parsedQuery} />
 
 		{#if store.hasSearched}
 			<LogFrequencyChart
@@ -153,7 +150,7 @@
 		</div>
 
 		<HistoryDrawer
-			bind:open={historyOpen}
+			bind:drawerTab
 			indexId={store.selectedIndex}
 			history={data.history}
 			savedQueries={data.savedQueries}
