@@ -1,8 +1,19 @@
 {
 	"name": "logwiz",
-	"private": true,
-	"version": "0.0.1",
+	"version": "0.1.0",
+	"description": "Open-source logging UI for Quickwit",
 	"type": "module",
+	"license": "Apache-2.0",
+	"author": "Oleksandr Zhyhalo",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/oleksandr-zhyhalo/logwiz.git"
+	},
+	"homepage": "https://github.com/oleksandr-zhyhalo/logwiz",
+	"keywords": ["logging", "quickwit", "log-viewer", "observability"],
+	"engines": {
+		"bun": ">=1.0.0"
+	},
 	"scripts": {
 		"dev": "bunx --bun vite dev",
 		"build": "bunx --bun vite build",

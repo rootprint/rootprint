@@ -23,7 +23,7 @@ Requires [Docker](https://www.docker.com) and [Docker Compose](https://docs.dock
 1. **Clone and start:**
 
    ```bash
-   git clone https://github.com/logwiz/logwiz.git
+   git clone https://github.com/oleksandr-zhyhalo/logwiz.git
    cd logwiz
    docker compose up -d
    ```
