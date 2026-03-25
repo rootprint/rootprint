@@ -1,0 +1,1 @@
+ALTER TABLE `qw_index` ADD `display_name` text;

@@ -44,7 +44,7 @@
 			onchange={(e) => store.handleIndexChange(e.currentTarget.value)}
 		>
 			{#each store.indexes as idx (idx.indexId)}
-				<option value={idx.indexId}>{idx.indexId}</option>
+				<option value={idx.indexId}>{idx.displayName || idx.indexId}</option>
 			{/each}
 		</select>
 

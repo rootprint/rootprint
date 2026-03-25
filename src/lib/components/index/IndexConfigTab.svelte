@@ -12,6 +12,7 @@
 	$effect(() => {
 		configForm.fields.set({
 			indexId: detail.indexId,
+			displayName: detail.displayName ?? '',
 			levelField: detail.levelField ?? 'level',
 			messageField: detail.messageField ?? 'message',
 			tracebackField: detail.tracebackField ?? ''
@@ -33,6 +34,18 @@
 	class="flex flex-col gap-4"
 >
 	<input {...configForm.fields.indexId.as('hidden', detail.indexId)} />
+	<div>
+		<label class="mb-1 block text-xs font-medium" for="displayName">Display Name</label>
+		<input
+			{...configForm.fields.displayName.as('text')}
+			id="displayName"
+			class="input-bordered input input-sm w-full"
+			placeholder="e.g. Production Logs"
+		/>
+		<p class="mt-1 text-[10px] text-base-content/40">
+			Friendly name shown to users. Leave empty to use the index ID.
+		</p>
+	</div>
 	<div>
 		<label class="mb-1 block text-xs font-medium" for="levelField">Level Field</label>
 		<input

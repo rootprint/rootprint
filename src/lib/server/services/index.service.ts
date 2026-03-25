@@ -286,14 +286,15 @@ export async function syncIndexesFromQuickwit() {
 
 export function getIndexes() {
 	const rows = db
-		.select({ indexId: qwIndex.indexId, indexUri: qwIndex.indexUri })
+		.select({ indexId: qwIndex.indexId, indexUri: qwIndex.indexUri, displayName: qwIndex.displayName })
 		.from(qwIndex)
 		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
 		.all();
 
 	return rows.map((r) => ({
 		indexId: r.indexId,
-		indexUri: r.indexUri ?? ''
+		indexUri: r.indexUri ?? '',
+		displayName: r.displayName
 	}));
 }
 
@@ -359,7 +360,8 @@ export function getIndexDetail(indexId: string) {
 			retention: qwIndex.retention,
 			levelField: qwIndex.levelField,
 			messageField: qwIndex.messageField,
-			tracebackField: qwIndex.tracebackField
+			tracebackField: qwIndex.tracebackField,
+			displayName: qwIndex.displayName
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId))

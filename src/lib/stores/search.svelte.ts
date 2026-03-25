@@ -21,7 +21,7 @@ import { buildQueryUrl, serialize } from '$lib/utils/query-params';
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import type { IndexField, LogEntry, ParsedQuery, TimeRange } from '$lib/types';
+import type { IndexField, IndexSummary, LogEntry, ParsedQuery, TimeRange } from '$lib/types';
 import { toast } from 'svelte-sonner';
 import { getErrorMessage } from '$lib/utils/error';
 
@@ -29,7 +29,7 @@ const BATCH_SIZE = 50;
 
 export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
-	initialIndexes: { indexId: string; indexUri: string }[],
+	initialIndexes: IndexSummary[],
 	options?: { onFreshSearch?: () => void }
 ) {
 	let nextKey = 0;
