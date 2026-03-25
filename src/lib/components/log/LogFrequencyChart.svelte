@@ -334,7 +334,7 @@
 	});
 </script>
 
-<div class="border-b border-base-300">
+<div class="relative z-20 border-b border-base-300">
 	<CollapsibleSection title="Frequency chart" bind:collapsed>
 		{#snippet headerActions()}
 			{#if loading}
