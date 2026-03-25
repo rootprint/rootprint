@@ -85,6 +85,27 @@ Set it explicitly when running behind a reverse proxy or when you need a strict 
 
 3. A new admin is seeded automatically with the default credentials (`logwiz`/`logwiz`). You'll be prompted to change the password on first login.
 
+## Google Authentication
+
+Logwiz supports Google OAuth sign-in alongside the default email/password login. Only users from allowed email domains can sign in with Google.
+
+### Setup
+
+1. Create OAuth credentials in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
+   - Application type: **Web application**
+   - Authorized redirect URI: `https://your-logwiz-url/api/auth/callback/google`
+
+2. In the Logwiz admin panel, go to **Administration → Settings**:
+   - Enter your **Client ID** and **Client Secret**
+   - Add one or more **Allowed Domains** (e.g., `company.com`)
+   - Copy the **Callback URL** shown and verify it matches what you configured in Google Cloud Console
+
+3. **Restart the server** for the changes to take effect.
+
+Once configured, a "Sign in with Google" button appears on the sign-in page. Users whose email domain matches an allowed domain are automatically created with the `user` role. If a Google account's email matches an existing user, the accounts are linked automatically.
+
+To remove Google authentication, click **Remove Google Auth** in the Settings tab and restart the server.
+
 ## Index Configuration
 
 Each Quickwit index can be configured in the admin panel (click an index in Settings → Config tab) to map fields to Logwiz display roles:

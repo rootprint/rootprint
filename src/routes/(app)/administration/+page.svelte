@@ -1,9 +1,10 @@
 <script lang="ts">
 	import UserManagement from '$lib/components/admin/UserManagement.svelte';
 	import IndexesTab from '$lib/components/index/IndexesTab.svelte';
+	import SettingsTab from '$lib/components/admin/SettingsTab.svelte';
 
 	let { data } = $props();
-	let activeTab = $state<'users' | 'indexes'>('users');
+	let activeTab = $state<'users' | 'indexes' | 'settings'>('users');
 </script>
 
 <div class="h-full overflow-y-auto align-middle">
@@ -32,12 +33,22 @@
 			>
 				Indexes
 			</button>
+			<button
+				role="tab"
+				class="tab"
+				class:tab-active={activeTab === 'settings'}
+				onclick={() => (activeTab = 'settings')}
+			>
+				Settings
+			</button>
 		</div>
 
 		{#if activeTab === 'users'}
 			<UserManagement users={data.users} />
-		{:else}
+		{:else if activeTab === 'indexes'}
 			<IndexesTab indexes={data.indexDetails} />
+		{:else}
+			<SettingsTab origin={data.origin} settings={data.googleAuthSettings} />
 		{/if}
 	</div>
 </div>

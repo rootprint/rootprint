@@ -97,3 +97,15 @@ export type SharedQueryEntry = {
 	username: string | null;
 	createdAt: Date;
 };
+
+export type GoogleAuthSettings = {
+	clientId: string;
+	clientSecret: string;
+	allowedDomains: string[];
+};
+
+export type GoogleAuthSettingsView = {
+	clientId: string;
+	clientSecretMasked: string;
+	allowedDomains: string[];
+};

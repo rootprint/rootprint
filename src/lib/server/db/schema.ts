@@ -171,4 +171,13 @@ export const savedQuery = sqliteTable(
 	(table) => [index('saved_query_user_index').on(table.userId, table.indexName)]
 );
 
+export const appSettings = sqliteTable('app_settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull(),
+	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.default(sql`(unixepoch())`)
+		.notNull()
+		.$onUpdate(() => new Date())
+});
+
 export * from './auth.schema';
