@@ -23,7 +23,14 @@ export const TIME_PRESETS = [
 
 export type IndexField = { name: string; type: string; fast: boolean };
 
-export type IndexSummary = { indexId: string; indexUri: string; displayName: string | null };
+export type IndexVisibility = 'hidden' | 'admin' | 'all';
+
+export type IndexSummary = {
+	indexId: string;
+	indexUri: string;
+	displayName: string | null;
+	visibility: IndexVisibility;
+};
 
 export type LogEntry = { key: number; hit: Record<string, unknown> };
 

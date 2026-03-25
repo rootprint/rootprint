@@ -1,0 +1,1 @@
+ALTER TABLE `qw_index` ADD `visibility` text DEFAULT 'all' NOT NULL;

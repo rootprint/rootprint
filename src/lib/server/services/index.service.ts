@@ -1,8 +1,10 @@
+import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { qwIndex, qwFieldMapping, qwSource } from '$lib/server/db/schema';
 import { eq, count, and, notInArray, or, isNull, like, not } from 'drizzle-orm';
 import type { FieldMapping } from 'quickwit-js';
 import { getQuickwitClient } from '$lib/server/quickwit';
+import type { IndexVisibility } from '$lib/types';
 
 function flattenFieldMappings(
 	mappings: FieldMapping[],
@@ -42,10 +44,10 @@ export function getIndexSummaries() {
 			id: qwIndex.id,
 			indexId: qwIndex.indexId,
 			mode: qwIndex.mode,
-			createTimestamp: qwIndex.createTimestamp
+			createTimestamp: qwIndex.createTimestamp,
+			visibility: qwIndex.visibility
 		})
 		.from(qwIndex)
-		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
 		.all();
 
 	const fieldCounts = db
@@ -75,7 +77,8 @@ export function getIndexSummaries() {
 		fieldCount: fieldCountMap.get(r.id) ?? 0,
 		sourceCount: sourceCountMap.get(r.id) ?? 0,
 		mode: r.mode,
-		createTimestamp: r.createTimestamp
+		createTimestamp: r.createTimestamp,
+		visibility: r.visibility
 	}));
 }
 
@@ -284,17 +287,26 @@ export async function syncIndexesFromQuickwit() {
 	return getIndexSummaries();
 }
 
-export function getIndexes() {
+export function getIndexes(userRole: string | null | undefined) {
+	const visibilityFilter =
+		userRole === 'admin' ? not(eq(qwIndex.visibility, 'hidden')) : eq(qwIndex.visibility, 'all');
+
 	const rows = db
-		.select({ indexId: qwIndex.indexId, indexUri: qwIndex.indexUri, displayName: qwIndex.displayName })
+		.select({
+			indexId: qwIndex.indexId,
+			indexUri: qwIndex.indexUri,
+			displayName: qwIndex.displayName,
+			visibility: qwIndex.visibility
+		})
 		.from(qwIndex)
-		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
+		.where(visibilityFilter)
 		.all();
 
 	return rows.map((r) => ({
 		indexId: r.indexId,
 		indexUri: r.indexUri ?? '',
-		displayName: r.displayName
+		displayName: r.displayName,
+		visibility: r.visibility as IndexVisibility
 	}));
 }
 
@@ -361,7 +373,8 @@ export function getIndexDetail(indexId: string) {
 			levelField: qwIndex.levelField,
 			messageField: qwIndex.messageField,
 			tracebackField: qwIndex.tracebackField,
-			displayName: qwIndex.displayName
+			displayName: qwIndex.displayName,
+			visibility: qwIndex.visibility
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId))
@@ -404,11 +417,24 @@ export function getIndexDetail(indexId: string) {
 }
 
 export function getAllIndexDetails() {
-	const indexes = db
-		.select({ indexId: qwIndex.indexId })
-		.from(qwIndex)
-		.where(not(like(qwIndex.indexId, 'otel-traces-%')))
-		.all();
+	const indexes = db.select({ indexId: qwIndex.indexId }).from(qwIndex).all();
 
 	return indexes.map((r) => getIndexDetail(r.indexId)).filter((d) => d !== null);
+}
+
+export function assertIndexAccess(indexId: string, userRole: string | null | undefined) {
+	const [idx] = db
+		.select({ visibility: qwIndex.visibility })
+		.from(qwIndex)
+		.where(eq(qwIndex.indexId, indexId))
+		.all();
+
+	if (!idx) error(403, 'Index not accessible');
+
+	if (idx.visibility === 'hidden') {
+		error(403, 'Index not accessible');
+	}
+	if (idx.visibility === 'admin' && userRole !== 'admin') {
+		error(403, 'Index not accessible');
+	}
 }

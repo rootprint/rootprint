@@ -5,8 +5,8 @@ import { requireUser, requireAdmin } from '$lib/middleware/auth';
 import * as indexService from '$lib/server/services/index.service';
 
 export const getIndexes = query(async () => {
-	requireUser();
-	return indexService.getIndexes();
+	const user = requireUser();
+	return indexService.getIndexes(user.role);
 });
 
 export const getIndexFields = query(getIndexFieldsSchema, async (data) => {

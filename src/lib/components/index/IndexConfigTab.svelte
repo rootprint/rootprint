@@ -15,9 +15,27 @@
 			displayName: detail.displayName ?? '',
 			levelField: detail.levelField ?? 'level',
 			messageField: detail.messageField ?? 'message',
-			tracebackField: detail.tracebackField ?? ''
+			tracebackField: detail.tracebackField ?? '',
+			visibility: (detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all'
 		});
 	});
+
+	let visibility = $state<'hidden' | 'admin' | 'all'>(
+		(detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all'
+	);
+	let adminVisible = $derived(visibility !== 'hidden');
+	let memberVisible = $derived(visibility === 'all');
+
+	function setVisibility(admin: boolean, member: boolean) {
+		if (member) {
+			visibility = 'all';
+		} else if (admin) {
+			visibility = 'admin';
+		} else {
+			visibility = 'hidden';
+		}
+		configForm.fields.visibility.set(visibility);
+	}
 </script>
 
 <h3 class="mb-1 text-sm font-semibold">Logwiz Configuration</h3>
@@ -44,6 +62,42 @@
 		/>
 		<p class="mt-1 text-[10px] text-base-content/40">
 			Friendly name shown to users. Leave empty to use the index ID.
+		</p>
+	</div>
+	<input {...configForm.fields.visibility.as('hidden', visibility)} />
+	<div class="rounded-lg border border-base-300 p-3">
+		<label class="mb-2 block text-xs font-medium">Search Visibility</label>
+		<div class="flex gap-4">
+			<label class="flex items-center gap-2 text-xs">
+				<input
+					type="checkbox"
+					class="checkbox checkbox-xs checkbox-accent"
+					checked={adminVisible}
+					onchange={(e) => {
+						const checked = e.currentTarget.checked;
+						if (!checked) setVisibility(false, false);
+						else setVisibility(true, memberVisible);
+					}}
+				/>
+				Admin
+			</label>
+			<label class="flex items-center gap-2 text-xs">
+				<input
+					type="checkbox"
+					class="checkbox checkbox-xs checkbox-accent"
+					checked={memberVisible}
+					onchange={(e) => {
+						const checked = e.currentTarget.checked;
+						if (checked) setVisibility(true, true);
+						else setVisibility(adminVisible, false);
+					}}
+				/>
+				Member
+			</label>
+		</div>
+		<p class="mt-1 text-[10px] text-base-content/40">
+			Controls who can see this index on the search page. Unchecking both hides it from search
+			entirely.
 		</p>
 	</div>
 	<div>

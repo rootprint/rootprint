@@ -33,6 +33,7 @@ export const qwIndex = sqliteTable('qw_index', {
 	messageField: text('message_field').notNull().default('message'),
 	tracebackField: text('traceback_field'),
 	displayName: text('display_name'),
+	visibility: text('visibility').notNull().default('all'),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull(),
