@@ -80,7 +80,9 @@
 							</td>
 							<td class="text-base-content/60">{user.email}</td>
 							<td>
-								{#if user.status === 'pending'}
+								{#if user.authProvider === 'google'}
+									<span class="badge badge-sm">Google</span>
+								{:else if user.status === 'pending'}
 									{@const expired =
 										user.inviteExpiresAt && new Date(user.inviteExpiresAt).getTime() < Date.now()}
 									<span class="badge badge-sm">{expired ? 'Expired' : 'Pending'}</span>
@@ -96,7 +98,7 @@
 							</td>
 							<td>
 								<div class="flex gap-1">
-									{#if user.status === 'pending'}
+									{#if user.authProvider !== 'google' && user.status === 'pending'}
 										{#if user.inviteUrl}
 											<CopyButton
 												text={user.inviteUrl!}
@@ -125,7 +127,7 @@
 											{/if}
 										</button>
 									{/if}
-									{#if user.status === 'active' && user.id !== currentUserId}
+									{#if user.authProvider !== 'google' && user.status === 'active' && user.id !== currentUserId}
 										<button
 											class="btn btn-ghost btn-xs"
 											onclick={() => {

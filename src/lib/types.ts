@@ -41,6 +41,7 @@ export type User = {
 	role?: string | null;
 	createdAt: Date;
 	status: 'pending' | 'active';
+	authProvider: 'google' | 'credential';
 	inviteUrl: string | null;
 	inviteExpiresAt: Date | null;
 };
@@ -94,7 +95,7 @@ export type SharedQueryEntry = {
 	name: string;
 	description: string | null;
 	query: string;
-	username: string | null;
+	username: string;
 	createdAt: Date;
 };
 

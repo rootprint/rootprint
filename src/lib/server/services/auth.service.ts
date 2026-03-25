@@ -4,6 +4,14 @@ import { inviteToken, account, user } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { hashPassword } from 'better-auth/crypto';
 
+export async function hasGoogleAccount(userId: string): Promise<boolean> {
+	const [row] = await db
+		.select({ id: account.id })
+		.from(account)
+		.where(and(eq(account.userId, userId), eq(account.providerId, 'google')));
+	return !!row;
+}
+
 export async function signInEmail(headers: Headers, email: string, password: string) {
 	await auth.api.signInEmail({
 		body: { email, password },
@@ -23,6 +31,10 @@ export async function signOut(headers: Headers) {
 }
 
 export async function changeForcedPassword(userId: string, password: string) {
+	if (await hasGoogleAccount(userId)) {
+		throw new Error('Cannot change password for a Google-authenticated user');
+	}
+
 	const hashedPw = await hashPassword(password);
 
 	await db
@@ -36,7 +48,7 @@ export async function changeForcedPassword(userId: string, password: string) {
 export async function setupPassword(
 	token: string,
 	password: string
-): Promise<{ success: true } | { error: 'invalid_token' | 'expired_token' }> {
+): Promise<{ success: true } | { error: 'invalid_token' | 'expired_token' | 'google_account' }> {
 	const [invite] = await db.select().from(inviteToken).where(eq(inviteToken.token, token));
 
 	if (!invite) {
@@ -45,6 +57,10 @@ export async function setupPassword(
 
 	if (invite.expiresAt < new Date()) {
 		return { error: 'expired_token' };
+	}
+
+	if (await hasGoogleAccount(invite.userId)) {
+		return { error: 'google_account' };
 	}
 
 	const hashedPw = await hashPassword(password);
@@ -76,10 +92,15 @@ export async function validateInviteToken(
 }
 
 export async function changeOwnPassword(
+	userId: string,
 	headers: Headers,
 	currentPassword: string,
 	newPassword: string
 ) {
+	if (await hasGoogleAccount(userId)) {
+		throw new Error('Cannot change password for a Google-authenticated user');
+	}
+
 	await auth.api.changePassword({
 		headers,
 		body: {

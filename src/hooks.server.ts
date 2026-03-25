@@ -5,8 +5,8 @@ import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { user, account } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { config, validateConfig } from '$lib/server/config';
 import { syncIndexesFromQuickwit } from '$lib/server/services/index.service';
 
@@ -73,16 +73,24 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 		event.locals.session = session.session;
 		event.locals.user = session.user;
 
-		// Force password change if required
+		// Force password change if required (skip for Google-authenticated users)
 		if (
 			session.user.mustChangePassword &&
 			!event.url.pathname.startsWith('/auth/change-password') &&
 			!event.url.pathname.startsWith('/api/auth')
 		) {
-			return new Response(null, {
-				status: 302,
-				headers: { Location: '/auth/change-password' }
-			});
+			const [googleAccount] = db
+				.select({ id: account.id })
+				.from(account)
+				.where(and(eq(account.userId, session.user.id), eq(account.providerId, 'google')))
+				.all();
+
+			if (!googleAccount) {
+				return new Response(null, {
+					status: 302,
+					headers: { Location: '/auth/change-password' }
+				});
+			}
 		}
 	}
 

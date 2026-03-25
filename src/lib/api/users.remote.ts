@@ -29,7 +29,11 @@ export const createInvite = command(createInviteSchema, async (data) => {
 export const regenerateInvite = command(regenerateInviteSchema, async (data) => {
 	requireAdmin();
 	const event = getRequestEvent();
-	return userService.regenerateInvite(data.userId, event.url.origin);
+	try {
+		return await userService.regenerateInvite(data.userId, event.url.origin);
+	} catch (e) {
+		error(400, e instanceof Error ? e.message : 'Failed to regenerate invite');
+	}
 });
 
 export const removeUser = command(removeUserSchema, async (data) => {

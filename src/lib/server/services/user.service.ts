@@ -1,6 +1,7 @@
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { inviteToken, user } from '$lib/server/db/schema';
+import { inviteToken, user, account } from '$lib/server/db/schema';
+import { hasGoogleAccount } from '$lib/server/services/auth.service';
 import { eq } from 'drizzle-orm';
 import { config } from '$lib/server/config';
 import { APIError } from 'better-auth/api';
@@ -28,9 +29,20 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 		])
 	);
 
+	const googleAccounts = await db
+		.select({ userId: account.userId })
+		.from(account)
+		.where(eq(account.providerId, 'google'));
+	const googleUserIds = new Set(googleAccounts.map((a) => a.userId));
+
 	return result.users.map((u) => ({
 		...u,
-		status: inviteMap.has(u.id) ? ('pending' as const) : ('active' as const),
+		status: googleUserIds.has(u.id)
+			? ('active' as const)
+			: inviteMap.has(u.id)
+				? ('pending' as const)
+				: ('active' as const),
+		authProvider: googleUserIds.has(u.id) ? ('google' as const) : ('credential' as const),
 		inviteUrl: inviteMap.get(u.id)?.url ?? null,
 		inviteExpiresAt: inviteMap.get(u.id)?.expiresAt ?? null
 	}));
@@ -74,6 +86,10 @@ export async function createInvite(
 }
 
 export async function regenerateInvite(userId: string, requestOrigin: string) {
+	if (await hasGoogleAccount(userId)) {
+		throw new Error('Cannot regenerate invite for a Google-authenticated user');
+	}
+
 	const publicOrigin = resolvePublicOrigin(requestOrigin);
 	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
 
@@ -121,6 +137,9 @@ export async function resetPassword(
 ) {
 	if (userId === adminId) {
 		throw new Error('Cannot reset your own password');
+	}
+	if (await hasGoogleAccount(userId)) {
+		throw new Error('Cannot reset password for a Google-authenticated user');
 	}
 	try {
 		await auth.api.setUserPassword({

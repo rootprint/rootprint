@@ -41,7 +41,14 @@ export const changePassword = form(changePasswordSchema, async (data) => {
 		error(403, 'Password change not required');
 	}
 
-	await authService.changeForcedPassword(currentUser.id, data._password);
+	try {
+		await authService.changeForcedPassword(currentUser.id, data._password);
+	} catch (e) {
+		if (e instanceof Error) {
+			error(403, e.message);
+		}
+		throw e;
+	}
 
 	redirect(303, '/');
 });
@@ -49,6 +56,10 @@ export const changePassword = form(changePasswordSchema, async (data) => {
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
 	const result = await authService.setupPassword(data.token, data._password);
 	if (!('success' in result)) {
+		if (result.error === 'google_account') {
+			invalid(issue.token('This account uses Google authentication. Please sign in with Google.'));
+			return;
+		}
 		invalid(
 			issue.token(
 				result.error === 'expired_token'
@@ -62,10 +73,11 @@ export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
 });
 
 export const changeOwnPassword = command(changeOwnPasswordSchema, async (data) => {
-	requireUser();
+	const currentUser = requireUser();
 	const event = getRequestEvent();
 	try {
 		await authService.changeOwnPassword(
+			currentUser.id,
 			event.request.headers,
 			data._currentPassword,
 			data._password
@@ -78,6 +90,9 @@ export const changeOwnPassword = command(changeOwnPasswordSchema, async (data) =
 					? 'Current password is incorrect'
 					: e.message || 'Failed to change password'
 			);
+		}
+		if (e instanceof Error) {
+			error(403, e.message);
 		}
 		throw e;
 	}

@@ -65,7 +65,7 @@ export async function getSharedQueries(indexId: string) {
 			description: savedQuery.description,
 			query: savedQuery.query,
 			createdAt: savedQuery.createdAt,
-			username: user.username
+			username: user.name
 		})
 		.from(savedQuery)
 		.innerJoin(user, eq(savedQuery.userId, user.id))

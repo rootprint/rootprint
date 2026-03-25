@@ -57,9 +57,7 @@
 			</div>
 			<div class="flex items-center gap-1.5 text-[10px] text-base-content/60">
 				<span class="truncate">{entry.query || '*'}</span>
-				<span class="ml-auto badge shrink-0 badge-ghost badge-xs"
-					>{entry.username ?? 'unknown'}</span
-				>
+				<span class="ml-auto badge shrink-0 badge-ghost badge-xs">{entry.username}</span>
 			</div>
 			{#if entry.description}
 				<div class="truncate text-[10px] text-base-content/50 italic">
