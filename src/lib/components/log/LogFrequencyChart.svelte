@@ -334,7 +334,7 @@
 	});
 </script>
 
-<div class="relative z-20 border-b border-base-300">
+<div class="relative border-b border-base-300">
 	<CollapsibleSection title="Frequency chart" bind:collapsed>
 		{#snippet headerActions()}
 			{#if loading}
@@ -354,7 +354,7 @@
 
 			{#if tooltipVisible && tooltipIdx != null && columnarData}
 				<div
-					class="pointer-events-none absolute z-10 rounded border border-base-300 bg-base-100 px-2.5 py-1.5 shadow-lg"
+					class="pointer-events-none absolute z-20 rounded border border-base-300 bg-base-100 px-2.5 py-1.5 shadow-lg"
 					style="left: {tooltipLeft}px; top: {tooltipTop}px;"
 				>
 					<div class="mb-1 text-[11px] text-base-content/60">
