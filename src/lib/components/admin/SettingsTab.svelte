@@ -2,16 +2,10 @@
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import {
-		saveGoogleAuthSettings,
-		removeGoogleAuthSettings
-	} from '$lib/api/settings.remote';
+	import { saveGoogleAuthSettings, removeGoogleAuthSettings } from '$lib/api/settings.remote';
 	import type { GoogleAuthSettingsView } from '$lib/types';
 
-	let {
-		origin,
-		settings
-	}: { origin: string; settings: GoogleAuthSettingsView | null } = $props();
+	let { origin, settings }: { origin: string; settings: GoogleAuthSettingsView | null } = $props();
 
 	let clientId = $state('');
 	let clientSecret = $state('');
@@ -113,7 +107,7 @@
 	const callbackUrl = $derived(`${origin}/api/auth/callback/google`);
 </script>
 
-<div class="card bg-base-100 border border-base-300">
+<div class="card border border-base-300 bg-base-100">
 	<div class="card-body">
 		<h3 class="card-title text-base">Google Authentication</h3>
 		<p class="text-sm text-base-content/60">
@@ -121,20 +115,18 @@
 		</p>
 
 		{#if savedSuccessfully}
-			<div class="alert alert-warning text-sm">
+			<div class="alert text-sm alert-warning">
 				Settings saved. Restart the server for changes to take effect.
 			</div>
 		{/if}
 
 		<div class="mt-2 flex flex-col gap-4">
 			<div>
-				<label class="mb-1 block text-xs font-medium" for="googleClientId">
-					Client ID
-				</label>
+				<label class="mb-1 block text-xs font-medium" for="googleClientId"> Client ID </label>
 				<input
 					id="googleClientId"
 					type="text"
-					class="input input-bordered input-sm w-full"
+					class="input-bordered input input-sm w-full"
 					placeholder="123456789.apps.googleusercontent.com"
 					bind:value={clientId}
 				/>
@@ -147,16 +139,14 @@
 				<input
 					id="googleClientSecret"
 					type="password"
-					class="input input-bordered input-sm w-full"
+					class="input-bordered input input-sm w-full"
 					placeholder={hasExistingSecret
 						? `Current: ${clientSecretMasked} (leave blank to keep)`
 						: 'Enter client secret'}
 					bind:value={clientSecret}
 				/>
 				{#if hasExistingSecret}
-					<p class="mt-1 text-[10px] text-base-content/40">
-						Leave blank to keep current secret.
-					</p>
+					<p class="mt-1 text-[10px] text-base-content/40">Leave blank to keep current secret.</p>
 				{/if}
 			</div>
 
@@ -166,23 +156,17 @@
 					<input
 						id="domainInput"
 						type="text"
-						class="input input-bordered input-sm flex-1"
+						class="input-bordered input input-sm flex-1"
 						placeholder="e.g. company.com"
 						bind:value={domainInput}
 						onkeydown={handleDomainKeydown}
 					/>
-					<button
-						type="button"
-						class="btn btn-sm btn-outline"
-						onclick={addDomain}
-					>
-						Add
-					</button>
+					<button type="button" class="btn btn-outline btn-sm" onclick={addDomain}> Add </button>
 				</div>
 				{#if allowedDomains.length > 0}
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each allowedDomains as domain (domain)}
-							<span class="badge badge-outline gap-1">
+							<span class="badge gap-1 badge-outline">
 								{domain}
 								<button
 									type="button"
@@ -203,15 +187,11 @@
 					<input
 						id="callbackUrl"
 						type="text"
-						class="input input-bordered input-sm w-full font-mono text-xs"
+						class="input-bordered input input-sm w-full font-mono text-xs"
 						value={callbackUrl}
 						readonly
 					/>
-					<CopyButton
-						text={callbackUrl}
-						class="btn btn-sm btn-outline"
-						title="Copy callback URL"
-					/>
+					<CopyButton text={callbackUrl} class="btn btn-outline btn-sm" title="Copy callback URL" />
 				</div>
 				<p class="mt-1 text-[10px] text-base-content/40">
 					Add this URL as an authorized redirect URI in your Google Cloud Console.
@@ -219,11 +199,7 @@
 			</div>
 
 			<div class="flex gap-2">
-				<button
-					class="btn btn-sm btn-accent"
-					disabled={saving}
-					onclick={handleSave}
-				>
+				<button class="btn btn-sm btn-accent" disabled={saving} onclick={handleSave}>
 					{#if saving}
 						<span class="loading loading-xs loading-spinner"></span>
 						Saving...
@@ -232,11 +208,7 @@
 					{/if}
 				</button>
 				{#if hasExistingSecret}
-					<button
-						class="btn btn-sm btn-outline btn-error"
-						disabled={saving}
-						onclick={handleRemove}
-					>
+					<button class="btn btn-outline btn-sm btn-error" disabled={saving} onclick={handleRemove}>
 						Remove Google Auth
 					</button>
 				{/if}

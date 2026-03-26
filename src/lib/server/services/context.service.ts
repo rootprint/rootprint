@@ -12,8 +12,7 @@ function fingerprint(hit: Record<string, unknown>, timestampField?: string): str
 			if (entries[i][0] === timestampField) {
 				const raw = entries[i][1];
 				if (raw !== null && raw !== undefined) {
-					const ms =
-						typeof raw === 'number' ? normalizeToMs(raw) : new Date(String(raw)).getTime();
+					const ms = typeof raw === 'number' ? normalizeToMs(raw) : new Date(String(raw)).getTime();
 					if (!isNaN(ms)) {
 						entries[i] = [entries[i][0], Math.floor(ms)];
 					}
@@ -74,10 +73,7 @@ function buildContextQuery(
 	return { query: parts.join(' AND '), activeLabels };
 }
 
-function extractTimestampSeconds(
-	log: Record<string, unknown>,
-	timestampField: string
-): number {
+function extractTimestampSeconds(log: Record<string, unknown>, timestampField: string): number {
 	const flat = flattenObject(log);
 	const entry = flat.find(([key]) => key === timestampField);
 	if (!entry) throw new Error(`Timestamp field "${timestampField}" not found in log`);
@@ -90,10 +86,7 @@ function extractTimestampSeconds(
 	return Math.floor(date.getTime() / 1000);
 }
 
-function extractTimestampMs(
-	log: Record<string, unknown>,
-	timestampField: string
-): number {
+function extractTimestampMs(log: Record<string, unknown>, timestampField: string): number {
 	const flat = flattenObject(log);
 	const entry = flat.find(([key]) => key === timestampField);
 	if (!entry) throw new Error(`Timestamp field "${timestampField}" not found in log`);
@@ -175,7 +168,9 @@ export async function getLogContext(
 	// Add selected log and sort everything by timestamp DESC
 	combined.push(log);
 	combined.sort((a, b) => {
-		return extractTimestampMs(b, config.timestampField) - extractTimestampMs(a, config.timestampField);
+		return (
+			extractTimestampMs(b, config.timestampField) - extractTimestampMs(a, config.timestampField)
+		);
 	});
 
 	// Find selected log position

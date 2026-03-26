@@ -155,7 +155,7 @@
 		<div class="border-b border-base-300 px-4 py-3">
 			<div class="flex flex-wrap gap-1.5">
 				{#each activeLabels.filter((l) => !excludedFields.includes(l.field)) as label (label.field)}
-					<span class="badge badge-sm gap-1 badge-outline font-mono" title={String(label.value)}>
+					<span class="badge gap-1 badge-outline font-mono badge-sm" title={String(label.value)}>
 						{label.field}:{isNumber(label.value)
 							? label.value
 							: `"${formatLabelValue(label.value)}"`}
@@ -196,7 +196,10 @@
 		</div>
 
 		<!-- Log list -->
-		<div class="flex-1 overflow-y-auto font-['Roboto_Mono',monospace] text-xs" bind:this={scrollContainer}>
+		<div
+			class="flex-1 overflow-y-auto font-['Roboto_Mono',monospace] text-xs"
+			bind:this={scrollContainer}
+		>
 			{#each logs as entry, i (entry.key)}
 				{@const severity = extractSeverity(entry.hit, levelField)}
 				{@const ts = extractTimestamp(entry.hit, timestampField, timezoneMode)}
@@ -209,7 +212,7 @@
 				<!-- Log row -->
 				<button
 					class="flex w-full cursor-pointer gap-3 border-l-4 px-4 py-1 text-left transition-colors hover:bg-base-200/50 {borderColor} {isSelected
-						? 'bg-neutral sticky top-0 bottom-0 z-10 text-neutral-content'
+						? 'sticky top-0 bottom-0 z-10 bg-neutral text-neutral-content'
 						: ''}"
 					data-selected={isSelected}
 					onclick={() => (expandedIndex = isExpanded ? null : i)}

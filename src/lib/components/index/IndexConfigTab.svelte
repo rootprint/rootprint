@@ -175,13 +175,13 @@
 	<div>
 		<label class="mb-1 block text-xs font-medium">Context Fields</label>
 		<input {...configForm.fields.contextFields.as('hidden', contextFieldsSerialized)} />
-		<div class="flex flex-wrap gap-1.5 mb-2">
+		<div class="mb-2 flex flex-wrap gap-1.5">
 			{#each contextFieldTags as field}
-				<span class="badge badge-sm badge-ghost gap-1 font-mono text-xs">
+				<span class="badge gap-1 badge-ghost font-mono text-xs badge-sm">
 					{field}
 					<button
 						type="button"
-						class="text-error cursor-pointer"
+						class="cursor-pointer text-error"
 						onclick={() => removeContextField(field)}>&times;</button
 					>
 				</span>
@@ -195,7 +195,7 @@
 				class="input-bordered input input-sm flex-1"
 				placeholder="e.g. service.name, attributes.environment"
 			/>
-			<button type="button" class="btn btn-sm btn-ghost" onclick={addContextField}>Add</button>
+			<button type="button" class="btn btn-ghost btn-sm" onclick={addContextField}>Add</button>
 		</div>
 		<p class="mt-1 text-[10px] text-base-content/40">
 			Fields used for log context search. Leave empty to use all fields. Supports dot-notation for

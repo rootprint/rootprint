@@ -44,12 +44,12 @@
 		{#if data.googleAuthEnabled}
 			<button
 				type="button"
-				class="btn w-full btn-outline gap-2"
+				class="btn w-full gap-2 btn-outline"
 				disabled={googleLoading}
 				onclick={handleGoogleSignIn}
 			>
 				{#if googleLoading}
-					<span class="loading loading-spinner loading-xs"></span>
+					<span class="loading loading-xs loading-spinner"></span>
 				{:else}
 					<svg class="h-4 w-4" viewBox="0 0 24 24">
 						<path

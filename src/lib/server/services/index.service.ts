@@ -90,7 +90,7 @@ export function getFieldConfig(indexId: string) {
 			timestampField: qwIndex.timestampField,
 			messageField: qwIndex.messageField,
 			tracebackField: qwIndex.tracebackField,
-		contextFields: qwIndex.contextFields
+			contextFields: qwIndex.contextFields
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId))
