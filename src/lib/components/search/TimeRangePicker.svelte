@@ -20,8 +20,8 @@
 	let container = $state<HTMLDivElement | null>(null);
 
 	// Custom date range state
-	let fromDate = $state<Date | null>(null);
-	let toDate = $state<Date | null>(null);
+	let fromDate = $state<Date | null>(new Date());
+	let toDate = $state<Date | null>(new Date());
 	let fromTime = $state('00:00');
 	let toTime = $state('23:59');
 	let selectionMode = $state<'from' | 'to'>('from');
