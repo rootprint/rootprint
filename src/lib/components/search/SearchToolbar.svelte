@@ -82,7 +82,7 @@
 		</button>
 
 		{#if browser}
-			<CopyButton text={window.location.href} class="btn btn-sm">
+			<CopyButton text={() => window.location.href} class="btn btn-sm">
 				{#snippet children({ copied })}
 					<Share2 size={14} />
 					{copied ? 'Copied!' : 'Share'}

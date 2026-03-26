@@ -10,7 +10,7 @@
 		children,
 		...rest
 	}: {
-		text: string;
+		text: string | (() => string);
 		class?: string;
 		title?: string;
 		children?: Snippet<[{ copied: boolean }]>;
@@ -21,11 +21,12 @@
 
 	async function handleCopy() {
 		try {
+			const value = typeof text === 'function' ? text() : text;
 			if (navigator.clipboard && window.isSecureContext) {
-				await navigator.clipboard.writeText(text);
+				await navigator.clipboard.writeText(value);
 			} else {
 				const textarea = document.createElement('textarea');
-				textarea.value = text;
+				textarea.value = value;
 				textarea.style.position = 'fixed';
 				textarea.style.opacity = '0';
 				document.body.appendChild(textarea);
