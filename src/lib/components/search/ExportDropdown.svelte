@@ -28,7 +28,7 @@
 			.toISOString()
 			.replace(/[:]/g, '-')
 			.replace(/\.\d+Z$/, 'Z');
-		return `logwit-${indexId}-${ts}.${ext}`;
+		return `logwiz-${indexId}-${ts}.${ext}`;
 	}
 
 	function handleExport() {

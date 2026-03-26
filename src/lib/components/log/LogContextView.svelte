@@ -69,7 +69,7 @@
 			noMoreBefore = result.noMoreBefore;
 		} catch {
 			if (thisSeq !== fetchSeq) return;
-			error = 'No matching logs found. Try removing some labels to widen the search.';
+			error = 'Failed to fetch log context. Check your connection and try again.';
 			logs = withKeys([hit]);
 			selectedIndex = 0;
 		} finally {

@@ -2,7 +2,8 @@
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { saveGoogleAuthSettings, removeGoogleAuthSettings } from '$lib/api/settings.remote';
+	import { saveGoogleAuthSettings } from '$lib/api/settings.remote';
+	import RemoveGoogleAuthModal from './RemoveGoogleAuthModal.svelte';
 	import type { GoogleAuthSettingsView } from '$lib/types';
 
 	let { origin, settings }: { origin: string; settings: GoogleAuthSettingsView | null } = $props();
@@ -15,6 +16,7 @@
 	let saving = $state(false);
 	let hasExistingSecret = $state(false);
 	let savedSuccessfully = $state(false);
+	let removeModalOpen = $state(false);
 
 	$effect(() => {
 		if (settings) {
@@ -88,20 +90,8 @@
 		}
 	}
 
-	async function handleRemove() {
-		if (!confirm('Remove Google authentication settings? A server restart will be required.'))
-			return;
-		saving = true;
-		try {
-			await removeGoogleAuthSettings();
-			savedSuccessfully = true;
-			toast.success('Google auth settings removed');
-			await invalidateAll();
-		} catch {
-			toast.error('Failed to remove settings');
-		} finally {
-			saving = false;
-		}
+	function handleRemoved() {
+		savedSuccessfully = true;
 	}
 
 	const callbackUrl = $derived(`${origin}/api/auth/callback/google`);
@@ -208,7 +198,7 @@
 					{/if}
 				</button>
 				{#if hasExistingSecret}
-					<button class="btn btn-outline btn-sm btn-error" disabled={saving} onclick={handleRemove}>
+					<button class="btn btn-outline btn-sm btn-error" disabled={saving} onclick={() => (removeModalOpen = true)}>
 						Remove Google Auth
 					</button>
 				{/if}
@@ -216,3 +206,5 @@
 		</div>
 	</div>
 </div>
+
+<RemoveGoogleAuthModal bind:open={removeModalOpen} onremove={handleRemoved} />
