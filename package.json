@@ -1,6 +1,6 @@
 {
 	"name": "logwiz",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "Open-source logging UI for Quickwit",
 	"type": "module",
 	"license": "Apache-2.0",
@@ -62,7 +62,7 @@
 		"daisyui": "^5.5.19",
 		"drizzle-orm": "^0.45.1",
 		"lucide-svelte": "^0.577.0",
-		"quickwit-js": "^0.3.1",
+		"quickwit-js": "^0.3.6",
 		"svelte-dnd-action": "^0.9.69",
 		"svelte-sonner": "^1.1.0",
 		"sveltekit-rate-limiter": "^0.7.0",

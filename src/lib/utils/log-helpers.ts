@@ -26,6 +26,25 @@ export function severityBorderColor(severity: string): string {
 	}
 }
 
+export function severityBgColor(severity: string): string {
+	switch (severity) {
+		case 'error':
+		case 'fatal':
+		case 'critical':
+			return 'bg-error/5';
+		case 'warn':
+		case 'warning':
+			return 'bg-warning/5';
+		case 'debug':
+		case 'trace':
+			return 'bg-accent/5';
+		case 'info':
+			return 'bg-info/5';
+		default:
+			return '';
+	}
+}
+
 export function severityTextColor(severity: string): string {
 	switch (severity) {
 		case 'error':

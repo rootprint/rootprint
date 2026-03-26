@@ -14,5 +14,19 @@ export const saveIndexConfigSchema = v.object({
 			v.transform((s) => s || null)
 		)
 	),
-	visibility: v.optional(v.picklist(['hidden', 'admin', 'all']), 'all')
+	visibility: v.optional(v.picklist(['hidden', 'admin', 'all']), 'all'),
+	contextFields: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((s): string[] | null => {
+				if (!s) return null;
+				try {
+					const parsed = JSON.parse(s);
+					return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+				} catch {
+					return null;
+				}
+			})
+		)
+	)
 });

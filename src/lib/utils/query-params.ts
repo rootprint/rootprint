@@ -5,7 +5,7 @@ const DEFAULTS = {
 	query: '',
 	timeRangePreset: '15m',
 	timezoneMode: 'local' as TimezoneMode,
-	sortDirection: 'asc' as SortDirection
+	sortDirection: 'desc' as SortDirection
 };
 
 /** Returns true if the parsed query has non-default search params (query or non-default time). */

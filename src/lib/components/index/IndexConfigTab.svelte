@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { saveIndexConfig } from '$lib/api/indexes.remote';
 	import type { PageData } from '../../../routes/(app)/administration/$types';
@@ -9,16 +10,57 @@
 
 	const configForm = $derived(saveIndexConfig.for(detail.indexId));
 
+	// Full form reset when switching indexes
 	$effect(() => {
-		configForm.fields.set({
-			indexId: detail.indexId,
-			displayName: detail.displayName ?? '',
-			levelField: detail.levelField ?? 'level',
-			messageField: detail.messageField ?? 'message',
-			tracebackField: detail.tracebackField ?? '',
-			visibility: (detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all'
+		const id = detail.indexId;
+		untrack(() => {
+			configForm.fields.set({
+				indexId: id,
+				displayName: detail.displayName ?? '',
+				levelField: detail.levelField ?? 'level',
+				messageField: detail.messageField ?? 'message',
+				tracebackField: detail.tracebackField ?? '',
+				visibility: (detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all',
+				contextFields: contextFieldsSerialized
+			});
+			contextFieldTags = Array.isArray(detail.contextFields)
+				? (detail.contextFields as string[])
+				: [];
 		});
 	});
+
+	// Sync only contextFields when tags change (without resetting other fields)
+	$effect(() => {
+		const serialized = contextFieldsSerialized;
+		untrack(() => {
+			configForm.fields.contextFields.set(serialized);
+		});
+	});
+
+	let contextFieldTags = $state<string[]>(
+		Array.isArray(detail.contextFields) ? (detail.contextFields as string[]) : []
+	);
+	let contextFieldInput = $state('');
+	const contextFieldsSerialized = $derived(JSON.stringify(contextFieldTags));
+
+	function addContextField() {
+		const value = contextFieldInput.trim();
+		if (value && !contextFieldTags.includes(value)) {
+			contextFieldTags = [...contextFieldTags, value];
+		}
+		contextFieldInput = '';
+	}
+
+	function removeContextField(field: string) {
+		contextFieldTags = contextFieldTags.filter((f) => f !== field);
+	}
+
+	function handleContextFieldKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			addContextField();
+		}
+	}
 
 	let visibility = $state<'hidden' | 'admin' | 'all'>(
 		(detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all'
@@ -128,6 +170,36 @@
 		/>
 		<p class="mt-1 text-[10px] text-base-content/40">
 			Dot-notation path to the field containing stacktrace/traceback data
+		</p>
+	</div>
+	<div>
+		<label class="mb-1 block text-xs font-medium">Context Fields</label>
+		<input {...configForm.fields.contextFields.as('hidden', contextFieldsSerialized)} />
+		<div class="flex flex-wrap gap-1.5 mb-2">
+			{#each contextFieldTags as field}
+				<span class="badge badge-sm badge-ghost gap-1 font-mono text-xs">
+					{field}
+					<button
+						type="button"
+						class="text-error cursor-pointer"
+						onclick={() => removeContextField(field)}>&times;</button
+					>
+				</span>
+			{/each}
+		</div>
+		<div class="flex gap-2">
+			<input
+				type="text"
+				bind:value={contextFieldInput}
+				onkeydown={handleContextFieldKeydown}
+				class="input-bordered input input-sm flex-1"
+				placeholder="e.g. service.name, attributes.environment"
+			/>
+			<button type="button" class="btn btn-sm btn-ghost" onclick={addContextField}>Add</button>
+		</div>
+		<p class="mt-1 text-[10px] text-base-content/40">
+			Fields used for log context search. Leave empty to use all fields. Supports dot-notation for
+			nested fields.
 		</p>
 	</div>
 	<div>

@@ -163,8 +163,12 @@
 <LogDetailDrawer
 	bind:open={drawerOpen}
 	hit={selectedLog}
+	indexId={store.selectedIndex ?? ''}
 	timestampField={store.fieldConfig.timestampField}
 	tracebackField={store.fieldConfig.tracebackField}
+	messageField={store.fieldConfig.messageField}
+	levelField={store.fieldConfig.levelField}
+	timezoneMode={store.timezoneMode}
 	onfilter={(key, value, exclude) => {
 		if (store.hasClause(key, value, exclude)) {
 			store.removeClause(key, value, exclude);

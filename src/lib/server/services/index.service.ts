@@ -89,7 +89,8 @@ export function getFieldConfig(indexId: string) {
 			levelField: qwIndex.levelField,
 			timestampField: qwIndex.timestampField,
 			messageField: qwIndex.messageField,
-			tracebackField: qwIndex.tracebackField
+			tracebackField: qwIndex.tracebackField,
+		contextFields: qwIndex.contextFields
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId))
@@ -121,6 +122,7 @@ export function getFieldConfig(indexId: string) {
 		timestampField: row?.timestampField ?? 'timestamp',
 		messageField: row?.messageField ?? 'message',
 		tracebackField: row?.tracebackField ?? null,
+		contextFields: (row?.contextFields as string[] | null) ?? null,
 		fastJsonFields
 	};
 }
@@ -374,7 +376,8 @@ export function getIndexDetail(indexId: string) {
 			messageField: qwIndex.messageField,
 			tracebackField: qwIndex.tracebackField,
 			displayName: qwIndex.displayName,
-			visibility: qwIndex.visibility
+			visibility: qwIndex.visibility,
+			contextFields: qwIndex.contextFields
 		})
 		.from(qwIndex)
 		.where(eq(qwIndex.indexId, indexId))

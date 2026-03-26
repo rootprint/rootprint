@@ -34,6 +34,7 @@ export const qwIndex = sqliteTable('qw_index', {
 	tracebackField: text('traceback_field'),
 	displayName: text('display_name'),
 	visibility: text('visibility').notNull().default('all'),
+	contextFields: text('context_fields', { mode: 'json' }).$type<string[] | null>(),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull(),

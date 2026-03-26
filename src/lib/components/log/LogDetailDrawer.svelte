@@ -1,8 +1,9 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
-	import { ListTree, Braces, SearchCheck, SearchX, Bug } from 'lucide-svelte';
+	import { ListTree, Braces, SearchCheck, SearchX, Bug, Logs } from 'lucide-svelte';
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
+	import LogContextView from './LogContextView.svelte';
 	import { flattenObject } from '$lib/utils/log-helpers';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import Drawer from '$lib/components/ui/Drawer.svelte';
@@ -12,12 +13,20 @@
 		hit = null,
 		timestampField = 'timestamp',
 		tracebackField = null as string | null,
+		indexId = '',
+		messageField = 'message',
+		levelField = 'level',
+		timezoneMode = 'utc' as 'utc' | 'local',
 		onfilter
 	}: {
 		open: boolean;
 		hit: Record<string, unknown> | null;
 		timestampField?: string;
 		tracebackField?: string | null;
+		indexId?: string;
+		messageField?: string;
+		levelField?: string;
+		timezoneMode?: 'utc' | 'local';
 		onfilter?: (key: string, value: string, exclude: boolean) => void;
 	} = $props();
 
@@ -31,7 +40,8 @@
 	const tabs = $derived.by(() => {
 		const base: { id: string; label: string; icon: typeof ListTree }[] = [
 			{ id: 'parameters', label: 'Parameters', icon: ListTree },
-			{ id: 'json', label: 'JSON', icon: Braces }
+			{ id: 'json', label: 'JSON', icon: Braces },
+			{ id: 'context', label: 'Context', icon: Logs }
 		];
 		if (tracebackContent) {
 			base.push({ id: 'traceback', label: 'Traceback', icon: Bug });
@@ -48,7 +58,7 @@
 		onfilter?.(key, formatFieldValue(value), exclude);
 	}
 
-	let activeTab = $state<'parameters' | 'json' | 'traceback'>('parameters');
+	let activeTab = $state<'parameters' | 'json' | 'context' | 'traceback'>('parameters');
 
 	const prettyJson = $derived(hit ? JSON.stringify(hit, null, 2) : '');
 	const jsonLines = $derived(prettyJson.split('\n'));
@@ -123,6 +133,17 @@
 						{/each}
 					</tbody>
 				</table>
+			{/if}
+		{:else if activeTab === 'context'}
+			{#if hit}
+				<LogContextView
+					{hit}
+					{indexId}
+					{messageField}
+					{levelField}
+					{timestampField}
+					{timezoneMode}
+				/>
 			{/if}
 		{:else if activeTab === 'traceback'}
 			{#if tracebackContent}
