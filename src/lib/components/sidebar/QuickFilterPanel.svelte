@@ -13,7 +13,7 @@
 	import { dndzone } from 'svelte-dnd-action';
 	import type { IndexField } from '$lib/types';
 	import { parseClauses } from '$lib/utils/query';
-	import { severityDotColor } from '$lib/utils/log-helpers';
+	import { severityDotColor, sortBySeverity } from '$lib/utils/log-helpers';
 
 	let {
 		fields,
@@ -390,21 +390,21 @@
 										</p>
 									{:else}
 										<div class="flex flex-col gap-1">
-											{#each getDisplayValues(field) as value (value)}
+											{#each pinnedSet.has(field) ? sortBySeverity(getDisplayValues(field)) : getDisplayValues(field) as value (value)}
 												{#if pinnedSet.has(field)}
 													{@const dotColor = severityDotColor(value.toLowerCase())}
 													{@const isActive = isChecked(field, value)}
 													{@const anyActive = hasActiveClausesForField(field)}
 													{@const showFull = !anyActive || isActive}
 													<button
-														class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors duration-150 hover:bg-base-200"
+														class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150 hover:bg-base-200"
 														role="checkbox"
 														aria-checked={isActive}
 														onclick={() => toggleValue(field, value)}
 													>
 														<span
 															class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-150 {showFull
-																? dotColor ?? 'bg-base-content/40'
+																? (dotColor ?? 'bg-base-content/40')
 																: 'bg-base-content/20'}"
 														></span>
 														<span
@@ -415,7 +415,7 @@
 													</button>
 												{:else}
 													<label
-														class="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-base-200"
+														class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs hover:bg-base-200"
 													>
 														<input
 															type="checkbox"

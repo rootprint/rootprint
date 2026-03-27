@@ -101,6 +101,8 @@
 			bind:activeFields={store.activeFields}
 			onchange={store.handleFieldsChange}
 			loading={store.fieldsLoading}
+			pinnedFields={[store.fieldConfig.levelField]}
+			pinnedFieldsEnd={[store.fieldConfig.messageField]}
 		/>
 	</div>
 

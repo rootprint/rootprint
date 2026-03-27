@@ -2,6 +2,17 @@ import { resolveFieldValue } from '$lib/utils/field-resolver';
 import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
 import type { TimezoneMode } from '$lib/types';
 
+export const SEVERITY_ORDER = ['trace', 'debug', 'info', 'warn', 'warning', 'error', 'critical', 'fatal'] as const;
+
+export function sortBySeverity(values: string[]): string[] {
+	const orderMap = new Map(SEVERITY_ORDER.map((v, i) => [v, i]));
+	return [...values].sort((a, b) => {
+		const ai = orderMap.get(a.toLowerCase()) ?? SEVERITY_ORDER.length;
+		const bi = orderMap.get(b.toLowerCase()) ?? SEVERITY_ORDER.length;
+		return ai - bi;
+	});
+}
+
 export function extractSeverity(doc: Record<string, unknown>, levelField: string): string {
 	const raw = resolveFieldValue(doc, levelField);
 	return (raw == null ? 'unknown' : String(raw)).toLowerCase();
@@ -10,36 +21,38 @@ export function extractSeverity(doc: Record<string, unknown>, levelField: string
 export function severityBorderColor(severity: string): string {
 	switch (severity) {
 		case 'error':
+			return 'border-l-level-error';
 		case 'fatal':
 		case 'critical':
-			return 'border-l-error';
+			return 'border-l-level-critical';
 		case 'warn':
 		case 'warning':
-			return 'border-l-warning';
+			return 'border-l-level-warning';
 		case 'debug':
 		case 'trace':
-			return 'border-l-accent';
+			return 'border-l-level-debug';
 		case 'info':
-			return 'border-l-info';
+			return 'border-l-level-info';
 		default:
-			return 'border-l-base-content/30';
+			return 'border-l-level-unknown/30';
 	}
 }
 
 export function severityBgColor(severity: string): string {
 	switch (severity) {
 		case 'error':
+			return 'bg-level-error/5';
 		case 'fatal':
 		case 'critical':
-			return 'bg-error/5';
+			return 'bg-level-critical/5';
 		case 'warn':
 		case 'warning':
-			return 'bg-warning/5';
+			return 'bg-level-warning/5';
 		case 'debug':
 		case 'trace':
-			return 'bg-accent/5';
+			return 'bg-level-debug/5';
 		case 'info':
-			return 'bg-info/5';
+			return 'bg-level-info/5';
 		default:
 			return '';
 	}
@@ -48,17 +61,18 @@ export function severityBgColor(severity: string): string {
 export function severityDotColor(severity: string): string | null {
 	switch (severity) {
 		case 'error':
+			return 'bg-level-error';
 		case 'fatal':
 		case 'critical':
-			return 'bg-error';
+			return 'bg-level-critical';
 		case 'warn':
 		case 'warning':
-			return 'bg-warning';
+			return 'bg-level-warning';
 		case 'debug':
 		case 'trace':
-			return 'bg-accent';
+			return 'bg-level-debug';
 		case 'info':
-			return 'bg-info';
+			return 'bg-level-info';
 		default:
 			return null;
 	}
@@ -67,19 +81,20 @@ export function severityDotColor(severity: string): string | null {
 export function severityTextColor(severity: string): string {
 	switch (severity) {
 		case 'error':
+			return 'text-level-error';
 		case 'fatal':
 		case 'critical':
-			return 'text-error';
+			return 'text-level-critical';
 		case 'warn':
 		case 'warning':
-			return 'text-warning';
+			return 'text-level-warning';
 		case 'debug':
 		case 'trace':
-			return 'text-accent';
+			return 'text-level-debug';
 		case 'info':
-			return 'text-info';
+			return 'text-level-info';
 		default:
-			return 'text-base-content/60';
+			return 'text-level-unknown/60';
 	}
 }
 

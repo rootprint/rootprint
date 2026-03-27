@@ -1,18 +1,22 @@
 <script lang="ts">
 	import { dndzone } from 'svelte-dnd-action';
-	import { ChevronRight, ChevronDown, Check, Settings, GripVertical, X, Plus } from 'lucide-svelte';
+	import { ChevronRight, ChevronDown, Check, Settings, GripVertical, X, Plus, Pin } from 'lucide-svelte';
 	import type { IndexField } from '$lib/types';
 
 	let {
 		availableFields,
 		activeFields = $bindable(),
 		onchange,
-		loading = false
+		loading = false,
+		pinnedFields = [],
+		pinnedFieldsEnd = []
 	}: {
 		availableFields: IndexField[];
 		activeFields: string[];
 		onchange?: () => void;
 		loading?: boolean;
+		pinnedFields?: string[];
+		pinnedFieldsEnd?: string[];
 	} = $props();
 
 	let collapsed = $state(false);
@@ -84,18 +88,28 @@
 			<span class="loading loading-sm loading-spinner"></span>
 		</div>
 	{:else if !collapsed}
-		{#if activeFields.length === 0 && !configMode}
-			<div class="px-3 py-3">
+		{#if pinnedFields.length === 0 && pinnedFieldsEnd.length === 0 && activeFields.length === 0 && !configMode}
+			<div class="px-3 py-2">
 				<p class="text-[11px] text-base-content/50">Click the gear icon to add display fields</p>
 			</div>
 		{:else}
 			<div class="flex flex-col">
-				<div class="{configMode ? 'border-b border-base-300' : ''} p-2">
+				<div class="flex flex-col gap-1 {configMode ? 'border-b border-base-300' : ''} p-2">
 					{#if configMode}
-						<p class="mb-1 text-xs font-medium text-base-content/50">Active</p>
+						<p class="text-xs font-medium text-base-content/50">Active</p>
+					{/if}
+					{#if pinnedFields.length > 0}
+						{#each pinnedFields as field (field)}
+							<div class="flex items-center gap-1 rounded {configMode ? 'bg-base-200' : ''} px-2 py-1 text-xs">
+								<Pin size={12} class="shrink-0 text-base-content/40" />
+								<span class="truncate">{field}</span>
+							</div>
+						{/each}
 					{/if}
 					{#if dndItems.length === 0}
-						<p class="px-1 py-2 text-xs text-base-content/50">No extra fields</p>
+						{#if pinnedFields.length === 0 && pinnedFieldsEnd.length === 0}
+							<p class="px-1 py-2 text-xs text-base-content/50">No extra fields</p>
+						{/if}
 					{:else if configMode}
 						<div
 							use:dndzone={{ items: dndItems, flipDurationMs: 150, type: 'active-fields' }}
@@ -114,19 +128,33 @@
 							{/each}
 						</div>
 					{:else}
-						<div class="flex flex-col gap-1">
+						<div
+							use:dndzone={{ items: dndItems, flipDurationMs: 150, type: 'active-fields' }}
+							onconsider={handleDndConsider}
+							onfinalize={handleDndFinalize}
+							class="flex flex-col gap-1"
+						>
 							{#each dndItems as field (field.id)}
-								<div class="flex items-center rounded px-2 py-1 text-xs">
+								<div class="flex items-center gap-1 rounded px-2 py-1 text-xs">
+									<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/40" />
 									<span class="truncate">{field.name}</span>
 								</div>
 							{/each}
 						</div>
 					{/if}
+					{#if pinnedFieldsEnd.length > 0}
+						{#each pinnedFieldsEnd as field (field)}
+							<div class="flex items-center gap-1 rounded {configMode ? 'bg-base-200' : ''} px-2 py-1 text-xs">
+								<Pin size={12} class="shrink-0 text-base-content/40" />
+								<span class="truncate">{field}</span>
+							</div>
+						{/each}
+					{/if}
 				</div>
 
 				{#if configMode && filteredAvailable.length > 0}
 					<div class="flex-1 p-2">
-						<p class="mb-1 text-xs font-medium text-base-content/50">Available</p>
+						<p class="mb-1 text-xs font-medium text-base-content/50">Hidden</p>
 						<div class="flex flex-col gap-0.5">
 							{#each filteredAvailable as field (field.name)}
 								<button

@@ -4,6 +4,7 @@
 	import type { TimezoneMode } from '$lib/types';
 	import { formatChartTime, formatChartDate, formatChartTooltip } from '$lib/utils/time';
 	import CollapsibleSection from '$lib/components/ui/CollapsibleSection.svelte';
+	import { SEVERITY_ORDER } from '$lib/utils/log-helpers';
 
 	let {
 		data,
@@ -19,19 +20,21 @@
 		onbrush: (start: number, end: number) => void;
 	} = $props();
 
-	const LEVEL_ORDER = ['DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL'] as const;
+	const LEVEL_ORDER = SEVERITY_ORDER.map((s) => s.toUpperCase());
 
-	const LEVEL_COLORS: Record<string, string> = {
-		DEBUG: '#22d3ee',
-		INFO: '#3b82f6',
-		WARN: '#f59e0b',
-		WARNING: '#f59e0b',
-		ERROR: '#ef4444',
-		CRITICAL: '#ec4899',
-		FATAL: '#ec4899'
+	const LEVEL_TOKEN_MAP: Record<string, string> = {
+		warn: 'warning',
+		fatal: 'critical',
+		trace: 'debug'
 	};
 
-	const FALLBACK_COLOR = '#8b5cf6';
+	function getLevelColor(level: string): string {
+		const style = getComputedStyle(document.documentElement);
+		const normalized = level.toLowerCase();
+		const token = LEVEL_TOKEN_MAP[normalized] ?? normalized;
+		return style.getPropertyValue(`--level-${token}`).trim() ||
+			style.getPropertyValue('--level-unknown').trim();
+	}
 
 	let containerEl = $state<HTMLDivElement | null>(null);
 	let chartEl = $state<HTMLDivElement | null>(null);
@@ -139,7 +142,7 @@
 
 		for (let i = 0; i < levels.length; i++) {
 			const level = levels[i];
-			const color = LEVEL_COLORS[level] ?? FALLBACK_COLOR;
+			const color = getLevelColor(level);
 
 			series.push({
 				label: level,
@@ -154,7 +157,7 @@
 			if (i > 0) {
 				bands.push({
 					series: [i + 1, i] as [number, number],
-					fill: LEVEL_COLORS[levels[i]] ?? FALLBACK_COLOR
+					fill: getLevelColor(levels[i])
 				});
 			}
 		}
@@ -366,7 +369,7 @@
 							<div class="flex items-center gap-1.5 text-xs">
 								<span
 									class="inline-block h-2 w-2 rounded-sm"
-									style="background-color: {LEVEL_COLORS[level] ?? FALLBACK_COLOR}"
+									style="background-color: {getLevelColor(level)}"
 								></span>
 								<span class="text-base-content/80">{level}</span>
 								<span class="ml-auto font-mono text-base-content">{count}</span>

@@ -50,8 +50,23 @@
 		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+:root {
+	--level-error: #ef4444;
+	--level-critical: #ec4899;
+	--level-warning: #f59e0b;
+	--level-info: #3b82f6;
+	--level-debug: #22d3ee;
+	--level-unknown: #8b5cf6;
+}
+
 @theme {
 	--font-sans: 'Inter', system-ui, sans-serif;
+	--color-level-error: var(--level-error);
+	--color-level-critical: var(--level-critical);
+	--color-level-warning: var(--level-warning);
+	--color-level-info: var(--level-info);
+	--color-level-debug: var(--level-debug);
+	--color-level-unknown: var(--level-unknown);
 }
 
 @plugin 'daisyui/theme' {
