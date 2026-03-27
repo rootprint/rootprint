@@ -38,6 +38,7 @@ Data loading should be handled in dedicated files alongside the page component(o
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
 
 ### Tests
+
 All tests has to be located in tests folder.
 
 ## Available MCP Tools:

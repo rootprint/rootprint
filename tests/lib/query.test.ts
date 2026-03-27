@@ -300,14 +300,20 @@ describe('clearClauses', () => {
 describe('shouldAutoClear', () => {
 	it('returns true when adding the last value completes the set', () => {
 		expect(
-			shouldAutoClear(['INFO', 'WARNING', 'ERROR'], 'level', 'level:(INFO OR WARNING)', 'ERROR', false)
+			shouldAutoClear(
+				['INFO', 'WARNING', 'ERROR'],
+				'level',
+				'level:(INFO OR WARNING)',
+				'ERROR',
+				false
+			)
 		).toBe(true);
 	});
 
 	it('returns true with single existing clause (not group)', () => {
-		expect(
-			shouldAutoClear(['INFO', 'WARNING'], 'level', 'level:INFO', 'WARNING', false)
-		).toBe(true);
+		expect(shouldAutoClear(['INFO', 'WARNING'], 'level', 'level:INFO', 'WARNING', false)).toBe(
+			true
+		);
 	});
 
 	it('returns false when not all values would be selected', () => {
@@ -318,20 +324,22 @@ describe('shouldAutoClear', () => {
 
 	it('returns false for exclude clauses', () => {
 		expect(
-			shouldAutoClear(['INFO', 'WARNING', 'ERROR'], 'level', '-level:(INFO OR WARNING)', 'ERROR', true)
+			shouldAutoClear(
+				['INFO', 'WARNING', 'ERROR'],
+				'level',
+				'-level:(INFO OR WARNING)',
+				'ERROR',
+				true
+			)
 		).toBe(false);
 	});
 
 	it('returns false when knownValues is empty', () => {
-		expect(
-			shouldAutoClear([], 'level', 'level:INFO', 'WARNING', false)
-		).toBe(false);
+		expect(shouldAutoClear([], 'level', 'level:INFO', 'WARNING', false)).toBe(false);
 	});
 
 	it('returns false when only one known value (single-value guard)', () => {
-		expect(
-			shouldAutoClear(['INFO'], 'level', '', 'INFO', false)
-		).toBe(false);
+		expect(shouldAutoClear(['INFO'], 'level', '', 'INFO', false)).toBe(false);
 	});
 
 	it('returns false when exclude clause exists for field (mixed-polarity guard)', () => {
@@ -360,7 +368,9 @@ describe('shouldAutoClear', () => {
 
 	it('auto-clearing one field preserves another field clause', () => {
 		const query = 'level:(INFO OR WARNING) service:api';
-		expect(shouldAutoClear(['INFO', 'WARNING', 'ERROR'], 'level', query, 'ERROR', false)).toBe(true);
+		expect(shouldAutoClear(['INFO', 'WARNING', 'ERROR'], 'level', query, 'ERROR', false)).toBe(
+			true
+		);
 		let cleared = query;
 		for (const v of ['INFO', 'WARNING', 'ERROR']) {
 			cleared = removeClause(cleared, 'level', v, false);
@@ -382,7 +392,9 @@ describe('shouldAutoClear', () => {
 
 	it('auto-clearing preserves freetext in query', () => {
 		const query = '"error message" level:(INFO OR WARNING)';
-		expect(shouldAutoClear(['INFO', 'WARNING', 'ERROR'], 'level', query, 'ERROR', false)).toBe(true);
+		expect(shouldAutoClear(['INFO', 'WARNING', 'ERROR'], 'level', query, 'ERROR', false)).toBe(
+			true
+		);
 		let cleared = query;
 		for (const v of ['INFO', 'WARNING', 'ERROR']) {
 			cleared = removeClause(cleared, 'level', v, false);

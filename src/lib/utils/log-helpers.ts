@@ -2,10 +2,19 @@ import { resolveFieldValue } from '$lib/utils/field-resolver';
 import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
 import type { TimezoneMode } from '$lib/types';
 
-export const SEVERITY_ORDER = ['trace', 'debug', 'info', 'warn', 'warning', 'error', 'critical', 'fatal'] as const;
+export const SEVERITY_ORDER = [
+	'trace',
+	'debug',
+	'info',
+	'warn',
+	'warning',
+	'error',
+	'critical',
+	'fatal'
+] as const;
 
 export function sortBySeverity(values: string[]): string[] {
-	const orderMap = new Map(SEVERITY_ORDER.map((v, i) => [v, i]));
+	const orderMap: Map<string, number> = new Map(SEVERITY_ORDER.map((v, i) => [v, i]));
 	return [...values].sort((a, b) => {
 		const ai = orderMap.get(a.toLowerCase()) ?? SEVERITY_ORDER.length;
 		const bi = orderMap.get(b.toLowerCase()) ?? SEVERITY_ORDER.length;

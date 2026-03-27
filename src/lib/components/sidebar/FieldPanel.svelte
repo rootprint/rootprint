@@ -1,6 +1,15 @@
 <script lang="ts">
 	import { dndzone } from 'svelte-dnd-action';
-	import { ChevronRight, ChevronDown, Check, Settings, GripVertical, X, Plus, Pin } from 'lucide-svelte';
+	import {
+		ChevronRight,
+		ChevronDown,
+		Check,
+		Settings,
+		GripVertical,
+		X,
+		Plus,
+		Pin
+	} from 'lucide-svelte';
 	import type { IndexField } from '$lib/types';
 
 	let {
@@ -100,7 +109,11 @@
 					{/if}
 					{#if pinnedFields.length > 0}
 						{#each pinnedFields as field (field)}
-							<div class="flex items-center gap-1 rounded {configMode ? 'bg-base-200' : ''} px-2 py-1 text-xs">
+							<div
+								class="flex items-center gap-1 rounded {configMode
+									? 'bg-base-200'
+									: ''} px-2 py-1 text-xs"
+							>
 								<Pin size={12} class="shrink-0 text-base-content/40" />
 								<span class="truncate">{field}</span>
 							</div>
@@ -144,7 +157,11 @@
 					{/if}
 					{#if pinnedFieldsEnd.length > 0}
 						{#each pinnedFieldsEnd as field (field)}
-							<div class="flex items-center gap-1 rounded {configMode ? 'bg-base-200' : ''} px-2 py-1 text-xs">
+							<div
+								class="flex items-center gap-1 rounded {configMode
+									? 'bg-base-200'
+									: ''} px-2 py-1 text-xs"
+							>
 								<Pin size={12} class="shrink-0 text-base-content/40" />
 								<span class="truncate">{field}</span>
 							</div>

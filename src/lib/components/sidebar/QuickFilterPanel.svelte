@@ -422,9 +422,9 @@
 															class="checkbox checkbox-xs"
 															checked={isChecked(field, value)}
 															onclick={(e) => {
-															e.preventDefault();
-															toggleValue(field, value);
-														}}
+																e.preventDefault();
+																toggleValue(field, value);
+															}}
 														/>
 														<span class="truncate">{value}</span>
 													</label>

@@ -32,8 +32,10 @@
 		const style = getComputedStyle(document.documentElement);
 		const normalized = level.toLowerCase();
 		const token = LEVEL_TOKEN_MAP[normalized] ?? normalized;
-		return style.getPropertyValue(`--level-${token}`).trim() ||
-			style.getPropertyValue('--level-unknown').trim();
+		return (
+			style.getPropertyValue(`--level-${token}`).trim() ||
+			style.getPropertyValue('--level-unknown').trim()
+		);
 	}
 
 	let containerEl = $state<HTMLDivElement | null>(null);
