@@ -468,6 +468,39 @@ export function clearClauses(query: string): string {
 	return cleanWhitespace(cleaned);
 }
 
+export function shouldAutoClear(
+	knownValues: string[],
+	field: string,
+	currentQuery: string,
+	newValue: string,
+	exclude: boolean
+): boolean {
+	// Only auto-clear positive (non-exclude) filters
+	if (exclude) return false;
+
+	// Need at least 2 known values — single value auto-clear would be a confusing no-op
+	if (knownValues.length < 2) return false;
+
+	// If the new value is already in the query, this isn't completing the set
+	if (hasClause(currentQuery, field, newValue, false)) return false;
+
+	// Mixed polarity guard — if any exclude clause exists for this field, skip
+	if (parseClauses(currentQuery).some((c) => c.field === field && c.exclude)) return false;
+
+	// Check if every other known value already has a positive clause
+	const allKnownCovered = knownValues.every(
+		(v) => v === newValue || hasClause(currentQuery, field, v, false)
+	);
+	if (!allKnownCovered) return false;
+
+	// Guard: if extra positive clauses exist beyond knownValues + newValue, don't auto-clear
+	const allowed = new Set([...knownValues, newValue]);
+	const hasExtras = parseClauses(currentQuery).some(
+		(c) => c.field === field && !c.exclude && !allowed.has(c.value)
+	);
+	return !hasExtras;
+}
+
 function cleanWhitespace(s: string): string {
 	return s
 		.replace(/\s{2,}/g, ' ')

@@ -15,7 +15,8 @@ import {
 	addClause as addClauseUtil,
 	removeClause as removeClauseUtil,
 	hasClause as hasClauseUtil,
-	clearClauses as clearClausesUtil
+	clearClauses as clearClausesUtil,
+	shouldAutoClear
 } from '$lib/utils/query';
 import { resolveTimeRange } from '$lib/utils/time';
 import { buildQueryUrl, serialize } from '$lib/utils/query-params';
@@ -456,7 +457,20 @@ export function createSearchStore(
 	}
 
 	function addClause(field: string, value: string, exclude = false) {
-		const newQuery = addClauseUtil(parsedQuery().query, field, value, exclude);
+		const currentQuery = parsedQuery().query;
+		const knownValues = aggregations[field];
+
+		// If adding this value would select all known values, clear the clause instead
+		if (knownValues && shouldAutoClear(knownValues, field, currentQuery, value, exclude)) {
+			let cleared = currentQuery;
+			for (const v of knownValues) {
+				cleared = removeClauseUtil(cleared, field, v, false);
+			}
+			navigateQuery({ query: cleared }, { push: true });
+			return;
+		}
+
+		const newQuery = addClauseUtil(currentQuery, field, value, exclude);
 		navigateQuery({ query: newQuery }, { push: true });
 	}
 
