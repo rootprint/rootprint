@@ -198,7 +198,11 @@
 					{/if}
 				</button>
 				{#if hasExistingSecret}
-					<button class="btn btn-outline btn-sm btn-error" disabled={saving} onclick={() => (removeModalOpen = true)}>
+					<button
+						class="btn btn-outline btn-sm btn-error"
+						disabled={saving}
+						onclick={() => (removeModalOpen = true)}
+					>
 						Remove Google Auth
 					</button>
 				{/if}

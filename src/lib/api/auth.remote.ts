@@ -26,7 +26,8 @@ export const signIn = form(signInSchema, async (data, issue) => {
 		}
 		throw e;
 	}
-	redirect(303, '/');
+	const returnTo = event.url.searchParams.get('returnTo');
+	redirect(303, returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/');
 });
 
 export const signOut = command(async () => {

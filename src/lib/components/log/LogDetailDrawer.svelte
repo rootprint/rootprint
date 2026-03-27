@@ -1,6 +1,8 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
-	import { ListTree, Braces, Bug, Logs } from 'lucide-svelte';
+	import { ListTree, Braces, Bug, Logs, Share2, Loader2 } from 'lucide-svelte';
+	import { createSharedLink } from '$lib/api/shared-links.remote';
+	import { toast } from 'svelte-sonner';
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
 	import LogContextView from './LogContextView.svelte';
@@ -16,7 +18,9 @@
 		indexId = '',
 		messageField = 'message',
 		levelField = 'level',
-		timezoneMode = 'utc' as 'utc' | 'local'
+		timezoneMode = 'utc' as 'utc' | 'local',
+		query = '',
+		timeRange = null as { start: number; end: number } | null
 	}: {
 		open: boolean;
 		hit: Record<string, unknown> | null;
@@ -26,7 +30,33 @@
 		messageField?: string;
 		levelField?: string;
 		timezoneMode?: 'utc' | 'local';
+		query?: string;
+		timeRange?: { start: number; end: number } | null;
 	} = $props();
+
+	let sharing = $state(false);
+
+	async function handleShare() {
+		if (!hit || !timeRange || sharing) return;
+		sharing = true;
+		try {
+			const { code } = await createSharedLink({
+				indexName: indexId,
+				query,
+				startTime: timeRange.start,
+				endTime: timeRange.end,
+				hit,
+				timestampField
+			});
+			const url = `${window.location.origin}/share/${code}`;
+			await navigator.clipboard.writeText(url);
+			toast.success('Link copied to clipboard');
+		} catch {
+			toast.error('Failed to create shared link');
+		} finally {
+			sharing = false;
+		}
+	}
 
 	const tracebackContent = $derived.by(() => {
 		if (!hit || !tracebackField) return null;
@@ -58,6 +88,20 @@
 </script>
 
 <Drawer bind:open {tabs} bind:activeTab>
+	{#snippet actions()}
+		<button
+			class="btn btn-ghost btn-xs"
+			title="Share link to this log"
+			onclick={handleShare}
+			disabled={sharing || !hit || !timeRange}
+		>
+			{#if sharing}
+				<Loader2 size={14} class="animate-spin" />
+			{:else}
+				<Share2 size={14} />
+			{/if}
+		</button>
+	{/snippet}
 	<div class="flex-1 overflow-auto p-4">
 		{#if activeTab === 'json'}
 			{#if hit}
@@ -81,7 +125,7 @@
 			{/if}
 		{:else if activeTab === 'parameters'}
 			{#if hit}
-				<table class="table table-sm w-full border border-base-300">
+				<table class="table w-full border border-base-300 table-sm">
 					<thead>
 						<tr>
 							<th class="w-1/3 border border-base-300 bg-base-200/50">Key</th>
@@ -91,10 +135,13 @@
 					<tbody>
 						{#each flatParams as [key, value] (key)}
 							<tr class="hover:bg-base-200/50">
-								<td class="border border-base-300 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
+								<td
+									class="border border-base-300 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
 									>{key}</td
 								>
-								<td class="border border-base-300 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word]">
+								<td
+									class="border border-base-300 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word]"
+								>
 									{#if value === null || value === undefined}
 										<span class="text-base-content/50 italic">null</span>
 									{:else}

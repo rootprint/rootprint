@@ -124,7 +124,8 @@
 			onsearchvalues={store.searchFieldValues}
 		/>
 		{#if store.hasSearched}
-			<span class="whitespace-nowrap rounded bg-base-200 px-2 py-0.5 text-xs font-medium text-base-content/70"
+			<span
+				class="rounded bg-base-200 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-base-content/70"
 				>{store.numHits.toLocaleString()} hits</span
 			>
 		{/if}

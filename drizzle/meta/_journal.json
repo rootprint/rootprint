@@ -134,6 +134,20 @@
       "when": 1774608683523,
       "tag": "0018_fluffy_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1774626315018,
+      "tag": "0019_legal_blonde_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1774629957483,
+      "tag": "0020_special_paibok",
+      "breakpoints": true
     }
   ]
 }

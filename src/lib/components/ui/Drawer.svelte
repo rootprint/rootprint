@@ -16,12 +16,14 @@
 		tabs,
 		activeTab = $bindable(undefined),
 		panelClass = 'w-full md:w-[50vw]',
+		actions,
 		children
 	}: {
 		open: boolean;
 		tabs?: Tab[];
 		activeTab?: string;
 		panelClass?: string;
+		actions?: Snippet;
 		children: Snippet;
 	} = $props();
 
@@ -86,9 +88,14 @@
 			{:else}
 				<div></div>
 			{/if}
-			<button class="btn btn-square btn-ghost btn-xs" onclick={close} title="Close">
-				<X size={14} />
-			</button>
+			<div class="flex items-center gap-1">
+				{#if actions}
+					{@render actions()}
+				{/if}
+				<button class="btn btn-square btn-ghost btn-xs" onclick={close} title="Close">
+					<X size={14} />
+				</button>
+			</div>
 		</div>
 
 		{@render children()}

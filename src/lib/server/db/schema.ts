@@ -173,6 +173,23 @@ export const savedQuery = sqliteTable(
 	(table) => [index('saved_query_user_index').on(table.userId, table.indexName)]
 );
 
+export const sharedLink = sqliteTable('shared_link', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	code: text('code').notNull().unique(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	indexName: text('index_name').notNull(),
+	query: text('query').notNull().default(''),
+	startTime: integer('start_time').notNull(),
+	endTime: integer('end_time').notNull(),
+	logTimestamp: integer('log_timestamp').notNull(),
+	logFingerprint: text('log_fingerprint').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.default(sql`(unixepoch())`)
+		.notNull()
+});
+
 export const appSettings = sqliteTable('app_settings', {
 	key: text('key').primaryKey(),
 	value: text('value').notNull(),

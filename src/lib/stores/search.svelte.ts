@@ -17,6 +17,7 @@ import {
 	hasClause as hasClauseUtil,
 	clearClauses as clearClausesUtil
 } from '$lib/utils/query';
+import { resolveTimeRange } from '$lib/utils/time';
 import { buildQueryUrl, serialize } from '$lib/utils/query-params';
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { extractJsonSubFields } from '$lib/utils/fields';
@@ -576,6 +577,10 @@ export function createSearchStore(
 		},
 		get sortDirection() {
 			return sortDirection;
+		},
+		get absoluteTimeRange() {
+			const resolved = resolveTimeRange(parsedQuery().timeRange);
+			return { start: resolved.startTs ?? 0, end: resolved.endTs ?? 0 };
 		},
 		get panelAvailableFields() {
 			return panelAvailableFields;

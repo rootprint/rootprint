@@ -107,10 +107,7 @@
 								<div class="flex items-center gap-1 rounded bg-base-200 px-2 py-1 text-xs">
 									<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/60" />
 									<span class="flex-1 truncate">{field.name}</span>
-									<button
-										class="btn p-0 btn-ghost btn-xs"
-										onclick={() => removeField(field.name)}
-									>
+									<button class="btn p-0 btn-ghost btn-xs" onclick={() => removeField(field.name)}>
 										<X size={12} />
 									</button>
 								</div>

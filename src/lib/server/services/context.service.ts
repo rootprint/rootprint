@@ -3,27 +3,7 @@ import { getFieldConfig } from './index.service';
 import { flattenObject } from '$lib/utils/log-helpers';
 import { escapeFilterValue } from '$lib/utils/query';
 import { normalizeToMs } from '$lib/utils/time';
-
-function fingerprint(hit: Record<string, unknown>, timestampField?: string): string {
-	const entries = flattenObject(hit);
-	// Normalize timestamp to ms for consistent comparison across format differences
-	if (timestampField) {
-		for (let i = 0; i < entries.length; i++) {
-			if (entries[i][0] === timestampField) {
-				const raw = entries[i][1];
-				if (raw !== null && raw !== undefined) {
-					const ms = typeof raw === 'number' ? normalizeToMs(raw) : new Date(String(raw)).getTime();
-					if (!isNaN(ms)) {
-						entries[i] = [entries[i][0], Math.floor(ms)];
-					}
-				}
-				break;
-			}
-		}
-	}
-	entries.sort((a, b) => a[0].localeCompare(b[0]));
-	return JSON.stringify(entries);
-}
+import { fingerprint, extractTimestampSeconds } from '$lib/server/utils/fingerprint';
 
 function isExcludedField(key: string, excluded: Set<string>, prefixes: string[]): boolean {
 	if (excluded.has(key)) return true;
@@ -71,19 +51,6 @@ function buildContextQuery(
 	});
 
 	return { query: parts.join(' AND '), activeLabels };
-}
-
-function extractTimestampSeconds(log: Record<string, unknown>, timestampField: string): number {
-	const flat = flattenObject(log);
-	const entry = flat.find(([key]) => key === timestampField);
-	if (!entry) throw new Error(`Timestamp field "${timestampField}" not found in log`);
-	const raw = entry[1];
-	if (typeof raw === 'number') {
-		return Math.floor(normalizeToMs(raw) / 1000);
-	}
-	const date = new Date(String(raw));
-	if (isNaN(date.getTime())) throw new Error(`Invalid timestamp value: ${raw}`);
-	return Math.floor(date.getTime() / 1000);
 }
 
 function extractTimestampMs(log: Record<string, unknown>, timestampField: string): number {

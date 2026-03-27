@@ -265,8 +265,8 @@
 			<button type="button" class="btn btn-ghost btn-sm" onclick={addStickyField}>Add</button>
 		</div>
 		<p class="mt-1 text-[10px] text-base-content/40">
-			Fields whose filter values persist across query changes instead of being replaced.
-			Useful for fields like severity level where you want to see all possible values.
+			Fields whose filter values persist across query changes instead of being replaced. Useful for
+			fields like severity level where you want to see all possible values.
 		</p>
 	</div>
 	<div>
