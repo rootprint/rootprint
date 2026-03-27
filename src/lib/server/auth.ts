@@ -28,6 +28,11 @@ export const auth = betterAuth({
 			mustChangePassword: {
 				type: 'boolean',
 				defaultValue: false
+			},
+			lastActive: {
+				type: 'number',
+				required: false,
+				input: false
 			}
 		}
 	},

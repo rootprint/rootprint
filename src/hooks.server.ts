@@ -73,6 +73,16 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 		event.locals.session = session.session;
 		event.locals.user = session.user;
 
+		// Throttled last-active update (at most once per 5 minutes)
+		const now = Date.now();
+		const lastActive = (session.user.lastActive as number | null) ?? 0;
+		if (now - lastActive > 5 * 60 * 1000) {
+			db.update(user)
+				.set({ lastActive: new Date(now) })
+				.where(eq(user.id, session.user.id))
+				.run();
+		}
+
 		// Force password change if required (skip for Google-authenticated users)
 		if (
 			session.user.mustChangePassword &&

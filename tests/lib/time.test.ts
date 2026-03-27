@@ -6,7 +6,8 @@ import {
 	formatChartTooltip,
 	normalizeToMs,
 	formatEpochLocale,
-	formatEpochDate
+	formatEpochDate,
+	formatRelativeTime
 } from '$lib/utils/time';
 
 describe('formatTimestamp', () => {
@@ -122,5 +123,37 @@ describe('formatEpochDate', () => {
 		const result = formatEpochDate(ts);
 		expect(result).toBeTruthy();
 		expect(result).not.toBe('—');
+	});
+});
+
+describe('formatRelativeTime', () => {
+	const ago = (ms: number) => new Date(Date.now() - ms);
+
+	it('returns "just now" for less than 60 seconds ago', () => {
+		expect(formatRelativeTime(ago(30_000))).toBe('just now');
+	});
+
+	it('returns minutes ago', () => {
+		expect(formatRelativeTime(ago(3 * 60_000))).toBe('3m ago');
+	});
+
+	it('returns hours ago', () => {
+		expect(formatRelativeTime(ago(2 * 3_600_000))).toBe('2h ago');
+	});
+
+	it('returns days ago', () => {
+		expect(formatRelativeTime(ago(5 * 86_400_000))).toBe('5d ago');
+	});
+
+	it('returns "1m ago" at exactly 60 seconds', () => {
+		expect(formatRelativeTime(ago(60_000))).toBe('1m ago');
+	});
+
+	it('returns "1h ago" at exactly 60 minutes', () => {
+		expect(formatRelativeTime(ago(60 * 60_000))).toBe('1h ago');
+	});
+
+	it('returns "1d ago" at exactly 24 hours', () => {
+		expect(formatRelativeTime(ago(24 * 3_600_000))).toBe('1d ago');
 	});
 });

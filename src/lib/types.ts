@@ -39,7 +39,7 @@ export type User = {
 	name: string;
 	email: string;
 	role?: string | null;
-	createdAt: Date;
+	lastActive: Date | null;
 	status: 'pending' | 'active';
 	authProvider: 'google' | 'credential';
 	inviteUrl: string | null;

@@ -148,6 +148,13 @@
       "when": 1774629957483,
       "tag": "0020_special_paibok",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1774637219514,
+      "tag": "0021_organic_wallop",
+      "breakpoints": true
     }
   ]
 }

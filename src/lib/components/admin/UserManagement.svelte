@@ -10,6 +10,7 @@
 	import { getErrorMessage } from '$lib/utils/error';
 	import type { User } from '$lib/types';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import { formatRelativeTime } from '$lib/utils/time';
 
 	let { users }: { users: User[] } = $props();
 	let inviteModalOpen = $state(false);
@@ -68,7 +69,7 @@
 						<th>Email</th>
 						<th>Status</th>
 						<th>Role</th>
-						<th>Created</th>
+						<th>Last Active</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -94,7 +95,7 @@
 								<span class="badge badge-sm">{user.role === 'admin' ? 'Admin' : 'Member'}</span>
 							</td>
 							<td class="text-base-content/60">
-								{new Date(user.createdAt).toLocaleDateString()}
+								{user.lastActive ? formatRelativeTime(new Date(user.lastActive)) : '—'}
 							</td>
 							<td>
 								<div class="flex gap-1">

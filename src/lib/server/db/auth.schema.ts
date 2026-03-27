@@ -22,7 +22,8 @@ export const user = sqliteTable('user', {
 	displayUsername: text('display_username'),
 	mustChangePassword: integer('must_change_password', {
 		mode: 'boolean'
-	}).default(false)
+	}).default(false),
+	lastActive: integer('last_active', { mode: 'timestamp_ms' })
 });
 
 export const session = sqliteTable(

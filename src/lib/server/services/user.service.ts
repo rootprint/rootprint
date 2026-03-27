@@ -36,7 +36,13 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 	const googleUserIds = new Set(googleAccounts.map((a) => a.userId));
 
 	return result.users.map((u) => ({
-		...u,
+		id: u.id,
+		name: u.name,
+		email: u.email,
+		role: u.role,
+		lastActive: (u as unknown as { lastActive?: number }).lastActive
+			? new Date((u as unknown as { lastActive: number }).lastActive)
+			: null,
 		status: googleUserIds.has(u.id)
 			? ('active' as const)
 			: inviteMap.has(u.id)
