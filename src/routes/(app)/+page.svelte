@@ -169,11 +169,4 @@
 	messageField={store.fieldConfig.messageField}
 	levelField={store.fieldConfig.levelField}
 	timezoneMode={store.timezoneMode}
-	onfilter={(key, value, exclude) => {
-		if (store.hasClause(key, value, exclude)) {
-			store.removeClause(key, value, exclude);
-		} else {
-			store.addClause(key, value, exclude);
-		}
-	}}
 />

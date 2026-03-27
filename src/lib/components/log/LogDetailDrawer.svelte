@@ -1,6 +1,6 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
-	import { ListTree, Braces, SearchCheck, SearchX, Bug, Logs } from 'lucide-svelte';
+	import { ListTree, Braces, Bug, Logs } from 'lucide-svelte';
 	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
 	import LogContextView from './LogContextView.svelte';
@@ -16,8 +16,7 @@
 		indexId = '',
 		messageField = 'message',
 		levelField = 'level',
-		timezoneMode = 'utc' as 'utc' | 'local',
-		onfilter
+		timezoneMode = 'utc' as 'utc' | 'local'
 	}: {
 		open: boolean;
 		hit: Record<string, unknown> | null;
@@ -27,7 +26,6 @@
 		messageField?: string;
 		levelField?: string;
 		timezoneMode?: 'utc' | 'local';
-		onfilter?: (key: string, value: string, exclude: boolean) => void;
 	} = $props();
 
 	const tracebackContent = $derived.by(() => {
@@ -52,11 +50,6 @@
 	const flatParams = $derived(
 		hit ? flattenObject(hit).filter(([key]) => key !== timestampField) : []
 	);
-
-	function handleFilter(key: string, value: unknown, exclude: boolean) {
-		if (value === null || value === undefined) return;
-		onfilter?.(key, formatFieldValue(value), exclude);
-	}
 
 	let activeTab = $state<'parameters' | 'json' | 'context' | 'traceback'>('parameters');
 
@@ -91,35 +84,14 @@
 				<table class="table table-sm">
 					<thead>
 						<tr>
-							<th class="w-0 pr-0"></th>
-							<th class="w-1/3 pl-0">Key</th>
+							<th class="w-1/3">Key</th>
 							<th>Value</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each flatParams as [key, value] (key)}
-							<tr class="group">
-								<td class="py-0 pr-0 align-middle">
-									{#if value !== null && value !== undefined}
-										<div class="flex items-center gap-0">
-											<button
-												class="btn btn-square h-5 min-h-0 w-5 btn-ghost btn-xs"
-												title="Filter for value"
-												onclick={() => handleFilter(key, value, false)}
-											>
-												<SearchCheck size={12} />
-											</button>
-											<button
-												class="btn btn-square h-5 min-h-0 w-5 btn-ghost btn-xs"
-												title="Filter out value"
-												onclick={() => handleFilter(key, value, true)}
-											>
-												<SearchX size={12} />
-											</button>
-										</div>
-									{/if}
-								</td>
-								<td class="pl-1 font-['Roboto_Mono',monospace] text-xs text-base-content/70"
+							<tr>
+								<td class="font-['Roboto_Mono',monospace] text-xs text-base-content/70"
 									>{key}</td
 								>
 								<td class="font-['Roboto_Mono',monospace] text-xs break-all">
