@@ -48,11 +48,13 @@ export function createSearchStore(
 		timestampField: string;
 		messageField: string;
 		tracebackField: string | null;
+		stickyFilterFields: string[] | null;
 	}>({
 		levelField: 'level',
 		timestampField: 'timestamp',
 		messageField: 'message',
-		tracebackField: null
+		tracebackField: null,
+		stickyFilterFields: null
 	});
 	let indexFields = $state<IndexField[]>([]);
 	let schemaFields = $state<IndexField[]>([]);
@@ -338,13 +340,17 @@ export function createSearchStore(
 			if (!append && result.aggregations) {
 				const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
 				if (hasActiveClauses) {
-					const merged = { ...aggregations };
+					const newAgg: Record<string, string[]> = {};
 					for (const [field, values] of Object.entries(result.aggregations)) {
-						if (!(field in merged)) {
-							merged[field] = values;
+						if ((fieldConfig.stickyFilterFields ?? []).includes(field)) {
+							const existing = new Set(aggregations[field] ?? []);
+							for (const v of values) existing.add(v);
+							newAgg[field] = [...existing];
+						} else {
+							newAgg[field] = values;
 						}
 					}
-					aggregations = merged;
+					aggregations = newAgg;
 				} else {
 					aggregations = result.aggregations;
 				}

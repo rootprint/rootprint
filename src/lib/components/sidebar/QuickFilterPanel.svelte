@@ -112,16 +112,35 @@
 		}, 300);
 	}
 
+	function getGhostValues(field: string): string[] {
+		const allValues = aggregations[field] ?? [];
+		const valueSet = new Set(allValues);
+		const seen = new Set<string>();
+		const ghost: string[] = [];
+		for (const c of clauses) {
+			if (c.field === field && !c.exclude && !valueSet.has(c.value) && !seen.has(c.value)) {
+				seen.add(c.value);
+				ghost.push(c.value);
+			}
+		}
+		return ghost;
+	}
+
+	function getTotalValueCount(field: string): number {
+		return (aggregations[field] ?? []).length + getGhostValues(field).length;
+	}
+
 	function getDisplayValues(field: string): string[] {
 		const searched = searchResults[field];
 		if (searched !== null && searched !== undefined) {
 			return searched;
 		}
 		const allValues = aggregations[field] ?? [];
+		const combined = [...getGhostValues(field), ...allValues];
 		if (expandedFields.has(field)) {
-			return allValues;
+			return combined;
 		}
-		return allValues.slice(0, INITIAL_SHOW_COUNT);
+		return combined.slice(0, INITIAL_SHOW_COUNT);
 	}
 
 	// Restore open/expanded state from localStorage, ensure first field always open
@@ -344,7 +363,7 @@
 
 							{#if openSections.has(field)}
 								<div class="px-3 pb-2">
-									{#if (aggregations[field] ?? []).length > INITIAL_SHOW_COUNT}
+									{#if getTotalValueCount(field) > INITIAL_SHOW_COUNT}
 										<input
 											type="text"
 											class="input input-xs mb-1.5 w-full border-base-300 bg-base-200/50"
@@ -380,14 +399,14 @@
 												</label>
 											{/each}
 										</div>
-										{#if !searchTerms[field]?.trim() && (aggregations[field] ?? []).length > INITIAL_SHOW_COUNT && !expandedFields.has(field)}
+										{#if !searchTerms[field]?.trim() && getTotalValueCount(field) > INITIAL_SHOW_COUNT && !expandedFields.has(field)}
 											<button
 												class="mt-1 text-[11px] text-primary hover:underline"
 												onclick={() => expandedFields.add(field)}
 											>
-												Show all {(aggregations[field] ?? []).length}
+												Show all {getTotalValueCount(field)}
 											</button>
-										{:else if !searchTerms[field]?.trim() && expandedFields.has(field) && (aggregations[field] ?? []).length > INITIAL_SHOW_COUNT}
+										{:else if !searchTerms[field]?.trim() && expandedFields.has(field) && getTotalValueCount(field) > INITIAL_SHOW_COUNT}
 											<button
 												class="mt-1 text-[11px] text-primary hover:underline"
 												onclick={() => expandedFields.delete(field)}

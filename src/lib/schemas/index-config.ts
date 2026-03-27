@@ -28,5 +28,19 @@ export const saveIndexConfigSchema = v.object({
 				}
 			})
 		)
+	),
+	stickyFilterFields: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((s): string[] | null => {
+				if (!s) return null;
+				try {
+					const parsed = JSON.parse(s);
+					return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+				} catch {
+					return null;
+				}
+			})
+		)
 	)
 });

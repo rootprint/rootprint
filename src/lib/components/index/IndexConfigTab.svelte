@@ -21,10 +21,14 @@
 				messageField: detail.messageField ?? 'message',
 				tracebackField: detail.tracebackField ?? '',
 				visibility: (detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all',
-				contextFields: contextFieldsSerialized
+				contextFields: contextFieldsSerialized,
+				stickyFilterFields: stickyFieldsSerialized
 			});
 			contextFieldTags = Array.isArray(detail.contextFields)
 				? (detail.contextFields as string[])
+				: [];
+			stickyFieldTags = Array.isArray(detail.stickyFilterFields)
+				? (detail.stickyFilterFields as string[])
 				: [];
 		});
 	});
@@ -37,11 +41,25 @@
 		});
 	});
 
+	// Sync only stickyFilterFields when tags change (without resetting other fields)
+	$effect(() => {
+		const serialized = stickyFieldsSerialized;
+		untrack(() => {
+			configForm.fields.stickyFilterFields.set(serialized);
+		});
+	});
+
 	let contextFieldTags = $state<string[]>(
 		Array.isArray(detail.contextFields) ? (detail.contextFields as string[]) : []
 	);
 	let contextFieldInput = $state('');
 	const contextFieldsSerialized = $derived(JSON.stringify(contextFieldTags));
+
+	let stickyFieldTags = $state<string[]>(
+		Array.isArray(detail.stickyFilterFields) ? (detail.stickyFilterFields as string[]) : []
+	);
+	let stickyFieldInput = $state('');
+	const stickyFieldsSerialized = $derived(JSON.stringify(stickyFieldTags));
 
 	function addContextField() {
 		const value = contextFieldInput.trim();
@@ -59,6 +77,25 @@
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			addContextField();
+		}
+	}
+
+	function addStickyField() {
+		const value = stickyFieldInput.trim();
+		if (value && !stickyFieldTags.includes(value)) {
+			stickyFieldTags = [...stickyFieldTags, value];
+		}
+		stickyFieldInput = '';
+	}
+
+	function removeStickyField(field: string) {
+		stickyFieldTags = stickyFieldTags.filter((f) => f !== field);
+	}
+
+	function handleStickyFieldKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			addStickyField();
 		}
 	}
 
@@ -200,6 +237,36 @@
 		<p class="mt-1 text-[10px] text-base-content/40">
 			Fields used for log context search. Leave empty to use all fields. Supports dot-notation for
 			nested fields.
+		</p>
+	</div>
+	<div>
+		<label class="mb-1 block text-xs font-medium">Sticky Filter Fields</label>
+		<input {...configForm.fields.stickyFilterFields.as('hidden', stickyFieldsSerialized)} />
+		<div class="mb-2 flex flex-wrap gap-1.5">
+			{#each stickyFieldTags as field}
+				<span class="badge gap-1 badge-ghost font-mono text-xs badge-sm">
+					{field}
+					<button
+						type="button"
+						class="cursor-pointer text-error"
+						onclick={() => removeStickyField(field)}>&times;</button
+					>
+				</span>
+			{/each}
+		</div>
+		<div class="flex gap-2">
+			<input
+				type="text"
+				bind:value={stickyFieldInput}
+				onkeydown={handleStickyFieldKeydown}
+				class="input-bordered input input-sm flex-1"
+				placeholder="e.g. level, service.name"
+			/>
+			<button type="button" class="btn btn-ghost btn-sm" onclick={addStickyField}>Add</button>
+		</div>
+		<p class="mt-1 text-[10px] text-base-content/40">
+			Fields whose filter values persist across query changes instead of being replaced.
+			Useful for fields like severity level where you want to see all possible values.
 		</p>
 	</div>
 	<div>
