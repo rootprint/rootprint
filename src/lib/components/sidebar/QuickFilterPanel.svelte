@@ -233,6 +233,10 @@
 	function isChecked(field: string, value: string): boolean {
 		return hasClause(field, value);
 	}
+
+	function hasActiveClausesForField(field: string): boolean {
+		return clauses.some((c) => c.field === field && !c.exclude);
+	}
 </script>
 
 {#if fields.length > 0 || availableFields.length > 0}
@@ -387,23 +391,41 @@
 									{:else}
 										<div class="flex flex-col gap-1">
 											{#each getDisplayValues(field) as value (value)}
-												<label
-													class="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-base-200"
-												>
-													<input
-														type="checkbox"
-														class="checkbox checkbox-xs"
-														checked={isChecked(field, value)}
-														onchange={() => toggleValue(field, value)}
-													/>
-													{#if pinnedSet.has(field)}
-														{@const dotColor = severityDotColor(value.toLowerCase())}
-														{#if dotColor}
-															<span class="h-2 w-2 shrink-0 rounded-full {dotColor}"></span>
-														{/if}
-													{/if}
-													<span class="truncate">{value}</span>
-												</label>
+												{#if pinnedSet.has(field)}
+													{@const dotColor = severityDotColor(value.toLowerCase())}
+													{@const isActive = isChecked(field, value)}
+													{@const anyActive = hasActiveClausesForField(field)}
+													{@const showFull = !anyActive || isActive}
+													<button
+														class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors duration-150 hover:bg-base-200"
+														role="checkbox"
+														aria-checked={isActive}
+														onclick={() => toggleValue(field, value)}
+													>
+														<span
+															class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-150 {showFull
+																? dotColor ?? 'bg-base-content/40'
+																: 'bg-base-content/20'}"
+														></span>
+														<span
+															class="truncate transition-colors duration-150 {showFull
+																? ''
+																: 'text-base-content/40'}">{value}</span
+														>
+													</button>
+												{:else}
+													<label
+														class="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-base-200"
+													>
+														<input
+															type="checkbox"
+															class="checkbox checkbox-xs"
+															checked={isChecked(field, value)}
+															onchange={() => toggleValue(field, value)}
+														/>
+														<span class="truncate">{value}</span>
+													</label>
+												{/if}
 											{/each}
 										</div>
 										{#if !searchTerms[field]?.trim() && getTotalValueCount(field) > INITIAL_SHOW_COUNT && !expandedFields.has(field)}
