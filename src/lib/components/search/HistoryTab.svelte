@@ -4,7 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import type { HistoryEntry, ParsedQuery } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
-	import { formatRelativeTime } from '$lib/utils/format';
+	import { formatRelativeTime } from '$lib/utils/time';
 	import DrawerList from './DrawerList.svelte';
 	import DrawerRow from './DrawerRow.svelte';
 
