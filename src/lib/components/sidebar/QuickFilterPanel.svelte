@@ -13,6 +13,7 @@
 	import { dndzone } from 'svelte-dnd-action';
 	import type { IndexField } from '$lib/types';
 	import { parseClauses } from '$lib/utils/query';
+	import { severityDotColor } from '$lib/utils/log-helpers';
 
 	let {
 		fields,
@@ -246,7 +247,7 @@
 				<h3
 					class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
 				>
-					Filters
+					Quick Filters
 				</h3>
 				{#if collapsed && hasAnyFilters}
 					<span class="rounded-full bg-primary/10 px-1.5 text-[10px] text-primary">
@@ -340,14 +341,14 @@
 				</div>
 			{:else if fields.length === 0}
 				<div class="px-3 pb-3">
-					<p class="text-[11px] text-base-content/50">Click the gear icon to add filter fields</p>
+					<p class="text-xs text-base-content/50">Click the gear icon to add filter fields</p>
 				</div>
 			{:else}
 				<div class="flex flex-col">
 					{#each fields as field (field)}
 						<div class="border-t border-base-300/50">
 							<button
-								class="flex w-full items-center px-3 py-1.5"
+								class="flex w-full items-center px-3 py-2"
 								onclick={() => toggleSection(field)}
 							>
 								{#if openSections.has(field)}
@@ -362,11 +363,11 @@
 							</button>
 
 							{#if openSections.has(field)}
-								<div class="px-3 pb-2">
+								<div class="px-3 pb-3">
 									{#if getTotalValueCount(field) > INITIAL_SHOW_COUNT}
 										<input
 											type="text"
-											class="input input-xs mb-1.5 w-full border-base-300 bg-base-200/50"
+											class="input input-xs mb-2 w-full border-base-300 bg-base-200/50"
 											placeholder="Search values..."
 											value={searchTerms[field] ?? ''}
 											oninput={(e) => handleSearchInput(field, e.currentTarget.value)}
@@ -375,19 +376,19 @@
 									{#if loadingFields.has(field)}
 										<div class="flex items-center gap-2 py-1">
 											<span class="loading loading-xs loading-spinner"></span>
-											<span class="text-[11px] text-base-content/50">Searching...</span>
+											<span class="text-xs text-base-content/50">Searching...</span>
 										</div>
 									{:else if getDisplayValues(field).length === 0}
-										<p class="py-1 text-[11px] text-base-content/50">
+										<p class="py-1 text-xs text-base-content/50">
 											{searchTerms[field]?.trim()
 												? 'No matching values'
 												: 'Run a search to see values'}
 										</p>
 									{:else}
-										<div class="flex flex-col gap-0.5">
+										<div class="flex flex-col gap-1">
 											{#each getDisplayValues(field) as value (value)}
 												<label
-													class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-base-200"
+													class="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-base-200"
 												>
 													<input
 														type="checkbox"
@@ -395,20 +396,26 @@
 														checked={isChecked(field, value)}
 														onchange={() => toggleValue(field, value)}
 													/>
+													{#if pinnedSet.has(field)}
+														{@const dotColor = severityDotColor(value.toLowerCase())}
+														{#if dotColor}
+															<span class="h-2 w-2 shrink-0 rounded-full {dotColor}"></span>
+														{/if}
+													{/if}
 													<span class="truncate">{value}</span>
 												</label>
 											{/each}
 										</div>
 										{#if !searchTerms[field]?.trim() && getTotalValueCount(field) > INITIAL_SHOW_COUNT && !expandedFields.has(field)}
 											<button
-												class="mt-1 text-[11px] text-primary hover:underline"
+												class="mt-1 text-xs text-primary hover:underline"
 												onclick={() => expandedFields.add(field)}
 											>
 												Show all {getTotalValueCount(field)}
 											</button>
 										{:else if !searchTerms[field]?.trim() && expandedFields.has(field) && getTotalValueCount(field) > INITIAL_SHOW_COUNT}
 											<button
-												class="mt-1 text-[11px] text-primary hover:underline"
+												class="mt-1 text-xs text-primary hover:underline"
 												onclick={() => expandedFields.delete(field)}
 											>
 												Show less

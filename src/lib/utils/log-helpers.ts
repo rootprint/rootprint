@@ -45,6 +45,25 @@ export function severityBgColor(severity: string): string {
 	}
 }
 
+export function severityDotColor(severity: string): string | null {
+	switch (severity) {
+		case 'error':
+		case 'fatal':
+		case 'critical':
+			return 'bg-error';
+		case 'warn':
+		case 'warning':
+			return 'bg-warning';
+		case 'debug':
+		case 'trace':
+			return 'bg-accent';
+		case 'info':
+			return 'bg-info';
+		default:
+			return null;
+	}
+}
+
 export function severityTextColor(severity: string): string {
 	switch (severity) {
 		case 'error':

@@ -81,20 +81,20 @@
 			{/if}
 		{:else if activeTab === 'parameters'}
 			{#if hit}
-				<table class="table table-sm">
+				<table class="table table-sm w-full border border-base-300">
 					<thead>
 						<tr>
-							<th class="w-1/3">Key</th>
-							<th>Value</th>
+							<th class="w-1/3 border border-base-300 bg-base-200/50">Key</th>
+							<th class="border border-base-300 bg-base-200/50">Value</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each flatParams as [key, value] (key)}
-							<tr>
-								<td class="font-['Roboto_Mono',monospace] text-xs text-base-content/70"
+							<tr class="hover:bg-base-200/50">
+								<td class="border border-base-300 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
 									>{key}</td
 								>
-								<td class="font-['Roboto_Mono',monospace] text-xs break-all">
+								<td class="border border-base-300 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word]">
 									{#if value === null || value === undefined}
 										<span class="text-base-content/50 italic">null</span>
 									{:else}

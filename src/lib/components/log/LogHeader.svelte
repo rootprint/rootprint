@@ -38,6 +38,7 @@
 			<ArrowUp class="h-3 w-3" />
 		{/if}
 	</button>
+	<span class="shrink-0 px-1.5 text-base-content/20">|</span>
 	{#each extraFields as field (field)}
 		<span
 			class="inline-block shrink-0 truncate py-px pl-2 align-top"

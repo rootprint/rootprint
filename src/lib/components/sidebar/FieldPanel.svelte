@@ -58,7 +58,7 @@
 			<h3
 				class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
 			>
-				Fields
+				Display Fields
 			</h3>
 		</button>
 		{#if availableFields.length > 0}
@@ -96,7 +96,7 @@
 					{/if}
 					{#if dndItems.length === 0}
 						<p class="px-1 py-2 text-xs text-base-content/50">No extra fields</p>
-					{:else}
+					{:else if configMode}
 						<div
 							use:dndzone={{ items: dndItems, flipDurationMs: 150, type: 'active-fields' }}
 							onconsider={handleDndConsider}
@@ -107,14 +107,20 @@
 								<div class="flex items-center gap-1 rounded bg-base-200 px-2 py-1 text-xs">
 									<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/60" />
 									<span class="flex-1 truncate">{field.name}</span>
-									{#if configMode}
-										<button
-											class="btn p-0 btn-ghost btn-xs"
-											onclick={() => removeField(field.name)}
-										>
-											<X size={12} />
-										</button>
-									{/if}
+									<button
+										class="btn p-0 btn-ghost btn-xs"
+										onclick={() => removeField(field.name)}
+									>
+										<X size={12} />
+									</button>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="flex flex-col gap-1">
+							{#each dndItems as field (field.id)}
+								<div class="flex items-center rounded px-2 py-1 text-xs">
+									<span class="truncate">{field.name}</span>
 								</div>
 							{/each}
 						</div>

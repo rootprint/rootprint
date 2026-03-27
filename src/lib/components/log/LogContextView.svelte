@@ -155,7 +155,7 @@
 		<div class="border-b border-base-300 px-4 py-3">
 			<div class="flex flex-wrap gap-1.5">
 				{#each activeLabels.filter((l) => !excludedFields.includes(l.field)) as label (label.field)}
-					<span class="badge gap-1 badge-outline font-mono badge-sm" title={String(label.value)}>
+					<span class="badge gap-1.5 badge-outline font-mono" title={String(label.value)}>
 						{label.field}:{isNumber(label.value)
 							? label.value
 							: `"${formatLabelValue(label.value)}"`}

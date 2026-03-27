@@ -108,7 +108,10 @@
 				</div>
 			{:else if store.logs.length === 0}
 				<div class="flex h-full items-center justify-center">
-					<p class="text-sm text-base-content/60">No logs found</p>
+					<div class="flex flex-col items-center gap-1">
+						<p class="text-sm text-base-content/60">No logs found</p>
+						<p class="text-xs text-base-content/40">Try adjusting your time range or query filters</p>
+					</div>
 				</div>
 			{:else}
 				<div class="w-fit min-w-full">

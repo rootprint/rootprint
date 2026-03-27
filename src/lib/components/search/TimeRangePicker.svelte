@@ -146,7 +146,7 @@
 					<div class="mb-2 flex items-center justify-between">
 						<span class="text-xs font-medium text-base-content/60">Custom Range</span>
 						<button
-							class="btn btn-xs btn-primary"
+							class="btn btn-xs btn-accent"
 							disabled={!fromDate || !toDate}
 							onclick={applyCustomRange}
 						>
