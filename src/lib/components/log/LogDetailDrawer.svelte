@@ -124,12 +124,6 @@
 		{:else if activeTab === 'parameters'}
 			{#if hit}
 				<table class="table w-full border border-base-300 table-sm">
-					<thead>
-						<tr>
-							<th class="w-1/3 border border-base-300 bg-base-200/50">Key</th>
-							<th class="border border-base-300 bg-base-200/50">Value</th>
-						</tr>
-					</thead>
 					<tbody>
 						{#each flatParams as [key, value] (key)}
 							<tr class="hover:bg-base-200/50">
