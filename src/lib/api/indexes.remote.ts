@@ -10,12 +10,14 @@ export const getIndexes = query(async () => {
 });
 
 export const getIndexFields = query(getIndexFieldsSchema, async (data) => {
-	requireUser();
+	const user = requireUser();
+	indexService.assertIndexAccess(data.indexId, user.role);
 	return indexService.getIndexFields(data.indexId);
 });
 
 export const getIndexConfig = query(indexIdSchema, async (indexId) => {
-	requireUser();
+	const user = requireUser();
+	indexService.assertIndexAccess(indexId, user.role);
 	return indexService.getIndexConfig(indexId);
 });
 
