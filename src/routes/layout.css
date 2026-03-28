@@ -103,3 +103,12 @@
 	--depth: 0;
 	--noise: 0;
 }
+
+.os-theme-dark {
+	--os-size: 6px;
+	--os-handle-border-radius: 3px;
+	--os-handle-bg: oklch(70% 0 0 / 0.3);
+	--os-handle-bg-hover: oklch(70% 0 0 / 0.5);
+	--os-handle-bg-active: oklch(70% 0 0 / 0.6);
+	--os-track-bg: transparent;
+}

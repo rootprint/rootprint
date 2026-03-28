@@ -9,6 +9,9 @@
 	import LogFrequencyChart from '$lib/components/log/LogFrequencyChart.svelte';
 	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
 	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
+	import 'overlayscrollbars/overlayscrollbars.css';
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+	import type { OverlayScrollbars } from 'overlayscrollbars';
 	import { CircleX } from 'lucide-svelte';
 	import type { DrawerTab } from '$lib/types';
 	import { replaceState } from '$app/navigation';
@@ -17,10 +20,14 @@
 
 	let { data } = $props();
 
-	let scrollElement = $state<HTMLDivElement | null>(null);
+	const scrollbarOptions = {
+		scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll', autoHideDelay: 800 }
+	} as const;
+
+	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
 
 	const store = createSearchStore(() => data.parsedQuery, data.indexes, {
-		onFreshSearch: () => scrollElement?.scrollTo(0, 0)
+		onFreshSearch: () => osRef?.osInstance()?.elements().viewport.scrollTo(0, 0)
 	});
 	store.setupAutoSearch();
 
@@ -63,9 +70,9 @@
 			});
 	});
 
-	function handleScroll() {
-		if (!scrollElement) return;
-		const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+	function handleOsScroll(osInstance: OverlayScrollbars) {
+		const viewport = osInstance.elements().viewport;
+		const { scrollTop, scrollHeight, clientHeight } = viewport;
 
 		// Infinite scroll
 		if (
@@ -79,8 +86,10 @@
 </script>
 
 <div class="flex h-full w-full">
-	<div
-		class="flex h-full w-56 shrink-0 flex-col overflow-x-hidden overflow-y-auto border-r border-base-300 bg-base-100"
+	<OverlayScrollbarsComponent
+		options={{ ...scrollbarOptions, overflow: { x: 'hidden' } }}
+		defer
+		class="h-full w-56 shrink-0 border-r border-base-300 bg-base-100"
 	>
 		<QuickFilterPanel
 			fields={store.quickFilterFields}
@@ -104,7 +113,7 @@
 			pinnedFields={[store.fieldConfig.levelField]}
 			pinnedFieldsEnd={[store.fieldConfig.messageField]}
 		/>
-	</div>
+	</OverlayScrollbarsComponent>
 
 	<div class="relative flex min-w-0 flex-1 flex-col overflow-hidden">
 		<SearchToolbar {store} bind:wrapMode bind:drawerTab parsedQuery={data.parsedQuery} />
@@ -120,10 +129,12 @@
 			/>
 		{/if}
 
-		<div
-			bind:this={scrollElement}
-			class="relative min-h-0 flex-1 overflow-auto bg-base-200/30"
-			onscroll={handleScroll}
+		<OverlayScrollbarsComponent
+			bind:this={osRef}
+			options={scrollbarOptions}
+			events={{ scroll: handleOsScroll }}
+			defer
+			class="relative min-h-0 flex-1 bg-base-200/30"
 		>
 			{#if !store.hasSearched}
 				<div class="flex h-full items-center justify-center">
@@ -183,7 +194,7 @@
 					{/if}
 				</div>
 			{/if}
-		</div>
+		</OverlayScrollbarsComponent>
 
 		<HistoryDrawer
 			bind:drawerTab
