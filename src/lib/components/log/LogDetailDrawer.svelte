@@ -77,9 +77,7 @@
 		return base;
 	});
 
-	const flatParams = $derived(
-		hit ? flattenObject(hit).filter(([key]) => key !== timestampField) : []
-	);
+	const flatParams = $derived(hit ? flattenObject(hit) : []);
 
 	let activeTab = $state<'parameters' | 'json' | 'context' | 'traceback'>('parameters');
 
