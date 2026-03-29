@@ -58,7 +58,7 @@
 				<label class="floating-label">
 					<span>Temporary Password</span>
 					<input
-						type="text"
+						type="password"
 						class="input input-md w-full"
 						placeholder="Temporary Password"
 						bind:value={password}

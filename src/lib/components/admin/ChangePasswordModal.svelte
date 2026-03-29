@@ -14,6 +14,7 @@
 	let newPassword = $state('');
 	let confirmPassword = $state('');
 	let loading = $state(false);
+	let passwordMismatch = $derived(confirmPassword.length > 0 && newPassword !== confirmPassword);
 
 	async function handleSubmit() {
 		loading = true;
@@ -80,16 +81,20 @@
 					<input
 						type="password"
 						class="input input-md w-full"
+						class:input-error={passwordMismatch}
 						placeholder="Confirm New Password"
 						bind:value={confirmPassword}
 						minlength={8}
 						required
 					/>
+					{#if passwordMismatch}
+						<p class="text-error text-sm mt-1">Passwords do not match</p>
+					{/if}
 				</label>
 
 				<div class="modal-action">
 					<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-					<button type="submit" class="btn btn-neutral" disabled={loading}>
+					<button type="submit" class="btn btn-neutral" disabled={loading || passwordMismatch}>
 						{loading ? 'Changing...' : 'Change Password'}
 					</button>
 				</div>
