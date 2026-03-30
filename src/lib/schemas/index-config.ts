@@ -1,6 +1,8 @@
 import * as v from 'valibot';
 
-export const indexIdSchema = v.pipe(v.string(), v.minLength(1));
+export const indexIdSchema = v.object({
+	indexId: v.pipe(v.string(), v.minLength(1))
+});
 
 export const saveIndexConfigSchema = v.object({
 	indexId: v.pipe(v.string(), v.minLength(1)),

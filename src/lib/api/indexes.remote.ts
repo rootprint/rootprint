@@ -15,7 +15,7 @@ export const getIndexFields = query(getIndexFieldsSchema, async (data) => {
 	return indexService.getIndexFields(data.indexId);
 });
 
-export const getIndexConfig = query(indexIdSchema, async (indexId) => {
+export const getIndexConfig = query(indexIdSchema, async ({ indexId }) => {
 	const user = requireUser();
 	indexService.assertIndexAccess(indexId, user.role);
 	return indexService.getIndexConfig(indexId);

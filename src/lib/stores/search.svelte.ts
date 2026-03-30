@@ -209,7 +209,7 @@ export function createSearchStore(
 		try {
 			const [indexFieldsResult, config, pref] = await Promise.all([
 				getIndexFields({ indexId: indexName }),
-				getIndexConfig(indexName),
+				getIndexConfig({ indexId: indexName }),
 				getPreference({ indexId: indexName })
 			]);
 			indexFields = indexFieldsResult.fields;
