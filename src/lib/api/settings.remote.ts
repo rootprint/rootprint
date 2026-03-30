@@ -5,17 +5,7 @@ import * as settingsService from '$lib/server/services/settings.service';
 
 export const getGoogleAuthSettings = query(async () => {
 	requireAdmin();
-	const settings = settingsService.getGoogleAuthSettings();
-	if (!settings) return null;
-
-	const masked =
-		settings.clientSecret.length > 4 ? '****' + settings.clientSecret.slice(-4) : '****';
-
-	return {
-		clientId: settings.clientId,
-		clientSecretMasked: masked,
-		allowedDomains: settings.allowedDomains
-	};
+	return settingsService.getGoogleAuthSettingsView();
 });
 
 export const removeGoogleAuthSettings = command(async () => {

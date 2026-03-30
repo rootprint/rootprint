@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { appSettings } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import type { GoogleAuthSettings } from '$lib/types';
+import type { GoogleAuthSettings, GoogleAuthSettingsView } from '$lib/types';
 
 export function getSetting(key: string): string | null {
 	const [row] = db
@@ -42,6 +42,18 @@ export function getGoogleAuthSettings(): GoogleAuthSettings | null {
 	}
 
 	return { clientId, clientSecret, allowedDomains };
+}
+
+export function getGoogleAuthSettingsView(): GoogleAuthSettingsView | null {
+	const settings = getGoogleAuthSettings();
+	if (!settings) return null;
+
+	return {
+		clientId: settings.clientId,
+		clientSecretMasked:
+			settings.clientSecret.length > 4 ? '****' + settings.clientSecret.slice(-4) : '****',
+		allowedDomains: settings.allowedDomains
+	};
 }
 
 export function isGoogleAuthConfigured(): boolean {
