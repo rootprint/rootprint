@@ -4,7 +4,7 @@ import { qwIndex, qwFieldMapping, qwSource } from '$lib/server/db/schema';
 import { eq, count, and, notInArray, or, isNull, like, not } from 'drizzle-orm';
 import type { FieldMapping } from 'quickwit-js';
 import { getQuickwitClient } from '$lib/server/quickwit';
-import type { IndexVisibility } from '$lib/types';
+import type { IndexVisibility, SaveIndexConfigFields } from '$lib/types';
 
 function flattenFieldMappings(
 	mappings: FieldMapping[],
@@ -352,7 +352,7 @@ export function getIndexConfig(indexId: string) {
 	return config;
 }
 
-export async function saveIndexConfig(indexId: string, fields: Record<string, unknown>) {
+export async function saveIndexConfig(indexId: string, fields: SaveIndexConfigFields) {
 	await db
 		.update(qwIndex)
 		.set({ ...fields, updatedAt: new Date() })

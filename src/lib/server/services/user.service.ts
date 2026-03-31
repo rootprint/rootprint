@@ -16,10 +16,7 @@ const buildInviteUrl = (origin: string, token: string) => `${origin}/auth/setup?
 export async function listUsersWithInvites(headers: Headers, requestOrigin: string) {
 	const publicOrigin = resolvePublicOrigin(requestOrigin);
 
-	const result = await auth.api.listUsers({
-		headers,
-		query: { limit: 100 }
-	});
+	const result = await auth.api.listUsers({ headers });
 
 	const pendingInvites = await db.select().from(inviteToken);
 	const inviteMap = new Map(

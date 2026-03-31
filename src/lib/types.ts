@@ -25,6 +25,16 @@ export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
 
+export type SaveIndexConfigFields = {
+	levelField?: string;
+	messageField?: string;
+	tracebackField?: string;
+	displayName?: string | null;
+	visibility?: IndexVisibility;
+	contextFields?: string[] | null;
+	stickyFilterFields?: string[] | null;
+};
+
 export type IndexSummary = {
 	indexId: string;
 	indexUri: string;
