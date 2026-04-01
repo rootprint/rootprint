@@ -3,12 +3,10 @@ import { sharedLink } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { fingerprint, extractTimestampSeconds } from '$lib/server/utils/fingerprint';
 import { getQuickwitClient } from '$lib/server/quickwit';
+import { nanoid } from 'nanoid';
 
-function generateCode(length: number = 8): string {
-	const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-	const bytes = crypto.getRandomValues(new Uint8Array(length));
-	return Array.from(bytes, (b) => chars[b % chars.length]).join('');
-}
+const SHARE_LINK_TTL_DAYS = 30;
+const SHARE_LINK_TTL_MS = SHARE_LINK_TTL_DAYS * 24 * 60 * 60 * 1000;
 
 export async function createSharedLink(
 	userId: string,
@@ -24,7 +22,7 @@ export async function createSharedLink(
 
 	const MAX_RETRIES = 3;
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-		const code = generateCode();
+		const code = nanoid(21);
 		try {
 			await db.insert(sharedLink).values({
 				code,
@@ -49,6 +47,7 @@ export async function createSharedLink(
 export async function resolveSharedLink(code: string) {
 	const [link] = await db.select().from(sharedLink).where(eq(sharedLink.code, code));
 	if (!link) return null;
+	if (Date.now() - link.createdAt.getTime() >= SHARE_LINK_TTL_MS) return null;
 	return link;
 }
 

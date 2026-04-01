@@ -62,6 +62,7 @@
 		"daisyui": "^5.5.19",
 		"drizzle-orm": "^0.45.1",
 		"lucide-svelte": "^0.577.0",
+		"nanoid": "^5.1.7",
 		"overlayscrollbars": "^2.14.0",
 		"overlayscrollbars-svelte": "^0.5.5",
 		"quickwit-js": "^0.3.6",

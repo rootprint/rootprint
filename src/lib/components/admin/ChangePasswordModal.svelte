@@ -88,7 +88,7 @@
 						required
 					/>
 					{#if passwordMismatch}
-						<p class="text-error text-sm mt-1">Passwords do not match</p>
+						<p class="mt-1 text-sm text-error">Passwords do not match</p>
 					{/if}
 				</label>
 
