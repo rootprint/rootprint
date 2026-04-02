@@ -32,14 +32,15 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 		.where(eq(account.providerId, 'google'));
 	const googleUserIds = new Set(googleAccounts.map((a) => a.userId));
 
-	return result.users.map((u) => ({
+	// Better Auth's admin plugin doesn't infer custom additionalFields in listUsers return type
+	type UserWithLastActive = (typeof result.users)[number] & { lastActive?: number };
+
+	return (result.users as UserWithLastActive[]).map((u) => ({
 		id: u.id,
 		name: u.name,
 		email: u.email,
 		role: u.role,
-		lastActive: (u as unknown as { lastActive?: number }).lastActive
-			? new Date((u as unknown as { lastActive: number }).lastActive)
-			: null,
+		lastActive: u.lastActive ? new Date(u.lastActive) : null,
 		status: googleUserIds.has(u.id)
 			? ('active' as const)
 			: inviteMap.has(u.id)
