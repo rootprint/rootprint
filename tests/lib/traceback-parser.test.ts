@@ -1,6 +1,5 @@
-// src/lib/utils/traceback-parser.test.ts
 import { describe, it, expect } from 'vitest';
-import { highlightTraceback } from './traceback-parser';
+import { highlightTraceback } from '../../src/lib/utils/traceback-parser';
 
 const PYTHON_SIMPLE = `Traceback (most recent call last):
   File "/app/main.py", line 42, in handle_request
