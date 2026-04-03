@@ -1,14 +1,16 @@
 <script lang="ts">
-	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
-	import { ListTree, Braces, Bug, Logs, Share2, Loader2 } from 'lucide-svelte';
-	import { createSharedLink } from '$lib/api/shared-links.remote';
+	import { Braces, Bug, ListTree, Loader2, Logs, Share2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
+
+	import { createSharedLink } from '$lib/api/shared-links.remote';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
-	import LogContextView from './LogContextView.svelte';
-	import { flattenObject } from '$lib/utils/log-helpers';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import Drawer from '$lib/components/ui/Drawer.svelte';
+	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
+	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
+	import { flattenObject } from '$lib/utils/log-helpers';
+
+	import LogContextView from './LogContextView.svelte';
 
 	let {
 		open = $bindable(false),

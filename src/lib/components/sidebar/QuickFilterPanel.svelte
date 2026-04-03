@@ -1,19 +1,20 @@
 <script lang="ts">
 	import {
-		ChevronRight,
-		ChevronDown,
-		X,
 		Check,
-		Settings,
-		Pin,
+		ChevronDown,
+		ChevronRight,
 		GripVertical,
-		Plus
+		Pin,
+		Plus,
+		Settings,
+		X
 	} from 'lucide-svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { dndzone } from 'svelte-dnd-action';
+
 	import type { IndexField } from '$lib/types';
-	import { parseClauses } from '$lib/utils/query';
 	import { severityDotColor, sortBySeverity } from '$lib/utils/log-helpers';
+	import { parseClauses } from '$lib/utils/query';
 
 	let {
 		fields,

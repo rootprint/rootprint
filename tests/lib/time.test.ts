@@ -1,13 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-	formatTimestamp,
-	formatChartTime,
 	formatChartDate,
+	formatChartTime,
 	formatChartTooltip,
-	normalizeToMs,
-	formatEpochLocale,
 	formatEpochDate,
-	formatRelativeTime
+	formatEpochLocale,
+	formatRelativeTime,
+	formatTimestamp,
+	normalizeToMs
 } from '$lib/utils/time';
 
 describe('formatTimestamp', () => {

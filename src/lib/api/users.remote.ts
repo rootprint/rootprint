@@ -1,12 +1,13 @@
-import { command, query, getRequestEvent } from '$app/server';
 import { error } from '@sveltejs/kit';
+
+import { command, getRequestEvent, query } from '$app/server';
 import { requireAdmin } from '$lib/middleware/auth';
 import {
 	createInviteSchema,
-	removeUserSchema,
-	setUserRoleSchema,
 	regenerateInviteSchema,
-	resetPasswordSchema
+	removeUserSchema,
+	resetPasswordSchema,
+	setUserRoleSchema
 } from '$lib/schemas/users';
 import * as userService from '$lib/server/services/user.service';
 

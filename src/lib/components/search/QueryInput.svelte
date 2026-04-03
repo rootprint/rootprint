@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+
 	import type { IndexField } from '$lib/types';
-	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
 	import { useDebounce } from '$lib/utils/debounce';
+	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
 
 	interface Props {
 		externalValue: string;

@@ -1,6 +1,7 @@
+import { and, desc, eq, notInArray } from 'drizzle-orm';
+
 import { db } from '$lib/server/db';
 import { searchHistory } from '$lib/server/db/schema';
-import { eq, and, desc, notInArray } from 'drizzle-orm';
 
 const MAX_HISTORY_PER_USER = 100;
 
@@ -31,7 +32,7 @@ export async function getHistory(userId: string, indexId: string) {
 
 export async function recordSearch(
 	userId: string,
-	data: { indexId: string; query: string; timeRange: any }
+	data: { indexId: string; query: string; timeRange: Record<string, unknown> }
 ) {
 	const [latest] = await db
 		.select()

@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { Clock } from 'lucide-svelte';
+
 	import { TIME_PRESETS, type TimeRange, type TimezoneMode } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
+
 	import Calendar from '../ui/Calendar.svelte';
-	import { Clock } from 'lucide-svelte';
 
 	let {
 		value = { type: 'relative', preset: '15m' } as TimeRange,

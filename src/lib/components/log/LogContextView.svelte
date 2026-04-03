@@ -1,15 +1,15 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+
 	import { getLogContext, getMoreContext } from '$lib/api/context.remote';
+	import type { LogEntry } from '$lib/types';
+	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import {
 		extractSeverity,
 		extractTimestamp,
-		severityBorderColor,
-		severityBgColor,
-		flattenObject
+		flattenObject,
+		severityBorderColor
 	} from '$lib/utils/log-helpers';
-	import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
-	import { untrack } from 'svelte';
-	import type { LogEntry } from '$lib/types';
 
 	let {
 		hit,
@@ -206,7 +206,6 @@
 				{@const msg = getMessage(entry.hit)}
 				{@const isSelected = i === selectedIndex}
 				{@const borderColor = severityBorderColor(severity)}
-				{@const bgColor = severityBgColor(severity)}
 				{@const isExpanded = expandedIndex === i}
 
 				<!-- Log row -->

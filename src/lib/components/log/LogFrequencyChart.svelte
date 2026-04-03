@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import type uPlotLib from 'uplot';
-	import type { TimezoneMode } from '$lib/types';
-	import { formatChartTime, formatChartDate, formatChartTooltip } from '$lib/utils/time';
+
+	import { browser } from '$app/environment';
 	import CollapsibleSection from '$lib/components/ui/CollapsibleSection.svelte';
+	import type { TimezoneMode } from '$lib/types';
 	import { SEVERITY_ORDER } from '$lib/utils/log-helpers';
+	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
 
 	let {
 		data,
@@ -132,7 +133,7 @@
 
 		const UPlot = uPlotCtor;
 
-		const barPaths = UPlot.paths.bars!({ size: [0.96, 64, 1], align: 0, gap: 1 });
+		const barPaths = UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? null;
 
 		const series: uPlotLib.Series[] = [
 			{

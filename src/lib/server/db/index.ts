@@ -1,10 +1,12 @@
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
-import * as schema from './schema';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
+
 import { config } from '$lib/server/config';
+
+import * as schema from './schema';
 
 mkdirSync(dirname(config.databasePath), { recursive: true });
 

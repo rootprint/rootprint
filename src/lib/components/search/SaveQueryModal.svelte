@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { saveQuery } from '$lib/api/saved-queries.remote';
-	import { invalidateAll } from '$app/navigation';
+	import { fade, scale } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
+
+	import { invalidateAll } from '$app/navigation';
+	import { saveQuery } from '$lib/api/saved-queries.remote';
 	import { getErrorMessage } from '$lib/utils/error';
-	import { scale, fade } from 'svelte/transition';
 
 	let {
 		open = $bindable(false),

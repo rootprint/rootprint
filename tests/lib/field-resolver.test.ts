@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { resolveFieldValue, formatFieldValue } from '$lib/utils/field-resolver';
+import { describe, expect, it } from 'vitest';
+
 import type { Formatter } from '$lib/types';
+import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 
 describe('resolveFieldValue (basic resolution)', () => {
 	it('resolves a top-level key', () => {

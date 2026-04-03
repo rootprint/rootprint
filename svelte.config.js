@@ -1,6 +1,6 @@
-import bunAdapter from 'svelte-adapter-bun';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import bunAdapter from 'svelte-adapter-bun';
 
 function adapter(options = {}) {
 	const base = bunAdapter(options);

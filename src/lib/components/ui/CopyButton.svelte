@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Check, Copy } from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
 	import type { Snippet } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	let {
 		text,

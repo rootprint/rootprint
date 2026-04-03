@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-	severityBorderColor,
+	SEVERITY_ORDER,
 	severityBgColor,
+	severityBorderColor,
 	severityDotColor,
 	severityTextColor,
-	sortBySeverity,
-	SEVERITY_ORDER
+	sortBySeverity
 } from '$lib/utils/log-helpers';
 
 describe('severityBorderColor', () => {

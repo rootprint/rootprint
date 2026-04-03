@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
+
 	import { invalidateAll } from '$app/navigation';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { saveGoogleAuthSettings } from '$lib/api/settings.remote';
-	import RemoveGoogleAuthModal from './RemoveGoogleAuthModal.svelte';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import type { GoogleAuthSettingsView } from '$lib/types';
+
+	import RemoveGoogleAuthModal from './RemoveGoogleAuthModal.svelte';
 
 	let { origin, settings }: { origin: string; settings: GoogleAuthSettingsView | null } = $props();
 
@@ -83,7 +85,7 @@
 			toast.success('Google auth settings saved');
 			savedSuccessfully = true;
 			await invalidateAll();
-		} catch (e) {
+		} catch {
 			toast.error('Failed to save settings');
 		} finally {
 			saving = false;

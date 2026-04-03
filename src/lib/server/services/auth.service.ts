@@ -1,8 +1,9 @@
+import { hashPassword } from 'better-auth/crypto';
+import { and, eq } from 'drizzle-orm';
+
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { inviteToken, account, user } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { hashPassword } from 'better-auth/crypto';
+import { account, inviteToken, user } from '$lib/server/db/schema';
 
 export async function hasGoogleAccount(userId: string): Promise<boolean> {
 	const [row] = await db

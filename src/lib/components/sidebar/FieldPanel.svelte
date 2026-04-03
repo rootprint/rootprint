@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { dndzone } from 'svelte-dnd-action';
 	import {
-		ChevronRight,
-		ChevronDown,
 		Check,
-		Settings,
+		ChevronDown,
+		ChevronRight,
 		GripVertical,
-		X,
+		Pin,
 		Plus,
-		Pin
+		Settings,
+		X
 	} from 'lucide-svelte';
+	import { dndzone } from 'svelte-dnd-action';
+
 	import type { IndexField } from '$lib/types';
 
 	let {

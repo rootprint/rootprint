@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatEpochLocale } from '$lib/utils/time';
+
 	import type { PageData } from '../../../routes/(app)/administration/$types';
 
 	type IndexDetail = PageData['indexDetails'][number];

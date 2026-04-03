@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { Users, X } from 'lucide-svelte';
-	import { deleteSavedQuery, shareQuery, unshareQuery } from '$lib/api/saved-queries.remote';
-	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-	import { getErrorMessage } from '$lib/utils/error';
+
+	import { invalidateAll } from '$app/navigation';
+	import { deleteSavedQuery, shareQuery, unshareQuery } from '$lib/api/saved-queries.remote';
 	import type { ParsedQuery, SavedQueryEntry } from '$lib/types';
+	import { getErrorMessage } from '$lib/utils/error';
+
 	import DrawerList from './DrawerList.svelte';
 	import DrawerRow from './DrawerRow.svelte';
 

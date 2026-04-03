@@ -1,11 +1,11 @@
 import { command, query } from '$app/server';
-import {
-	getHistorySchema,
-	recordSearchSchema,
-	deleteHistoryEntrySchema,
-	clearHistorySchema
-} from '$lib/schemas/history';
 import { requireUser } from '$lib/middleware/auth';
+import {
+	clearHistorySchema,
+	deleteHistoryEntrySchema,
+	getHistorySchema,
+	recordSearchSchema
+} from '$lib/schemas/history';
 import * as historyService from '$lib/server/services/history.service';
 
 export const getHistory = query(getHistorySchema, async (data) => {

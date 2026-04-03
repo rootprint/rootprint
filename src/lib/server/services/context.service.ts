@@ -1,9 +1,10 @@
 import { getQuickwitClient } from '$lib/server/quickwit';
-import { getFieldConfig } from './index.service';
+import { extractTimestampSeconds, fingerprint } from '$lib/server/utils/fingerprint';
 import { flattenObject } from '$lib/utils/log-helpers';
 import { escapeFilterValue } from '$lib/utils/query';
 import { normalizeToMs } from '$lib/utils/time';
-import { fingerprint, extractTimestampSeconds } from '$lib/server/utils/fingerprint';
+
+import { getFieldConfig } from './index.service';
 
 function isExcludedField(key: string, excluded: Set<string>, prefixes: string[]): boolean {
 	if (excluded.has(key)) return true;

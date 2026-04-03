@@ -1,6 +1,6 @@
+import type { TimezoneMode } from '$lib/types';
 import { resolveFieldValue } from '$lib/utils/field-resolver';
 import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
-import type { TimezoneMode } from '$lib/types';
 
 export const SEVERITY_ORDER = [
 	'trace',

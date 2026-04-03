@@ -237,7 +237,7 @@ function parseClauseAt(input: string, start: number): ClauseMatch | null {
 	i++;
 	if (i >= input.length) return null;
 
-	let match: ClauseMatch | null = null;
+	let match: ClauseMatch;
 
 	if (input[i] === '"') {
 		const quoted = parseQuotedValueAt(input, i);

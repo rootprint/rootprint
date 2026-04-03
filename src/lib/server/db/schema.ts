@@ -1,5 +1,6 @@
-import { sqliteTable, integer, text, uniqueIndex, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+
 import { user } from './auth.schema';
 
 // Quickwit index metadata — one row per index

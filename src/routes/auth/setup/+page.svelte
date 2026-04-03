@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { setupPassword } from '$lib/api/auth.remote';
 	import { setupPasswordSchema } from '$lib/schemas/auth';
-	import { page } from '$app/state';
 
 	let { data } = $props();
 
@@ -16,7 +16,7 @@
 				Choose a password to complete your account setup.
 			</p>
 
-			{#each setupPassword.fields.allIssues() as issue}
+			{#each setupPassword.fields.allIssues() as issue, i (i)}
 				<div class="alert text-sm alert-error">{issue.message}</div>
 			{/each}
 

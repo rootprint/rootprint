@@ -1,7 +1,7 @@
-import { query, command, form } from '$app/server';
-import { saveIndexConfigSchema, indexIdSchema } from '$lib/schemas/index-config';
+import { command, form, query } from '$app/server';
+import { requireAdmin, requireUser } from '$lib/middleware/auth';
+import { indexIdSchema, saveIndexConfigSchema } from '$lib/schemas/index-config';
 import { getIndexFieldsSchema } from '$lib/schemas/preference';
-import { requireUser, requireAdmin } from '$lib/middleware/auth';
 import * as indexService from '$lib/server/services/index.service';
 
 export const getIndexes = query(async () => {

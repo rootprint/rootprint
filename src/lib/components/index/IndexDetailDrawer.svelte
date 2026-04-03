@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { Info, ListTree, Plug, Settings } from 'lucide-svelte';
-	import Drawer from '$lib/components/ui/Drawer.svelte';
+
+	import IndexConfigTab from '$lib/components/index/IndexConfigTab.svelte';
 	import IndexDetailsTab from '$lib/components/index/IndexDetailsTab.svelte';
 	import IndexFieldsTab from '$lib/components/index/IndexFieldsTab.svelte';
 	import IndexSourcesTab from '$lib/components/index/IndexSourcesTab.svelte';
-	import IndexConfigTab from '$lib/components/index/IndexConfigTab.svelte';
+	import Drawer from '$lib/components/ui/Drawer.svelte';
+
 	import type { PageData } from '../../../routes/(app)/administration/$types';
 
 	type IndexDetail = PageData['indexDetails'][number];

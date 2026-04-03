@@ -1,13 +1,14 @@
-import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { sveltekitCookies } from 'better-auth/svelte-kit';
-import { admin, username } from 'better-auth/plugins';
-import { getRequestEvent } from '$app/server';
-import { db } from '$lib/server/db';
-import { user, account, inviteToken } from '$lib/server/db/schema';
-import { config } from '$lib/server/config';
-import { eq, and } from 'drizzle-orm';
 import { APIError } from 'better-auth/api';
+import { betterAuth } from 'better-auth/minimal';
+import { admin, username } from 'better-auth/plugins';
+import { sveltekitCookies } from 'better-auth/svelte-kit';
+import { and, eq } from 'drizzle-orm';
+
+import { getRequestEvent } from '$app/server';
+import { config } from '$lib/server/config';
+import { db } from '$lib/server/db';
+import { account, inviteToken, user } from '$lib/server/db/schema';
 import * as settingsService from '$lib/server/services/settings.service';
 
 const googleSettings = settingsService.getGoogleAuthSettings();
@@ -83,7 +84,7 @@ export const auth = betterAuth({
 						throw new APIError('FORBIDDEN', { message: 'domain_not_allowed' });
 					}
 				},
-				after: async (accountData, _context) => {
+				after: async (accountData) => {
 					if (accountData.providerId !== 'google') return;
 
 					try {
@@ -140,5 +141,3 @@ export const auth = betterAuth({
 		sveltekitCookies(getRequestEvent) // must be last
 	]
 });
-
-export { googleSettings };

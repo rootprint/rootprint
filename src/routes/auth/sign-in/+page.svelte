@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { signIn } from '$lib/api/auth.remote';
-	import { signInSchema } from '$lib/schemas/auth';
 	import { page } from '$app/state';
+	import { signIn } from '$lib/api/auth.remote';
 	import { authClient } from '$lib/auth-client';
+	import { signInSchema } from '$lib/schemas/auth';
 
 	let { data } = $props();
 

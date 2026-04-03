@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { parseClauses } from '$lib/utils/query';
 
 // Inline the helper logic for unit testing (same logic will be in QuickFilterPanel)

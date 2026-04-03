@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { removeGoogleAuthSettings } from '$lib/api/settings.remote';
+	import { fade, scale } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
+
 	import { invalidateAll } from '$app/navigation';
-	import { scale, fade } from 'svelte/transition';
+	import { removeGoogleAuthSettings } from '$lib/api/settings.remote';
 
 	let {
 		open = $bindable(false),

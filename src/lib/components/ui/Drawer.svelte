@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import type { Snippet } from 'svelte';
-	import { fly, fade } from 'svelte/transition';
+	import type { Component, Snippet } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
 
 	type Tab = {
 		id: string;
 		label: string;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		icon: any;
+		icon: Component<{ size?: number }>;
 		disabled?: boolean;
 	};
 

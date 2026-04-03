@@ -24,8 +24,6 @@ export const searchFieldValuesSchema = v.object({
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
 });
 
-type SearchFieldValuesInput = v.InferOutput<typeof searchFieldValuesSchema>;
-
 export const searchLogHistogramSchema = v.object({
 	indexId: v.pipe(v.string(), v.minLength(1)),
 	query: v.string(),
@@ -33,5 +31,3 @@ export const searchLogHistogramSchema = v.object({
 	startTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	endTimestamp: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
 });
-
-type SearchLogHistogramInput = v.InferOutput<typeof searchLogHistogramSchema>;

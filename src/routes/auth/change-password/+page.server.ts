@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+
 import { requireUser } from '$lib/middleware/auth';
 import { hasGoogleAccount } from '$lib/server/services/auth.service';
 

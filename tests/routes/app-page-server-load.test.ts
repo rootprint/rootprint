@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { HistoryEntry, SharedQueryEntry } from '$lib/types';
 
 vi.mock('$lib/server/services/history.service', () => ({
@@ -10,9 +11,10 @@ vi.mock('$lib/server/services/saved-query.service', () => ({
 	getSharedQueries: vi.fn()
 }));
 
-import { load } from '../../src/routes/(app)/+page.server';
 import * as historyService from '$lib/server/services/history.service';
 import * as savedQueryService from '$lib/server/services/saved-query.service';
+
+import { load } from '../../src/routes/(app)/+page.server';
 
 describe('+page.server load', () => {
 	beforeEach(() => {

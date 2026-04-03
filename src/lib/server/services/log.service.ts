@@ -1,32 +1,30 @@
+import { error } from '@sveltejs/kit';
+import { and, eq, inArray } from 'drizzle-orm';
+import { AggregationBuilder, ValidationError } from 'quickwit-js';
+
+import type { SearchLogsInput } from '$lib/schemas/logs';
 import { db } from '$lib/server/db';
 import { qwFieldMapping } from '$lib/server/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
-import { getFieldConfig } from '$lib/server/services/index.service';
-import { AggregationBuilder, ValidationError } from 'quickwit-js';
-import { error } from '@sveltejs/kit';
 import { getQuickwitClient } from '$lib/server/quickwit';
-import { resolveTimeRange } from '$lib/utils/time';
+import { getFieldConfig } from '$lib/server/services/index.service';
 import { formatFieldValue } from '$lib/utils/field-resolver';
 import {
 	computeHistogramInterval,
 	computeHistogramIntervalSeconds,
 	padHistogramBuckets
 } from '$lib/utils/histogram';
-import type { SearchLogsInput } from '$lib/schemas/logs';
+import { resolveTimeRange } from '$lib/utils/time';
 
 function resolveTimestamps(data: {
 	startTimestamp?: number;
 	endTimestamp?: number;
 	timeRange?: string;
 }): { startTs: number; endTs: number } {
-	const hasStart = data.startTimestamp !== undefined;
-	const hasEnd = data.endTimestamp !== undefined;
-
-	if (hasStart && hasEnd) {
-		return { startTs: data.startTimestamp!, endTs: data.endTimestamp! };
+	if (data.startTimestamp !== undefined && data.endTimestamp !== undefined) {
+		return { startTs: data.startTimestamp, endTs: data.endTimestamp };
 	}
 
-	if (hasStart !== hasEnd) {
+	if (data.startTimestamp !== undefined || data.endTimestamp !== undefined) {
 		throw new Error('Both startTimestamp and endTimestamp must be provided together');
 	}
 

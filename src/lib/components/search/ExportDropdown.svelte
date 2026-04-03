@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { formatAsJson, formatAsCsv, formatAsText, downloadFile } from '$lib/utils/export';
 	import { Download } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+
+	import { downloadFile, formatAsCsv, formatAsJson, formatAsText } from '$lib/utils/export';
 
 	let {
 		logs,
@@ -65,7 +66,6 @@
 </script>
 
 {#if dropdownOpen}
-	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
 	<div role="none" class="fixed inset-0 z-10" onclick={() => (dropdownOpen = false)}></div>
 {/if}
 <div class="dropdown dropdown-end" class:dropdown-open={dropdownOpen}>

@@ -1,9 +1,10 @@
+import { eq } from 'drizzle-orm';
+
 import { db } from '$lib/server/db';
 import { appSettings } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
 import type { GoogleAuthSettings, GoogleAuthSettingsView } from '$lib/types';
 
-export function getSetting(key: string): string | null {
+function getSetting(key: string): string | null {
 	const [row] = db
 		.select({ value: appSettings.value })
 		.from(appSettings)

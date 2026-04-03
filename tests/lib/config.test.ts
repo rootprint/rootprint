@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, readFileSync, unlinkSync, mkdirSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, rmSync } from 'fs';
 import { resolve } from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let mockEnv: Record<string, string> = {};
 

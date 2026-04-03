@@ -1,4 +1,5 @@
 import type { Session } from 'better-auth/minimal';
+
 import type { auth } from '$lib/server/auth';
 
 type Auth = typeof auth;

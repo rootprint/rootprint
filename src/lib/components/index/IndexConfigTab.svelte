@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
+
 	import { saveIndexConfig } from '$lib/api/indexes.remote';
+
 	import type { PageData } from '../../../routes/(app)/administration/$types';
 
 	type IndexDetail = PageData['indexDetails'][number];
@@ -124,7 +126,7 @@
 		try {
 			await submit();
 			toast.success('Index configuration saved');
-		} catch (e) {
+		} catch {
 			toast.error('Failed to save configuration');
 		}
 	})}
@@ -213,7 +215,7 @@
 		<label class="mb-1 block text-xs font-medium">Context Fields</label>
 		<input {...configForm.fields.contextFields.as('hidden', contextFieldsSerialized)} />
 		<div class="mb-2 flex flex-wrap gap-1.5">
-			{#each contextFieldTags as field}
+			{#each contextFieldTags as field (field)}
 				<span class="badge gap-1 badge-ghost font-mono text-xs badge-sm">
 					{field}
 					<button
@@ -243,7 +245,7 @@
 		<label class="mb-1 block text-xs font-medium">Sticky Filter Fields</label>
 		<input {...configForm.fields.stickyFilterFields.as('hidden', stickyFieldsSerialized)} />
 		<div class="mb-2 flex flex-wrap gap-1.5">
-			{#each stickyFieldTags as field}
+			{#each stickyFieldTags as field (field)}
 				<span class="badge gap-1 badge-ghost font-mono text-xs badge-sm">
 					{field}
 					<button

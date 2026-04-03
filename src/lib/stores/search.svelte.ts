@@ -1,31 +1,32 @@
-import { getIndexFields, getIndexConfig } from '$lib/api/indexes.remote';
-import { searchLogs, searchFieldValues, searchLogHistogram } from '$lib/api/logs.remote';
+import { toast } from 'svelte-sonner';
+
+import { browser } from '$app/environment';
+import { invalidateAll } from '$app/navigation';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { recordSearch } from '$lib/api/history.remote';
+import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
+import { searchFieldValues, searchLogHistogram, searchLogs } from '$lib/api/logs.remote';
 import {
 	getPreference,
 	saveDisplayFields,
 	saveQuickFilterFields
 } from '$lib/api/preferences.remote';
-import { recordSearch } from '$lib/api/history.remote';
-import { invalidateAll } from '$app/navigation';
-import { browser } from '$app/environment';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
-import {
-	parseClauses,
-	addClause as addClauseUtil,
-	removeClause as removeClauseUtil,
-	hasClause as hasClauseUtil,
-	clearClauses as clearClausesUtil,
-	shouldAutoClear
-} from '$lib/utils/query';
-import { resolveTimeRange } from '$lib/utils/time';
-import { buildQueryUrl, serialize } from '$lib/utils/query-params';
-import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
-import { extractJsonSubFields } from '$lib/utils/fields';
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import type { IndexField, IndexSummary, LogEntry, ParsedQuery, TimeRange } from '$lib/types';
-import { toast } from 'svelte-sonner';
+import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { getErrorMessage } from '$lib/utils/error';
+import { extractJsonSubFields } from '$lib/utils/fields';
+import {
+	addClause as addClauseUtil,
+	clearClauses as clearClausesUtil,
+	hasClause as hasClauseUtil,
+	parseClauses,
+	removeClause as removeClauseUtil,
+	shouldAutoClear
+} from '$lib/utils/query';
+import { buildQueryUrl, serialize } from '$lib/utils/query-params';
+import { resolveTimeRange } from '$lib/utils/time';
 
 const BATCH_SIZE = 50;
 
@@ -41,7 +42,7 @@ export function createSearchStore(
 	}
 
 	// --- Index state ---
-	let indexes = $state(initialIndexes);
+	const indexes = $state(initialIndexes);
 	let selectedIndex = $state<string | null>(null);
 
 	// --- Field config state ---
@@ -80,7 +81,7 @@ export function createSearchStore(
 	let searchRequestId = 0;
 
 	// --- Column widths ---
-	let columnWidths = $derived(
+	const columnWidths = $derived(
 		computeColumnWidths(
 			logs.map((e) => e.hit),
 			activeFields
@@ -96,26 +97,26 @@ export function createSearchStore(
 	let shouldRecordHistory = false;
 
 	// --- Derived state ---
-	let timeRange = $derived(parsedQuery().timeRange);
-	let timezoneMode = $derived(parsedQuery().timezoneMode);
-	let timestampWidth = $derived(
+	const timeRange = $derived(parsedQuery().timeRange);
+	const timezoneMode = $derived(parsedQuery().timezoneMode);
+	const timestampWidth = $derived(
 		computeTimestampWidth(
 			logs.map((e) => e.hit),
 			fieldConfig.timestampField,
 			timezoneMode
 		)
 	);
-	let urlIndex = $derived(parsedQuery().index);
-	let sortDirection = $derived(parsedQuery().sortDirection);
+	const urlIndex = $derived(parsedQuery().index);
+	const sortDirection = $derived(parsedQuery().sortDirection);
 
-	let excludedFields = $derived(
+	const excludedFields = $derived(
 		new Set([fieldConfig.levelField, fieldConfig.timestampField, fieldConfig.messageField])
 	);
-	let panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
-	let quickFilterExcludedFields = $derived(
+	const panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
+	const quickFilterExcludedFields = $derived(
 		new Set([fieldConfig.timestampField, fieldConfig.messageField])
 	);
-	let quickFilterAvailableFields = $derived(
+	const quickFilterAvailableFields = $derived(
 		indexFields.filter((f) => f.fast && !quickFilterExcludedFields.has(f.name))
 	);
 

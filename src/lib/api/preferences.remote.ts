@@ -1,10 +1,10 @@
-import { query, command } from '$app/server';
+import { command, query } from '$app/server';
+import { requireUser } from '$lib/middleware/auth';
 import {
 	getPreferenceSchema,
 	saveDisplayFieldsSchema,
 	saveQuickFilterFieldsSchema
 } from '$lib/schemas/preference';
-import { requireUser } from '$lib/middleware/auth';
 import * as preferenceService from '$lib/server/services/preference.service';
 
 export const getPreference = query(getPreferenceSchema, async (data) => {

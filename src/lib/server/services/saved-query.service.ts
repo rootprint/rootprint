@@ -1,7 +1,8 @@
+import { error } from '@sveltejs/kit';
+import { and, desc, eq } from 'drizzle-orm';
+
 import { db } from '$lib/server/db';
 import { savedQuery, user } from '$lib/server/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { error } from '@sveltejs/kit';
 
 export async function getSavedQueries(userId: string, indexId: string) {
 	return db

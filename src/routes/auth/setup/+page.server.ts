@@ -1,5 +1,6 @@
-import type { PageServerLoad } from './$types';
 import { validateInviteToken } from '$lib/server/services/auth.service';
+
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const token = url.searchParams.get('token');

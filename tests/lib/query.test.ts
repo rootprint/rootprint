@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-	escapeFilterValue,
-	parseClauses,
 	addClause,
-	removeClause,
-	hasClause,
 	clearClauses,
+	escapeFilterValue,
+	hasClause,
+	parseClauses,
+	removeClause,
 	shouldAutoClear
 } from '$lib/utils/query';
 

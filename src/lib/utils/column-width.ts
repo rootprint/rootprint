@@ -1,4 +1,4 @@
-import { resolveFieldValue, formatFieldValue } from './field-resolver';
+import { formatFieldValue, resolveFieldValue } from './field-resolver';
 import { extractTimestamp } from './log-helpers';
 
 const MAX_COLUMN_CH = 60;

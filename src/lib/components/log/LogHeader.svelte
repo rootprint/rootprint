@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ArrowDown, ArrowUp } from 'lucide-svelte';
+
 	import type { SortDirection } from '$lib/types';
 
 	let {

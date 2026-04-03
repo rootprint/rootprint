@@ -1,8 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
-import { qwIndex, qwFieldMapping, qwSource } from '$lib/server/db/schema';
-import { eq, count, and, notInArray, or, isNull, like, not } from 'drizzle-orm';
+import { and, count, eq, isNull, not, notInArray, or } from 'drizzle-orm';
 import type { FieldMapping } from 'quickwit-js';
+
+import { db } from '$lib/server/db';
+import { qwFieldMapping, qwIndex, qwSource } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';
 import type { IndexVisibility, SaveIndexConfigFields } from '$lib/types';
 
@@ -38,7 +39,7 @@ function flattenFieldMappings(
 	return result;
 }
 
-export function getIndexSummaries() {
+function getIndexSummaries() {
 	const results = db
 		.select({
 			id: qwIndex.id,
@@ -131,11 +132,14 @@ export function getFieldConfig(indexId: string) {
 	};
 }
 
+// Quickwit API response objects have dynamic shapes - use Record<string, unknown>
+// and let the DB schema handle type coercion on insert
 function buildIndexValues(
-	meta: Record<string, any>,
-	cfg: Record<string, any>,
-	doc: Record<string, any>
+	meta: Record<string, unknown>,
+	cfg: Record<string, unknown>,
+	doc: Record<string, unknown>
 ) {
+	const searchSettings = cfg.search_settings as Record<string, unknown> | undefined;
 	return {
 		indexUid: meta.index_uid,
 		indexUri: cfg.index_uri ?? null,
@@ -150,7 +154,7 @@ function buildIndexValues(
 		storeDocumentSize: doc.store_document_size ?? null,
 		docMappingUid: doc.doc_mapping_uid ?? null,
 		tagFields: doc.tag_fields ?? null,
-		defaultSearchFields: cfg.search_settings?.default_search_fields ?? null,
+		defaultSearchFields: searchSettings?.default_search_fields ?? null,
 		dynamicMapping: doc.dynamic_mapping ?? null,
 		tokenizers: doc.tokenizers ?? null,
 		indexingSettings: cfg.indexing_settings ?? null,
@@ -170,11 +174,12 @@ export async function syncIndexesFromQuickwit() {
 	// All DB operations are synchronous (SQLite driver is synchronous)
 	db.transaction((tx) => {
 		for (const meta of allIndexes) {
-			const cfg = meta.index_config as Record<string, any>;
-			const doc = cfg.doc_mapping;
-			const values = buildIndexValues(meta, cfg, doc);
+			const cfg = meta.index_config as Record<string, unknown>;
+			const doc = cfg.doc_mapping as Record<string, unknown>;
+			const values = buildIndexValues(meta as Record<string, unknown>, cfg, doc);
 
-			const otelDefaults = cfg.index_id.startsWith('otel-logs-')
+			const indexId = cfg.index_id as string;
+			const otelDefaults = indexId.startsWith('otel-logs-')
 				? {
 						levelField: 'severity_text',
 						messageField: 'body',
@@ -183,7 +188,7 @@ export async function syncIndexesFromQuickwit() {
 				: {};
 
 			tx.insert(qwIndex)
-				.values({ indexId: cfg.index_id, ...values, ...otelDefaults })
+				.values({ indexId, ...values, ...otelDefaults })
 				.onConflictDoUpdate({
 					target: qwIndex.indexId,
 					set: { ...values, updatedAt: new Date() }
@@ -193,14 +198,16 @@ export async function syncIndexesFromQuickwit() {
 			const [row] = tx
 				.select({ id: qwIndex.id })
 				.from(qwIndex)
-				.where(eq(qwIndex.indexId, cfg.index_id))
+				.where(eq(qwIndex.indexId, indexId))
 				.all();
 
-			if (!row) throw new Error(`Failed to resolve id for index: ${cfg.index_id}`);
+			if (!row) throw new Error(`Failed to resolve id for index: ${indexId}`);
 			const parentId = row.id;
 
 			// Upsert field mappings
-			const flatFields = flattenFieldMappings(doc.field_mappings ?? []);
+			const flatFields = flattenFieldMappings(
+				(doc.field_mappings as FieldMapping[] | undefined) ?? []
+			);
 			for (const f of flatFields) {
 				tx.insert(qwFieldMapping)
 					.values({
@@ -239,7 +246,10 @@ export async function syncIndexesFromQuickwit() {
 			}
 
 			// Upsert sources
-			const sources = (meta.sources ?? []) as Record<string, any>[];
+			const sources = ((meta as Record<string, unknown>).sources ?? []) as Record<
+				string,
+				unknown
+			>[];
 			for (const s of sources) {
 				tx.insert(qwSource)
 					.values({
@@ -348,7 +358,7 @@ export function getIndexFields(indexId: string) {
 }
 
 export function getIndexConfig(indexId: string) {
-	const { id: _, ...config } = getFieldConfig(indexId);
+	const { id: _id, ...config } = getFieldConfig(indexId);
 	return config;
 }
 
@@ -359,7 +369,7 @@ export async function saveIndexConfig(indexId: string, fields: SaveIndexConfigFi
 		.where(eq(qwIndex.indexId, indexId));
 }
 
-export function getIndexDetail(indexId: string) {
+function getIndexDetail(indexId: string) {
 	const [idx] = db
 		.select({
 			id: qwIndex.id,
@@ -420,7 +430,7 @@ export function getIndexDetail(indexId: string) {
 		.where(eq(qwSource.indexId, idx.id))
 		.all();
 
-	const { id: _, ...detail } = idx;
+	const { id: _id, ...detail } = idx;
 	return { ...detail, fields, sources };
 }
 

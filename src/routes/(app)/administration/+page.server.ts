@@ -1,9 +1,10 @@
-import type { PageServerLoad } from './$types';
-import { listUsersWithInvites } from '$lib/server/services/user.service';
+import { requireAdmin } from '$lib/middleware/auth';
+import { config } from '$lib/server/config';
 import { getAllIndexDetails } from '$lib/server/services/index.service';
 import * as settingsService from '$lib/server/services/settings.service';
-import { config } from '$lib/server/config';
-import { requireAdmin } from '$lib/middleware/auth';
+import { listUsersWithInvites } from '$lib/server/services/user.service';
+
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	requireAdmin();

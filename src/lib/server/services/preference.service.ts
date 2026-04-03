@@ -1,6 +1,7 @@
+import { and, eq } from 'drizzle-orm';
+
 import { db } from '$lib/server/db';
 import { userPreference } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
 
 async function upsertPreference(
 	userId: string,

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { createInvite } from '$lib/api/users.remote';
+	import { fade, scale } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
-	import { getErrorMessage } from '$lib/utils/error';
+
+	import { createInvite } from '$lib/api/users.remote';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { scale, fade } from 'svelte/transition';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	let {
 		open = $bindable(false),

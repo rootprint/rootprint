@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { nanoid } from 'nanoid';
+import { describe, expect, it } from 'vitest';
 
 describe('share code generation (nanoid)', () => {
 	it('generates a 21-character code', () => {

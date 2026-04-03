@@ -1,12 +1,12 @@
-import { query, command } from '$app/server';
-import {
-	searchLogsSchema,
-	searchFieldValuesSchema,
-	searchLogHistogramSchema
-} from '$lib/schemas/logs';
+import { command, query } from '$app/server';
 import { requireUser } from '$lib/middleware/auth';
-import * as logService from '$lib/server/services/log.service';
+import {
+	searchFieldValuesSchema,
+	searchLogHistogramSchema,
+	searchLogsSchema
+} from '$lib/schemas/logs';
 import * as indexService from '$lib/server/services/index.service';
+import * as logService from '$lib/server/services/log.service';
 
 export const searchLogs = command(searchLogsSchema, async (data) => {
 	const user = requireUser();

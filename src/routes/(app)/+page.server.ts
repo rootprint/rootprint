@@ -1,7 +1,8 @@
-import type { PageServerLoad } from './$types';
-import type { HistoryEntry, SavedQueryEntry, SharedQueryEntry } from '$lib/types';
 import * as historyService from '$lib/server/services/history.service';
 import * as savedQueryService from '$lib/server/services/saved-query.service';
+import type { HistoryEntry, SavedQueryEntry, SharedQueryEntry } from '$lib/types';
+
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	const indexId = event.url.searchParams.get('index');

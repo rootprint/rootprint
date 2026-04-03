@@ -1,22 +1,24 @@
 <script lang="ts">
-	import { createSearchStore } from '$lib/stores/search.svelte';
+	import 'overlayscrollbars/overlayscrollbars.css';
+
+	import { CircleX } from 'lucide-svelte';
+	import type { OverlayScrollbars } from 'overlayscrollbars';
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+	import { toast } from 'svelte-sonner';
+
 	import { browser } from '$app/environment';
-	import LogRow from '$lib/components/log/LogRow.svelte';
-	import LogHeader from '$lib/components/log/LogHeader.svelte';
-	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
-	import QuickFilterPanel from '$lib/components/sidebar/QuickFilterPanel.svelte';
+	import { replaceState } from '$app/navigation';
+	import { resolveSharedHit } from '$lib/api/shared-links.remote';
 	import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
 	import LogFrequencyChart from '$lib/components/log/LogFrequencyChart.svelte';
+	import LogHeader from '$lib/components/log/LogHeader.svelte';
+	import LogRow from '$lib/components/log/LogRow.svelte';
 	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
 	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
-	import 'overlayscrollbars/overlayscrollbars.css';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
-	import type { OverlayScrollbars } from 'overlayscrollbars';
-	import { CircleX } from 'lucide-svelte';
+	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
+	import QuickFilterPanel from '$lib/components/sidebar/QuickFilterPanel.svelte';
+	import { createSearchStore } from '$lib/stores/search.svelte';
 	import type { DrawerTab } from '$lib/types';
-	import { replaceState } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
-	import { resolveSharedHit } from '$lib/api/shared-links.remote';
 
 	let { data } = $props();
 

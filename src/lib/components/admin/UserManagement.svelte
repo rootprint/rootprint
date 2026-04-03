@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { UserPlus, Check, Link, RefreshCw, Loader, KeyRound, Trash2 } from 'lucide-svelte';
-	import { setUserRole, regenerateInvite } from '$lib/api/users.remote';
+	import { Check, KeyRound, Link, Loader, RefreshCw, Trash2, UserPlus } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-	import InviteUserModal from './InviteUserModal.svelte';
-	import ResetPasswordModal from './ResetPasswordModal.svelte';
-	import RemoveUserModal from './RemoveUserModal.svelte';
-	import { toast } from 'svelte-sonner';
-	import { getErrorMessage } from '$lib/utils/error';
-	import type { User } from '$lib/types';
+	import { regenerateInvite } from '$lib/api/users.remote';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import type { User } from '$lib/types';
+	import { getErrorMessage } from '$lib/utils/error';
 	import { formatRelativeTime } from '$lib/utils/time';
+
+	import InviteUserModal from './InviteUserModal.svelte';
+	import RemoveUserModal from './RemoveUserModal.svelte';
+	import ResetPasswordModal from './ResetPasswordModal.svelte';
 
 	let { users }: { users: User[] } = $props();
 	let inviteModalOpen = $state(false);
@@ -34,16 +36,6 @@
 	}
 
 	const currentUserId = $derived(page.data.user?.id);
-
-	async function handleRoleChange(userId: string, newRole: 'admin' | 'user') {
-		try {
-			await setUserRole({ userId, role: newRole });
-			await invalidateAll();
-			toast.success(`Role updated to ${newRole === 'admin' ? 'Admin' : 'Member'}`);
-		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to change role'));
-		}
-	}
 </script>
 
 <div class="card border border-base-300 bg-base-100">
@@ -102,7 +94,7 @@
 									{#if user.authProvider !== 'google' && user.status === 'pending'}
 										{#if user.inviteUrl}
 											<CopyButton
-												text={user.inviteUrl!}
+												text={user.inviteUrl ?? ''}
 												class="btn btn-ghost btn-xs"
 												title="Copy invite link"
 											>

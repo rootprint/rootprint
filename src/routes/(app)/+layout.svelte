@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Settings, Lock, LogOut } from 'lucide-svelte';
-	import { page } from '$app/state';
+	import { Lock, LogOut, Settings } from 'lucide-svelte';
+
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { signOut } from '$lib/api/auth.remote';
-	import { getUserInitials } from '$lib/utils/format';
-	import ChangePasswordModal from '$lib/components/admin/ChangePasswordModal.svelte';
 	import logo from '$lib/assets/logo.png';
+	import ChangePasswordModal from '$lib/components/admin/ChangePasswordModal.svelte';
+	import { getUserInitials } from '$lib/utils/format';
 
 	let { children } = $props();
 

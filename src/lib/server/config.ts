@@ -1,9 +1,10 @@
-import { env } from '$env/dynamic/private';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, resolve } from 'path';
+
+import { env } from '$env/dynamic/private';
 import { randomHex } from '$lib/utils/crypto';
 
-export interface Config {
+interface Config {
 	// Required
 	quickwitUrl: string;
 	secret: string;
@@ -61,19 +62,14 @@ function resolveSecret(dataDir: string): string {
 
 let _config: Config | null = null;
 
+/** @public Used by tests via dynamic import (vi.resetModules + await import()) */
 export function buildConfig(): Config {
 	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL', 'QUICKWIT_URL');
 	const origin = readEnv('ORIGIN', 'LOGWIZ_ORIGIN');
 
-	// Validate required vars — collect all errors
-	const missing: string[] = [];
-	if (!quickwitUrl) missing.push('LOGWIZ_QUICKWIT_URL');
-
-	if (missing.length > 0) {
-		throw new Error(
-			`[logwiz] Missing required environment variables:\n` +
-				missing.map((v) => `  - ${v}`).join('\n')
-		);
+	// Validate required vars
+	if (!quickwitUrl) {
+		throw new Error(`[logwiz] Missing required environment variable: LOGWIZ_QUICKWIT_URL`);
 	}
 
 	// Resolve secret: read from data dir, auto-generate on first run
@@ -120,8 +116,8 @@ export function buildConfig(): Config {
 	}
 
 	return Object.freeze({
-		quickwitUrl: quickwitUrl!,
-		secret: secret!,
+		quickwitUrl,
+		secret,
 		origin,
 		databasePath,
 		adminEmail,

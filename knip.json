@@ -1,0 +1,6 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"entry": ["src/routes/**/+*.{ts,svelte}", "src/lib/api/*.remote.ts"],
+	"project": ["src/**/*.{ts,svelte}", "tests/**/*.ts"],
+	"ignoreDependencies": ["daisyui", "tailwindcss"]
+}

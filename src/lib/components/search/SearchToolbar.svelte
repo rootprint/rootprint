@@ -1,13 +1,14 @@
 <script lang="ts">
-	import type { createSearchStore } from '$lib/stores/search.svelte';
-	import type { ParsedQuery, TimeRange, DrawerTab } from '$lib/types';
-	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
+	import { Bookmark, Clock, Play, Save, Share2, Users } from 'lucide-svelte';
+
+	import { browser } from '$app/environment';
 	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { Clock, Share2, Play, Bookmark, Users, Save } from 'lucide-svelte';
 	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
-	import { browser } from '$app/environment';
+	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import type { createSearchStore } from '$lib/stores/search.svelte';
+	import type { DrawerTab, ParsedQuery, TimeRange } from '$lib/types';
 
 	let {
 		store,

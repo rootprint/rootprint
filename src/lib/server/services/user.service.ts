@@ -1,10 +1,11 @@
-import { auth } from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import { inviteToken, user, account } from '$lib/server/db/schema';
-import { hasGoogleAccount } from '$lib/server/services/auth.service';
-import { eq } from 'drizzle-orm';
-import { config } from '$lib/server/config';
 import { APIError } from 'better-auth/api';
+import { eq } from 'drizzle-orm';
+
+import { auth } from '$lib/server/auth';
+import { config } from '$lib/server/config';
+import { db } from '$lib/server/db';
+import { account, inviteToken, user } from '$lib/server/db/schema';
+import { hasGoogleAccount } from '$lib/server/services/auth.service';
 import { randomHex } from '$lib/utils/crypto';
 
 const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
@@ -73,7 +74,7 @@ export async function createInvite(
 		});
 	} catch (e) {
 		if (e instanceof APIError) {
-			throw new Error(e.message || 'Failed to create user');
+			throw new Error(e.message || 'Failed to create user', { cause: e });
 		}
 		throw e;
 	}
@@ -152,7 +153,7 @@ export async function resetPassword(
 		});
 	} catch (e) {
 		if (e instanceof APIError) {
-			throw new Error(e.message || 'Failed to reset password');
+			throw new Error(e.message || 'Failed to reset password', { cause: e });
 		}
 		throw e;
 	}

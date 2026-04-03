@@ -1,4 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+
 import { db } from '$lib/server/db';
 import { qwIndex } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';

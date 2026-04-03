@@ -1,9 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
-import * as sharedLinkService from '$lib/server/services/shared-link.service';
+
 import { assertIndexAccess } from '$lib/server/services/index.service';
-import { serialize } from '$lib/utils/query-params';
+import * as sharedLinkService from '$lib/server/services/shared-link.service';
 import type { ParsedQuery } from '$lib/types';
+import { serialize } from '$lib/utils/query-params';
+
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	const { code } = event.params;

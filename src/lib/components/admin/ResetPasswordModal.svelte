@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { resetPassword } from '$lib/api/users.remote';
+	import { fade, scale } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
+
+	import { resetPassword } from '$lib/api/users.remote';
 	import { getErrorMessage } from '$lib/utils/error';
-	import { scale, fade } from 'svelte/transition';
 
 	let {
 		open = $bindable(false),

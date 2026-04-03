@@ -1,8 +1,8 @@
 import { command } from '$app/server';
-import { getLogContextSchema, getMoreContextSchema } from '$lib/schemas/context';
 import { requireUser } from '$lib/middleware/auth';
-import * as indexService from '$lib/server/services/index.service';
+import { getLogContextSchema, getMoreContextSchema } from '$lib/schemas/context';
 import * as contextService from '$lib/server/services/context.service';
+import * as indexService from '$lib/server/services/index.service';
 
 export const getLogContext = command(getLogContextSchema, async (data) => {
 	const user = requireUser();

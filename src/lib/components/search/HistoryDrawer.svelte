@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { Clock, Bookmark, Users } from 'lucide-svelte';
+	import { Bookmark, Clock, Users } from 'lucide-svelte';
+
 	import { page } from '$app/state';
-	import type {
-		ParsedQuery,
-		HistoryEntry,
-		SavedQueryEntry,
-		SharedQueryEntry,
-		DrawerTab
-	} from '$lib/types';
 	import Drawer from '$lib/components/ui/Drawer.svelte';
-	import SaveQueryModal from './SaveQueryModal.svelte';
+	import type {
+		DrawerTab,
+		HistoryEntry,
+		ParsedQuery,
+		SavedQueryEntry,
+		SharedQueryEntry
+	} from '$lib/types';
+
 	import HistoryTab from './HistoryTab.svelte';
 	import SavedTab from './SavedTab.svelte';
+	import SaveQueryModal from './SaveQueryModal.svelte';
 	import SharedTab from './SharedTab.svelte';
 
 	let {

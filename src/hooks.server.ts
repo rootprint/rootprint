@@ -1,13 +1,14 @@
 import type { Handle } from '@sveltejs/kit';
-import { building } from '$app/environment';
 import { sequence } from '@sveltejs/kit/hooks';
-import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
-import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { db } from '$lib/server/db';
-import { user, account } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
+
+import { building } from '$app/environment';
+import { auth } from '$lib/server/auth';
 import { config, validateConfig } from '$lib/server/config';
+import { db } from '$lib/server/db';
+import { account, user } from '$lib/server/db/schema';
 import { syncIndexesFromQuickwit } from '$lib/server/services/index.service';
 
 async function seedDefaultAdmin() {

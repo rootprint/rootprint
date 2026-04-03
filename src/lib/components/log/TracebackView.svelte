@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { highlightTraceback } from '$lib/utils/traceback-parser';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import { highlightTraceback } from '$lib/utils/traceback-parser';
 
 	let {
 		traceback

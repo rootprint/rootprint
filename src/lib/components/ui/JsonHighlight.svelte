@@ -52,7 +52,7 @@
 </script>
 
 {#if tokens.length}
-	<pre class="break-all whitespace-pre-wrap">{#each tokens as token}<span
+	<pre class="break-all whitespace-pre-wrap">{#each tokens as token, i (i)}<span
 				class={CLASS_MAP[token.type]}>{token.value}</span
 			>{/each}</pre>
 {:else}

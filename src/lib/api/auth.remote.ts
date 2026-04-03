@@ -1,13 +1,14 @@
-import { form, command, getRequestEvent } from '$app/server';
-import { redirect, invalid, error } from '@sveltejs/kit';
-import {
-	signInSchema,
-	setupPasswordSchema,
-	changePasswordSchema,
-	changeOwnPasswordSchema
-} from '$lib/schemas/auth';
-import { requireUser } from '$lib/middleware/auth';
+import { error, invalid, redirect } from '@sveltejs/kit';
 import { APIError } from 'better-auth/api';
+
+import { command, form, getRequestEvent } from '$app/server';
+import { requireUser } from '$lib/middleware/auth';
+import {
+	changeOwnPasswordSchema,
+	changePasswordSchema,
+	setupPasswordSchema,
+	signInSchema
+} from '$lib/schemas/auth';
 import * as authService from '$lib/server/services/auth.service';
 
 export const signIn = form(signInSchema, async (data, issue) => {
