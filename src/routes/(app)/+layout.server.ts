@@ -1,6 +1,8 @@
+import { hasGoogleAccount } from '$lib/server/services/auth.service';
 import { getIndexes } from '$lib/server/services/index.service';
 
 export const load = async (event) => {
 	const indexes = getIndexes(event.locals.user?.role);
-	return { indexes };
+	const isGoogleUser = event.locals.user ? await hasGoogleAccount(event.locals.user.id) : false;
+	return { indexes, isGoogleUser };
 };

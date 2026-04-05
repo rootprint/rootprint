@@ -11,6 +11,7 @@
 	let { children } = $props();
 
 	const user = $derived(page.data.user);
+	const isGoogleUser = $derived(page.data.isGoogleUser ?? false);
 	const initials = $derived(getUserInitials(user?.name));
 	let changePasswordOpen = $state(false);
 </script>
@@ -39,24 +40,26 @@
 					<p class="text-sm font-medium">{user?.name ?? 'User'}</p>
 					<p class="text-xs text-base-content/60">{user?.email ?? ''}</p>
 				</div>
-				{#if user?.role === 'admin'}
+				{#if user?.role === 'admin' || !isGoogleUser}
 					<ul class="menu w-full p-2">
-						<li class="w-full">
-							<a href="/administration" class="w-full">
-								<Settings size={16} class="opacity-70" />
-								Administration
-							</a>
-						</li>
+						{#if user?.role === 'admin'}
+							<li class="w-full">
+								<a href="/administration" class="w-full">
+									<Settings size={16} class="opacity-70" />
+									Administration
+								</a>
+							</li>
+						{/if}
+						{#if !isGoogleUser}
+							<li class="w-full">
+								<button class="w-full" onclick={() => (changePasswordOpen = true)}>
+									<Lock size={16} class="opacity-70" />
+									Change password
+								</button>
+							</li>
+						{/if}
 					</ul>
 				{/if}
-				<ul class="menu w-full p-2">
-					<li class="w-full">
-						<button class="w-full" onclick={() => (changePasswordOpen = true)}>
-							<Lock size={16} class="opacity-70" />
-							Change password
-						</button>
-					</li>
-				</ul>
 				<div class="border-t border-base-300 p-2">
 					<button
 						class="btn w-full justify-start btn-ghost btn-sm"
