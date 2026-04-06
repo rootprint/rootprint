@@ -220,4 +220,5 @@
 	timezoneMode={store.timezoneMode}
 	query={data.parsedQuery.query}
 	timeRange={store.absoluteTimeRange}
+	onfilter={(field, value) => store.addClause(field, value)}
 />

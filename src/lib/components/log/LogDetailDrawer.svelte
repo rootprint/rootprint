@@ -22,7 +22,8 @@
 		levelField = 'level',
 		timezoneMode = 'utc' as 'utc' | 'local',
 		query = '',
-		timeRange = null as { start: number; end: number } | null
+		timeRange = null as { start: number; end: number } | null,
+		onfilter
 	}: {
 		open: boolean;
 		hit: Record<string, unknown> | null;
@@ -34,6 +35,7 @@
 		timezoneMode?: 'utc' | 'local';
 		query?: string;
 		timeRange?: { start: number; end: number } | null;
+		onfilter?: (field: string, value: string) => void;
 	} = $props();
 
 	let sharing = $state(false);
@@ -85,6 +87,19 @@
 
 	const prettyJson = $derived(hit ? JSON.stringify(hit, null, 2) : '');
 	const jsonLines = $derived(prettyJson.split('\n'));
+
+	function isFilterable(value: unknown): boolean {
+		if (value == null) return false;
+		if (value === '') return false;
+		if (typeof value === 'object') return false;
+		return true;
+	}
+
+	function handleFilterClick(field: string, value: unknown) {
+		if (onfilter && isFilterable(value)) {
+			onfilter(field, formatFieldValue(value));
+		}
+	}
 </script>
 
 <Drawer bind:open {tabs} bind:activeTab>
@@ -134,7 +149,13 @@
 									>{key}</td
 								>
 								<td
-									class="border border-base-300 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word]"
+									class="border border-base-300 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word] {onfilter &&
+									isFilterable(value)
+										? 'cursor-pointer hover:bg-base-200'
+										: ''}"
+									onclick={onfilter && isFilterable(value)
+										? () => handleFilterClick(key, value)
+										: undefined}
 								>
 									{#if value === null || value === undefined}
 										<span class="text-base-content/50 italic">null</span>
