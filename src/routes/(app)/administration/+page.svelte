@@ -1,4 +1,5 @@
 <script lang="ts">
+	import GoogleAuthCard from '$lib/components/admin/GoogleAuthCard.svelte';
 	import SettingsTab from '$lib/components/admin/SettingsTab.svelte';
 	import UserManagement from '$lib/components/admin/UserManagement.svelte';
 	import IndexesTab from '$lib/components/index/IndexesTab.svelte';
@@ -45,10 +46,13 @@
 
 		{#if activeTab === 'users'}
 			<UserManagement users={data.users} />
+			<div class="mt-6">
+				<GoogleAuthCard origin={data.origin} settings={data.googleAuthSettings} />
+			</div>
 		{:else if activeTab === 'indexes'}
 			<IndexesTab indexes={data.indexDetails} />
 		{:else}
-			<SettingsTab origin={data.origin} settings={data.googleAuthSettings} />
+			<SettingsTab />
 		{/if}
 	</div>
 </div>
