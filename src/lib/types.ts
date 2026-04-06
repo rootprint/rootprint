@@ -109,6 +109,13 @@ export type SharedQueryEntry = {
 	createdAt: Date;
 };
 
+export const AUTO_REFRESH_INTERVALS = [
+	{ label: '5s', ms: 5_000 },
+	{ label: '10s', ms: 10_000 },
+	{ label: '30s', ms: 30_000 },
+	{ label: '1m', ms: 60_000 }
+] as const;
+
 export type GoogleAuthSettings = {
 	clientId: string;
 	clientSecret: string;

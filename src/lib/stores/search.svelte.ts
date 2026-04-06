@@ -96,6 +96,10 @@ export function createSearchStore(
 	let lastSearchedKey = '';
 	let shouldRecordHistory = false;
 
+	// --- Auto-refresh state ---
+	let autoRefreshInterval = $state<number | null>(null);
+	let autoRefreshTimerId: ReturnType<typeof setInterval> | null = null;
+
 	// --- Derived state ---
 	const timeRange = $derived(parsedQuery().timeRange);
 	const timezoneMode = $derived(parsedQuery().timezoneMode);
@@ -108,6 +112,7 @@ export function createSearchStore(
 	);
 	const urlIndex = $derived(parsedQuery().index);
 	const sortDirection = $derived(parsedQuery().sortDirection);
+	const canAutoRefresh = $derived(timeRange.type === 'relative');
 
 	const excludedFields = $derived(
 		new Set([fieldConfig.levelField, fieldConfig.timestampField, fieldConfig.messageField])
@@ -494,6 +499,32 @@ export function createSearchStore(
 		navigateQuery({ sortDirection: current === 'desc' ? 'asc' : 'desc' });
 	}
 
+	// --- Auto-refresh ---
+
+	function startAutoRefresh(intervalMs: number) {
+		stopAutoRefresh();
+		autoRefreshInterval = intervalMs;
+		autoRefreshTimerId = setInterval(() => {
+			bumpSearch();
+		}, intervalMs);
+	}
+
+	function stopAutoRefresh() {
+		if (autoRefreshTimerId !== null) {
+			clearInterval(autoRefreshTimerId);
+			autoRefreshTimerId = null;
+		}
+		autoRefreshInterval = null;
+	}
+
+	function setAutoRefresh(intervalMs: number | null) {
+		if (intervalMs === null) {
+			stopAutoRefresh();
+		} else {
+			startAutoRefresh(intervalMs);
+		}
+	}
+
 	// --- Start loading immediately ---
 	initIndexes();
 
@@ -521,6 +552,42 @@ export function createSearchStore(
 			if (key === lastSearchedKey) return;
 			lastSearchedKey = key;
 			search();
+		});
+
+		// Stop auto-refresh when switching to absolute time range
+		$effect(() => {
+			if (!canAutoRefresh && autoRefreshInterval !== null) {
+				stopAutoRefresh();
+			}
+		});
+
+		// Pause auto-refresh when tab is hidden, resume when visible.
+		// We manage the timer directly here instead of calling startAutoRefresh()
+		// because startAutoRefresh() calls stopAutoRefresh() which resets autoRefreshInterval.
+		$effect(() => {
+			if (!browser) return;
+			const interval = autoRefreshInterval;
+			if (interval === null) return;
+
+			function onVisibilityChange() {
+				if (document.hidden) {
+					if (autoRefreshTimerId !== null) {
+						clearInterval(autoRefreshTimerId);
+						autoRefreshTimerId = null;
+					}
+				} else if (autoRefreshInterval !== null) {
+					bumpSearch();
+					autoRefreshTimerId = setInterval(() => bumpSearch(), autoRefreshInterval);
+				}
+			}
+
+			document.addEventListener('visibilitychange', onVisibilityChange);
+			return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+		});
+
+		// Clean up auto-refresh timer on component destroy
+		$effect(() => {
+			return () => stopAutoRefresh();
 		});
 	}
 
@@ -603,7 +670,14 @@ export function createSearchStore(
 		get quickFilterAvailableFields() {
 			return quickFilterAvailableFields;
 		},
+		get autoRefreshInterval() {
+			return autoRefreshInterval;
+		},
+		get canAutoRefresh() {
+			return canAutoRefresh;
+		},
 		// Methods
+		setAutoRefresh,
 		navigateQuery,
 		runQuery,
 		handleIndexChange,
