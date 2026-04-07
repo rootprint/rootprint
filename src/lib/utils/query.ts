@@ -398,29 +398,45 @@ export function addClause(query: string, field: string, value: string, exclude =
 		query = removeClause(query, field, value, !exclude);
 	}
 
-	const escaped = escapeFilterValue(value);
 	const prefix = exclude ? '-' : '';
 
-	// Check if same field+polarity already has a quick-filter clause — merge into OR group
-	for (const match of parseClauseMatches(query)) {
-		if (match.field !== field || match.exclude !== exclude) continue;
+	// Collect all matching clauses for this field+polarity
+	const matches = parseClauseMatches(query).filter(
+		(m) => m.field === field && m.exclude === exclude
+	);
 
-		if (match.kind === 'group') {
-			const nextValues = [...(match.values ?? []), value];
-			const replacement = `${prefix}${field}:(${nextValues.map(escapeFilterValue).join(' OR ')})`;
-			return query.slice(0, match.start) + replacement + query.slice(match.end);
-		}
-
-		if (match.value !== undefined) {
-			const existing = match.rawValue ?? escapeFilterValue(match.value);
-			const replacement = `${prefix}${field}:(${existing} OR ${escaped})`;
-			return query.slice(0, match.start) + replacement + query.slice(match.end);
-		}
+	if (matches.length === 0) {
+		// No existing clause for this field — append
+		const clause = `${prefix}${field}:${escapeFilterValue(value)}`;
+		return query ? `${query} ${clause}` : clause;
 	}
 
-	// No existing clause for this field — append
-	const clause = `${prefix}${field}:${escaped}`;
-	return query ? `${query} ${clause}` : clause;
+	// Gather all existing values from every clause for this field
+	const allValues: string[] = [];
+	for (const match of matches) {
+		if (match.kind === 'group') {
+			allValues.push(...(match.values ?? []));
+		} else if (match.value !== undefined) {
+			allValues.push(match.value);
+		}
+	}
+	allValues.push(value);
+
+	// Build single merged clause
+	const replacement =
+		allValues.length === 1
+			? `${prefix}${field}:${escapeFilterValue(allValues[0])}`
+			: `${prefix}${field}:(${allValues.map(escapeFilterValue).join(' OR ')})`;
+
+	// Remove all duplicate clauses (reverse order to preserve positions), keep the first
+	let result = query;
+	for (let i = matches.length - 1; i > 0; i--) {
+		result = result.slice(0, matches[i].start) + result.slice(matches[i].end);
+	}
+
+	// Replace the first clause with the merged one
+	result = result.slice(0, matches[0].start) + replacement + result.slice(matches[0].end);
+	return cleanWhitespace(result);
 }
 
 export function removeClause(query: string, field: string, value: string, exclude = false): string {
@@ -501,13 +517,48 @@ export function shouldAutoClear(
 	return !hasExtras;
 }
 
+function stripUnquotedAnd(s: string): string {
+	let result = '';
+	let i = 0;
+	while (i < s.length) {
+		if (s[i] === '"') {
+			const start = i;
+			i++;
+			while (i < s.length) {
+				if (s[i] === '\\' && i + 1 < s.length) {
+					i += 2;
+					continue;
+				}
+				if (s[i] === '"') {
+					i++;
+					break;
+				}
+				i++;
+			}
+			result += s.slice(start, i);
+			continue;
+		}
+		if (/\s/.test(s[i]) && s.slice(i).match(/^\s+AND\s+/i)) {
+			const m = s.slice(i).match(/^\s+AND\s+/i)!;
+			result += ' ';
+			i += m[0].length;
+			continue;
+		}
+		result += s[i];
+		i++;
+	}
+	return result;
+}
+
 function cleanWhitespace(s: string): string {
-	return s
-		.replaceAll(/\s{2,}/g, ' ')
-		.trim()
-		.replace(/^(AND|OR)\s+/i, '')
-		.replace(/\s+(AND|OR)$/i, '')
-		.replaceAll(/\b(AND|OR)\s+(AND|OR)\b/gi, '$1')
-		.replace(/^NOT$/i, '')
-		.trim();
+	return stripUnquotedAnd(
+		s
+			.replaceAll(/\s{2,}/g, ' ')
+			.trim()
+			.replace(/^(AND|OR)\s+/i, '')
+			.replace(/\s+(AND|OR)$/i, '')
+			.replaceAll(/\b(AND|OR)\s+(AND|OR)\b/gi, '$1')
+			.replace(/^NOT$/i, '')
+			.trim()
+	);
 }

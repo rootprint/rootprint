@@ -117,18 +117,21 @@
 		}, 300);
 	}
 
-	function getGhostValues(field: string): string[] {
-		const allValues = aggregations[field] ?? [];
-		const valueSet = new Set(allValues);
+	function getActiveValues(field: string): string[] {
 		const seen = new Set<string>();
-		const ghost: string[] = [];
+		const active: string[] = [];
 		for (const c of clauses) {
-			if (c.field === field && !c.exclude && !valueSet.has(c.value) && !seen.has(c.value)) {
+			if (c.field === field && !c.exclude && !seen.has(c.value)) {
 				seen.add(c.value);
-				ghost.push(c.value);
+				active.push(c.value);
 			}
 		}
-		return ghost;
+		return active;
+	}
+
+	function getGhostValues(field: string): string[] {
+		const valueSet = new Set(aggregations[field] ?? []);
+		return getActiveValues(field).filter((v) => !valueSet.has(v));
 	}
 
 	function getTotalValueCount(field: string): number {
@@ -147,15 +150,16 @@
 		if (searched !== null && searched !== undefined) {
 			return searched;
 		}
-		const allValues = aggregations[field] ?? [];
-		const combined = [...getGhostValues(field), ...allValues];
+		const active = getActiveValues(field);
+		const activeSet = new Set(active);
+		const allValues = (aggregations[field] ?? []).filter((v) => !activeSet.has(v));
 		const limit = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
-		const ghostCount = getGhostValues(field).length;
-		return combined.slice(0, ghostCount + limit);
+		return [...active, ...allValues.slice(0, limit)];
 	}
 
 	function getAggregationRemaining(field: string): number {
-		const total = (aggregations[field] ?? []).length;
+		const activeSet = new Set(getActiveValues(field));
+		const total = (aggregations[field] ?? []).filter((v) => !activeSet.has(v)).length;
 		const shown = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
 		return Math.max(0, total - shown);
 	}

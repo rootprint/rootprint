@@ -237,6 +237,32 @@ describe('removeClause', () => {
 		expect(removeClause('bhome:10 AND service:api', 'bhome', '10')).toBe('service:api');
 	});
 
+	it('strips explicit AND between remaining clauses after removal', () => {
+		expect(
+			removeClause(
+				'bhome:40730 source:hive_manager function:_do_handling AND bhome:41234',
+				'bhome',
+				'40730'
+			)
+		).toBe('source:hive_manager function:_do_handling bhome:41234');
+	});
+
+	it('strips multiple AND keywords after removal', () => {
+		expect(removeClause('a:1 AND b:2 AND c:3', 'a', '1')).toBe('b:2 c:3');
+	});
+
+	it('preserves AND inside quoted values', () => {
+		expect(removeClause('msg:"foo AND bar" level:error', 'level', 'error')).toBe(
+			'msg:"foo AND bar"'
+		);
+	});
+
+	it('preserves AND in freetext quoted strings', () => {
+		expect(removeClause('"search AND destroy" level:error', 'level', 'error')).toBe(
+			'"search AND destroy"'
+		);
+	});
+
 	it('does not remove clauses prefixed by unary NOT', () => {
 		expect(removeClause('NOT level:error', 'level', 'error')).toBe('NOT level:error');
 	});
@@ -401,5 +427,46 @@ describe('shouldAutoClear', () => {
 			cleared = removeClause(cleared, 'level', v, false);
 		}
 		expect(cleared).toBe('"error message"');
+	});
+});
+
+describe('quick filter + manual AND interaction', () => {
+	it('deselecting one value after manual AND produces clean query', () => {
+		// User selects via quick filter: bhome:40730 source:hive_manager function:_do_handling
+		// Then manually adds: AND bhome:41234
+		const query = 'bhome:40730 source:hive_manager function:_do_handling AND bhome:41234';
+
+		// Deselect bhome:40730 via quick filter
+		const afterDeselect = removeClause(query, 'bhome', '40730');
+		expect(afterDeselect).toBe('source:hive_manager function:_do_handling bhome:41234');
+
+		// Adding another bhome value should merge cleanly (no AND leftover)
+		const afterAdd = addClause(afterDeselect, 'bhome', '41191');
+		expect(afterAdd).toBe('source:hive_manager function:_do_handling bhome:(41234 OR 41191)');
+
+		// No explicit AND anywhere in the result
+		expect(afterAdd).not.toMatch(/\bAND\b/i);
+	});
+
+	it('preserves OR operators when stripping AND', () => {
+		const query = 'level:error OR level:warn AND bhome:123';
+		const result = removeClause(query, 'bhome', '123');
+		expect(result).toBe('level:error OR level:warn');
+	});
+
+	it('consolidates duplicate field clauses when adding a value', () => {
+		// bhome OR group + standalone bhome clause from manual AND
+		const query = 'function:_handle_internal_commands bhome:(41158 OR 40325 OR 40779) AND bhome:41335';
+		const result = addClause(query, 'bhome', '41191');
+		// All bhome values should be in a single OR group
+		expect(result).toBe(
+			'function:_handle_internal_commands bhome:(41158 OR 40325 OR 40779 OR 41335 OR 41191)'
+		);
+	});
+
+	it('consolidates two standalone clauses for the same field', () => {
+		const query = 'source:api AND bhome:123 AND bhome:456';
+		const result = addClause(query, 'bhome', '789');
+		expect(result).toBe('source:api bhome:(123 OR 456 OR 789)');
 	});
 });
