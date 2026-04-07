@@ -1,6 +1,6 @@
 {
 	"name": "logwiz",
-	"version": "0.1.9",
+	"version": "0.1.10",
 	"description": "Open-source logging UI for Quickwit",
 	"type": "module",
 	"license": "Apache-2.0",
