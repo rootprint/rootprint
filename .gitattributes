@@ -1,0 +1,4 @@
+# Exclude support code from GitHub language statistics
+tests/** linguist-vendored
+*.config.ts linguist-vendored
+scripts/** linguist-vendored
