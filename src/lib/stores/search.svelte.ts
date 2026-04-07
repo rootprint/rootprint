@@ -19,6 +19,7 @@ import { extractJsonSubFields } from '$lib/utils/fields';
 import {
 	addClause as addClauseUtil,
 	clearClauses as clearClausesUtil,
+	consolidateClauses,
 	hasClause as hasClauseUtil,
 	parseClauses,
 	removeClause as removeClauseUtil,
@@ -151,6 +152,9 @@ export function createSearchStore(
 	// --- Navigation ---
 
 	function navigateQuery(partial: Partial<ParsedQuery>, opts?: { push?: boolean }) {
+		if (partial.query !== undefined) {
+			partial = { ...partial, query: consolidateClauses(partial.query) };
+		}
 		const url = buildQueryUrl(page.url.searchParams, partial);
 		goto(url, {
 			replaceState: !opts?.push,

@@ -484,6 +484,80 @@ export function clearClauses(query: string): string {
 	return cleanWhitespace(cleaned);
 }
 
+export function consolidateClauses(query: string): string {
+	const matches = parseClauseMatches(query);
+	if (matches.length < 2) return query;
+
+	// Group by field + polarity
+	const groups = new Map<string, ClauseMatch[]>();
+	for (const match of matches) {
+		const key = `${match.exclude ? '-' : ''}${match.field}`;
+		const list = groups.get(key) ?? [];
+		list.push(match);
+		groups.set(key, list);
+	}
+
+	// Check if any field has duplicates
+	let hasDuplicates = false;
+	for (const list of groups.values()) {
+		if (list.length > 1) {
+			hasDuplicates = true;
+			break;
+		}
+	}
+	if (!hasDuplicates) return query;
+
+	// Build consolidated query — process groups in reverse document order
+	// so that splicing doesn't shift earlier positions
+	const toProcess: { fieldMatches: ClauseMatch[]; field: string; exclude: boolean }[] = [];
+	for (const [, fieldMatches] of groups) {
+		if (fieldMatches.length < 2) continue;
+		toProcess.push({
+			fieldMatches,
+			field: fieldMatches[0].field,
+			exclude: fieldMatches[0].exclude
+		});
+	}
+
+	let result = query;
+	// Collect all removals and replacements, process from end to start
+	const ops: { start: number; end: number; replacement?: string }[] = [];
+	for (const { fieldMatches, field, exclude } of toProcess) {
+		const prefix = exclude ? '-' : '';
+		const allValues: string[] = [];
+		for (const match of fieldMatches) {
+			if (match.kind === 'group') {
+				allValues.push(...(match.values ?? []));
+			} else if (match.value !== undefined) {
+				allValues.push(match.value);
+			}
+		}
+
+		const replacement =
+			allValues.length === 1
+				? `${prefix}${field}:${escapeFilterValue(allValues[0])}`
+				: `${prefix}${field}:(${allValues.map(escapeFilterValue).join(' OR ')})`;
+
+		// First match gets the replacement, rest get removed
+		ops.push({ start: fieldMatches[0].start, end: fieldMatches[0].end, replacement });
+		for (let i = 1; i < fieldMatches.length; i++) {
+			ops.push({ start: fieldMatches[i].start, end: fieldMatches[i].end });
+		}
+	}
+
+	// Sort by start position descending so splicing doesn't shift earlier positions
+	ops.sort((a, b) => b.start - a.start);
+	for (const op of ops) {
+		if (op.replacement !== undefined) {
+			result = result.slice(0, op.start) + op.replacement + result.slice(op.end);
+		} else {
+			result = result.slice(0, op.start) + result.slice(op.end);
+		}
+	}
+
+	return cleanWhitespace(result);
+}
+
 export function shouldAutoClear(
 	knownValues: string[],
 	field: string,

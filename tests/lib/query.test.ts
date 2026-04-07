@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	addClause,
 	clearClauses,
+	consolidateClauses,
 	escapeFilterValue,
 	hasClause,
 	parseClauses,
@@ -468,5 +469,51 @@ describe('quick filter + manual AND interaction', () => {
 		const query = 'source:api AND bhome:123 AND bhome:456';
 		const result = addClause(query, 'bhome', '789');
 		expect(result).toBe('source:api bhome:(123 OR 456 OR 789)');
+	});
+});
+
+describe('consolidateClauses', () => {
+	it('merges two standalone same-field clauses into OR group', () => {
+		expect(consolidateClauses('bhome:10071 bhome:40133')).toBe('bhome:(10071 OR 40133)');
+	});
+
+	it('merges three standalone same-field clauses', () => {
+		expect(consolidateClauses('bhome:1 bhome:2 bhome:3')).toBe('bhome:(1 OR 2 OR 3)');
+	});
+
+	it('only merges same-field clauses, leaves different fields alone', () => {
+		expect(consolidateClauses('level:error source:api level:warn')).toBe(
+			'level:(error OR warn) source:api'
+		);
+	});
+
+	it('flattens existing OR group with standalone same-field clause', () => {
+		expect(consolidateClauses('bhome:(10071 OR 40133) bhome:99999')).toBe(
+			'bhome:(10071 OR 40133 OR 99999)'
+		);
+	});
+
+	it('consolidates excluded clauses separately', () => {
+		expect(consolidateClauses('-level:debug -level:trace')).toBe('-level:(debug OR trace)');
+	});
+
+	it('keeps mixed polarity clauses separate', () => {
+		expect(consolidateClauses('level:error -level:debug')).toBe('level:error -level:debug');
+	});
+
+	it('returns single clause unchanged', () => {
+		expect(consolidateClauses('level:error')).toBe('level:error');
+	});
+
+	it('returns empty string unchanged', () => {
+		expect(consolidateClauses('')).toBe('');
+	});
+
+	it('returns free text (no clauses) unchanged', () => {
+		expect(consolidateClauses('some free text search')).toBe('some free text search');
+	});
+
+	it('handles numeric values', () => {
+		expect(consolidateClauses('status:500 status:404')).toBe('status:(500 OR 404)');
 	});
 });
