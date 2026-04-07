@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import type { Component, Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 
 	type Tab = {
 		id: string;
 		label: string;
-		icon: Component<{ size?: number }>;
+		// lucide-svelte uses Svelte 4 class components incompatible with Svelte 5 Component type
+		icon: any;
 		disabled?: boolean;
 	};
 

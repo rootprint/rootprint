@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { and, count, eq, isNull, not, notInArray, or } from 'drizzle-orm';
-import type { FieldMapping } from 'quickwit-js';
+import type { FieldMapping, IndexConfig, IndexMetadata } from 'quickwit-js';
 
 import { db } from '$lib/server/db';
 import { qwFieldMapping, qwIndex, qwSource } from '$lib/server/db/schema';
@@ -132,14 +132,9 @@ export function getFieldConfig(indexId: string) {
 	};
 }
 
-// Quickwit API response objects have dynamic shapes - use Record<string, unknown>
-// and let the DB schema handle type coercion on insert
-function buildIndexValues(
-	meta: Record<string, unknown>,
-	cfg: Record<string, unknown>,
-	doc: Record<string, unknown>
-) {
-	const searchSettings = cfg.search_settings as Record<string, unknown> | undefined;
+function buildIndexValues(meta: IndexMetadata, cfg: IndexConfig) {
+	const doc = cfg.doc_mapping;
+	const extra = cfg as unknown as Record<string, unknown>;
 	return {
 		indexUid: meta.index_uid,
 		indexUri: cfg.index_uri ?? null,
@@ -154,11 +149,11 @@ function buildIndexValues(
 		storeDocumentSize: doc.store_document_size ?? null,
 		docMappingUid: doc.doc_mapping_uid ?? null,
 		tagFields: doc.tag_fields ?? null,
-		defaultSearchFields: searchSettings?.default_search_fields ?? null,
+		defaultSearchFields: cfg.search_settings?.default_search_fields ?? null,
 		dynamicMapping: doc.dynamic_mapping ?? null,
 		tokenizers: doc.tokenizers ?? null,
 		indexingSettings: cfg.indexing_settings ?? null,
-		ingestSettings: cfg.ingest_settings ?? null,
+		ingestSettings: extra.ingest_settings ?? null,
 		retention: cfg.retention ?? null,
 		rawFieldMappings: doc.field_mappings ?? null
 	};
@@ -174,11 +169,10 @@ export async function syncIndexesFromQuickwit() {
 	// All DB operations are synchronous (SQLite driver is synchronous)
 	db.transaction((tx) => {
 		for (const meta of allIndexes) {
-			const cfg = meta.index_config as Record<string, unknown>;
-			const doc = cfg.doc_mapping as Record<string, unknown>;
-			const values = buildIndexValues(meta as Record<string, unknown>, cfg, doc);
+			const cfg = meta.index_config;
+			const values = buildIndexValues(meta, cfg);
 
-			const indexId = cfg.index_id as string;
+			const indexId = cfg.index_id;
 			const otelDefaults = indexId.startsWith('otel-logs-')
 				? {
 						levelField: 'severity_text',
@@ -205,9 +199,7 @@ export async function syncIndexesFromQuickwit() {
 			const parentId = row.id;
 
 			// Upsert field mappings
-			const flatFields = flattenFieldMappings(
-				(doc.field_mappings as FieldMapping[] | undefined) ?? []
-			);
+			const flatFields = flattenFieldMappings(cfg.doc_mapping.field_mappings ?? []);
 			for (const f of flatFields) {
 				tx.insert(qwFieldMapping)
 					.values({
@@ -246,11 +238,9 @@ export async function syncIndexesFromQuickwit() {
 			}
 
 			// Upsert sources
-			const sources = ((meta as Record<string, unknown>).sources ?? []) as Record<
-				string,
-				unknown
-			>[];
+			const sources = meta.sources ?? [];
 			for (const s of sources) {
+				const extra = s as unknown as Record<string, unknown>;
 				tx.insert(qwSource)
 					.values({
 						indexId: parentId,
@@ -259,8 +249,8 @@ export async function syncIndexesFromQuickwit() {
 						enabled: s.enabled ?? true,
 						inputFormat: s.input_format ?? null,
 						numPipelines: s.num_pipelines ?? null,
-						desiredNumPipelines: s.desired_num_pipelines ?? null,
-						maxNumPipelinesPerIndexer: s.max_num_pipelines_per_indexer ?? null,
+						desiredNumPipelines: (extra.desired_num_pipelines as number) ?? null,
+						maxNumPipelinesPerIndexer: (extra.max_num_pipelines_per_indexer as number) ?? null,
 						version: s.version ?? null,
 						params: s.params ?? null,
 						transform: s.transform ?? null
@@ -272,8 +262,8 @@ export async function syncIndexesFromQuickwit() {
 							enabled: s.enabled ?? true,
 							inputFormat: s.input_format ?? null,
 							numPipelines: s.num_pipelines ?? null,
-							desiredNumPipelines: s.desired_num_pipelines ?? null,
-							maxNumPipelinesPerIndexer: s.max_num_pipelines_per_indexer ?? null,
+							desiredNumPipelines: (extra.desired_num_pipelines as number) ?? null,
+							maxNumPipelinesPerIndexer: (extra.max_num_pipelines_per_indexer as number) ?? null,
 							version: s.version ?? null,
 							params: s.params ?? null,
 							transform: s.transform ?? null

@@ -32,7 +32,7 @@ export async function getHistory(userId: string, indexId: string) {
 
 export async function recordSearch(
 	userId: string,
-	data: { indexId: string; query: string; timeRange: Record<string, unknown> }
+	data: { indexId: string; query: string; timeRange: { type: string; start?: number; end?: number; preset?: string } }
 ) {
 	const [latest] = await db
 		.select()

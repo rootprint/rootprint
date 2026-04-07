@@ -133,7 +133,7 @@
 
 		const UPlot = uPlotCtor;
 
-		const barPaths = UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? null;
+		const barPaths = UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? undefined;
 
 		const series: uPlotLib.Series[] = [
 			{
