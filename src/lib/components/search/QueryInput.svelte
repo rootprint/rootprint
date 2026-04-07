@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 
 	import type { IndexField } from '$lib/types';
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import getCaretCoordinates from 'textarea-caret';
 	import { useDebounce } from '$lib/utils/debounce';
 	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
@@ -9,11 +10,12 @@
 	interface Props {
 		externalValue: string;
 		fields: IndexField[];
+		autocomplete?: boolean;
 		onsubmit: (query: string) => void;
 		onsearchvalues: (field: string, searchTerm: string) => Promise<string[]>;
 	}
 
-	let { externalValue, fields, onsubmit, onsearchvalues }: Props = $props();
+	let { externalValue, fields, autocomplete = true, onsubmit, onsearchvalues }: Props = $props();
 
 	// --- Internal state (owns the localBuffer pattern from +page.svelte) ---
 	let localBuffer = $state('');
@@ -54,6 +56,14 @@
 		return () => cleanupDebounce();
 	});
 
+	$effect(() => {
+		if (!autocomplete) {
+			cleanupDebounce();
+			showDropdown = false;
+			suggestions = [];
+		}
+	});
+
 	// Display value: localBuffer when focused, externalValue when not
 	let displayValue = $derived(focused ? localBuffer : externalValue);
 
@@ -67,7 +77,11 @@
 	// --- Autocomplete logic ---
 
 	function updateSuggestions() {
-		if (!inputEl) return;
+		if (!inputEl || !autocomplete) {
+			showDropdown = false;
+			suggestions = [];
+			return;
+		}
 		// Clear any pending value debounce when context changes
 		cleanupDebounce();
 		const cursorPos = inputEl.selectionStart ?? localBuffer.length;
@@ -134,6 +148,7 @@
 	function handleFocus() {
 		localBuffer = externalValue;
 		focused = true;
+		updateSuggestions();
 	}
 
 	function handleBlur() {
@@ -233,31 +248,40 @@
 	/>
 
 	{#if showDropdown && suggestions.length > 0}
-		<ul
-			id={listboxId}
-			role="listbox"
-			class="absolute top-full z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded-box border border-base-300 bg-base-100 shadow-lg"
+		<div
+			class="absolute top-full z-50 mt-1 max-h-64 w-64 overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-lg"
 			style:left="{dropdownLeft}px"
 		>
-			{#if lastContext.type === 'value'}
-				<li class="px-3 py-1 text-xs tracking-wide text-base-content/60 uppercase">
-					Values for {lastContext.field}
-				</li>
-			{/if}
-			{#each suggestions as suggestion, i (suggestion)}
-				<li
-					id={optionId(i)}
-					role="option"
-					aria-selected={i === selectedIndex}
-					class="cursor-pointer px-3 py-1.5 text-sm"
-					class:bg-base-200={i === selectedIndex}
-					onmousedown={(e) => handleSuggestionMousedown(e, suggestion)}
-					onmouseenter={() => (selectedIndex = i)}
-				>
-					{suggestion}
-				</li>
-			{/each}
-		</ul>
+			<OverlayScrollbarsComponent
+				options={{
+					scrollbars: { theme: 'os-theme-dark', autoHide: 'leave', autoHideDelay: 400 },
+					overflow: { x: 'hidden' }
+				}}
+				defer
+				class="max-h-64"
+			>
+				<ul id={listboxId} role="listbox">
+					{#if lastContext.type === 'value'}
+						<li class="px-3 py-1 text-xs tracking-wide text-base-content/60 uppercase">
+							Values for {lastContext.field}
+						</li>
+					{/if}
+					{#each suggestions as suggestion, i (suggestion)}
+						<li
+							id={optionId(i)}
+							role="option"
+							aria-selected={i === selectedIndex}
+							class="cursor-pointer px-3 py-1.5 text-sm"
+							class:bg-base-200={i === selectedIndex}
+							onmousedown={(e) => handleSuggestionMousedown(e, suggestion)}
+							onmouseenter={() => (selectedIndex = i)}
+						>
+							{suggestion}
+						</li>
+					{/each}
+				</ul>
+			</OverlayScrollbarsComponent>
+		</div>
 	{/if}
 
 	{#if validationError}

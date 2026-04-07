@@ -50,6 +50,13 @@
 
 	let queryInputRef = $state<ReturnType<typeof QueryInput>>();
 	let autoRefreshOpen = $state(false);
+	let autocomplete = $state(
+		browser ? localStorage.getItem('logwiz:autocomplete') !== 'false' : true
+	);
+
+	$effect(() => {
+		if (browser) localStorage.setItem('logwiz:autocomplete', String(autocomplete));
+	});
 
 	const activeIntervalLabel = $derived(
 		AUTO_REFRESH_INTERVALS.find((i) => i.ms === store.autoRefreshInterval)?.label ?? null
@@ -198,16 +205,25 @@
 		</div>
 	</div>
 
-	<div class="mt-2 flex w-full items-center gap-2">
+	<div class="mt-2 flex w-full items-start gap-2">
+		<button
+			class="btn btn-sm {autocomplete ? 'btn-accent' : ''}"
+			title="Toggle autocomplete"
+			aria-pressed={autocomplete}
+			onclick={() => (autocomplete = !autocomplete)}
+		>
+			A
+		</button>
 		<QueryInput
 			bind:this={queryInputRef}
 			externalValue={parsedQuery.query}
 			fields={store.indexFields}
+			{autocomplete}
 			onsubmit={(query) => store.runQuery(query)}
 			onsearchvalues={store.searchFieldValues}
 		/>
 		{#if store.hasSearched}
-			<span class="text-xs font-medium whitespace-nowrap text-base-content/70"
+			<span class="flex h-8 items-center text-xs font-medium whitespace-nowrap text-base-content/70"
 				>{store.numHits.toLocaleString()} hits</span
 			>
 		{/if}
