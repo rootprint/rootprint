@@ -76,7 +76,7 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 
 		// Throttled last-active update (at most once per 5 minutes)
 		const now = Date.now();
-		const lastActive = (session.user.lastActive as number | null) ?? 0;
+		const lastActive = session.user.lastActive ?? 0;
 		if (now - lastActive > 5 * 60 * 1000) {
 			db.update(user)
 				.set({ lastActive: new Date(now) })

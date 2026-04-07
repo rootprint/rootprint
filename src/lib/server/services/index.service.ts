@@ -124,8 +124,8 @@ export function getFieldConfig(indexId: string) {
 		timestampField: row?.timestampField ?? 'timestamp',
 		messageField: row?.messageField ?? 'message',
 		tracebackField: row?.tracebackField ?? null,
-		contextFields: (row?.contextFields as string[] | null) ?? null,
-		stickyFilterFields: (row?.stickyFilterFields as string[] | null) ?? [
+		contextFields: row?.contextFields ?? null,
+		stickyFilterFields: row?.stickyFilterFields ?? [
 			row?.levelField ?? 'level'
 		],
 		fastJsonFields

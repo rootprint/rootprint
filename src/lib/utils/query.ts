@@ -118,7 +118,7 @@ function parseGroupValueToken(rawToken: string): string | null {
 
 	if (token.startsWith('"')) {
 		const quoted = parseQuotedValueAt(token, 0);
-		if (!quoted || quoted.end !== token.length) return null;
+		if (quoted?.end !== token.length) return null;
 		return quoted.value;
 	}
 
@@ -503,11 +503,11 @@ export function shouldAutoClear(
 
 function cleanWhitespace(s: string): string {
 	return s
-		.replace(/\s{2,}/g, ' ')
+		.replaceAll(/\s{2,}/g, ' ')
 		.trim()
 		.replace(/^(AND|OR)\s+/i, '')
 		.replace(/\s+(AND|OR)$/i, '')
-		.replace(/\b(AND|OR)\s+(AND|OR)\b/gi, '$1')
+		.replaceAll(/\b(AND|OR)\s+(AND|OR)\b/gi, '$1')
 		.replace(/^NOT$/i, '')
 		.trim();
 }

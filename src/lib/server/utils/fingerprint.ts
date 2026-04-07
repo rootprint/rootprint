@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 import { flattenObject } from '$lib/utils/log-helpers';
 import { normalizeToMs } from '$lib/utils/time';
@@ -33,6 +33,6 @@ export function extractTimestampSeconds(
 		return Math.floor(normalizeToMs(raw) / 1000);
 	}
 	const date = new Date(String(raw));
-	if (Number.isNaN(date.getTime())) throw new Error(`Invalid timestamp value: ${raw}`);
+	if (Number.isNaN(date.getTime())) throw new Error(`Invalid timestamp value: ${JSON.stringify(raw)}`);
 	return Math.floor(date.getTime() / 1000);
 }

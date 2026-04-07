@@ -24,8 +24,8 @@ export async function getPreference(userId: string, indexId: string) {
 		.where(and(eq(userPreference.userId, userId), eq(userPreference.indexName, indexId)));
 
 	return {
-		displayFields: (pref?.displayFields as string[]) ?? [],
-		quickFilterFields: (pref?.quickFilterFields as string[]) ?? []
+		displayFields: pref?.displayFields ?? [],
+		quickFilterFields: pref?.quickFilterFields ?? []
 	};
 }
 

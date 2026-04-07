@@ -42,11 +42,7 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 		email: u.email,
 		role: u.role,
 		lastActive: u.lastActive ? new Date(u.lastActive) : null,
-		status: googleUserIds.has(u.id)
-			? ('active' as const)
-			: inviteMap.has(u.id)
-				? ('pending' as const)
-				: ('active' as const),
+		status: !googleUserIds.has(u.id) && inviteMap.has(u.id) ? ('pending' as const) : ('active' as const),
 		authProvider: googleUserIds.has(u.id) ? ('google' as const) : ('credential' as const),
 		inviteUrl: inviteMap.get(u.id)?.url ?? null,
 		inviteExpiresAt: inviteMap.get(u.id)?.expiresAt ?? null

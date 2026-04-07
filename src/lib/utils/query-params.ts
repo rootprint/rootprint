@@ -62,7 +62,7 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 	const to = params.get('to');
 	let timeRange: TimeRange;
 
-	if (from !== null && to !== null && !isNaN(Number(from)) && !isNaN(Number(to))) {
+	if (from !== null && to !== null && !Number.isNaN(Number(from)) && !Number.isNaN(Number(to))) {
 		timeRange = { type: 'absolute', start: Number(from), end: Number(to) };
 	} else if (from !== null && TIME_PRESETS.some((p) => p.code === from)) {
 		timeRange = { type: 'relative', preset: from };

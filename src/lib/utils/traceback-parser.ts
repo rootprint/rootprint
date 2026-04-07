@@ -2,10 +2,10 @@ import type { TracebackFormatter } from '$lib/types';
 
 function escapeHtml(s: string): string {
 	return s
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;');
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;');
 }
 
 const PYTHON_DETECT = /Traceback \(most recent call last\):/;
@@ -33,7 +33,7 @@ const pythonFormatter: TracebackFormatter = {
 			const line = lines[i];
 			const trimmed = line.trim();
 
-			if (PYTHON_CHAINED_SEPARATORS.some((sep) => trimmed === sep)) {
+			if (PYTHON_CHAINED_SEPARATORS.includes(trimmed)) {
 				parts.push(
 					`<div class="my-3 border-l-3 border-warning bg-warning/5 px-3 py-1.5 text-[11px] text-warning">${escapeHtml(trimmed)}</div>`
 				);
@@ -45,7 +45,7 @@ const pythonFormatter: TracebackFormatter = {
 				continue;
 			}
 
-			const frameMatch = line.match(PYTHON_FRAME);
+			const frameMatch = PYTHON_FRAME.exec(line);
 			if (frameMatch) {
 				const [, prefix, filePath, lineNum, funcName] = frameMatch;
 				parts.push(
@@ -61,7 +61,7 @@ const pythonFormatter: TracebackFormatter = {
 				continue;
 			}
 
-			const exMatch = trimmed.match(PYTHON_EXCEPTION);
+			const exMatch = PYTHON_EXCEPTION.exec(trimmed);
 			if (exMatch && !line.startsWith('  ')) {
 				const [, exType, exMsg] = exMatch;
 				parts.push(
@@ -73,7 +73,7 @@ const pythonFormatter: TracebackFormatter = {
 				continue;
 			}
 
-			if (line.startsWith('    ') && i > 0 && lines[i - 1].match(PYTHON_FRAME)) {
+			if (line.startsWith('    ') && i > 0 && PYTHON_FRAME.exec(lines[i - 1])) {
 				parts.push(
 					`<div class="border-l-2 border-base-content/20 py-px pl-7 text-base-content/80">${escapeHtml(line.trimStart())}</div>`
 				);

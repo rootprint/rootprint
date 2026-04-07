@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, resolve } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 import { env } from '$env/dynamic/private';
 import { randomHex } from '$lib/utils/crypto';
@@ -36,8 +36,8 @@ function readEnv(newName: string, oldName?: string): string | undefined {
 
 function parseIntWithDefault(value: string | undefined, defaultValue: number): number {
 	if (!value) return defaultValue;
-	const parsed = parseInt(value, 10);
-	if (isNaN(parsed)) return defaultValue;
+	const parsed = Number.parseInt(value, 10);
+	if (Number.isNaN(parsed)) return defaultValue;
 	return parsed;
 }
 

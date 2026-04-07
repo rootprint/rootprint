@@ -62,9 +62,9 @@ export function formatAsText(
 				.map(([k, v]) => `${k}=${cellValue(v)}`)
 				.join(' ');
 
-			const parts = [String(ts), `[${level}]`];
+			const parts = [cellValue(ts), `[${cellValue(level)}]`];
 			if (extras) parts.push(extras);
-			parts.push(String(message));
+			parts.push(cellValue(message));
 			return parts.join(' ');
 		})
 		.join('\n');

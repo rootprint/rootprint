@@ -61,7 +61,7 @@ function extractTimestampMs(log: Record<string, unknown>, timestampField: string
 	const raw = entry[1];
 	if (typeof raw === 'number') return normalizeToMs(raw);
 	const ms = new Date(String(raw)).getTime();
-	if (isNaN(ms)) throw new Error(`Invalid timestamp value: ${raw}`);
+	if (Number.isNaN(ms)) throw new Error(`Invalid timestamp value: ${JSON.stringify(raw)}`);
 	return ms;
 }
 
@@ -99,7 +99,7 @@ export async function getLogContext(
 		.limit(51)
 		.offset(0)
 		.sortBy(config.timestampField, 'asc');
-	afterQuery.timeRange(anchorTs, undefined);
+	afterQuery.timeRange(anchorTs);
 
 	const beforeQuery = index
 		.query(contextQuery)
@@ -192,7 +192,7 @@ export async function getMoreContext(
 	if (direction === 'before') {
 		q.timeRange(undefined, anchorTs);
 	} else {
-		q.timeRange(anchorTs, undefined);
+		q.timeRange(anchorTs);
 	}
 
 	const result = await index.search(q);

@@ -117,7 +117,7 @@ export function extractTimestamp(
 
 	const ms = typeof raw === 'number' ? normalizeToMs(raw) : new Date(raw as string).getTime();
 
-	if (isNaN(ms)) return String(raw);
+	if (Number.isNaN(ms)) return String(raw);
 	return formatTimestamp(ms, timezoneMode);
 }
 

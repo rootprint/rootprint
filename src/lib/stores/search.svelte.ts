@@ -1,8 +1,7 @@
 import { toast } from 'svelte-sonner';
 
 import { browser } from '$app/environment';
-import { invalidateAll } from '$app/navigation';
-import { goto } from '$app/navigation';
+import { goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
 import { recordSearch } from '$lib/api/history.remote';
 import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';

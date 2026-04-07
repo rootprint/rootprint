@@ -102,7 +102,7 @@ export function validateQuery(query: string): string | null {
 			current += ch;
 			continue;
 		}
-		if (/[\s]/.test(ch)) {
+		if (/\s/.test(ch)) {
 			if (current) tokens.push(current);
 			current = '';
 		} else {
