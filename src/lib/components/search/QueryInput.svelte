@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 
 	import type { IndexField } from '$lib/types';
+	import getCaretCoordinates from 'textarea-caret';
 	import { useDebounce } from '$lib/utils/debounce';
 	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
 
@@ -23,6 +24,15 @@
 	let validationError = $state<string | null>(null);
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let lastContext = $state<ReturnType<typeof getQueryContext>>({ type: 'none' });
+
+	let dropdownLeft = $derived.by(() => {
+		if (!inputEl || lastContext.type === 'none') return 0;
+		const { left } = getCaretCoordinates(inputEl, lastContext.start);
+		const adjustedLeft = left - inputEl.scrollLeft;
+		const inputWidth = inputEl.offsetWidth;
+		const dropdownWidth = 256;
+		return Math.max(0, Math.min(adjustedLeft, inputWidth - dropdownWidth));
+	});
 
 	const { debounced: debouncedValueSearch, cleanup: cleanupDebounce } = useDebounce(
 		async (field: string, fragment: string) => {
@@ -226,7 +236,8 @@
 		<ul
 			id={listboxId}
 			role="listbox"
-			class="absolute top-full left-0 z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded-box border border-base-300 bg-base-100 shadow-lg"
+			class="absolute top-full z-50 mt-1 max-h-64 w-64 overflow-y-auto rounded-box border border-base-300 bg-base-100 shadow-lg"
+			style:left="{dropdownLeft}px"
 		>
 			{#if lastContext.type === 'value'}
 				<li class="px-3 py-1 text-xs tracking-wide text-base-content/60 uppercase">
