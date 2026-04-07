@@ -538,10 +538,10 @@ function stripUnquotedAnd(s: string): string {
 			result += s.slice(start, i);
 			continue;
 		}
-		if (/\s/.test(s[i]) && s.slice(i).match(/^\s+AND\s+/i)) {
-			const m = s.slice(i).match(/^\s+AND\s+/i)!;
+		const andMatch = /\s/.test(s[i]) ? s.slice(i).match(/^\s+AND\s+/i) : null;
+		if (andMatch) {
 			result += ' ';
-			i += m[0].length;
+			i += andMatch[0].length;
 			continue;
 		}
 		result += s[i];
