@@ -6,7 +6,7 @@
 	type Tab = {
 		id: string;
 		label: string;
-		// lucide-svelte uses Svelte 4 class components incompatible with Svelte 5 Component type
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- lucide-svelte uses Svelte 4 class components
 		icon: any;
 		disabled?: boolean;
 	};

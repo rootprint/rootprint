@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { and, eq, inArray } from 'drizzle-orm';
-import { AggregationBuilder, ValidationError } from 'quickwit-js';
 import type { BucketAggregationResult } from 'quickwit-js';
+import { AggregationBuilder, ValidationError } from 'quickwit-js';
 
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import { db } from '$lib/server/db';
