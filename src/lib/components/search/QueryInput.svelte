@@ -173,6 +173,7 @@
 		} else {
 			validationError = null;
 			onsubmit(localBuffer);
+			inputEl?.blur();
 		}
 	}
 

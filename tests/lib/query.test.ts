@@ -187,6 +187,16 @@ describe('addClause', () => {
 		expect(addClause('-level:debug', 'level', 'trace', true)).toBe('-level:(debug OR trace)');
 	});
 
+	it('deduplicates existing values when merging into OR group', () => {
+		expect(
+			addClause('service_name:("api-gateway" OR "api-gateway")', 'service_name', 'order')
+		).toBe('service_name:("api-gateway" OR order)');
+	});
+
+	it('deduplicates when existing query has quoted and unquoted same value', () => {
+		expect(addClause('svc:api svc:api', 'svc', 'order')).toBe('svc:(api OR order)');
+	});
+
 	it('supports clause lifecycle for Quickwit field names', () => {
 		const query = addClause('', '@timestamp', '2026-01-01');
 		expect(query).toBe('@timestamp:"2026-01-01"');
@@ -515,5 +525,21 @@ describe('consolidateClauses', () => {
 
 	it('handles numeric values', () => {
 		expect(consolidateClauses('status:500 status:404')).toBe('status:(500 OR 404)');
+	});
+
+	it('deduplicates quoted and unquoted forms of the same value', () => {
+		expect(consolidateClauses('service_name:"api-gateway" service_name:api-gateway')).toBe(
+			'service_name:"api-gateway"'
+		);
+	});
+
+	it('deduplicates within merged OR group', () => {
+		expect(
+			consolidateClauses('service_name:("api-gateway" OR "payment") service_name:api-gateway')
+		).toBe('service_name:("api-gateway" OR payment)');
+	});
+
+	it('deduplicates multiple identical values across clauses', () => {
+		expect(consolidateClauses('level:error level:error level:warn')).toBe('level:(error OR warn)');
 	});
 });

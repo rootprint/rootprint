@@ -421,12 +421,13 @@ export function addClause(query: string, field: string, value: string, exclude =
 		}
 	}
 	allValues.push(value);
+	const uniqueValues = [...new Set(allValues)];
 
 	// Build single merged clause
 	const replacement =
-		allValues.length === 1
-			? `${prefix}${field}:${escapeFilterValue(allValues[0])}`
-			: `${prefix}${field}:(${allValues.map(escapeFilterValue).join(' OR ')})`;
+		uniqueValues.length === 1
+			? `${prefix}${field}:${escapeFilterValue(uniqueValues[0])}`
+			: `${prefix}${field}:(${uniqueValues.map(escapeFilterValue).join(' OR ')})`;
 
 	// Remove all duplicate clauses (reverse order to preserve positions), keep the first
 	let result = query;
@@ -533,10 +534,12 @@ export function consolidateClauses(query: string): string {
 			}
 		}
 
+		const uniqueValues = [...new Set(allValues)];
+
 		const replacement =
-			allValues.length === 1
-				? `${prefix}${field}:${escapeFilterValue(allValues[0])}`
-				: `${prefix}${field}:(${allValues.map(escapeFilterValue).join(' OR ')})`;
+			uniqueValues.length === 1
+				? `${prefix}${field}:${escapeFilterValue(uniqueValues[0])}`
+				: `${prefix}${field}:(${uniqueValues.map(escapeFilterValue).join(' OR ')})`;
 
 		// First match gets the replacement, rest get removed
 		ops.push({ start: fieldMatches[0].start, end: fieldMatches[0].end, replacement });
