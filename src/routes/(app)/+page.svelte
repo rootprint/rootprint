@@ -96,6 +96,7 @@
 		<QuickFilterPanel
 			fields={store.quickFilterFields}
 			aggregations={store.aggregations}
+			aggregationOverflow={store.aggregationOverflow}
 			query={data.parsedQuery.query}
 			onAddClause={store.addClause}
 			onRemoveClause={store.removeClause}

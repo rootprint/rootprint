@@ -27,6 +27,7 @@
 		availableFields = [],
 		onconfigchange,
 		onsearch,
+		aggregationOverflow = {},
 		pinnedFields = [],
 		indexId = null
 	}: {
@@ -40,6 +41,7 @@
 		availableFields?: IndexField[];
 		onconfigchange?: (fields: string[]) => void;
 		onsearch?: (field: string, searchTerm: string) => Promise<string[]>;
+		aggregationOverflow?: Record<string, boolean>;
 		pinnedFields?: string[];
 		indexId?: string | null;
 	} = $props();
@@ -54,7 +56,7 @@
 	let searchTerms = $state<Record<string, string>>({});
 	let searchResults = $state<Record<string, string[] | null>>({});
 	let loadingFields = new SvelteSet<string>();
-	let expandedFields = new SvelteSet<string>();
+	let expandedCounts = $state<Record<string, number>>({});
 	let debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
 	function loadSet(key: string): string[] {
@@ -78,6 +80,7 @@
 	});
 
 	const INITIAL_SHOW_COUNT = 10;
+	const PAGE_SIZE = 100;
 
 	function handleSearchInput(field: string, value: string) {
 		searchTerms = { ...searchTerms, [field]: value };
@@ -132,6 +135,13 @@
 		return (aggregations[field] ?? []).length + getGhostValues(field).length;
 	}
 
+	function getFieldCountLabel(field: string): string {
+		const count = (aggregations[field] ?? []).length;
+		if (count === 0) return '';
+		if (aggregationOverflow[field]) return '10000+';
+		return String(count);
+	}
+
 	function getDisplayValues(field: string): string[] {
 		const searched = searchResults[field];
 		if (searched !== null && searched !== undefined) {
@@ -139,10 +149,15 @@
 		}
 		const allValues = aggregations[field] ?? [];
 		const combined = [...getGhostValues(field), ...allValues];
-		if (expandedFields.has(field)) {
-			return combined;
-		}
-		return combined.slice(0, INITIAL_SHOW_COUNT);
+		const limit = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
+		const ghostCount = getGhostValues(field).length;
+		return combined.slice(0, ghostCount + limit);
+	}
+
+	function getAggregationRemaining(field: string): number {
+		const total = (aggregations[field] ?? []).length;
+		const shown = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
+		return Math.max(0, total - shown);
 	}
 
 	// Restore open/expanded state from localStorage, ensure first field always open
@@ -365,6 +380,11 @@
 									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content/70"
 									title={field}>{field}</span
 								>
+								{#if getFieldCountLabel(field)}
+									<span class="text-[10px] text-base-content/40">
+										({getFieldCountLabel(field)})
+									</span>
+								{/if}
 							</button>
 
 							{#if openSections.has(field)}
@@ -432,17 +452,25 @@
 												{/if}
 											{/each}
 										</div>
-										{#if !searchTerms[field]?.trim() && getTotalValueCount(field) > INITIAL_SHOW_COUNT && !expandedFields.has(field)}
+										{#if !searchTerms[field]?.trim() && getAggregationRemaining(field) > 0}
 											<button
 												class="mt-1 text-xs text-primary hover:underline"
-												onclick={() => expandedFields.add(field)}
+												onclick={() => {
+													expandedCounts = {
+														...expandedCounts,
+														[field]: (expandedCounts[field] ?? INITIAL_SHOW_COUNT) + PAGE_SIZE
+													};
+												}}
 											>
-												Show all {getTotalValueCount(field)}
+												Show more ({getAggregationRemaining(field)} remaining)
 											</button>
-										{:else if !searchTerms[field]?.trim() && expandedFields.has(field) && getTotalValueCount(field) > INITIAL_SHOW_COUNT}
+										{:else if !searchTerms[field]?.trim() && (expandedCounts[field] ?? INITIAL_SHOW_COUNT) > INITIAL_SHOW_COUNT && getTotalValueCount(field) > INITIAL_SHOW_COUNT}
 											<button
 												class="mt-1 text-xs text-primary hover:underline"
-												onclick={() => expandedFields.delete(field)}
+												onclick={() => {
+													const { [field]: _, ...rest } = expandedCounts;
+													expandedCounts = rest;
+												}}
 											>
 												Show less
 											</button>

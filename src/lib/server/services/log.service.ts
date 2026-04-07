@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { and, eq, inArray } from 'drizzle-orm';
 import { AggregationBuilder, ValidationError } from 'quickwit-js';
+import type { BucketAggregationResult } from 'quickwit-js';
 
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import { db } from '$lib/server/db';
@@ -98,19 +99,21 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 	query.timeRange(startTs, endTs);
 
 	for (const field of filterFields) {
-		query.agg(field, AggregationBuilder.terms(field, { size: 100 }));
+		query.agg(field, AggregationBuilder.terms(field, { size: 10_000 }));
 	}
 
 	const result = await index.search(query).catch(rethrowValidationError);
 
 	const aggregations: Record<string, string[]> = {};
+	const aggregationOverflow: Record<string, boolean> = {};
 	if (result.aggregations) {
 		for (const [field, agg] of Object.entries(result.aggregations)) {
-			const bucketAgg = agg as { buckets?: { key: string }[] };
+			const bucketAgg = agg as BucketAggregationResult;
 			if (bucketAgg.buckets) {
 				aggregations[field] = bucketAgg.buckets
 					.map((b) => formatFieldValue(b.key))
 					.filter((v) => v !== '');
+				aggregationOverflow[field] = (bucketAgg.sum_other_doc_count ?? 0) > 0;
 			}
 		}
 	}
@@ -121,6 +124,7 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 		startTimestamp: startTs,
 		endTimestamp: endTs,
 		aggregations,
+		aggregationOverflow,
 		unsupportedFilterFields
 	};
 }
@@ -151,7 +155,7 @@ export async function searchFieldValues(data: {
 	const query = index
 		.query(combinedQuery)
 		.limit(0)
-		.agg(data.field, AggregationBuilder.terms(data.field, { size: 100 }));
+		.agg(data.field, AggregationBuilder.terms(data.field, { size: 10_000 }));
 
 	query.timeRange(startTs, endTs);
 
