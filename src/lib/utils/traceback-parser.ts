@@ -15,10 +15,10 @@ const PYTHON_FRAME = /^(\s+File\s+)"([^"]+)",\s+line\s+(\d+),\s+in\s+(.+)$/;
 const PYTHON_EXCEPTION =
 	/^([A-Za-z_][\w.]*(?:Error|Exception|Warning|Exit|Interrupt|Failure|Fault|Abort|KeyboardInterrupt|SystemExit|StopIteration|StopAsyncIteration|GeneratorExit))(?::\s*(.*))?$/;
 
-const PYTHON_CHAINED_SEPARATORS = [
+const PYTHON_CHAINED_SEPARATORS = new Set([
 	'During handling of the above exception, another exception occurred:',
 	'The above exception was the direct cause of the following exception:'
-];
+]);
 
 const pythonFormatter: TracebackFormatter = {
 	detect(text: string): boolean {
@@ -33,7 +33,7 @@ const pythonFormatter: TracebackFormatter = {
 			const line = lines[i];
 			const trimmed = line.trim();
 
-			if (PYTHON_CHAINED_SEPARATORS.includes(trimmed)) {
+			if (PYTHON_CHAINED_SEPARATORS.has(trimmed)) {
 				parts.push(
 					`<div class="my-3 border-l-3 border-warning bg-warning/5 px-3 py-1.5 text-[11px] text-warning">${escapeHtml(trimmed)}</div>`
 				);

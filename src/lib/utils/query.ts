@@ -33,7 +33,7 @@ function isFieldBodyChar(ch: string): boolean {
 }
 
 function unquote(raw: string): string {
-	return raw.replaceAll('\\"', '"').replaceAll('\\\\', '\\');
+	return raw.replaceAll(String.raw`\"`, '"').replaceAll(String.raw`\\`, '\\');
 }
 
 function parseQuotedValueAt(
