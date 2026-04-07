@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { tick } from 'svelte';
+	import getCaretCoordinates from 'textarea-caret';
 
 	import type { IndexField } from '$lib/types';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
-	import getCaretCoordinates from 'textarea-caret';
 	import { useDebounce } from '$lib/utils/debounce';
 	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
 
