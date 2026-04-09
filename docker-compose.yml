@@ -3,8 +3,8 @@ services:
     image: quickwit/quickwit@sha256:7297db3d2fffdea817e8b6a0c293d41dc5cb78bcc4672136bc5b6c30460c4429
     container_name: quickwit
     ports:
-      - '7280:7280' # REST API + Web UI
-      - '7281:7281' # gRPC
+      - '127.0.0.1:7280:7280' # REST API + Web UI (local only)
+      - '127.0.0.1:7281:7281' # gRPC (local only)
     volumes:
       - ./quickwit.yaml:/quickwit/config/quickwit.yaml:ro
       - ./.quickwit/qwdata:/quickwit/qwdata

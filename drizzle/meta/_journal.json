@@ -155,6 +155,13 @@
       "when": 1774637219514,
       "tag": "0021_organic_wallop",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1775669966621,
+      "tag": "0022_lazy_shotgun",
+      "breakpoints": true
     }
   ]
 }

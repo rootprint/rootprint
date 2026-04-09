@@ -375,18 +375,22 @@ def generate_batch(
 
 def send_batch(
     endpoint: str, batch: list[dict], batch_num: int, total_batches: int, is_last: bool,
+    token: str | None = None,
 ) -> None:
     """Send a single batch with retry logic."""
     max_retries = 5
     params = {"commit": "wait_for"} if is_last else {}
     ndjson = "\n".join(json.dumps(doc) for doc in batch)
+    headers = {"Content-Type": "application/x-ndjson"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
 
     for attempt in range(max_retries):
         try:
             resp = requests.post(
                 endpoint,
                 data=ndjson,
-                headers={"Content-Type": "application/x-ndjson"},
+                headers=headers,
                 params=params,
                 timeout=30,
             )
@@ -414,17 +418,26 @@ def main():
     parser.add_argument("--batch-size", type=int, default=1000, help="Batch size for ingestion (default: 1000)")
     parser.add_argument("--live", action="store_true", help="Live mode: continuously emit logs")
     parser.add_argument("--rate", type=float, default=1, help="Logs per second in live mode (default: 1)")
+    parser.add_argument("--ingest", action="store_true", help="Send via Logwiz ingest API instead of Quickwit directly")
+    parser.add_argument("--ingest-url", default="http://localhost:5173", help="Logwiz base URL for ingest API (default: http://localhost:5173)")
+    parser.add_argument("--token", help="Bearer token for Logwiz ingest API (required with --ingest)")
+    parser.add_argument("--index", default="otel-logs-v0_9", help="Index ID (default: otel-logs-v0_9)")
     args = parser.parse_args()
 
-    endpoint = f"{args.url.rstrip('/')}/api/v1/otel-logs-v0_9/ingest"
+    if args.ingest:
+        if not args.token:
+            parser.error("--token is required when using --ingest")
+        endpoint = f"{args.ingest_url.rstrip('/')}/api/ingest/{args.index}"
+    else:
+        endpoint = f"{args.url.rstrip('/')}/api/v1/{args.index}/ingest"
 
     if args.live:
-        run_live(endpoint, args.error_rate, args.rate)
+        run_live(endpoint, args.error_rate, args.rate, token=args.token)
     else:
-        run_batch_ingest(endpoint, args)
+        run_batch_ingest(endpoint, args, token=args.token)
 
 
-def run_live(endpoint: str, error_rate: float, rate: float = 1) -> None:
+def run_live(endpoint: str, error_rate: float, rate: float = 1, token: str | None = None) -> None:
     """Emit logs at the given rate (logs/sec) with the current timestamp."""
     if rate <= 0:
         print("Error: --rate must be positive", file=sys.stderr)
@@ -446,11 +459,14 @@ def run_live(endpoint: str, error_rate: float, rate: float = 1) -> None:
                 docs.append(generate_log(service, severity, ts))
             last_service, last_severity = service, severity
             ndjson = "\n".join(json.dumps(doc) for doc in docs)
+            headers = {"Content-Type": "application/x-ndjson"}
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
             try:
                 resp = session.post(
                     endpoint,
                     data=ndjson,
-                    headers={"Content-Type": "application/x-ndjson"},
+                    headers=headers,
                     params={"commit": "force"},
                     timeout=10,
                 )
@@ -467,7 +483,7 @@ def run_live(endpoint: str, error_rate: float, rate: float = 1) -> None:
         print(f"\nStopped. Sent {count} logs total.")
 
 
-def run_batch_ingest(endpoint: str, args: argparse.Namespace) -> None:
+def run_batch_ingest(endpoint: str, args: argparse.Namespace, token: str | None = None) -> None:
     """Original batch ingestion mode."""
     batch_size = args.batch_size
     total = args.lines
@@ -484,7 +500,7 @@ def run_batch_ingest(endpoint: str, args: argparse.Namespace) -> None:
         is_last = i == total_batches - 1
 
         batch = generate_batch(args.days, current_size, args.error_rate, now, start_time)
-        send_batch(endpoint, batch, i + 1, total_batches, is_last)
+        send_batch(endpoint, batch, i + 1, total_batches, is_last, token=token)
 
         ingested += current_size
         print(f"\r  Ingested {ingested}/{total} logs ({ingested * 100 // total}%)", end="", flush=True)

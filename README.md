@@ -32,12 +32,18 @@ Requires [Docker](https://www.docker.com) and [Docker Compose](https://docs.dock
 
    Go to [http://localhost:3000](http://localhost:3000). Sign in with username `logwiz` and password `logwiz`. On first login, you'll be prompted to change it. For non-local deployments, set your own `LOGWIZ_ADMIN_USERNAME`/`LOGWIZ_ADMIN_PASSWORD` before first start.
 
-3. **Ingest sample data:**
+3. **Create an ingest token (admin):**
+
+   In Logwiz, go to **Administration -> Settings -> Ingest Tokens** and create a token.
+   Copy the token value (it is shown only once).
+
+4. **Ingest sample data:**
 
    ```bash
-   curl -X POST 'http://localhost:7280/api/v1/otel-logs-v0_9/ingest' \
+   curl -X POST 'http://localhost:3000/api/ingest/otel-logs-v0_9' \
+     -H 'Authorization: Bearer <your-ingest-token>' \
      -H 'Content-Type: application/json' \
-     -d '[{"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}},{"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}]'
+      -d '[{"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}},{"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}]'
    ```
 
    Refresh Logwiz to see the logs appear.
@@ -49,6 +55,14 @@ For Docker deployments, set environment variables in `docker-compose.yml` under 
 ### Connecting to an existing Quickwit instance
 
 `LOGWIZ_QUICKWIT_URL` can point to any running Quickwit instance — not just the bundled one from docker-compose. Logwiz syncs available indexes from Quickwit on server startup, so restart the container to pick up new indexes.
+
+### Secure ingest flow
+
+Logwiz includes an authenticated ingest gateway at `POST /api/ingest/<indexId>`.
+
+- Create/revoke bearer tokens in **Administration -> Settings -> Ingest Tokens**
+- Send log shippers to Logwiz ingest endpoint (not directly to Quickwit)
+- Keep Quickwit private (the bundled compose file binds Quickwit ports to localhost only)
 
 ### Environment variables
 

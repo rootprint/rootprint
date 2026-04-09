@@ -127,3 +127,23 @@ export type GoogleAuthSettingsView = {
 	clientSecretMasked: string;
 	allowedDomains: string[];
 };
+
+export type IngestTokenScope = {
+	indexIds: string[] | null;
+};
+
+export type IngestTokenSummary = {
+	id: number;
+	name: string;
+	tokenPrefix: string;
+	scope: IngestTokenScope;
+	revokedAt: Date | null;
+	lastUsedAt: Date | null;
+	createdAt: Date;
+	createdByUserId: string;
+};
+
+export type CreateIngestTokenResult = {
+	token: string;
+	summary: IngestTokenSummary;
+};

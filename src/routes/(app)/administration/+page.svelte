@@ -52,7 +52,7 @@
 		{:else if activeTab === 'indexes'}
 			<IndexesTab indexes={data.indexDetails} />
 		{:else}
-			<SettingsTab />
+			<SettingsTab ingestTokens={data.ingestTokens} ingestIndexIds={data.ingestIndexIds} />
 		{/if}
 	</div>
 </div>
