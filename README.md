@@ -40,11 +40,16 @@ Requires [Docker](https://www.docker.com) and [Docker Compose](https://docs.dock
 4. **Ingest sample data:**
 
    ```bash
-   curl -X POST 'http://localhost:3000/api/ingest/otel-logs-v0_9' \
+   curl -X POST 'http://localhost:3000/api/ingest/otel-logs-v0_9?commit=wait_for' \
      -H 'Authorization: Bearer <your-ingest-token>' \
-     -H 'Content-Type: application/json' \
-      -d '[{"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}},{"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}]'
+     -H 'Content-Type: application/x-ndjson' \
+     --data-binary @- <<'EOF'
+   {"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}}
+   {"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}
+   EOF
    ```
+
+   Quickwit ingest expects NDJSON (one JSON object per line).
 
    Refresh Logwiz to see the logs appear.
 
