@@ -9,6 +9,7 @@ import { db } from '$lib/server/db';
 import { qwFieldMapping } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';
 import { getFieldConfig } from '$lib/server/services/index.service';
+import type { QuickFilterBucket } from '$lib/types';
 import { formatFieldValue } from '$lib/utils/field-resolver';
 import {
 	computeHistogramInterval,
@@ -105,15 +106,18 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 
 	const result = await index.search(query).catch(rethrowValidationError);
 
-	const aggregations: Record<string, string[]> = {};
+	const aggregations: Record<string, QuickFilterBucket[]> = {};
 	const aggregationOverflow: Record<string, boolean> = {};
 	if (result.aggregations) {
 		for (const [field, agg] of Object.entries(result.aggregations)) {
 			const bucketAgg = agg as BucketAggregationResult;
 			if (bucketAgg.buckets) {
 				aggregations[field] = bucketAgg.buckets
-					.map((b) => formatFieldValue(b.key))
-					.filter((v) => v !== '');
+					.map((bucket) => ({
+						value: formatFieldValue(bucket.key),
+						count: bucket.doc_count
+					}))
+					.filter((entry) => entry.value !== '');
 				aggregationOverflow[field] = (bucketAgg.sum_other_doc_count ?? 0) > 0;
 			}
 		}
@@ -142,7 +146,7 @@ export async function searchFieldValues(data: {
 	const config = getFieldConfig(data.indexId);
 	const { unsupported } = await partitionFastFields(config.id, [data.field], config.fastJsonFields);
 	if (unsupported.length > 0) {
-		return { values: [], unsupported: true };
+		return { values: [], totalHits: 0, unsupported: true };
 	}
 
 	const client = getQuickwitClient();
@@ -163,14 +167,17 @@ export async function searchFieldValues(data: {
 	const result = await index.search(query).catch(rethrowValidationError);
 
 	const bucketAgg = result.aggregations?.[data.field] as
-		| { buckets?: { key: string }[] }
+		| { buckets?: { key: string; doc_count: number }[] }
 		| undefined;
 	const searchLower = data.searchTerm.toLowerCase();
-	const values = (bucketAgg?.buckets?.map((b) => formatFieldValue(b.key)) ?? []).filter(
-		(v) => v !== '' && v.toLowerCase().includes(searchLower)
-	);
+	const values: QuickFilterBucket[] = (bucketAgg?.buckets ?? [])
+		.map((bucket) => ({
+			value: formatFieldValue(bucket.key),
+			count: bucket.doc_count
+		}))
+		.filter((entry) => entry.value !== '' && entry.value.toLowerCase().includes(searchLower));
 
-	return { values, unsupported: false };
+	return { values, totalHits: result.num_hits, unsupported: false };
 }
 
 export async function searchLogHistogram(data: {

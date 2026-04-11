@@ -155,3 +155,8 @@ export type LogStatsData = {
 	otherCount: number;
 	totalCount: number;
 };
+
+export type QuickFilterBucket = {
+	value: string;
+	count: number | null;
+};

@@ -8,9 +8,8 @@ import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
 import {
 	searchFieldValues,
 	searchLogHistogram,
-	searchLogStats,
-	searchLogs
-} from '$lib/api/logs.remote';
+	searchLogs,
+	searchLogStats} from '$lib/api/logs.remote';
 import {
 	getPreference,
 	saveDisplayFields,
@@ -23,6 +22,7 @@ import type {
 	LogEntry,
 	LogStatsData,
 	ParsedQuery,
+	QuickFilterBucket,
 	TimeRange
 } from '$lib/types';
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
@@ -107,7 +107,7 @@ export function createSearchStore(
 	);
 
 	// --- Aggregations ---
-	let aggregations = $state<Record<string, string[]>>({});
+	let aggregations = $state<Record<string, QuickFilterBucket[]>>({});
 	let aggregationOverflow = $state<Record<string, boolean>>({});
 
 	// --- Search version ---
@@ -401,14 +401,21 @@ export function createSearchStore(
 			if (!append && result.aggregations) {
 				const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
 				if (hasActiveClauses) {
-					const newAgg: Record<string, string[]> = {};
-					for (const [field, values] of Object.entries(result.aggregations)) {
+					const newAgg: Record<string, QuickFilterBucket[]> = {};
+					for (const [field, buckets] of Object.entries(result.aggregations)) {
 						if ((fieldConfig.stickyFilterFields ?? []).includes(field)) {
-							const existing = new Set(aggregations[field] ?? []);
-							for (const v of values) existing.add(v);
-							newAgg[field] = [...existing].slice(0, 10_000);
+							const merged = new Map<string, QuickFilterBucket>();
+							for (const prev of aggregations[field] ?? []) {
+								// Carry over old values with count nulled (they're stale)
+								merged.set(prev.value, { value: prev.value, count: null });
+							}
+							for (const fresh of buckets) {
+								// Fresh buckets override with real counts, preserving Map insertion order
+								merged.set(fresh.value, fresh);
+							}
+							newAgg[field] = [...merged.values()].slice(0, 10_000);
 						} else {
-							newAgg[field] = values;
+							newAgg[field] = buckets;
 						}
 					}
 					aggregations = newAgg;
@@ -574,8 +581,11 @@ export function createSearchStore(
 
 	// --- Field value search ---
 
-	async function searchFieldValuesHandler(field: string, searchTerm: string): Promise<string[]> {
-		if (!selectedIndex) return [];
+	async function searchFieldValuesHandler(
+		field: string,
+		searchTerm: string
+	): Promise<{ values: QuickFilterBucket[]; totalHits: number }> {
+		if (!selectedIndex) return { values: [], totalHits: 0 };
 		const queryText = getQueryText();
 		const result = await searchFieldValues({
 			indexId: selectedIndex,
@@ -585,12 +595,13 @@ export function createSearchStore(
 			startTimestamp: searchStartTimestamp,
 			endTimestamp: searchEndTimestamp
 		});
-		return result.values;
+		return { values: result.values, totalHits: result.totalHits };
 	}
 
 	function addClause(field: string, value: string, exclude = false) {
 		const currentQuery = parsedQuery().query;
-		const knownValues = aggregations[field];
+		const knownBuckets = aggregations[field];
+		const knownValues = knownBuckets?.map((b) => b.value);
 
 		// If adding this value would select all known values, clear the clause instead
 		if (knownValues && shouldAutoClear(knownValues, field, currentQuery, value, exclude)) {

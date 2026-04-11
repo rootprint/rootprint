@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-	SEVERITY_ORDER,
 	getLevelColor,
 	getValueColor,
+	SEVERITY_ORDER,
 	severityBgColor,
 	severityBorderColor,
 	severityDotColor,

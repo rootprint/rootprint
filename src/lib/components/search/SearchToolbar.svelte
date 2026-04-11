@@ -220,7 +220,10 @@
 			fields={store.indexFields}
 			{autocomplete}
 			onsubmit={(query) => store.runQuery(query)}
-			onsearchvalues={store.searchFieldValues}
+			onsearchvalues={async (field, term) => {
+				const result = await store.searchFieldValues(field, term);
+				return result.values.map((b) => b.value);
+			}}
 		/>
 		{#if store.hasSearched}
 			<span class="flex h-8 items-center text-xs font-medium whitespace-nowrap text-base-content/70"

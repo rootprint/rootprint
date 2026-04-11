@@ -12,13 +12,15 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { dndzone } from 'svelte-dnd-action';
 
-	import type { IndexField } from '$lib/types';
+	import type { IndexField, QuickFilterBucket } from '$lib/types';
 	import { severityDotColor, sortBySeverity } from '$lib/utils/log-helpers';
 	import { parseClauses } from '$lib/utils/query';
+	import { formatCountAsPercent } from '$lib/utils/quick-filter-percent';
 
 	let {
 		fields,
 		aggregations,
+		numHits,
 		query,
 		onAddClause,
 		onRemoveClause,
@@ -32,7 +34,8 @@
 		indexId = null
 	}: {
 		fields: string[];
-		aggregations: Record<string, string[]>;
+		aggregations: Record<string, QuickFilterBucket[]>;
+		numHits: number;
 		query: string;
 		onAddClause: (field: string, value: string, exclude?: boolean) => void;
 		onRemoveClause: (field: string, value: string, exclude?: boolean) => void;
@@ -40,7 +43,10 @@
 		onClearClauses: () => void;
 		availableFields?: IndexField[];
 		onconfigchange?: (fields: string[]) => void;
-		onsearch?: (field: string, searchTerm: string) => Promise<string[]>;
+		onsearch?: (
+			field: string,
+			searchTerm: string
+		) => Promise<{ values: QuickFilterBucket[]; totalHits: number }>;
 		aggregationOverflow?: Record<string, boolean>;
 		pinnedFields?: string[];
 		indexId?: string | null;
@@ -54,7 +60,9 @@
 	let configFields = $state<{ id: string; name: string }[]>([]);
 
 	let searchTerms = $state<Record<string, string>>({});
-	let searchResults = $state<Record<string, string[] | null>>({});
+	let searchResults = $state<
+		Record<string, { values: QuickFilterBucket[]; totalHits: number } | null>
+	>({});
 	let loadingFields = new SvelteSet<string>();
 	let expandedCounts = $state<Record<string, number>>({});
 	let debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -102,10 +110,10 @@
 			}
 
 			try {
-				const values = await onsearch(field, currentTerm.trim());
+				const result = await onsearch(field, currentTerm.trim());
 				// Only update if search term hasn't changed while waiting
 				if (searchTerms[field] === currentTerm) {
-					searchResults = { ...searchResults, [field]: values };
+					searchResults = { ...searchResults, [field]: result };
 				}
 			} catch {
 				if (searchTerms[field] === currentTerm) {
@@ -130,7 +138,7 @@
 	}
 
 	function getGhostValues(field: string): string[] {
-		const valueSet = new Set(aggregations[field] ?? []);
+		const valueSet = new Set((aggregations[field] ?? []).map((b) => b.value));
 		return getActiveValues(field).filter((v) => !valueSet.has(v));
 	}
 
@@ -145,23 +153,38 @@
 		return String(count);
 	}
 
-	function getDisplayValues(field: string): string[] {
+	function getDisplayValues(field: string): QuickFilterBucket[] {
 		const searched = searchResults[field];
 		if (searched !== null && searched !== undefined) {
-			return searched;
+			return searched.values;
 		}
 		const active = getActiveValues(field);
 		const activeSet = new Set(active);
-		const allValues = (aggregations[field] ?? []).filter((v) => !activeSet.has(v));
+		const aggBuckets = aggregations[field] ?? [];
+		const aggValueMap = new Map(aggBuckets.map((b) => [b.value, b]));
+		const activeBuckets: QuickFilterBucket[] = active.map(
+			(value) => aggValueMap.get(value) ?? { value, count: null }
+		);
+		const remainingBuckets = aggBuckets.filter((b) => !activeSet.has(b.value));
 		const limit = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
-		return [...active, ...allValues.slice(0, limit)];
+		return [...activeBuckets, ...remainingBuckets.slice(0, limit)];
 	}
 
 	function getAggregationRemaining(field: string): number {
 		const activeSet = new Set(getActiveValues(field));
-		const total = (aggregations[field] ?? []).filter((v) => !activeSet.has(v)).length;
+		const total = (aggregations[field] ?? []).filter((b) => !activeSet.has(b.value)).length;
 		const shown = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
 		return Math.max(0, total - shown);
+	}
+
+	function getDenominator(field: string): number {
+		return searchResults[field]?.totalHits ?? numHits;
+	}
+
+	function sortBucketsBySeverity(buckets: QuickFilterBucket[]): QuickFilterBucket[] {
+		const sortedValues = sortBySeverity(buckets.map((b) => b.value));
+		const byValue = new Map(buckets.map((b) => [b.value, b]));
+		return sortedValues.map((v) => byValue.get(v) ?? { value: v, count: null });
 	}
 
 	// Restore open/expanded state from localStorage, ensure first field always open
@@ -415,17 +438,17 @@
 										</p>
 									{:else}
 										<div class="flex flex-col gap-1">
-											{#each pinnedSet.has(field) ? sortBySeverity(getDisplayValues(field)) : getDisplayValues(field) as value (value)}
+											{#each pinnedSet.has(field) ? sortBucketsBySeverity(getDisplayValues(field)) : getDisplayValues(field) as bucket (bucket.value)}
 												{#if pinnedSet.has(field)}
-													{@const dotColor = severityDotColor(value.toLowerCase())}
-													{@const isActive = isChecked(field, value)}
+													{@const dotColor = severityDotColor(bucket.value.toLowerCase())}
+													{@const isActive = isChecked(field, bucket.value)}
 													{@const anyActive = hasActiveClausesForField(field)}
 													{@const showFull = !anyActive || isActive}
 													<button
 														class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150 hover:bg-base-200"
 														role="checkbox"
 														aria-checked={isActive}
-														onclick={() => toggleValue(field, value)}
+														onclick={() => toggleValue(field, bucket.value)}
 													>
 														<span
 															class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-150 {showFull
@@ -433,10 +456,15 @@
 																: 'bg-base-content/20'}"
 														></span>
 														<span
-															class="truncate transition-colors duration-150 {showFull
+															class="min-w-0 flex-1 truncate text-left transition-colors duration-150 {showFull
 																? ''
-																: 'text-base-content/40'}">{value}</span
+																: 'text-base-content/40'}">{bucket.value}</span
 														>
+														<span
+															class="w-10 shrink-0 text-right text-[10px] tabular-nums text-base-content/50"
+														>
+															{formatCountAsPercent(bucket.count, getDenominator(field))}
+														</span>
 													</button>
 												{:else}
 													<label
@@ -445,13 +473,18 @@
 														<input
 															type="checkbox"
 															class="checkbox checkbox-xs"
-															checked={isChecked(field, value)}
+															checked={isChecked(field, bucket.value)}
 															onclick={(e) => {
 																e.preventDefault();
-																toggleValue(field, value);
+																toggleValue(field, bucket.value);
 															}}
 														/>
-														<span class="truncate">{value}</span>
+														<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
+														<span
+															class="w-10 shrink-0 text-right text-[10px] tabular-nums text-base-content/50"
+														>
+															{formatCountAsPercent(bucket.count, getDenominator(field))}
+														</span>
 													</label>
 												{/if}
 											{/each}
