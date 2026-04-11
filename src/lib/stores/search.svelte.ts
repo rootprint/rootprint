@@ -5,14 +5,26 @@ import { goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
 import { recordSearch } from '$lib/api/history.remote';
 import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
-import { searchFieldValues, searchLogHistogram, searchLogs } from '$lib/api/logs.remote';
+import {
+	searchFieldValues,
+	searchLogHistogram,
+	searchLogStats,
+	searchLogs
+} from '$lib/api/logs.remote';
 import {
 	getPreference,
 	saveDisplayFields,
 	saveQuickFilterFields
 } from '$lib/api/preferences.remote';
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import type { IndexField, IndexSummary, LogEntry, ParsedQuery, TimeRange } from '$lib/types';
+import type {
+	IndexField,
+	IndexSummary,
+	LogEntry,
+	LogStatsData,
+	ParsedQuery,
+	TimeRange
+} from '$lib/types';
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { getErrorMessage } from '$lib/utils/error';
 import { extractJsonSubFields } from '$lib/utils/fields';
@@ -79,6 +91,12 @@ export function createSearchStore(
 	let histogramLoading = $state(false);
 	let histogramRequestId = 0;
 	let searchRequestId = 0;
+
+	// --- Stats bar state ---
+	let statsData = $state<LogStatsData | null>(null);
+	let statsLoading = $state(false);
+	let statsField = $state<string | null>(null);
+	let statsRequestId = 0;
 
 	// --- Column widths ---
 	const columnWidths = $derived(
@@ -232,11 +250,40 @@ export function createSearchStore(
 				pref.quickFilterFields.length > 0 ? pref.quickFilterFields : [levelField]
 			).filter((f) => f !== levelField);
 			quickFilterFields = [levelField, ...savedFields];
+
+			// Resolve initial statsField: saved → levelField (if fast) → first eligible fast field → null.
+			// Eligible = fast AND not timestamp/message, matching quickFilterAvailableFields
+			// so the bootstrap never picks a field the dropdown selector won't offer.
+			const eligibleFastNames = new Set(
+				indexFieldsResult.fields
+					.filter(
+						(f) =>
+							f.fast && f.name !== config.timestampField && f.name !== config.messageField
+					)
+					.map((f) => f.name)
+			);
+			let nextStatsField: string | null = null;
+			if (browser) {
+				const saved = localStorage.getItem(`logwiz:statsGroupBy:${indexName}`);
+				if (saved && eligibleFastNames.has(saved)) {
+					nextStatsField = saved;
+				}
+			}
+			if (nextStatsField === null && eligibleFastNames.has(config.levelField)) {
+				nextStatsField = config.levelField;
+			}
+			if (nextStatsField === null) {
+				const firstFast = indexFieldsResult.fields.find((f) => eligibleFastNames.has(f.name));
+				nextStatsField = firstFast ? firstFast.name : null;
+			}
+			statsField = nextStatsField;
 			// search() removed — auto-search fires when fieldsLoading becomes false
 		} catch {
 			indexFields = [];
 			activeFields = [];
 			quickFilterFields = [];
+			statsField = null;
+			statsData = null;
 		} finally {
 			fieldsLoading = false;
 		}
@@ -321,6 +368,7 @@ export function createSearchStore(
 
 			if (!append) {
 				fetchHistogram();
+				fetchStats();
 			}
 
 			const result = await searchLogs({
@@ -453,6 +501,75 @@ export function createSearchStore(
 				histogramLoading = false;
 			}
 		}
+	}
+
+	async function fetchStats() {
+		if (selectedIndex === null) return;
+		const field = statsField;
+		if (field === null) return;
+
+		const requestId = ++statsRequestId;
+		statsLoading = true;
+		try {
+			const queryText = getQueryText();
+			const currentTimeRange = timeRange;
+			const timeParams = buildTimeParams(currentTimeRange);
+
+			const result = await searchLogStats({
+				indexId: selectedIndex,
+				query: queryText || '*',
+				field,
+				...timeParams
+			});
+
+			if (requestId !== statsRequestId) return;
+
+			if (result.unsupported) {
+				toast.error(
+					`Cannot group by ${field} — not a fast field in Quickwit. Falling back.`
+				);
+				statsData = null;
+				// Fall back to levelField if it's fast, otherwise null
+				const fastNames = new Set(
+					indexFields.filter((f) => f.fast).map((f) => f.name)
+				);
+				const fallback = fastNames.has(fieldConfig.levelField)
+					? fieldConfig.levelField
+					: null;
+				if (fallback !== null && fallback !== field) {
+					statsField = fallback;
+					if (browser && selectedIndex) {
+						localStorage.setItem(`logwiz:statsGroupBy:${selectedIndex}`, fallback);
+					}
+					// Re-fetch with the fallback field
+					fetchStats();
+				} else {
+					statsField = null;
+				}
+				return;
+			}
+
+			statsData = {
+				buckets: result.buckets,
+				otherCount: result.otherCount,
+				totalCount: result.totalCount
+			};
+		} catch {
+			if (requestId !== statsRequestId) return;
+			statsData = null;
+		} finally {
+			if (requestId === statsRequestId) {
+				statsLoading = false;
+			}
+		}
+	}
+
+	function handleStatsFieldChange(field: string) {
+		statsField = field;
+		if (browser && selectedIndex) {
+			localStorage.setItem(`logwiz:statsGroupBy:${selectedIndex}`, field);
+		}
+		fetchStats();
 	}
 
 	// --- Field value search ---
@@ -651,6 +768,15 @@ export function createSearchStore(
 		get histogramLoading() {
 			return histogramLoading;
 		},
+		get statsData() {
+			return statsData;
+		},
+		get statsLoading() {
+			return statsLoading;
+		},
+		get statsField() {
+			return statsField;
+		},
 		get columnWidths() {
 			return columnWidths;
 		},
@@ -695,6 +821,7 @@ export function createSearchStore(
 		handleIndexChange,
 		handleFieldsChange,
 		handleQuickFilterFieldsChange,
+		handleStatsFieldChange,
 		search,
 		searchFieldValues: searchFieldValuesHandler,
 		setupAutoSearch,

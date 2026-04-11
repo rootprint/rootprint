@@ -147,3 +147,11 @@ export type CreateIngestTokenResult = {
 	token: string;
 	summary: IngestTokenSummary;
 };
+
+export type LogStatsBucket = { value: string; count: number };
+
+export type LogStatsData = {
+	buckets: LogStatsBucket[];
+	otherCount: number;
+	totalCount: number;
+};

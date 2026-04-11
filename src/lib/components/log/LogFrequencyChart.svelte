@@ -4,7 +4,7 @@
 	import { browser } from '$app/environment';
 	import CollapsibleSection from '$lib/components/ui/CollapsibleSection.svelte';
 	import type { TimezoneMode } from '$lib/types';
-	import { SEVERITY_ORDER } from '$lib/utils/log-helpers';
+	import { getLevelColor, SEVERITY_ORDER } from '$lib/utils/log-helpers';
 	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
 
 	let {
@@ -22,22 +22,6 @@
 	} = $props();
 
 	const LEVEL_ORDER = SEVERITY_ORDER.map((s) => s.toUpperCase());
-
-	const LEVEL_TOKEN_MAP: Record<string, string> = {
-		warn: 'warning',
-		fatal: 'critical',
-		trace: 'debug'
-	};
-
-	function getLevelColor(level: string): string {
-		const style = getComputedStyle(document.documentElement);
-		const normalized = level.toLowerCase();
-		const token = LEVEL_TOKEN_MAP[normalized] ?? normalized;
-		return (
-			style.getPropertyValue(`--level-${token}`).trim() ||
-			style.getPropertyValue('--level-unknown').trim()
-		);
-	}
 
 	let containerEl = $state<HTMLDivElement | null>(null);
 	let chartEl = $state<HTMLDivElement | null>(null);

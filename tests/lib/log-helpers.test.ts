@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
 	SEVERITY_ORDER,
+	getLevelColor,
+	getValueColor,
 	severityBgColor,
 	severityBorderColor,
 	severityDotColor,
@@ -160,5 +162,108 @@ describe('sortBySeverity', () => {
 		expect(SEVERITY_ORDER).toContain('error');
 		expect(SEVERITY_ORDER).toContain('critical');
 		expect(SEVERITY_ORDER).toContain('fatal');
+	});
+});
+
+describe('getLevelColor', () => {
+	// Scoped DOM shim — vitest runs in node by default, so these tests
+	// set up minimal window/document/getComputedStyle stubs only for this
+	// describe block and restore them afterwards. This prevents the shim
+	// from leaking into other test files that might share a worker.
+	const originalWindow = globalThis.window;
+	const originalDocument = globalThis.document;
+	const originalGetComputedStyle = globalThis.getComputedStyle;
+
+	beforeAll(() => {
+		if (typeof globalThis.window === 'undefined') {
+			// @ts-expect-error — minimal stub for tests
+			globalThis.window = globalThis;
+		}
+		if (typeof globalThis.document === 'undefined') {
+			// @ts-expect-error — minimal stub for tests
+			globalThis.document = { documentElement: {} };
+		}
+		if (typeof globalThis.getComputedStyle === 'undefined') {
+			globalThis.getComputedStyle = () =>
+				({ getPropertyValue: () => '' }) as unknown as CSSStyleDeclaration;
+		}
+	});
+
+	afterAll(() => {
+		globalThis.window = originalWindow;
+		globalThis.document = originalDocument;
+		globalThis.getComputedStyle = originalGetComputedStyle;
+	});
+
+	it('returns empty string when document is not available (SSR)', () => {
+		const originalDoc = globalThis.document;
+		// @ts-expect-error — simulate SSR
+		globalThis.document = undefined;
+		try {
+			expect(getLevelColor('error')).toBe('');
+		} finally {
+			globalThis.document = originalDoc;
+		}
+	});
+
+	it('reads the CSS variable for known levels', () => {
+		const originalGet = window.getComputedStyle;
+		window.getComputedStyle = () =>
+			({
+				getPropertyValue: (prop: string) =>
+					prop === '--level-error' ? '#ff0000' : ''
+			}) as unknown as CSSStyleDeclaration;
+		try {
+			expect(getLevelColor('error')).toBe('#ff0000');
+		} finally {
+			window.getComputedStyle = originalGet;
+		}
+	});
+
+	it('maps warn to warning token', () => {
+		const originalGet = window.getComputedStyle;
+		window.getComputedStyle = () =>
+			({
+				getPropertyValue: (prop: string) =>
+					prop === '--level-warning' ? '#ffaa00' : ''
+			}) as unknown as CSSStyleDeclaration;
+		try {
+			expect(getLevelColor('warn')).toBe('#ffaa00');
+		} finally {
+			window.getComputedStyle = originalGet;
+		}
+	});
+
+	it('falls back to --level-unknown when token lookup is empty', () => {
+		const originalGet = window.getComputedStyle;
+		window.getComputedStyle = () =>
+			({
+				getPropertyValue: (prop: string) =>
+					prop === '--level-unknown' ? '#888' : ''
+			}) as unknown as CSSStyleDeclaration;
+		try {
+			expect(getLevelColor('mystery')).toBe('#888');
+		} finally {
+			window.getComputedStyle = originalGet;
+		}
+	});
+});
+
+describe('getValueColor', () => {
+	it('returns a non-empty color for index 0', () => {
+		expect(getValueColor(0)).toMatch(/^#[0-9a-fA-F]{6}$/);
+	});
+
+	it('returns stable values for the same index', () => {
+		expect(getValueColor(3)).toBe(getValueColor(3));
+	});
+
+	it('cycles through the palette modulo its length', () => {
+		expect(getValueColor(0)).toBe(getValueColor(8));
+		expect(getValueColor(1)).toBe(getValueColor(9));
+	});
+
+	it('returns different colors for adjacent indexes', () => {
+		expect(getValueColor(0)).not.toBe(getValueColor(1));
 	});
 });

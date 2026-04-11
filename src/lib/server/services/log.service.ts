@@ -4,6 +4,7 @@ import type { BucketAggregationResult } from 'quickwit-js';
 import { AggregationBuilder, ValidationError } from 'quickwit-js';
 
 import type { SearchLogsInput } from '$lib/schemas/logs';
+import type { SearchLogStatsInput } from '$lib/schemas/stats';
 import { db } from '$lib/server/db';
 import { qwFieldMapping } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';
@@ -230,4 +231,50 @@ export async function searchLogHistogram(data: {
 	const buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
 
 	return { buckets };
+}
+
+export async function searchLogStats(data: SearchLogStatsInput): Promise<{
+	buckets: { value: string; count: number }[];
+	otherCount: number;
+	totalCount: number;
+	unsupported: boolean;
+}> {
+	const config = getFieldConfig(data.indexId);
+
+	const { fast } = await partitionFastFields(
+		config.id,
+		[data.field],
+		config.fastJsonFields
+	);
+	if (fast.length === 0) {
+		return { buckets: [], otherCount: 0, totalCount: 0, unsupported: true };
+	}
+
+	const client = getQuickwitClient();
+	const index = client.index(data.indexId);
+
+	const { startTs, endTs } = resolveTimestamps(data);
+
+	const query = index
+		.query(data.query || '*')
+		.limit(0)
+		.agg(data.field, AggregationBuilder.terms(data.field, { size: 10 }));
+
+	query.timeRange(startTs, endTs);
+
+	const result = await index.search(query).catch(rethrowValidationError);
+
+	const bucketAgg = result.aggregations?.[data.field] as
+		| BucketAggregationResult
+		| undefined;
+	const rawBuckets = bucketAgg?.buckets ?? [];
+
+	const buckets = rawBuckets
+		.map((b) => ({ value: formatFieldValue(b.key), count: b.doc_count }))
+		.filter((b) => b.value !== '');
+
+	const otherCount = bucketAgg?.sum_other_doc_count ?? 0;
+	const totalCount = buckets.reduce((sum, b) => sum + b.count, 0) + otherCount;
+
+	return { buckets, otherCount, totalCount, unsupported: false };
 }
