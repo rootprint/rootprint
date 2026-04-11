@@ -53,9 +53,7 @@
 			count: b.count,
 			percent: (b.count / data.totalCount) * 100,
 			color:
-				currentField === levelField
-					? getLevelColor(b.value) || getValueColor(i)
-					: getValueColor(i),
+				currentField === levelField ? getLevelColor(b.value) || getValueColor(i) : getValueColor(i),
 			isOther: false
 		}));
 		if (data.otherCount > 0) {
@@ -102,12 +100,12 @@
 					<div class="dropdown dropdown-end" class:dropdown-open={dropdownOpen}>
 						<button
 							type="button"
-							class="btn btn-xs"
+							class="flex h-6 items-center gap-1 rounded-xs border border-base-content/20 bg-base-200 px-2 font-mono text-[11px] leading-none hover:bg-base-300"
 							onclick={() => (dropdownOpen = !dropdownOpen)}
 							title="Change group-by field"
 						>
-							<span class="font-mono text-[11px]">{currentField}</span>
-							<ChevronDown size={12} />
+							<span class="leading-none">{currentField}</span>
+							<ChevronDown size={12} class="shrink-0" />
 						</button>
 						{#if dropdownOpen}
 							<div
@@ -164,12 +162,10 @@
 								disabled={seg.isOther}
 								onclick={() => handleSegmentClick(seg)}
 							>
-								<span
-									class="inline-block h-2 w-2 rounded-sm"
-									style="background-color: {seg.color};"
+								<span class="inline-block h-2 w-2 rounded-sm" style="background-color: {seg.color};"
 								></span>
 								<span class="max-w-[140px] truncate" title={seg.value}>{seg.value}</span>
-								<span class="tabular-nums text-base-content/60">{seg.count.toLocaleString()}</span>
+								<span class="text-base-content/60 tabular-nums">{seg.count.toLocaleString()}</span>
 							</button>
 						{/each}
 					</div>
