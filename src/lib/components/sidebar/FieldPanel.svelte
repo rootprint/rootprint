@@ -82,10 +82,10 @@
 					if (!configMode) collapsed = false;
 					configMode = !configMode;
 				}}
-				title={configMode ? 'Done configuring' : 'Configure display fields'}
+				title={configMode ? 'Done' : 'Configure display fields'}
 			>
 				{#if configMode}
-					<Check size={14} class="text-base-content/60" />
+					<Check size={14} class="text-success" />
 				{:else}
 					<Settings size={14} class="text-base-content/60" />
 				{/if}

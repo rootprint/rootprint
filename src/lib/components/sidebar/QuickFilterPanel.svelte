@@ -292,10 +292,10 @@
 				<button
 					class="btn ml-1 p-0 btn-ghost btn-xs"
 					onclick={() => (configMode ? exitConfigMode() : enterConfigMode())}
-					title={configMode ? 'Done configuring' : 'Configure filter fields'}
+					title={configMode ? 'Done' : 'Configure filter fields'}
 				>
 					{#if configMode}
-						<Check size={14} class="text-base-content/60" />
+						<Check size={14} class="text-success" />
 					{:else}
 						<Settings size={14} class="text-base-content/60" />
 					{/if}
