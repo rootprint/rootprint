@@ -217,11 +217,6 @@
 				return result.values.map((b) => b.value);
 			}}
 		/>
-		{#if store.hasSearched}
-			<span class="flex h-8 items-center text-xs font-medium whitespace-nowrap text-base-content/70"
-				>{store.numHits.toLocaleString()} hits</span
-			>
-		{/if}
 		<ColumnSettings
 			bind:activeFields={store.activeFields}
 			allFields={store.indexFields}

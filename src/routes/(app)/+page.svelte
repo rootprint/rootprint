@@ -118,6 +118,7 @@
 				data={store.histogramData}
 				timezoneMode={store.timezoneMode}
 				loading={store.histogramLoading}
+				numHits={store.numHits}
 				bind:collapsed={chartCollapsed}
 				onbrush={(start, end) =>
 					store.navigateQuery({ timeRange: { type: 'absolute', start, end } })}

@@ -12,12 +12,14 @@
 		timezoneMode,
 		loading,
 		collapsed = $bindable(false),
+		numHits = 0,
 		onbrush
 	}: {
 		data: { timestamp: number; levels: Record<string, number> }[];
 		timezoneMode: TimezoneMode;
 		loading: boolean;
 		collapsed: boolean;
+		numHits?: number;
 		onbrush: (start: number, end: number) => void;
 	} = $props();
 
@@ -330,6 +332,9 @@
 			{#if loading}
 				<span class="loading loading-xs loading-spinner text-base-content/60"></span>
 			{/if}
+			<span class="text-xs font-medium whitespace-nowrap text-base-content/70"
+				>{numHits.toLocaleString()} hits</span
+			>
 		{/snippet}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
