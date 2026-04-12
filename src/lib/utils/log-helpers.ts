@@ -30,21 +30,6 @@ export function getLevelColor(level: string): string {
 	);
 }
 
-const FIELD_VALUE_PALETTE = [
-	'#6a8cff',
-	'#66c4a8',
-	'#e9c46a',
-	'#f08a5d',
-	'#b18aff',
-	'#4db6ac',
-	'#ff7b9c',
-	'#a3b18a'
-] as const;
-
-export function getValueColor(bucketIndex: number): string {
-	return FIELD_VALUE_PALETTE[bucketIndex % FIELD_VALUE_PALETTE.length];
-}
-
 export function sortBySeverity(values: string[]): string[] {
 	const orderMap: Map<string, number> = new Map(SEVERITY_ORDER.map((v, i) => [v, i]));
 	return [...values].sort((a, b) => {

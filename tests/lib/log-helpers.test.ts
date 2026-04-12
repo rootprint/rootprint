@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
 	getLevelColor,
-	getValueColor,
 	SEVERITY_ORDER,
 	severityBgColor,
 	severityBorderColor,
@@ -249,21 +248,3 @@ describe('getLevelColor', () => {
 	});
 });
 
-describe('getValueColor', () => {
-	it('returns a non-empty color for index 0', () => {
-		expect(getValueColor(0)).toMatch(/^#[0-9a-fA-F]{6}$/);
-	});
-
-	it('returns stable values for the same index', () => {
-		expect(getValueColor(3)).toBe(getValueColor(3));
-	});
-
-	it('cycles through the palette modulo its length', () => {
-		expect(getValueColor(0)).toBe(getValueColor(8));
-		expect(getValueColor(1)).toBe(getValueColor(9));
-	});
-
-	it('returns different colors for adjacent indexes', () => {
-		expect(getValueColor(0)).not.toBe(getValueColor(1));
-	});
-});

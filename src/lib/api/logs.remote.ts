@@ -5,7 +5,6 @@ import {
 	searchLogHistogramSchema,
 	searchLogsSchema
 } from '$lib/schemas/logs';
-import { searchLogStatsSchema } from '$lib/schemas/stats';
 import * as indexService from '$lib/server/services/index.service';
 import * as logService from '$lib/server/services/log.service';
 
@@ -25,10 +24,4 @@ export const searchLogHistogram = command(searchLogHistogramSchema, async (data)
 	const user = requireUser();
 	indexService.assertIndexAccess(data.indexId, user.role);
 	return logService.searchLogHistogram(data);
-});
-
-export const searchLogStats = command(searchLogStatsSchema, async (data) => {
-	const user = requireUser();
-	indexService.assertIndexAccess(data.indexId, user.role);
-	return logService.searchLogStats(data);
 });

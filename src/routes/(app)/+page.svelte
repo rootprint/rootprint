@@ -13,7 +13,6 @@
 	import LogFrequencyChart from '$lib/components/log/LogFrequencyChart.svelte';
 	import LogHeader from '$lib/components/log/LogHeader.svelte';
 	import LogRow from '$lib/components/log/LogRow.svelte';
-	import LogStatsBar from '$lib/components/log/LogStatsBar.svelte';
 	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
 	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
@@ -40,17 +39,10 @@
 	let chartCollapsed = $state(
 		browser ? localStorage.getItem('logwiz:chartCollapsed') === 'true' : false
 	);
-	let statsCollapsed = $state(
-		browser ? localStorage.getItem('logwiz:statsCollapsed') === 'true' : false
-	);
 	let drawerTab = $state<DrawerTab | null>(null);
 
 	$effect(() => {
 		if (browser) localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
-	});
-
-	$effect(() => {
-		if (browser) localStorage.setItem('logwiz:statsCollapsed', String(statsCollapsed));
 	});
 
 	// Handle shared log link
@@ -132,16 +124,6 @@
 				bind:collapsed={chartCollapsed}
 				onbrush={(start, end) =>
 					store.navigateQuery({ timeRange: { type: 'absolute', start, end } })}
-			/>
-			<LogStatsBar
-				data={store.statsData}
-				loading={store.statsLoading}
-				currentField={store.statsField}
-				availableFields={store.panelAvailableFields.filter((f) => f.fast)}
-				levelField={store.fieldConfig.levelField}
-				onFieldChange={store.handleStatsFieldChange}
-				onSegmentClick={(field, value) => store.addClause(field, value)}
-				bind:collapsed={statsCollapsed}
 			/>
 		{/if}
 
