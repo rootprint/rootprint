@@ -20,17 +20,9 @@ interface Config {
 	signinRateLimitMax: number;
 }
 
-function readEnv(newName: string, oldName?: string): string | undefined {
-	const value = env[newName];
+function readEnv(name: string): string | undefined {
+	const value = env[name];
 	if (value) return value;
-
-	if (oldName && env[oldName]) {
-		console.warn(
-			`[logwiz] DEPRECATED: ${oldName} will be removed in a future version. Use ${newName} instead.`
-		);
-		return env[oldName];
-	}
-
 	return undefined;
 }
 
@@ -64,8 +56,8 @@ let _config: Config | null = null;
 
 /** @public Used by tests via dynamic import (vi.resetModules + await import()) */
 export function buildConfig(): Config {
-	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL', 'QUICKWIT_URL');
-	const origin = readEnv('ORIGIN', 'LOGWIZ_ORIGIN');
+	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL');
+	const origin = readEnv('ORIGIN');
 
 	// Validate required vars
 	if (!quickwitUrl) {

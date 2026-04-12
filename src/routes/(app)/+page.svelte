@@ -102,8 +102,6 @@
 		<FieldPanel
 			fields={store.panelAvailableFields}
 			levelField={store.levelField}
-			timestampField={store.timestampField}
-			messageField={store.messageField}
 			levelAggregations={store.aggregations}
 			numHits={store.numHits}
 			query={data.parsedQuery.query}

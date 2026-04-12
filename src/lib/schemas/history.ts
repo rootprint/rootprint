@@ -2,10 +2,6 @@ import * as v from 'valibot';
 
 const indexIdField = v.pipe(v.string(), v.minLength(1));
 
-export const getHistorySchema = v.object({
-	indexId: indexIdField
-});
-
 export const recordSearchSchema = v.object({
 	indexId: indexIdField,
 	query: v.string(),

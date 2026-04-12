@@ -1,21 +1,14 @@
 import { error } from '@sveltejs/kit';
 
-import { command, getRequestEvent, query } from '$app/server';
+import { command, getRequestEvent } from '$app/server';
 import { requireAdmin } from '$lib/middleware/auth';
 import {
 	createInviteSchema,
 	regenerateInviteSchema,
 	removeUserSchema,
-	resetPasswordSchema,
-	setUserRoleSchema
+	resetPasswordSchema
 } from '$lib/schemas/users';
 import * as userService from '$lib/server/services/user.service';
-
-export const listUsers = query(async () => {
-	requireAdmin();
-	const event = getRequestEvent();
-	return userService.listUsersWithInvites(event.request.headers, event.url.origin);
-});
 
 export const createInvite = command(createInviteSchema, async (data) => {
 	requireAdmin();
@@ -44,16 +37,6 @@ export const removeUser = command(removeUserSchema, async (data) => {
 		await userService.removeUser(event.request.headers, admin.id, data.userId);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to remove user');
-	}
-});
-
-export const setUserRole = command(setUserRoleSchema, async (data) => {
-	const admin = requireAdmin();
-	const event = getRequestEvent();
-	try {
-		await userService.setUserRole(event.request.headers, admin.id, data.userId, data.role);
-	} catch (e) {
-		error(400, e instanceof Error ? e.message : 'Failed to change role');
 	}
 });
 

@@ -1,12 +1,7 @@
-import { command, query } from '$app/server';
+import { command } from '$app/server';
 import { requireAdmin } from '$lib/middleware/auth';
 import { saveGoogleAuthSettingsSchema } from '$lib/schemas/settings';
 import * as settingsService from '$lib/server/services/settings.service';
-
-export const getGoogleAuthSettings = query(async () => {
-	requireAdmin();
-	return settingsService.getGoogleAuthSettingsView();
-});
 
 export const removeGoogleAuthSettings = command(async () => {
 	requireAdmin();

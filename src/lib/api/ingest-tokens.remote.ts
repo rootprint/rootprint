@@ -1,14 +1,9 @@
 import { error } from '@sveltejs/kit';
 
-import { command, query } from '$app/server';
+import { command } from '$app/server';
 import { requireAdmin } from '$lib/middleware/auth';
 import { createIngestTokenSchema, revokeIngestTokenSchema } from '$lib/schemas/ingest-tokens';
 import * as ingestTokenService from '$lib/server/services/ingest-token.service';
-
-export const listIngestTokens = query(async () => {
-	requireAdmin();
-	return ingestTokenService.listIngestTokens();
-});
 
 export const createIngestToken = command(createIngestTokenSchema, async (data) => {
 	const admin = requireAdmin();

@@ -12,4 +12,3 @@ export const revokeIngestTokenSchema = v.object({
 });
 
 export type CreateIngestTokenInput = v.InferInput<typeof createIngestTokenSchema>;
-export type RevokeIngestTokenInput = v.InferInput<typeof revokeIngestTokenSchema>;

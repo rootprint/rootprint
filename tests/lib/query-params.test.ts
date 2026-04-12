@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ParsedQuery } from '$lib/types';
-import {
-	buildQueryUrl,
-	deserialize,
-	hasNonDefaultParams,
-	serialize
-} from '$lib/utils/query-params';
+import { buildQueryUrl, deserialize, serialize } from '$lib/utils/query-params';
 
 function defaults(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
 	return {
@@ -153,32 +148,6 @@ describe('roundtrip', () => {
 	it('preserves defaults', () => {
 		const result = deserialize(serialize(defaults()));
 		expect(result).toEqual(defaults());
-	});
-});
-
-describe('hasNonDefaultParams', () => {
-	it('returns false for default state', () => {
-		expect(hasNonDefaultParams(defaults())).toBe(false);
-	});
-
-	it('returns true when query is set', () => {
-		expect(hasNonDefaultParams(defaults({ query: 'hello' }))).toBe(true);
-	});
-
-	it('returns true when query has clauses', () => {
-		expect(hasNonDefaultParams(defaults({ query: 'level:error' }))).toBe(true);
-	});
-
-	it('returns true for absolute time', () => {
-		expect(
-			hasNonDefaultParams(defaults({ timeRange: { type: 'absolute', start: 1000, end: 2000 } }))
-		).toBe(true);
-	});
-
-	it('returns true for non-default relative time', () => {
-		expect(hasNonDefaultParams(defaults({ timeRange: { type: 'relative', preset: '1h' } }))).toBe(
-			true
-		);
 	});
 });
 

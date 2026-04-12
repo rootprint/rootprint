@@ -1,13 +1,8 @@
-import { command, form, query } from '$app/server';
+import { form, query } from '$app/server';
 import { requireAdmin, requireUser } from '$lib/middleware/auth';
 import { indexIdSchema, saveIndexConfigSchema } from '$lib/schemas/index-config';
 import { getIndexFieldsSchema } from '$lib/schemas/preference';
 import * as indexService from '$lib/server/services/index.service';
-
-export const getIndexes = query(async () => {
-	const user = requireUser();
-	return indexService.getIndexes(user.role);
-});
 
 export const getIndexFields = query(getIndexFieldsSchema, async (data) => {
 	const user = requireUser();
@@ -24,9 +19,4 @@ export const getIndexConfig = query(indexIdSchema, async ({ indexId }) => {
 export const saveIndexConfig = form(saveIndexConfigSchema, async ({ indexId, ...fields }) => {
 	requireAdmin();
 	await indexService.saveIndexConfig(indexId, fields);
-});
-
-export const syncIndexes = command(async () => {
-	requireAdmin();
-	return indexService.syncIndexesFromQuickwit();
 });

@@ -10,8 +10,6 @@
 	let {
 		fields,
 		levelField,
-		timestampField,
-		messageField,
 		levelAggregations = {},
 		numHits,
 		query,
@@ -25,8 +23,6 @@
 	}: {
 		fields: IndexField[];
 		levelField: string;
-		timestampField: string;
-		messageField: string;
 		levelAggregations: Record<string, QuickFilterBucket[]>;
 		numHits: number;
 		query: string;

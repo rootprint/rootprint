@@ -2,11 +2,11 @@
 	import { Bookmark, ChevronDown, Clock, Pause, Play, Save, Share2, Users } from 'lucide-svelte';
 
 	import { browser } from '$app/environment';
+	import ColumnSettings from '$lib/components/search/ColumnSettings.svelte';
 	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
 	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
-	import ColumnSettings from '$lib/components/search/ColumnSettings.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import type { createSearchStore } from '$lib/stores/search.svelte';
 	import {

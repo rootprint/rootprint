@@ -8,14 +8,6 @@ const DEFAULTS = {
 	sortDirection: 'desc' as SortDirection
 };
 
-/** Returns true if the parsed query has non-default search params (query or non-default time). */
-export function hasNonDefaultParams(state: ParsedQuery): boolean {
-	if (state.query !== '') return true;
-	if (state.timeRange.type === 'absolute') return true;
-	if (state.timeRange.type === 'relative' && state.timeRange.preset !== '15m') return true;
-	return false;
-}
-
 export function serialize(state: ParsedQuery): URLSearchParams {
 	const params = new URLSearchParams();
 

@@ -64,26 +64,6 @@ export function severityBorderColor(severity: string): string {
 	}
 }
 
-export function severityBgColor(severity: string): string {
-	switch (severity) {
-		case 'error':
-			return 'bg-level-error/5';
-		case 'fatal':
-		case 'critical':
-			return 'bg-level-critical/5';
-		case 'warn':
-		case 'warning':
-			return 'bg-level-warning/5';
-		case 'debug':
-		case 'trace':
-			return 'bg-level-debug/5';
-		case 'info':
-			return 'bg-level-info/5';
-		default:
-			return '';
-	}
-}
-
 export function severityDotColor(severity: string): string | null {
 	switch (severity) {
 		case 'error':
@@ -101,26 +81,6 @@ export function severityDotColor(severity: string): string | null {
 			return 'bg-level-info';
 		default:
 			return null;
-	}
-}
-
-export function severityTextColor(severity: string): string {
-	switch (severity) {
-		case 'error':
-			return 'text-level-error';
-		case 'fatal':
-		case 'critical':
-			return 'text-level-critical';
-		case 'warn':
-		case 'warning':
-			return 'text-level-warning';
-		case 'debug':
-		case 'trace':
-			return 'text-level-debug';
-		case 'info':
-			return 'text-level-info';
-		default:
-			return 'text-level-unknown/60';
 	}
 }
 

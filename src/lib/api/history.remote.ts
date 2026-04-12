@@ -1,17 +1,11 @@
-import { command, query } from '$app/server';
+import { command } from '$app/server';
 import { requireUser } from '$lib/middleware/auth';
 import {
 	clearHistorySchema,
 	deleteHistoryEntrySchema,
-	getHistorySchema,
 	recordSearchSchema
 } from '$lib/schemas/history';
 import * as historyService from '$lib/server/services/history.service';
-
-export const getHistory = query(getHistorySchema, async (data) => {
-	const user = requireUser();
-	return historyService.getHistory(user.id, data.indexId);
-});
 
 export const recordSearch = command(recordSearchSchema, async (data) => {
 	const user = requireUser();

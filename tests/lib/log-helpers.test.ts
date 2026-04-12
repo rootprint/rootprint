@@ -3,10 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
 	getLevelColor,
 	SEVERITY_ORDER,
-	severityBgColor,
 	severityBorderColor,
 	severityDotColor,
-	severityTextColor,
 	sortBySeverity
 } from '$lib/utils/log-helpers';
 
@@ -40,36 +38,6 @@ describe('severityBorderColor', () => {
 	});
 });
 
-describe('severityBgColor', () => {
-	it('returns bg-level-error/5 for error', () => {
-		expect(severityBgColor('error')).toBe('bg-level-error/5');
-	});
-	it('returns bg-level-critical/5 for fatal', () => {
-		expect(severityBgColor('fatal')).toBe('bg-level-critical/5');
-	});
-	it('returns bg-level-critical/5 for critical', () => {
-		expect(severityBgColor('critical')).toBe('bg-level-critical/5');
-	});
-	it('returns bg-level-warning/5 for warn', () => {
-		expect(severityBgColor('warn')).toBe('bg-level-warning/5');
-	});
-	it('returns bg-level-warning/5 for warning', () => {
-		expect(severityBgColor('warning')).toBe('bg-level-warning/5');
-	});
-	it('returns bg-level-debug/5 for debug', () => {
-		expect(severityBgColor('debug')).toBe('bg-level-debug/5');
-	});
-	it('returns bg-level-debug/5 for trace', () => {
-		expect(severityBgColor('trace')).toBe('bg-level-debug/5');
-	});
-	it('returns bg-level-info/5 for info', () => {
-		expect(severityBgColor('info')).toBe('bg-level-info/5');
-	});
-	it('returns empty string for unknown severity', () => {
-		expect(severityBgColor('unknown')).toBe('');
-	});
-});
-
 describe('severityDotColor', () => {
 	it('returns bg-level-error for error', () => {
 		expect(severityDotColor('error')).toBe('bg-level-error');
@@ -97,36 +65,6 @@ describe('severityDotColor', () => {
 	});
 	it('returns null for unknown severity', () => {
 		expect(severityDotColor('unknown')).toBeNull();
-	});
-});
-
-describe('severityTextColor', () => {
-	it('returns text-level-error for error', () => {
-		expect(severityTextColor('error')).toBe('text-level-error');
-	});
-	it('returns text-level-critical for fatal', () => {
-		expect(severityTextColor('fatal')).toBe('text-level-critical');
-	});
-	it('returns text-level-critical for critical', () => {
-		expect(severityTextColor('critical')).toBe('text-level-critical');
-	});
-	it('returns text-level-warning for warn', () => {
-		expect(severityTextColor('warn')).toBe('text-level-warning');
-	});
-	it('returns text-level-warning for warning', () => {
-		expect(severityTextColor('warning')).toBe('text-level-warning');
-	});
-	it('returns text-level-debug for debug', () => {
-		expect(severityTextColor('debug')).toBe('text-level-debug');
-	});
-	it('returns text-level-debug for trace', () => {
-		expect(severityTextColor('trace')).toBe('text-level-debug');
-	});
-	it('returns text-level-info for info', () => {
-		expect(severityTextColor('info')).toBe('text-level-info');
-	});
-	it('returns text-level-unknown/60 for unknown severity', () => {
-		expect(severityTextColor('unknown')).toBe('text-level-unknown/60');
 	});
 });
 
@@ -209,8 +147,7 @@ describe('getLevelColor', () => {
 		const originalGet = window.getComputedStyle;
 		window.getComputedStyle = () =>
 			({
-				getPropertyValue: (prop: string) =>
-					prop === '--level-error' ? '#ff0000' : ''
+				getPropertyValue: (prop: string) => (prop === '--level-error' ? '#ff0000' : '')
 			}) as unknown as CSSStyleDeclaration;
 		try {
 			expect(getLevelColor('error')).toBe('#ff0000');
@@ -223,8 +160,7 @@ describe('getLevelColor', () => {
 		const originalGet = window.getComputedStyle;
 		window.getComputedStyle = () =>
 			({
-				getPropertyValue: (prop: string) =>
-					prop === '--level-warning' ? '#ffaa00' : ''
+				getPropertyValue: (prop: string) => (prop === '--level-warning' ? '#ffaa00' : '')
 			}) as unknown as CSSStyleDeclaration;
 		try {
 			expect(getLevelColor('warn')).toBe('#ffaa00');
@@ -237,8 +173,7 @@ describe('getLevelColor', () => {
 		const originalGet = window.getComputedStyle;
 		window.getComputedStyle = () =>
 			({
-				getPropertyValue: (prop: string) =>
-					prop === '--level-unknown' ? '#888' : ''
+				getPropertyValue: (prop: string) => (prop === '--level-unknown' ? '#888' : '')
 			}) as unknown as CSSStyleDeclaration;
 		try {
 			expect(getLevelColor('mystery')).toBe('#888');
@@ -247,4 +182,3 @@ describe('getLevelColor', () => {
 		}
 	});
 });
-

@@ -136,7 +136,7 @@ describe('config', () => {
 			warnSpy.mockRestore();
 		});
 
-		it('falls back to old env var names with deprecation', async () => {
+		it('does not accept legacy QUICKWIT_URL fallback', async () => {
 			mockEnv = {
 				QUICKWIT_URL: 'http://old:7280',
 				LOGWIZ_ORIGIN: 'http://old:5173',
@@ -144,24 +144,20 @@ describe('config', () => {
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
-			expect(cfg.quickwitUrl).toBe('http://old:7280');
-			expect(cfg.origin).toBe('http://old:5173');
-			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATED'));
+			expect(() => buildConfig()).toThrow('LOGWIZ_QUICKWIT_URL');
 			warnSpy.mockRestore();
 		});
 
-		it('prefers ORIGIN over LOGWIZ_ORIGIN when both are set', async () => {
+		it('does not use LOGWIZ_ORIGIN when ORIGIN is missing', async () => {
 			mockEnv = {
 				LOGWIZ_QUICKWIT_URL: 'http://localhost:7280',
-				ORIGIN: 'http://new:5173',
 				LOGWIZ_ORIGIN: 'http://old:5173',
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const { buildConfig } = await importConfig();
 			const cfg = buildConfig();
-			expect(cfg.origin).toBe('http://new:5173');
+			expect(cfg.origin).toBeUndefined();
 			warnSpy.mockRestore();
 		});
 
