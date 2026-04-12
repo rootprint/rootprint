@@ -10,11 +10,7 @@ import {
 	searchLogHistogram,
 	searchLogs,
 	searchLogStats} from '$lib/api/logs.remote';
-import {
-	getPreference,
-	saveDisplayFields,
-	saveQuickFilterFields
-} from '$lib/api/preferences.remote';
+import { getPreference, saveDisplayFields } from '$lib/api/preferences.remote';
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import type {
 	IndexField,
@@ -75,7 +71,7 @@ export function createSearchStore(
 	let schemaFields = $state<IndexField[]>([]);
 	let activeFields = $state<string[]>([]);
 	let fieldsLoading = $state(false);
-	let quickFilterFields = $state<string[]>([]);
+	const levelFilterFields = $derived(fieldConfig.levelField ? [fieldConfig.levelField] : []);
 
 	// --- Search result state ---
 	let logs = $state<LogEntry[]>([]);
@@ -134,15 +130,9 @@ export function createSearchStore(
 	const canAutoRefresh = $derived(timeRange.type === 'relative');
 
 	const excludedFields = $derived(
-		new Set([fieldConfig.levelField, fieldConfig.timestampField, fieldConfig.messageField])
-	);
-	const panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
-	const quickFilterExcludedFields = $derived(
 		new Set([fieldConfig.timestampField, fieldConfig.messageField])
 	);
-	const quickFilterAvailableFields = $derived(
-		indexFields.filter((f) => f.fast && !quickFilterExcludedFields.has(f.name))
-	);
+	const panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
 
 	// --- Internal helpers ---
 
@@ -245,14 +235,8 @@ export function createSearchStore(
 			fieldConfig = config;
 			activeFields = pref.displayFields;
 
-			const levelField = config.levelField;
-			const savedFields = (
-				pref.quickFilterFields.length > 0 ? pref.quickFilterFields : [levelField]
-			).filter((f) => f !== levelField);
-			quickFilterFields = [levelField, ...savedFields];
-
 			// Resolve initial statsField: saved → levelField (if fast) → first eligible fast field → null.
-			// Eligible = fast AND not timestamp/message, matching quickFilterAvailableFields
+			// Eligible = fast AND not timestamp/message
 			// so the bootstrap never picks a field the dropdown selector won't offer.
 			const eligibleFastNames = new Set(
 				indexFieldsResult.fields
@@ -281,7 +265,6 @@ export function createSearchStore(
 		} catch {
 			indexFields = [];
 			activeFields = [];
-			quickFilterFields = [];
 			statsField = null;
 			statsData = null;
 		} finally {
@@ -322,28 +305,6 @@ export function createSearchStore(
 		debouncedSaveFields();
 	}
 
-	const debouncedSaveQuickFilters = debounce(() => {
-		if (selectedIndex) {
-			saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields }).catch((e) =>
-				toast.error(getErrorMessage(e, 'Failed to save quick filter fields'))
-			);
-		}
-	}, 500);
-
-	function handleQuickFilterFieldsChange(fields: string[]) {
-		const levelField = fieldConfig.levelField;
-		const otherFields = fields.filter((f) => f !== levelField);
-		quickFilterFields = [levelField, ...otherFields];
-		const fieldSet = new Set(fields);
-		aggregations = Object.fromEntries(
-			Object.entries(aggregations).filter(([k]) => fieldSet.has(k))
-		);
-		if (hasSearched) {
-			bumpSearch();
-		}
-		debouncedSaveQuickFilters();
-	}
-
 	// --- Search ---
 
 	async function search(opts?: { append?: boolean }) {
@@ -377,7 +338,7 @@ export function createSearchStore(
 				...timeParams,
 				offset: append ? logs.length : 0,
 				limit: BATCH_SIZE,
-				quickFilterFields,
+				quickFilterFields: levelFilterFields,
 				sortDirection
 			});
 
@@ -385,18 +346,6 @@ export function createSearchStore(
 
 			searchStartTimestamp = result.startTimestamp;
 			searchEndTimestamp = result.endTimestamp;
-
-			if (result.unsupportedFilterFields?.length) {
-				const bad = result.unsupportedFilterFields;
-				const names = bad.join(', ');
-				toast.error(
-					`Filter field${bad.length > 1 ? 's' : ''} ${names} cannot be used as a filter (not a fast field in Quickwit)`
-				);
-				quickFilterFields = quickFilterFields.filter((f) => !bad.includes(f));
-				if (selectedIndex) {
-					saveQuickFilterFields({ indexId: selectedIndex, fields: quickFilterFields });
-				}
-			}
 
 			if (!append && result.aggregations) {
 				const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
@@ -740,6 +689,15 @@ export function createSearchStore(
 		get fieldConfig() {
 			return fieldConfig;
 		},
+		get levelField() {
+			return fieldConfig.levelField;
+		},
+		get timestampField() {
+			return fieldConfig.timestampField;
+		},
+		get messageField() {
+			return fieldConfig.messageField;
+		},
 		get indexFields() {
 			return indexFields;
 		},
@@ -754,9 +712,6 @@ export function createSearchStore(
 		},
 		get fieldsLoading() {
 			return fieldsLoading;
-		},
-		get quickFilterFields() {
-			return quickFilterFields;
 		},
 		get logs() {
 			return logs;
@@ -816,9 +771,6 @@ export function createSearchStore(
 		get panelAvailableFields() {
 			return panelAvailableFields;
 		},
-		get quickFilterAvailableFields() {
-			return quickFilterAvailableFields;
-		},
 		get autoRefreshInterval() {
 			return autoRefreshInterval;
 		},
@@ -831,7 +783,6 @@ export function createSearchStore(
 		runQuery,
 		handleIndexChange,
 		handleFieldsChange,
-		handleQuickFilterFieldsChange,
 		handleStatsFieldChange,
 		search,
 		searchFieldValues: searchFieldValuesHandler,

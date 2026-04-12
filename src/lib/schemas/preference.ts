@@ -11,11 +11,6 @@ export const saveDisplayFieldsSchema = v.object({
 	fields: v.array(v.string())
 });
 
-export const saveQuickFilterFieldsSchema = v.object({
-	indexId: indexIdField,
-	fields: v.array(v.string())
-});
-
 export const getIndexFieldsSchema = v.object({
 	indexId: indexIdField
 });

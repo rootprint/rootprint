@@ -17,7 +17,6 @@
 	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
 	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
-	import QuickFilterPanel from '$lib/components/sidebar/QuickFilterPanel.svelte';
 	import { createSearchStore } from '$lib/stores/search.svelte';
 	import type { DrawerTab } from '$lib/types';
 
@@ -101,29 +100,24 @@
 		defer
 		class="h-full w-56 shrink-0 border-r border-base-300 bg-base-100"
 	>
-		<QuickFilterPanel
-			fields={store.quickFilterFields}
-			aggregations={store.aggregations}
+		<FieldPanel
+			fields={store.panelAvailableFields}
+			bind:activeFields={store.activeFields}
+			levelField={store.levelField}
+			timestampField={store.timestampField}
+			messageField={store.messageField}
+			levelAggregations={store.aggregations}
+			levelAggregationOverflow={store.aggregationOverflow}
 			numHits={store.numHits}
-			aggregationOverflow={store.aggregationOverflow}
 			query={data.parsedQuery.query}
 			onAddClause={store.addClause}
 			onRemoveClause={store.removeClause}
 			hasClause={store.hasClause}
 			onClearClauses={store.clearClauses}
-			availableFields={store.quickFilterAvailableFields}
-			onconfigchange={store.handleQuickFilterFieldsChange}
 			onsearch={store.searchFieldValues}
-			pinnedFields={[store.fieldConfig.levelField]}
-			indexId={store.selectedIndex}
-		/>
-		<FieldPanel
-			availableFields={store.panelAvailableFields}
-			bind:activeFields={store.activeFields}
-			onchange={store.handleFieldsChange}
+			onFieldsChange={store.handleFieldsChange}
 			loading={store.fieldsLoading}
-			pinnedFields={[store.fieldConfig.levelField]}
-			pinnedFieldsEnd={[store.fieldConfig.messageField]}
+			indexId={store.selectedIndex}
 		/>
 	</OverlayScrollbarsComponent>
 
@@ -143,7 +137,7 @@
 				data={store.statsData}
 				loading={store.statsLoading}
 				currentField={store.statsField}
-				availableFields={store.quickFilterAvailableFields}
+				availableFields={store.panelAvailableFields.filter((f) => f.fast)}
 				levelField={store.fieldConfig.levelField}
 				onFieldChange={store.handleStatsFieldChange}
 				onSegmentClick={(field, value) => store.addClause(field, value)}

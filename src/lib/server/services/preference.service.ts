@@ -32,7 +32,3 @@ export async function getPreference(userId: string, indexId: string) {
 export async function saveDisplayFields(userId: string, indexId: string, fields: string[]) {
 	await upsertPreference(userId, indexId, { displayFields: fields });
 }
-
-export async function saveQuickFilterFields(userId: string, indexId: string, fields: string[]) {
-	await upsertPreference(userId, indexId, { quickFilterFields: fields });
-}
