@@ -1,6 +1,16 @@
 <script lang="ts">
-	import { Braces, Bug, ListTree, Loader2, Logs, Share2 } from 'lucide-svelte';
+	import {
+		Braces,
+		Bug,
+		ChevronDown,
+		ChevronRight,
+		ListTree,
+		Loader2,
+		Logs,
+		Share2
+	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { slide } from 'svelte/transition';
 
 	import { createSharedLink } from '$lib/api/shared-links.remote';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
@@ -8,7 +18,7 @@
 	import Drawer from '$lib/components/ui/Drawer.svelte';
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
-	import { flattenObject } from '$lib/utils/log-helpers';
+	import { flattenObject, isEmpty } from '$lib/utils/log-helpers';
 
 	import LogContextView from './LogContextView.svelte';
 
@@ -23,6 +33,7 @@
 		timezoneMode = 'utc' as 'utc' | 'local',
 		query = '',
 		timeRange = null as { start: number; end: number } | null,
+		isOtelIndex = false,
 		onfilter
 	}: {
 		open: boolean;
@@ -35,6 +46,7 @@
 		timezoneMode?: 'utc' | 'local';
 		query?: string;
 		timeRange?: { start: number; end: number } | null;
+		isOtelIndex?: boolean;
 		onfilter?: (field: string, value: string) => void;
 	} = $props();
 
@@ -82,6 +94,39 @@
 	});
 
 	const flatParams = $derived(hit ? flattenObject(hit) : []);
+
+	const messageValue = $derived.by(() => {
+		if (!hit) return null;
+		const raw = resolveFieldValue(hit, messageField);
+		if (raw == null || raw === '') return null;
+		return String(raw);
+	});
+
+	let hideEmpty = $state(false);
+
+	const filteredParams = $derived(
+		hideEmpty ? flatParams.filter(([, value]) => !isEmpty(value)) : flatParams
+	);
+
+	function otelDisplayName(key: string): string {
+		if (key.startsWith('resource_attributes.')) return key.slice(20);
+		if (key.startsWith('attributes.')) return key.slice(11);
+		return key;
+	}
+
+	const attrParams = $derived(filteredParams.filter(([key]) => key.startsWith('attributes.')));
+	const resourceAttrParams = $derived(
+		filteredParams.filter(([key]) => key.startsWith('resource_attributes.'))
+	);
+	const otherParams = $derived(
+		filteredParams.filter(
+			([key]) => !key.startsWith('attributes.') && !key.startsWith('resource_attributes.')
+		)
+	);
+
+	let attrCollapsed = $state(false);
+	let resourceAttrCollapsed = $state(false);
+	let otherCollapsed = $state(false);
 
 	let activeTab = $state<'parameters' | 'json' | 'context' | 'traceback'>('parameters');
 
@@ -140,33 +185,129 @@
 			{/if}
 		{:else if activeTab === 'parameters'}
 			{#if hit}
-				<table class="table w-full border border-base-300 table-sm">
-					<tbody>
-						{#each flatParams as [key, value] (key)}
-							<tr class="hover:bg-base-200/50">
-								<td
-									class="border border-base-300 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
-									>{key}</td
-								>
-								<td
-									class="border border-base-300 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word] {onfilter &&
-									isFilterable(value)
-										? 'cursor-pointer hover:bg-base-200'
-										: ''}"
-									onclick={onfilter && isFilterable(value)
-										? () => handleFilterClick(key, value)
-										: undefined}
-								>
-									{#if value === null || value === undefined}
-										<span class="text-base-content/50 italic">null</span>
-									{:else}
-										{formatFieldValue(value)}
-									{/if}
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+				{#snippet paramTable(params: [string, unknown][], stripPrefix: boolean)}
+					<table
+						class="table w-full table-fixed rounded-none border-[0.5px] border-base-content/20 table-sm"
+					>
+						<tbody>
+							{#each params as [key, value] (key)}
+								<tr class="hover:bg-base-200/50">
+									<td
+										class="w-2/5 border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
+										>{stripPrefix ? otelDisplayName(key) : key}</td
+									>
+									<td
+										class="border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word] {onfilter &&
+										isFilterable(value)
+											? 'cursor-pointer hover:bg-base-200'
+											: ''}"
+										onclick={onfilter && isFilterable(value)
+											? () => handleFilterClick(key, value)
+											: undefined}
+									>
+										{#if value === null || value === undefined}
+											<span class="text-base-content/50 italic">null</span>
+										{:else}
+											{formatFieldValue(value)}
+										{/if}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				{/snippet}
+
+				{#if messageValue}
+					<div class="mb-4">
+						<div class="mb-1 text-xs font-semibold tracking-wider text-base-content/60 uppercase">
+							{messageField}
+						</div>
+						<div
+							class="rounded-box bg-base-200 p-3 font-['Roboto_Mono',monospace] text-sm break-all whitespace-pre-wrap"
+						>
+							{messageValue}
+						</div>
+					</div>
+				{/if}
+
+				<label class="mb-3 flex items-center gap-2">
+					<input type="checkbox" class="checkbox checkbox-xs" bind:checked={hideEmpty} />
+					<span class="text-xs text-base-content/70">Hide empty values</span>
+				</label>
+
+				{#if isOtelIndex}
+					{#if attrParams.length > 0}
+						<div class="mb-2">
+							<button
+								type="button"
+								class="flex items-center py-2"
+								onclick={() => (attrCollapsed = !attrCollapsed)}
+							>
+								{#if attrCollapsed}
+									<ChevronRight size={14} class="mr-1 text-base-content/60" />
+								{:else}
+									<ChevronDown size={14} class="mr-1 text-base-content/60" />
+								{/if}
+								<span class="text-xs font-bold tracking-wider text-base-content uppercase">
+									Attributes ({attrParams.length})
+								</span>
+							</button>
+							{#if !attrCollapsed}
+								<div transition:slide={{ duration: 200 }}>
+									{@render paramTable(attrParams, true)}
+								</div>
+							{/if}
+						</div>
+					{/if}
+					{#if resourceAttrParams.length > 0}
+						<div class="mb-2">
+							<button
+								type="button"
+								class="flex items-center py-2"
+								onclick={() => (resourceAttrCollapsed = !resourceAttrCollapsed)}
+							>
+								{#if resourceAttrCollapsed}
+									<ChevronRight size={14} class="mr-1 text-base-content/60" />
+								{:else}
+									<ChevronDown size={14} class="mr-1 text-base-content/60" />
+								{/if}
+								<span class="text-xs font-bold tracking-wider text-base-content uppercase">
+									Resource Attributes ({resourceAttrParams.length})
+								</span>
+							</button>
+							{#if !resourceAttrCollapsed}
+								<div transition:slide={{ duration: 200 }}>
+									{@render paramTable(resourceAttrParams, true)}
+								</div>
+							{/if}
+						</div>
+					{/if}
+					{#if otherParams.length > 0}
+						<div class="mb-2">
+							<button
+								type="button"
+								class="flex items-center py-2"
+								onclick={() => (otherCollapsed = !otherCollapsed)}
+							>
+								{#if otherCollapsed}
+									<ChevronRight size={14} class="mr-1 text-base-content/60" />
+								{:else}
+									<ChevronDown size={14} class="mr-1 text-base-content/60" />
+								{/if}
+								<span class="text-xs font-bold tracking-wider text-base-content uppercase">
+									Other Fields ({otherParams.length})
+								</span>
+							</button>
+							{#if !otherCollapsed}
+								<div transition:slide={{ duration: 200 }}>
+									{@render paramTable(otherParams, false)}
+								</div>
+							{/if}
+						</div>
+					{/if}
+				{:else}
+					{@render paramTable(filteredParams, false)}
+				{/if}
 			{/if}
 		{:else if activeTab === 'context'}
 			{#if hit}
