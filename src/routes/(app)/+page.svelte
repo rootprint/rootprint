@@ -18,6 +18,7 @@
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
 	import { createSearchStore } from '$lib/stores/search.svelte';
 	import type { DrawerTab } from '$lib/types';
+	import { parseWrapMode } from '$lib/utils/wrap-mode';
 
 	let { data } = $props();
 
@@ -33,7 +34,9 @@
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
-	let wrapMode = $state<'none' | 'wrap'>('none');
+	let wrapMode = $state<'none' | 'wrap'>(
+		browser ? parseWrapMode(localStorage.getItem('logwiz:wrapMode')) : 'none'
+	);
 	let selectedLog = $state<Record<string, unknown> | null>(null);
 	let drawerOpen = $state(false);
 	let chartCollapsed = $state(
@@ -43,6 +46,10 @@
 
 	$effect(() => {
 		if (browser) localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
+	});
+
+	$effect(() => {
+		if (browser) localStorage.setItem('logwiz:wrapMode', wrapMode);
 	});
 
 	// Handle shared log link

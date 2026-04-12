@@ -67,17 +67,6 @@
 			{/each}
 		</select>
 
-		<div class="join">
-			{#each [['none', 'No wrap'], ['wrap', 'Wrap']] as [mode, label] (mode)}
-				<button
-					class="btn join-item whitespace-nowrap btn-sm {wrapMode === mode ? 'btn-accent' : ''}"
-					onclick={() => (wrapMode = mode as typeof wrapMode)}
-				>
-					{label}
-				</button>
-			{/each}
-		</div>
-
 		<div class="join ml-auto">
 			{#each drawerButtons as { id, icon: Icon, title } (id)}
 				<button
@@ -224,6 +213,17 @@
 			pinnedFieldsEnd={[store.fieldConfig.messageField]}
 			onchange={store.handleFieldsChange}
 		/>
+		<button
+			class="btn whitespace-nowrap btn-sm {wrapMode === 'wrap' ? 'btn-accent' : ''}"
+			type="button"
+			aria-pressed={wrapMode === 'wrap'}
+			title="Toggle multiline log message display"
+			onclick={() => {
+				wrapMode = wrapMode === 'wrap' ? 'none' : 'wrap';
+			}}
+		>
+			Wrap lines
+		</button>
 	</div>
 
 	<SaveQueryModal
