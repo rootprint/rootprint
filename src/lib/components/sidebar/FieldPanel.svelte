@@ -333,6 +333,13 @@
 		if (field.name.startsWith('attributes.')) return field.name.slice(11);
 		return field.name;
 	}
+
+	function getFieldCountLabel(field: string): string {
+		const count = (levelAggregations[field] ?? expandedAggregations[field] ?? []).length;
+		if (count === 0) return '';
+		if (count >= 10_000) return '10000+';
+		return String(count);
+	}
 </script>
 
 {#snippet fieldValues(field: IndexField, isLevel: boolean, indented: boolean = false)}
@@ -491,6 +498,11 @@
 									{displayName(field)}
 								</span>
 							</button>
+							{#if getFieldCountLabel(field.name)}
+								<span class="text-[10px] text-base-content/40">
+									({getFieldCountLabel(field.name)})
+								</span>
+							{/if}
 						</div>
 
 						{#if isOpen}
@@ -540,6 +552,11 @@
 											{displayName(field)}
 										</span>
 									</button>
+									{#if getFieldCountLabel(field.name)}
+										<span class="text-[10px] text-base-content/40">
+											({getFieldCountLabel(field.name)})
+										</span>
+									{/if}
 								</div>
 
 								{#if isOpen}
@@ -593,6 +610,11 @@
 											{displayName(field)}
 										</span>
 									</button>
+									{#if getFieldCountLabel(field.name)}
+										<span class="text-[10px] text-base-content/40">
+											({getFieldCountLabel(field.name)})
+										</span>
+									{/if}
 								</div>
 
 								{#if isOpen}
@@ -623,6 +645,11 @@
 									{field.name}
 								</span>
 							</button>
+							{#if getFieldCountLabel(field.name)}
+								<span class="text-[10px] text-base-content/40">
+									({getFieldCountLabel(field.name)})
+								</span>
+							{/if}
 						</div>
 
 						{#if isOpen}

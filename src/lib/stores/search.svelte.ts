@@ -66,7 +66,7 @@ export function createSearchStore(
 	let schemaFields = $state<IndexField[]>([]);
 	let activeFields = $state<string[]>([]);
 	let fieldsLoading = $state(false);
-	const levelFilterFields = $derived(fieldConfig.levelField ? [fieldConfig.levelField] : []);
+	const quickFilterFields = $derived(indexFields.filter((f) => f.fast).map((f) => f.name));
 
 	// --- Search result state ---
 	let logs = $state<LogEntry[]>([]);
@@ -296,7 +296,7 @@ export function createSearchStore(
 				...timeParams,
 				offset: append ? logs.length : 0,
 				limit: BATCH_SIZE,
-				quickFilterFields: levelFilterFields,
+				quickFilterFields,
 				sortDirection
 			});
 
