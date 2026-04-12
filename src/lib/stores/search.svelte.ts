@@ -93,7 +93,6 @@ export function createSearchStore(
 
 	// --- Aggregations ---
 	let aggregations = $state<Record<string, QuickFilterBucket[]>>({});
-	let aggregationOverflow = $state<Record<string, boolean>>({});
 
 	// --- Search version ---
 	let searchVersion = $state(0);
@@ -237,7 +236,6 @@ export function createSearchStore(
 		selectedIndex = indexName;
 		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
 		aggregations = {};
-		aggregationOverflow = {};
 		schemaFields = [];
 		fieldsLoading = true; // block auto-search until new fields load
 		navigateQuery({ index: indexName, query: '' });
@@ -331,10 +329,6 @@ export function createSearchStore(
 				} else {
 					aggregations = result.aggregations;
 				}
-			}
-
-			if (!append && result.aggregationOverflow) {
-				aggregationOverflow = result.aggregationOverflow;
 			}
 
 			if (append) {
@@ -633,9 +627,6 @@ export function createSearchStore(
 		},
 		get aggregations() {
 			return aggregations;
-		},
-		get aggregationOverflow() {
-			return aggregationOverflow;
 		},
 		get timeRange() {
 			return timeRange;

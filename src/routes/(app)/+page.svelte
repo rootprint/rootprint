@@ -99,7 +99,6 @@
 			timestampField={store.timestampField}
 			messageField={store.messageField}
 			levelAggregations={store.aggregations}
-			levelAggregationOverflow={store.aggregationOverflow}
 			numHits={store.numHits}
 			query={data.parsedQuery.query}
 			onAddClause={store.addClause}

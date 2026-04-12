@@ -6,6 +6,7 @@
 	import { severityDotColor, sortBySeverity } from '$lib/utils/log-helpers';
 	import { parseClauses } from '$lib/utils/query';
 	import { formatCountAsPercent } from '$lib/utils/quick-filter-percent';
+
 	import ColumnDropdown from './ColumnDropdown.svelte';
 
 	let {
@@ -15,7 +16,6 @@
 		timestampField,
 		messageField,
 		levelAggregations = {},
-		levelAggregationOverflow = {},
 		numHits,
 		query,
 		onAddClause,
@@ -33,7 +33,6 @@
 		timestampField: string;
 		messageField: string;
 		levelAggregations: Record<string, QuickFilterBucket[]>;
-		levelAggregationOverflow: Record<string, boolean>;
 		numHits: number;
 		query: string;
 		onAddClause: (field: string, value: string, exclude?: boolean) => void;
@@ -119,10 +118,11 @@
 
 	function refreshExpandedFields() {
 		if (!onsearch) return;
+		const search = onsearch;
 		const fieldsToRefresh = [...openSections].filter((f) => f !== levelField);
 		Promise.allSettled(
 			fieldsToRefresh.map((fieldName) =>
-				onsearch!(fieldName, searchTerms[fieldName]?.trim() || '').then((result) => {
+				search(fieldName, searchTerms[fieldName]?.trim() || '').then((result) => {
 					expandedAggregations = { ...expandedAggregations, [fieldName]: result.values };
 				})
 			)
@@ -179,13 +179,6 @@
 			return levelAggregations[field] ?? [];
 		}
 		return expandedAggregations[field] ?? [];
-	}
-
-	function getOverflow(field: string): boolean {
-		if (field === levelField) {
-			return levelAggregationOverflow[field] ?? false;
-		}
-		return false;
 	}
 
 	function getDenominator(field: string): number {

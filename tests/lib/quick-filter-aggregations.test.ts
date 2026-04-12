@@ -202,25 +202,6 @@ describe('sticky aggregation merge', () => {
 	});
 });
 
-describe('aggregationOverflow', () => {
-	it('is true when sum_other_doc_count > 0', () => {
-		const agg = { buckets: [{ key: 'a', doc_count: 10 }], sum_other_doc_count: 500 };
-		expect((agg.sum_other_doc_count ?? 0) > 0).toBe(true);
-	});
-
-	it('is false when sum_other_doc_count is 0', () => {
-		const agg = { buckets: [{ key: 'a', doc_count: 10 }], sum_other_doc_count: 0 };
-		expect((agg.sum_other_doc_count ?? 0) > 0).toBe(false);
-	});
-
-	it('is false when sum_other_doc_count is undefined', () => {
-		const agg: { buckets: { key: string; doc_count: number }[]; sum_other_doc_count?: number } = {
-			buckets: [{ key: 'a', doc_count: 10 }]
-		};
-		expect((agg.sum_other_doc_count ?? 0) > 0).toBe(false);
-	});
-});
-
 describe('pagination helpers', () => {
 	const INITIAL_SHOW_COUNT = 10;
 	const PAGE_SIZE = 100;
@@ -236,17 +217,6 @@ describe('pagination helpers', () => {
 		return Math.max(0, total - shown);
 	}
 
-	function getFieldCountLabel(
-		field: string,
-		aggregations: Record<string, QuickFilterBucket[]>,
-		aggregationOverflow: Record<string, boolean>
-	): string {
-		const count = (aggregations[field] ?? []).length;
-		if (count === 0) return '';
-		if (aggregationOverflow[field]) return '10000+';
-		return String(count);
-	}
-
 	it('shows remaining count excluding ghost values', () => {
 		const aggs = { env: Array.from({ length: 50 }, (_, i) => b(`val-${i}`)) };
 		expect(getAggregationRemaining('env', aggs, {})).toBe(40);
@@ -260,18 +230,5 @@ describe('pagination helpers', () => {
 	it('remaining decreases after show more', () => {
 		const aggs = { env: Array.from({ length: 200 }, (_, i) => b(`val-${i}`)) };
 		expect(getAggregationRemaining('env', aggs, { env: INITIAL_SHOW_COUNT + PAGE_SIZE })).toBe(90);
-	});
-
-	it('count label shows exact count', () => {
-		expect(getFieldCountLabel('env', { env: [b('a'), b('b'), b('c')] }, {})).toBe('3');
-	});
-
-	it('count label shows 10000+ on overflow', () => {
-		const aggs = { env: Array.from({ length: 10_000 }, (_, i) => b(`v${i}`)) };
-		expect(getFieldCountLabel('env', aggs, { env: true })).toBe('10000+');
-	});
-
-	it('count label is empty for no values', () => {
-		expect(getFieldCountLabel('env', {}, {})).toBe('');
 	});
 });

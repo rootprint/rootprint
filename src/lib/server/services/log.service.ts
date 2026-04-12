@@ -106,7 +106,6 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 	const result = await index.search(query).catch(rethrowValidationError);
 
 	const aggregations: Record<string, QuickFilterBucket[]> = {};
-	const aggregationOverflow: Record<string, boolean> = {};
 	if (result.aggregations) {
 		for (const [field, agg] of Object.entries(result.aggregations)) {
 			const bucketAgg = agg as BucketAggregationResult;
@@ -117,7 +116,6 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 						count: bucket.doc_count
 					}))
 					.filter((entry) => entry.value !== '');
-				aggregationOverflow[field] = (bucketAgg.sum_other_doc_count ?? 0) > 0;
 			}
 		}
 	}
@@ -128,7 +126,6 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 		startTimestamp: startTs,
 		endTimestamp: endTs,
 		aggregations,
-		aggregationOverflow,
 		unsupportedFilterFields
 	};
 }
