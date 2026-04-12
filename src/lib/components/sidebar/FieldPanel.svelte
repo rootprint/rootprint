@@ -19,7 +19,8 @@
 		onClearClauses,
 		onsearch,
 		loading = false,
-		indexId = null
+		indexId = null,
+		isOtelIndex = false
 	}: {
 		fields: IndexField[];
 		levelField: string;
@@ -36,6 +37,7 @@
 		) => Promise<{ values: QuickFilterBucket[]; totalHits: number }>;
 		loading?: boolean;
 		indexId?: string | null;
+		isOtelIndex?: boolean;
 	} = $props();
 
 	let clauses = $derived(parseClauses(query));
@@ -86,6 +88,16 @@
 		if (levelField) openSections.add(levelField);
 	});
 
+	// Restore collapsed groups from localStorage
+	$effect(() => {
+		collapsedGroups.clear();
+		if (indexId) {
+			for (const g of loadSet(`logwiz:collapsedGroups:${indexId}`)) {
+				collapsedGroups.add(g);
+			}
+		}
+	});
+
 	// Clean up debounce timers
 	$effect(() => {
 		return () => {
@@ -132,6 +144,39 @@
 
 	let nonFastFields = $derived(fields.filter((f) => !f.fast));
 	let nonFastCollapsed = $state(true);
+
+	// --- OTel field grouping ---
+	let topLevelFields = $derived(
+		isOtelIndex
+			? fastFields.filter(
+					(f) => !f.name.startsWith('resource_attributes.') && !f.name.startsWith('attributes.')
+				)
+			: fastFields
+	);
+
+	let resourceAttrFields = $derived(
+		isOtelIndex ? fastFields.filter((f) => f.name.startsWith('resource_attributes.')) : []
+	);
+
+	let attrFields = $derived(
+		isOtelIndex ? fastFields.filter((f) => f.name.startsWith('attributes.')) : []
+	);
+
+	let collapsedGroups = new SvelteSet<string>();
+
+	function saveCollapsedGroups(id: string | null, groups: SvelteSet<string>) {
+		if (!id) return;
+		localStorage.setItem(`logwiz:collapsedGroups:${id}`, JSON.stringify([...groups]));
+	}
+
+	function toggleGroup(group: string) {
+		if (collapsedGroups.has(group)) {
+			collapsedGroups.delete(group);
+		} else {
+			collapsedGroups.add(group);
+		}
+		saveCollapsedGroups(indexId, collapsedGroups);
+	}
 
 	// --- Expand/collapse ---
 
@@ -281,7 +326,117 @@
 	// --- Filter state ---
 
 	let hasAnyFilters = $derived(clauses.length > 0);
+
+	function displayName(field: IndexField): string {
+		if (!isOtelIndex) return field.name;
+		if (field.name.startsWith('resource_attributes.')) return field.name.slice(20);
+		if (field.name.startsWith('attributes.')) return field.name.slice(11);
+		return field.name;
+	}
 </script>
+
+{#snippet fieldValues(field: IndexField, isLevel: boolean, indented: boolean = false)}
+	<div class="{indented ? 'pr-3 pl-6' : 'px-3'} pb-3">
+		{#if loadingSections.has(field.name)}
+			<div class="flex items-center gap-2 py-1">
+				<span class="loading loading-xs loading-spinner"></span>
+				<span class="text-xs text-base-content/50">Loading...</span>
+			</div>
+		{:else if getTotalValueCount(field.name) > INITIAL_SHOW_COUNT}
+			<input
+				type="text"
+				class="input input-xs mb-2 w-full border-base-300 bg-base-200/50"
+				placeholder="Search values..."
+				value={searchTerms[field.name] ?? ''}
+				oninput={(e) => handleSearchInput(field.name, e.currentTarget.value)}
+			/>
+		{/if}
+
+		{#if loadingSearch.has(field.name)}
+			<div class="flex items-center gap-2 py-1">
+				<span class="loading loading-xs loading-spinner"></span>
+				<span class="text-xs text-base-content/50">Searching...</span>
+			</div>
+		{:else if !loadingSections.has(field.name) && getDisplayValues(field.name).length === 0}
+			<p class="py-1 text-xs text-base-content/50">
+				{searchTerms[field.name]?.trim() ? 'No matching values' : 'No values found'}
+			</p>
+		{:else if !loadingSections.has(field.name)}
+			<div class="flex flex-col gap-1">
+				{#each isLevel ? sortBucketsBySeverity(getDisplayValues(field.name)) : getDisplayValues(field.name) as bucket (bucket.value)}
+					{#if isLevel}
+						{@const dotColor = severityDotColor(bucket.value.toLowerCase())}
+						{@const isActive = isChecked(field.name, bucket.value)}
+						{@const anyActive = hasActiveClausesForField(field.name)}
+						{@const showFull = !anyActive || isActive}
+						<button
+							class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150 hover:bg-base-200"
+							role="checkbox"
+							aria-checked={isActive}
+							onclick={() => toggleValue(field.name, bucket.value)}
+						>
+							<span
+								class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-150 {showFull
+									? (dotColor ?? 'bg-base-content/40')
+									: 'bg-base-content/20'}"
+							></span>
+							<span
+								class="min-w-0 flex-1 truncate text-left transition-colors duration-150 {showFull
+									? ''
+									: 'text-base-content/40'}">{bucket.value}</span
+							>
+							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums">
+								{formatCountAsPercent(bucket.count, getDenominator(field.name))}
+							</span>
+						</button>
+					{:else}
+						<label
+							class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs hover:bg-base-200"
+						>
+							<input
+								type="checkbox"
+								class="checkbox checkbox-xs"
+								checked={isChecked(field.name, bucket.value)}
+								onclick={(e) => {
+									e.preventDefault();
+									toggleValue(field.name, bucket.value);
+								}}
+							/>
+							<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
+							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums">
+								{formatCountAsPercent(bucket.count, getDenominator(field.name))}
+							</span>
+						</label>
+					{/if}
+				{/each}
+			</div>
+
+			{#if !searchTerms[field.name]?.trim() && getAggregationRemaining(field.name) > 0}
+				<button
+					class="mt-1 text-xs text-primary hover:underline"
+					onclick={() => {
+						expandedCounts = {
+							...expandedCounts,
+							[field.name]: (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) + PAGE_SIZE
+						};
+					}}
+				>
+					Show more ({getAggregationRemaining(field.name)} remaining)
+				</button>
+			{:else if !searchTerms[field.name]?.trim() && (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) > INITIAL_SHOW_COUNT && getTotalValueCount(field.name) > INITIAL_SHOW_COUNT}
+				<button
+					class="mt-1 text-xs text-primary hover:underline"
+					onclick={() => {
+						const { [field.name]: _, ...rest } = expandedCounts;
+						expandedCounts = rest;
+					}}
+				>
+					Show less
+				</button>
+			{/if}
+		{/if}
+	</div>
+{/snippet}
 
 <div class="flex flex-col bg-base-100">
 	<!-- Panel header -->
@@ -313,137 +468,169 @@
 	{:else}
 		<div class="flex flex-col">
 			<!-- Fast fields (expandable with filter values) -->
-			{#each fastFields as field (field.name)}
-				{@const isLevel = field.name === levelField}
-				{@const isOpen = openSections.has(field.name)}
+			{#if isOtelIndex}
+				<!-- OTel grouped layout -->
 
-				<div class="border-b border-base-300/50">
-					<!-- Field row -->
-					<div class="flex w-full items-center px-3 py-1.5">
-						<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
-							{#if isOpen}
-								<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-							{:else}
+				<!-- Top-level fields (flat) -->
+				{#each topLevelFields as field (field.name)}
+					{@const isLevel = field.name === levelField}
+					{@const isOpen = openSections.has(field.name)}
+
+					<div class="border-b border-base-300/50">
+						<div class="flex w-full items-center px-3 py-1.5">
+							<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
+								{#if isOpen}
+									<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
+								{:else}
+									<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+								{/if}
+								<span
+									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
+									title={field.name}
+								>
+									{displayName(field)}
+								</span>
+							</button>
+						</div>
+
+						{#if isOpen}
+							{@render fieldValues(field, isLevel)}
+						{/if}
+					</div>
+				{/each}
+
+				<!-- Attributes group -->
+				{#if attrFields.length > 0}
+					<div class="border-b border-base-300/50">
+						<button
+							class="flex w-full items-center px-3 py-1.5"
+							onclick={() => toggleGroup('attributes')}
+						>
+							{#if collapsedGroups.has('attributes')}
 								<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+							{:else}
+								<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
 							{/if}
-							<span
-								class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
-								title={field.name}
-							>
-								{field.name}
+							<span class="flex-1 text-left text-xs font-medium text-base-content">Attributes</span>
+							<span class="text-[10px] text-base-content/40">
+								({attrFields.length})
 							</span>
 						</button>
 					</div>
 
-					<!-- Expanded filter values -->
-					{#if isOpen}
-						<div class="px-3 pb-3">
-							{#if loadingSections.has(field.name)}
-								<div class="flex items-center gap-2 py-1">
-									<span class="loading loading-xs loading-spinner"></span>
-									<span class="text-xs text-base-content/50">Loading...</span>
-								</div>
-							{:else if getTotalValueCount(field.name) > INITIAL_SHOW_COUNT}
-								<input
-									type="text"
-									class="input input-xs mb-2 w-full border-base-300 bg-base-200/50"
-									placeholder="Search values..."
-									value={searchTerms[field.name] ?? ''}
-									oninput={(e) => handleSearchInput(field.name, e.currentTarget.value)}
-								/>
-							{/if}
+					{#if !collapsedGroups.has('attributes')}
+						{#each attrFields as field (field.name)}
+							{@const isOpen = openSections.has(field.name)}
 
-							{#if loadingSearch.has(field.name)}
-								<div class="flex items-center gap-2 py-1">
-									<span class="loading loading-xs loading-spinner"></span>
-									<span class="text-xs text-base-content/50">Searching...</span>
-								</div>
-							{:else if !loadingSections.has(field.name) && getDisplayValues(field.name).length === 0}
-								<p class="py-1 text-xs text-base-content/50">
-									{searchTerms[field.name]?.trim() ? 'No matching values' : 'No values found'}
-								</p>
-							{:else if !loadingSections.has(field.name)}
-								<div class="flex flex-col gap-1">
-									{#each isLevel ? sortBucketsBySeverity(getDisplayValues(field.name)) : getDisplayValues(field.name) as bucket (bucket.value)}
-										{#if isLevel}
-											{@const dotColor = severityDotColor(bucket.value.toLowerCase())}
-											{@const isActive = isChecked(field.name, bucket.value)}
-											{@const anyActive = hasActiveClausesForField(field.name)}
-											{@const showFull = !anyActive || isActive}
-											<button
-												class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150 hover:bg-base-200"
-												role="checkbox"
-												aria-checked={isActive}
-												onclick={() => toggleValue(field.name, bucket.value)}
-											>
-												<span
-													class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-150 {showFull
-														? (dotColor ?? 'bg-base-content/40')
-														: 'bg-base-content/20'}"
-												></span>
-												<span
-													class="min-w-0 flex-1 truncate text-left transition-colors duration-150 {showFull
-														? ''
-														: 'text-base-content/40'}">{bucket.value}</span
-												>
-												<span
-													class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums"
-												>
-													{formatCountAsPercent(bucket.count, getDenominator(field.name))}
-												</span>
-											</button>
+							<div class="border-b border-base-300/50">
+								<div class="flex w-full items-center px-3 py-1.5 pl-6">
+									<button
+										class="flex min-w-0 flex-1 items-center"
+										onclick={() => toggleSection(field)}
+									>
+										{#if isOpen}
+											<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
 										{:else}
-											<label
-												class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs hover:bg-base-200"
-											>
-												<input
-													type="checkbox"
-													class="checkbox checkbox-xs"
-													checked={isChecked(field.name, bucket.value)}
-													onclick={(e) => {
-														e.preventDefault();
-														toggleValue(field.name, bucket.value);
-													}}
-												/>
-												<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
-												<span
-													class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums"
-												>
-													{formatCountAsPercent(bucket.count, getDenominator(field.name))}
-												</span>
-											</label>
+											<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
 										{/if}
-									{/each}
+										<span
+											class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
+											title={field.name}
+										>
+											{displayName(field)}
+										</span>
+									</button>
 								</div>
 
-								{#if !searchTerms[field.name]?.trim() && getAggregationRemaining(field.name) > 0}
-									<button
-										class="mt-1 text-xs text-primary hover:underline"
-										onclick={() => {
-											expandedCounts = {
-												...expandedCounts,
-												[field.name]: (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) + PAGE_SIZE
-											};
-										}}
-									>
-										Show more ({getAggregationRemaining(field.name)} remaining)
-									</button>
-								{:else if !searchTerms[field.name]?.trim() && (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) > INITIAL_SHOW_COUNT && getTotalValueCount(field.name) > INITIAL_SHOW_COUNT}
-									<button
-										class="mt-1 text-xs text-primary hover:underline"
-										onclick={() => {
-											const { [field.name]: _, ...rest } = expandedCounts;
-											expandedCounts = rest;
-										}}
-									>
-										Show less
-									</button>
+								{#if isOpen}
+									{@render fieldValues(field, false, true)}
 								{/if}
-							{/if}
-						</div>
+							</div>
+						{/each}
 					{/if}
-				</div>
-			{/each}
+				{/if}
+
+				<!-- Resource Attributes group -->
+				{#if resourceAttrFields.length > 0}
+					<div class="border-b border-base-300/50">
+						<button
+							class="flex w-full items-center px-3 py-1.5"
+							onclick={() => toggleGroup('resource_attributes')}
+						>
+							{#if collapsedGroups.has('resource_attributes')}
+								<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+							{:else}
+								<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
+							{/if}
+							<span class="flex-1 text-left text-xs font-medium text-base-content"
+								>Resource Attributes</span
+							>
+							<span class="text-[10px] text-base-content/40">
+								({resourceAttrFields.length})
+							</span>
+						</button>
+					</div>
+
+					{#if !collapsedGroups.has('resource_attributes')}
+						{#each resourceAttrFields as field (field.name)}
+							{@const isOpen = openSections.has(field.name)}
+
+							<div class="border-b border-base-300/50">
+								<div class="flex w-full items-center px-3 py-1.5 pl-6">
+									<button
+										class="flex min-w-0 flex-1 items-center"
+										onclick={() => toggleSection(field)}
+									>
+										{#if isOpen}
+											<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
+										{:else}
+											<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+										{/if}
+										<span
+											class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
+											title={field.name}
+										>
+											{displayName(field)}
+										</span>
+									</button>
+								</div>
+
+								{#if isOpen}
+									{@render fieldValues(field, false, true)}
+								{/if}
+							</div>
+						{/each}
+					{/if}
+				{/if}
+			{:else}
+				<!-- Non-OTel flat layout (existing behavior) -->
+				{#each fastFields as field (field.name)}
+					{@const isLevel = field.name === levelField}
+					{@const isOpen = openSections.has(field.name)}
+
+					<div class="border-b border-base-300/50">
+						<div class="flex w-full items-center px-3 py-1.5">
+							<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
+								{#if isOpen}
+									<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
+								{:else}
+									<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+								{/if}
+								<span
+									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
+									title={field.name}
+								>
+									{field.name}
+								</span>
+							</button>
+						</div>
+
+						{#if isOpen}
+							{@render fieldValues(field, isLevel)}
+						{/if}
+					</div>
+				{/each}
+			{/if}
 
 			<!-- Non-fast fields (collapsible section, view toggle only) -->
 			{#if nonFastFields.length > 0}
@@ -457,8 +644,10 @@
 						{:else}
 							<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
 						{/if}
-						<span class="text-xs font-medium text-base-content/60"> Other Fields </span>
-						<span class="ml-1 text-[10px] text-base-content/40">
+						<span class="flex-1 text-left text-xs font-medium text-base-content/60">
+							Other Fields
+						</span>
+						<span class="text-[10px] text-base-content/40">
 							({nonFastFields.length})
 						</span>
 					</button>

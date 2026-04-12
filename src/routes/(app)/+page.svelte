@@ -112,6 +112,7 @@
 			onsearch={store.searchFieldValues}
 			loading={store.fieldsLoading}
 			indexId={store.selectedIndex}
+			isOtelIndex={store.selectedIndex?.startsWith('otel-logs-') ?? false}
 		/>
 	</OverlayScrollbarsComponent>
 
