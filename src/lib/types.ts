@@ -32,7 +32,6 @@ export type SaveIndexConfigFields = {
 	displayName?: string | null;
 	visibility?: IndexVisibility;
 	contextFields?: string[] | null;
-	stickyFilterFields?: string[] | null;
 };
 
 export type IndexSummary = {

@@ -54,13 +54,11 @@ export function createSearchStore(
 		timestampField: string;
 		messageField: string;
 		tracebackField: string | null;
-		stickyFilterFields: string[] | null;
 	}>({
 		levelField: 'level',
 		timestampField: 'timestamp',
 		messageField: 'message',
-		tracebackField: null,
-		stickyFilterFields: null
+		tracebackField: null
 	});
 	let indexFields = $state<IndexField[]>([]);
 	let schemaFields = $state<IndexField[]>([]);
@@ -308,7 +306,7 @@ export function createSearchStore(
 				if (hasActiveClauses) {
 					const newAgg: Record<string, QuickFilterBucket[]> = {};
 					for (const [field, buckets] of Object.entries(result.aggregations)) {
-						if ((fieldConfig.stickyFilterFields ?? []).includes(field)) {
+						if (field === fieldConfig.levelField) {
 							const merged = new Map<string, QuickFilterBucket>();
 							for (const prev of aggregations[field] ?? []) {
 								// Carry over old values with count nulled (they're stale)

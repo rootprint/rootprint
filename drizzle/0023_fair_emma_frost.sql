@@ -1,0 +1,1 @@
+ALTER TABLE `qw_index` DROP COLUMN `sticky_filter_fields`;

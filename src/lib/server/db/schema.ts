@@ -36,7 +36,6 @@ export const qwIndex = sqliteTable('qw_index', {
 	displayName: text('display_name'),
 	visibility: text('visibility').notNull().default('all'),
 	contextFields: text('context_fields', { mode: 'json' }).$type<string[] | null>(),
-	stickyFilterFields: text('sticky_filter_fields', { mode: 'json' }).$type<string[] | null>(),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull(),

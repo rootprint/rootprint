@@ -95,21 +95,22 @@ describe('getTotalValueCount', () => {
 	});
 });
 
-describe('sticky aggregation merge', () => {
+describe('level field sticky aggregation merge', () => {
 	const b = (value: string, count: number | null): QuickFilterBucket => ({ value, count });
 
 	// Inline the merge logic for unit testing (same logic as search store)
+	// Level field is always sticky; all other fields are replaced.
 	function mergeAggregations(
 		existing: Record<string, QuickFilterBucket[]>,
 		incoming: Record<string, QuickFilterBucket[]>,
-		stickyFields: string[],
+		levelField: string,
 		hasActiveClauses: boolean,
 		maxSize = 10_000
 	): Record<string, QuickFilterBucket[]> {
 		if (!hasActiveClauses) return incoming;
 		const result: Record<string, QuickFilterBucket[]> = {};
 		for (const [field, buckets] of Object.entries(incoming)) {
-			if (stickyFields.includes(field)) {
+			if (field === levelField) {
 				const merged = new Map<string, QuickFilterBucket>();
 				for (const prev of existing[field] ?? []) {
 					merged.set(prev.value, { value: prev.value, count: null });
@@ -125,57 +126,47 @@ describe('sticky aggregation merge', () => {
 		return result;
 	}
 
-	it('accumulates values for sticky fields with fresh counts', () => {
+	it('accumulates values for level field with fresh counts', () => {
 		const existing = { level: [b('info', 10), b('warn', 5)] };
 		const incoming = { level: [b('error', 3), b('info', 12)] };
-		const result = mergeAggregations(existing, incoming, ['level'], true);
+		const result = mergeAggregations(existing, incoming, 'level', true);
 		expect(result.level).toHaveLength(3);
-		// info: merged, should take fresh count
 		expect(result.level.find((x) => x.value === 'info')?.count).toBe(12);
-		// warn: carried over, no fresh data -> null
 		expect(result.level.find((x) => x.value === 'warn')?.count).toBe(null);
-		// error: fresh only
 		expect(result.level.find((x) => x.value === 'error')?.count).toBe(3);
 	});
 
-	it('replaces values for non-sticky fields', () => {
+	it('replaces values for non-level fields', () => {
 		const existing = { service: [b('api', 20), b('web', 10)] };
 		const incoming = { service: [b('worker', 5)] };
-		const result = mergeAggregations(existing, incoming, ['level'], true);
+		const result = mergeAggregations(existing, incoming, 'level', true);
 		expect(result.service).toEqual([{ value: 'worker', count: 5 }]);
 	});
 
 	it('returns incoming directly when no active clauses', () => {
 		const existing = { level: [b('info', 1)] };
 		const incoming = { level: [b('error', 2)] };
-		const result = mergeAggregations(existing, incoming, ['level'], false);
+		const result = mergeAggregations(existing, incoming, 'level', false);
 		expect(result.level).toEqual([{ value: 'error', count: 2 }]);
 	});
 
-	it('supports multiple sticky fields', () => {
+	it('only level field is sticky, other fields always replaced', () => {
 		const existing = { level: [b('info', 1)], env: [b('dev', 2)] };
 		const incoming = {
 			level: [b('error', 3)],
 			env: [b('prod', 4)],
 			service: [b('api', 5)]
 		};
-		const result = mergeAggregations(existing, incoming, ['level', 'env'], true);
+		const result = mergeAggregations(existing, incoming, 'level', true);
 		expect(result.level.map((x) => x.value)).toEqual(expect.arrayContaining(['info', 'error']));
-		expect(result.env.map((x) => x.value)).toEqual(expect.arrayContaining(['dev', 'prod']));
+		expect(result.env).toEqual([{ value: 'prod', count: 4 }]);
 		expect(result.service).toEqual([{ value: 'api', count: 5 }]);
 	});
 
-	it('handles empty sticky fields list (all replace)', () => {
-		const existing = { level: [b('info', 1)] };
-		const incoming = { level: [b('error', 2)] };
-		const result = mergeAggregations(existing, incoming, [], true);
-		expect(result.level).toEqual([{ value: 'error', count: 2 }]);
-	});
-
-	it('handles sticky field not in incoming', () => {
+	it('handles level field not in incoming', () => {
 		const existing = { level: [b('info', 1)] };
 		const incoming = { service: [b('api', 2)] };
-		const result = mergeAggregations(existing, incoming, ['level'], true);
+		const result = mergeAggregations(existing, incoming, 'level', true);
 		expect(result.service).toEqual([{ value: 'api', count: 2 }]);
 		expect(result.level).toBeUndefined();
 	});
@@ -187,14 +178,14 @@ describe('sticky aggregation merge', () => {
 		const incoming = {
 			level: [b('new-1', 1), b('new-2', 1), b('new-3', 1)]
 		};
-		const result = mergeAggregations(existing, incoming, ['level'], true);
+		const result = mergeAggregations(existing, incoming, 'level', true);
 		expect(result.level.length).toBe(10_000);
 	});
 
 	it('nulls out count for carried-over values that are not in fresh buckets', () => {
 		const existing = { level: [b('info', 42), b('warn', 7)] };
 		const incoming = { level: [b('error', 3)] };
-		const result = mergeAggregations(existing, incoming, ['level'], true);
+		const result = mergeAggregations(existing, incoming, 'level', true);
 		const info = result.level.find((x) => x.value === 'info');
 		const warn = result.level.find((x) => x.value === 'warn');
 		expect(info?.count).toBe(null);

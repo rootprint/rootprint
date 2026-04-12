@@ -162,6 +162,13 @@
       "when": 1775669966621,
       "tag": "0022_lazy_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1776016688696,
+      "tag": "0023_fair_emma_frost",
+      "breakpoints": true
     }
   ]
 }
