@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-svelte';
+	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	import type { IndexField, QuickFilterBucket } from '$lib/types';
@@ -7,11 +7,8 @@
 	import { parseClauses } from '$lib/utils/query';
 	import { formatCountAsPercent } from '$lib/utils/quick-filter-percent';
 
-	import ColumnDropdown from './ColumnDropdown.svelte';
-
 	let {
 		fields,
-		activeFields = $bindable(),
 		levelField,
 		timestampField,
 		messageField,
@@ -23,12 +20,10 @@
 		hasClause,
 		onClearClauses,
 		onsearch,
-		onFieldsChange,
 		loading = false,
 		indexId = null
 	}: {
 		fields: IndexField[];
-		activeFields: string[];
 		levelField: string;
 		timestampField: string;
 		messageField: string;
@@ -43,7 +38,6 @@
 			field: string,
 			searchTerm: string
 		) => Promise<{ values: QuickFilterBucket[]; totalHits: number }>;
-		onFieldsChange?: () => void;
 		loading?: boolean;
 		indexId?: string | null;
 	} = $props();
@@ -64,8 +58,6 @@
 
 	const INITIAL_SHOW_COUNT = 10;
 	const PAGE_SIZE = 100;
-
-	let activeFieldSet = $derived(new Set(activeFields));
 
 	// --- localStorage persistence for open sections ---
 
@@ -290,17 +282,6 @@
 		return clauses.some((c) => c.field === field && !c.exclude);
 	}
 
-	// --- Column toggling ---
-
-	function toggleColumn(fieldName: string) {
-		if (activeFieldSet.has(fieldName)) {
-			activeFields = activeFields.filter((f) => f !== fieldName);
-		} else {
-			activeFields = [...activeFields, fieldName];
-		}
-		onFieldsChange?.();
-	}
-
 	// --- Filter state ---
 
 	let hasAnyFilters = $derived(clauses.length > 0);
@@ -323,12 +304,6 @@
 				<span class="text-[10px] text-primary">Clear</span>
 			</button>
 		{/if}
-		<ColumnDropdown
-			bind:activeFields
-			pinnedFields={[timestampField, levelField]}
-			pinnedFieldsEnd={[messageField]}
-			onchange={onFieldsChange}
-		/>
 	</div>
 
 	{#if loading}
@@ -345,15 +320,11 @@
 			{#each fastFields as field (field.name)}
 				{@const isLevel = field.name === levelField}
 				{@const isOpen = openSections.has(field.name)}
-				{@const isColumn = activeFieldSet.has(field.name)}
 
 				<div class="border-b border-base-300/50">
 					<!-- Field row -->
 					<div class="flex w-full items-center px-3 py-1.5">
-						<button
-							class="flex min-w-0 flex-1 items-center"
-							onclick={() => toggleSection(field)}
-						>
+						<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
 							{#if isOpen}
 								<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
 							{:else}
@@ -365,18 +336,6 @@
 							>
 								{field.name}
 							</span>
-						</button>
-
-						<button
-							class="btn btn-ghost p-0 btn-xs"
-							onclick={() => toggleColumn(field.name)}
-							title={isColumn ? 'Remove from view' : 'Add to view'}
-						>
-	{#if isColumn}
-								<Eye size={12} class="text-base-content" />
-							{:else}
-								<EyeOff size={12} class="text-base-content/80" />
-							{/if}
 						</button>
 					</div>
 
@@ -405,9 +364,7 @@
 								</div>
 							{:else if !loadingSections.has(field.name) && getDisplayValues(field.name).length === 0}
 								<p class="py-1 text-xs text-base-content/50">
-									{searchTerms[field.name]?.trim()
-										? 'No matching values'
-										: 'No values found'}
+									{searchTerms[field.name]?.trim() ? 'No matching values' : 'No values found'}
 								</p>
 							{:else if !loadingSections.has(field.name)}
 								<div class="flex flex-col gap-1">
@@ -434,7 +391,7 @@
 														: 'text-base-content/40'}">{bucket.value}</span
 												>
 												<span
-													class="w-10 shrink-0 text-right text-[10px] tabular-nums text-base-content/50"
+													class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums"
 												>
 													{formatCountAsPercent(bucket.count, getDenominator(field.name))}
 												</span>
@@ -454,7 +411,7 @@
 												/>
 												<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
 												<span
-													class="w-10 shrink-0 text-right text-[10px] tabular-nums text-base-content/50"
+													class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums"
 												>
 													{formatCountAsPercent(bucket.count, getDenominator(field.name))}
 												</span>
@@ -469,8 +426,7 @@
 										onclick={() => {
 											expandedCounts = {
 												...expandedCounts,
-												[field.name]:
-													(expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) + PAGE_SIZE
+												[field.name]: (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) + PAGE_SIZE
 											};
 										}}
 									>
@@ -505,9 +461,7 @@
 						{:else}
 							<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
 						{/if}
-						<span class="text-xs font-medium text-base-content/60">
-							Other Fields
-						</span>
+						<span class="text-xs font-medium text-base-content/60"> Other Fields </span>
 						<span class="ml-1 text-[10px] text-base-content/40">
 							({nonFastFields.length})
 						</span>
@@ -516,7 +470,6 @@
 
 				{#if !nonFastCollapsed}
 					{#each nonFastFields as field (field.name)}
-						{@const isColumn = activeFieldSet.has(field.name)}
 						<div class="border-b border-base-300/50">
 							<div class="flex w-full items-center px-3 py-1.5 pl-7">
 								<span
@@ -525,17 +478,6 @@
 								>
 									{field.name}
 								</span>
-								<button
-									class="btn btn-ghost p-0 btn-xs"
-									onclick={() => toggleColumn(field.name)}
-									title={isColumn ? 'Remove from view' : 'Add to view'}
-								>
-									{#if isColumn}
-										<Eye size={12} class="text-primary" />
-									{:else}
-										<EyeOff size={12} class="text-base-content/60" />
-									{/if}
-								</button>
 							</div>
 						</div>
 					{/each}

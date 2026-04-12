@@ -1,20 +1,12 @@
 <script lang="ts">
-	import {
-		Bookmark,
-		ChevronDown,
-		Clock,
-		Pause,
-		Play,
-		Save,
-		Share2,
-		Users
-	} from 'lucide-svelte';
+	import { Bookmark, ChevronDown, Clock, Pause, Play, Save, Share2, Users } from 'lucide-svelte';
 
 	import { browser } from '$app/environment';
 	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
 	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
+	import ColumnSettings from '$lib/components/search/ColumnSettings.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import type { createSearchStore } from '$lib/stores/search.svelte';
 	import {
@@ -168,9 +160,7 @@
 				</button>
 			</div>
 			{#if autoRefreshOpen}
-				<div
-					class="dropdown-content menu z-20 mt-1 w-36 rounded-box bg-base-200 p-2 shadow-lg"
-				>
+				<div class="dropdown-content menu z-20 mt-1 w-36 rounded-box bg-base-200 p-2 shadow-lg">
 					{#if store.autoRefreshInterval !== null}
 						<button
 							class="btn justify-start btn-ghost btn-sm"
@@ -184,7 +174,9 @@
 						</button>
 						<div class="divider my-0"></div>
 					{/if}
-					<div class="mb-1 px-1 text-xs font-semibold tracking-wider text-base-content/50 uppercase">
+					<div
+						class="mb-1 px-1 text-xs font-semibold tracking-wider text-base-content/50 uppercase"
+					>
 						Auto refresh
 					</div>
 					{#each AUTO_REFRESH_INTERVALS as { label, ms } (ms)}
@@ -230,6 +222,13 @@
 				>{store.numHits.toLocaleString()} hits</span
 			>
 		{/if}
+		<ColumnSettings
+			bind:activeFields={store.activeFields}
+			allFields={store.indexFields}
+			pinnedFields={[store.fieldConfig.timestampField, store.fieldConfig.levelField]}
+			pinnedFieldsEnd={[store.fieldConfig.messageField]}
+			onchange={store.handleFieldsChange}
+		/>
 	</div>
 
 	<SaveQueryModal

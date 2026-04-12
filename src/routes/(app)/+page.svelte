@@ -94,7 +94,6 @@
 	>
 		<FieldPanel
 			fields={store.panelAvailableFields}
-			bind:activeFields={store.activeFields}
 			levelField={store.levelField}
 			timestampField={store.timestampField}
 			messageField={store.messageField}
@@ -106,7 +105,6 @@
 			hasClause={store.hasClause}
 			onClearClauses={store.clearClauses}
 			onsearch={store.searchFieldValues}
-			onFieldsChange={store.handleFieldsChange}
 			loading={store.fieldsLoading}
 			indexId={store.selectedIndex}
 		/>
