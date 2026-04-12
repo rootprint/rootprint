@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Bookmark, ChevronDown, Clock, Pause, Play, Save, Share2, Users } from 'lucide-svelte';
+	import {
+		Bookmark,
+		ChevronDown,
+		Clock,
+		Pause,
+		Play,
+		Save,
+		Share2,
+		TextWrap,
+		Users
+	} from 'lucide-svelte';
 
 	import { browser } from '$app/environment';
 	import ColumnSettings from '$lib/components/search/ColumnSettings.svelte';
@@ -214,15 +224,16 @@
 			onchange={store.handleFieldsChange}
 		/>
 		<button
-			class="btn whitespace-nowrap btn-sm {wrapMode === 'wrap' ? 'btn-accent' : ''}"
+			class="btn btn-square btn-sm {wrapMode === 'wrap' ? 'btn-accent' : ''}"
 			type="button"
 			aria-pressed={wrapMode === 'wrap'}
-			title="Toggle multiline log message display"
+			aria-label="Toggle line wrapping"
+			title="Toggle line wrapping"
 			onclick={() => {
 				wrapMode = wrapMode === 'wrap' ? 'none' : 'wrap';
 			}}
 		>
-			Wrap lines
+			<TextWrap size={14} />
 		</button>
 	</div>
 
