@@ -117,9 +117,7 @@ export function createSearchStore(
 	const sortDirection = $derived(parsedQuery().sortDirection);
 	const canAutoRefresh = $derived(timeRange.type === 'relative');
 
-	const excludedFields = $derived(
-		new Set([fieldConfig.timestampField, fieldConfig.messageField])
-	);
+	const excludedFields = $derived(new Set([fieldConfig.timestampField, fieldConfig.messageField]));
 	const panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
 
 	// --- Internal helpers ---

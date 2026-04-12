@@ -467,7 +467,8 @@ describe('quick filter + manual AND interaction', () => {
 
 	it('consolidates duplicate field clauses when adding a value', () => {
 		// bhome OR group + standalone bhome clause from manual AND
-		const query = 'function:_handle_internal_commands bhome:(41158 OR 40325 OR 40779) AND bhome:41335';
+		const query =
+			'function:_handle_internal_commands bhome:(41158 OR 40325 OR 40779) AND bhome:41335';
 		const result = addClause(query, 'bhome', '41191');
 		// All bhome values should be in a single OR group
 		expect(result).toBe(

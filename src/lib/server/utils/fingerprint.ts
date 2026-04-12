@@ -33,6 +33,7 @@ export function extractTimestampSeconds(
 		return Math.floor(normalizeToMs(raw) / 1000);
 	}
 	const date = new Date(String(raw));
-	if (Number.isNaN(date.getTime())) throw new Error(`Invalid timestamp value: ${JSON.stringify(raw)}`);
+	if (Number.isNaN(date.getTime()))
+		throw new Error(`Invalid timestamp value: ${JSON.stringify(raw)}`);
 	return Math.floor(date.getTime() / 1000);
 }

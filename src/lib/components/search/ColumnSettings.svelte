@@ -97,12 +97,7 @@
 </script>
 
 <div class="relative">
-	<button
-		bind:this={triggerEl}
-		class="btn btn-sm"
-		onclick={toggle}
-		title="Column settings"
-	>
+	<button bind:this={triggerEl} class="btn btn-sm" onclick={toggle} title="Column settings">
 		<SlidersVertical size={14} />
 	</button>
 

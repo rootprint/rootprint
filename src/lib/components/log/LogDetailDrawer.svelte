@@ -52,6 +52,22 @@
 
 	let sharing = $state(false);
 
+	let copiedField = $state<string | null>(null);
+
+	async function handleCopy(key: string, value: unknown) {
+		const text = value == null ? 'null' : formatFieldValue(value);
+		try {
+			await navigator.clipboard.writeText(text);
+			copiedField = key;
+			toast.success('Value copied to clipboard');
+			setTimeout(() => {
+				if (copiedField === key) copiedField = null;
+			}, 1500);
+		} catch {
+			toast.error('Failed to copy value');
+		}
+	}
+
 	async function handleShare() {
 		if (!hit || !timeRange || sharing) return;
 		sharing = true;
@@ -102,7 +118,7 @@
 		return String(raw);
 	});
 
-	let hideEmpty = $state(false);
+	let hideEmpty = $state(true);
 
 	const filteredParams = $derived(
 		hideEmpty ? flatParams.filter(([, value]) => !isEmpty(value)) : flatParams
@@ -191,25 +207,44 @@
 					>
 						<tbody>
 							{#each params as [key, value] (key)}
-								<tr class="hover:bg-base-200/50">
+								<tr class="group/row hover:bg-base-200/50">
 									<td
 										class="w-2/5 border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
 										>{stripPrefix ? otelDisplayName(key) : key}</td
 									>
 									<td
-										class="border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word] {onfilter &&
-										isFilterable(value)
-											? 'cursor-pointer hover:bg-base-200'
-											: ''}"
-										onclick={onfilter && isFilterable(value)
-											? () => handleFilterClick(key, value)
-											: undefined}
+										class="relative border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word]"
 									>
 										{#if value === null || value === undefined}
 											<span class="text-base-content/50 italic">null</span>
 										{:else}
 											{formatFieldValue(value)}
 										{/if}
+										<div
+											class="absolute inset-y-0 right-0 flex items-center pr-1 md:pointer-events-none md:opacity-0 md:group-focus-within/row:pointer-events-auto md:group-focus-within/row:opacity-100 md:group-hover/row:pointer-events-auto md:group-hover/row:opacity-100"
+										>
+											<div
+												class="pointer-events-none h-full w-6 bg-gradient-to-r from-transparent to-base-200/50"
+											></div>
+											<div class="pointer-events-auto flex items-center gap-0.5 bg-base-200/50">
+												{#if onfilter && isFilterable(value)}
+													<button
+														type="button"
+														class="rounded px-1.5 py-0.5 text-xs text-base-content/70 hover:bg-base-300 hover:text-base-content"
+														onclick={() => handleFilterClick(key, value)}
+													>
+														Filter
+													</button>
+												{/if}
+												<button
+													type="button"
+													class="rounded px-1.5 py-0.5 text-xs text-base-content/70 hover:bg-base-300 hover:text-base-content"
+													onclick={() => handleCopy(key, value)}
+												>
+													{copiedField === key ? 'Copied!' : 'Copy'}
+												</button>
+											</div>
+										</div>
 									</td>
 								</tr>
 							{/each}
@@ -231,8 +266,13 @@
 				{/if}
 
 				<label class="mb-3 flex items-center gap-2">
-					<input type="checkbox" class="checkbox checkbox-xs" bind:checked={hideEmpty} />
-					<span class="text-xs text-base-content/70">Hide empty values</span>
+					<input
+						type="checkbox"
+						class="checkbox checkbox-xs"
+						checked={!hideEmpty}
+						onchange={() => (hideEmpty = !hideEmpty)}
+					/>
+					<span class="text-xs text-base-content/70">Show empty values</span>
 				</label>
 
 				{#if isOtelIndex}
