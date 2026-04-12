@@ -57,7 +57,30 @@
 	const INITIAL_SHOW_COUNT = 10;
 	const PAGE_SIZE = 100;
 
+	function resetIndexScopedState() {
+		for (const timer of Object.values(debounceTimers)) clearTimeout(timer);
+		debounceTimers = {};
+
+		expandedAggregations = {};
+		searchTerms = {};
+		searchResults = {};
+		expandedCounts = {};
+
+		loadingSections.clear();
+		loadingSearch.clear();
+		prevRefreshKey = '';
+	}
+
 	// --- localStorage persistence for open sections ---
+
+	let previousIndexId: string | null = null;
+
+	$effect(() => {
+		const nextIndexId = indexId ?? null;
+		if (nextIndexId === previousIndexId) return;
+		previousIndexId = nextIndexId;
+		resetIndexScopedState();
+	});
 
 	function loadSet(key: string): string[] {
 		try {

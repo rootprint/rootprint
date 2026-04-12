@@ -85,11 +85,7 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
-	const { fast: filterFields, unsupported: unsupportedFilterFields } = await partitionFastFields(
-		config.id,
-		data.quickFilterFields ?? [],
-		config.fastJsonFields
-	);
+	const filterFields = data.quickFilterFields ?? [];
 
 	const query = index
 		.query(data.query || '*')
@@ -125,8 +121,7 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 		numHits: result.num_hits,
 		startTimestamp: startTs,
 		endTimestamp: endTs,
-		aggregations,
-		unsupportedFilterFields
+		aggregations
 	};
 }
 

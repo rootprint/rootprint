@@ -6,7 +6,7 @@ import { userPreference } from '$lib/server/db/schema';
 async function upsertPreference(
 	userId: string,
 	indexName: string,
-	set: Partial<{ displayFields: string[]; quickFilterFields: string[] }>
+	set: Partial<{ displayFields: string[] }>
 ) {
 	await db
 		.insert(userPreference)
@@ -24,8 +24,7 @@ export async function getPreference(userId: string, indexId: string) {
 		.where(and(eq(userPreference.userId, userId), eq(userPreference.indexName, indexId)));
 
 	return {
-		displayFields: pref?.displayFields ?? [],
-		quickFilterFields: pref?.quickFilterFields ?? []
+		displayFields: pref?.displayFields ?? []
 	};
 }
 

@@ -101,7 +101,6 @@ export const userPreference = sqliteTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		indexName: text('index_name').notNull(),
 		displayFields: text('display_fields', { mode: 'json' }).$type<string[]>(),
-		quickFilterFields: text('quick_filter_fields', { mode: 'json' }).$type<string[]>(),
 		createdAt: integer('created_at', { mode: 'timestamp' })
 			.default(sql`(unixepoch())`)
 			.notNull(),

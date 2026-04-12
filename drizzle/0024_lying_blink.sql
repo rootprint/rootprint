@@ -1,0 +1,1 @@
+ALTER TABLE `user_preference` DROP COLUMN `quick_filter_fields`;

@@ -169,6 +169,13 @@
       "when": 1776016688696,
       "tag": "0023_fair_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1776026028440,
+      "tag": "0024_lying_blink",
+      "breakpoints": true
     }
   ]
 }
