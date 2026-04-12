@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ChevronLeft, GripVertical, Plus, SlidersVertical, X } from 'lucide-svelte';
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { dndzone } from 'svelte-dnd-action';
 
 	import type { IndexField } from '$lib/types';
@@ -125,21 +126,30 @@
 						bind:value={searchTerm}
 					/>
 				</div>
-				<div class="max-h-64 overflow-y-auto px-1 py-1">
-					{#each availableFields as field (field.name)}
-						<button
-							class="flex w-full items-center rounded px-2 py-1.5 text-xs hover:bg-base-200"
-							onclick={() => addField(field.name)}
-						>
-							{field.name}
-						</button>
-					{/each}
-					{#if availableFields.length === 0}
-						<p class="px-2 py-2 text-xs text-base-content/50">
-							{searchTerm.trim() ? 'No matching fields' : 'All fields added'}
-						</p>
-					{/if}
-				</div>
+				<OverlayScrollbarsComponent
+					options={{
+						scrollbars: { theme: 'os-theme-dark', autoHide: 'leave', autoHideDelay: 400 },
+						overflow: { x: 'hidden' }
+					}}
+					defer
+					class="max-h-64"
+				>
+					<div class="px-1 py-1">
+						{#each availableFields as field (field.name)}
+							<button
+								class="flex w-full items-center rounded px-2 py-1.5 text-xs hover:bg-base-200"
+								onclick={() => addField(field.name)}
+							>
+								{field.name}
+							</button>
+						{/each}
+						{#if availableFields.length === 0}
+							<p class="px-2 py-2 text-xs text-base-content/50">
+								{searchTerm.trim() ? 'No matching fields' : 'All fields added'}
+							</p>
+						{/if}
+					</div>
+				</OverlayScrollbarsComponent>
 			{:else}
 				<div class="flex items-center border-b border-base-300 px-3 py-2">
 					<span class="flex-1 text-xs font-medium tracking-wider text-base-content/70 uppercase">
@@ -149,44 +159,53 @@
 						<Plus size={14} />
 					</button>
 				</div>
-				<div class="flex max-h-72 flex-col overflow-y-auto px-1 py-1">
-					{#each pinnedFields as field (field)}
-						<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
-							<span class="w-4 shrink-0"></span>
-							<span class="flex-1 truncate">{field}</span>
-						</div>
-					{/each}
+				<OverlayScrollbarsComponent
+					options={{
+						scrollbars: { theme: 'os-theme-dark', autoHide: 'leave', autoHideDelay: 400 },
+						overflow: { x: 'hidden' }
+					}}
+					defer
+					class="max-h-72"
+				>
+					<div class="flex flex-col px-1 py-1">
+						{#each pinnedFields as field (field)}
+							<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
+								<span class="w-4 shrink-0"></span>
+								<span class="flex-1 truncate">{field}</span>
+							</div>
+						{/each}
 
-					{#if dndItems.length > 0}
-						<div
-							use:dndzone={{
-								items: dndItems,
-								flipDurationMs: 150,
-								type: 'column-settings'
-							}}
-							onconsider={handleDndConsider}
-							onfinalize={handleDndFinalize}
-							class="flex flex-col"
-						>
-							{#each dndItems as field (field.id)}
-								<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs hover:bg-base-200">
-									<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/40" />
-									<span class="flex-1 truncate">{field.name}</span>
-									<button class="btn p-0 btn-ghost btn-xs" onclick={() => removeField(field.name)}>
-										<X size={12} class="text-base-content/40 hover:text-base-content" />
-									</button>
-								</div>
-							{/each}
-						</div>
-					{/if}
+						{#if dndItems.length > 0}
+							<div
+								use:dndzone={{
+									items: dndItems,
+									flipDurationMs: 150,
+									type: 'column-settings'
+								}}
+								onconsider={handleDndConsider}
+								onfinalize={handleDndFinalize}
+								class="flex flex-col"
+							>
+								{#each dndItems as field (field.id)}
+									<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs hover:bg-base-200">
+										<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/40" />
+										<span class="flex-1 truncate">{field.name}</span>
+										<button class="btn p-0 btn-ghost btn-xs" onclick={() => removeField(field.name)}>
+											<X size={12} class="text-base-content/40 hover:text-base-content" />
+										</button>
+									</div>
+								{/each}
+							</div>
+						{/if}
 
-					{#each pinnedFieldsEnd as field (field)}
-						<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
-							<span class="w-4 shrink-0"></span>
-							<span class="flex-1 truncate">{field}</span>
-						</div>
-					{/each}
-				</div>
+						{#each pinnedFieldsEnd as field (field)}
+							<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
+								<span class="w-4 shrink-0"></span>
+								<span class="flex-1 truncate">{field}</span>
+							</div>
+						{/each}
+					</div>
+				</OverlayScrollbarsComponent>
 			{/if}
 		</div>
 	{/if}
