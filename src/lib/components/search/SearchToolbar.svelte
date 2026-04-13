@@ -13,7 +13,7 @@
 
 	import { browser } from '$app/environment';
 	import ColumnSettings from '$lib/components/search/ColumnSettings.svelte';
-	import ExportDropdown from '$lib/components/search/ExportDropdown.svelte';
+	import ExportDialog from '$lib/components/search/ExportDialog.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
 	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
@@ -108,12 +108,12 @@
 			</CopyButton>
 		{/if}
 
-		<ExportDropdown
-			logs={store.logs.map((e) => e.hit)}
+		<ExportDialog
+			numHits={store.numHits}
+			query={store.queryText}
+			startTimestamp={store.absoluteTimeRange.start}
+			endTimestamp={store.absoluteTimeRange.end}
 			indexId={store.selectedIndex}
-			timestampField={store.fieldConfig.timestampField}
-			levelField={store.fieldConfig.levelField}
-			messageField={store.fieldConfig.messageField}
 		/>
 
 		<TimeRangePicker

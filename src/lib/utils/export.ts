@@ -1,5 +1,6 @@
-export function formatAsJson(logs: Record<string, unknown>[]): string {
-	return JSON.stringify(logs, null, 2);
+export function formatAsNdjson(logs: Record<string, unknown>[]): string {
+	if (logs.length === 0) return '';
+	return logs.map((log) => JSON.stringify(log)).join('\n');
 }
 
 const PRIORITY_FIELDS = ['timestamp', 'level', 'message'];
@@ -70,12 +71,3 @@ export function formatAsText(
 		.join('\n');
 }
 
-export function downloadFile(content: string, filename: string, mimeType: string): void {
-	const blob = new Blob([content], { type: mimeType });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = filename;
-	a.click();
-	setTimeout(() => URL.revokeObjectURL(url), 1000);
-}

@@ -640,6 +640,9 @@ export function createSearchStore(
 		get panelAvailableFields() {
 			return panelAvailableFields;
 		},
+		get queryText() {
+			return getQueryText();
+		},
 		get autoRefreshInterval() {
 			return autoRefreshInterval;
 		},

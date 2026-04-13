@@ -151,3 +151,18 @@ export type QuickFilterBucket = {
 	value: string;
 	count: number | null;
 };
+
+export type ExportStatus = 'pending' | 'fetching' | 'compressing' | 'complete' | 'error';
+
+export type ExportState = {
+	status: ExportStatus;
+	userId: string;
+	fetched: number;
+	total: number;
+	format: 'ndjson' | 'csv' | 'text';
+	logs: Record<string, unknown>[];
+	result?: Uint8Array;
+	error?: string;
+	filename: string;
+	createdAt: number;
+};
