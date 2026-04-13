@@ -1,11 +1,11 @@
 <script lang="ts">
 	import GoogleAuthCard from '$lib/components/admin/GoogleAuthCard.svelte';
-	import SettingsTab from '$lib/components/admin/SettingsTab.svelte';
+	import SendLogsTab from '$lib/components/admin/SendLogsTab.svelte';
 	import UserManagement from '$lib/components/admin/UserManagement.svelte';
 	import IndexesTab from '$lib/components/index/IndexesTab.svelte';
 
 	let { data } = $props();
-	let activeTab = $state<'users' | 'indexes' | 'settings'>('users');
+	let activeTab = $state<'users' | 'indexes' | 'send-logs'>('users');
 </script>
 
 <div class="h-full overflow-y-auto align-middle">
@@ -37,10 +37,10 @@
 			<button
 				role="tab"
 				class="tab"
-				class:tab-active={activeTab === 'settings'}
-				onclick={() => (activeTab = 'settings')}
+				class:tab-active={activeTab === 'send-logs'}
+				onclick={() => (activeTab = 'send-logs')}
 			>
-				Settings
+				Send Logs
 			</button>
 		</div>
 
@@ -51,8 +51,12 @@
 			</div>
 		{:else if activeTab === 'indexes'}
 			<IndexesTab indexes={data.indexDetails} />
-		{:else}
-			<SettingsTab ingestTokens={data.ingestTokens} ingestIndexIds={data.ingestIndexIds} />
+		{:else if activeTab === 'send-logs'}
+			<SendLogsTab
+				origin={data.origin}
+				ingestTokens={data.ingestTokens}
+				ingestIndexIds={data.ingestIndexIds}
+			/>
 		{/if}
 	</div>
 </div>
