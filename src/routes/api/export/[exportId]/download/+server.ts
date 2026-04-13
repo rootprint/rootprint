@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
-	const exportId = params.exportId!;
+	const exportId = params.exportId ?? '';
 	const state = exportManager.get(exportId);
 
 	if (!state || state.status !== 'complete' || !state.result || state.userId !== locals.user.id) {
