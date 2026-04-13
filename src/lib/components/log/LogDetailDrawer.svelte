@@ -230,7 +230,7 @@
 												{#if onfilter && isFilterable(value)}
 													<button
 														type="button"
-														class="rounded px-1.5 py-0.5 text-xs text-base-content/70 hover:bg-base-300 hover:text-base-content"
+														class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
 														onclick={() => handleFilterClick(key, value)}
 													>
 														Filter
@@ -238,7 +238,7 @@
 												{/if}
 												<button
 													type="button"
-													class="rounded px-1.5 py-0.5 text-xs text-base-content/70 hover:bg-base-300 hover:text-base-content"
+													class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
 													onclick={() => handleCopy(key, value)}
 												>
 													{copiedField === key ? 'Copied!' : 'Copy'}

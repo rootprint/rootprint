@@ -8,12 +8,12 @@
 		/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[{}[\]:,]|\s+/g;
 
 	const CLASS_MAP: Record<Token['type'], string> = {
-		key: 'text-info',
-		string: 'text-success',
-		number: 'text-warning',
-		boolean: 'text-error',
-		null: 'text-base-content/50',
-		punctuation: 'text-base-content/30',
+		key: 'text-[var(--json-key)]',
+		string: 'text-[var(--json-string)]',
+		number: 'text-[var(--json-number)]',
+		boolean: 'text-[var(--json-boolean)]',
+		null: 'text-[var(--json-null)]',
+		punctuation: 'text-[var(--json-punctuation)]',
 		whitespace: ''
 	};
 

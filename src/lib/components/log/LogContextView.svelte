@@ -211,7 +211,7 @@
 				<!-- Log row -->
 				<button
 					class="flex w-full cursor-pointer gap-3 border-l-4 px-4 py-1 text-left transition-colors hover:bg-base-200/50 {borderColor} {isSelected
-						? 'sticky top-0 bottom-0 z-10 bg-neutral text-neutral-content'
+						? 'sticky top-0 bottom-0 z-10 bg-base-200 outline outline-1 outline-primary/30'
 						: ''}"
 					data-selected={isSelected}
 					onclick={() => (expandedIndex = isExpanded ? null : i)}

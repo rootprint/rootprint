@@ -400,7 +400,7 @@
 						{@const anyActive = hasActiveClausesForField(field.name)}
 						{@const showFull = !anyActive || isActive}
 						<button
-							class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150 hover:bg-base-200"
+							class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150"
 							role="checkbox"
 							aria-checked={isActive}
 							onclick={() => toggleValue(field.name, bucket.value)}
@@ -421,7 +421,7 @@
 						</button>
 					{:else}
 						<label
-							class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs hover:bg-base-200"
+							class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs"
 						>
 							<input
 								type="checkbox"
@@ -482,7 +482,7 @@
 				onclick={() => onClearClauses()}
 				title="Clear all filters"
 			>
-				<span class="text-[10px] text-primary">Clear</span>
+				<span class="text-xs text-primary">Clear</span>
 			</button>
 		{/if}
 	</div>

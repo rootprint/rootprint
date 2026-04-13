@@ -219,7 +219,7 @@
 		<ColumnSettings
 			bind:activeFields={store.activeFields}
 			allFields={store.indexFields}
-			pinnedFields={[store.fieldConfig.timestampField, store.fieldConfig.levelField]}
+			pinnedFields={[store.fieldConfig.levelField, store.fieldConfig.timestampField]}
 			pinnedFieldsEnd={[store.fieldConfig.messageField]}
 			onchange={store.handleFieldsChange}
 		/>

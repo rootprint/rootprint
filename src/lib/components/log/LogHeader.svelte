@@ -27,7 +27,7 @@
 >
 	<button
 		type="button"
-		class="flex shrink-0 cursor-pointer items-center gap-1 py-px text-base-content/60 transition-colors hover:text-base-content"
+		class="flex shrink-0 cursor-pointer items-center gap-1 py-px transition-colors hover:text-base-content/60"
 		style={timestampWidth ? `min-width: ${timestampWidth}ch` : undefined}
 		title="Sort {sortDirection === 'desc' ? 'oldest first' : 'newest first'}"
 		onclick={ontogglesort}
