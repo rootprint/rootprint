@@ -10,18 +10,6 @@ import {
 	exportManager
 } from '$lib/server/services/export.service';
 import { assertIndexAccess, getFieldConfig } from '$lib/server/services/index.service';
-import { normalizeToMs } from '$lib/utils/time';
-
-function toEpochSeconds(rawTs: unknown): number | null {
-	if (typeof rawTs === 'string') {
-		const ms = new Date(rawTs).getTime();
-		return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
-	}
-	if (typeof rawTs === 'number') {
-		return Math.floor(normalizeToMs(rawTs) / 1000);
-	}
-	return null;
-}
 
 async function runExportJob(
 	exportId: string,
@@ -34,13 +22,10 @@ async function runExportJob(
 		const client = getQuickwitClient();
 		const index = client.index(data.indexId);
 
-		let currentEnd = data.endTimestamp;
+		let currentOffset = 0;
 		let totalFetched = 0;
 
-		while (true) {
-			if (data.startTimestamp >= currentEnd) break;
-			if (totalFetched >= EXPORT_MAX_LOGS) break;
-
+		while (totalFetched < EXPORT_MAX_LOGS) {
 			const remaining = EXPORT_MAX_LOGS - totalFetched;
 			const batchLimit = Math.min(EXPORT_BATCH_SIZE, remaining);
 
@@ -49,11 +34,11 @@ async function runExportJob(
 			const query = index
 				.query(data.query || '*')
 				.limit(batchLimit)
-				.offset(0)
+				.offset(currentOffset)
 				.sortBy(timestampField, 'desc')
 				.agg('_export', AggregationBuilder.terms(timestampField, { size: 1 }));
 
-			query.timeRange(data.startTimestamp, currentEnd);
+			query.timeRange(data.startTimestamp, data.endTimestamp);
 
 			const result = await index.search(query);
 			const hits = result.hits as Record<string, unknown>[];
@@ -62,15 +47,9 @@ async function runExportJob(
 
 			exportManager.appendLogs(exportId, hits);
 			totalFetched += hits.length;
+			currentOffset += hits.length;
 
 			if (hits.length < batchLimit) break;
-
-			// Last hit is the oldest in this descending batch — retreat end cursor
-			const lastHit = hits[hits.length - 1];
-			const lastTs = toEpochSeconds(lastHit[timestampField]);
-			if (lastTs === null) break;
-
-			currentEnd = lastTs;
 		}
 
 		await exportManager.finalize(exportId, timestampField, levelField, messageField);

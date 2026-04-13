@@ -19,7 +19,7 @@
 	type ExportFormat = 'ndjson' | 'csv' | 'text';
 	type DialogState = 'form' | 'progress' | 'error';
 
-	const EXPORT_MAX = 50_000;
+	const EXPORT_MAX = 10_000;
 
 	let open = $state(false);
 	let format = $state<ExportFormat>('ndjson');

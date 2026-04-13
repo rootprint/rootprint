@@ -8,7 +8,7 @@ function compress(data: Uint8Array<ArrayBuffer>): Uint8Array {
 }
 
 export const EXPORT_BATCH_SIZE = 1_000;
-export const EXPORT_MAX_LOGS = 50_000;
+export const EXPORT_MAX_LOGS = 10_000;
 const CLEANUP_INTERVAL_MS = 60_000;
 const EXPORT_TTL_MS = 5 * 60_000;
 
