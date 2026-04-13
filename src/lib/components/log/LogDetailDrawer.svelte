@@ -9,8 +9,8 @@
 		Logs,
 		Share2
 	} from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
 	import { slide } from 'svelte/transition';
+	import { toast } from 'svelte-sonner';
 
 	import { createSharedLink } from '$lib/api/shared-links.remote';
 	import TracebackView from '$lib/components/log/TracebackView.svelte';
