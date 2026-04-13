@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock } from 'lucide-svelte';
+	import { ChevronDown, Clock } from 'lucide-svelte';
 
 	import { TIME_PRESETS, type TimeRange, type TimezoneMode } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
@@ -113,9 +113,9 @@
 	<button class="btn gap-2 border-base-content/20 bg-base-100 font-normal btn-sm" onclick={toggle}>
 		<span class="text-sm">{buttonLabel}</span>
 		<span class="text-base-content/50">|</span>
-		<span class="text-sm text-base-content/70">
+		<span class="inline-flex items-center text-sm text-base-content/70">
 			{timezoneMode === 'utc' ? 'UTC' : 'Local'}
-			<span class="ml-0.5 text-[10px] {open ? 'inline-block rotate-180' : ''}">▾</span>
+			<ChevronDown size={12} class="ml-0.5 shrink-0 transition-transform {open ? 'rotate-180' : ''}" />
 		</span>
 	</button>
 
