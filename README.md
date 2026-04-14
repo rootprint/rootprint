@@ -1,176 +1,31 @@
-# Logwiz
+<div align="center">
+  <h1>Logwiz</h1>
+  <p>Open-source, self-hosted log management platform that allows you to run search directly on cloud storage.</p>
 
-Open-source logging UI for [Quickwit](https://quickwit.io). Search, filter, and visualize your logs with a modern web interface.
+  [![SvelteKit](https://img.shields.io/badge/SvelteKit-%23f1413d.svg?logo=svelte&logoColor=white)](#)
+  [![Release](https://img.shields.io/github/v/release/oleksandr-zhyhalo/logwiz)](https://github.com/oleksandr-zhyhalo/logwiz/releases)
+  [![License](https://img.shields.io/github/license/oleksandr-zhyhalo/logwiz)](LICENSE)
+</div>
 
-![Logwiz](static/screenshot.png)
+<div align="center">
+  <picture>
+    <img alt="Logwiz Screenshot" src="static/home-image.png" width="80%">
+  </picture>
+</div>
 
-## Why Logwiz?
-
-Quickwit is a powerful log search engine, but its built-in UI is minimal. Logwiz adds:
-
-- **Saved queries** — bookmark and share frequently used searches
-- **Quick filters** — one-click filtering by field values with aggregation counts
-- **Log frequency histogram** — visualize log volume and severity distribution over time
-- **Live tailing** — stream new logs in real-time
-- **User management** — invite-based access control with admin/user roles
-- **Configurable field mappings** — customize which fields display per index
-- **Traceback formatting** — syntax-highlighted Python stacktraces with automatic detection
+- **Search & explore** — full-text log search, quick filters, and frequency histogram to visualize log volume over time
+- **Saved queries & export** — bookmark searches, share them with your team, and download results as NDJSON, CSV, or plain text
+- **HTTP ingest API** — authenticated endpoint that forwards logs to Quickwit
+- **User management** — invite-based access control with optional Google Authentication
 
 ## Quick Start
 
-Requires [Docker](https://www.docker.com) and [Docker Compose](https://docs.docker.com/compose/).
+```bash
+curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz-docs/main/files/docker-compose.yml
+docker compose up -d
+```
 
-1. **Clone and start:**
-
-   ```bash
-   git clone https://github.com/oleksandr-zhyhalo/logwiz.git
-   cd logwiz
-   docker compose up -d
-   ```
-
-2. **Open Logwiz:**
-
-   Go to [http://localhost:3000](http://localhost:3000). Sign in with username `logwiz` and password `logwiz`. On first login, you'll be prompted to change it. For non-local deployments, set your own `LOGWIZ_ADMIN_USERNAME`/`LOGWIZ_ADMIN_PASSWORD` before first start.
-
-3. **Create an ingest token (admin):**
-
-   In Logwiz, go to **Administration -> Settings -> Ingest Tokens** and create a token.
-   Copy the token value (it is shown only once).
-
-4. **Ingest sample data:**
-
-   ```bash
-   curl -X POST 'http://localhost:3000/api/ingest/otel-logs-v0_9?commit=wait_for' \
-     -H 'Authorization: Bearer <your-ingest-token>' \
-     -H 'Content-Type: application/x-ndjson' \
-     --data-binary @- <<'EOF'
-   {"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}}
-   {"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}
-   EOF
-   ```
-
-   Quickwit ingest expects NDJSON (one JSON object per line).
-
-   Refresh Logwiz to see the logs appear.
-
-## Configuration
-
-For Docker deployments, set environment variables in `docker-compose.yml` under the `logwiz` service. For local development, use `.env`.
-
-### Connecting to an existing Quickwit instance
-
-`LOGWIZ_QUICKWIT_URL` can point to any running Quickwit instance — not just the bundled one from docker-compose. Logwiz syncs available indexes from Quickwit on server startup, so restart the container to pick up new indexes.
-
-### Secure ingest flow
-
-Logwiz includes an authenticated ingest gateway at `POST /api/ingest/<indexId>`.
-
-- Create/revoke bearer tokens in **Administration -> Settings -> Ingest Tokens**
-- Send log shippers to Logwiz ingest endpoint (not directly to Quickwit)
-- Keep Quickwit private (the bundled compose file binds Quickwit ports to localhost only)
-
-### Environment variables
-
-| Variable                       | Required | Default               | Description                     |
-| ------------------------------ | -------- | --------------------- | ------------------------------- |
-| `LOGWIZ_QUICKWIT_URL`          | Yes      | —                     | Quickwit API endpoint           |
-| `ORIGIN`                       | No       | Auto-detected         | Canonical public URL override   |
-| `LOGWIZ_DATABASE_PATH`         | No       | `./data/logwiz.db`    | Path to SQLite database         |
-| `LOGWIZ_ADMIN_EMAIL`           | No       | `logwiz@logwiz.local` | Default admin email             |
-| `LOGWIZ_ADMIN_USERNAME`        | No       | `logwiz`              | Default admin username          |
-| `LOGWIZ_ADMIN_PASSWORD`        | No       | `logwiz`              | Default admin password          |
-| `LOGWIZ_INVITE_EXPIRY_HOURS`   | No       | `48`                  | Invite token expiry (hours)     |
-| `LOGWIZ_RATE_LIMIT_WINDOW`     | No       | `60`                  | Rate limit window (seconds)     |
-| `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`                 | Max requests per window         |
-| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                   | Max sign-in attempts per window |
-| `LOGWIZ_AUTH_SECRET`           | No       | Auto-generated        | Auth secret (min 32 chars)      |
-
-`ORIGIN` is auto-detected from the incoming request URL in typical deployments.
-Set it explicitly when running behind a reverse proxy or when you need a strict canonical URL (e.g. `ORIGIN=https://logs.example.com`).
-
-### Resetting the admin password
-
-1. Delete the admin user from the database:
-
-   ```bash
-   docker exec -it logwiz sqlite3 data/logwiz.db "DELETE FROM user WHERE role = 'admin';"
-   ```
-
-2. Restart the container:
-
-   ```bash
-   docker compose restart logwiz
-   ```
-
-3. A new admin is seeded automatically with the default credentials (`logwiz`/`logwiz`). You'll be prompted to change the password on first login.
-
-## Google Authentication
-
-Logwiz supports Google OAuth sign-in alongside the default email/password login. Only users from allowed email domains can sign in with Google.
-
-### Setup
-
-1. Create OAuth credentials in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
-   - Application type: **Web application**
-   - Authorized redirect URI: `https://your-logwiz-url/api/auth/callback/google`
-
-2. In the Logwiz admin panel, go to **Administration → Settings**:
-   - Enter your **Client ID** and **Client Secret**
-   - Add one or more **Allowed Domains** (e.g., `company.com`)
-   - Copy the **Callback URL** shown and verify it matches what you configured in Google Cloud Console
-
-3. **Restart the server** for the changes to take effect.
-
-Once configured, a "Sign in with Google" button appears on the sign-in page. Users whose email domain matches an allowed domain are automatically created with the `user` role. If a Google account's email matches an existing user, the accounts are linked automatically.
-
-To remove Google authentication, click **Remove Google Auth** in the Settings tab and restart the server.
-
-## Index Configuration
-
-Each Quickwit index can be configured in the admin panel (click an index in Settings → Config tab) to map fields to Logwiz display roles:
-
-| Field               | Default   | Description                                                                                               |
-| ------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| **Level Field**     | `level`   | Field containing the log severity (e.g., `level`, `severity`, `severity_text`)                            |
-| **Message Field**   | `message` | Field containing the log message body (e.g., `message`, `body.message`)                                   |
-| **Traceback Field** | _(empty)_ | Field containing stacktrace/traceback data (e.g., `message.traceback`, `attributes.exception.stacktrace`) |
-
-All fields support **dot-notation paths** for nested or JSON-in-string values (e.g., `body.error.stacktrace`).
-
-### Traceback Display
-
-When a traceback field is configured and a log entry contains traceback data, a **Traceback** tab appears in the log detail drawer (click any log row to open it). The traceback is rendered with syntax highlighting:
-
-- **Python tracebacks** — file paths, line numbers, function names, and exception types are color-coded. Chained exceptions (`During handling of...`, `Caused by:`) are visually separated.
-- **Other formats** — displayed as plain monospace text. Additional language support can be added in the future.
-
-**OTel compatibility:** For OpenTelemetry-native indexes, set the traceback field to `attributes.exception.stacktrace` to display exception stacktraces captured by OTel instrumentation.
-
-## Local Development
-
-Requires [Bun](https://bun.sh).
-
-1. Start Quickwit:
-
-   ```bash
-   docker compose up quickwit -d
-   ```
-
-2. Install dependencies and set up the database:
-
-   ```bash
-   bun install
-   cp .env.example .env
-   bun run db:push
-   ```
-
-3. Start the dev server:
-
-   ```bash
-   bun run dev
-   ```
-
-   Open [http://localhost:5173](http://localhost:5173).
+For full installation options, see [docs.logwiz.io/install/docker-compose](https://docs.logwiz.io/install/docker-compose).
 
 ## License
 
