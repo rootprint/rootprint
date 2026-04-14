@@ -18,6 +18,7 @@ COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/package.json /app/bun.lock ./
 RUN bun install --frozen-lockfile --ignore-scripts --production
 
-EXPOSE 3000
+ENV PORT=8282
+EXPOSE 8282
 
 CMD ["bun", "run", "./build/index.js"]
