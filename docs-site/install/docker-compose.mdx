@@ -1,0 +1,172 @@
+---
+title: "Docker Compose"
+description: "Install Logwiz with Docker Compose"
+---
+
+## Prerequisites
+
+Install [Docker](https://www.docker.com) and [Docker Compose](https://docs.docker.com/compose/) before continuing.
+
+## Self-contained deployment (recommended)
+
+This option deploys Logwiz together with a bundled Quickwit instance. Best for getting started quickly or running a self-contained setup.
+
+Download the Compose file and start both services:
+
+```bash
+curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz-docs/main/files/docker-compose.yml
+docker compose up -d
+```
+
+<Expandable title="docker-compose.yml">
+```yaml
+services:
+  quickwit:
+    image: quickwit/quickwit:edge
+    container_name: quickwit
+    ports:
+      - '127.0.0.1:7280:7280'
+      - '127.0.0.1:7281:7281'
+    volumes:
+      - quickwit-data:/quickwit/qwdata
+    command: ['run']
+    healthcheck:
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/7280"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  logwiz:
+    image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
+    container_name: logwiz
+    depends_on:
+      quickwit:
+        condition: service_healthy
+    environment:
+      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
+      LOGWIZ_ADMIN_USERNAME: logwiz
+      LOGWIZ_ADMIN_PASSWORD: logwiz
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - '8282:8282'
+    volumes:
+      - logwiz-data:/app/data
+
+volumes:
+  quickwit-data:
+  logwiz-data:
+```
+</Expandable>
+
+This starts two containers:
+
+- **Logwiz** — the web UI, exposed on port `8282`.
+- **Quickwit** — the search and indexing backend, bound to `localhost` only (ports 7280 and 7281 are not reachable from outside your machine).
+
+Run `docker compose ps` to confirm both containers are healthy, then open [http://localhost:8282](http://localhost:8282).
+
+### Use S3 for storage
+
+By default, the self-contained deployment stores index data in the `quickwit-data` Docker volume on local disk. This is fine for testing, but removing the volume permanently deletes all indexed logs. For a persistent, production-ready setup, configure Quickwit to store index data in S3 (or any S3-compatible object storage).
+
+Add the following environment variables to the `quickwit` service in your `docker-compose.yml`:
+
+```yaml
+services:
+  quickwit:
+    image: quickwit/quickwit:edge
+    environment:
+      QW_DEFAULT_INDEX_ROOT_URI: s3://your-bucket-name/indexes
+      QW_METASTORE_URI: s3://your-bucket-name/metastore
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: us-east-1
+```
+
+Set both variables to paths within the same bucket. The bucket must already exist. See [Quickwit storage configuration](https://quickwit.io/docs/configuration/storage-config) for all options, including S3-compatible providers and custom endpoints.
+
+### Exposing Quickwit on internal networks
+
+If other services on your internal network need to ingest data directly into Quickwit, you can change the port bindings to listen on all interfaces. In `docker-compose.yml`, update the `quickwit` port bindings from:
+
+```yaml
+ports:
+  - '127.0.0.1:7280:7280'
+  - '127.0.0.1:7281:7281'
+```
+
+to:
+
+```yaml
+ports:
+  - '7280:7280'
+  - '7281:7281'
+```
+
+Quickwit will then be reachable at `http://<host-ip>:7280` from other machines on the same network.
+
+<Warning>
+  Quickwit has no authentication mechanism. Never expose it on a public or untrusted network — restrict access at the network or firewall level and only do this within a private, trusted network.
+</Warning>
+
+## Connect to an existing Quickwit instance
+
+If you already have a Quickwit cluster running, deploy only the Logwiz container and point it at your instance.
+
+Download the standalone Compose file:
+
+```bash
+curl -o docker-compose.yml https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz-docs/main/files/docker-compose.standalone.yml
+```
+
+Open `docker-compose.yml` and set `LOGWIZ_QUICKWIT_URL` to the REST API endpoint of your Quickwit instance:
+
+```yaml
+environment:
+  LOGWIZ_QUICKWIT_URL: http://your-quickwit-host:7280/api/v1
+```
+
+<Expandable title="docker-compose.standalone.yml">
+```yaml
+services:
+  logwiz:
+    image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
+    container_name: logwiz
+    environment:
+      LOGWIZ_QUICKWIT_URL: http://your-quickwit-host:7280/api/v1
+      LOGWIZ_ADMIN_USERNAME: logwiz
+      LOGWIZ_ADMIN_PASSWORD: logwiz
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - '8282:8282'
+    volumes:
+      - logwiz-data:/app/data
+
+volumes:
+  logwiz-data:
+```
+</Expandable>
+
+Then start the service:
+
+```bash
+docker compose up -d
+```
+
+Run `docker compose ps` to confirm the container is healthy, then open [http://localhost:8282](http://localhost:8282).
+
+## Configuration
+
+Customize the deployment by setting environment variables under the `environment` key of the `logwiz` service. See the [environment variables reference](/configuration/environment-variables) for the full list, including admin credentials, rate limits, and authentication settings.
+
+<Warning>
+  Change `LOGWIZ_ADMIN_PASSWORD` from its default value before exposing Logwiz beyond your local machine.
+</Warning>

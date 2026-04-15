@@ -1,0 +1,91 @@
+---
+title: "POST /api/ingest/{indexId} — ingest log events"
+description: "Send newline-delimited JSON log events to a Quickwit index through the Logwiz ingest gateway. Requires a bearer token. Accepts up to 10 MB per request."
+---
+
+The ingest endpoint accepts a batch of log events as NDJSON and forwards them to the Quickwit index you specify. Logwiz acts as an authenticated gateway — your log shippers send data here instead of directly to Quickwit, so you can keep Quickwit private and manage access with per-index bearer tokens.
+
+## Endpoint
+
+```http
+POST /api/ingest/{indexId}
+```
+
+## Authentication
+
+```http
+Authorization: Bearer <your-ingest-token>
+```
+
+You must include a valid ingest token in every request. Create tokens in the Logwiz admin panel at **Administration → Send Logs**. A token can be scoped to specific index IDs; a request for an index outside its allowlist returns `403`.
+
+## Path parameters
+
+<ParamField path="indexId" type="string" required>
+  The ID of the Quickwit index to ingest logs into (for example, `otel-logs-v0_9`). The index must exist in Quickwit.
+</ParamField>
+
+## Query parameters
+
+<ParamField query="commit" type="string">
+  Controls when Quickwit commits the ingested documents. Pass `wait_for` to block until the documents are indexed and immediately searchable. Omit this parameter to use Quickwit's default commit behavior (asynchronous).
+
+  Example: `?commit=wait_for`
+</ParamField>
+
+## Request body
+
+Set `Content-Type: application/x-ndjson`. The body must contain one JSON object per line. Each line represents a single log event. The body cannot be empty and must not exceed 10 MB.
+
+<Note>
+NDJSON (Newline Delimited JSON) means each log entry is a complete JSON object on its own line, with a newline character (`\n`) between entries. There is no wrapping array.
+</Note>
+
+## Example request
+
+```bash
+curl -X POST 'https://logs.example.com/api/ingest/otel-logs-v0_9?commit=wait_for' \
+  -H 'Authorization: Bearer logwiz_abc123' \
+  -H 'Content-Type: application/x-ndjson' \
+  --data-binary @- <<'EOF'
+{"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}}
+{"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}
+EOF
+```
+
+<Tip>
+The index ID `otel-logs-v0_9` is the standard name for an OpenTelemetry logs index created by Quickwit's OTel ingest API. If you set up Quickwit using its default OTel configuration, this is the index you should target.
+</Tip>
+
+## Response
+
+Logwiz proxies the response from Quickwit directly. On success, Quickwit returns `200`.
+
+<ResponseField name="num_docs_for_processing" type="number">
+  The number of log events accepted for indexing in this request.
+</ResponseField>
+
+Example success response:
+
+```json
+{"num_docs_for_processing": 2}
+```
+
+## Error responses
+
+| Status | Cause |
+|--------|-------|
+| `400` | The request body is empty or the payload could not be parsed |
+| `401` | The `Authorization` header is missing or does not contain a bearer token |
+| `403` | The token is invalid, revoked, or not scoped for the requested index |
+| `404` | The specified index does not exist in Quickwit |
+| `413` | The request body exceeds the 10 MB limit |
+| `429` | The rate limit for the ingest endpoint has been exceeded |
+| `502` | Logwiz could not reach Quickwit to forward the request |
+| `503` | Quickwit is unhealthy or unavailable |
+
+All error responses include a JSON body with a `message` field:
+
+```json
+{"message": "Invalid ingest token"}
+```

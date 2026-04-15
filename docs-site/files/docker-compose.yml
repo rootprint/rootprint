@@ -1,0 +1,39 @@
+services:
+  quickwit:
+    image: quickwit/quickwit:edge
+    container_name: quickwit
+    ports:
+      - '127.0.0.1:7280:7280'
+      - '127.0.0.1:7281:7281'
+    volumes:
+      - quickwit-data:/quickwit/qwdata
+    command: ['run']
+    healthcheck:
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/7280"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  logwiz:
+    image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
+    container_name: logwiz
+    depends_on:
+      quickwit:
+        condition: service_healthy
+    environment:
+      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
+      LOGWIZ_ADMIN_USERNAME: logwiz
+      LOGWIZ_ADMIN_PASSWORD: logwiz
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - '8282:8282'
+    volumes:
+      - logwiz-data:/app/data
+
+volumes:
+  quickwit-data:
+  logwiz-data:

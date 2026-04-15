@@ -1,0 +1,74 @@
+---
+title: "Per Index configuration in Logwiz"
+description: "Learn how to map Quickwit index fields to Logwiz display roles, control index visibility, and set up context fields and traceback display."
+---
+
+Logwiz syncs indexes from your Quickwit instance and lets you configure how each index's fields are presented in the UI. You can set a human-readable display name, control which users can see the index, and tell Logwiz which fields contain the log level, message body, stacktrace, and any additional context you want surfaced in the detail panel.
+
+<Note>
+  Logwiz syncs available indexes from Quickwit on server startup. If you add a new index to Quickwit while Logwiz is running, restart the Logwiz container to pick it up.
+</Note>
+
+## Opening index config
+
+Navigate to **Administration → Indexes**, click on an index, then open the **Config** tab.
+
+## Index visibility
+
+The visibility setting controls which users can see and query the index.
+
+| Value | Who can access |
+|---|---|
+| `all` | Every signed-in user. |
+| `admin` | Admin users only. Regular users cannot see or query the index. |
+| `hidden` | No one. The index is invisible in the UI and inaccessible via the API. Use this to temporarily suppress an index without deleting its configuration. |
+
+## Display name
+
+An optional human-readable label shown in the index selector and throughout the UI. When left blank, Logwiz uses the raw Quickwit index ID. Use a display name to present friendlier names to your users (e.g. "Application Logs" instead of `otel-logs-v0_9`).
+
+## Field mappings
+
+These settings tell Logwiz which fields in your index carry specific log data.
+
+### Level field
+
+**Default:** `level`
+
+The field that contains the log severity or level (e.g. `INFO`, `ERROR`, `WARN`). Logwiz uses this field to color-code log rows and populate the severity filter. Common values include `level`, `severity`, and `severity_text`.
+
+### Message field
+
+**Default:** `message`
+
+The field that contains the primary log message body. This is the text shown in the main log list. Common values include `message` and `body.message` for OpenTelemetry indexes.
+
+### Traceback field
+
+**Default:** _(empty)_
+
+The field that contains stacktrace or traceback data. When configured and a log entry contains data in this field, a **Traceback** tab appears in the log detail drawer. Leave this blank if your index does not include stacktrace data.
+
+### Context fields
+
+An optional list of additional fields to display in the log detail panel. Use context fields to surface structured metadata that is not part of the primary message — for example, `user_id`, `request_id`, or `service.name`.
+
+## Dot-notation for nested fields
+
+All field settings accept dot-notation paths to reference nested fields or fields inside JSON objects. For example:
+
+- `body.message` — the `message` key inside a top-level `body` object
+- `attributes.exception.stacktrace` — a deeply nested OTel attribute
+- `body.error.stacktrace` — a custom nested path
+
+## OpenTelemetry indexes
+
+For indexes created by OpenTelemetry collectors (index IDs beginning with `otel-logs-`), Logwiz automatically applies sensible defaults on first sync:
+
+| Field | OTel default |
+|---|---|
+| Level field | `severity_text` |
+| Message field | `body` |
+| Traceback field | `attributes.exception.stacktrace` |
+
+You can override any of these defaults in the Config tab. If your OTel instrumentation captures exception stacktraces, setting the traceback field to `attributes.exception.stacktrace` enables the Traceback tab with syntax-highlighted Python stacktrace rendering.

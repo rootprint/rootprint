@@ -2,9 +2,10 @@
   <h1>Logwiz</h1>
   <p>Open-source, self-hosted log management platform that allows you to run search directly on cloud storage.</p>
 
-  [![SvelteKit](https://img.shields.io/badge/SvelteKit-%23f1413d.svg?logo=svelte&logoColor=white)](#)
-  [![Release](https://img.shields.io/github/v/release/oleksandr-zhyhalo/logwiz)](https://github.com/oleksandr-zhyhalo/logwiz/releases)
-  [![License](https://img.shields.io/github/license/oleksandr-zhyhalo/logwiz)](LICENSE)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-%23f1413d.svg?logo=svelte&logoColor=white)](#)
+[![Release](https://img.shields.io/github/v/release/oleksandr-zhyhalo/logwiz)](https://github.com/oleksandr-zhyhalo/logwiz/releases)
+[![License](https://img.shields.io/github/license/oleksandr-zhyhalo/logwiz)](LICENSE)
+
 </div>
 
 <div align="center">
@@ -26,6 +27,12 @@ docker compose up -d
 ```
 
 For full installation options, see [docs.logwiz.io/install/docker-compose](https://docs.logwiz.io/install/docker-compose).
+
+## Repository Layout
+
+- `./` - the main Logwiz application
+- `site/` - the marketing site  
+- `docs-site/` - the documentation site built with Mintlify
 
 ## License
 

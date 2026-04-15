@@ -1,0 +1,55 @@
+---
+title: "Environment variables reference"
+description: "Reference for all environment variables that control Logwiz behavior."
+---
+
+Logwiz reads its configuration from environment variables at startup. For Docker deployments, set these under the `environment` key of the `logwiz` service in `docker-compose.yml`.
+
+<Warning>
+  Change `LOGWIZ_ADMIN_PASSWORD` from its default value before exposing Logwiz to the internet. The default password `logwiz` is well-known and unsafe for production use.
+</Warning>
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `LOGWIZ_QUICKWIT_URL` | Yes | — | Quickwit REST API endpoint (e.g. `http://quickwit:7280/api/v1`). Logwiz will refuse to start without it. |
+| `LOGWIZ_ADMIN_EMAIL` | No | `logwiz@logwiz.local` | Email address for the seeded admin account. |
+| `LOGWIZ_ADMIN_USERNAME` | No | `logwiz` | Username for the seeded admin account. |
+| `LOGWIZ_ADMIN_PASSWORD` | No | `logwiz` | Password for the seeded admin account. |
+| `LOGWIZ_AUTH_SECRET` | No | Auto-generated | Secret used to sign session tokens. Must be at least 32 characters. If not set, Logwiz generates one on first startup and persists it to a `.secret` file next to the database. Values shorter than 32 characters are ignored and the file secret is used instead. |
+| `LOGWIZ_DATABASE_PATH` | No | `./data/logwiz.db` | Path to the SQLite database file. |
+| `ORIGIN` | No | Auto-detected | Canonical public URL of the Logwiz instance. Set this when running behind a reverse proxy or load balancer that rewrites the `Host` header (e.g. `https://logs.example.com`). |
+| `LOGWIZ_INVITE_EXPIRY_HOURS` | No | `48` | How long (in hours) an invite link remains valid. |
+| `LOGWIZ_RATE_LIMIT_WINDOW` | No | `60` | Duration (in seconds) of the rate-limit sliding window. |
+| `LOGWIZ_RATE_LIMIT_MAX` | No | `100` | Maximum requests allowed per window per IP. |
+| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No | `5` | Maximum sign-in attempts allowed per window per IP. |
+
+## Docker Compose example
+
+```yaml
+services:
+  logwiz:
+    image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
+    environment:
+      # Required
+      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
+      # Admin account (seeded on first start)
+      LOGWIZ_ADMIN_EMAIL: admin@example.com
+      LOGWIZ_ADMIN_USERNAME: admin
+      LOGWIZ_ADMIN_PASSWORD: change-me-before-going-live
+      # Session security
+      LOGWIZ_AUTH_SECRET: a-random-string-at-least-32-characters-long
+      # Database
+      LOGWIZ_DATABASE_PATH: /app/data/logwiz.db
+      # Public URL (required behind a reverse proxy)
+      ORIGIN: https://logs.example.com
+      # Invites
+      LOGWIZ_INVITE_EXPIRY_HOURS: 48
+      # Rate limiting
+      LOGWIZ_RATE_LIMIT_WINDOW: 60
+      LOGWIZ_RATE_LIMIT_MAX: 100
+      LOGWIZ_SIGNIN_RATE_LIMIT_MAX: 5
+    ports:
+      - "8282:8282"
+    volumes:
+      - logwiz-data:/app/data
+```

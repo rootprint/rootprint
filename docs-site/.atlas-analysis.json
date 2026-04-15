@@ -1,0 +1,80 @@
+{
+  "projectType": "saas",
+  "projectName": "Logwiz",
+  "projectDescription": "An open-source logging UI for Quickwit that lets you search, filter, visualize, and live-tail logs through a modern web interface.",
+  "theme": "luma",
+  "primaryColor": "#848c8e",
+  "lightColor": "#11161e",
+  "darkColor": "#cfd0d2",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/log-search",
+              "features/live-tail",
+              "features/saved-queries",
+              "features/export"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment-variables",
+              "configuration/index-config",
+              "configuration/google-auth"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "administration/user-management",
+              "administration/ingest-tokens"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Ingest API",
+            "pages": [
+              "api/overview",
+              "api/ingest-logs"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Log search and filtering with full-text query support",
+    "Live log tailing with real-time streaming",
+    "Log frequency histogram with severity distribution",
+    "Saved and shared queries",
+    "Quick filters — one-click field-value filtering with aggregation counts",
+    "Log export to NDJSON, CSV, and plain text",
+    "Ingest gateway with bearer token authentication",
+    "User management with invite-based access control (admin/user roles)",
+    "Google OAuth sign-in with allowed-domain restrictions",
+    "Per-index field configuration (level, message, traceback fields)",
+    "Python traceback syntax highlighting",
+    "OpenTelemetry (OTel) native index support"
+  ],
+  "publicApiSurface": [
+    "POST /api/ingest/{indexId} — Ingest NDJSON logs with bearer token auth",
+    "GET /api/health — Health check endpoint",
+    "GET /api/export/{exportId} — Download exported log file"
+  ]
+}

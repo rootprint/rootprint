@@ -1,0 +1,59 @@
+---
+title: "Enable Google OAuth"
+description: "Set up Google OAuth credentials and configure allowed email domains so your team can sign in to Logwiz using their Google accounts."
+---
+
+Logwiz supports Google OAuth as an additional sign-in method alongside the default username and password login. Once configured, a "Sign in with Google" button appears on the sign-in page. Users whose Google account email matches one of your allowed domains are automatically provisioned with the `user` role. If a Google account's email matches an existing Logwiz account, the two are linked automatically.
+
+## Setup
+
+<Steps>
+  <Step title="Create OAuth credentials in Google Cloud Console">
+    You will need a Google Cloud project. If you do not have one, create it at [console.cloud.google.com](https://console.cloud.google.com) before continuing.
+
+    Go to the [Google Cloud Console credentials page](https://console.cloud.google.com/apis/credentials) and create a new credential:
+
+    - **Application type:** Web application
+    - **Authorized redirect URI:** `https://your-logwiz-url/api/auth/callback/google`
+
+    Replace `your-logwiz-url` with the public URL of your Logwiz instance. After saving, copy the **Client ID** and **Client Secret** — you will need them in the next step.
+  </Step>
+
+  <Step title="Enter credentials in Logwiz">
+    In Logwiz, go to **Administration → Users** and find the **Google Auth** section. Enter:
+
+    - **Client ID** — from the Google Cloud Console
+    - **Client Secret** — from the Google Cloud Console
+    - **Allowed Domains** — one or more email domains whose users are permitted to sign in (e.g. `company.com`)
+
+    <Note>
+      Only users with an email address ending in one of the allowed domains can sign in with Google. For example, adding `company.com` permits `alice@company.com` but blocks `user@gmail.com`. You can add multiple domains if needed.
+    </Note>
+
+    You can also verify the **Callback URL** shown in this section matches the redirect URI you registered in Google Cloud Console.
+  </Step>
+
+  <Step title="Apply the configuration">
+    Restart the Logwiz container to apply the new configuration:
+
+    ```bash
+    docker compose restart logwiz
+    ```
+
+    After the restart, the "Sign in with Google" button appears on the sign-in page.
+
+    <Note>
+      Google auth configuration changes — including saving credentials, updating allowed domains, and removing Google auth — only take effect after a server restart.
+    </Note>
+  </Step>
+</Steps>
+
+## Removing Google auth
+
+To disable Google sign-in, go to **Administration → Users → Google Auth** and click **Remove Google Auth**, then restart the server:
+
+```bash
+docker compose restart logwiz
+```
+
+After the restart, the Google sign-in button is removed from the sign-in page. Existing accounts that were linked via Google retain their Logwiz account but must use a password to sign in. If a user signed in exclusively via Google and has no password set, an admin can send them a password reset invite from the [user management](/administration/user-management) page.

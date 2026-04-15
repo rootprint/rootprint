@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://logwiz.io/sitemap.xml
