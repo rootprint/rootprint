@@ -14,6 +14,11 @@ export const regenerateInviteSchema = v.object({
 	userId: v.pipe(v.string(), v.minLength(1))
 });
 
+export const setUserRoleSchema = v.object({
+	userId: v.pipe(v.string(), v.minLength(1)),
+	role: v.picklist(['admin', 'user'])
+});
+
 export const resetPasswordSchema = v.object({
 	userId: v.pipe(v.string(), v.minLength(1)),
 	_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters'))

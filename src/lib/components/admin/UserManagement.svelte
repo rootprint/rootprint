@@ -4,7 +4,7 @@
 
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-	import { regenerateInvite } from '$lib/api/users.remote';
+	import { regenerateInvite, setUserRole } from '$lib/api/users.remote';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import type { User } from '$lib/types';
 	import { getErrorMessage } from '$lib/utils/error';
@@ -21,6 +21,7 @@
 	let resetTargetUser = $state<{ id: string; name: string }>({ id: '', name: '' });
 	let removeModalOpen = $state(false);
 	let removeTargetUser = $state<{ id: string; name: string }>({ id: '', name: '' });
+	let togglingRoleUserId = $state<string | null>(null);
 
 	async function handleRegenerate(userId: string) {
 		regeneratingUserId = userId;
@@ -32,6 +33,20 @@
 			toast.error(getErrorMessage(e, 'Failed to regenerate invite'));
 		} finally {
 			regeneratingUserId = null;
+		}
+	}
+
+	async function handleToggleRole(user: User) {
+		togglingRoleUserId = user.id;
+		const newRole = user.role === 'admin' ? 'user' : 'admin';
+		try {
+			await setUserRole({ userId: user.id, role: newRole });
+			await invalidateAll();
+			toast.success(`Changed ${user.name}'s role to ${newRole === 'admin' ? 'Admin' : 'Member'}`);
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to change role'));
+		} finally {
+			togglingRoleUserId = null;
 		}
 	}
 
@@ -81,7 +96,21 @@
 								{/if}
 							</td>
 							<td>
-								<span class="badge badge-sm">{user.role === 'admin' ? 'Admin' : 'Member'}</span>
+								{#if user.id === currentUserId}
+									<span class="badge badge-sm">{user.role === 'admin' ? 'Admin' : 'Member'}</span>
+								{:else}
+									<button
+										class="badge badge-sm cursor-pointer hover:badge-accent transition-colors"
+										onclick={() => handleToggleRole(user)}
+										disabled={togglingRoleUserId === user.id}
+										title="Click to change role"
+									>
+										{#if togglingRoleUserId === user.id}
+											<Loader size={10} class="animate-spin" />
+										{/if}
+										{user.role === 'admin' ? 'Admin' : 'Member'}
+									</button>
+								{/if}
 							</td>
 							<td class="text-base-content/60">
 								{user.lastActive ? formatRelativeTime(new Date(user.lastActive)) : '—'}
