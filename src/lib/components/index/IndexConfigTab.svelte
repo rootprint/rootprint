@@ -3,12 +3,9 @@
 	import { toast } from 'svelte-sonner';
 
 	import { saveIndexConfig } from '$lib/api/indexes.remote';
+	import type { AdminIndexDetail } from '$lib/types';
 
-	import type { PageData } from '../../../routes/(app)/administration/$types';
-
-	type IndexDetail = PageData['indexDetails'][number];
-
-	let { detail }: { detail: IndexDetail } = $props();
+	let { detail }: { detail: AdminIndexDetail } = $props();
 
 	const configForm = $derived(saveIndexConfig.for(detail.indexId));
 
@@ -82,7 +79,7 @@
 	}
 </script>
 
-<h3 class="mb-1 text-sm font-semibold">Logwiz Configuration</h3>
+<h2 class="mb-1 text-xl font-semibold">Logwiz Configuration</h2>
 <p class="mb-4 text-xs text-base-content/50">Map Quickwit fields to Logwiz display roles</p>
 <form
 	{...configForm.enhance(async ({ submit }) => {

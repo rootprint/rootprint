@@ -43,9 +43,7 @@
 			{tokens.length} token{tokens.length !== 1 ? 's' : ''}
 		</p>
 	</div>
-	<div class="card border border-base-300 bg-base-100">
-		<div class="card-body p-0">
-			<div class="overflow-x-auto">
+	<div class="overflow-x-auto rounded-box border border-base-300">
 				<table class="table table-sm">
 					<thead>
 						<tr>
@@ -112,7 +110,5 @@
 						{/if}
 					</tbody>
 				</table>
-			</div>
-		</div>
 	</div>
 </div>

@@ -1,11 +1,8 @@
 <script lang="ts">
+	import type { AdminIndexDetail } from '$lib/types';
 	import { formatEpochLocale } from '$lib/utils/time';
 
-	import type { PageData } from '../../../routes/(app)/administration/$types';
-
-	type IndexDetail = PageData['indexDetails'][number];
-
-	let { detail }: { detail: IndexDetail } = $props();
+	let { detail }: { detail: AdminIndexDetail } = $props();
 
 	function formatRetention(ret: unknown): string {
 		if (!ret || typeof ret !== 'object') return '—';
@@ -17,7 +14,6 @@
 	}
 </script>
 
-<h3 class="mb-4 text-base font-semibold">{detail.indexId}</h3>
 <div class="grid grid-cols-2 gap-3">
 	{#snippet kvItem(label: string, value: string | null | undefined | boolean)}
 		<div>

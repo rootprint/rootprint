@@ -5,7 +5,12 @@ import type { FieldMapping, IndexConfig, IndexMetadata } from 'quickwit-js';
 import { db } from '$lib/server/db';
 import { qwFieldMapping, qwIndex, qwSource } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';
-import type { IndexVisibility, SaveIndexConfigFields } from '$lib/types';
+import type {
+	AdminIndexDetail,
+	AdminIndexSummary,
+	IndexVisibility,
+	SaveIndexConfigFields
+} from '$lib/types';
 
 function flattenFieldMappings(
 	mappings: FieldMapping[],
@@ -39,11 +44,12 @@ function flattenFieldMappings(
 	return result;
 }
 
-function getIndexSummaries() {
+function getIndexSummaries(): AdminIndexSummary[] {
 	const results = db
 		.select({
 			id: qwIndex.id,
 			indexId: qwIndex.indexId,
+			displayName: qwIndex.displayName,
 			mode: qwIndex.mode,
 			createTimestamp: qwIndex.createTimestamp,
 			visibility: qwIndex.visibility
@@ -73,13 +79,13 @@ function getIndexSummaries() {
 	const sourceCountMap = new Map(sourceCounts.map((r) => [r.indexId, r.count]));
 
 	return results.map((r) => ({
-		id: r.id,
 		indexId: r.indexId,
+		displayName: r.displayName,
 		fieldCount: fieldCountMap.get(r.id) ?? 0,
 		sourceCount: sourceCountMap.get(r.id) ?? 0,
 		mode: r.mode,
 		createTimestamp: r.createTimestamp,
-		visibility: r.visibility
+		visibility: r.visibility as IndexVisibility
 	}));
 }
 
@@ -355,7 +361,7 @@ export async function saveIndexConfig(indexId: string, fields: SaveIndexConfigFi
 		.where(eq(qwIndex.indexId, indexId));
 }
 
-function getIndexDetail(indexId: string) {
+export function getAdminIndexDetail(indexId: string): AdminIndexDetail | null {
 	const [idx] = db
 		.select({
 			id: qwIndex.id,
@@ -416,13 +422,19 @@ function getIndexDetail(indexId: string) {
 		.all();
 
 	const { id: _id, ...detail } = idx;
-	return { ...detail, fields, sources };
+	return { ...detail, visibility: detail.visibility as IndexVisibility, fields, sources };
 }
 
-export function getAllIndexDetails() {
-	const indexes = db.select({ indexId: qwIndex.indexId }).from(qwIndex).all();
+export function getAdminIndexSummaries(): AdminIndexSummary[] {
+	return getIndexSummaries();
+}
 
-	return indexes.map((r) => getIndexDetail(r.indexId)).filter((d) => d !== null);
+export function getAdminIndexIds(): string[] {
+	return db
+		.select({ indexId: qwIndex.indexId })
+		.from(qwIndex)
+		.all()
+		.map((r) => r.indexId);
 }
 
 export function assertIndexAccess(indexId: string, userRole: string | null | undefined) {

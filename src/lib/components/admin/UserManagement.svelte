@@ -38,23 +38,20 @@
 	const currentUserId = $derived(page.data.user?.id);
 </script>
 
-<div class="card border border-base-300 bg-base-100">
-	<div class="card-body p-0">
-		<div class="px-6 py-4">
-			<div class="flex items-center justify-between">
-				<div>
-					<h3 class="text-sm font-semibold">Users</h3>
-					<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>
-				</div>
-				<button class="btn btn-sm btn-accent" onclick={() => (inviteModalOpen = true)}>
-					<UserPlus size={16} />
-					Invite User
-				</button>
-			</div>
+<div>
+	<div class="mb-3 flex items-center justify-between">
+		<div>
+			<h2 class="text-xl font-semibold">Users</h2>
+			<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>
 		</div>
+		<button class="btn btn-sm btn-accent" onclick={() => (inviteModalOpen = true)}>
+			<UserPlus size={16} />
+			Invite User
+		</button>
+	</div>
 
-		<div class="overflow-x-auto border-t border-base-300">
-			<table class="table table-sm">
+	<div class="overflow-x-auto rounded-box border border-base-300">
+		<table class="table table-sm">
 				<thead>
 					<tr>
 						<th>Name</th>
@@ -150,20 +147,19 @@
 					{/each}
 				</tbody>
 			</table>
-		</div>
-
-		<InviteUserModal bind:open={inviteModalOpen} oncreated={() => invalidateAll()} />
-		<ResetPasswordModal
-			bind:open={resetModalOpen}
-			userId={resetTargetUser.id}
-			userName={resetTargetUser.name}
-			onreset={() => invalidateAll()}
-		/>
-		<RemoveUserModal
-			bind:open={removeModalOpen}
-			userId={removeTargetUser.id}
-			userName={removeTargetUser.name}
-			onremove={() => invalidateAll()}
-		/>
 	</div>
+
+	<InviteUserModal bind:open={inviteModalOpen} oncreated={() => invalidateAll()} />
+	<ResetPasswordModal
+		bind:open={resetModalOpen}
+		userId={resetTargetUser.id}
+		userName={resetTargetUser.name}
+		onreset={() => invalidateAll()}
+	/>
+	<RemoveUserModal
+		bind:open={removeModalOpen}
+		userId={removeTargetUser.id}
+		userName={removeTargetUser.name}
+		onremove={() => invalidateAll()}
+	/>
 </div>

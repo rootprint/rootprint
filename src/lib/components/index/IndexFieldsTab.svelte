@@ -1,9 +1,7 @@
 <script lang="ts">
-	import type { PageData } from '../../../routes/(app)/administration/$types';
+	import type { AdminIndexField } from '$lib/types';
 
-	type IndexDetail = PageData['indexDetails'][number];
-
-	let { fields }: { fields: IndexDetail['fields'] } = $props();
+	let { fields }: { fields: AdminIndexField[] } = $props();
 </script>
 
 <table class="table table-sm">

@@ -99,12 +99,11 @@
 	const callbackUrl = $derived(`${origin}/api/auth/callback/google`);
 </script>
 
-<div class="card border border-base-300 bg-base-100">
-	<div class="card-body">
-		<h3 class="card-title text-base">Google Authentication</h3>
-		<p class="text-sm text-base-content/60">
-			Configure Google OAuth to allow users from specific domains to sign in.
-		</p>
+<div>
+	<h2 class="text-xl font-semibold">Google Authentication</h2>
+	<p class="text-sm text-base-content/60">
+		Configure Google OAuth to allow users from specific domains to sign in.
+	</p>
 
 		{#if savedSuccessfully}
 			<div class="alert text-sm alert-warning">
@@ -210,7 +209,6 @@
 				{/if}
 			</div>
 		</div>
-	</div>
 </div>
 
 <RemoveGoogleAuthModal bind:open={removeModalOpen} onremove={handleRemoved} />

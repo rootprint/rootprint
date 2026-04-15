@@ -1,9 +1,7 @@
 <script lang="ts">
-	import type { PageData } from '../../../routes/(app)/administration/$types';
+	import type { AdminIndexSource } from '$lib/types';
 
-	type IndexDetail = PageData['indexDetails'][number];
-
-	let { sources }: { sources: IndexDetail['sources'] } = $props();
+	let { sources }: { sources: AdminIndexSource[] } = $props();
 </script>
 
 <div class="mb-3 text-xs text-base-content/50">

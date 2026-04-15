@@ -25,6 +25,62 @@ export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
 
+export type AdminIndexSummary = {
+	indexId: string;
+	displayName: string | null;
+	mode: string | null;
+	fieldCount: number;
+	sourceCount: number;
+	createTimestamp: number | null;
+	visibility: IndexVisibility;
+};
+
+export type AdminIndexField = {
+	name: string;
+	type: string;
+	fast: boolean | null;
+	indexed: boolean | null;
+	stored: boolean | null;
+	record: string | null;
+	tokenizer: string | null;
+	description: string | null;
+};
+
+export type AdminIndexSource = {
+	sourceId: string;
+	sourceType: string;
+	enabled: boolean | null;
+	inputFormat: string | null;
+	numPipelines: number | null;
+	desiredNumPipelines: number | null;
+	maxNumPipelinesPerIndexer: number | null;
+	params: unknown;
+};
+
+export type AdminIndexDetail = {
+	indexId: string;
+	indexUid: string | null;
+	indexUri: string | null;
+	version: string | null;
+	createTimestamp: number | null;
+	timestampField: string | null;
+	mode: string | null;
+	indexFieldPresence: boolean | null;
+	storeSource: boolean | null;
+	storeDocumentSize: boolean | null;
+	tagFields: string[] | null;
+	defaultSearchFields: string[] | null;
+	retention: unknown;
+	levelField: string | null;
+	messageField: string | null;
+	tracebackField: string | null;
+	displayName: string | null;
+	visibility: IndexVisibility;
+	contextFields: string[] | null;
+	fields: AdminIndexField[];
+	sources: AdminIndexSource[];
+};
+
 export type SaveIndexConfigFields = {
 	levelField?: string;
 	messageField?: string;
