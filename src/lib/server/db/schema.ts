@@ -139,7 +139,6 @@ export const ingestToken = sqliteTable(
 		tokenHash: text('token_hash').notNull().unique(),
 		tokenPrefix: text('token_prefix').notNull(),
 		indexAllowlist: text('index_allowlist', { mode: 'json' }).$type<string[] | null>(),
-		revokedAt: integer('revoked_at', { mode: 'timestamp' }),
 		lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
 		createdByUserId: text('created_by_user_id')
 			.notNull()

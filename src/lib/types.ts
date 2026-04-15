@@ -192,7 +192,6 @@ export type IngestTokenSummary = {
 	name: string;
 	tokenPrefix: string;
 	scope: IngestTokenScope;
-	revokedAt: Date | null;
 	lastUsedAt: Date | null;
 	createdAt: Date;
 	createdByUserId: string;

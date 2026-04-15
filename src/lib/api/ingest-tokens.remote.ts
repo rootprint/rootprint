@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 
 import { command } from '$app/server';
 import { requireAdmin } from '$lib/middleware/auth';
-import { createIngestTokenSchema, revokeIngestTokenSchema } from '$lib/schemas/ingest-tokens';
+import { createIngestTokenSchema, deleteIngestTokenSchema } from '$lib/schemas/ingest-tokens';
 import * as ingestTokenService from '$lib/server/services/ingest-token.service';
 
 export const createIngestToken = command(createIngestTokenSchema, async (data) => {
@@ -14,11 +14,11 @@ export const createIngestToken = command(createIngestTokenSchema, async (data) =
 	}
 });
 
-export const revokeIngestToken = command(revokeIngestTokenSchema, async (data) => {
+export const deleteIngestToken = command(deleteIngestTokenSchema, async (data) => {
 	requireAdmin();
 	try {
-		ingestTokenService.revokeIngestToken(data.tokenId);
+		ingestTokenService.deleteIngestToken(data.tokenId);
 	} catch (e) {
-		error(400, e instanceof Error ? e.message : 'Failed to revoke ingest token');
+		error(400, e instanceof Error ? e.message : 'Failed to delete ingest token');
 	}
 });

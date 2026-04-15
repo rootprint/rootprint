@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	createIngestTokenSchema,
-	revokeIngestTokenSchema
+	deleteIngestTokenSchema
 } from '../../src/lib/schemas/ingest-tokens';
 
 describe('ingest token schemas', () => {
@@ -41,14 +41,14 @@ describe('ingest token schemas', () => {
 		expect(result.success).toBe(false);
 	});
 
-	it('accepts revoke payload with positive id', () => {
-		const result = safeParse(revokeIngestTokenSchema, { tokenId: 1 });
+	it('accepts delete payload with positive id', () => {
+		const result = safeParse(deleteIngestTokenSchema, { tokenId: 1 });
 
 		expect(result.success).toBe(true);
 	});
 
-	it('rejects revoke payload with non-positive id', () => {
-		const result = safeParse(revokeIngestTokenSchema, { tokenId: 0 });
+	it('rejects delete payload with non-positive id', () => {
+		const result = safeParse(deleteIngestTokenSchema, { tokenId: 0 });
 
 		expect(result.success).toBe(false);
 	});

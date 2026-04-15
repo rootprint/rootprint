@@ -13,11 +13,6 @@ export function isIngestScopeAllowed(indexIds: string[] | null, indexId: string)
 	return indexIds.includes(indexId);
 }
 
-export function isIngestTokenUsable(token: { revokedAt: Date | null }): boolean {
-	if (token.revokedAt) return false;
-	return true;
-}
-
 export function generateIngestTokenCredentials(): {
 	token: string;
 	tokenHash: string;

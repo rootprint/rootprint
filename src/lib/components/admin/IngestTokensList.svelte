@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidateAll } from '$app/navigation';
-	import { revokeIngestToken } from '$lib/api/ingest-tokens.remote';
+	import { deleteIngestToken } from '$lib/api/ingest-tokens.remote';
 	import type { IngestTokenSummary } from '$lib/types';
 	import { getErrorMessage } from '$lib/utils/error';
 	import { formatRelativeTime } from '$lib/utils/time';
@@ -13,25 +13,20 @@
 		tokens: IngestTokenSummary[];
 	} = $props();
 
-	let revokingTokenId = $state<number | null>(null);
+	let deletingTokenId = $state<number | null>(null);
 
-	function resolveTokenState(token: IngestTokenSummary): 'active' | 'revoked' {
-		if (token.revokedAt) return 'revoked';
-		return 'active';
-	}
+	async function handleDelete(tokenId: number) {
+		if (!confirm('Delete this ingest token? This cannot be undone.')) return;
 
-	async function handleRevoke(tokenId: number) {
-		if (!confirm('Revoke this ingest token? This cannot be undone.')) return;
-
-		revokingTokenId = tokenId;
+		deletingTokenId = tokenId;
 		try {
-			await revokeIngestToken({ tokenId });
-			toast.success('Ingest token revoked');
+			await deleteIngestToken({ tokenId });
+			toast.success('Ingest token deleted');
 			await invalidateAll();
 		} catch (e) {
-			toast.error(getErrorMessage(e, 'Failed to revoke ingest token'));
+			toast.error(getErrorMessage(e, 'Failed to delete ingest token'));
 		} finally {
-			revokingTokenId = null;
+			deletingTokenId = null;
 		}
 	}
 </script>
@@ -50,7 +45,6 @@
 							<th>Name</th>
 							<th>Prefix</th>
 							<th>Scope</th>
-							<th>Status</th>
 							<th>Last Used</th>
 							<th></th>
 						</tr>
@@ -58,13 +52,12 @@
 					<tbody>
 						{#if tokens.length === 0}
 							<tr>
-								<td colspan="6" class="py-6 text-center text-sm text-base-content/60">
+								<td colspan="5" class="py-6 text-center text-sm text-base-content/60">
 									No ingest tokens created yet.
 								</td>
 							</tr>
 						{:else}
 							{#each tokens as token (token.id)}
-								{@const state = resolveTokenState(token)}
 								<tr>
 									<td class="font-medium">{token.name}</td>
 									<td class="font-mono text-xs">{token.tokenPrefix}...</td>
@@ -75,13 +68,6 @@
 											All indexes
 										{/if}
 									</td>
-									<td>
-										{#if state === 'active'}
-											<span class="badge badge-sm badge-success">Active</span>
-										{:else}
-											<span class="badge badge-sm badge-error">Revoked</span>
-										{/if}
-									</td>
 									<td class="text-xs text-base-content/60">
 										{#if token.lastUsedAt}
 											{formatRelativeTime(token.lastUsedAt)}
@@ -90,20 +76,18 @@
 										{/if}
 									</td>
 									<td>
-										{#if state !== 'revoked'}
-											<button
-												class="btn text-error btn-ghost btn-xs"
-												disabled={revokingTokenId === token.id}
-												onclick={() => handleRevoke(token.id)}
-											>
-												{#if revokingTokenId === token.id}
-													<span class="loading loading-xs loading-spinner"></span>
-													Revoking...
-												{:else}
-													Revoke
-												{/if}
-											</button>
-										{/if}
+										<button
+											class="btn text-error btn-ghost btn-xs"
+											disabled={deletingTokenId === token.id}
+											onclick={() => handleDelete(token.id)}
+										>
+											{#if deletingTokenId === token.id}
+												<span class="loading loading-xs loading-spinner"></span>
+												Deleting...
+											{:else}
+												Delete
+											{/if}
+										</button>
 									</td>
 								</tr>
 							{/each}

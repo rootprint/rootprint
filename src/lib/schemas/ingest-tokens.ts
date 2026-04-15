@@ -7,7 +7,7 @@ export const createIngestTokenSchema = v.object({
 	indexIds: v.optional(v.array(indexIdSchema))
 });
 
-export const revokeIngestTokenSchema = v.object({
+export const deleteIngestTokenSchema = v.object({
 	tokenId: v.pipe(v.number(), v.integer(), v.minValue(1, 'Token ID must be positive'))
 });
 

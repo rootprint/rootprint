@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	generateIngestTokenCredentials,
 	hashIngestToken,
-	isIngestScopeAllowed,
-	isIngestTokenUsable
+	isIngestScopeAllowed
 } from '../../src/lib/server/utils/ingest-token';
 
 describe('ingest token utilities', () => {
@@ -29,12 +28,3 @@ describe('ingest token utilities', () => {
 	});
 });
 
-describe('isIngestTokenUsable', () => {
-	it('returns false for revoked token', () => {
-		expect(isIngestTokenUsable({ revokedAt: new Date() })).toBe(false);
-	});
-
-	it('returns true for active token', () => {
-		expect(isIngestTokenUsable({ revokedAt: null })).toBe(true);
-	});
-});

@@ -6,8 +6,7 @@ import { ingestToken } from '$lib/server/db/schema';
 import {
 	generateIngestTokenCredentials,
 	hashIngestToken,
-	isIngestScopeAllowed,
-	isIngestTokenUsable
+	isIngestScopeAllowed
 } from '$lib/server/utils/ingest-token';
 import type { CreateIngestTokenResult, IngestTokenSummary } from '$lib/types';
 
@@ -19,7 +18,6 @@ function mapIngestTokenSummary(row: TokenRow): IngestTokenSummary {
 		name: row.name,
 		tokenPrefix: row.tokenPrefix,
 		scope: { indexIds: row.indexAllowlist ?? null },
-		revokedAt: row.revokedAt,
 		lastUsedAt: row.lastUsedAt,
 		createdAt: row.createdAt,
 		createdByUserId: row.createdByUserId
@@ -67,7 +65,7 @@ export function createIngestToken(
 	};
 }
 
-export function revokeIngestToken(tokenId: number): void {
+export function deleteIngestToken(tokenId: number): void {
 	const [existing] = db
 		.select({ id: ingestToken.id })
 		.from(ingestToken)
@@ -76,7 +74,7 @@ export function revokeIngestToken(tokenId: number): void {
 	if (!existing) {
 		throw new Error('Ingest token not found');
 	}
-	db.update(ingestToken).set({ revokedAt: new Date() }).where(eq(ingestToken.id, tokenId)).run();
+	db.delete(ingestToken).where(eq(ingestToken.id, tokenId)).run();
 }
 
 export function verifyIngestToken(
@@ -86,7 +84,6 @@ export function verifyIngestToken(
 	const tokenHash = hashIngestToken(token);
 	const [record] = db.select().from(ingestToken).where(eq(ingestToken.tokenHash, tokenHash)).all();
 	if (!record) return null;
-	if (!isIngestTokenUsable(record)) return null;
 	if (!isIngestScopeAllowed(record.indexAllowlist ?? null, indexId)) return null;
 
 	// Throttled last-used update (at most once per minute)
