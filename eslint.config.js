@@ -119,7 +119,9 @@ export default defineConfig(
 			'coverage/',
 			'data/',
 			'.quickwit/',
-			'drizzle/'
+			'drizzle/',
+			'site/**',
+			'docs-site/**'
 		]
 	},
 
