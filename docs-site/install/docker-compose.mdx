@@ -14,7 +14,7 @@ This option deploys Logwiz together with a bundled Quickwit instance. Best for g
 Download the Compose file and start both services:
 
 ```bash
-curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz-docs/main/files/docker-compose.yml
+curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/docs-site/files/docker-compose.yml
 docker compose up -d
 ```
 
@@ -120,7 +120,7 @@ If you already have a Quickwit cluster running, deploy only the Logwiz container
 Download the standalone Compose file:
 
 ```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz-docs/main/files/docker-compose.standalone.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/docs-site/files/docker-compose.standalone.yml
 ```
 
 Open `docker-compose.yml` and set `LOGWIZ_QUICKWIT_URL` to the REST API endpoint of your Quickwit instance:

@@ -22,7 +22,7 @@
 ## Quick Start
 
 ```bash
-curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz-docs/main/files/docker-compose.yml
+curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/docs-site/files/docker-compose.yml
 docker compose up -d
 ```
 
