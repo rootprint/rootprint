@@ -112,7 +112,7 @@
 			<label class="flex items-center gap-2 text-xs">
 				<input
 					type="checkbox"
-					class="checkbox checkbox-xs checkbox-accent"
+					class="checkbox checkbox-xs"
 					checked={adminVisible}
 					onchange={(e) => {
 						const checked = e.currentTarget.checked;
@@ -125,7 +125,7 @@
 			<label class="flex items-center gap-2 text-xs">
 				<input
 					type="checkbox"
-					class="checkbox checkbox-xs checkbox-accent"
+					class="checkbox checkbox-xs"
 					checked={memberVisible}
 					onchange={(e) => {
 						const checked = e.currentTarget.checked;
