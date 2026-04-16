@@ -42,7 +42,6 @@
 	let error = $state<string | null>(null);
 	let nextKey = $state(0);
 	let fetchSeq = 0;
-	let scrollContainer: HTMLDivElement | undefined = $state();
 
 	function withKeys(hits: Record<string, unknown>[]): LogEntry[] {
 		return hits.map((h) => ({ key: nextKey++, hit: h }));
