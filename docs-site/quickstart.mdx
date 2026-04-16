@@ -46,8 +46,8 @@ This guide walks you through deploying Logwiz locally, signing in, and sending y
       -H 'Authorization: Bearer <your-ingest-token>' \
       -H 'Content-Type: application/x-ndjson' \
       --data-binary @- <<'EOF'
-    {"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}}
-    {"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}
+    {"timestamp_nanos":1776340800000000000,"severity_text":"INFO","body":{"message":"User logged in"},"service_name":"frontend","attributes":{"user_id":"alice"},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340800000000000,"severity_number":9,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+    {"timestamp_nanos":1776340860000000000,"severity_text":"ERROR","body":{"message":"Connection timeout"},"service_name":"api-gateway","attributes":{},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340860000000000,"severity_number":17,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
     EOF
     ```
 
@@ -63,7 +63,7 @@ This guide walks you through deploying Logwiz locally, signing in, and sending y
 
 ## Next steps
 
+- [Read the Send Logs guide](/send-logs) to understand the default OpenTelemetry path and the authenticated HTTP gateway.
 - [Configure your index fields](/configuration/index-config) to map log level, message, and traceback fields for your data schema.
-- [Invite team members](/administration/user-management) using the invite-based access controls.
 - [Set up Google OAuth](/configuration/google-auth) to let your team sign in with their company Google accounts.
-- [Explore the Ingest API reference](/api/ingest-logs) to integrate Logwiz with your existing log shippers.
+- [Explore the Ingest API reference](/api/ingest-logs) for endpoint-level details.

@@ -3,7 +3,9 @@ title: "POST /api/ingest/{indexId} — ingest log events"
 description: "Send newline-delimited JSON log events to a Quickwit index through the Logwiz ingest gateway. Requires a bearer token. Accepts up to 10 MB per request."
 ---
 
-The ingest endpoint accepts a batch of log events as NDJSON and forwards them to the Quickwit index you specify. Logwiz acts as an authenticated gateway — your log shippers send data here instead of directly to Quickwit, so you can keep Quickwit private and manage access with per-index bearer tokens.
+The ingest endpoint accepts a batch of log events as NDJSON and forwards them to the Quickwit index you specify. Logwiz acts as an authenticated gateway - your log shippers send data here instead of directly to Quickwit, so you can keep Quickwit private and manage access with per-index bearer tokens.
+
+If you want the full setup flow, see [Send Logs](/send-logs).
 
 ## Endpoint
 
@@ -48,8 +50,8 @@ curl -X POST 'https://logs.example.com/api/ingest/otel-logs-v0_9?commit=wait_for
   -H 'Authorization: Bearer logwiz_abc123' \
   -H 'Content-Type: application/x-ndjson' \
   --data-binary @- <<'EOF'
-{"timestamp_nanos":1710000000000000000,"severity_text":"INFO","body":{"message":"User logged in","user_id":"alice"}}
-{"timestamp_nanos":1710000060000000000,"severity_text":"ERROR","body":{"message":"Connection timeout","service":"api-gateway"}}
+{"timestamp_nanos":1776340800000000000,"severity_text":"INFO","body":{"message":"User logged in"},"service_name":"frontend","attributes":{"user_id":"alice"},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340800000000000,"severity_number":9,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+{"timestamp_nanos":1776340860000000000,"severity_text":"ERROR","body":{"message":"Connection timeout"},"service_name":"api-gateway","attributes":{},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340860000000000,"severity_number":17,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
 EOF
 ```
 

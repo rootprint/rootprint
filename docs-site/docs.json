@@ -31,8 +31,13 @@
                 "group": "Installation",
                 "pages": ["install/docker-compose"]
               },
-              "quickstart"
+              "quickstart",
+              "indexes"
             ]
+          },
+          {
+            "group": "Send Logs",
+            "pages": ["send-logs/http-ingest"]
           },
           {
             "group": "Configuration",

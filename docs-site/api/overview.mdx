@@ -21,9 +21,9 @@ Ingest endpoints require a bearer token in the `Authorization` header.
 Authorization: Bearer <your-ingest-token>
 ```
 
-You create and revoke ingest tokens in the Logwiz admin panel at **Administration → Send Logs**. Each token can optionally be scoped to one or more index IDs—a request to an index outside a token's allowlist is rejected with `403`. The token value is shown only once on creation; copy it before closing the dialog.
+Create and revoke ingest tokens in the Logwiz admin panel at **Administration -> Send Logs**. Each token can optionally be scoped to one or more index IDs.
 
-See [Ingest tokens](/administration/ingest-tokens) for step-by-step instructions.
+See [Send Logs](/send-logs) for the end-to-end setup flow.
 
 <Note>
 The health check endpoint (`GET /api/health`) does not require authentication.

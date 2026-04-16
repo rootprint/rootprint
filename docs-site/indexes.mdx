@@ -1,0 +1,148 @@
+---
+title: 'Indexes'
+description: 'Understand how Logwiz uses Quickwit indexes to organize and query your log data.'
+---
+
+Logwiz reads indexes from your Quickwit instance and presents them as searchable log sources in the UI. Each index defines a schema that determines how log fields are stored and queried.
+
+## Built-in OpenTelemetry index
+
+The default Logwiz deployment includes `otel-logs-v0_9` — a standard OpenTelemetry logs index created by default. It maps directly to the [OpenTelemetry Log Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/) and is ready to use without any configuration.
+
+### Logwiz field defaults
+
+When Logwiz syncs an index whose ID starts with `otel-logs-`, it automatically applies these display defaults on first sync:
+
+| Logwiz field    | Default OTel path                 |
+| --------------- | --------------------------------- |
+| Level field     | `severity_text`                   |
+| Message field   | `body`                            |
+| Traceback field | `attributes.exception.stacktrace` |
+
+You can override any of these in [Per Index configuration](/configuration/index-config).
+
+### Schema
+
+The index uses `strict` mode — every document must match the schema exactly. Arbitrary fields are not accepted at the top level. Instead, all custom key-value data goes into the `attributes`, `resource_attributes`, or `scope_attributes` JSON fields.
+
+#### Core fields
+
+These fields carry the primary log data.
+
+| Field | Type | Search | Description |
+| --- | --- | --- | --- |
+| `timestamp_nanos` | `datetime` | fast | Timestamp in nanoseconds UTC. Primary time field for range filtering. |
+| `observed_timestamp_nanos` | `datetime` | indexed | When the collector observed the event. |
+| `severity_text` | `text` | indexed, fast | Severity level (`INFO`, `ERROR`). Raw tokenizer — exact match. |
+| `severity_number` | `u64` | indexed, fast | Numeric severity: 1-4 TRACE, 5-8 DEBUG, 9-12 INFO, 13-16 WARN, 17-20 ERROR, 21-24 FATAL. |
+| `body` | `json` | indexed | Log message body. Default tokenizer — full-text searchable. |
+| `service_name` | `text` | indexed, fast | Derived from `resource_attributes["service.name"]`. Raw tokenizer. |
+
+#### Attributes
+
+Key-value metadata on the log event and its resource.
+
+| Field | Type | Search | Description |
+| --- | --- | --- | --- |
+| `attributes` | `json` | indexed, fast | Log-level metadata. Raw tokenizer, `expand_dots` enabled. |
+| `resource_attributes` | `json` | indexed, fast | Infrastructure metadata (host, k8s, cloud). Same as `attributes`. |
+| `dropped_attributes_count` | `u64` | — | Dropped log-level attributes count. |
+| `resource_dropped_attributes_count` | `u64` | — | Dropped resource attributes count. |
+
+#### Trace context
+
+Fields for correlating logs with distributed traces.
+
+| Field | Type | Search | Description |
+| --- | --- | --- | --- |
+| `trace_id` | `bytes` | indexed | 16-byte trace ID in hex. |
+| `span_id` | `bytes` | indexed | 8-byte span ID in hex. |
+| `trace_flags` | `u64` | — | W3C trace flags bitmask. Stored only. |
+
+#### Instrumentation scope
+
+Metadata about the library that produced the log. Stored but not indexed — available in results but not searchable.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `scope_name` | `text` | Instrumentation library name. |
+| `scope_version` | `text` | Instrumentation library version. |
+| `scope_attributes` | `json` | Scope-level key-value metadata. |
+| `scope_dropped_attributes_count` | `u64` | Dropped scope attributes count. |
+
+### Indexed vs fast fields
+
+Understanding these two properties helps when querying and designing custom indexes:
+
+- **Indexed** — the field is added to an inverted index and is searchable via text queries. When `indexed: false`, you cannot use the field in search predicates.
+- **Fast** — the field is stored in column-oriented storage (similar to Lucene DocValues). Enables efficient range queries, aggregations, and sorting. A field can be fast without being indexed, and vice versa.
+
+For example, `timestamp_nanos` is fast but not indexed — Quickwit uses it for time-range partitioning, not text search.
+
+### Tokenizers
+
+The index uses two tokenizer strategies:
+
+| Tokenizer | Behavior | Used by |
+| --- | --- | --- |
+| `raw` | No processing. The entire value is one token. Best for exact-match fields. | `service_name`, `severity_text`, `attributes`, `resource_attributes` |
+| `default` | Splits on whitespace and punctuation, lowercases. Best for free-text search. | `body` |
+
+### Query examples
+
+```bash
+# Full-text search in the log body (default search field)
+body.message:timeout
+
+# Exact severity match
+severity_text:ERROR
+
+# Numeric severity range (all WARN and above)
+severity_number:[13 TO *]
+
+# Filter by service
+service_name:api-gateway
+
+# Search structured attributes (exact match)
+attributes.http.method:POST
+
+# Correlate by trace ID
+trace_id:abc123def456...
+```
+
+### Example payload
+
+```json
+{
+  "timestamp_nanos": 1776340800000000000,
+  "observed_timestamp_nanos": 1776340800000000000,
+  "severity_text": "INFO",
+  "severity_number": 9,
+  "body": { "message": "User logged in" },
+  "service_name": "frontend",
+  "attributes": { "user_id": "alice" },
+  "resource_attributes": { "service.name": "frontend", "host.name": "node-1" },
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id": "00f067aa0ba902b7",
+  "trace_flags": 1,
+  "dropped_attributes_count": 0,
+  "resource_dropped_attributes_count": 0,
+  "scope_name": "my-library",
+  "scope_version": "1.0.0",
+  "scope_attributes": {},
+  "scope_dropped_attributes_count": 0
+}
+```
+
+<Tip>
+Because the schema uses `strict` mode, any fields not defined in the schema are rejected. When sending logs manually, ensure your payload only includes fields that match the schema. When using an OpenTelemetry collector, Quickwit handles field mapping automatically.
+</Tip>
+
+## Custom indexes
+
+Create the index in Quickwit with whatever schema fits your data, then configure how Logwiz maps its fields in [Per Index configuration](/configuration/index-config).
+
+## Next steps
+
+- [Send logs](/send-logs) to start ingesting data into any index.
+- [Configure index fields](/configuration/index-config) to map log level, message, and traceback for your schema.
