@@ -79,7 +79,7 @@
 	}
 </script>
 
-<h2 class="mb-1 text-xl font-semibold">Logwiz Configuration</h2>
+<h2 class="mb-1 text-xl font-semibold">Index Configuration</h2>
 <p class="mb-4 text-xs text-base-content/50">Map Quickwit fields to Logwiz display roles</p>
 <form
 	{...configForm.enhance(async ({ submit }) => {
