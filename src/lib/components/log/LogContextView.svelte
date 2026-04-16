@@ -195,10 +195,7 @@
 		</div>
 
 		<!-- Log list -->
-		<div
-			class="flex-1 overflow-y-auto font-['Roboto_Mono',monospace] text-xs"
-			bind:this={scrollContainer}
-		>
+		<div class="flex-1 overflow-y-auto font-['Roboto_Mono',monospace] text-xs">
 			{#each logs as entry, i (entry.key)}
 				{@const severity = extractSeverity(entry.hit, levelField)}
 				{@const ts = extractTimestamp(entry.hit, timestampField, timezoneMode)}
