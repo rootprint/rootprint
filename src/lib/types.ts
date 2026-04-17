@@ -221,3 +221,14 @@ export type ExportState = {
 	filename: string;
 	createdAt: number;
 };
+
+export type AuthProviderId = 'google';
+
+export type AuthProviderRow = {
+	id: AuthProviderId;
+	name: string;
+	description: string;
+	configured: boolean;
+	statusLine: string | null;
+	editHref: string;
+};

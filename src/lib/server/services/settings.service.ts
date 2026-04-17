@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
 import { appSettings } from '$lib/server/db/schema';
-import type { GoogleAuthSettings, GoogleAuthSettingsView } from '$lib/types';
+import type { AuthProviderRow, GoogleAuthSettings, GoogleAuthSettingsView } from '$lib/types';
 
 function getSetting(key: string): string | null {
 	const [row] = db
@@ -59,4 +59,26 @@ export function getGoogleAuthSettingsView(): GoogleAuthSettingsView | null {
 
 export function isGoogleAuthConfigured(): boolean {
 	return getGoogleAuthSettings() !== null;
+}
+
+export function deleteGoogleAuthSettings(): void {
+	deleteSetting('google_client_id');
+	deleteSetting('google_client_secret');
+	deleteSetting('google_allowed_domains');
+}
+
+export function getAuthProviderRows(): AuthProviderRow[] {
+	const google = getGoogleAuthSettings();
+	const googleRow: AuthProviderRow = {
+		id: 'google',
+		name: 'Google',
+		description: 'Allow sign-in with Google accounts from approved domains',
+		configured: google !== null,
+		statusLine: google
+			? `OAuth 2.0 · ${google.allowedDomains.length} allowed domain${google.allowedDomains.length === 1 ? '' : 's'}`
+			: null,
+		editHref: '/administration/authentication/google'
+	};
+
+	return [googleRow];
 }

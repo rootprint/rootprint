@@ -5,9 +5,7 @@ import * as settingsService from '$lib/server/services/settings.service';
 
 export const removeGoogleAuthSettings = command(async () => {
 	requireAdmin();
-	settingsService.deleteSetting('google_client_id');
-	settingsService.deleteSetting('google_client_secret');
-	settingsService.deleteSetting('google_allowed_domains');
+	settingsService.deleteGoogleAuthSettings();
 });
 
 export const saveGoogleAuthSettings = command(saveGoogleAuthSettingsSchema, async (data) => {
@@ -15,7 +13,6 @@ export const saveGoogleAuthSettings = command(saveGoogleAuthSettingsSchema, asyn
 
 	settingsService.setSetting('google_client_id', data.clientId);
 
-	// Only update secret if a new value was provided
 	if (data.clientSecret && data.clientSecret.length > 0) {
 		settingsService.setSetting('google_client_secret', data.clientSecret);
 	}

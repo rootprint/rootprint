@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { removeGoogleAuthSettings } from '$lib/api/settings.remote';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 
 	let {
-		open = $bindable(false),
-		onremove = () => {}
+		open = $bindable(false)
 	}: {
 		open: boolean;
-		onremove?: () => void;
 	} = $props();
 
 	let loading = $state(false);
@@ -20,9 +18,8 @@
 		try {
 			await removeGoogleAuthSettings();
 			toast.success('Google auth settings removed');
-			onremove();
-			await invalidateAll();
 			open = false;
+			await goto('/administration/authentication?saved=google', { invalidateAll: true });
 		} catch {
 			toast.error('Failed to remove settings');
 		} finally {

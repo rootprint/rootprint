@@ -6,7 +6,8 @@
 	const sections = [
 		{ href: '/administration/send-logs', label: 'Send Logs' },
 		{ href: '/administration/indexes', label: 'Indexes' },
-		{ href: '/administration/users', label: 'Users' }
+		{ href: '/administration/users', label: 'Users' },
+		{ href: '/administration/authentication', label: 'Authentication' }
 	] as const;
 
 	const pathname = $derived(page.url.pathname);
