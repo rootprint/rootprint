@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Check, KeyRound, Link, Loader, MoreHorizontal, RefreshCw, Shield, ShieldOff, Trash2 } from 'lucide-svelte';
+	import {
+		Check,
+		KeyRound,
+		Link,
+		Loader,
+		MoreHorizontal,
+		RefreshCw,
+		Shield,
+		ShieldOff,
+		Trash2
+	} from 'lucide-svelte';
 
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import type { User } from '$lib/types';
@@ -51,7 +61,7 @@
 {#if isSelf}
 	<button
 		type="button"
-		class="btn btn-ghost btn-sm btn-square opacity-30"
+		class="btn btn-square opacity-30 btn-ghost btn-sm"
 		disabled
 		aria-label="No actions available on your own account"
 	>
@@ -61,7 +71,7 @@
 	<div class="dropdown dropdown-end">
 		<button
 			tabindex="0"
-			class="btn btn-ghost btn-sm btn-square"
+			class="btn btn-square btn-ghost btn-sm"
 			aria-label="Actions for {user.name}"
 		>
 			<MoreHorizontal size={16} />
@@ -69,7 +79,7 @@
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<ul
 			tabindex="0"
-			class="menu dropdown-content z-10 mt-1 w-56 rounded-box border border-base-300 bg-base-100 p-1 shadow"
+			class="dropdown-content menu z-10 mt-1 w-56 rounded-box border border-base-300 bg-base-100 p-1 shadow"
 		>
 			{#if canManageInvite}
 				{#if user.inviteUrl}

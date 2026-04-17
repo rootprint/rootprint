@@ -115,7 +115,10 @@
 		<span class="text-base-content/50">|</span>
 		<span class="inline-flex items-center text-sm text-base-content/70">
 			{timezoneMode === 'utc' ? 'UTC' : 'Local'}
-			<ChevronDown size={12} class="ml-0.5 shrink-0 transition-transform {open ? 'rotate-180' : ''}" />
+			<ChevronDown
+				size={12}
+				class="ml-0.5 shrink-0 transition-transform {open ? 'rotate-180' : ''}"
+			/>
 		</span>
 	</button>
 

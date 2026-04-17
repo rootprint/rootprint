@@ -73,9 +73,7 @@ function loadConfig() {
 	}
 
 	if (warnings.length > 0) {
-		console.warn(
-			`[logwiz] Using defaults for:\n${warnings.map((w) => `  - ${w}`).join('\n')}`
-		);
+		console.warn(`[logwiz] Using defaults for:\n${warnings.map((w) => `  - ${w}`).join('\n')}`);
 	}
 
 	return Object.freeze({

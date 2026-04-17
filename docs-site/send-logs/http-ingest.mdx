@@ -12,9 +12,10 @@ If you are using the default setup, the built-in `otel-logs-v0_9` OpenTelemetry 
     Open **Administration -> Send Logs**, create a token, and copy it before closing the dialog. The token value is shown only once. Each token can optionally be scoped to specific index IDs.
   </Step>
 
-  <Step title="Choose your target index">
-    Pick the Quickwit index you want to write to. If you are using the default setup, that is `otel-logs-v0_9`. See [Indexes](/indexes) to learn about the built-in index and custom indexes.
-  </Step>
+<Step title="Choose your target index">
+	Pick the Quickwit index you want to write to. If you are using the default setup, that is
+	`otel-logs-v0_9`. See [Indexes](/indexes) to learn about the built-in index and custom indexes.
+</Step>
 
   <Step title="Post logs to the Logwiz gateway">
     Send NDJSON to `/api/ingest/{indexId}` on your Logwiz instance. Replace the index ID and payload with values that match your index schema.

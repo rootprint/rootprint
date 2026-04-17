@@ -1,55 +1,55 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "luma",
-  "name": "Logwiz",
-  "colors": {
-    "primary": "#848c8e",
-    "light": "#11161e",
-    "dark": "#cfd0d2"
-  },
-  "favicon": "https://media.brand.dev/2b01fe20-c04b-4a1d-a2f9-1d2789c50a7a.jpg",
-  "logo": {
-    "light": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg",
-    "dark": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/oleksandr-zhyhalo/logwiz"
-    }
-  },
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Documentation",
-        "groups": [
-          {
-            "group": "Get Started",
-            "pages": [
-              "index",
-              {
-                "group": "Installation",
-                "pages": ["install/docker-compose"]
-              },
-              "quickstart",
-              "indexes"
-            ]
-          },
-          {
-            "group": "Send Logs",
-            "pages": ["send-logs/http-ingest"]
-          },
-          {
-            "group": "Configuration",
-            "pages": [
-              "configuration/environment-variables",
-              "configuration/google-auth",
-              "configuration/reset-admin-password",
-              "configuration/index-config"
-            ]
-          }
-        ]
-      }
-    ]
-  }
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "luma",
+	"name": "Logwiz",
+	"colors": {
+		"primary": "#848c8e",
+		"light": "#11161e",
+		"dark": "#cfd0d2"
+	},
+	"favicon": "https://media.brand.dev/2b01fe20-c04b-4a1d-a2f9-1d2789c50a7a.jpg",
+	"logo": {
+		"light": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg",
+		"dark": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg"
+	},
+	"navbar": {
+		"primary": {
+			"type": "github",
+			"href": "https://github.com/oleksandr-zhyhalo/logwiz"
+		}
+	},
+	"navigation": {
+		"tabs": [
+			{
+				"tab": "Documentation",
+				"groups": [
+					{
+						"group": "Get Started",
+						"pages": [
+							"index",
+							{
+								"group": "Installation",
+								"pages": ["install/docker-compose"]
+							},
+							"quickstart",
+							"indexes"
+						]
+					},
+					{
+						"group": "Send Logs",
+						"pages": ["send-logs/http-ingest"]
+					},
+					{
+						"group": "Configuration",
+						"pages": [
+							"configuration/environment-variables",
+							"configuration/google-auth",
+							"configuration/reset-admin-password",
+							"configuration/index-config"
+						]
+					}
+				]
+			}
+		]
+	}
 }

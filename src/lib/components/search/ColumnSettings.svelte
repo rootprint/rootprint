@@ -187,10 +187,15 @@
 								class="flex flex-col"
 							>
 								{#each dndItems as field (field.id)}
-									<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs hover:bg-base-200">
+									<div
+										class="flex items-center gap-1 rounded px-2 py-1.5 text-xs hover:bg-base-200"
+									>
 										<GripVertical size={12} class="shrink-0 cursor-grab text-base-content/40" />
 										<span class="flex-1 truncate">{field.name}</span>
-										<button class="btn p-0 btn-ghost btn-xs" onclick={() => removeField(field.name)}>
+										<button
+											class="btn p-0 btn-ghost btn-xs"
+											onclick={() => removeField(field.name)}
+										>
 											<X size={12} class="text-base-content/40 hover:text-base-content" />
 										</button>
 									</div>

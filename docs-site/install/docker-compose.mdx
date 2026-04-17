@@ -1,6 +1,6 @@
 ---
-title: "Docker Compose"
-description: "Install Logwiz with Docker Compose"
+title: 'Docker Compose'
+description: 'Install Logwiz with Docker Compose'
 ---
 
 ## Prerequisites
@@ -36,28 +36,27 @@ services:
       timeout: 5s
       retries: 10
 
-  logwiz:
-    image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
-    container_name: logwiz
-    depends_on:
-      quickwit:
-        condition: service_healthy
-    environment:
-      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - '8282:8282'
-    volumes:
-      - logwiz-data:/app/data
+logwiz:
+image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
+container_name: logwiz
+depends_on:
+quickwit:
+condition: service_healthy
+environment:
+LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
+healthcheck:
+test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
+interval: 10s
+timeout: 5s
+retries: 5
+ports: - '8282:8282'
+volumes: - logwiz-data:/app/data
 
 volumes:
-  quickwit-data:
-  logwiz-data:
-```
+quickwit-data:
+logwiz-data:
+
+````
 </Expandable>
 
 This starts two containers:
@@ -83,7 +82,7 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: us-east-1
-```
+````
 
 Set both variables to paths within the same bucket. The bucket must already exist. See [Quickwit storage configuration](https://quickwit.io/docs/configuration/storage-config) for all options, including S3-compatible providers and custom endpoints.
 
@@ -108,7 +107,9 @@ ports:
 Quickwit will then be reachable at `http://<host-ip>:7280` from other machines on the same network.
 
 <Warning>
-  Quickwit has no authentication mechanism. Never expose it on a public or untrusted network — restrict access at the network or firewall level and only do this within a private, trusted network.
+	Quickwit has no authentication mechanism. Never expose it on a public or untrusted network —
+	restrict access at the network or firewall level and only do this within a private, trusted
+	network.
 </Warning>
 
 ## Connect to an existing Quickwit instance
@@ -147,15 +148,16 @@ services:
       - logwiz-data:/app/data
 
 volumes:
-  logwiz-data:
-```
+logwiz-data:
+
+````
 </Expandable>
 
 Then start the service:
 
 ```bash
 docker compose up -d
-```
+````
 
 Run `docker compose ps` to confirm the container is healthy, then open [http://localhost:8282](http://localhost:8282).
 

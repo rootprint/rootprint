@@ -91,7 +91,7 @@
 	</header>
 
 	<div class="mb-3 flex flex-wrap items-center gap-3">
-		<div role="tablist" class="tabs tabs-boxed">
+		<div role="tablist" class="tabs-boxed tabs">
 			<button
 				type="button"
 				role="tab"
@@ -115,7 +115,7 @@
 			>
 		</div>
 
-		<label class="input input-sm input-bordered flex flex-1 items-center gap-2">
+		<label class="input-bordered input input-sm flex flex-1 items-center gap-2">
 			<Search size={14} class="opacity-60" />
 			<input
 				type="search"
@@ -134,7 +134,7 @@
 	<div class="divide-y divide-base-300 rounded-box border border-base-300">
 		{#each filtered as user (user.id)}
 			<div
-				class="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-base-200/40 first:rounded-t-box last:rounded-b-box"
+				class="flex min-h-14 items-center gap-3 px-4 py-3 first:rounded-t-box last:rounded-b-box hover:bg-base-200/40"
 			>
 				<div
 					class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
@@ -148,7 +148,7 @@
 					<div class="flex items-center gap-2">
 						<span class="truncate text-sm font-semibold">{user.name}</span>
 						{#if user.role === 'admin'}
-							<span class="badge badge-sm badge-warning badge-outline">Admin</span>
+							<span class="badge badge-outline badge-sm badge-warning">Admin</span>
 						{/if}
 					</div>
 					<div class="truncate text-xs text-base-content/60">{user.email}</div>

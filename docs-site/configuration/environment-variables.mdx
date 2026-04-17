@@ -1,20 +1,20 @@
 ---
-title: "Environment variables reference"
-description: "Reference for all environment variables that control Logwiz behavior."
+title: 'Environment variables reference'
+description: 'Reference for all environment variables that control Logwiz behavior.'
 ---
 
 Logwiz reads its configuration from environment variables at startup. For Docker deployments, set these under the `environment` key of the `logwiz` service in `docker-compose.yml`.
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `LOGWIZ_QUICKWIT_URL` | Yes | — | Quickwit REST API endpoint (e.g. `http://quickwit:7280/api/v1`). Logwiz will refuse to start without it. |
-| `LOGWIZ_AUTH_SECRET` | No | Auto-generated | Secret used to sign session tokens. Must be at least 32 characters. If not set, Logwiz generates one on first startup and persists it to a `.secret` file next to the database. Values shorter than 32 characters are ignored and the file secret is used instead. |
-| `LOGWIZ_DATABASE_PATH` | No | `./data/logwiz.db` | Path to the SQLite database file. |
-| `ORIGIN` | No | Auto-detected | Canonical public URL of the Logwiz instance. Set this when running behind a reverse proxy or load balancer that rewrites the `Host` header (e.g. `https://logs.example.com`). |
-| `LOGWIZ_INVITE_EXPIRY_HOURS` | No | `48` | How long (in hours) an invite link remains valid. |
-| `LOGWIZ_RATE_LIMIT_WINDOW` | No | `60` | Duration (in seconds) of the rate-limit sliding window. |
-| `LOGWIZ_RATE_LIMIT_MAX` | No | `100` | Maximum requests allowed per window per IP. |
-| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No | `5` | Maximum sign-in attempts allowed per window per IP. |
+| Variable                       | Required | Default            | Description                                                                                                                                                                                                                                                        |
+| ------------------------------ | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LOGWIZ_QUICKWIT_URL`          | Yes      | —                  | Quickwit REST API endpoint (e.g. `http://quickwit:7280/api/v1`). Logwiz will refuse to start without it.                                                                                                                                                           |
+| `LOGWIZ_AUTH_SECRET`           | No       | Auto-generated     | Secret used to sign session tokens. Must be at least 32 characters. If not set, Logwiz generates one on first startup and persists it to a `.secret` file next to the database. Values shorter than 32 characters are ignored and the file secret is used instead. |
+| `LOGWIZ_DATABASE_PATH`         | No       | `./data/logwiz.db` | Path to the SQLite database file.                                                                                                                                                                                                                                  |
+| `ORIGIN`                       | No       | Auto-detected      | Canonical public URL of the Logwiz instance. Set this when running behind a reverse proxy or load balancer that rewrites the `Host` header (e.g. `https://logs.example.com`).                                                                                      |
+| `LOGWIZ_INVITE_EXPIRY_HOURS`   | No       | `48`               | How long (in hours) an invite link remains valid.                                                                                                                                                                                                                  |
+| `LOGWIZ_RATE_LIMIT_WINDOW`     | No       | `60`               | Duration (in seconds) of the rate-limit sliding window.                                                                                                                                                                                                            |
+| `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`              | Maximum requests allowed per window per IP.                                                                                                                                                                                                                        |
+| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                | Maximum sign-in attempts allowed per window per IP.                                                                                                                                                                                                                |
 
 ## Docker Compose example
 
@@ -38,7 +38,7 @@ services:
       LOGWIZ_RATE_LIMIT_MAX: 100
       LOGWIZ_SIGNIN_RATE_LIMIT_MAX: 5
     ports:
-      - "8282:8282"
+      - '8282:8282'
     volumes:
       - logwiz-data:/app/data
 ```

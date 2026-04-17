@@ -31,7 +31,7 @@ For full installation options, see [docs.logwiz.io/install/docker-compose](https
 ## Repository Layout
 
 - `./` - the main Logwiz application
-- `site/` - the marketing site  
+- `site/` - the marketing site
 - `docs-site/` - the documentation site built with Mintlify
 
 ## License

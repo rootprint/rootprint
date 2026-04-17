@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { revokeUserSessions, updateFn, setFn, deleteFn, insertFn, valuesFn } = vi.hoisted(() => {
-		const accWhereFn = vi.fn();
-		const setFn = vi.fn(() => ({ where: accWhereFn }));
-		const delWhereFn = vi.fn();
-		const valuesFn = vi.fn();
-		return {
-			revokeUserSessions: vi.fn(),
-			updateFn: vi.fn(() => ({ set: setFn })),
-			setFn,
-			deleteFn: vi.fn(() => ({ where: delWhereFn })),
-			insertFn: vi.fn(() => ({ values: valuesFn })),
-			valuesFn
-		};
-	});
+	const accWhereFn = vi.fn();
+	const setFn = vi.fn(() => ({ where: accWhereFn }));
+	const delWhereFn = vi.fn();
+	const valuesFn = vi.fn();
+	return {
+		revokeUserSessions: vi.fn(),
+		updateFn: vi.fn(() => ({ set: setFn })),
+		setFn,
+		deleteFn: vi.fn(() => ({ where: delWhereFn })),
+		insertFn: vi.fn(() => ({ values: valuesFn })),
+		valuesFn
+	};
+});
 
 vi.mock('$lib/server/auth', () => ({
 	auth: { api: { revokeUserSessions } }

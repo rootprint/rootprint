@@ -16,13 +16,17 @@
 
 	let clientId = $state(untrack(() => settings?.clientId ?? ''));
 	let clientSecret = $state('');
-	let allowedDomains = $state<string[]>(untrack(() => (settings ? [...settings.allowedDomains] : [])));
+	let allowedDomains = $state<string[]>(
+		untrack(() => (settings ? [...settings.allowedDomains] : []))
+	);
 	let domainInput = $state('');
 	let saving = $state(false);
 	let removeModalOpen = $state(false);
 
 	const secretPlaceholder = $derived(
-		settings ? `Current: ${settings.clientSecretMasked} (leave blank to keep)` : 'Enter client secret'
+		settings
+			? `Current: ${settings.clientSecretMasked} (leave blank to keep)`
+			: 'Enter client secret'
 	);
 	const callbackUrl = $derived(`${origin}/api/auth/callback/google`);
 

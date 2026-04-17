@@ -1,12 +1,13 @@
 ---
-title: "Per Index configuration in Logwiz"
-description: "Learn how to map Quickwit index fields to Logwiz display roles, control index visibility, and set up context fields and traceback display."
+title: 'Per Index configuration in Logwiz'
+description: 'Learn how to map Quickwit index fields to Logwiz display roles, control index visibility, and set up context fields and traceback display.'
 ---
 
 Logwiz syncs indexes from your Quickwit instance and lets you configure how each index's fields are presented in the UI. You can set a human-readable display name, control which users can see the index, and tell Logwiz which fields contain the log level, message body, stacktrace, and any additional context you want surfaced in the detail panel.
 
 <Note>
-  Logwiz syncs available indexes from Quickwit on server startup. If you add a new index to Quickwit while Logwiz is running, restart the Logwiz container to pick it up.
+	Logwiz syncs available indexes from Quickwit on server startup. If you add a new index to Quickwit
+	while Logwiz is running, restart the Logwiz container to pick it up.
 </Note>
 
 ## Opening index config
@@ -17,10 +18,10 @@ Navigate to **Administration → Indexes**, click on an index, then open the **C
 
 The visibility setting controls which users can see and query the index.
 
-| Value | Who can access |
-|---|---|
-| `all` | Every signed-in user. |
-| `admin` | Admin users only. Regular users cannot see or query the index. |
+| Value    | Who can access                                                                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `all`    | Every signed-in user.                                                                                                                                |
+| `admin`  | Admin users only. Regular users cannot see or query the index.                                                                                       |
 | `hidden` | No one. The index is invisible in the UI and inaccessible via the API. Use this to temporarily suppress an index without deleting its configuration. |
 
 ## Display name
@@ -65,10 +66,10 @@ All field settings accept dot-notation paths to reference nested fields or field
 
 For indexes created by OpenTelemetry collectors (index IDs beginning with `otel-logs-`), Logwiz automatically applies sensible defaults on first sync:
 
-| Field | OTel default |
-|---|---|
-| Level field | `severity_text` |
-| Message field | `body` |
+| Field           | OTel default                      |
+| --------------- | --------------------------------- |
+| Level field     | `severity_text`                   |
+| Message field   | `body`                            |
 | Traceback field | `attributes.exception.stacktrace` |
 
 You can override any of these defaults in the Config tab. If your OTel instrumentation captures exception stacktraces, setting the traceback field to `attributes.exception.stacktrace` enables the Traceback tab with syntax-highlighted Python stacktrace rendering.

@@ -162,7 +162,7 @@
 					<div class="flex items-center gap-2 border-b border-base-300 p-2">
 						<input
 							type="search"
-							class="input input-xs input-bordered flex-1"
+							class="input-bordered input input-xs flex-1"
 							placeholder="Search indexes…"
 							bind:value={indexSearch}
 						/>
@@ -215,7 +215,7 @@
 			<div class="flex gap-2">
 				<input
 					type="text"
-					class="input input-sm input-bordered flex-1 font-mono text-xs"
+					class="input-bordered input input-sm flex-1 font-mono text-xs"
 					readonly
 					value={generatedToken}
 				/>

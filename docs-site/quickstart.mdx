@@ -1,6 +1,6 @@
 ---
-title: "Get started with Logwiz in under five minutes"
-description: "Deploy Logwiz with Docker Compose, create an ingest token, and send your first logs to a Quickwit index — all in under five minutes."
+title: 'Get started with Logwiz in under five minutes'
+description: 'Deploy Logwiz with Docker Compose, create an ingest token, and send your first logs to a Quickwit index — all in under five minutes.'
 ---
 
 This guide walks you through deploying Logwiz locally, signing in, and sending your first logs. The whole process takes about five minutes and requires only Docker.
@@ -13,11 +13,14 @@ This guide walks you through deploying Logwiz locally, signing in, and sending y
     curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/docs-site/files/docker-compose.yml
     docker compose up -d
     ```
+
   </Step>
 
-  <Step title="Create the admin account">
-    Open [http://localhost:8282](http://localhost:8282) in your browser. On first boot, Logwiz redirects you to the setup wizard at `/auth/setup-admin`. Enter your desired admin credentials and submit the form. You will be signed in automatically after setup completes.
-  </Step>
+<Step title="Create the admin account">
+	Open [http://localhost:8282](http://localhost:8282) in your browser. On first boot, Logwiz
+	redirects you to the setup wizard at `/auth/setup-admin`. Enter your desired admin credentials and
+	submit the form. You will be signed in automatically after setup completes.
+</Step>
 
   <Step title="Create an ingest token">
     Logwiz requires a bearer token to accept log data. To create one:
@@ -27,6 +30,7 @@ This guide walks you through deploying Logwiz locally, signing in, and sending y
     3. Copy the token value immediately — it is shown only once.
 
     You will use this token in the next step to authenticate your log shipper.
+
   </Step>
 
   <Step title="Send sample logs">
@@ -45,6 +49,7 @@ This guide walks you through deploying Logwiz locally, signing in, and sending y
     The `?commit=wait_for` parameter tells Quickwit to index the documents before returning a response, so the logs are immediately searchable.
 
     The ingest endpoint accepts NDJSON format — one JSON object per line, with no trailing comma.
+
   </Step>
 
   <Step title="Search your logs">

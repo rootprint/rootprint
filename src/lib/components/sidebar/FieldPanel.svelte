@@ -420,9 +420,7 @@
 							</span>
 						</button>
 					{:else}
-						<label
-							class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs"
-						>
+						<label class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs">
 							<input
 								type="checkbox"
 								class="checkbox checkbox-xs"

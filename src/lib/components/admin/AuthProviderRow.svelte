@@ -5,7 +5,9 @@
 
 	const initial = $derived(provider.name.charAt(0).toUpperCase());
 	const badgeClass = $derived(
-		provider.configured ? 'badge-sm badge-success badge-outline' : 'badge-sm badge-outline opacity-60'
+		provider.configured
+			? 'badge-sm badge-success badge-outline'
+			: 'badge-sm badge-outline opacity-60'
 	);
 	const badgeLabel = $derived(provider.configured ? 'Enabled' : 'Not configured');
 	const actionLabel = $derived(provider.configured ? 'Edit' : 'Configure');
@@ -15,7 +17,7 @@
 </script>
 
 <div
-	class="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-base-200/40 first:rounded-t-box last:rounded-b-box"
+	class="flex min-h-14 items-center gap-3 px-4 py-3 first:rounded-t-box last:rounded-b-box hover:bg-base-200/40"
 >
 	<div
 		class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-200 text-xs font-semibold"

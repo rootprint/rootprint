@@ -1,6 +1,6 @@
 ---
-title: "Enable Google OAuth"
-description: "Set up Google OAuth credentials and configure allowed email domains so your team can sign in to Logwiz using their Google accounts."
+title: 'Enable Google OAuth'
+description: 'Set up Google OAuth credentials and configure allowed email domains so your team can sign in to Logwiz using their Google accounts.'
 ---
 
 Logwiz supports Google OAuth as an additional sign-in method alongside the default username and password login. Once configured, a "Sign in with Google" button appears on the sign-in page. Users whose Google account email matches one of your allowed domains are automatically provisioned with the `user` role. If a Google account's email matches an existing Logwiz account, the two are linked automatically.
@@ -17,6 +17,7 @@ Logwiz supports Google OAuth as an additional sign-in method alongside the defau
     - **Authorized redirect URI:** `https://your-logwiz-url/api/auth/callback/google`
 
     Replace `your-logwiz-url` with the public URL of your Logwiz instance. After saving, copy the **Client ID** and **Client Secret** — you will need them in the next step.
+
   </Step>
 
   <Step title="Enter credentials in Logwiz">
@@ -31,6 +32,7 @@ Logwiz supports Google OAuth as an additional sign-in method alongside the defau
     </Note>
 
     You can also verify the **Callback URL** shown in this section matches the redirect URI you registered in Google Cloud Console.
+
   </Step>
 
   <Step title="Apply the configuration">
@@ -45,6 +47,7 @@ Logwiz supports Google OAuth as an additional sign-in method alongside the defau
     <Note>
       Google auth configuration changes — including saving credentials, updating allowed domains, and removing Google auth — only take effect after a server restart.
     </Note>
+
   </Step>
 </Steps>
 

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js for CLI. Works with any Git-based workflow.
 metadata:
   author: mintlify
-  version: "1.0"
+  version: '1.0'
 ---
 
 # Mintlify best practices
@@ -36,6 +36,7 @@ Understanding the project tells you:
 ### Check for existing content
 
 Search the docs before creating new pages. You may need to:
+
 - Update an existing page instead of creating a new one
 - Add a section to an existing page
 - Link to existing content rather than duplicating
@@ -51,6 +52,7 @@ Review the Mintlify [components](https://www.mintlify.com/docs/components) to se
 ## Quick reference
 
 ### CLI commands
+
 - `npm i -g mint` - Install the Mintlify CLI
 - `mint dev` - Local preview at localhost:3000
 - `mint broken-links` - Check internal links
@@ -58,10 +60,12 @@ Review the Mintlify [components](https://www.mintlify.com/docs/components) to se
 - `mint validate` - Validate documentation builds
 
 ### Required files
+
 - `docs.json` - Site configuration (navigation, theme, integrations, etc.). See [global settings](https://mintlify.com/docs/settings/global) for all options.
 - `*.mdx` files - Documentation pages with YAML frontmatter
 
 ### Example file structure
+
 ```
 project/
 ├── docs.json           # Site configuration
@@ -82,12 +86,13 @@ Every page requires `title` in its frontmatter. Include `description` for SEO an
 
 ```yaml
 ---
-title: "Clear, descriptive title"
-description: "Concise summary for SEO and navigation."
+title: 'Clear, descriptive title'
+description: 'Concise summary for SEO and navigation.'
 ---
 ```
 
 Optional frontmatter fields:
+
 - `sidebarTitle`: Short title for sidebar navigation.
 - `icon`: Lucide or Font Awesome icon name, URL, or file path.
 - `tag`: Label next to the page title in the sidebar (for example, "NEW").
@@ -113,15 +118,15 @@ The `navigation` property in `docs.json` controls site structure. Choose one pri
 
 **Choose your primary pattern:**
 
-| Pattern | When to use |
-|---------|-------------|
-| **Groups** | Default. Single audience, straightforward hierarchy |
-| **Tabs** | Distinct sections with different audiences (Guides vs API Reference) or content types |
-| **Anchors** | Want persistent section links at sidebar top. Good for separating docs from external resources |
-| **Dropdowns** | Multiple doc sections users switch between, but not distinct enough for tabs |
-| **Products** | Multi-product company with separate documentation per product |
-| **Versions** | Maintaining docs for multiple API/product versions simultaneously |
-| **Languages** | Localized content |
+| Pattern       | When to use                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| **Groups**    | Default. Single audience, straightforward hierarchy                                            |
+| **Tabs**      | Distinct sections with different audiences (Guides vs API Reference) or content types          |
+| **Anchors**   | Want persistent section links at sidebar top. Good for separating docs from external resources |
+| **Dropdowns** | Multiple doc sections users switch between, but not distinct enough for tabs                   |
+| **Products**  | Multi-product company with separate documentation per product                                  |
+| **Versions**  | Maintaining docs for multiple API/product versions simultaneously                              |
+| **Languages** | Localized content                                                                              |
 
 **Within your primary pattern:**
 
@@ -131,6 +136,7 @@ The `navigation` property in `docs.json` controls site structure. Choose one pri
 - **`openapi`** - Auto-generate pages from OpenAPI spec. Add at group/tab level to inherit
 
 **Common combinations:**
+
 - Tabs containing groups (most common for docs with API reference)
 - Products containing tabs (multi-product SaaS)
 - Versions containing tabs (versioned API docs)
@@ -145,6 +151,7 @@ The `navigation` property in `docs.json` controls site structure. Choose one pri
 ## Customize docs sites
 
 **What to customize where:**
+
 - **Brand colors, fonts, logo** → `docs.json`. See [global settings](https://mintlify.com/docs/settings/global)
 - **Component styling, layout tweaks** → `custom.css` at project root
 - **Dark mode** → Enabled by default. Only disable with `"appearance": "light"` in `docs.json` if brand requires it
@@ -159,18 +166,19 @@ The [components overview](https://mintlify.com/docs/components) organizes all co
 
 **Common decision points:**
 
-| Need | Use |
-|------|-----|
-| Hide optional details | `<Accordion>` |
-| Long code examples | `<Expandable>` |
-| User chooses one option | `<Tabs>` |
-| Linked navigation cards | `<Card>` in `<Columns>` |
-| Sequential instructions | `<Steps>` |
-| Code in multiple languages | `<CodeGroup>` |
-| API parameters | `<ParamField>` |
-| API response fields | `<ResponseField>` |
+| Need                       | Use                     |
+| -------------------------- | ----------------------- |
+| Hide optional details      | `<Accordion>`           |
+| Long code examples         | `<Expandable>`          |
+| User chooses one option    | `<Tabs>`                |
+| Linked navigation cards    | `<Card>` in `<Columns>` |
+| Sequential instructions    | `<Steps>`               |
+| Code in multiple languages | `<CodeGroup>`           |
+| API parameters             | `<ParamField>`          |
+| API response fields        | `<ResponseField>`       |
 
 **Callouts by severity:**
+
 - `<Note>` - Supplementary info, safe to skip
 - `<Info>` - Helpful context such as permissions
 - `<Tip>` - Recommendations or best practices
@@ -180,11 +188,13 @@ The [components overview](https://mintlify.com/docs/components) organizes all co
 ### Reusable content
 
 **When to use snippets:**
+
 - Exact content appears on more than one page
 - Complex components you want to maintain in one place
 - Shared content across teams/repos
 
 **When NOT to use snippets:**
+
 - Slight variations needed per page (leads to complex props)
 
 Import snippets with `import { Component } from "/path/to/snippet-name.jsx"`.
@@ -203,12 +213,14 @@ Import snippets with `import { Component } from "/path/to/snippet-name.jsx"`.
 ### What to avoid
 
 **Never use:**
+
 - Marketing language ("powerful", "seamless", "robust", "cutting-edge")
 - Filler phrases ("it's important to note", "in order to")
 - Excessive conjunctions ("moreover", "furthermore", "additionally")
 - Editorializing ("obviously", "simply", "just", "easily")
 
 **Watch for AI-typical patterns:**
+
 - Overly formal or stilted phrasing
 - Unnecessary repetition of concepts
 - Generic introductions that don't add value
@@ -231,6 +243,7 @@ Import snippets with `import { Component } from "/path/to/snippet-name.jsx"`.
 ## Document APIs
 
 **Choose your approach:**
+
 - **Have an OpenAPI spec?** → Add to `docs.json` with `"openapi": ["openapi.yaml"]`. Pages auto-generate. Reference in navigation as `GET /endpoint`
 - **No spec?** → Write endpoints manually with `api: "POST /users"` in frontmatter. More work but full control
 - **Hybrid** → Use OpenAPI for most endpoints, manual pages for complex workflows
@@ -242,10 +255,12 @@ Encourage users to generate endpoint pages from an OpenAPI spec. It is the most 
 Mintlify deploys automatically when changes are pushed to the connected Git repository.
 
 **What agents can configure:**
+
 - **Redirects** → Add to `docs.json` with `"redirects": [{"source": "/old", "destination": "/new"}]`
 - **SEO indexing** → Control with `"seo": {"indexing": "all"}` to include hidden pages in search
 
 **Requires dashboard setup (human task):**
+
 - Custom domains and subdomains
 - Preview deployment settings
 - DNS configuration

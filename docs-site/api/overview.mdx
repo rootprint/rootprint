@@ -1,5 +1,5 @@
 ---
-title: "Logwiz public HTTP API — endpoints and authentication"
+title: 'Logwiz public HTTP API — endpoints and authentication'
 description: "A concise reference for Logwiz's public HTTP API, covering base URL, authentication, available endpoints, error codes, and rate limiting."
 ---
 
@@ -25,9 +25,7 @@ Create and revoke ingest tokens in the Logwiz admin panel at **Administration ->
 
 See [Send Logs](/send-logs) for the end-to-end setup flow.
 
-<Note>
-The health check endpoint (`GET /api/health`) does not require authentication.
-</Note>
+<Note>The health check endpoint (`GET /api/health`) does not require authentication.</Note>
 
 ## Content type
 
@@ -39,37 +37,37 @@ Content-Type: application/x-ndjson
 
 ## Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
+| Method | Path                                        | Description                                         |
+| ------ | ------------------------------------------- | --------------------------------------------------- |
 | `POST` | [`/api/ingest/{indexId}`](/api/ingest-logs) | Ingest one or more log events into a Quickwit index |
-| `GET` | `/api/health` | Check the health of Logwiz and its dependencies |
+| `GET`  | `/api/health`                               | Check the health of Logwiz and its dependencies     |
 
 ## Error responses
 
 All error responses return JSON with a `message` field describing the problem.
 
 ```json
-{"message": "Invalid ingest token"}
+{ "message": "Invalid ingest token" }
 ```
 
-| Status | Meaning |
-|--------|---------|
-| `400` | Bad request — the body is empty or malformed |
-| `401` | Missing bearer token |
-| `403` | Token is invalid, revoked, or not scoped for the requested index |
-| `404` | Unknown index — Quickwit has no index with the given ID |
-| `413` | Request body exceeds the 10 MB limit |
-| `429` | Rate limit exceeded |
-| `502` | Logwiz could not reach Quickwit to forward the request |
-| `503` | Quickwit is unhealthy or unavailable |
+| Status | Meaning                                                          |
+| ------ | ---------------------------------------------------------------- |
+| `400`  | Bad request — the body is empty or malformed                     |
+| `401`  | Missing bearer token                                             |
+| `403`  | Token is invalid, revoked, or not scoped for the requested index |
+| `404`  | Unknown index — Quickwit has no index with the given ID          |
+| `413`  | Request body exceeds the 10 MB limit                             |
+| `429`  | Rate limit exceeded                                              |
+| `502`  | Logwiz could not reach Quickwit to forward the request           |
+| `503`  | Quickwit is unhealthy or unavailable                             |
 
 ## Rate limiting
 
 Logwiz applies rate limiting to all ingest requests. The defaults are:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOGWIZ_RATE_LIMIT_WINDOW` | `60` | Window duration in seconds |
-| `LOGWIZ_RATE_LIMIT_MAX` | `100` | Maximum requests per window |
+| Variable                   | Default | Description                 |
+| -------------------------- | ------- | --------------------------- |
+| `LOGWIZ_RATE_LIMIT_WINDOW` | `60`    | Window duration in seconds  |
+| `LOGWIZ_RATE_LIMIT_MAX`    | `100`   | Maximum requests per window |
 
 When the limit is exceeded, Logwiz returns `429`. Adjust these values in your environment configuration if your log volume requires a higher throughput.

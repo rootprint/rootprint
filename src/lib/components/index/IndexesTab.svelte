@@ -58,11 +58,7 @@
 				<div class="flex shrink-0 items-center gap-1.5">
 					<span class="text-xs text-base-content/60">Visibility:</span>
 					<span class="badge badge-sm">
-						{idx.visibility === 'all'
-							? 'Public'
-							: idx.visibility === 'admin'
-								? 'Admins'
-								: 'Hidden'}
+						{idx.visibility === 'all' ? 'Public' : idx.visibility === 'admin' ? 'Admins' : 'Hidden'}
 					</span>
 				</div>
 

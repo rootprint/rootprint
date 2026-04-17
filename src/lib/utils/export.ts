@@ -70,4 +70,3 @@ export function formatAsText(
 		})
 		.join('\n');
 }
-

@@ -27,4 +27,3 @@ describe('ingest token utilities', () => {
 		expect(isIngestScopeAllowed(scope, 'unknown')).toBe(false);
 	});
 });
-

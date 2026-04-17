@@ -78,7 +78,6 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 				.where(eq(user.id, session.user.id))
 				.run();
 		}
-
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });

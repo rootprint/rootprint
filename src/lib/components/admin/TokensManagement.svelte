@@ -57,7 +57,7 @@
 	</header>
 
 	<div class="mb-3 flex flex-wrap items-center gap-3">
-		<label class="input input-sm input-bordered flex flex-1 items-center gap-2">
+		<label class="input-bordered input input-sm flex flex-1 items-center gap-2">
 			<Search size={14} class="opacity-60" />
 			<input
 				type="search"
@@ -76,7 +76,7 @@
 	<div class="divide-y divide-base-300 rounded-box border border-base-300">
 		{#each filtered as token (token.id)}
 			<div
-				class="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-base-200/40 first:rounded-t-box last:rounded-b-box"
+				class="flex min-h-14 items-center gap-3 px-4 py-3 first:rounded-t-box last:rounded-b-box hover:bg-base-200/40"
 			>
 				<div class="min-w-0 flex-1">
 					<div class="truncate text-sm font-semibold">{token.name}</div>
@@ -87,11 +87,11 @@
 
 				<div class="shrink-0">
 					{#if token.scope.indexIds === null}
-						<span class="badge badge-sm badge-warning badge-outline">
+						<span class="badge badge-outline badge-sm badge-warning">
 							{scopeLabel(token)}
 						</span>
 					{:else}
-						<span class="badge badge-sm badge-ghost">{scopeLabel(token)}</span>
+						<span class="badge badge-ghost badge-sm">{scopeLabel(token)}</span>
 					{/if}
 				</div>
 
@@ -101,7 +101,7 @@
 
 				<button
 					type="button"
-					class="btn btn-ghost btn-sm btn-square text-error"
+					class="btn btn-square text-error btn-ghost btn-sm"
 					aria-label="Delete token {token.name}"
 					onclick={() => openDeleteModal(token)}
 				>
