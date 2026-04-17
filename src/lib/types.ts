@@ -105,7 +105,7 @@ export type User = {
 	email: string;
 	role?: string | null;
 	lastActive: Date | null;
-	status: 'pending' | 'active';
+	status: 'pending' | 'active' | 'expired';
 	authProvider: 'google' | 'credential';
 	inviteUrl: string | null;
 	inviteExpiresAt: Date | null;

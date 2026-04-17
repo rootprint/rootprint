@@ -36,18 +36,28 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 	// Better Auth's admin plugin doesn't infer custom additionalFields in listUsers return type
 	type UserWithLastActive = (typeof result.users)[number] & { lastActive?: number };
 
-	return (result.users as UserWithLastActive[]).map((u) => ({
-		id: u.id,
-		name: u.name,
-		email: u.email,
-		role: u.role,
-		lastActive: u.lastActive ? new Date(u.lastActive) : null,
-		status:
-			!googleUserIds.has(u.id) && inviteMap.has(u.id) ? ('pending' as const) : ('active' as const),
-		authProvider: googleUserIds.has(u.id) ? ('google' as const) : ('credential' as const),
-		inviteUrl: inviteMap.get(u.id)?.url ?? null,
-		inviteExpiresAt: inviteMap.get(u.id)?.expiresAt ?? null
-	}));
+	const now = Date.now();
+
+	return (result.users as UserWithLastActive[]).map((u) => {
+		const invite = inviteMap.get(u.id);
+		const isGoogle = googleUserIds.has(u.id);
+		const status: 'active' | 'pending' | 'expired' = (() => {
+			if (isGoogle || !invite) return 'active';
+			return invite.expiresAt.getTime() < now ? 'expired' : 'pending';
+		})();
+
+		return {
+			id: u.id,
+			name: u.name,
+			email: u.email,
+			role: u.role,
+			lastActive: u.lastActive ? new Date(u.lastActive) : null,
+			status,
+			authProvider: isGoogle ? ('google' as const) : ('credential' as const),
+			inviteUrl: invite?.url ?? null,
+			inviteExpiresAt: invite?.expiresAt ?? null
+		};
+	});
 }
 
 export async function createInvite(

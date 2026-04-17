@@ -6,13 +6,13 @@
 	import { signOut } from '$lib/api/auth.remote';
 	import logo from '$lib/assets/logo.png';
 	import ChangePasswordModal from '$lib/components/admin/ChangePasswordModal.svelte';
-	import { getUserInitials } from '$lib/utils/format';
+	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
 
 	let { children } = $props();
 
 	const user = $derived(page.data.user);
 	const isGoogleUser = $derived(page.data.isGoogleUser ?? false);
-	const initials = $derived(getUserInitials(user?.name));
+	const initials = $derived(avatarInitials(user?.name));
 	let changePasswordOpen = $state(false);
 </script>
 
@@ -26,8 +26,11 @@
 		<div class="dropdown dropdown-end">
 			<div tabindex="0" role="button" class="btn btn-circle btn-ghost btn-sm">
 				<div class="avatar avatar-placeholder">
-					<div class="w-8 rounded-full bg-neutral text-neutral-content">
-						<span class="text-xs">{initials}</span>
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white"
+						style="background: {user?.id ? avatarColor(user.id) : ''}"
+					>
+						<span>{initials}</span>
 					</div>
 				</div>
 			</div>
