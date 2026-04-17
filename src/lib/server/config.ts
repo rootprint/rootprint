@@ -4,37 +4,43 @@ import { dirname, resolve } from 'node:path';
 import { env } from '$env/dynamic/private';
 import { randomHex } from '$lib/utils/crypto';
 
-interface Config {
-	// Required
-	quickwitUrl: string;
-	secret: string;
-	origin?: string;
-	// Optional with defaults
-	databasePath: string;
-	adminEmail: string;
-	adminUsername: string;
-	adminPassword: string;
-	inviteExpiryHours: number;
-	rateLimitWindow: number;
-	rateLimitMax: number;
-	signinRateLimitMax: number;
+const warnings: string[] = [];
+
+function envRequired(name: string): string {
+	const raw = env[name];
+	if (!raw) {
+		throw new Error(`[logwiz] Missing required environment variable: ${name}`);
+	}
+	return raw;
 }
 
-function readEnv(name: string): string | undefined {
-	const value = env[name];
-	if (value) return value;
-	return undefined;
+function envOptional(name: string): string | undefined {
+	return env[name] || undefined;
 }
 
-function parseIntWithDefault(value: string | undefined, defaultValue: number): number {
-	if (!value) return defaultValue;
-	const parsed = Number.parseInt(value, 10);
-	if (Number.isNaN(parsed)) return defaultValue;
+function envString(name: string, defaultValue: string): string {
+	const raw = env[name];
+	if (raw) return raw;
+	warnings.push(`${name} = ${defaultValue}`);
+	return defaultValue;
+}
+
+function envInt(name: string, defaultValue: number): number {
+	const raw = env[name];
+	if (!raw) {
+		warnings.push(`${name} = ${defaultValue}`);
+		return defaultValue;
+	}
+	const parsed = Number.parseInt(raw, 10);
+	if (Number.isNaN(parsed)) {
+		warnings.push(`${name} = ${defaultValue} (ignored invalid value "${raw}")`);
+		return defaultValue;
+	}
 	return parsed;
 }
 
 function resolveSecret(dataDir: string): string {
-	const envSecret = readEnv('LOGWIZ_AUTH_SECRET');
+	const envSecret = env.LOGWIZ_AUTH_SECRET;
 	if (envSecret) {
 		if (envSecret.length >= 32) return envSecret;
 		console.warn('[logwiz] LOGWIZ_AUTH_SECRET is set but shorter than 32 characters, ignoring');
@@ -52,58 +58,26 @@ function resolveSecret(dataDir: string): string {
 	return generated;
 }
 
-let _config: Config | null = null;
+function loadConfig() {
+	const quickwitUrl = envRequired('LOGWIZ_QUICKWIT_URL');
+	const origin = envOptional('ORIGIN');
+	const databasePath = envString('LOGWIZ_DATABASE_PATH', './data/logwiz.db');
+	const adminEmail = envString('LOGWIZ_ADMIN_EMAIL', 'logwiz@logwiz.local');
+	const adminUsername = envString('LOGWIZ_ADMIN_USERNAME', 'logwiz');
+	const adminPassword = envString('LOGWIZ_ADMIN_PASSWORD', 'logwiz');
+	const inviteExpiryHours = envInt('LOGWIZ_INVITE_EXPIRY_HOURS', 48);
+	const rateLimitWindow = envInt('LOGWIZ_RATE_LIMIT_WINDOW', 60);
+	const rateLimitMax = envInt('LOGWIZ_RATE_LIMIT_MAX', 100);
+	const signinRateLimitMax = envInt('LOGWIZ_SIGNIN_RATE_LIMIT_MAX', 5);
 
-/** @public Used by tests via dynamic import (vi.resetModules + await import()) */
-export function buildConfig(): Config {
-	const quickwitUrl = readEnv('LOGWIZ_QUICKWIT_URL');
-	const origin = readEnv('ORIGIN');
-
-	// Validate required vars
-	if (!quickwitUrl) {
-		throw new Error(`[logwiz] Missing required environment variable: LOGWIZ_QUICKWIT_URL`);
+	const secret = resolveSecret(dirname(resolve(databasePath)));
+	if (!env.LOGWIZ_AUTH_SECRET) {
+		warnings.push('LOGWIZ_AUTH_SECRET = (file-generated)');
 	}
 
-	// Resolve secret: read from data dir, auto-generate on first run
-	const databasePath = readEnv('LOGWIZ_DATABASE_PATH') ?? './data/logwiz.db';
-	const dataDir = dirname(resolve(databasePath));
-	const secret = resolveSecret(dataDir);
-
-	// Optional vars with defaults
-	const adminEmail = readEnv('LOGWIZ_ADMIN_EMAIL') ?? 'logwiz@logwiz.local';
-	const adminUsername = readEnv('LOGWIZ_ADMIN_USERNAME') ?? 'logwiz';
-
-	const adminPassword = readEnv('LOGWIZ_ADMIN_PASSWORD') ?? 'logwiz';
-
-	const inviteExpiryHours = parseIntWithDefault(readEnv('LOGWIZ_INVITE_EXPIRY_HOURS'), 48);
-	const rateLimitWindow = parseIntWithDefault(readEnv('LOGWIZ_RATE_LIMIT_WINDOW'), 60);
-	const rateLimitMax = parseIntWithDefault(readEnv('LOGWIZ_RATE_LIMIT_MAX'), 100);
-	const signinRateLimitMax = parseIntWithDefault(readEnv('LOGWIZ_SIGNIN_RATE_LIMIT_MAX'), 5);
-
-	// Warn about optional vars using defaults
-	const optionalDefaults: [string, string | number][] = [];
-	if (!readEnv('LOGWIZ_DATABASE_PATH'))
-		optionalDefaults.push(['LOGWIZ_DATABASE_PATH', databasePath]);
-	if (!readEnv('LOGWIZ_ADMIN_EMAIL')) optionalDefaults.push(['LOGWIZ_ADMIN_EMAIL', adminEmail]);
-	if (!readEnv('LOGWIZ_ADMIN_USERNAME'))
-		optionalDefaults.push(['LOGWIZ_ADMIN_USERNAME', adminUsername]);
-	if (!readEnv('LOGWIZ_ADMIN_PASSWORD'))
-		optionalDefaults.push(['LOGWIZ_ADMIN_PASSWORD', '"logwiz" (default)']);
-	if (!readEnv('LOGWIZ_INVITE_EXPIRY_HOURS'))
-		optionalDefaults.push(['LOGWIZ_INVITE_EXPIRY_HOURS', inviteExpiryHours]);
-	if (!readEnv('LOGWIZ_RATE_LIMIT_WINDOW'))
-		optionalDefaults.push(['LOGWIZ_RATE_LIMIT_WINDOW', rateLimitWindow]);
-	if (!readEnv('LOGWIZ_RATE_LIMIT_MAX'))
-		optionalDefaults.push(['LOGWIZ_RATE_LIMIT_MAX', rateLimitMax]);
-	if (!readEnv('LOGWIZ_SIGNIN_RATE_LIMIT_MAX'))
-		optionalDefaults.push(['LOGWIZ_SIGNIN_RATE_LIMIT_MAX', signinRateLimitMax]);
-	if (!readEnv('LOGWIZ_AUTH_SECRET'))
-		optionalDefaults.push(['LOGWIZ_AUTH_SECRET', '(file-generated)']);
-
-	if (optionalDefaults.length > 0) {
+	if (warnings.length > 0) {
 		console.warn(
-			`[logwiz] Using defaults for:\n` +
-				optionalDefaults.map(([k, v]) => `  - ${k} = ${v}`).join('\n')
+			`[logwiz] Using defaults for:\n${warnings.map((w) => `  - ${w}`).join('\n')}`
 		);
 	}
 
@@ -122,18 +96,6 @@ export function buildConfig(): Config {
 	});
 }
 
-export function validateConfig(): Config {
-	if (!_config) {
-		_config = buildConfig();
-	}
-	return _config;
-}
+export type Config = ReturnType<typeof loadConfig>;
 
-export const config = new Proxy({} as Config, {
-	get(_, prop: string) {
-		if (!_config) {
-			_config = buildConfig();
-		}
-		return _config[prop as keyof Config];
-	}
-});
+export const config = loadConfig();

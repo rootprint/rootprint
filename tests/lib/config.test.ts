@@ -34,11 +34,18 @@ describe('config', () => {
 		rmSync(TEST_DATA_DIR, { recursive: true, force: true });
 	});
 
-	describe('buildConfig', () => {
+	describe('loadConfig', () => {
 		it('throws listing all missing required vars', async () => {
-			const { buildConfig } = await importConfig();
-			expect(() => buildConfig()).toThrow('LOGWIZ_QUICKWIT_URL');
-			expect(() => buildConfig()).not.toThrow('ORIGIN');
+			let caught: unknown;
+			try {
+				await importConfig();
+			} catch (e) {
+				caught = e;
+			}
+			expect(caught).toBeInstanceOf(Error);
+			const message = (caught as Error).message;
+			expect(message).toContain('LOGWIZ_QUICKWIT_URL');
+			expect(message).not.toContain('ORIGIN');
 		});
 
 		it('builds config without ORIGIN set', async () => {
@@ -47,8 +54,7 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(cfg.origin).toBeUndefined();
 			warnSpy.mockRestore();
 		});
@@ -60,8 +66,7 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(cfg.secret).toBeTruthy();
 			expect(cfg.secret.length).toBe(64); // 32 bytes hex
 			expect(existsSync(resolve(TEST_DATA_DIR, '.secret'))).toBe(true);
@@ -76,11 +81,8 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig: buildFirst } = await importConfig();
-			const first = buildFirst();
-
-			const { buildConfig: buildSecond } = await importConfig();
-			const second = buildSecond();
+			const { config: first } = await importConfig();
+			const { config: second } = await importConfig();
 
 			expect(second.secret).toBe(first.secret);
 			warnSpy.mockRestore();
@@ -93,8 +95,7 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(cfg.quickwitUrl).toBe('http://localhost:7280');
 			expect(cfg.secret).toBeTruthy();
 			expect(cfg.origin).toBe('http://localhost:5173');
@@ -123,8 +124,7 @@ describe('config', () => {
 				LOGWIZ_SIGNIN_RATE_LIMIT_MAX: '3'
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(cfg.databasePath).toBe(TEST_DB_PATH);
 			expect(cfg.adminEmail).toBe('admin@example.com');
 			expect(cfg.adminUsername).toBe('myadmin');
@@ -143,8 +143,14 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			expect(() => buildConfig()).toThrow('LOGWIZ_QUICKWIT_URL');
+			let caught: unknown;
+			try {
+				await importConfig();
+			} catch (e) {
+				caught = e;
+			}
+			expect(caught).toBeInstanceOf(Error);
+			expect((caught as Error).message).toContain('LOGWIZ_QUICKWIT_URL');
 			warnSpy.mockRestore();
 		});
 
@@ -155,8 +161,7 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(cfg.origin).toBeUndefined();
 			warnSpy.mockRestore();
 		});
@@ -168,8 +173,7 @@ describe('config', () => {
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(() => {
 				(cfg as unknown as Record<string, unknown>).quickwitUrl = 'changed';
 			}).toThrow();
@@ -184,9 +188,26 @@ describe('config', () => {
 				LOGWIZ_INVITE_EXPIRY_HOURS: 'notanumber'
 			};
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { buildConfig } = await importConfig();
-			const cfg = buildConfig();
+			const { config: cfg } = await importConfig();
 			expect(cfg.inviteExpiryHours).toBe(48);
+			warnSpy.mockRestore();
+		});
+
+		it('warns with the invalid value when a numeric env var is non-numeric', async () => {
+			mockEnv = {
+				LOGWIZ_QUICKWIT_URL: 'http://localhost:7280',
+				ORIGIN: 'http://localhost:5173',
+				LOGWIZ_DATABASE_PATH: TEST_DB_PATH,
+				LOGWIZ_INVITE_EXPIRY_HOURS: 'notanumber'
+			};
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			await importConfig();
+			const defaultsWarning = warnSpy.mock.calls
+				.map((args) => args.join(' '))
+				.find((msg) => msg.includes('Using defaults for'));
+			expect(defaultsWarning).toBeDefined();
+			expect(defaultsWarning).toContain('LOGWIZ_INVITE_EXPIRY_HOURS = 48');
+			expect(defaultsWarning).toContain('ignored invalid value "notanumber"');
 			warnSpy.mockRestore();
 		});
 	});

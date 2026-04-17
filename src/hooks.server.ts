@@ -6,7 +6,7 @@ import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 
 import { building } from '$app/environment';
 import { auth } from '$lib/server/auth';
-import { config, validateConfig } from '$lib/server/config';
+import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { account, user } from '$lib/server/db/schema';
 import { syncIndexesFromQuickwit } from '$lib/server/services/index.service';
@@ -36,8 +36,6 @@ async function seedDefaultAdmin() {
 }
 
 if (!building) {
-	validateConfig();
-
 	await seedDefaultAdmin().catch(console.error);
 
 	try {
