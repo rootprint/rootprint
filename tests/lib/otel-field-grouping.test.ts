@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // Extract these as pure functions for testability
 function otelDisplayName(fieldName: string, isOtel: boolean): string {
