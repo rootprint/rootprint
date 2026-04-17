@@ -4,8 +4,4 @@
 	let { data } = $props();
 </script>
 
-<SendLogsTab
-	origin={data.origin}
-	ingestTokens={data.ingestTokens}
-	ingestIndexIds={data.ingestIndexIds}
-/>
+<SendLogsTab origin={data.origin} />

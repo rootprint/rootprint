@@ -5,6 +5,7 @@
 
 	const sections = [
 		{ href: '/administration/send-logs', label: 'Send Logs' },
+		{ href: '/administration/tokens', label: 'Tokens' },
 		{ href: '/administration/indexes', label: 'Indexes' },
 		{ href: '/administration/users', label: 'Users' },
 		{ href: '/administration/authentication', label: 'Authentication' }

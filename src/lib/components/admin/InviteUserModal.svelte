@@ -106,7 +106,7 @@
 
 			<div class="modal-action">
 				<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-				<button type="submit" class="btn btn-neutral" disabled={loading}>
+				<button type="submit" class="btn btn-primary" disabled={loading}>
 					{loading ? 'Creating...' : 'Create & Get Link'}
 				</button>
 			</div>

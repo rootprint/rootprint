@@ -1,17 +1,10 @@
 <script lang="ts">
-	import IngestTokensCard from '$lib/components/admin/IngestTokensCard.svelte';
-	import IngestTokensList from '$lib/components/admin/IngestTokensList.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import type { IngestTokenSummary } from '$lib/types';
 
 	let {
-		origin,
-		ingestTokens,
-		ingestIndexIds
+		origin
 	}: {
 		origin: string;
-		ingestTokens: IngestTokenSummary[];
-		ingestIndexIds: string[];
 	} = $props();
 
 	let endpointUrl = $derived(`${origin}/api/ingest/{indexId}`);
@@ -25,7 +18,6 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	<!-- Endpoint -->
 	<div>
 		<div class="mb-3">
 			<h2 class="text-xl font-semibold">Endpoint</h2>
@@ -41,7 +33,6 @@
 		</div>
 	</div>
 
-	<!-- Example Request -->
 	<div>
 		<div class="mb-3">
 			<h2 class="text-xl font-semibold">Example Request</h2>
@@ -58,10 +49,4 @@
 			</div>
 		</div>
 	</div>
-
-	<!-- Create Ingest Token -->
-	<IngestTokensCard indexIds={ingestIndexIds} />
-
-	<!-- Ingest Tokens List -->
-	<IngestTokensList tokens={ingestTokens} />
 </div>
