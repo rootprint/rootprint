@@ -5,8 +5,14 @@ export const signInSchema = v.object({
 	_password: v.pipe(v.string(), v.minLength(1, 'Password is required'))
 });
 
-export const changePasswordSchema = v.pipe(
+export const setupPasswordSchema = v.object({
+	token: v.pipe(v.string(), v.minLength(1, 'Invalid invite link')),
+	_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters'))
+});
+
+export const changeOwnPasswordSchema = v.pipe(
 	v.object({
+		_currentPassword: v.pipe(v.string(), v.minLength(1, 'Current password is required')),
 		_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters')),
 		_confirmPassword: v.string()
 	}),
@@ -16,14 +22,11 @@ export const changePasswordSchema = v.pipe(
 	)
 );
 
-export const setupPasswordSchema = v.object({
-	token: v.pipe(v.string(), v.minLength(1, 'Invalid invite link')),
-	_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters'))
-});
-
-export const changeOwnPasswordSchema = v.pipe(
+export const setupAdminSchema = v.pipe(
 	v.object({
-		_currentPassword: v.pipe(v.string(), v.minLength(1, 'Current password is required')),
+		name: v.pipe(v.string(), v.minLength(1, 'Name is required')),
+		username: v.pipe(v.string(), v.minLength(1, 'Username is required')),
+		email: v.pipe(v.string(), v.email('Please enter a valid email')),
 		_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters')),
 		_confirmPassword: v.string()
 	}),

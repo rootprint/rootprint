@@ -26,10 +26,6 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: 'sqlite' }),
 	user: {
 		additionalFields: {
-			mustChangePassword: {
-				type: 'boolean',
-				defaultValue: false
-			},
 			lastActive: {
 				type: 'number',
 				required: false,
@@ -100,11 +96,6 @@ export const auth = betterAuth({
 								.run();
 
 							tx.delete(inviteToken).where(eq(inviteToken.userId, accountData.userId)).run();
-
-							tx.update(user)
-								.set({ mustChangePassword: false })
-								.where(eq(user.id, accountData.userId))
-								.run();
 						});
 					} catch (e) {
 						console.error(

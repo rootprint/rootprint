@@ -100,9 +100,6 @@ describe('config', () => {
 			expect(cfg.secret).toBeTruthy();
 			expect(cfg.origin).toBe('http://localhost:5173');
 			expect(cfg.databasePath).toBe(TEST_DB_PATH);
-			expect(cfg.adminEmail).toBe('logwiz@logwiz.local');
-			expect(cfg.adminUsername).toBe('logwiz');
-			expect(cfg.adminPassword).toBeTruthy();
 			expect(cfg.inviteExpiryHours).toBe(48);
 			expect(cfg.rateLimitWindow).toBe(60);
 			expect(cfg.rateLimitMax).toBe(100);
@@ -115,9 +112,6 @@ describe('config', () => {
 				LOGWIZ_QUICKWIT_URL: 'http://localhost:7280',
 				ORIGIN: 'http://localhost:5173',
 				LOGWIZ_DATABASE_PATH: TEST_DB_PATH,
-				LOGWIZ_ADMIN_EMAIL: 'admin@example.com',
-				LOGWIZ_ADMIN_USERNAME: 'myadmin',
-				LOGWIZ_ADMIN_PASSWORD: 'securepass',
 				LOGWIZ_INVITE_EXPIRY_HOURS: '72',
 				LOGWIZ_RATE_LIMIT_WINDOW: '120',
 				LOGWIZ_RATE_LIMIT_MAX: '200',
@@ -126,9 +120,6 @@ describe('config', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const { config: cfg } = await importConfig();
 			expect(cfg.databasePath).toBe(TEST_DB_PATH);
-			expect(cfg.adminEmail).toBe('admin@example.com');
-			expect(cfg.adminUsername).toBe('myadmin');
-			expect(cfg.adminPassword).toBe('securepass');
 			expect(cfg.inviteExpiryHours).toBe(72);
 			expect(cfg.rateLimitWindow).toBe(120);
 			expect(cfg.rateLimitMax).toBe(200);

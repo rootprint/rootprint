@@ -44,8 +44,6 @@ services:
         condition: service_healthy
     environment:
       LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
-      LOGWIZ_ADMIN_USERNAME: logwiz
-      LOGWIZ_ADMIN_PASSWORD: logwiz
     healthcheck:
       test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
       interval: 10s
@@ -138,8 +136,6 @@ services:
     container_name: logwiz
     environment:
       LOGWIZ_QUICKWIT_URL: http://your-quickwit-host:7280/api/v1
-      LOGWIZ_ADMIN_USERNAME: logwiz
-      LOGWIZ_ADMIN_PASSWORD: logwiz
     healthcheck:
       test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
       interval: 10s
@@ -165,8 +161,4 @@ Run `docker compose ps` to confirm the container is healthy, then open [http://l
 
 ## Configuration
 
-Customize the deployment by setting environment variables under the `environment` key of the `logwiz` service. See the [environment variables reference](/configuration/environment-variables) for the full list, including admin credentials, rate limits, and authentication settings.
-
-<Warning>
-  Change `LOGWIZ_ADMIN_PASSWORD` from its default value before exposing Logwiz beyond your local machine.
-</Warning>
+Customize the deployment by setting environment variables under the `environment` key of the `logwiz` service. See the [environment variables reference](/configuration/environment-variables) for the full list, including rate limits and authentication settings.

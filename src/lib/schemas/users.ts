@@ -20,6 +20,5 @@ export const setUserRoleSchema = v.object({
 });
 
 export const resetPasswordSchema = v.object({
-	userId: v.pipe(v.string(), v.minLength(1)),
-	_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters'))
+	userId: v.pipe(v.string(), v.minLength(1))
 });

@@ -4,8 +4,6 @@ services:
     container_name: logwiz
     environment:
       LOGWIZ_QUICKWIT_URL: http://your-quickwit-host:7280/api/v1
-      LOGWIZ_ADMIN_USERNAME: logwiz
-      LOGWIZ_ADMIN_PASSWORD: logwiz
     healthcheck:
       test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
       interval: 10s

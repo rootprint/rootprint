@@ -1,10 +1,10 @@
 import { APIError } from 'better-auth/api';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
-import { account, inviteToken, user } from '$lib/server/db/schema';
+import { account, inviteToken } from '$lib/server/db/schema';
 import { hasGoogleAccount } from '$lib/server/services/auth.service';
 import { randomHex } from '$lib/utils/crypto';
 
@@ -135,24 +135,33 @@ export async function resetPassword(
 	headers: Headers,
 	adminId: string,
 	userId: string,
-	password: string
-) {
+	requestOrigin: string
+): Promise<{ inviteUrl: string }> {
 	if (userId === adminId) {
 		throw new Error('Cannot reset your own password');
 	}
 	if (await hasGoogleAccount(userId)) {
 		throw new Error('Cannot reset password for a Google-authenticated user');
 	}
-	try {
-		await auth.api.setUserPassword({
-			headers,
-			body: { userId, newPassword: password }
-		});
-	} catch (e) {
-		if (e instanceof APIError) {
-			throw new Error(e.message || 'Failed to reset password', { cause: e });
-		}
-		throw e;
-	}
-	await db.update(user).set({ mustChangePassword: true }).where(eq(user.id, userId));
+
+	const publicOrigin = resolvePublicOrigin(requestOrigin);
+
+	await auth.api.revokeUserSessions({ headers, body: { userId } });
+
+	await db
+		.update(account)
+		.set({ password: null })
+		.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+
+	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
+
+	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
+	const token = randomHex(32);
+	await db.insert(inviteToken).values({
+		userId,
+		token,
+		expiresAt
+	});
+
+	return { inviteUrl: buildInviteUrl(publicOrigin, token) };
 }

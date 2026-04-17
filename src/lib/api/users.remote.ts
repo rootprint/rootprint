@@ -55,7 +55,12 @@ export const resetPassword = command(resetPasswordSchema, async (data) => {
 	const admin = requireAdmin();
 	const event = getRequestEvent();
 	try {
-		await userService.resetPassword(event.request.headers, admin.id, data.userId, data._password);
+		return await userService.resetPassword(
+			event.request.headers,
+			admin.id,
+			data.userId,
+			event.url.origin
+		);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to reset password');
 	}

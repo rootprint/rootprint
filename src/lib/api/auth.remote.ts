@@ -5,7 +5,7 @@ import { command, form, getRequestEvent } from '$app/server';
 import { requireUser } from '$lib/middleware/auth';
 import {
 	changeOwnPasswordSchema,
-	changePasswordSchema,
+	setupAdminSchema,
 	setupPasswordSchema,
 	signInSchema
 } from '$lib/schemas/auth';
@@ -31,28 +31,31 @@ export const signIn = form(signInSchema, async (data, issue) => {
 	redirect(303, returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/');
 });
 
-export const signOut = command(async () => {
+export const setupAdmin = form(setupAdminSchema, async (data, issue) => {
 	const event = getRequestEvent();
-	await authService.signOut(event.request.headers);
-});
-
-export const changePassword = form(changePasswordSchema, async (data) => {
-	const currentUser = requireUser();
-
-	if (!currentUser.mustChangePassword) {
-		error(403, 'Password change not required');
-	}
-
 	try {
-		await authService.changeForcedPassword(currentUser.id, data._password);
+		await authService.setupAdmin(event.request.headers, {
+			name: data.name,
+			username: data.username,
+			email: data.email,
+			password: data._password
+		});
 	} catch (e) {
 		if (e instanceof Error) {
-			error(403, e.message);
+			if (e.message === 'admin_exists') {
+				error(403, 'Admin account already exists');
+			}
+			invalid(issue.email(e.message || 'Failed to create admin'));
+			return;
 		}
 		throw e;
 	}
-
 	redirect(303, '/');
+});
+
+export const signOut = command(async () => {
+	const event = getRequestEvent();
+	await authService.signOut(event.request.headers);
 });
 
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {

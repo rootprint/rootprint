@@ -31,21 +31,6 @@ export async function signOut(headers: Headers) {
 	await auth.api.signOut({ headers });
 }
 
-export async function changeForcedPassword(userId: string, password: string) {
-	if (await hasGoogleAccount(userId)) {
-		throw new Error('Cannot change password for a Google-authenticated user');
-	}
-
-	const hashedPw = await hashPassword(password);
-
-	await db
-		.update(account)
-		.set({ password: hashedPw })
-		.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
-
-	await db.update(user).set({ mustChangePassword: false }).where(eq(user.id, userId));
-}
-
 export async function setupPassword(
 	token: string,
 	password: string
@@ -109,5 +94,34 @@ export async function changeOwnPassword(
 			newPassword,
 			revokeOtherSessions: false
 		}
+	});
+}
+
+export async function setupAdmin(
+	headers: Headers,
+	data: { name: string; username: string; email: string; password: string }
+) {
+	const [existing] = await db
+		.select({ id: user.id })
+		.from(user)
+		.where(eq(user.role, 'admin'))
+		.limit(1);
+	if (existing) {
+		throw new Error('admin_exists');
+	}
+
+	await auth.api.createUser({
+		body: {
+			email: data.email,
+			password: data.password,
+			name: data.name,
+			role: 'admin',
+			data: { username: data.username }
+		}
+	});
+
+	await auth.api.signInEmail({
+		headers,
+		body: { email: data.email, password: data.password }
 	});
 }

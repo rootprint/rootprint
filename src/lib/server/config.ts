@@ -62,9 +62,6 @@ function loadConfig() {
 	const quickwitUrl = envRequired('LOGWIZ_QUICKWIT_URL');
 	const origin = envOptional('ORIGIN');
 	const databasePath = envString('LOGWIZ_DATABASE_PATH', './data/logwiz.db');
-	const adminEmail = envString('LOGWIZ_ADMIN_EMAIL', 'logwiz@logwiz.local');
-	const adminUsername = envString('LOGWIZ_ADMIN_USERNAME', 'logwiz');
-	const adminPassword = envString('LOGWIZ_ADMIN_PASSWORD', 'logwiz');
 	const inviteExpiryHours = envInt('LOGWIZ_INVITE_EXPIRY_HOURS', 48);
 	const rateLimitWindow = envInt('LOGWIZ_RATE_LIMIT_WINDOW', 60);
 	const rateLimitMax = envInt('LOGWIZ_RATE_LIMIT_MAX', 100);
@@ -86,9 +83,6 @@ function loadConfig() {
 		secret,
 		origin,
 		databasePath,
-		adminEmail,
-		adminUsername,
-		adminPassword,
 		inviteExpiryHours,
 		rateLimitWindow,
 		rateLimitMax,

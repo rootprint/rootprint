@@ -22,8 +22,6 @@ services:
         condition: service_healthy
     environment:
       LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
-      LOGWIZ_ADMIN_USERNAME: logwiz
-      LOGWIZ_ADMIN_PASSWORD: logwiz
     healthcheck:
       test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
       interval: 10s

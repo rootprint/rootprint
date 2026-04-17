@@ -15,17 +15,8 @@ This guide walks you through deploying Logwiz locally, signing in, and sending y
     ```
   </Step>
 
-  <Step title="Sign in">
-    Open [http://localhost:8282](http://localhost:8282) in your browser. Sign in with the default credentials:
-
-    - **Username:** `logwiz`
-    - **Password:** `logwiz`
-
-    On your first login, Logwiz prompts you to set a new password. Complete that step before continuing.
-
-    <Note>
-      Change the default credentials before deploying to any environment accessible beyond your local machine. For non-local deployments, set `LOGWIZ_ADMIN_USERNAME` and `LOGWIZ_ADMIN_PASSWORD` as environment variables before the first start so the default credentials are never used.
-    </Note>
+  <Step title="Create the admin account">
+    Open [http://localhost:8282](http://localhost:8282) in your browser. On first boot, Logwiz redirects you to the setup wizard at `/auth/setup-admin`. Enter your desired admin credentials and submit the form. You will be signed in automatically after setup completes.
   </Step>
 
   <Step title="Create an ingest token">

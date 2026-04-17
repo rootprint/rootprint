@@ -1,49 +1,35 @@
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 
 import { building } from '$app/environment';
 import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
-import { account, user } from '$lib/server/db/schema';
+import { user } from '$lib/server/db/schema';
 import { syncIndexesFromQuickwit } from '$lib/server/services/index.service';
 
-async function seedDefaultAdmin() {
-	const [existing] = await db
-		.select({ id: user.id })
-		.from(user)
-		.where(eq(user.role, 'admin'))
-		.limit(1);
-	if (existing) return;
-
-	await auth.api.createUser({
-		body: {
-			email: config.adminEmail,
-			password: config.adminPassword,
-			name: 'Admin',
-			role: 'admin',
-			data: {
-				username: config.adminUsername,
-				mustChangePassword: true
-			}
-		}
-	});
-
-	console.log(`[logwiz] Default admin created: ${config.adminUsername} / ${config.adminEmail}`);
-}
-
 if (!building) {
-	await seedDefaultAdmin().catch(console.error);
-
 	try {
 		const summaries = await syncIndexesFromQuickwit();
 		console.log(`[logwiz] Synced ${summaries.length} indexes from Quickwit`);
 	} catch (e) {
 		console.warn('[logwiz] Failed to sync indexes from Quickwit:', e);
 	}
+}
+
+let adminExistsCache = false;
+
+function hasAdmin(): boolean {
+	if (adminExistsCache) return true;
+	const [row] = db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).limit(1).all();
+	if (row) {
+		adminExistsCache = true;
+		return true;
+	}
+	return false;
 }
 
 const authLimiter = new RetryAfterRateLimiter({
@@ -66,6 +52,17 @@ const handleRateLimit: Handle = async ({ event, resolve }) => {
 };
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
+	if (
+		!event.url.pathname.startsWith('/auth/setup-admin') &&
+		!event.url.pathname.startsWith('/api/auth') &&
+		!hasAdmin()
+	) {
+		return new Response(null, {
+			status: 302,
+			headers: { Location: '/auth/setup-admin' }
+		});
+	}
+
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
 	if (session) {
@@ -82,25 +79,6 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 				.run();
 		}
 
-		// Force password change if required (skip for Google-authenticated users)
-		if (
-			session.user.mustChangePassword &&
-			!event.url.pathname.startsWith('/auth/change-password') &&
-			!event.url.pathname.startsWith('/api/auth')
-		) {
-			const [googleAccount] = db
-				.select({ id: account.id })
-				.from(account)
-				.where(and(eq(account.userId, session.user.id), eq(account.providerId, 'google')))
-				.all();
-
-			if (!googleAccount) {
-				return new Response(null, {
-					status: 302,
-					headers: { Location: '/auth/change-password' }
-				});
-			}
-		}
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });
