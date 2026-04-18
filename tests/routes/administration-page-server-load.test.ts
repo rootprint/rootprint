@@ -64,7 +64,7 @@ describe('administration route loads', () => {
 			sources: []
 		};
 
-		getAdminIndexDetail.mockReturnValue(detail);
+		getAdminIndexDetail.mockResolvedValue(detail);
 
 		const { load } = await import(indexDetailRouteModulePath);
 
@@ -75,7 +75,7 @@ describe('administration route loads', () => {
 	});
 
 	it('returns 404 when the requested administration index detail is missing', async () => {
-		getAdminIndexDetail.mockReturnValue(null);
+		getAdminIndexDetail.mockResolvedValue(null);
 
 		const { load } = await import(indexDetailRouteModulePath);
 

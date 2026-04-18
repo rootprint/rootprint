@@ -16,7 +16,7 @@ export const load: PageServerLoad = async (event) => {
 		error(404, 'Shared link not found');
 	}
 
-	assertIndexAccess(link.indexName, userRole);
+	await assertIndexAccess(link.indexName, userRole);
 
 	// Build the search page URL with stored state
 	const parsedQuery: ParsedQuery = {

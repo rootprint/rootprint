@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Search } from 'lucide-svelte';
 
-	import type { AdminIndexField } from '$lib/types';
+	import type { QuickwitField } from '$lib/types';
 
-	let { fields }: { fields: AdminIndexField[] } = $props();
+	let { fields }: { fields: QuickwitField[] } = $props();
 
 	let filter = $state('');
 

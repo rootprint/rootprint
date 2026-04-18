@@ -77,8 +77,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const data = parsed.output;
-	assertIndexAccess(data.indexId, locals.user.role);
-	const fieldConfig = getFieldConfig(data.indexId);
+	await assertIndexAccess(data.indexId, locals.user.role);
+	const fieldConfig = await getFieldConfig(data.indexId);
 
 	const client = getQuickwitClient();
 	const index = client.index(data.indexId);

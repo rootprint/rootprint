@@ -4,6 +4,6 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	return {
-		indexes: getAdminIndexSummaries()
+		indexes: await getAdminIndexSummaries()
 	};
 };

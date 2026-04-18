@@ -9,16 +9,6 @@ import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
-import { syncIndexesFromQuickwit } from '$lib/server/services/index.service';
-
-if (!building) {
-	try {
-		const summaries = await syncIndexesFromQuickwit();
-		console.log(`[logwiz] Synced ${summaries.length} indexes from Quickwit`);
-	} catch (e) {
-		console.warn('[logwiz] Failed to sync indexes from Quickwit:', e);
-	}
-}
 
 let adminExistsCache = false;
 

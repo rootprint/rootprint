@@ -6,13 +6,13 @@ import * as indexService from '$lib/server/services/index.service';
 
 export const getLogContext = command(getLogContextSchema, async (data) => {
 	const user = requireUser();
-	indexService.assertIndexAccess(data.indexId, user.role);
+	await indexService.assertIndexAccess(data.indexId, user.role);
 	return contextService.getLogContext(data.indexId, data.log, data.excludedFields);
 });
 
 export const getMoreContext = command(getMoreContextSchema, async (data) => {
 	const user = requireUser();
-	indexService.assertIndexAccess(data.indexId, user.role);
+	await indexService.assertIndexAccess(data.indexId, user.role);
 	return contextService.getMoreContext(
 		data.indexId,
 		data.log,

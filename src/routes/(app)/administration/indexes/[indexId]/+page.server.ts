@@ -5,7 +5,7 @@ import { getAdminIndexDetail } from '$lib/server/services/index.service';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const detail = getAdminIndexDetail(params.indexId);
+	const detail = await getAdminIndexDetail(params.indexId);
 
 	if (!detail) {
 		error(404, 'Index not found');

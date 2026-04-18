@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { db } from '$lib/server/db';
-import { qwIndex } from '$lib/server/db/schema';
+import { indexesMeta } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';
 
 type CheckStatus = 'ok' | 'error';
@@ -21,7 +21,7 @@ type HealthDependencies = {
 
 const defaultDependencies: HealthDependencies = {
 	checkDatabase: async () => {
-		await db.select({ id: qwIndex.id }).from(qwIndex).limit(1);
+		await db.select({ indexId: indexesMeta.indexId }).from(indexesMeta).limit(1);
 	},
 	checkQuickwit: async () => getQuickwitClient().isHealthy()
 };

@@ -77,7 +77,7 @@ export async function getLogContext(
 	noMoreAfter: boolean;
 	noMoreBefore: boolean;
 }> {
-	const config = getFieldConfig(indexId);
+	const config = await getFieldConfig(indexId);
 	const client = getQuickwitClient();
 	const index = client.index(indexId);
 
@@ -169,7 +169,7 @@ export async function getMoreContext(
 	offset: number,
 	limit: number
 ): Promise<Record<string, unknown>[]> {
-	const config = getFieldConfig(indexId);
+	const config = await getFieldConfig(indexId);
 	const client = getQuickwitClient();
 	const index = client.index(indexId);
 

@@ -25,6 +25,12 @@ export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
 
+export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): boolean {
+	if (visibility === 'hidden') return false;
+	if (visibility === 'admin') return isAdmin;
+	return true;
+}
+
 export type AdminIndexSummary = {
 	indexId: string;
 	displayName: string | null;
@@ -35,7 +41,7 @@ export type AdminIndexSummary = {
 	visibility: IndexVisibility;
 };
 
-export type AdminIndexField = {
+export type QuickwitField = {
 	name: string;
 	type: string;
 	fast: boolean | null;
@@ -46,15 +52,31 @@ export type AdminIndexField = {
 	description: string | null;
 };
 
-export type AdminIndexSource = {
+export type QuickwitSource = {
 	sourceId: string;
 	sourceType: string;
-	enabled: boolean | null;
+	enabled: boolean;
 	inputFormat: string | null;
 	numPipelines: number | null;
-	desiredNumPipelines: number | null;
-	maxNumPipelinesPerIndexer: number | null;
 	params: unknown;
+};
+
+export type QuickwitIndexMetadata = {
+	indexId: string;
+	indexUid: string | null;
+	indexUri: string | null;
+	version: string | null;
+	createTimestamp: number | null;
+	mode: string | null;
+	timestampField: string | null;
+	indexFieldPresence: boolean | null;
+	storeSource: boolean | null;
+	storeDocumentSize: boolean | null;
+	tagFields: string[] | null;
+	defaultSearchFields: string[] | null;
+	retention: unknown;
+	fields: QuickwitField[];
+	sources: QuickwitSource[];
 };
 
 export type AdminIndexDetail = {
@@ -77,14 +99,14 @@ export type AdminIndexDetail = {
 	displayName: string | null;
 	visibility: IndexVisibility;
 	contextFields: string[] | null;
-	fields: AdminIndexField[];
-	sources: AdminIndexSource[];
+	fields: QuickwitField[];
+	sources: QuickwitSource[];
 };
 
 export type SaveIndexConfigFields = {
 	levelField?: string;
 	messageField?: string;
-	tracebackField?: string;
+	tracebackField?: string | null;
 	displayName?: string | null;
 	visibility?: IndexVisibility;
 	contextFields?: string[] | null;

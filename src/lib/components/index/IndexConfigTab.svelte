@@ -142,9 +142,7 @@
 		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
 			<div>
 				<label for="cfg-level-field" class="text-sm font-medium">Level field</label>
-				<div class="mt-0.5 text-xs text-base-content/60">
-					Field that carries the log severity.
-				</div>
+				<div class="mt-0.5 text-xs text-base-content/60">Field that carries the log severity.</div>
 			</div>
 			<div>
 				<input

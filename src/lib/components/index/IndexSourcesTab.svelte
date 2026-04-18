@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { Search } from 'lucide-svelte';
 
-	import type { AdminIndexSource } from '$lib/types';
+	import type { QuickwitSource } from '$lib/types';
 
-	let { sources }: { sources: AdminIndexSource[] } = $props();
+	let { sources }: { sources: QuickwitSource[] } = $props();
 
 	let enabledOverrides = $state<Record<string, boolean>>({});
 	let filter = $state('');
 
-	function isEnabled(source: AdminIndexSource): boolean {
+	function isEnabled(source: QuickwitSource): boolean {
 		if (source.sourceId in enabledOverrides) return enabledOverrides[source.sourceId];
-		return source.enabled !== false;
+		return source.enabled;
 	}
 
 	const filtered = $derived.by(() => {
@@ -65,9 +65,7 @@
 
 				<div class="flex shrink-0 items-center gap-3 text-xs text-base-content/60">
 					<span>{source.inputFormat ?? '—'}</span>
-					<span>
-						{source.numPipelines ?? 0}/{source.desiredNumPipelines ?? 0} pipelines
-					</span>
+					<span>{source.numPipelines ?? 0} pipelines</span>
 				</div>
 
 				<input

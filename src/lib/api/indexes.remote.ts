@@ -6,14 +6,14 @@ import * as indexService from '$lib/server/services/index.service';
 
 export const getIndexFields = query(getIndexFieldsSchema, async (data) => {
 	const user = requireUser();
-	indexService.assertIndexAccess(data.indexId, user.role);
+	await indexService.assertIndexAccess(data.indexId, user.role);
 	return indexService.getIndexFields(data.indexId);
 });
 
 export const getIndexConfig = query(indexIdSchema, async ({ indexId }) => {
 	const user = requireUser();
-	indexService.assertIndexAccess(indexId, user.role);
-	return indexService.getIndexConfig(indexId);
+	await indexService.assertIndexAccess(indexId, user.role);
+	return indexService.getFieldConfig(indexId);
 });
 
 export const saveIndexConfig = form(saveIndexConfigSchema, async ({ indexId, ...fields }) => {

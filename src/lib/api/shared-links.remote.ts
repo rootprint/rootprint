@@ -6,7 +6,7 @@ import * as sharedLinkService from '$lib/server/services/shared-link.service';
 
 export const createSharedLink = command(createSharedLinkSchema, async (data) => {
 	const user = requireUser();
-	indexService.assertIndexAccess(data.indexName, user.role);
+	await indexService.assertIndexAccess(data.indexName, user.role);
 	const code = await sharedLinkService.createSharedLink(
 		user.id,
 		data.indexName,
@@ -24,9 +24,9 @@ export const resolveSharedHit = command(resolveSharedHitSchema, async (data) => 
 	const link = await sharedLinkService.resolveSharedLink(data.code);
 	if (!link) return { hit: null };
 
-	indexService.assertIndexAccess(link.indexName, user.role);
+	await indexService.assertIndexAccess(link.indexName, user.role);
 
-	const config = indexService.getFieldConfig(link.indexName);
+	const config = await indexService.getFieldConfig(link.indexName);
 	const hit = await sharedLinkService.findMatchingHit(
 		link.indexName,
 		link.logTimestamp,

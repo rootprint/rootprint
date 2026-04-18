@@ -12,7 +12,7 @@
         "nanoid": "^5.1.7",
         "overlayscrollbars": "^2.14.0",
         "overlayscrollbars-svelte": "^0.5.5",
-        "quickwit-js": "^0.3.6",
+        "quickwit-js": "^0.3.7",
         "svelte-dnd-action": "^0.9.69",
         "svelte-sonner": "^1.1.0",
         "sveltekit-rate-limiter": "^0.7.0",
@@ -905,7 +905,7 @@
 
     "queue-microtask": ["queue-microtask@1.2.3", "", {}, "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="],
 
-    "quickwit-js": ["quickwit-js@0.3.6", "", { "peerDependencies": { "typescript": "^5" } }, "sha512-+sZOGOIDp3+Aqeafy+kcWUv3rwAVSmqZOL20e8WEaPYmoeQFe+wBf/bYfuPIifCMVcdyrPOHZcIp36Kiq9/wZg=="],
+    "quickwit-js": ["quickwit-js@0.3.7", "", { "peerDependencies": { "typescript": "^5" } }, "sha512-snBeRpM9POyIL8Y5dYAWP+IlSNKd+gedGKpo4LjWyBX8toh5kzzvY5+hVd9hsEtMz99IBeNTP54NKVnVsfY71A=="],
 
     "rc": ["rc@1.2.8", "", { "dependencies": { "deep-extend": "^0.6.0", "ini": "~1.3.0", "minimist": "^1.2.0", "strip-json-comments": "~2.0.1" }, "bin": { "rc": "./cli.js" } }, "sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw=="],
 

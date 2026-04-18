@@ -35,9 +35,7 @@
 	<nav class="flex flex-col gap-5">
 		{#each groups as group (group.label)}
 			<div class="flex flex-col gap-1">
-				<div
-					class="mb-1 px-3 text-xs font-semibold tracking-wide text-base-content/60 uppercase"
-				>
+				<div class="mb-1 px-3 text-xs font-semibold tracking-wide text-base-content/60 uppercase">
 					{group.label}
 				</div>
 				{#each group.items as item (item.href)}

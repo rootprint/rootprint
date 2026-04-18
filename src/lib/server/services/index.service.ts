@@ -1,455 +1,224 @@
 import { error } from '@sveltejs/kit';
-import { and, count, eq, isNull, not, notInArray, or } from 'drizzle-orm';
-import type { FieldMapping, IndexConfig, IndexMetadata } from 'quickwit-js';
+import { eq } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
-import { qwFieldMapping, qwIndex, qwSource } from '$lib/server/db/schema';
-import { getQuickwitClient } from '$lib/server/quickwit';
-import type {
-	AdminIndexDetail,
-	AdminIndexSummary,
-	IndexVisibility,
-	SaveIndexConfigFields
+import { indexesMeta } from '$lib/server/db/schema';
+import { getIndexMetadata, listIndexMetadata } from '$lib/server/services/quickwit-index.service';
+import {
+	type AdminIndexDetail,
+	type AdminIndexSummary,
+	canAccessIndex,
+	type IndexVisibility,
+	type QuickwitField,
+	type SaveIndexConfigFields
 } from '$lib/types';
 
-function flattenFieldMappings(
-	mappings: FieldMapping[],
-	prefix = ''
-): {
-	name: string;
-	type: string;
-	fast: boolean | undefined;
-	indexed: boolean | undefined;
-	stored: boolean | undefined;
-	record: string | undefined;
-	tokenizer: string | undefined;
-}[] {
-	const result: ReturnType<typeof flattenFieldMappings> = [];
-	for (const f of mappings) {
-		const fullName = prefix ? `${prefix}.${f.name}` : f.name;
-		if (f.type === 'object' && f.field_mappings) {
-			result.push(...flattenFieldMappings(f.field_mappings, fullName));
-		} else {
-			result.push({
-				name: fullName,
-				type: f.type,
-				fast: f.fast,
-				indexed: f.indexed,
-				stored: f.stored,
-				record: f.record,
-				tokenizer: f.tokenizer
-			});
-		}
+const OTEL_INDEX_PREFIX = 'otel-logs-';
+
+type MetaDefaults = {
+	displayName: string | null;
+	visibility: IndexVisibility;
+	levelField: string;
+	messageField: string;
+	tracebackField: string | null;
+	contextFields: string[] | null;
+};
+
+function defaultsFor(indexId: string): MetaDefaults {
+	if (indexId.startsWith(OTEL_INDEX_PREFIX)) {
+		return {
+			displayName: null,
+			visibility: 'all',
+			levelField: 'severity_text',
+			messageField: 'body',
+			tracebackField: 'attributes.exception.stacktrace',
+			contextFields: null
+		};
 	}
-	return result;
-}
-
-function getIndexSummaries(): AdminIndexSummary[] {
-	const results = db
-		.select({
-			id: qwIndex.id,
-			indexId: qwIndex.indexId,
-			displayName: qwIndex.displayName,
-			mode: qwIndex.mode,
-			createTimestamp: qwIndex.createTimestamp,
-			visibility: qwIndex.visibility
-		})
-		.from(qwIndex)
-		.all();
-
-	const fieldCounts = db
-		.select({
-			indexId: qwFieldMapping.indexId,
-			count: count()
-		})
-		.from(qwFieldMapping)
-		.groupBy(qwFieldMapping.indexId)
-		.all();
-
-	const sourceCounts = db
-		.select({
-			indexId: qwSource.indexId,
-			count: count()
-		})
-		.from(qwSource)
-		.groupBy(qwSource.indexId)
-		.all();
-
-	const fieldCountMap = new Map(fieldCounts.map((r) => [r.indexId, r.count]));
-	const sourceCountMap = new Map(sourceCounts.map((r) => [r.indexId, r.count]));
-
-	return results.map((r) => ({
-		indexId: r.indexId,
-		displayName: r.displayName,
-		fieldCount: fieldCountMap.get(r.id) ?? 0,
-		sourceCount: sourceCountMap.get(r.id) ?? 0,
-		mode: r.mode,
-		createTimestamp: r.createTimestamp,
-		visibility: r.visibility as IndexVisibility
-	}));
-}
-
-export function getFieldConfig(indexId: string) {
-	const [row] = db
-		.select({
-			id: qwIndex.id,
-			levelField: qwIndex.levelField,
-			timestampField: qwIndex.timestampField,
-			messageField: qwIndex.messageField,
-			tracebackField: qwIndex.tracebackField,
-			contextFields: qwIndex.contextFields
-		})
-		.from(qwIndex)
-		.where(eq(qwIndex.indexId, indexId))
-		.all();
-
-	const internalId = row?.id ?? null;
-
-	const fastJsonFields: string[] = [];
-	if (internalId !== null) {
-		const rows = db
-			.select({ name: qwFieldMapping.name })
-			.from(qwFieldMapping)
-			.where(
-				and(
-					eq(qwFieldMapping.indexId, internalId),
-					eq(qwFieldMapping.type, 'json'),
-					or(eq(qwFieldMapping.fast, true), isNull(qwFieldMapping.fast))
-				)
-			)
-			.all();
-		for (const r of rows) {
-			fastJsonFields.push(r.name);
-		}
-	}
-
 	return {
-		id: internalId,
-		levelField: row?.levelField ?? 'level',
-		timestampField: row?.timestampField ?? 'timestamp',
-		messageField: row?.messageField ?? 'message',
-		tracebackField: row?.tracebackField ?? null,
-		contextFields: row?.contextFields ?? null,
-		fastJsonFields
+		displayName: null,
+		visibility: 'all',
+		levelField: 'level',
+		messageField: 'message',
+		tracebackField: null,
+		contextFields: null
 	};
 }
 
-function buildIndexValues(meta: IndexMetadata, cfg: IndexConfig) {
-	const doc = cfg.doc_mapping;
-	const extra = cfg as unknown as Record<string, unknown>;
+type MetaRow = typeof indexesMeta.$inferSelect;
+
+function readMetaRow(indexId: string): MetaRow | undefined {
+	const [row] = db.select().from(indexesMeta).where(eq(indexesMeta.indexId, indexId)).all();
+	return row;
+}
+
+function readMetaMap(): Map<string, MetaRow> {
+	return new Map(
+		db
+			.select()
+			.from(indexesMeta)
+			.all()
+			.map((r) => [r.indexId, r])
+	);
+}
+
+function metaWithDefaults(indexId: string): MetaDefaults {
+	const row = readMetaRow(indexId);
+	const defaults = defaultsFor(indexId);
+	if (!row) return defaults;
 	return {
-		indexUid: meta.index_uid,
-		indexUri: cfg.index_uri ?? null,
-		version: cfg.version,
-		createTimestamp: meta.create_timestamp ?? null,
-		timestampField: doc.timestamp_field ?? null,
-		partitionKey: doc.partition_key ?? null,
-		maxNumPartitions: doc.max_num_partitions ?? 0,
-		mode: doc.mode ?? null,
-		indexFieldPresence: doc.index_field_presence ?? null,
-		storeSource: doc.store_source ?? null,
-		storeDocumentSize: doc.store_document_size ?? null,
-		docMappingUid: doc.doc_mapping_uid ?? null,
-		tagFields: doc.tag_fields ?? null,
-		defaultSearchFields: cfg.search_settings?.default_search_fields ?? null,
-		dynamicMapping: doc.dynamic_mapping ?? null,
-		tokenizers: doc.tokenizers ?? null,
-		indexingSettings: cfg.indexing_settings ?? null,
-		ingestSettings: extra.ingest_settings ?? null,
-		retention: cfg.retention ?? null,
-		rawFieldMappings: doc.field_mappings ?? null
+		displayName: row.displayName ?? defaults.displayName,
+		visibility: row.visibility,
+		levelField: row.levelField,
+		messageField: row.messageField,
+		tracebackField: row.tracebackField ?? defaults.tracebackField,
+		contextFields: row.contextFields ?? defaults.contextFields
 	};
 }
 
-export async function syncIndexesFromQuickwit() {
-	const client = getQuickwitClient();
+// JSON fields are "fast" unless explicitly fast=false; other fields require fast=true.
+function isFastField(f: QuickwitField): boolean {
+	return f.type === 'json' ? f.fast !== false : f.fast === true;
+}
 
-	// Fetch all data from Quickwit first (async)
-	const allIndexes = await client.listIndexes();
-	const syncedIndexIds = allIndexes.map((m) => m.index_config.index_id);
+function fastJsonFieldNames(fields: QuickwitField[]): string[] {
+	return fields.filter((f) => f.type === 'json' && f.fast !== false).map((f) => f.name);
+}
 
-	// All DB operations are synchronous (SQLite driver is synchronous)
-	db.transaction((tx) => {
-		for (const meta of allIndexes) {
-			const cfg = meta.index_config;
-			const values = buildIndexValues(meta, cfg);
+function strictFastFieldNames(fields: QuickwitField[]): string[] {
+	return fields.filter((f) => f.fast === true).map((f) => f.name);
+}
 
-			const indexId = cfg.index_id;
-			const otelDefaults = indexId.startsWith('otel-logs-')
-				? {
-						levelField: 'severity_text',
-						messageField: 'body',
-						tracebackField: 'attributes.exception.stacktrace'
-					}
-				: {};
+export async function getAdminIndexSummaries(): Promise<AdminIndexSummary[]> {
+	const live = await listIndexMetadata();
+	const metaMap = readMetaMap();
 
-			tx.insert(qwIndex)
-				.values({ indexId, ...values, ...otelDefaults })
-				.onConflictDoUpdate({
-					target: qwIndex.indexId,
-					set: { ...values, updatedAt: new Date() }
-				})
-				.run();
-
-			const [row] = tx
-				.select({ id: qwIndex.id })
-				.from(qwIndex)
-				.where(eq(qwIndex.indexId, indexId))
-				.all();
-
-			if (!row) throw new Error(`Failed to resolve id for index: ${indexId}`);
-			const parentId = row.id;
-
-			// Upsert field mappings
-			const flatFields = flattenFieldMappings(cfg.doc_mapping.field_mappings ?? []);
-			for (const f of flatFields) {
-				tx.insert(qwFieldMapping)
-					.values({
-						indexId: parentId,
-						name: f.name,
-						type: f.type,
-						fast: f.fast ?? null,
-						indexed: f.indexed ?? null,
-						stored: f.stored ?? null,
-						record: f.record ?? null,
-						tokenizer: f.tokenizer ?? null
-					})
-					.onConflictDoUpdate({
-						target: [qwFieldMapping.indexId, qwFieldMapping.name],
-						set: {
-							type: f.type,
-							fast: f.fast ?? null,
-							indexed: f.indexed ?? null,
-							stored: f.stored ?? null,
-							record: f.record ?? null,
-							tokenizer: f.tokenizer ?? null
-						}
-					})
-					.run();
-			}
-			// Delete stale fields
-			const fieldNames = flatFields.map((f) => f.name);
-			if (fieldNames.length > 0) {
-				tx.delete(qwFieldMapping)
-					.where(
-						and(eq(qwFieldMapping.indexId, parentId), notInArray(qwFieldMapping.name, fieldNames))
-					)
-					.run();
-			} else {
-				tx.delete(qwFieldMapping).where(eq(qwFieldMapping.indexId, parentId)).run();
-			}
-
-			// Upsert sources
-			const sources = meta.sources ?? [];
-			for (const s of sources) {
-				const extra = s as unknown as Record<string, unknown>;
-				tx.insert(qwSource)
-					.values({
-						indexId: parentId,
-						sourceId: s.source_id,
-						sourceType: s.source_type,
-						enabled: s.enabled ?? true,
-						inputFormat: s.input_format ?? null,
-						numPipelines: s.num_pipelines ?? null,
-						desiredNumPipelines: (extra.desired_num_pipelines as number) ?? null,
-						maxNumPipelinesPerIndexer: (extra.max_num_pipelines_per_indexer as number) ?? null,
-						version: s.version ?? null,
-						params: s.params ?? null,
-						transform: s.transform ?? null
-					})
-					.onConflictDoUpdate({
-						target: [qwSource.indexId, qwSource.sourceId],
-						set: {
-							sourceType: s.source_type,
-							enabled: s.enabled ?? true,
-							inputFormat: s.input_format ?? null,
-							numPipelines: s.num_pipelines ?? null,
-							desiredNumPipelines: (extra.desired_num_pipelines as number) ?? null,
-							maxNumPipelinesPerIndexer: (extra.max_num_pipelines_per_indexer as number) ?? null,
-							version: s.version ?? null,
-							params: s.params ?? null,
-							transform: s.transform ?? null
-						}
-					})
-					.run();
-			}
-			// Delete stale sources
-			const sourceIds = sources.map((s) => s.source_id);
-			if (sourceIds.length > 0) {
-				tx.delete(qwSource)
-					.where(and(eq(qwSource.indexId, parentId), notInArray(qwSource.sourceId, sourceIds)))
-					.run();
-			} else {
-				tx.delete(qwSource).where(eq(qwSource.indexId, parentId)).run();
-			}
-		}
-
-		// Remove indexes no longer in Quickwit (cascades to field mappings and sources)
-		if (syncedIndexIds.length > 0) {
-			tx.delete(qwIndex).where(notInArray(qwIndex.indexId, syncedIndexIds)).run();
-		} else {
-			tx.delete(qwIndex).run();
-		}
+	return live.map((m) => {
+		const meta = metaMap.get(m.indexId);
+		return {
+			indexId: m.indexId,
+			displayName: meta?.displayName ?? null,
+			fieldCount: m.fields.length,
+			sourceCount: m.sources.length,
+			mode: m.mode,
+			createTimestamp: m.createTimestamp,
+			visibility: meta?.visibility ?? 'all'
+		};
 	});
-
-	return getIndexSummaries();
 }
 
-export function getIndexes(userRole: string | null | undefined) {
-	const visibilityFilter =
-		userRole === 'admin' ? not(eq(qwIndex.visibility, 'hidden')) : eq(qwIndex.visibility, 'all');
+export async function getIndexes(userRole: string | null | undefined) {
+	const live = await listIndexMetadata();
+	const metaMap = readMetaMap();
 
-	const rows = db
-		.select({
-			indexId: qwIndex.indexId,
-			indexUri: qwIndex.indexUri,
-			displayName: qwIndex.displayName,
-			visibility: qwIndex.visibility
+	const isAdmin = userRole === 'admin';
+	return live
+		.map((m) => {
+			const meta = metaMap.get(m.indexId);
+			return {
+				indexId: m.indexId,
+				indexUri: m.indexUri ?? '',
+				displayName: meta?.displayName ?? null,
+				visibility: meta?.visibility ?? 'all'
+			};
 		})
-		.from(qwIndex)
-		.where(visibilityFilter)
-		.all();
-
-	return rows.map((r) => ({
-		indexId: r.indexId,
-		indexUri: r.indexUri ?? '',
-		displayName: r.displayName,
-		visibility: r.visibility as IndexVisibility
-	}));
+		.filter((i) => canAccessIndex(i.visibility, isAdmin));
 }
 
-export function getIndexFields(indexId: string) {
-	const [idx] = db
-		.select({
-			id: qwIndex.id,
-			indexingSettings: qwIndex.indexingSettings
-		})
-		.from(qwIndex)
-		.where(eq(qwIndex.indexId, indexId))
-		.all();
+export async function getAdminIndexIds(): Promise<string[]> {
+	const live = await listIndexMetadata();
+	return live.map((m) => m.indexId);
+}
 
-	if (!idx) return { fields: [] };
-
-	const fields = db
-		.select({
-			name: qwFieldMapping.name,
-			type: qwFieldMapping.type,
-			fast: qwFieldMapping.fast
-		})
-		.from(qwFieldMapping)
-		.where(eq(qwFieldMapping.indexId, idx.id))
-		.all();
+export async function getFieldConfig(indexId: string) {
+	const meta = metaWithDefaults(indexId);
+	const live = await getIndexMetadata(indexId);
+	const fields = live?.fields ?? [];
 
 	return {
-		fields: fields.map((f) => ({
+		indexId,
+		levelField: meta.levelField,
+		timestampField: live?.timestampField ?? 'timestamp',
+		messageField: meta.messageField,
+		tracebackField: meta.tracebackField,
+		contextFields: meta.contextFields,
+		fastFieldNames: strictFastFieldNames(fields),
+		fastJsonFields: fastJsonFieldNames(fields)
+	};
+}
+
+export async function getIndexFields(indexId: string) {
+	const live = await getIndexMetadata(indexId);
+	if (!live) return { fields: [] };
+
+	return {
+		fields: live.fields.map((f) => ({
 			name: f.name,
 			type: f.type,
-			fast: f.type === 'json' ? f.fast !== false : f.fast === true
+			fast: isFastField(f)
 		}))
 	};
 }
 
-export function getIndexConfig(indexId: string) {
-	const { id: _id, ...config } = getFieldConfig(indexId);
-	return config;
-}
-
 export async function saveIndexConfig(indexId: string, fields: SaveIndexConfigFields) {
+	const defaults = defaultsFor(indexId);
+	const provided = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
+	const updatedAt = new Date();
 	await db
-		.update(qwIndex)
-		.set({ ...fields, updatedAt: new Date() })
-		.where(eq(qwIndex.indexId, indexId));
-}
-
-export function getAdminIndexDetail(indexId: string): AdminIndexDetail | null {
-	const [idx] = db
-		.select({
-			id: qwIndex.id,
-			indexId: qwIndex.indexId,
-			indexUid: qwIndex.indexUid,
-			indexUri: qwIndex.indexUri,
-			version: qwIndex.version,
-			createTimestamp: qwIndex.createTimestamp,
-			timestampField: qwIndex.timestampField,
-			mode: qwIndex.mode,
-			indexFieldPresence: qwIndex.indexFieldPresence,
-			storeSource: qwIndex.storeSource,
-			storeDocumentSize: qwIndex.storeDocumentSize,
-			tagFields: qwIndex.tagFields,
-			defaultSearchFields: qwIndex.defaultSearchFields,
-			retention: qwIndex.retention,
-			levelField: qwIndex.levelField,
-			messageField: qwIndex.messageField,
-			tracebackField: qwIndex.tracebackField,
-			displayName: qwIndex.displayName,
-			visibility: qwIndex.visibility,
-			contextFields: qwIndex.contextFields
+		.insert(indexesMeta)
+		.values({
+			indexId,
+			levelField: defaults.levelField,
+			messageField: defaults.messageField,
+			tracebackField: defaults.tracebackField,
+			...provided,
+			updatedAt
 		})
-		.from(qwIndex)
-		.where(eq(qwIndex.indexId, indexId))
-		.all();
-
-	if (!idx) return null;
-
-	const fields = db
-		.select({
-			name: qwFieldMapping.name,
-			type: qwFieldMapping.type,
-			fast: qwFieldMapping.fast,
-			indexed: qwFieldMapping.indexed,
-			stored: qwFieldMapping.stored,
-			record: qwFieldMapping.record,
-			tokenizer: qwFieldMapping.tokenizer,
-			description: qwFieldMapping.description
-		})
-		.from(qwFieldMapping)
-		.where(eq(qwFieldMapping.indexId, idx.id))
-		.all();
-
-	const sources = db
-		.select({
-			sourceId: qwSource.sourceId,
-			sourceType: qwSource.sourceType,
-			enabled: qwSource.enabled,
-			inputFormat: qwSource.inputFormat,
-			numPipelines: qwSource.numPipelines,
-			desiredNumPipelines: qwSource.desiredNumPipelines,
-			maxNumPipelinesPerIndexer: qwSource.maxNumPipelinesPerIndexer,
-			params: qwSource.params
-		})
-		.from(qwSource)
-		.where(eq(qwSource.indexId, idx.id))
-		.all();
-
-	const { id: _id, ...detail } = idx;
-	return { ...detail, visibility: detail.visibility as IndexVisibility, fields, sources };
+		.onConflictDoUpdate({
+			target: indexesMeta.indexId,
+			set: { ...provided, updatedAt }
+		});
 }
 
-export function getAdminIndexSummaries(): AdminIndexSummary[] {
-	return getIndexSummaries();
+export async function getAdminIndexDetail(indexId: string): Promise<AdminIndexDetail | null> {
+	const live = await getIndexMetadata(indexId);
+	if (!live) return null;
+
+	const meta = metaWithDefaults(indexId);
+
+	return {
+		indexId: live.indexId,
+		indexUid: live.indexUid,
+		indexUri: live.indexUri,
+		version: live.version,
+		createTimestamp: live.createTimestamp,
+		timestampField: live.timestampField,
+		mode: live.mode,
+		indexFieldPresence: live.indexFieldPresence,
+		storeSource: live.storeSource,
+		storeDocumentSize: live.storeDocumentSize,
+		tagFields: live.tagFields,
+		defaultSearchFields: live.defaultSearchFields,
+		retention: live.retention,
+		levelField: meta.levelField,
+		messageField: meta.messageField,
+		tracebackField: meta.tracebackField,
+		displayName: meta.displayName,
+		visibility: meta.visibility,
+		contextFields: meta.contextFields,
+		fields: live.fields,
+		sources: live.sources
+	};
 }
 
-export function getAdminIndexIds(): string[] {
-	return db
-		.select({ indexId: qwIndex.indexId })
-		.from(qwIndex)
-		.all()
-		.map((r) => r.indexId);
-}
+export async function assertIndexAccess(
+	indexId: string,
+	userRole: string | null | undefined
+): Promise<void> {
+	const isAdmin = userRole === 'admin';
+	const visibility = readMetaRow(indexId)?.visibility ?? 'all';
+	if (!canAccessIndex(visibility, isAdmin)) error(403, 'Index not accessible');
 
-export function assertIndexAccess(indexId: string, userRole: string | null | undefined) {
-	const [idx] = db
-		.select({ visibility: qwIndex.visibility })
-		.from(qwIndex)
-		.where(eq(qwIndex.indexId, indexId))
-		.all();
-
-	if (!idx) error(403, 'Index not accessible');
-
-	if (idx.visibility === 'hidden') {
-		error(403, 'Index not accessible');
-	}
-	if (idx.visibility === 'admin' && userRole !== 'admin') {
-		error(403, 'Index not accessible');
-	}
+	const live = await getIndexMetadata(indexId);
+	if (!live) error(403, 'Index not accessible');
 }

@@ -20,9 +20,7 @@
 	);
 
 	function toggle(id: string) {
-		selected = selected.includes(id)
-			? selected.filter((x) => x !== id)
-			: [...selected, id];
+		selected = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
 	}
 
 	function toggleAllFiltered() {

@@ -1,11 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { and, eq, inArray } from 'drizzle-orm';
 import type { BucketAggregationResult } from 'quickwit-js';
 import { AggregationBuilder, ValidationError } from 'quickwit-js';
 
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import { db } from '$lib/server/db';
-import { qwFieldMapping } from '$lib/server/db/schema';
 import { getQuickwitClient } from '$lib/server/quickwit';
 import { getFieldConfig } from '$lib/server/services/index.service';
 import type { QuickFilterBucket } from '$lib/types';
@@ -38,27 +35,14 @@ function resolveTimestamps(data: {
 	return { startTs: resolved.startTs, endTs: resolved.endTs };
 }
 
-async function partitionFastFields(
-	internalId: number | null,
+function partitionFastFields(
+	fastFieldNames: string[],
 	requestedFields: string[],
 	fastJsonFields: string[]
-): Promise<{ fast: string[]; unsupported: string[] }> {
+): { fast: string[]; unsupported: string[] } {
 	if (requestedFields.length === 0) return { fast: [], unsupported: [] };
-	if (internalId === null) return { fast: [], unsupported: requestedFields };
 
-	const fastRows = await db
-		.select({ name: qwFieldMapping.name })
-		.from(qwFieldMapping)
-		.where(
-			and(
-				eq(qwFieldMapping.indexId, internalId),
-				eq(qwFieldMapping.fast, true),
-				inArray(qwFieldMapping.name, requestedFields)
-			)
-		);
-
-	const fastSet = new Set(fastRows.map((r) => r.name));
-
+	const fastSet = new Set(fastFieldNames);
 	for (const f of requestedFields) {
 		if (!fastSet.has(f) && fastJsonFields.some((j) => f.startsWith(`${j}.`))) {
 			fastSet.add(f);
@@ -79,7 +63,7 @@ function rethrowValidationError(e: unknown): never {
 }
 
 export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: string[] }) {
-	const config = getFieldConfig(data.indexId);
+	const config = await getFieldConfig(data.indexId);
 	const client = getQuickwitClient();
 	const index = client.index(data.indexId);
 
@@ -134,8 +118,12 @@ export async function searchFieldValues(data: {
 	endTimestamp?: number;
 	timeRange?: string;
 }) {
-	const config = getFieldConfig(data.indexId);
-	const { unsupported } = await partitionFastFields(config.id, [data.field], config.fastJsonFields);
+	const config = await getFieldConfig(data.indexId);
+	const { unsupported } = partitionFastFields(
+		config.fastFieldNames,
+		[data.field],
+		config.fastJsonFields
+	);
 	if (unsupported.length > 0) {
 		return { values: [], totalHits: 0, unsupported: true };
 	}
@@ -178,7 +166,7 @@ export async function searchLogHistogram(data: {
 	endTimestamp?: number;
 	timeRange?: string;
 }) {
-	const config = getFieldConfig(data.indexId);
+	const config = await getFieldConfig(data.indexId);
 	const client = getQuickwitClient();
 	const index = client.index(data.indexId);
 
