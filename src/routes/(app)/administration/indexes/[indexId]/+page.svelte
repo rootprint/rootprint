@@ -40,7 +40,7 @@
 		</div>
 	</header>
 
-	<IndexStatsRow />
+	<IndexStatsRow stats={data.stats} />
 
 	<IndexTabs
 		{activeTab}

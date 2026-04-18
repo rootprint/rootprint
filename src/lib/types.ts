@@ -254,3 +254,15 @@ export type AuthProviderRow = {
 	statusLine: string | null;
 	editHref: string;
 };
+
+export type IndexStatsCard = {
+	ingestion24h: {
+		value: number | null;
+		deltaPct: number | null;
+	};
+	size: {
+		bytes: number;
+		numSplits: number;
+		compressionRatio: number | null;
+	};
+};

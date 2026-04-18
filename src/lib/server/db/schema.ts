@@ -147,4 +147,22 @@ export const appSettings = sqliteTable('app_settings', {
 		.$onUpdate(() => new Date())
 });
 
+export const indexStatsSnapshot = sqliteTable(
+	'index_stats_snapshot',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		indexId: text('index_id').notNull(),
+		capturedAt: integer('captured_at', { mode: 'timestamp' }).notNull(),
+		numDocs: integer('num_docs').notNull(),
+		sizeBytes: integer('size_bytes').notNull(),
+		uncompressedBytes: integer('uncompressed_bytes').notNull(),
+		numSplits: integer('num_splits').notNull(),
+		minTimestamp: integer('min_timestamp'),
+		maxTimestamp: integer('max_timestamp')
+	},
+	(table) => [
+		index('index_stats_snapshot_index_captured').on(table.indexId, table.capturedAt)
+	]
+);
+
 export * from './auth.schema';

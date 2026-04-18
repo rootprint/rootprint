@@ -8,11 +8,20 @@ vi.mock('$lib/server/services/index.service', () => ({
 	getAdminIndexDetail: vi.fn()
 }));
 
+vi.mock('$lib/server/services/index-stats.service', () => ({
+	getIndexStatsCard: vi.fn()
+}));
+
 import { requireAdmin } from '$lib/middleware/auth';
 import * as indexService from '$lib/server/services/index.service';
+import * as indexStatsService from '$lib/server/services/index-stats.service';
 
 const getAdminIndexDetail = vi.mocked(
 	(indexService as unknown as { getAdminIndexDetail: ReturnType<typeof vi.fn> }).getAdminIndexDetail
+);
+const getIndexStatsCard = vi.mocked(
+	(indexStatsService as unknown as { getIndexStatsCard: ReturnType<typeof vi.fn> })
+		.getIndexStatsCard
 );
 const administrationLayoutRouteModulePath = '../../src/routes/(app)/administration/+layout.server';
 const indexDetailRouteModulePath =
@@ -64,18 +73,26 @@ describe('administration route loads', () => {
 			sources: []
 		};
 
+		const stats = {
+			ingestion24h: { value: 100, deltaPct: 5 },
+			size: { bytes: 1024, numSplits: 2, compressionRatio: 3.4 }
+		};
+
 		getAdminIndexDetail.mockResolvedValue(detail);
+		getIndexStatsCard.mockResolvedValue(stats);
 
 		const { load } = await import(indexDetailRouteModulePath);
 
 		await expect(
 			load({ params: { indexId: 'logs' } } as Parameters<typeof load>[0])
-		).resolves.toEqual({ detail });
+		).resolves.toEqual({ detail, stats });
 		expect(getAdminIndexDetail).toHaveBeenCalledWith('logs');
+		expect(getIndexStatsCard).toHaveBeenCalledWith('logs');
 	});
 
 	it('returns 404 when the requested administration index detail is missing', async () => {
 		getAdminIndexDetail.mockResolvedValue(null);
+		getIndexStatsCard.mockResolvedValue(null);
 
 		const { load } = await import(indexDetailRouteModulePath);
 
