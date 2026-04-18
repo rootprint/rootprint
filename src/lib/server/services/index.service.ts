@@ -1,8 +1,18 @@
 import { error } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { NotFoundError } from 'quickwit-js';
 
 import { db } from '$lib/server/db';
-import { indexesMeta } from '$lib/server/db/schema';
+import {
+	indexesMeta,
+	indexStatsSnapshot,
+	ingestToken,
+	savedQuery,
+	searchHistory,
+	sharedLink,
+	userPreference
+} from '$lib/server/db/schema';
+import { getQuickwitClient } from '$lib/server/quickwit';
 import { getIndexMetadata, listIndexMetadata } from '$lib/server/services/quickwit-index.service';
 import {
 	type AdminIndexDetail,
@@ -221,4 +231,48 @@ export async function assertIndexAccess(
 
 	const live = await getIndexMetadata(indexId);
 	if (!live) error(403, 'Index not accessible');
+}
+
+export async function deleteIndex(indexId: string): Promise<void> {
+	try {
+		await getQuickwitClient().deleteIndex(indexId);
+	} catch (e) {
+		if (e instanceof NotFoundError) error(404, 'Index not found');
+		throw e;
+	}
+
+	try {
+		db.transaction((tx) => {
+			tx.delete(indexesMeta).where(eq(indexesMeta.indexId, indexId)).run();
+			tx.delete(indexStatsSnapshot).where(eq(indexStatsSnapshot.indexId, indexId)).run();
+			tx.delete(userPreference).where(eq(userPreference.indexName, indexId)).run();
+			tx.delete(searchHistory).where(eq(searchHistory.indexName, indexId)).run();
+			tx.delete(savedQuery).where(eq(savedQuery.indexName, indexId)).run();
+			tx.delete(sharedLink).where(eq(sharedLink.indexName, indexId)).run();
+
+			// Ingest tokens: global tokens (null allowlist) are untouched. For scoped tokens,
+			// remove this index from the allowlist. If the allowlist becomes empty, delete the
+			// token — empty allowlist is treated as global scope by isIngestScopeAllowed, so
+			// leaving one would silently escalate the token's privileges.
+			const scoped = tx
+				.select({ id: ingestToken.id, indexAllowlist: ingestToken.indexAllowlist })
+				.from(ingestToken)
+				.all()
+				.filter((r) => r.indexAllowlist?.includes(indexId));
+
+			for (const row of scoped) {
+				const remaining = (row.indexAllowlist ?? []).filter((i) => i !== indexId);
+				if (remaining.length === 0) {
+					tx.delete(ingestToken).where(eq(ingestToken.id, row.id)).run();
+				} else {
+					tx.update(ingestToken)
+						.set({ indexAllowlist: remaining })
+						.where(eq(ingestToken.id, row.id))
+						.run();
+				}
+			}
+		});
+	} catch (e) {
+		console.error(`[deleteIndex] local cleanup failed for ${indexId}:`, e);
+	}
 }

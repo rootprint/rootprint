@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { RefreshCw, Trash2 } from 'lucide-svelte';
+	import { Trash2 } from 'lucide-svelte';
 
 	import { page } from '$app/state';
+	import DeleteIndexModal from '$lib/components/admin/DeleteIndexModal.svelte';
 	import IndexConfigTab from '$lib/components/index/IndexConfigTab.svelte';
 	import IndexFieldsTab from '$lib/components/index/IndexFieldsTab.svelte';
 	import IndexOverviewTab from '$lib/components/index/IndexOverviewTab.svelte';
@@ -11,6 +12,8 @@
 	import { formatEpochLocale } from '$lib/utils/time';
 
 	let { data } = $props();
+
+	let deleteOpen = $state(false);
 
 	const activeTab: IndexDetailTab = $derived.by(() => {
 		const tab = page.url.searchParams.get('tab');
@@ -29,11 +32,7 @@
 			</p>
 		</div>
 		<div class="flex shrink-0 items-center gap-2">
-			<button type="button" class="btn btn-sm">
-				<RefreshCw size={14} />
-				Refresh
-			</button>
-			<button type="button" class="btn text-error btn-outline btn-sm">
+			<button type="button" class="btn btn-error btn-sm" onclick={() => (deleteOpen = true)}>
 				<Trash2 size={14} />
 				Delete
 			</button>
@@ -58,3 +57,5 @@
 		<IndexConfigTab detail={data.detail} />
 	{/if}
 </div>
+
+<DeleteIndexModal bind:open={deleteOpen} indexId={data.detail.indexId} />
