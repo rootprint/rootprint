@@ -1,55 +1,91 @@
 <script lang="ts">
+	import { Search } from 'lucide-svelte';
+
 	import type { AdminIndexSource } from '$lib/types';
 
 	let { sources }: { sources: AdminIndexSource[] } = $props();
+
+	let enabledOverrides = $state<Record<string, boolean>>({});
+	let filter = $state('');
+
+	function isEnabled(source: AdminIndexSource): boolean {
+		if (source.sourceId in enabledOverrides) return enabledOverrides[source.sourceId];
+		return source.enabled !== false;
+	}
+
+	const filtered = $derived.by(() => {
+		const q = filter.trim().toLowerCase();
+		if (!q) return sources;
+		return sources.filter((s) => s.sourceId.toLowerCase().includes(q));
+	});
+
+	const countLabel = $derived.by(() => {
+		if (filter.trim().length > 0) {
+			return `${filtered.length} of ${sources.length}`;
+		}
+		return `${sources.length} source${sources.length === 1 ? '' : 's'}`;
+	});
+
+	function toggle(sourceId: string, value: boolean) {
+		enabledOverrides[sourceId] = value;
+	}
 </script>
 
-<div class="mb-3 text-xs text-base-content/50">
-	{sources.length} source{sources.length === 1 ? '' : 's'} configured
-</div>
-<div class="flex flex-col gap-2">
-	{#each sources as source (source.sourceId)}
-		<div class="rounded border border-base-300 p-3" class:opacity-50={source.enabled === false}>
-			<div class="mb-2 flex items-center justify-between">
-				<div class="flex items-center gap-2">
-					<span class="font-medium">{source.sourceId}</span>
-					<span class="badge badge-sm">{source.sourceType}</span>
+<section>
+	<p class="mb-3 text-sm text-base-content/60">Data sources ingesting into this index</p>
+
+	<div class="mb-3 flex flex-wrap items-center gap-3">
+		<label class="input-bordered input input-sm flex flex-1 items-center gap-2">
+			<Search size={14} class="opacity-60" />
+			<input
+				type="search"
+				class="grow"
+				placeholder="Search sources…"
+				aria-label="Search sources"
+				bind:value={filter}
+			/>
+		</label>
+
+		<span class="text-sm text-base-content/60">{countLabel}</span>
+	</div>
+
+	<div class="divide-y divide-base-300 rounded-box border border-base-300">
+		{#each filtered as source (source.sourceId)}
+			{@const enabled = isEnabled(source)}
+			<div
+				class="flex min-h-14 items-center gap-3 px-4 py-3 first:rounded-t-box last:rounded-b-box hover:bg-base-200/40"
+				class:opacity-60={!enabled}
+			>
+				<div class="min-w-0 flex-1">
+					<div class="truncate text-sm font-semibold">{source.sourceId}</div>
+					<div class="mt-0.5">
+						<span class="badge badge-sm">{source.sourceType}</span>
+					</div>
 				</div>
-				{#if source.enabled !== false}
-					<span class="text-xs text-success">● enabled</span>
+
+				<div class="flex shrink-0 items-center gap-3 text-xs text-base-content/60">
+					<span>{source.inputFormat ?? '—'}</span>
+					<span>
+						{source.numPipelines ?? 0}/{source.desiredNumPipelines ?? 0} pipelines
+					</span>
+				</div>
+
+				<input
+					type="checkbox"
+					class="toggle shrink-0 toggle-sm toggle-success"
+					aria-label="Enable source {source.sourceId}"
+					checked={enabled}
+					onchange={(e) => toggle(source.sourceId, e.currentTarget.checked)}
+				/>
+			</div>
+		{:else}
+			<div class="py-10 text-center text-sm text-base-content/60">
+				{#if filter.trim() !== ''}
+					No sources match your search.
 				{:else}
-					<span class="text-xs text-error">● disabled</span>
+					No sources configured.
 				{/if}
 			</div>
-			<div class="grid grid-cols-3 gap-2 text-xs">
-				<div>
-					<div class="text-[10px] text-base-content/50 uppercase">Input Format</div>
-					<div class="text-base-content/70">{source.inputFormat ?? '—'}</div>
-				</div>
-				<div>
-					<div class="text-[10px] text-base-content/50 uppercase">Pipelines</div>
-					<div class="text-base-content/70">
-						{source.numPipelines ?? 0} / {source.desiredNumPipelines ?? 0} desired
-					</div>
-				</div>
-				<div>
-					<div class="text-[10px] text-base-content/50 uppercase">Max Per Indexer</div>
-					<div class="text-base-content/70">
-						{source.maxNumPipelinesPerIndexer ?? '—'}
-					</div>
-				</div>
-			</div>
-			{#if source.params}
-				<div class="mt-2 border-t border-base-300 pt-2">
-					<div class="mb-1 text-[10px] text-base-content/50 uppercase">Params</div>
-					<pre
-						class="overflow-x-auto rounded bg-base-200 p-2 font-['Roboto_Mono',monospace] text-[10px] text-base-content/70">{JSON.stringify(
-							source.params,
-							null,
-							2
-						)}</pre>
-				</div>
-			{/if}
-		</div>
-	{/each}
-</div>
+		{/each}
+	</div>
+</section>

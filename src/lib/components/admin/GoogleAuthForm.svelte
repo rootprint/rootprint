@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
@@ -14,11 +13,9 @@
 
 	const hasExistingSecret = $derived(settings !== null);
 
-	let clientId = $state(untrack(() => settings?.clientId ?? ''));
+	let clientId = $state(settings?.clientId ?? '');
 	let clientSecret = $state('');
-	let allowedDomains = $state<string[]>(
-		untrack(() => (settings ? [...settings.allowedDomains] : []))
-	);
+	let allowedDomains = $state<string[]>(settings ? [...settings.allowedDomains] : []);
 	let domainInput = $state('');
 	let saving = $state(false);
 	let removeModalOpen = $state(false);

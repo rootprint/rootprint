@@ -29,7 +29,7 @@
 			<input
 				type="search"
 				class="grow"
-				placeholder="Search by name or ID…"
+				placeholder="Search indexes…"
 				aria-label="Search indexes"
 				bind:value={search}
 			/>

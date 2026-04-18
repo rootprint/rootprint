@@ -1,7 +1,7 @@
 <script lang="ts">
-	import IndexesTab from '$lib/components/index/IndexesTab.svelte';
+	import IndexList from '$lib/components/index/IndexList.svelte';
 
 	let { data } = $props();
 </script>
 
-<IndexesTab indexes={data.indexes} />
+<IndexList indexes={data.indexes} />

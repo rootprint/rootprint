@@ -62,7 +62,7 @@
 			<input
 				type="search"
 				class="grow"
-				placeholder="Search by name…"
+				placeholder="Search tokens…"
 				aria-label="Search tokens"
 				bind:value={search}
 			/>

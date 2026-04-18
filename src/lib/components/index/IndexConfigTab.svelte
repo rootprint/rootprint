@@ -5,42 +5,43 @@
 	import { saveIndexConfig } from '$lib/api/indexes.remote';
 	import type { AdminIndexDetail } from '$lib/types';
 
+	type Visibility = 'hidden' | 'admin' | 'all';
+
 	let { detail }: { detail: AdminIndexDetail } = $props();
 
 	const configForm = $derived(saveIndexConfig.for(detail.indexId));
 
-	// Full form reset when switching indexes
+	let visibility = $state<Visibility>((detail.visibility as Visibility) ?? 'all');
+	let contextFieldTags = $state<string[]>(
+		Array.isArray(detail.contextFields) ? (detail.contextFields as string[]) : []
+	);
+	let contextFieldInput = $state('');
+
+	const contextFieldsSerialized = $derived(JSON.stringify(contextFieldTags));
+	const adminVisible = $derived(visibility !== 'hidden');
+	const memberVisible = $derived(visibility === 'all');
+
+	// Reset form state when switching indexes.
 	$effect(() => {
 		const id = detail.indexId;
 		untrack(() => {
+			const nextVisibility = (detail.visibility as Visibility) ?? 'all';
+			const nextTags = Array.isArray(detail.contextFields)
+				? (detail.contextFields as string[])
+				: [];
 			configForm.fields.set({
 				indexId: id,
 				displayName: detail.displayName ?? '',
 				levelField: detail.levelField ?? 'level',
 				messageField: detail.messageField ?? 'message',
 				tracebackField: detail.tracebackField ?? '',
-				visibility: (detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all',
-				contextFields: contextFieldsSerialized
+				visibility: nextVisibility,
+				contextFields: JSON.stringify(nextTags)
 			});
-			contextFieldTags = Array.isArray(detail.contextFields)
-				? (detail.contextFields as string[])
-				: [];
+			visibility = nextVisibility;
+			contextFieldTags = nextTags;
 		});
 	});
-
-	// Sync only contextFields when tags change (without resetting other fields)
-	$effect(() => {
-		const serialized = contextFieldsSerialized;
-		untrack(() => {
-			configForm.fields.contextFields.set(serialized);
-		});
-	});
-
-	let contextFieldTags = $state<string[]>(
-		Array.isArray(detail.contextFields) ? (detail.contextFields as string[]) : []
-	);
-	let contextFieldInput = $state('');
-	const contextFieldsSerialized = $derived(JSON.stringify(contextFieldTags));
 
 	function addContextField() {
 		const value = contextFieldInput.trim();
@@ -61,154 +62,178 @@
 		}
 	}
 
-	let visibility = $state<'hidden' | 'admin' | 'all'>(
-		(detail.visibility as 'hidden' | 'admin' | 'all') ?? 'all'
-	);
-	let adminVisible = $derived(visibility !== 'hidden');
-	let memberVisible = $derived(visibility === 'all');
+	function setAdminVisible(checked: boolean) {
+		visibility = checked ? (memberVisible ? 'all' : 'admin') : 'hidden';
+	}
 
-	function setVisibility(admin: boolean, member: boolean) {
-		if (member) {
-			visibility = 'all';
-		} else if (admin) {
-			visibility = 'admin';
-		} else {
-			visibility = 'hidden';
-		}
-		configForm.fields.visibility.set(visibility);
+	function setMemberVisible(checked: boolean) {
+		if (checked) visibility = 'all';
+		else if (visibility === 'all') visibility = 'admin';
 	}
 </script>
 
-<h2 class="mb-1 text-xl font-semibold">Index Configuration</h2>
-<p class="mb-4 text-xs text-base-content/50">Map Quickwit fields to Logwiz display roles</p>
-<form
-	{...configForm.enhance(async ({ submit }) => {
-		try {
-			await submit();
-			toast.success('Index configuration saved');
-		} catch {
-			toast.error('Failed to save configuration');
-		}
-	})}
-	class="flex flex-col gap-4"
->
-	<input {...configForm.fields.indexId.as('hidden', detail.indexId)} />
-	<div>
-		<label class="mb-1 block text-xs font-medium" for="displayName">Display Name</label>
-		<input
-			{...configForm.fields.displayName.as('text')}
-			id="displayName"
-			class="input-bordered input input-sm w-full"
-			placeholder="e.g. Production Logs"
-		/>
-		<p class="mt-1 text-[10px] text-base-content/40">
-			Friendly name shown to users. Leave empty to use the index ID.
-		</p>
-	</div>
-	<input {...configForm.fields.visibility.as('hidden', visibility)} />
-	<div class="rounded-lg border border-base-300 p-3">
-		<label class="mb-2 block text-xs font-medium">Search Visibility</label>
-		<div class="flex gap-4">
-			<label class="flex items-center gap-2 text-xs">
-				<input
-					type="checkbox"
-					class="checkbox checkbox-xs"
-					checked={adminVisible}
-					onchange={(e) => {
-						const checked = e.currentTarget.checked;
-						if (!checked) setVisibility(false, false);
-						else setVisibility(true, memberVisible);
-					}}
-				/>
-				Admin
-			</label>
-			<label class="flex items-center gap-2 text-xs">
-				<input
-					type="checkbox"
-					class="checkbox checkbox-xs"
-					checked={memberVisible}
-					onchange={(e) => {
-						const checked = e.currentTarget.checked;
-						if (checked) setVisibility(true, true);
-						else setVisibility(adminVisible, false);
-					}}
-				/>
-				Member
-			</label>
-		</div>
-		<p class="mt-1 text-[10px] text-base-content/40">
-			Controls who can see this index on the search page. Unchecking both hides it from search
-			entirely.
-		</p>
-	</div>
-	<div>
-		<label class="mb-1 block text-xs font-medium" for="levelField">Level Field</label>
-		<input
-			{...configForm.fields.levelField.as('text')}
-			id="levelField"
-			class="input-bordered input input-sm w-full"
-			placeholder="e.g. level, severity"
-		/>
-	</div>
-	<div>
-		<label class="mb-1 block text-xs font-medium" for="messageField"> Message Field </label>
-		<input
-			{...configForm.fields.messageField.as('text')}
-			id="messageField"
-			class="input-bordered input input-sm w-full"
-			placeholder="e.g. message, body.message"
-		/>
-	</div>
-	<div>
-		<label class="mb-1 block text-xs font-medium" for="tracebackField"> Traceback Field </label>
-		<input
-			{...configForm.fields.tracebackField.as('text')}
-			id="tracebackField"
-			class="input-bordered input input-sm w-full"
-			placeholder="e.g. message.traceback, attributes.exception.stacktrace"
-		/>
-		<p class="mt-1 text-[10px] text-base-content/40">
-			Dot-notation path to the field containing stacktrace/traceback data
-		</p>
-	</div>
-	<div>
-		<label class="mb-1 block text-xs font-medium">Context Fields</label>
+<section>
+	<p class="mb-3 text-sm text-base-content/60">
+		Display, visibility, and field mappings for this index.
+	</p>
+	<form
+		{...configForm.enhance(async ({ submit }) => {
+			try {
+				await submit();
+				toast.success('Index configuration saved');
+			} catch {
+				toast.error('Failed to save configuration');
+			}
+		})}
+		class="rounded-box border border-base-300 bg-base-100"
+	>
+		<input {...configForm.fields.indexId.as('hidden', detail.indexId)} />
+		<input {...configForm.fields.visibility.as('hidden', visibility)} />
 		<input {...configForm.fields.contextFields.as('hidden', contextFieldsSerialized)} />
-		<div class="mb-2 flex flex-wrap gap-1.5">
-			{#each contextFieldTags as field (field)}
-				<span class="badge gap-1 badge-ghost font-mono text-xs badge-sm">
-					{field}
-					<button
-						type="button"
-						class="cursor-pointer text-error"
-						onclick={() => removeContextField(field)}>&times;</button
-					>
-				</span>
-			{/each}
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
+			<div>
+				<label for="cfg-display-name" class="text-sm font-medium">Display name</label>
+				<div class="mt-0.5 text-xs text-base-content/60">
+					Friendly name shown to users in search.
+				</div>
+			</div>
+			<div>
+				<input
+					{...configForm.fields.displayName.as('text')}
+					id="cfg-display-name"
+					class="input-bordered input input-sm w-full"
+					placeholder="e.g. Production Traces"
+				/>
+			</div>
 		</div>
-		<div class="flex gap-2">
-			<input
-				type="text"
-				bind:value={contextFieldInput}
-				onkeydown={handleContextFieldKeydown}
-				class="input-bordered input input-sm flex-1"
-				placeholder="e.g. service.name, attributes.environment"
-			/>
-			<button type="button" class="btn btn-ghost btn-sm" onclick={addContextField}>Add</button>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
+			<div>
+				<div class="text-sm font-medium">Search visibility</div>
+				<div class="mt-0.5 text-xs text-base-content/60">
+					Who can see this index on the search page. Uncheck both to hide entirely.
+				</div>
+			</div>
+			<div>
+				<div class="flex gap-4">
+					<label class="flex items-center gap-2 text-xs">
+						<input
+							type="checkbox"
+							class="checkbox checkbox-xs"
+							checked={adminVisible}
+							onchange={(e) => setAdminVisible(e.currentTarget.checked)}
+						/>
+						Admin
+					</label>
+					<label class="flex items-center gap-2 text-xs">
+						<input
+							type="checkbox"
+							class="checkbox checkbox-xs"
+							checked={memberVisible}
+							onchange={(e) => setMemberVisible(e.currentTarget.checked)}
+						/>
+						Member
+					</label>
+				</div>
+			</div>
 		</div>
-		<p class="mt-1 text-[10px] text-base-content/40">
-			Fields used for log context search. Leave empty to use all fields. Supports dot-notation for
-			nested fields.
-		</p>
-	</div>
-	<div>
-		<button class="btn btn-sm btn-accent" disabled={!!configForm.pending}>
-			{#if configForm.pending}
-				<span class="loading loading-xs loading-spinner"></span>
-				Saving...
-			{:else}
-				Save
-			{/if}
-		</button>
-	</div>
-</form>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
+			<div>
+				<label for="cfg-level-field" class="text-sm font-medium">Level field</label>
+				<div class="mt-0.5 text-xs text-base-content/60">
+					Field that carries the log severity.
+				</div>
+			</div>
+			<div>
+				<input
+					{...configForm.fields.levelField.as('text')}
+					id="cfg-level-field"
+					class="input-bordered input input-sm w-full"
+					placeholder="level"
+				/>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
+			<div>
+				<label for="cfg-message-field" class="text-sm font-medium">Message field</label>
+				<div class="mt-0.5 text-xs text-base-content/60">
+					The primary human-readable message per row.
+				</div>
+			</div>
+			<div>
+				<input
+					{...configForm.fields.messageField.as('text')}
+					id="cfg-message-field"
+					class="input-bordered input input-sm w-full"
+					placeholder="message"
+				/>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
+			<div>
+				<label for="cfg-traceback-field" class="text-sm font-medium">Traceback field</label>
+				<div class="mt-0.5 text-xs text-base-content/60">
+					Dot-notation path to stacktrace data. Optional.
+				</div>
+			</div>
+			<div>
+				<input
+					{...configForm.fields.tracebackField.as('text')}
+					id="cfg-traceback-field"
+					class="input-bordered input input-sm w-full"
+					placeholder="e.g. message.traceback, attributes.exception.stacktrace"
+				/>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 border-b border-base-300 px-4 py-4">
+			<div>
+				<div class="text-sm font-medium">Context fields</div>
+				<div class="mt-0.5 text-xs text-base-content/60">
+					Fields used for log context search. Leave empty to use all fields. Supports dot-notation
+					for nested fields.
+				</div>
+			</div>
+			<div>
+				<div class="mb-2 flex flex-wrap gap-1.5">
+					{#each contextFieldTags as field (field)}
+						<span class="badge gap-1 badge-ghost font-mono text-xs badge-sm">
+							{field}
+							<button
+								type="button"
+								aria-label="Remove {field}"
+								class="cursor-pointer text-error"
+								onclick={() => removeContextField(field)}>&times;</button
+							>
+						</span>
+					{/each}
+				</div>
+				<div class="flex gap-2">
+					<input
+						type="text"
+						bind:value={contextFieldInput}
+						onkeydown={handleContextFieldKeydown}
+						class="input-bordered input input-sm flex-1"
+						placeholder="e.g. service.name, attributes.environment"
+					/>
+					<button type="button" class="btn btn-ghost btn-sm" onclick={addContextField}>Add</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="flex justify-end border-t border-base-300 px-4 py-3">
+			<button class="btn btn-sm btn-accent" disabled={!!configForm.pending}>
+				{#if configForm.pending}
+					<span class="loading loading-xs loading-spinner"></span>
+					Saving...
+				{:else}
+					Save
+				{/if}
+			</button>
+		</div>
+	</form>
+</section>

@@ -1,66 +1,60 @@
 <script lang="ts">
+	import { RefreshCw, Trash2 } from 'lucide-svelte';
+
+	import { page } from '$app/state';
 	import IndexConfigTab from '$lib/components/index/IndexConfigTab.svelte';
-	import IndexDetailsTab from '$lib/components/index/IndexDetailsTab.svelte';
 	import IndexFieldsTab from '$lib/components/index/IndexFieldsTab.svelte';
+	import IndexOverviewTab from '$lib/components/index/IndexOverviewTab.svelte';
 	import IndexSourcesTab from '$lib/components/index/IndexSourcesTab.svelte';
+	import IndexStatsRow from '$lib/components/index/IndexStatsRow.svelte';
+	import IndexTabs, { type IndexDetailTab } from '$lib/components/index/IndexTabs.svelte';
+	import { formatEpochLocale } from '$lib/utils/time';
 
 	let { data } = $props();
-	let fieldFilter = $state('');
 
-	const title = $derived(data.detail.displayName ?? data.detail.indexId);
-	const filteredFields = $derived.by(() => {
-		const query = fieldFilter.trim().toLowerCase();
-
-		if (!query) return data.detail.fields;
-
-		return data.detail.fields.filter((field) => field.name.toLowerCase().includes(query));
+	const activeTab: IndexDetailTab = $derived.by(() => {
+		const tab = page.url.searchParams.get('tab');
+		if (tab === 'fields' || tab === 'sources' || tab === 'configuration') return tab;
+		return 'overview';
 	});
 </script>
 
 <div class="flex flex-col gap-6">
-	<div>
-		<a href="/administration/indexes" class="link text-sm text-base-content/60 link-hover">
-			Back to indexes
-		</a>
-		<h3 class="mt-2 text-xl font-semibold">{title}</h3>
-		{#if data.detail.displayName}
-			<p class="text-sm text-base-content/60">{data.detail.indexId}</p>
-		{/if}
-	</div>
-
-	<section>
-		<h2 class="mb-3 text-xl font-semibold">Details</h2>
-		<IndexDetailsTab detail={data.detail} />
-	</section>
-
-	<section>
-		<div class="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-			<div>
-				<h2 class="text-xl font-semibold">Fields</h2>
-				<p class="text-xs text-base-content/50">
-					{filteredFields.length} field{filteredFields.length === 1 ? '' : 's'}
-				</p>
-			</div>
-			<input
-				class="input-bordered input input-sm w-full md:max-w-xs"
-				placeholder="Filter fields..."
-				bind:value={fieldFilter}
-			/>
+	<header class="flex items-start justify-between gap-4">
+		<div>
+			<h1 class="font-mono text-2xl font-semibold break-all">{data.detail.indexId}</h1>
+			<p class="mt-1 text-sm text-base-content/60">
+				{data.detail.mode} schema · Created {formatEpochLocale(data.detail.createTimestamp)} · {data
+					.detail.sources.length} sources
+			</p>
 		</div>
-		<div class="overflow-x-auto rounded-box border border-base-300">
-			<IndexFieldsTab fields={filteredFields} />
+		<div class="flex shrink-0 items-center gap-2">
+			<button type="button" class="btn btn-sm">
+				<RefreshCw size={14} />
+				Refresh
+			</button>
+			<button type="button" class="btn text-error btn-outline btn-sm">
+				<Trash2 size={14} />
+				Delete
+			</button>
 		</div>
-	</section>
+	</header>
 
-	<section>
-		<div class="mb-3">
-			<h2 class="text-xl font-semibold">Sources</h2>
-			<p class="text-xs text-base-content/50">Quickwit source configuration for this index</p>
-		</div>
+	<IndexStatsRow />
+
+	<IndexTabs
+		{activeTab}
+		fieldCount={data.detail.fields.length}
+		sourceCount={data.detail.sources.length}
+	/>
+
+	{#if activeTab === 'overview'}
+		<IndexOverviewTab detail={data.detail} />
+	{:else if activeTab === 'fields'}
+		<IndexFieldsTab fields={data.detail.fields} />
+	{:else if activeTab === 'sources'}
 		<IndexSourcesTab sources={data.detail.sources} />
-	</section>
-
-	<section>
+	{:else if activeTab === 'configuration'}
 		<IndexConfigTab detail={data.detail} />
-	</section>
+	{/if}
 </div>

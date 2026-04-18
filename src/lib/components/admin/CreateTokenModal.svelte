@@ -7,6 +7,8 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { getErrorMessage } from '$lib/utils/error';
 
+	import IndexPicker from './IndexPicker.svelte';
+
 	let {
 		open = $bindable(false),
 		indexIds
@@ -19,46 +21,16 @@
 	let tokenName = $state('');
 	let scope = $state<'all' | 'selected'>('all');
 	let selectedIndexIds = $state<string[]>([]);
-	let indexSearch = $state('');
 	let creating = $state(false);
 	let generatedToken = $state('');
 
 	const noIndexes = $derived(indexIds.length === 0);
-
-	const filteredIndexIds = $derived.by(() => {
-		const q = indexSearch.trim().toLowerCase();
-		if (!q) return indexIds;
-		return indexIds.filter((id) => id.toLowerCase().includes(q));
-	});
-
-	const allFilteredSelected = $derived(
-		filteredIndexIds.length > 0 && filteredIndexIds.every((id) => selectedIndexIds.includes(id))
-	);
-
-	function toggleIndex(indexId: string) {
-		if (selectedIndexIds.includes(indexId)) {
-			selectedIndexIds = selectedIndexIds.filter((id) => id !== indexId);
-			return;
-		}
-		selectedIndexIds = [...selectedIndexIds, indexId];
-	}
-
-	function toggleAllFiltered() {
-		if (allFilteredSelected) {
-			selectedIndexIds = selectedIndexIds.filter((id) => !filteredIndexIds.includes(id));
-			return;
-		}
-		const next = new Set(selectedIndexIds);
-		for (const id of filteredIndexIds) next.add(id);
-		selectedIndexIds = [...next];
-	}
 
 	function resetForm() {
 		phase = 'form';
 		tokenName = '';
 		scope = 'all';
 		selectedIndexIds = [];
-		indexSearch = '';
 		generatedToken = '';
 		creating = false;
 	}
@@ -158,46 +130,7 @@
 			</fieldset>
 
 			{#if scope === 'selected' && !noIndexes}
-				<div class="flex flex-col rounded-box border border-base-300">
-					<div class="flex items-center gap-2 border-b border-base-300 p-2">
-						<input
-							type="search"
-							class="input-bordered input input-xs flex-1"
-							placeholder="Search indexes…"
-							bind:value={indexSearch}
-						/>
-						<button
-							type="button"
-							class="btn btn-ghost btn-xs"
-							disabled={filteredIndexIds.length === 0}
-							onclick={toggleAllFiltered}
-						>
-							{allFilteredSelected ? 'Deselect all' : 'Select all'}
-						</button>
-					</div>
-
-					<div class="max-h-40 overflow-y-auto p-2">
-						{#if filteredIndexIds.length === 0}
-							<p class="px-1 py-2 text-xs text-base-content/60">No indexes match.</p>
-						{:else}
-							{#each filteredIndexIds as indexId (indexId)}
-								<label class="flex cursor-pointer items-center gap-3 py-1">
-									<input
-										type="checkbox"
-										class="checkbox checkbox-xs"
-										checked={selectedIndexIds.includes(indexId)}
-										onchange={() => toggleIndex(indexId)}
-									/>
-									<span class="font-mono text-xs">{indexId}</span>
-								</label>
-							{/each}
-						{/if}
-					</div>
-
-					<div class="border-t border-base-300 px-2 py-1 text-xs text-base-content/60">
-						{selectedIndexIds.length} of {indexIds.length} selected
-					</div>
-				</div>
+				<IndexPicker {indexIds} bind:selected={selectedIndexIds} />
 			{/if}
 
 			<div class="modal-action">
