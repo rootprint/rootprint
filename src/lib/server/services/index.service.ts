@@ -230,7 +230,10 @@ export async function assertIndexAccess(
 	if (!canAccessIndex(visibility, isAdmin)) error(403, 'Index not accessible');
 
 	const live = await getIndexMetadata(indexId);
-	if (!live) error(403, 'Index not accessible');
+	if (!live) {
+		if (isAdmin) error(404, 'Index not found');
+		error(403, 'Index not accessible');
+	}
 }
 
 export async function setSourceEnabled(
