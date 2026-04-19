@@ -3,16 +3,11 @@ title: 'Per Index configuration in Logwiz'
 description: 'Learn how to map Quickwit index fields to Logwiz display roles, control index visibility, and set up context fields and traceback display.'
 ---
 
-Logwiz syncs indexes from your Quickwit instance and lets you configure how each index's fields are presented in the UI. You can set a human-readable display name, control which users can see the index, and tell Logwiz which fields contain the log level, message body, stacktrace, and any additional context you want surfaced in the detail panel.
-
-<Note>
-	Logwiz syncs available indexes from Quickwit on server startup. If you add a new index to Quickwit
-	while Logwiz is running, restart the Logwiz container to pick it up.
-</Note>
+Logwiz reads indexes live from your Quickwit instance and lets you configure how each index's fields are presented in the UI. You can set a human-readable display name, control which users can see the index, and tell Logwiz which fields contain the log level, message body, stacktrace, and any additional context you want surfaced in the detail panel.
 
 ## Opening index config
 
-Navigate to **Administration → Indexes**, click on an index, then open the **Config** tab.
+Navigate to **Administration → Indexes**, click on an index, then open the **Configuration** tab. For the other tabs on this page — schema overview, fields, sources, and the delete action — see [Manage indexes](/configuration/manage-indexes).
 
 ## Index visibility
 

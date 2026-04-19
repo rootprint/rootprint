@@ -45,7 +45,8 @@
 							"configuration/environment-variables",
 							"configuration/google-auth",
 							"configuration/reset-admin-password",
-							"configuration/index-config"
+							"configuration/index-config",
+							"configuration/manage-indexes"
 						]
 					}
 				]

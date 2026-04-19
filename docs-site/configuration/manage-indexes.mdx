@@ -1,0 +1,69 @@
+---
+title: 'Manage indexes'
+description: 'Inspect, reconfigure, and clean up Quickwit indexes from the Logwiz admin UI — schema overview, fields, data sources, stats, and deletion.'
+---
+
+The **Administration → Indexes** section gives admins a single place to inspect every index Quickwit knows about, adjust how it is presented in the search UI, manage the data sources that feed it, and delete indexes that are no longer needed.
+
+<Note>
+	Index management actions proxy directly to the Quickwit metastore. Changes apply to Quickwit
+	itself, not just Logwiz's local metadata.
+</Note>
+
+## Indexes list
+
+Navigate to **Administration → Indexes** to see every index currently known to Quickwit. The list is fetched live from the Quickwit metastore on each page load, so an index you create in Quickwit appears here on the next refresh with no restart required. Each row shows the display name, raw index ID, visibility (**Public**, **Admins**, or **Hidden**), and the number of configured sources. Use the search box to filter by name or ID, and click any row to open the detail page.
+
+## Index detail page
+
+Clicking an index opens its detail page. A header shows the raw index ID, creation date, schema mode, and source count, plus a **Delete** action in the top right. Below the header, a stats strip summarizes recent activity, followed by four tabs: **Overview**, **Fields**, **Sources**, and **Configuration**.
+
+### Stats strip
+
+| Card               | What it shows                                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Ingestion · 24h    | Document count ingested in the last 24 hours, with a percentage delta vs the prior 24 hours. Drops of 20% or more are highlighted.       |
+| Index size         | Total on-disk footprint, number of splits, and the average compression ratio when Quickwit reports one.                                  |
+
+### Overview tab
+
+Displays the index's schema metadata pulled straight from Quickwit: index UID, schema mode (`dynamic` or `strict`), timestamp field, Quickwit version, storage settings, retention policy, tag fields, default search fields, and the full index URI. Use this tab when you need to confirm how an index was provisioned without leaving the Logwiz UI.
+
+### Fields tab
+
+Lists every field in the index schema with its type and indexing properties — **Fast**, **Indexed**, **Stored**, **Record**, and **Tokenizer**. Filter by name to find a specific field. This is a read-only view of what Quickwit reports; to change field definitions you must recreate the index in Quickwit.
+
+### Sources tab
+
+Data sources are the pipelines Quickwit uses to pull or receive documents for this index (for example, the built-in `_ingest-api-source` that backs the HTTP ingest gateway, or a Kafka or file-based source you have configured in Quickwit). The Sources tab lists each source with its type, input format, pipeline count, and current enabled state.
+
+From the kebab menu on each row you can:
+
+- **Enable** or **Disable** the source. A disabled source stops ingesting until re-enabled.
+- **Reset checkpoint** — clear Quickwit's record of how far the source has progressed. The next run re-reads from the beginning of the stream. Requires a second click on **Confirm reset**, since this can cause duplicate documents.
+- **Delete source** — permanently remove the source from Quickwit. Requires typing the source ID to confirm.
+
+<Warning>
+	Resetting a checkpoint on a source backed by a durable stream (Kafka, file, etc.) re-ingests every
+	record the source can still see. Run it only when you understand the downstream impact.
+</Warning>
+
+### Configuration tab
+
+Controls the Logwiz-specific presentation settings for the index — display name, search visibility, and field role mappings. See [Per Index configuration](/configuration/index-config) for the full field reference.
+
+## Deleting an index
+
+The **Delete** button in the index header permanently removes the index from Quickwit along with every document, split, and source configured on it. After the Quickwit delete succeeds, Logwiz also cleans up its own records for the index:
+
+- Field-role and visibility configuration.
+- Per-user preferences, search history, saved queries, and shared links tied to the index.
+- Scoped ingest tokens — the index is removed from each token's allowlist. If an allowlist becomes empty, the token is deleted outright so it cannot escalate to all-index scope. Global tokens (no allowlist) are left untouched.
+
+To prevent accidents, the modal requires you to type the exact index ID before the **Delete** button becomes active. There is no undo.
+
+## Related pages
+
+- [Indexes](/indexes) — schema details for the built-in OpenTelemetry index and custom index concepts.
+- [Per Index configuration](/configuration/index-config) — field-role mapping and visibility settings.
+- [HTTP Ingestion](/send-logs/http-ingest) — how ingest tokens and the gateway interact with these sources.
