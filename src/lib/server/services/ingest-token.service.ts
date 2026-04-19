@@ -3,19 +3,18 @@ import { eq } from 'drizzle-orm';
 import type { CreateIngestTokenInput } from '$lib/schemas/ingest-tokens';
 import { db } from '$lib/server/db';
 import { ingestToken } from '$lib/server/db/schema';
-import {
-	generateIngestTokenCredentials,
-	hashIngestToken
-} from '$lib/server/utils/ingest-token';
-import type { CreateIngestTokenResult, IngestTokenSummary } from '$lib/types';
+import { generateIngestToken } from '$lib/server/utils/ingest-token';
+import type { IngestTokenSummary } from '$lib/types';
 
 type TokenRow = typeof ingestToken.$inferSelect;
+
+const TOKEN_PREFIX_LENGTH = 12;
 
 function mapIngestTokenSummary(row: TokenRow): IngestTokenSummary {
 	return {
 		id: row.id,
 		name: row.name,
-		tokenPrefix: row.tokenPrefix,
+		tokenPrefix: row.token.slice(0, TOKEN_PREFIX_LENGTH),
 		indexId: row.indexId,
 		lastUsedAt: row.lastUsedAt,
 		createdAt: row.createdAt,
@@ -31,13 +30,12 @@ export function listIngestTokens(): IngestTokenSummary[] {
 export function createIngestToken(
 	createdByUserId: string,
 	input: CreateIngestTokenInput
-): CreateIngestTokenResult {
-	const credentials = generateIngestTokenCredentials();
+): IngestTokenSummary {
+	const token = generateIngestToken();
 	db.insert(ingestToken)
 		.values({
 			name: input.name,
-			tokenHash: credentials.tokenHash,
-			tokenPrefix: credentials.tokenPrefix,
+			token,
 			indexId: input.indexId,
 			createdByUserId
 		})
@@ -46,16 +44,13 @@ export function createIngestToken(
 	const [created] = db
 		.select()
 		.from(ingestToken)
-		.where(eq(ingestToken.tokenHash, credentials.tokenHash))
+		.where(eq(ingestToken.token, token))
 		.all();
 	if (!created) {
 		throw new Error('Failed to create ingest token');
 	}
 
-	return {
-		token: credentials.token,
-		summary: mapIngestTokenSummary(created)
-	};
+	return mapIngestTokenSummary(created);
 }
 
 export function deleteIngestToken(tokenId: number): void {
@@ -70,11 +65,22 @@ export function deleteIngestToken(tokenId: number): void {
 	db.delete(ingestToken).where(eq(ingestToken.id, tokenId)).run();
 }
 
+export function getIngestTokenValue(tokenId: number): { token: string } {
+	const [row] = db
+		.select({ token: ingestToken.token })
+		.from(ingestToken)
+		.where(eq(ingestToken.id, tokenId))
+		.all();
+	if (!row) {
+		throw new Error('Ingest token not found');
+	}
+	return { token: row.token };
+}
+
 export function verifyIngestToken(
 	token: string
 ): { id: number; name: string; indexId: string } | null {
-	const tokenHash = hashIngestToken(token);
-	const [record] = db.select().from(ingestToken).where(eq(ingestToken.tokenHash, tokenHash)).all();
+	const [record] = db.select().from(ingestToken).where(eq(ingestToken.token, token)).all();
 	if (!record) return null;
 
 	const now = Date.now();

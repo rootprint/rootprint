@@ -11,4 +11,8 @@ export const deleteIngestTokenSchema = v.object({
 	tokenId: v.pipe(v.number(), v.integer(), v.minValue(1, 'Token ID must be positive'))
 });
 
+export const getIngestTokenSchema = v.object({
+	tokenId: v.pipe(v.number(), v.integer(), v.minValue(1, 'Token ID must be positive'))
+});
+
 export type CreateIngestTokenInput = v.InferInput<typeof createIngestTokenSchema>;

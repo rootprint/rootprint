@@ -215,11 +215,6 @@ export type IngestTokenSummary = {
 	createdByUserId: string;
 };
 
-export type CreateIngestTokenResult = {
-	token: string;
-	summary: IngestTokenSummary;
-};
-
 export type QuickFilterBucket = {
 	value: string;
 	count: number | null;

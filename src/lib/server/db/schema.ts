@@ -66,8 +66,7 @@ export const ingestToken = sqliteTable(
 	{
 		id: integer('id').primaryKey({ autoIncrement: true }),
 		name: text('name').notNull().unique(),
-		tokenHash: text('token_hash').notNull().unique(),
-		tokenPrefix: text('token_prefix').notNull(),
+		token: text('token').notNull().unique(),
 		indexId: text('index_id').notNull(),
 		lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
 		createdByUserId: text('created_by_user_id')

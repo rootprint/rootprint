@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Plus, Search, Trash2 } from 'lucide-svelte';
+	import { Eye, Plus, Search, Trash2 } from 'lucide-svelte';
 
 	import type { IngestTokenSummary } from '$lib/types';
 	import { formatRelativeTime } from '$lib/utils/time';
 
 	import CreateTokenModal from './CreateTokenModal.svelte';
 	import DeleteTokenModal from './DeleteTokenModal.svelte';
+	import ViewTokenModal from './ViewTokenModal.svelte';
 
 	let {
 		tokens,
@@ -19,6 +20,8 @@
 	let createOpen = $state(false);
 	let deleteOpen = $state(false);
 	let target = $state<IngestTokenSummary | null>(null);
+	let viewOpen = $state(false);
+	let viewTarget = $state<IngestTokenSummary | null>(null);
 
 	const filtered = $derived.by(() => {
 		const q = search.trim().toLowerCase();
@@ -34,6 +37,11 @@
 	function openDeleteModal(token: IngestTokenSummary) {
 		target = token;
 		deleteOpen = true;
+	}
+
+	function openViewModal(t: IngestTokenSummary) {
+		viewTarget = t;
+		viewOpen = true;
 	}
 
 	function scopeLabel(token: IngestTokenSummary): string {
@@ -92,6 +100,14 @@
 
 				<button
 					type="button"
+					class="btn btn-square btn-ghost btn-sm"
+					aria-label="View token {token.name}"
+					onclick={() => openViewModal(token)}
+				>
+					<Eye size={16} />
+				</button>
+				<button
+					type="button"
 					class="btn btn-square text-error btn-ghost btn-sm"
 					aria-label="Delete token {token.name}"
 					onclick={() => openDeleteModal(token)}
@@ -109,3 +125,4 @@
 
 <CreateTokenModal bind:open={createOpen} {indexIds} />
 <DeleteTokenModal bind:open={deleteOpen} token={target} />
+<ViewTokenModal bind:open={viewOpen} token={viewTarget} />
