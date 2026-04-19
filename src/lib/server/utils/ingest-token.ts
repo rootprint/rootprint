@@ -8,11 +8,6 @@ export function hashIngestToken(token: string): string {
 	return createHash('sha256').update(token).digest('hex');
 }
 
-export function isIngestScopeAllowed(indexIds: string[] | null, indexId: string): boolean {
-	if (!indexIds || indexIds.length === 0) return true;
-	return indexIds.includes(indexId);
-}
-
 export function generateIngestTokenCredentials(): {
 	token: string;
 	tokenHash: string;

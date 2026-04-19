@@ -287,27 +287,7 @@ export async function deleteIndex(indexId: string): Promise<void> {
 			tx.delete(savedQuery).where(eq(savedQuery.indexName, indexId)).run();
 			tx.delete(sharedLink).where(eq(sharedLink.indexName, indexId)).run();
 
-			// Ingest tokens: global tokens (null allowlist) are untouched. For scoped tokens,
-			// remove this index from the allowlist. If the allowlist becomes empty, delete the
-			// token — empty allowlist is treated as global scope by isIngestScopeAllowed, so
-			// leaving one would silently escalate the token's privileges.
-			const scoped = tx
-				.select({ id: ingestToken.id, indexAllowlist: ingestToken.indexAllowlist })
-				.from(ingestToken)
-				.all()
-				.filter((r) => r.indexAllowlist?.includes(indexId));
-
-			for (const row of scoped) {
-				const remaining = (row.indexAllowlist ?? []).filter((i) => i !== indexId);
-				if (remaining.length === 0) {
-					tx.delete(ingestToken).where(eq(ingestToken.id, row.id)).run();
-				} else {
-					tx.update(ingestToken)
-						.set({ indexAllowlist: remaining })
-						.where(eq(ingestToken.id, row.id))
-						.run();
-				}
-			}
+			tx.delete(ingestToken).where(eq(ingestToken.indexId, indexId)).run();
 		});
 	} catch (e) {
 		console.error(`[deleteIndex] local cleanup failed for ${indexId}:`, e);

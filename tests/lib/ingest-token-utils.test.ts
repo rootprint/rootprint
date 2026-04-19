@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	generateIngestTokenCredentials,
-	hashIngestToken,
-	isIngestScopeAllowed
+	hashIngestToken
 } from '../../src/lib/server/utils/ingest-token';
 
 describe('ingest token utilities', () => {
@@ -14,16 +13,5 @@ describe('ingest token utilities', () => {
 		expect(credentials.tokenHash).toHaveLength(64);
 		expect(credentials.tokenPrefix).toBe(credentials.token.slice(0, 12));
 		expect(credentials.tokenHash).toBe(hashIngestToken(credentials.token));
-	});
-
-	it('allows all indexes when scope is null', () => {
-		expect(isIngestScopeAllowed(null, 'otel-logs-v0_9')).toBe(true);
-	});
-
-	it('allows only configured scoped indexes', () => {
-		const scope = ['otel-logs-v0_9', 'app-logs'];
-
-		expect(isIngestScopeAllowed(scope, 'app-logs')).toBe(true);
-		expect(isIngestScopeAllowed(scope, 'unknown')).toBe(false);
 	});
 });

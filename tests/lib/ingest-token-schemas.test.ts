@@ -7,18 +7,10 @@ import {
 } from '../../src/lib/schemas/ingest-tokens';
 
 describe('ingest token schemas', () => {
-	it('accepts minimal create payload', () => {
-		const result = safeParse(createIngestTokenSchema, {
-			name: 'CI token'
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it('accepts scoped create payload', () => {
+	it('accepts a valid create payload', () => {
 		const result = safeParse(createIngestTokenSchema, {
 			name: 'Prod router',
-			indexIds: ['otel-logs-v0_9', 'app-logs']
+			indexId: 'otel-logs-v0_9'
 		});
 
 		expect(result.success).toBe(true);
@@ -26,16 +18,25 @@ describe('ingest token schemas', () => {
 
 	it('rejects create payload with blank name', () => {
 		const result = safeParse(createIngestTokenSchema, {
-			name: '  '
+			name: '  ',
+			indexId: 'otel-logs-v0_9'
 		});
 
 		expect(result.success).toBe(false);
 	});
 
-	it('rejects create payload with invalid index ids', () => {
+	it('rejects create payload without indexId', () => {
 		const result = safeParse(createIngestTokenSchema, {
-			name: 'Scoped',
-			indexIds: ['ok-index', '  ']
+			name: 'Missing index'
+		});
+
+		expect(result.success).toBe(false);
+	});
+
+	it('rejects create payload with blank indexId', () => {
+		const result = safeParse(createIngestTokenSchema, {
+			name: 'Blank index',
+			indexId: '  '
 		});
 
 		expect(result.success).toBe(false);

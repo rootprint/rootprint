@@ -37,10 +37,7 @@
 	}
 
 	function scopeLabel(token: IngestTokenSummary): string {
-		const ids = token.scope.indexIds;
-		if (ids === null) return 'All indexes';
-		if (ids.length === 1) return '1 index';
-		return `${ids.length} indexes`;
+		return token.indexId;
 	}
 </script>
 
@@ -86,13 +83,7 @@
 				</div>
 
 				<div class="shrink-0">
-					{#if token.scope.indexIds === null}
-						<span class="badge badge-outline badge-sm">
-							{scopeLabel(token)}
-						</span>
-					{:else}
-						<span class="badge badge-ghost badge-sm">{scopeLabel(token)}</span>
-					{/if}
+					<span class="badge badge-outline badge-sm">{scopeLabel(token)}</span>
 				</div>
 
 				<span class="shrink-0 text-xs text-base-content/60">

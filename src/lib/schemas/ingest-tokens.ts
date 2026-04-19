@@ -4,7 +4,7 @@ const indexIdSchema = v.pipe(v.string(), v.trim(), v.minLength(1, 'Index ID is r
 
 export const createIngestTokenSchema = v.object({
 	name: v.pipe(v.string(), v.trim(), v.minLength(1, 'Token name is required')),
-	indexIds: v.optional(v.array(indexIdSchema))
+	indexId: indexIdSchema
 });
 
 export const deleteIngestTokenSchema = v.object({

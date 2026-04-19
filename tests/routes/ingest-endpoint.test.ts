@@ -15,7 +15,7 @@ import { _createIngestHandler } from '../../src/routes/api/ingest/[indexId]/+ser
 describe('POST /api/ingest/[indexId]', () => {
 	it('returns 401 when bearer token is missing', async () => {
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest: async () => new Response('ok')
 		});
 
@@ -48,9 +48,27 @@ describe('POST /api/ingest/[indexId]', () => {
 		expect(response.status).toBe(403);
 	});
 
+	it('returns 403 when token.indexId does not match URL indexId', async () => {
+		const POST = _createIngestHandler({
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'app-logs' }),
+			forwardIngest: async () => new Response('ok')
+		});
+
+		const response = await POST({
+			params: { indexId: 'otel-logs-v0_9' },
+			request: new Request('http://localhost/api/ingest/otel-logs-v0_9', {
+				method: 'POST',
+				headers: { authorization: 'Bearer test-token' },
+				body: '[{"message":"hi"}]'
+			})
+		} as unknown as Parameters<typeof POST>[0]);
+
+		expect(response.status).toBe(403);
+	});
+
 	it('returns 400 for empty body', async () => {
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest: async () => new Response('ok')
 		});
 
@@ -68,7 +86,7 @@ describe('POST /api/ingest/[indexId]', () => {
 
 	it('returns 413 when request body exceeds limit', async () => {
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest: async () => new Response('ok')
 		});
 		const largeBody = 'a'.repeat(11 * 1024 * 1024);
@@ -88,7 +106,7 @@ describe('POST /api/ingest/[indexId]', () => {
 	it('returns 413 from content-length check before reading body', async () => {
 		const forwardIngest = vi.fn(async () => new Response('ok'));
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest
 		});
 		const arrayBuffer = vi.fn(async () => new ArrayBuffer(0));
@@ -115,7 +133,7 @@ describe('POST /api/ingest/[indexId]', () => {
 
 	it('returns 502 when upstream forwarding fails', async () => {
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest: async () => {
 				throw new Error('network down');
 			}
@@ -142,7 +160,7 @@ describe('POST /api/ingest/[indexId]', () => {
 				})
 		);
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest
 		});
 
@@ -181,7 +199,7 @@ describe('POST /api/ingest/[indexId]', () => {
 				})
 		);
 		const POST = _createIngestHandler({
-			verifyToken: () => ({ id: 1, name: 'token' }),
+			verifyToken: () => ({ id: 1, name: 'token', indexId: 'otel-logs-v0_9' }),
 			forwardIngest
 		});
 

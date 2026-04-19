@@ -7,8 +7,6 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { getErrorMessage } from '$lib/utils/error';
 
-	import IndexPicker from './IndexPicker.svelte';
-
 	let {
 		open = $bindable(false),
 		indexIds
@@ -19,8 +17,7 @@
 
 	let phase = $state<'form' | 'reveal'>('form');
 	let tokenName = $state('');
-	let scope = $state<'all' | 'selected'>('all');
-	let selectedIndexIds = $state<string[]>([]);
+	let selectedIndexId = $state<string>('');
 	let creating = $state(false);
 	let generatedToken = $state('');
 
@@ -29,8 +26,7 @@
 	function resetForm() {
 		phase = 'form';
 		tokenName = '';
-		scope = 'all';
-		selectedIndexIds = [];
+		selectedIndexId = '';
 		generatedToken = '';
 		creating = false;
 	}
@@ -53,8 +49,8 @@
 	}
 
 	async function handleCreate() {
-		if (scope === 'selected' && selectedIndexIds.length === 0) {
-			toast.error('Select at least one index for scoped tokens');
+		if (!selectedIndexId) {
+			toast.error('Pick the index this token will write to');
 			return;
 		}
 
@@ -62,7 +58,7 @@
 		try {
 			const result = await createIngestToken({
 				name: tokenName,
-				indexIds: scope === 'selected' ? selectedIndexIds : undefined
+				indexId: selectedIndexId
 			});
 			generatedToken = result.token;
 			phase = 'reveal';
@@ -99,43 +95,27 @@
 				/>
 			</label>
 
-			<fieldset class="flex flex-col gap-2">
-				<legend class="text-sm font-medium">Scope</legend>
-				<label class="label cursor-pointer justify-start gap-3 py-1">
-					<input
-						type="radio"
-						name="token-scope"
-						class="radio radio-sm"
-						value="all"
-						checked={scope === 'all'}
-						onchange={() => (scope = 'all')}
-					/>
-					<span class="label-text">Grant access to all indexes</span>
-				</label>
-				<label class="label cursor-pointer justify-start gap-3 py-1" class:opacity-50={noIndexes}>
-					<input
-						type="radio"
-						name="token-scope"
-						class="radio radio-sm"
-						value="selected"
-						checked={scope === 'selected'}
-						disabled={noIndexes}
-						onchange={() => (scope = 'selected')}
-					/>
-					<span class="label-text" aria-disabled={noIndexes}>Only selected indexes</span>
-				</label>
-				{#if noIndexes}
-					<p class="pl-8 text-xs text-base-content/60">No indexes available — create one first.</p>
-				{/if}
-			</fieldset>
-
-			{#if scope === 'selected' && !noIndexes}
-				<IndexPicker {indexIds} bind:selected={selectedIndexIds} />
+			<label class="floating-label">
+				<span>Index</span>
+				<select
+					class="select select-md w-full"
+					bind:value={selectedIndexId}
+					disabled={noIndexes}
+					required
+				>
+					<option value="" disabled selected>Select an index…</option>
+					{#each indexIds as id (id)}
+						<option value={id}>{id}</option>
+					{/each}
+				</select>
+			</label>
+			{#if noIndexes}
+				<p class="text-xs text-base-content/60">No indexes available — create one first.</p>
 			{/if}
 
 			<div class="modal-action">
 				<button type="button" class="btn" onclick={handleCancel}>Cancel</button>
-				<button type="submit" class="btn btn-primary" disabled={creating}>
+				<button type="submit" class="btn btn-primary" disabled={creating || noIndexes}>
 					{creating ? 'Creating...' : 'Create Token'}
 				</button>
 			</div>

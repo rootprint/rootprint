@@ -205,15 +205,11 @@ export type GoogleAuthSettingsView = {
 	allowedDomains: string[];
 };
 
-export type IngestTokenScope = {
-	indexIds: string[] | null;
-};
-
 export type IngestTokenSummary = {
 	id: number;
 	name: string;
 	tokenPrefix: string;
-	scope: IngestTokenScope;
+	indexId: string;
 	lastUsedAt: Date | null;
 	createdAt: Date;
 	createdByUserId: string;

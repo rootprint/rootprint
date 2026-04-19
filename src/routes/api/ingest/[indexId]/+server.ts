@@ -5,10 +5,10 @@ import { verifyIngestToken } from '$lib/server/services/ingest-token.service';
 
 const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
 
-type VerifyResult = { id: number; name: string } | null;
+type VerifyResult = { id: number; name: string; indexId: string } | null;
 
 type IngestDependencies = {
-	verifyToken: (token: string, indexId: string) => VerifyResult;
+	verifyToken: (token: string) => VerifyResult;
 	forwardIngest: (
 		indexId: string,
 		search: string,
@@ -55,8 +55,11 @@ export function _createIngestHandler(
 			return json({ message: 'Missing bearer token' }, { status: 401 });
 		}
 
-		const verifiedToken = dependencies.verifyToken(token, indexId);
+		const verifiedToken = dependencies.verifyToken(token);
 		if (!verifiedToken) {
+			return json({ message: 'Invalid ingest token' }, { status: 403 });
+		}
+		if (verifiedToken.indexId !== indexId) {
 			return json({ message: 'Invalid ingest token' }, { status: 403 });
 		}
 

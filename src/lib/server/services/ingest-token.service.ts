@@ -5,8 +5,7 @@ import { db } from '$lib/server/db';
 import { ingestToken } from '$lib/server/db/schema';
 import {
 	generateIngestTokenCredentials,
-	hashIngestToken,
-	isIngestScopeAllowed
+	hashIngestToken
 } from '$lib/server/utils/ingest-token';
 import type { CreateIngestTokenResult, IngestTokenSummary } from '$lib/types';
 
@@ -17,17 +16,11 @@ function mapIngestTokenSummary(row: TokenRow): IngestTokenSummary {
 		id: row.id,
 		name: row.name,
 		tokenPrefix: row.tokenPrefix,
-		scope: { indexIds: row.indexAllowlist ?? null },
+		indexId: row.indexId,
 		lastUsedAt: row.lastUsedAt,
 		createdAt: row.createdAt,
 		createdByUserId: row.createdByUserId
 	};
-}
-
-function normalizeScope(indexIds: string[] | undefined): string[] | null {
-	if (!indexIds || indexIds.length === 0) return null;
-	const deduped = Array.from(new Set(indexIds.map((id) => id.trim()).filter(Boolean)));
-	return deduped.length > 0 ? deduped : null;
 }
 
 export function listIngestTokens(): IngestTokenSummary[] {
@@ -45,7 +38,7 @@ export function createIngestToken(
 			name: input.name,
 			tokenHash: credentials.tokenHash,
 			tokenPrefix: credentials.tokenPrefix,
-			indexAllowlist: normalizeScope(input.indexIds),
+			indexId: input.indexId,
 			createdByUserId
 		})
 		.run();
@@ -78,15 +71,12 @@ export function deleteIngestToken(tokenId: number): void {
 }
 
 export function verifyIngestToken(
-	token: string,
-	indexId: string
-): { id: number; name: string } | null {
+	token: string
+): { id: number; name: string; indexId: string } | null {
 	const tokenHash = hashIngestToken(token);
 	const [record] = db.select().from(ingestToken).where(eq(ingestToken.tokenHash, tokenHash)).all();
 	if (!record) return null;
-	if (!isIngestScopeAllowed(record.indexAllowlist ?? null, indexId)) return null;
 
-	// Throttled last-used update (at most once per minute)
 	const now = Date.now();
 	const lastUsed = record.lastUsedAt?.getTime() ?? 0;
 	if (now - lastUsed > 60 * 1000) {
@@ -96,5 +86,5 @@ export function verifyIngestToken(
 			.run();
 	}
 
-	return { id: record.id, name: record.name };
+	return { id: record.id, name: record.name, indexId: record.indexId };
 }
