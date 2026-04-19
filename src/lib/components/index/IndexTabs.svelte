@@ -44,7 +44,7 @@
 		>
 			<span>{tab.label}</span>
 			{#if tab.count !== null}
-				<span class="badge badge-ghost badge-sm">{tab.count}</span>
+				<span class="badge badge-sm badge-accent">{tab.count}</span>
 			{/if}
 		</a>
 	{/each}

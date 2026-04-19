@@ -67,12 +67,12 @@
 					</div>
 				</div>
 
-				<span class="badge badge-ghost badge-sm shrink-0">{source.sourceType}</span>
+				<span class="badge shrink-0 badge-ghost badge-sm">{source.sourceType}</span>
 
 				{#if source.enabled}
-					<span class="badge badge-success badge-outline badge-sm shrink-0">Enabled</span>
+					<span class="badge shrink-0 badge-outline badge-sm badge-success">Enabled</span>
 				{:else}
-					<span class="badge badge-outline badge-sm shrink-0 opacity-60">Disabled</span>
+					<span class="badge shrink-0 badge-outline badge-sm opacity-60">Disabled</span>
 				{/if}
 
 				<SourceActionsMenu {indexId} {source} onRequestDelete={() => openDelete(source)} />

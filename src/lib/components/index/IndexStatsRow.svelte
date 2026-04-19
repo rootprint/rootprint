@@ -71,7 +71,7 @@
 </script>
 
 <div
-	class="grid grid-cols-1 overflow-hidden rounded-box border border-base-300 md:grid-cols-2 lg:grid-cols-4"
+	class="grid grid-cols-1 overflow-hidden rounded-t-2xl border border-base-300 md:grid-cols-2 lg:grid-cols-4"
 >
 	{#each cards as card, i (i)}
 		<div

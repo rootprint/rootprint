@@ -27,25 +27,27 @@
 		<div>
 			<h1 class="font-mono text-2xl font-semibold break-all">{data.detail.indexId}</h1>
 			<p class="mt-1 text-sm text-base-content/60">
-				{data.detail.mode} schema · Created {formatEpochLocale(data.detail.createTimestamp)} · {data
+				Created {formatEpochLocale(data.detail.createTimestamp)} · {data.detail.mode} schema · {data
 					.detail.sources.length} sources
 			</p>
 		</div>
 		<div class="flex shrink-0 items-center gap-2">
-			<button type="button" class="btn btn-error btn-sm" onclick={() => (deleteOpen = true)}>
+			<button type="button" class="btn btn-sm btn-outline btn-error" onclick={() => (deleteOpen = true)}>
 				<Trash2 size={14} />
 				Delete
 			</button>
 		</div>
 	</header>
 
-	<IndexStatsRow stats={data.stats} />
+	<div class="flex flex-col gap-2">
+		<IndexStatsRow stats={data.stats} />
 
-	<IndexTabs
-		{activeTab}
-		fieldCount={data.detail.fields.length}
-		sourceCount={data.detail.sources.length}
-	/>
+		<IndexTabs
+			{activeTab}
+			fieldCount={data.detail.fields.length}
+			sourceCount={data.detail.sources.length}
+		/>
+	</div>
 
 	{#if activeTab === 'overview'}
 		<IndexOverviewTab detail={data.detail} />
