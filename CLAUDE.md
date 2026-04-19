@@ -39,7 +39,7 @@ You are able to use the Svelte MCP server, where you have access to comprehensiv
 
 ### Tests
 
-All tests has to be located in tests folder.
+Do not write tests for this project. No unit, integration, or end-to-end tests are needed — skip test authoring unless explicitly requested.
 
 ## Available MCP Tools:
 

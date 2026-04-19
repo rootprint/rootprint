@@ -4,7 +4,7 @@ Guidance for autonomous coding agents working in `logwiz`.
 
 ## Project Snapshot
 
-- Stack: Svelte 5 + SvelteKit 2, TypeScript, Bun, Vitest, Drizzle ORM, Better Auth.
+- Stack: Svelte 5 + SvelteKit 2, TypeScript, Bun, Drizzle ORM, Better Auth.
 - UI: Tailwind CSS v4 + DaisyUI.
 - Search backend: Quickwit via `quickwit-js`.
 - API style: SvelteKit Remote Functions in `src/lib/api/*.remote.ts`.
@@ -15,7 +15,6 @@ Guidance for autonomous coding agents working in `logwiz`.
 - Scripts and toolchain: `package.json`.
 - Formatting: `.prettierrc`.
 - TS strictness: `tsconfig.json`.
-- Test config: `vitest.config.ts`.
 - CI expectations: `.github/workflows/ci.yml`.
 - Team rules: `CLAUDE.md`.
 
@@ -29,7 +28,7 @@ bun run db:push
 bun run dev
 ```
 
-## Build, Lint, Typecheck, Test
+## Build, Lint, Typecheck
 
 - `bun run dev` - start local dev server.
 - `bun run build` - production build (requires env vars).
@@ -37,22 +36,15 @@ bun run dev
 - `bun run lint` - Prettier check only.
 - `bun run format` - Prettier write.
 - `bun run check` - `svelte-kit sync` + `svelte-check` (strict TS checks).
-- `bun run test` - run all Vitest tests once.
-- `bun run test:watch` - run tests in watch mode.
 
-## Single Test Commands (Vitest)
+## Testing Policy
 
-```bash
-bun run test -- tests/lib/query.test.ts
-bun run test -- tests/lib/query.test.ts -t "parses single include clause"
-bun run test -- src/lib/utils/traceback-parser.test.ts
-bun run test -- --coverage
-```
+This project does not use automated tests. Do not author unit, integration, or end-to-end tests. Rely on `bun run check` and manual verification instead.
 
 ## CI Parity Checks Before Merge
 
 ```bash
-bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 bun run build
+bun run lint && bun run check && LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 bun run build
 ```
 
 ## Database and Auth Utility Commands
@@ -94,7 +86,6 @@ bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://plac
 
 - Keep imports at top of file.
 - Prefer SvelteKit aliases (`$lib`, `$app`, `$env`) over deep relative paths in app code.
-- In tests, relative imports are acceptable for route modules under test.
 - Preserve existing import grouping/order in touched files (no enforced auto-sort in repo).
 - Add new imports to the nearest logical group instead of reordering entire files.
 
@@ -105,7 +96,6 @@ bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://plac
 - Services: `*.service.ts` in `src/lib/server/services`.
 - Remote functions: `*.remote.ts` in `src/lib/api`.
 - Schemas: one domain file per concern in `src/lib/schemas`.
-- Tests: `*.test.ts` under `tests/` or colocated in `src/`.
 - Variables/functions: camelCase.
 - Constants: UPPER_SNAKE_CASE when truly constant.
 
@@ -126,14 +116,6 @@ bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://plac
 - On client side, use toasts/fallback messages (see `getErrorMessage`).
 - Do not silently swallow errors unless fallback behavior is intentional.
 
-## Testing Conventions
-
-- Test runner: Vitest (`describe`, `it`, `expect`, `vi`).
-- Mock dependencies with `vi.mock(...)` before importing module-under-test.
-- Reset mocks in `beforeEach` when needed.
-- Prefer behavior-focused test names.
-- Keep tests deterministic; avoid network or real external service dependency.
-
 ## Security and Runtime Notes
 
 - Required env vars for app/build: `LOGWIZ_QUICKWIT_URL`.
@@ -153,6 +135,5 @@ bun run lint && bun run check && bun run test && LOGWIZ_QUICKWIT_URL=http://plac
 
 - Read related schema/type/service files before editing.
 - Make minimal, localized changes that match existing patterns.
-- Run targeted tests first (single file or `-t`) for fast feedback.
 - Run CI parity checks before handing off major changes.
 - If schema/auth contracts change, run relevant generation commands.

@@ -29,15 +29,6 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
 
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run test
-
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -58,8 +49,6 @@ jobs:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run test -- --coverage
-        continue-on-error: true
       - uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

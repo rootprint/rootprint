@@ -116,7 +116,6 @@ export default defineConfig(
 			'.svelte-kit/',
 			'build/',
 			'node_modules/',
-			'coverage/',
 			'data/',
 			'.quickwit/',
 			'drizzle/',

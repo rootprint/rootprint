@@ -7,7 +7,7 @@ faster and safer.
 ## Ways to contribute
 
 - Report bugs with clear reproduction steps
-- Improve docs, tests, or developer tooling
+- Improve docs or developer tooling
 - Submit focused bug fixes or small features
 - Pick up issues marked as good first issue or help wanted when available
 
@@ -50,7 +50,6 @@ Notes:
 - `./` - main Logwiz application
 - `site/` - marketing site
 - `docs-site/` - documentation site
-- `tests/` - automated tests
 
 ## Development guidelines
 
@@ -58,7 +57,7 @@ Notes:
 - Put shared app types in `src/lib/types.ts`.
 - Keep server-only logic in the server layer and follow the existing remote function pattern in
   `src/lib/api/*.remote.ts`.
-- Add tests in `tests/` for behavior changes.
+- This project does not use automated tests. Verify changes manually and rely on `bun run check`.
 - Match the existing code style:
   - tabs for indentation
   - single quotes
@@ -71,15 +70,7 @@ Notes:
 bun run dev
 bun run lint
 bun run check
-bun run test
 bun run format
-```
-
-Examples for running a single Vitest file or test:
-
-```bash
-bun run test -- tests/lib/query.test.ts
-bun run test -- tests/lib/query.test.ts -t "parses single include clause"
 ```
 
 If you change database or auth contracts, the following commands may also be relevant:
@@ -98,7 +89,6 @@ Run the same core checks that CI runs:
 ```bash
 bun run lint
 bun run check
-bun run test
 LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 bun run build
 ```
 
@@ -106,7 +96,6 @@ LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 bun run build
 
 - Explain the problem and why the change is needed
 - Link related issues when applicable
-- Add or update tests for behavior changes
 - Update docs when setup, configuration, or user-facing behavior changes
 - Include screenshots or short recordings for UI changes when helpful
 - Make sure CI is green before requesting review

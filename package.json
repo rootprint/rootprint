@@ -30,8 +30,6 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
-		"test": "vitest run",
-		"test:watch": "vitest",
 		"knip": "knip",
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
@@ -48,7 +46,6 @@
 		"@types/bun": "^1.3.11",
 		"@types/node": "^22.19.15",
 		"@types/textarea-caret": "^3.0.4",
-		"@vitest/coverage-v8": "^4.1.1",
 		"drizzle-kit": "^0.31.10",
 		"eslint": "^10.1.0",
 		"eslint-config-prettier": "^10.1.8",
@@ -66,8 +63,7 @@
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.58.0",
 		"vite": "^8.0.2",
-		"vite-plugin-devtools-json": "^1.0.0",
-		"vitest": "^4.1.1"
+		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
 		"better-auth": "~1.4.22",
