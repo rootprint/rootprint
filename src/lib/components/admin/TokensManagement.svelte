@@ -87,7 +87,7 @@
 
 				<div class="shrink-0">
 					{#if token.scope.indexIds === null}
-						<span class="badge badge-outline badge-sm badge-warning">
+						<span class="badge badge-outline badge-sm">
 							{scopeLabel(token)}
 						</span>
 					{:else}

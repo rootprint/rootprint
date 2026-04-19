@@ -30,6 +30,14 @@
 			: `${stats.ingestion24h.deltaPct > 0 ? '↑' : stats.ingestion24h.deltaPct < 0 ? '↓' : '→'} ${Math.abs(stats.ingestion24h.deltaPct).toFixed(1)}% vs yesterday`
 	);
 
+	// Surface significant ingestion drops — pipeline anomalies are usually bad and
+	// the directional glyph alone is too easy to miss in a uniformly muted caption.
+	const ingestionCaptionClass = $derived(
+		stats?.ingestion24h.deltaPct != null && stats.ingestion24h.deltaPct <= -20
+			? 'text-warning'
+			: 'text-base-content/50'
+	);
+
 	const sizeValue = $derived(stats ? formatBytes(stats.size.bytes) : '—');
 
 	const sizeCaption = $derived(
@@ -40,13 +48,20 @@
 				: `${stats.size.numSplits} splits`
 	);
 
-	type Card = { label: string; value: string; caption: string; showTrend?: boolean };
+	type Card = {
+		label: string;
+		value: string;
+		caption: string;
+		captionClass?: string;
+		showTrend?: boolean;
+	};
 
 	const cards: Card[] = $derived([
 		{
 			label: 'Ingestion · 24h',
 			value: ingestionValue,
 			caption: ingestionCaption,
+			captionClass: ingestionCaptionClass,
 			showTrend: true
 		},
 		{ label: 'Index size', value: sizeValue, caption: sizeCaption },
@@ -67,7 +82,7 @@
 					{card.label}
 				</div>
 				<div class="mt-1 text-2xl font-semibold text-base-content/80">{card.value}</div>
-				<div class="mt-1 text-xs text-base-content/50">{card.caption}</div>
+				<div class="mt-1 text-xs {card.captionClass ?? 'text-base-content/50'}">{card.caption}</div>
 			</div>
 			{#if card.showTrend && trend}
 				<svg
