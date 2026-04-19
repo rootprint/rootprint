@@ -1,17 +1,21 @@
 <script lang="ts">
 	import { Search } from 'lucide-svelte';
 
+	import DeleteSourceModal from '$lib/components/admin/DeleteSourceModal.svelte';
+	import SourceActionsMenu from '$lib/components/index/SourceActionsMenu.svelte';
 	import type { QuickwitSource } from '$lib/types';
 
-	let { sources }: { sources: QuickwitSource[] } = $props();
+	let {
+		indexId,
+		sources
+	}: {
+		indexId: string;
+		sources: QuickwitSource[];
+	} = $props();
 
-	let enabledOverrides = $state<Record<string, boolean>>({});
 	let filter = $state('');
-
-	function isEnabled(source: QuickwitSource): boolean {
-		if (source.sourceId in enabledOverrides) return enabledOverrides[source.sourceId];
-		return source.enabled;
-	}
+	let deleteOpen = $state(false);
+	let pendingDeleteId = $state('');
 
 	const filtered = $derived.by(() => {
 		const q = filter.trim().toLowerCase();
@@ -26,8 +30,9 @@
 		return `${sources.length} source${sources.length === 1 ? '' : 's'}`;
 	});
 
-	function toggle(sourceId: string, value: boolean) {
-		enabledOverrides[sourceId] = value;
+	function openDelete(source: QuickwitSource) {
+		pendingDeleteId = source.sourceId;
+		deleteOpen = true;
 	}
 </script>
 
@@ -51,30 +56,26 @@
 
 	<div class="divide-y divide-base-300 rounded-box border border-base-300">
 		{#each filtered as source (source.sourceId)}
-			{@const enabled = isEnabled(source)}
 			<div
 				class="flex min-h-14 items-center gap-3 px-4 py-3 first:rounded-t-box last:rounded-b-box hover:bg-base-200/40"
-				class:opacity-60={!enabled}
+				class:opacity-60={!source.enabled}
 			>
 				<div class="min-w-0 flex-1">
-					<div class="truncate text-sm font-semibold">{source.sourceId}</div>
-					<div class="mt-0.5">
-						<span class="badge badge-sm">{source.sourceType}</span>
+					<div class="truncate font-mono text-sm font-semibold">{source.sourceId}</div>
+					<div class="mt-0.5 text-xs text-base-content/60">
+						{source.inputFormat ?? '—'} · {source.numPipelines ?? 0} pipelines
 					</div>
 				</div>
 
-				<div class="flex shrink-0 items-center gap-3 text-xs text-base-content/60">
-					<span>{source.inputFormat ?? '—'}</span>
-					<span>{source.numPipelines ?? 0} pipelines</span>
-				</div>
+				<span class="badge badge-ghost badge-sm shrink-0">{source.sourceType}</span>
 
-				<input
-					type="checkbox"
-					class="toggle shrink-0 toggle-sm toggle-success"
-					aria-label="Enable source {source.sourceId}"
-					checked={enabled}
-					onchange={(e) => toggle(source.sourceId, e.currentTarget.checked)}
-				/>
+				{#if source.enabled}
+					<span class="badge badge-success badge-outline badge-sm shrink-0">Enabled</span>
+				{:else}
+					<span class="badge badge-outline badge-sm shrink-0 opacity-60">Disabled</span>
+				{/if}
+
+				<SourceActionsMenu {indexId} {source} onRequestDelete={() => openDelete(source)} />
 			</div>
 		{:else}
 			<div class="py-10 text-center text-sm text-base-content/60">
@@ -87,3 +88,5 @@
 		{/each}
 	</div>
 </section>
+
+<DeleteSourceModal bind:open={deleteOpen} {indexId} sourceId={pendingDeleteId} />

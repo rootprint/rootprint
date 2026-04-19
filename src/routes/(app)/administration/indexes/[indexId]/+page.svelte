@@ -52,7 +52,7 @@
 	{:else if activeTab === 'fields'}
 		<IndexFieldsTab fields={data.detail.fields} />
 	{:else if activeTab === 'sources'}
-		<IndexSourcesTab sources={data.detail.sources} />
+		<IndexSourcesTab indexId={data.detail.indexId} sources={data.detail.sources} />
 	{:else if activeTab === 'configuration'}
 		<IndexConfigTab detail={data.detail} />
 	{/if}

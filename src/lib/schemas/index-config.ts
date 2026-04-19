@@ -37,3 +37,14 @@ export const saveIndexConfigSchema = v.object({
 		)
 	)
 });
+
+export const sourceActionSchema = v.object({
+	indexId: v.pipe(v.string(), v.minLength(1)),
+	sourceId: v.pipe(v.string(), v.minLength(1))
+});
+
+export const setSourceEnabledSchema = v.object({
+	indexId: v.pipe(v.string(), v.minLength(1)),
+	sourceId: v.pipe(v.string(), v.minLength(1)),
+	enabled: v.boolean()
+});

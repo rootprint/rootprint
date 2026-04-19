@@ -233,6 +233,40 @@ export async function assertIndexAccess(
 	if (!live) error(403, 'Index not accessible');
 }
 
+export async function setSourceEnabled(
+	indexId: string,
+	sourceId: string,
+	enabled: boolean
+): Promise<void> {
+	try {
+		await getQuickwitClient().index(indexId).toggleSource(sourceId, enabled);
+	} catch (e) {
+		if (e instanceof NotFoundError) error(404, 'Source not found');
+		throw e;
+	}
+}
+
+export async function resetSourceCheckpoint(
+	indexId: string,
+	sourceId: string
+): Promise<void> {
+	try {
+		await getQuickwitClient().index(indexId).resetSourceCheckpoint(sourceId);
+	} catch (e) {
+		if (e instanceof NotFoundError) error(404, 'Source not found');
+		throw e;
+	}
+}
+
+export async function deleteSource(indexId: string, sourceId: string): Promise<void> {
+	try {
+		await getQuickwitClient().index(indexId).deleteSource(sourceId);
+	} catch (e) {
+		if (e instanceof NotFoundError) error(404, 'Source not found');
+		throw e;
+	}
+}
+
 export async function deleteIndex(indexId: string): Promise<void> {
 	try {
 		await getQuickwitClient().deleteIndex(indexId);

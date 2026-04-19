@@ -2,7 +2,12 @@ import { error, isHttpError } from '@sveltejs/kit';
 
 import { command, form, query } from '$app/server';
 import { requireAdmin, requireUser } from '$lib/middleware/auth';
-import { indexIdSchema, saveIndexConfigSchema } from '$lib/schemas/index-config';
+import {
+	indexIdSchema,
+	saveIndexConfigSchema,
+	setSourceEnabledSchema,
+	sourceActionSchema
+} from '$lib/schemas/index-config';
 import { getIndexFieldsSchema } from '$lib/schemas/preference';
 import * as indexService from '$lib/server/services/index.service';
 
@@ -30,5 +35,41 @@ export const deleteIndex = command(indexIdSchema, async ({ indexId }) => {
 	} catch (e) {
 		if (isHttpError(e)) throw e;
 		error(400, e instanceof Error ? e.message : 'Failed to delete index');
+	}
+});
+
+export const setSourceEnabled = command(
+	setSourceEnabledSchema,
+	async ({ indexId, sourceId, enabled }) => {
+		requireAdmin();
+		try {
+			await indexService.setSourceEnabled(indexId, sourceId, enabled);
+		} catch (e) {
+			if (isHttpError(e)) throw e;
+			error(400, e instanceof Error ? e.message : 'Failed to update source');
+		}
+	}
+);
+
+export const resetSourceCheckpoint = command(
+	sourceActionSchema,
+	async ({ indexId, sourceId }) => {
+		requireAdmin();
+		try {
+			await indexService.resetSourceCheckpoint(indexId, sourceId);
+		} catch (e) {
+			if (isHttpError(e)) throw e;
+			error(400, e instanceof Error ? e.message : 'Failed to reset source checkpoint');
+		}
+	}
+);
+
+export const deleteSource = command(sourceActionSchema, async ({ indexId, sourceId }) => {
+	requireAdmin();
+	try {
+		await indexService.deleteSource(indexId, sourceId);
+	} catch (e) {
+		if (isHttpError(e)) throw e;
+		error(400, e instanceof Error ? e.message : 'Failed to delete source');
 	}
 });
