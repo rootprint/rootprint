@@ -4,6 +4,7 @@
 
 	import { saveIndexConfig } from '$lib/api/indexes.remote';
 	import type { AdminIndexDetail } from '$lib/types';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	type Visibility = 'hidden' | 'admin' | 'all';
 
@@ -81,8 +82,8 @@
 			try {
 				await submit();
 				toast.success('Index configuration saved');
-			} catch {
-				toast.error('Failed to save configuration');
+			} catch (e) {
+				toast.error(getErrorMessage(e, 'Failed to save configuration'));
 			}
 		})}
 		class="rounded-box border border-base-300 bg-base-100"

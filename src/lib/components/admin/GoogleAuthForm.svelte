@@ -6,6 +6,7 @@
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { isValidDomain } from '$lib/schemas/settings';
 	import type { GoogleAuthSettingsView } from '$lib/types';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	import RemoveGoogleAuthModal from './RemoveGoogleAuthModal.svelte';
 
@@ -76,8 +77,8 @@
 			});
 			toast.success('Google auth settings saved');
 			await goto('/administration/authentication?saved=google', { invalidateAll: true });
-		} catch {
-			toast.error('Failed to save settings');
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to save settings'));
 		} finally {
 			saving = false;
 		}
