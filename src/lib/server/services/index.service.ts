@@ -39,7 +39,7 @@ function defaultsFor(indexId: string): MetaDefaults {
 			displayName: null,
 			visibility: 'all',
 			levelField: 'severity_text',
-			messageField: 'body',
+			messageField: 'body.message',
 			tracebackField: 'attributes.exception.stacktrace',
 			contextFields: null
 		};

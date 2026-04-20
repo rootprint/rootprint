@@ -2,6 +2,19 @@
 
 All notable changes to Logwiz are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-20
+
+### Changed
+
+- **OTLP endpoint is protobuf-only.** `/api/otlp/v1/logs` now returns `415` for `Content-Type: application/json` (previously the request was forwarded and Quickwit returned an opaque `400`). Users of `@opentelemetry/exporter-logs-otlp-http` (which defaults to JSON) should switch to `@opentelemetry/exporter-logs-otlp-proto`. JavaScript integration guides (docs and admin UI) have been updated to use `@opentelemetry/exporter-logs-otlp-proto`.
+
+### Fixed
+
+- **Docker log-shipping guide (docs and `/administration/send-logs/docker`).** The previous OpenTelemetry Collector config relied on the `container` operator emitting `container.name`, but the `docker` format only emits `log.iostream` and the parsed timestamp — so the `filter/exclude_self` processor never matched and the self-exclusion loop guard was a no-op. The config now derives `container.id` from the log file path with a `transform` processor and matches the filter against `${env:HOSTNAME}` (Docker's default short container ID) instead. `service.name` falls back to the container ID when an app hasn't set one itself.
+- **Docker log-shipping guide — permission denied.** Added `user: "0:0"` to the collector compose service. The `otel/opentelemetry-collector-contrib` image runs as UID 10001 by default, which cannot read `/var/lib/docker/containers`.
+- **Docker log-shipping guide — noisy parser errors.** Added `on_error: send_quiet` to the `container` operator. The operator's k8s-metadata step runs a regex that matches only pod log paths and fails loudly on Docker paths; entries are still forwarded, but the error logs are now suppressed.
+- **Docker log-shipping guide — dropped an unneeded Docker socket mount.** `/var/run/docker.sock` was mounted in the compose snippet but never actually read by the `container` operator.
+
 ## [0.2.0] - 2026-04-20
 
 Major release reshaping the administration experience, adding first-class log-ingestion guides, and introducing marketing + documentation sites.
@@ -65,4 +78,5 @@ Major release reshaping the administration experience, adding first-class log-in
 
 See the [git history](https://github.com/oleksandr-zhyhalo/logwiz/commits/main) for releases prior to 0.2.0.
 
+[0.2.1]: https://github.com/oleksandr-zhyhalo/logwiz/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/oleksandr-zhyhalo/logwiz/compare/v0.1.11...v0.2.0

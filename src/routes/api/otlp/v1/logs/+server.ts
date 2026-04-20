@@ -19,7 +19,7 @@ type OtlpDependencies = {
 	forwardOtlp: (args: ForwardArgs) => Promise<Response>;
 };
 
-const SUPPORTED_MEDIA_TYPES = new Set(['application/x-protobuf', 'application/json']);
+const SUPPORTED_MEDIA_TYPES = new Set(['application/x-protobuf']);
 
 function extractBearerToken(authorizationHeader: string | null): string | null {
 	if (!authorizationHeader) return null;
@@ -76,7 +76,13 @@ export function _createOtlpLogsHandler(
 		const contentTypeHeader = request.headers.get('content-type');
 		const baseMediaType = parseBaseMediaType(contentTypeHeader);
 		if (!baseMediaType || !SUPPORTED_MEDIA_TYPES.has(baseMediaType)) {
-			return json({ message: 'Unsupported content type' }, { status: 415 });
+			return json(
+				{
+					message:
+						'Only application/x-protobuf is accepted. If you are using @opentelemetry/exporter-logs-otlp-http (defaults to JSON), switch to @opentelemetry/exporter-logs-otlp-proto. See /send-logs/otlp for details.'
+				},
+				{ status: 415 }
+			);
 		}
 
 		const contentLength = request.headers.get('content-length');

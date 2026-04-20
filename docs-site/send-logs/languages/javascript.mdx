@@ -12,7 +12,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
     <Tabs>
       <Tab title="OTEL SDK">
         ```bash
-        npm install @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-http
+        npm install @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto
         ```
       </Tab>
       <Tab title="Pino">
@@ -22,7 +22,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
       </Tab>
       <Tab title="Winston">
         ```bash
-        npm install winston @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-http @opentelemetry/winston-transport
+        npm install winston @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto @opentelemetry/winston-transport
         ```
       </Tab>
     </Tabs>
@@ -48,7 +48,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
         ```javascript
         import { logs } from '@opentelemetry/api-logs';
         import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
-        import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+        import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-proto';
 
         const provider = new LoggerProvider({
             processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
@@ -80,7 +80,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
         ```javascript
         import { logs } from '@opentelemetry/api-logs';
         import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
-        import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+        import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-proto';
         import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport';
         import winston from 'winston';
 
@@ -136,7 +136,7 @@ Initialise the provider once at process start, then log from anywhere. Keep the 
 // otel.js
 import { logs } from '@opentelemetry/api-logs';
 import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-proto';
 
 const provider = new LoggerProvider({
 	processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]

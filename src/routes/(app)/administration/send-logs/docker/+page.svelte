@@ -16,10 +16,9 @@
 	<Callout variant="warning">
 		<p>
 			These instructions are Linux-only. They mount
-			<InlineCode>/var/lib/docker/containers</InlineCode> and
-			<InlineCode>/var/run/docker.sock</InlineCode> from the host, which works with Docker Engine on Linux.
-			Docker Desktop on macOS and Windows runs Docker inside a VM, so those host paths are not available
-			as shown.
+			<InlineCode>/var/lib/docker/containers</InlineCode> from the host, which works with Docker Engine
+			on Linux. Docker Desktop on macOS and Windows runs Docker inside a VM, so that host path is not
+			available as shown.
 		</p>
 	</Callout>
 
@@ -44,13 +43,25 @@
 						core image.
 					</p>
 				</Callout>
+				<Callout variant="info">
+					<p>
+						The <InlineCode>container</InlineCode> operator does not emit
+						<InlineCode>container.name</InlineCode> — only <InlineCode>log.iostream</InlineCode> and
+						the parsed timestamp. <InlineCode>transform/enrich</InlineCode> extracts the 64-char
+						container ID from the log file path into <InlineCode>container.id</InlineCode> and uses
+						it as <InlineCode>service.name</InlineCode> when the app hasn't set one itself.
+					</p>
+				</Callout>
 				<Callout variant="warning">
 					<p>
-						The <InlineCode>filter/exclude_self</InlineCode> processor drops logs from the collector itself.
-						Without it, every line the collector emits would be tailed from its own log file and re-shipped
-						— creating an amplification loop. The filter matches on
-						<InlineCode>container.name == "otel-collector"</InlineCode>, which is why the compose
-						service below pins <InlineCode>container_name: otel-collector</InlineCode>.
+						The <InlineCode>filter/exclude_self</InlineCode> processor drops logs from the collector
+						itself — without it, every line the collector emits would be tailed and re-shipped,
+						creating an amplification loop. The filter matches
+						<InlineCode>{'${env:HOSTNAME}'}</InlineCode>, which Docker sets to the collector
+						container's own short (12-char) ID, against the prefix of each record's
+						<InlineCode>container.id</InlineCode>. If you set an explicit
+						<InlineCode>hostname:</InlineCode> on the collector service, the match breaks — leave it
+						unset or update the filter to your chosen value.
 					</p>
 				</Callout>
 			</SendLogsStep>
@@ -64,10 +75,10 @@
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.compose} copyTitle="Copy compose fragment" />
-				<Callout variant="warning">
+				<Callout variant="info">
 					<p>
-						Mounts are read-only. The Docker socket is used only to enrich logs with container names
-						— the collector never issues write commands.
+						Both mounts are read-only. No Docker socket is required — the collector reads log files
+						off the host filesystem directly.
 					</p>
 				</Callout>
 			</SendLogsStep>
@@ -87,9 +98,8 @@
 					<h3 class="font-semibold">Send a test log line</h3>
 					<p class="mt-1 text-sm text-base-content/60">
 						Run a throwaway container that prints one line and exits. The collector picks the line
-						up from the host log file, the <InlineCode>container</InlineCode> operator attaches
-						<InlineCode>container.name=logwiz-smoke-test</InlineCode>, and the record is shipped to
-						Logwiz.
+						up from the host log file and ships it with <InlineCode>service.name</InlineCode> set
+						to the container's ID.
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.test} copyTitle="Copy test command" />
@@ -99,10 +109,11 @@
 				<div>
 					<h3 class="font-semibold">Verify in Logwiz</h3>
 					<p class="mt-1 text-sm text-base-content/60">
-						Open Search and filter on the message body
-						<InlineCode>hello from logwiz</InlineCode> or the resource attribute
-						<InlineCode>resource_attributes.container.name:logwiz-smoke-test</InlineCode>. The
-						record typically arrives within ~5 seconds (the batch interval).
+						Open Search and query for <InlineCode>hello from logwiz</InlineCode>. The record
+						typically arrives within ~5 seconds (the batch interval). For apps that set
+						<InlineCode>service.name</InlineCode> themselves via the OTel SDK, you'll see the
+						SDK-provided name; for bare containers (like the smoke test above), you'll see the
+						container ID.
 					</p>
 				</div>
 				<div>

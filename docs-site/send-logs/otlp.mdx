@@ -30,12 +30,9 @@ OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
 
 ## Supported content types
 
-- `application/x-protobuf` — the OpenTelemetry specification default for OTLP/HTTP
-- `application/json`
+Logwiz accepts `application/x-protobuf` only. Any other `Content-Type` returns **415 Unsupported Media Type**.
 
-Most OTEL SDKs pick protobuf by default, but some (notably the OpenTelemetry JS HTTP exporters)
-also ship a JSON variant. Set `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=http/json` to switch. Anything
-other than these two content types returns **415 Unsupported Media Type**.
+Quickwit's upstream OTLP endpoint does not accept JSON, and Logwiz does not transcode JSON to protobuf. Every major OTEL SDK already defaults to protobuf for HTTP logs — with one exception: the JavaScript package `@opentelemetry/exporter-logs-otlp-http` defaults to JSON. If you are using that package, switch to `@opentelemetry/exporter-logs-otlp-proto` (same `OTLPLogExporter` API).
 
 ## Size and encoding
 
@@ -51,7 +48,7 @@ other than these two content types returns **415 Unsupported Media Type**.
 | `401`  | Missing Bearer token.                                         |
 | `403`  | Invalid or unknown ingest token.                              |
 | `413`  | Body exceeds 10 MB.                                           |
-| `415`  | Unsupported `Content-Type`.                                   |
+| `415`  | `Content-Type` is not `application/x-protobuf`.               |
 | `429`  | Upstream Quickwit is rate-limited. `Retry-After` is echoed.   |
 | `503`  | Upstream Quickwit error or network failure. `Retry-After: 5`. |
 
@@ -67,7 +64,7 @@ other than these two content types returns **415 Unsupported Media Type**.
 | `OTEL_SERVICE_NAME`                | Your service name (lands in `service_name`). |
 | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | `https://<your-logwiz>/api/otlp/v1/logs`     |
 | `OTEL_EXPORTER_OTLP_LOGS_HEADERS`  | `Authorization=Bearer%20<your-ingest-token>` |
-| `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL` | `http/protobuf` (default) or `http/json`     |
+| `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL` | `http/protobuf` (required)                   |
 | `OTEL_LOG_LEVEL`                   | Minimum severity emitted by the SDK itself.  |
 
 ## Index target

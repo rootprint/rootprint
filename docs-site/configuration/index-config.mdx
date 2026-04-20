@@ -64,7 +64,7 @@ For indexes created by OpenTelemetry collectors (index IDs beginning with `otel-
 | Field           | OTel default                      |
 | --------------- | --------------------------------- |
 | Level field     | `severity_text`                   |
-| Message field   | `body`                            |
+| Message field   | `body.message`                    |
 | Traceback field | `attributes.exception.stacktrace` |
 
 You can override any of these defaults in the Config tab. If your OTel instrumentation captures exception stacktraces, setting the traceback field to `attributes.exception.stacktrace` enables the Traceback tab with syntax-highlighted Python stacktrace rendering.

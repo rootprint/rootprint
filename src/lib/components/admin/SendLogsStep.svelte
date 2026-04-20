@@ -23,7 +23,7 @@
 			<div class="mt-2 w-px flex-1 bg-base-300"></div>
 		{/if}
 	</div>
-	<div class="flex flex-col gap-3 {isLast ? '' : 'pb-6'}">
+	<div class="flex min-w-0 flex-col gap-3 {isLast ? '' : 'pb-6'}">
 		{@render children()}
 	</div>
 </li>

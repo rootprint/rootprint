@@ -16,7 +16,7 @@ When Logwiz syncs an index whose ID starts with `otel-logs-`, it automatically a
 | Logwiz field    | Default OTel path                 |
 | --------------- | --------------------------------- |
 | Level field     | `severity_text`                   |
-| Message field   | `body`                            |
+| Message field   | `body.message`                    |
 | Traceback field | `attributes.exception.stacktrace` |
 
 You can override any of these in [Per Index configuration](/configuration/index-config).

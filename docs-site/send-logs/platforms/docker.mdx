@@ -3,7 +3,7 @@ title: 'Send logs from Docker'
 description: 'Ship every container on a Linux host to Logwiz with an OpenTelemetry Collector sidecar.'
 ---
 
-Run an OpenTelemetry Collector sidecar next to your other containers. It tails the Docker log files on the host, parses each line with the `container` operator (which pulls `container.id` and `container.name` from the log file path and Docker's per-container `config.v2.json`), and ships records over OTLP HTTP to Logwiz. No changes to the apps themselves.
+Run an OpenTelemetry Collector sidecar next to your other containers. It tails the Docker log files on the host, parses each line with the `container` operator, derives `container.id` from the log file path with a `transform` processor, and ships records over OTLP HTTP to Logwiz. No changes to the apps themselves.
 
 <Warning>
 	Linux-only. Docker Desktop on macOS and Windows runs Docker inside a VM — the host path
@@ -21,16 +21,28 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
       filelog:
         include: [/var/lib/docker/containers/*/*.log]
         start_at: end
+        include_file_path: true
         operators:
           - type: container
             format: docker
+            on_error: send_quiet
 
     processors:
+      transform/enrich:
+        log_statements:
+          - context: log
+            statements:
+              - merge_maps(resource.attributes, ExtractPatterns(attributes["log.file.path"], "^/var/lib/docker/containers/(?P<container_id>[a-f0-9]{64})/"), "upsert") where attributes["log.file.path"] != nil
+          - context: resource
+            statements:
+              - set(attributes["container.id"], attributes["container_id"]) where attributes["container_id"] != nil
+              - delete_key(attributes, "container_id") where attributes["container_id"] != nil
+              - set(attributes["service.name"], attributes["container.id"]) where attributes["service.name"] == nil and attributes["container.id"] != nil
       filter/exclude_self:
         error_mode: ignore
         logs:
           log_record:
-            - 'resource.attributes["container.name"] == "otel-collector"'
+            - 'resource.attributes["container.id"] != nil and IsMatch(resource.attributes["container.id"], "^${env:HOSTNAME}")'
       batch:
         timeout: 5s
 
@@ -44,11 +56,13 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
       pipelines:
         logs:
           receivers: [filelog]
-          processors: [filter/exclude_self, batch]
+          processors: [transform/enrich, filter/exclude_self, batch]
           exporters: [otlphttp]
     ```
 
     <Note>The `contrib` distribution is required — the `container` operator that parses Docker's per-line JSON log format ships only in `otel/opentelemetry-collector-contrib`, not the core image.</Note>
+
+    <Note>The `container` operator itself doesn't read Docker's `config.v2.json`, so it never emits `container.name` — only `log.iostream` and the parsed timestamp. `transform/enrich` works around this by pulling the 64-char container ID out of the log file path and using it as `service.name` when the app hasn't set one itself. Containers already exporting `service.name` via an OTel SDK keep theirs (the `where service.name == nil` guard).</Note>
 
   </Step>
 
@@ -61,19 +75,20 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
         image: otel/opentelemetry-collector-contrib:0.113.0
         container_name: otel-collector
         restart: unless-stopped
+        user: "0:0"
         volumes:
           - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
           - /var/lib/docker/containers:/var/lib/docker/containers:ro
     ```
 
-    <Note>Both mounts are read-only. `/var/lib/docker/containers` is what the `container` operator reads to enrich each log line with `container.name` and `container.id` — no Docker socket is required.</Note>
+    <Note>If your Logwiz runs on the same host (not a remote endpoint), point `logs_endpoint` at `http://host.docker.internal:<port>/api/otlp/v1/logs` and add `extra_hosts: ["host.docker.internal:host-gateway"]` to this service. Required on Linux; Docker Desktop resolves it automatically.</Note>
 
   </Step>
 
 <Step title="Start the collector">```bash docker compose up -d otel-collector ```</Step>
 
   <Step title="Send a test log line">
-    Run a throwaway container that prints one line and exits. The collector picks up the line from the host log file, attaches `container.name=logwiz-smoke-test`, and ships it.
+    Run a throwaway container that prints one line and exits. The collector picks up the line from the host log file and ships it with `service.name` set to the container's ID.
 
     ```bash
     docker run --rm --name logwiz-smoke-test alpine echo "hello from logwiz"
@@ -82,21 +97,22 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
   </Step>
 
   <Step title="Verify in Logwiz">
-    Open Search and filter on `resource_attributes.container.name:logwiz-smoke-test`. The record typically arrives within ~5 seconds (one batch interval).
+    Open Search and query for `hello from logwiz`. The record typically arrives within ~5 seconds (one batch interval). For apps that set `service.name` themselves via the OTel SDK, you'll see the SDK-provided name; for bare containers (like the smoke test above), you'll see the container ID.
   </Step>
 </Steps>
 
 ## Why the self-exclusion filter?
 
-The `filter/exclude_self` processor drops log records whose `container.name` equals `otel-collector`. Without it, every line the collector itself emits would be tailed from its own log file on the host and re-shipped — creating an amplification loop. That's why the compose service pins `container_name: otel-collector`: the filter matches on that exact value.
-
-If you rename the service, update both the `container_name` and the filter condition to match.
+Without it, every line the collector emits would be tailed from its own log file on the host and re-shipped — creating an amplification loop. Since the `container` operator doesn't provide `container.name`, the filter matches on `container_id` instead: `${env:HOSTNAME}` is expanded at collector startup to the short (12-char) container ID that Docker assigns as the container's hostname by default, and that prefixes the full 64-char ID of the collector's own log file. If you set an explicit `hostname:` in compose, the match breaks — either leave it unset or update the filter to whatever you chose.
 
 ## Troubleshooting
 
 - **No logs arriving** — confirm the collector is running (`docker logs otel-collector`). Check that your app containers write to stdout/stderr, not to files that bypass Docker's log driver.
-- **Collector logs flooding back** — the self-exclusion isn't matching. Confirm `container_name: otel-collector` in your compose file matches the filter expression exactly.
-- **`permission denied` on `/var/lib/docker/containers`** — rootless Docker or SELinux restrictions. Run the collector with the `docker` group (`group_add: [docker]` in compose) or append `:z` to the mount.
+- **`service.name` shows as `unknown_service`** — `transform/enrich` is missing from the pipeline, or `include_file_path: true` is missing on the `filelog` receiver (that's what populates `log.file.path`). Confirm both. For a meaningful service name, instrument your app with an OTel SDK that sets `service.name` itself — `transform/enrich` only provides the container ID as a fallback.
+- **`failed to detect a valid log path` errors in the collector log** — the `container` operator's k8s-metadata step runs a regex that only matches pod log paths (`/var/log/pods/...`) and fails loudly on Docker paths. Noisy but non-fatal: entries are still forwarded. The `on_error: send_quiet` in the config above suppresses it.
+- **`connection refused` to `localhost:<port>`** — inside the collector container, `localhost` is the container itself, not the Docker host. See the `host.docker.internal` Note in the compose step above.
+- **Collector logs flooding back** — the self-exclusion isn't matching. Confirm you haven't set a custom `hostname:` on the collector service in compose; `${env:HOSTNAME}` needs to equal the short container ID for the match to work.
+- **`permission denied` on `/var/lib/docker/containers`** — the `otel/opentelemetry-collector-contrib` image runs as `otel` (UID 10001) by default, but the Docker log directory is root-readable only. The `user: "0:0"` line in the compose snippet above addresses this. On rootless Docker or SELinux hosts, also add `group_add: [docker]` or append `:z` to the mount.
 - **413 from Logwiz** — individual batches exceed 10 MB (rare). Lower `batch.send_batch_size` in the processor config.
 
 ## Related
