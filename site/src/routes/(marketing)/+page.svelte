@@ -92,13 +92,13 @@
       ],
     },
     {
-      name: "Ingest API",
+      name: "Ingestion",
       visual: "ingest",
       description: [
-        "Authenticated HTTP endpoint forwarding to Quickwit",
-        "Send NDJSON payloads directly",
-        "Per-index bearer tokens for access control",
-        "Configurable rate limiting",
+        "OTLP HTTP endpoint — works with any OpenTelemetry SDK or Collector",
+        "Drop-in guides for Python, Node.js, Go, Java, and .NET",
+        "NDJSON gateway for custom-schema indexes",
+        "Per-index bearer tokens, 10 MB max per request",
       ],
     },
     {
@@ -554,41 +554,42 @@
                     >POST</span
                   >
                   <span class="text-xs font-mono text-base-content"
-                    >/api/ingest/&#123;indexId&#125;</span
+                    >/api/otlp/v1/logs</span
                   >
                 </div>
-                <p class="text-[11px] text-neutral/40 mb-4">Endpoint URL</p>
-                <!-- cURL example -->
+                <p class="text-[11px] text-neutral/40 mb-4">
+                  OTLP endpoint · also <span class="font-mono"
+                    >/api/ingest/&#123;indexId&#125;</span
+                  > for NDJSON
+                </p>
+                <!-- Language pills -->
+                <p
+                  class="text-[10px] text-neutral/50 uppercase tracking-wider font-medium mb-2"
+                >
+                  Drop-in OTEL SDKs
+                </p>
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                  {#each ["Python", "Node.js", "Go", "Java", ".NET", "Docker"] as lang (lang)}
+                    <span
+                      class="text-[11px] bg-base-100 border border-base-300 rounded-full px-2.5 py-0.5 text-base-content"
+                      >{lang}</span
+                    >
+                  {/each}
+                </div>
+                <!-- Env snippet -->
                 <div
                   class="bg-base-100 rounded-lg border border-base-300 p-3 mb-4 font-mono text-xs leading-relaxed text-base-content/70"
                 >
                   <p
                     class="text-neutral/40 mb-1 font-sans text-[10px] uppercase tracking-wider font-medium"
                   >
-                    cURL
+                    Point any OTEL SDK at Logwiz
                   </p>
-                  <span class="text-neutral/40">$</span> curl -X POST
-                  https://logwiz.internal/api/ingest/prod-logs-v2 \<br />
-                  &nbsp;&nbsp;-H
-                  <span class="text-primary"
-                    >"Authorization: Bearer lwit_a7f3..."</span
-                  >
-                  \<br />
-                  &nbsp;&nbsp;-H
-                  <span class="text-primary"
-                    >"Content-Type: application/json"</span
-                  >
-                  \<br />
-                  &nbsp;&nbsp;-d '&#123;"message":"Connection timeout","level":"error"&#125;'
-                </div>
-                <!-- Response -->
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span class="text-xs font-medium text-base-content"
-                    >200 OK</span
-                  >
-                  <span class="text-xs text-neutral/40 ml-auto font-mono"
-                    >38ms</span
+                  <span class="text-primary">OTEL_EXPORTER_OTLP_ENDPOINT</span
+                  >=https://logwiz.internal/api<br />
+                  <span class="text-primary">OTEL_EXPORTER_OTLP_HEADERS</span
+                  >=<span class="text-primary"
+                    >"Authorization=Bearer lwit_a7f3..."</span
                   >
                 </div>
                 <!-- Tokens -->
