@@ -96,7 +96,7 @@
 
 		<div class="modal-action">
 			<button type="button" class="btn" onclick={handleCancel}>Cancel</button>
-			<button type="submit" class="btn btn-primary" disabled={creating || noIndexes}>
+			<button type="submit" class="btn btn-accent" disabled={creating || noIndexes}>
 				{creating ? 'Creating...' : 'Create Token'}
 			</button>
 		</div>

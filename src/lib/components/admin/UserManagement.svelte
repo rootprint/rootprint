@@ -79,7 +79,7 @@
 </script>
 
 <section>
-	<header class="mb-3 flex items-center justify-between">
+	<header class="mb-4 flex items-center justify-between border-b border-base-300 pb-4">
 		<div>
 			<h2 class="text-xl font-semibold">Users</h2>
 			<p class="mt-1 text-sm text-base-content/60">Manage user accounts and roles</p>

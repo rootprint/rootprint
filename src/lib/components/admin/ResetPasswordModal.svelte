@@ -57,7 +57,7 @@
 		>
 			<div class="modal-action">
 				<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-				<button type="submit" class="btn btn-neutral" disabled={loading}>
+				<button type="submit" class="btn btn-accent" disabled={loading}>
 					{loading ? 'Resetting...' : 'Reset Password'}
 				</button>
 			</div>

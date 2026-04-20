@@ -5,7 +5,7 @@
 </script>
 
 <section>
-	<header class="mb-3">
+	<header class="mb-4 border-b border-base-300 pb-4">
 		<h2 class="text-xl font-semibold">Authentication providers</h2>
 		<p class="mt-1 text-sm text-base-content/60">Configure sign-in methods for your instance</p>
 	</header>

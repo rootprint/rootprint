@@ -1,4 +1,7 @@
 <script lang="ts">
+	import Icon from '@iconify/svelte';
+	import googleIcon from '@iconify-icons/logos/google-icon';
+
 	import type { AuthProviderRow } from '$lib/types';
 
 	let { provider }: { provider: AuthProviderRow } = $props();
@@ -23,7 +26,11 @@
 		class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-200 text-xs font-semibold"
 		aria-hidden="true"
 	>
-		{initial}
+		{#if provider.id === 'google'}
+			<Icon icon={googleIcon} class="h-4 w-4" />
+		{:else}
+			{initial}
+		{/if}
 	</div>
 
 	<div class="min-w-0 flex-1">

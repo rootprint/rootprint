@@ -32,7 +32,7 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	<header>
+	<header class="border-b border-base-300 pb-4">
 		<h2 class="text-xl font-semibold">Send Logs</h2>
 		<p class="mt-1 text-sm text-base-content/60">
 			Pick a source to see step-by-step setup instructions.

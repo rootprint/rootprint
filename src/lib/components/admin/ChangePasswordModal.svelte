@@ -91,7 +91,7 @@
 
 		<div class="modal-action">
 			<button type="button" class="btn" onclick={handleClose}>Cancel</button>
-			<button type="submit" class="btn btn-neutral" disabled={loading || passwordMismatch}>
+			<button type="submit" class="btn btn-accent" disabled={loading || passwordMismatch}>
 				{loading ? 'Changing...' : 'Change Password'}
 			</button>
 		</div>
