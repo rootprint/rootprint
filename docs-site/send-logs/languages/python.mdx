@@ -14,6 +14,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP (`proto-http`). The Python SDK'
     ```
 
     Python 3.8+ is required. For async apps, add `opentelemetry-instrumentation-asyncio`.
+
   </Step>
 
   <Step title="Set environment variables">
@@ -24,6 +25,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP (`proto-http`). The Python SDK'
     ```
 
     <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+
   </Step>
 
   <Step title="Minimal working example">
@@ -47,6 +49,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP (`proto-http`). The Python SDK'
     # (or shut the provider down) before exit, otherwise the batch is dropped.
     logger_provider.shutdown()
     ```
+
   </Step>
 
   <Step title="Verify in Logwiz">

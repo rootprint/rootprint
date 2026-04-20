@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import googleIcon from '@iconify-icons/logos/google-icon';
+
 	import { page } from '$app/state';
 	import { signIn } from '$lib/api/auth.remote';
 	import { authClient } from '$lib/auth-client';

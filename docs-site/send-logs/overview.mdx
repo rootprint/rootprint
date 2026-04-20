@@ -10,35 +10,35 @@ Logwiz accepts logs two ways:
 
 ## Pick a path
 
-| If you have…                                 | Use                                                      |
-| -------------------------------------------- | -------------------------------------------------------- |
-| An app in Python, Node.js, Go, Java, or .NET | The matching [language page](#languages) (OTLP SDK)      |
-| Container logs on a Linux host               | [Docker](/send-logs/platforms/docker) (OTEL Collector)   |
-| Existing pipeline that emits your own schema | [HTTP (NDJSON gateway)](/send-logs/http)                 |
-| Something else that speaks OTLP              | [OTLP reference](/send-logs/otlp)                        |
+| If you have…                                 | Use                                                    |
+| -------------------------------------------- | ------------------------------------------------------ |
+| An app in Python, Node.js, Go, Java, or .NET | The matching [language page](#languages) (OTLP SDK)    |
+| Container logs on a Linux host               | [Docker](/send-logs/platforms/docker) (OTEL Collector) |
+| Existing pipeline that emits your own schema | [HTTP (NDJSON gateway)](/send-logs/http)               |
+| Something else that speaks OTLP              | [OTLP reference](/send-logs/otlp)                      |
 
 ## Integrations
 
 ### Languages
 
 <CardGroup cols={3}>
-  <Card title="Python" icon="python" href="/send-logs/languages/python" />
-  <Card title="Node.js" icon="node-js" href="/send-logs/languages/javascript" />
-  <Card title="Go" icon="golang" href="/send-logs/languages/go" />
-  <Card title="Java" icon="java" href="/send-logs/languages/java" />
-  <Card title=".NET" icon="microsoft" href="/send-logs/languages/dotnet" />
+	<Card title="Python" icon="python" href="/send-logs/languages/python" />
+	<Card title="Node.js" icon="node-js" href="/send-logs/languages/javascript" />
+	<Card title="Go" icon="golang" href="/send-logs/languages/go" />
+	<Card title="Java" icon="java" href="/send-logs/languages/java" />
+	<Card title=".NET" icon="microsoft" href="/send-logs/languages/dotnet" />
 </CardGroup>
 
 ### Platforms
 
 <CardGroup cols={3}>
-  <Card title="Docker" icon="docker" href="/send-logs/platforms/docker" />
+	<Card title="Docker" icon="docker" href="/send-logs/platforms/docker" />
 </CardGroup>
 
 ### Other
 
 <CardGroup cols={3}>
-  <Card title="HTTP (NDJSON gateway)" icon="globe" href="/send-logs/http" />
+	<Card title="HTTP (NDJSON gateway)" icon="globe" href="/send-logs/http" />
 </CardGroup>
 
 ## Before you start
@@ -46,6 +46,6 @@ Logwiz accepts logs two ways:
 Every path requires an **ingest token**. Tokens are created in **Administration → Tokens** and are scoped to a single index — one token, one index. Pick the index you want to write to, create a token for it, and keep the value ready for the integration page you follow.
 
 <Note>
-  The built-in `otel-logs-v0_9` index is created on first boot and is ready for OTLP traffic with
-  no extra configuration. See [Indexes](/indexes) for its schema.
+	The built-in `otel-logs-v0_9` index is created on first boot and is ready for OTLP traffic with no
+	extra configuration. See [Indexes](/indexes) for its schema.
 </Note>

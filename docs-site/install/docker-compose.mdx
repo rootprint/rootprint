@@ -36,28 +36,27 @@ services:
       timeout: 5s
       retries: 10
 
-  logwiz:
-    image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
-    container_name: logwiz
-    depends_on:
-      quickwit:
-        condition: service_healthy
-    environment:
-      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - '8282:8282'
-    volumes:
-      - logwiz-data:/app/data
+logwiz:
+image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
+container_name: logwiz
+depends_on:
+quickwit:
+condition: service_healthy
+environment:
+LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
+healthcheck:
+test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
+interval: 10s
+timeout: 5s
+retries: 5
+ports: - '8282:8282'
+volumes: - logwiz-data:/app/data
 
 volumes:
-  quickwit-data:
-  logwiz-data:
-```
+quickwit-data:
+logwiz-data:
+
+````
 </Expandable>
 
 This starts two containers:
@@ -149,8 +148,9 @@ services:
       - logwiz-data:/app/data
 
 volumes:
-  logwiz-data:
-```
+logwiz-data:
+
+````
 </Expandable>
 
 Then start the service:

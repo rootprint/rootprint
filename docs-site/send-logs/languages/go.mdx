@@ -22,6 +22,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. The Go SDK's `otlploghttp` exp
     ```
 
     Go 1.21+ is required (for `log/slog`).
+
   </Step>
 
   <Step title="Set environment variables">
@@ -32,6 +33,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. The Go SDK's `otlploghttp` exp
     ```
 
     <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+
   </Step>
 
   <Step title="Minimal working example">
@@ -63,6 +65,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. The Go SDK's `otlploghttp` exp
         logger.Info("Hello from Go to Logwiz")
     }
     ```
+
   </Step>
 
   <Step title="Verify in Logwiz">

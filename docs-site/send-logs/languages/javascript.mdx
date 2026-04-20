@@ -28,6 +28,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
     </Tabs>
 
     Node.js 18+ is required (for native `fetch` and top-level `await`).
+
   </Step>
 
   <Step title="Set environment variables">
@@ -38,6 +39,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
     ```
 
     <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+
   </Step>
 
   <Step title="Minimal working example">
@@ -100,6 +102,7 @@ Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OT
         ```
       </Tab>
     </Tabs>
+
   </Step>
 
   <Step title="Verify in Logwiz">
@@ -113,9 +116,9 @@ Attributes become log-record attributes on the OTEL side — searchable and filt
 
 ```javascript
 logs.getLogger('app').emit({
-    severityText: 'INFO',
-    body: 'user signed up',
-    attributes: { user_id: 'alice', plan: 'pro' }
+	severityText: 'INFO',
+	body: 'user signed up',
+	attributes: { user_id: 'alice', plan: 'pro' }
 });
 ```
 
@@ -136,7 +139,7 @@ import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 
 const provider = new LoggerProvider({
-    processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+	processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
 });
 logs.setGlobalLoggerProvider(provider);
 export const logger = logs.getLogger('express-app');
@@ -151,12 +154,12 @@ import { logger } from './otel.js';
 const app = express();
 
 app.use((req, _res, next) => {
-    logger.emit({
-        severityText: 'INFO',
-        body: 'request',
-        attributes: { method: req.method, path: req.path }
-    });
-    next();
+	logger.emit({
+		severityText: 'INFO',
+		body: 'request',
+		attributes: { method: req.method, path: req.path }
+	});
+	next();
 });
 
 app.get('/', (_req, res) => res.json({ ok: true }));

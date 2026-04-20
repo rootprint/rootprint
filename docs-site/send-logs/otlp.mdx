@@ -23,7 +23,10 @@ When used through `OTEL_EXPORTER_OTLP_LOGS_HEADERS`, the value must be URL-encod
 OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
 ```
 
-<Warning>The `%20` between `Bearer` and the token is required — OTEL SDKs expect header values in URL-encoded form.</Warning>
+<Warning>
+	The `%20` between `Bearer` and the token is required — OTEL SDKs expect header values in
+	URL-encoded form.
+</Warning>
 
 ## Supported content types
 
@@ -41,31 +44,31 @@ other than these two content types returns **415 Unsupported Media Type**.
 
 ## Response codes
 
-| Status | Meaning                                                            |
-| ------ | ------------------------------------------------------------------ |
-| `200`  | Accepted. Empty body.                                              |
-| `400`  | Empty request body.                                                |
-| `401`  | Missing Bearer token.                                              |
-| `403`  | Invalid or unknown ingest token.                                   |
-| `413`  | Body exceeds 10 MB.                                                |
-| `415`  | Unsupported `Content-Type`.                                        |
-| `429`  | Upstream Quickwit is rate-limited. `Retry-After` is echoed.        |
-| `503`  | Upstream Quickwit error or network failure. `Retry-After: 5`.      |
+| Status | Meaning                                                       |
+| ------ | ------------------------------------------------------------- |
+| `200`  | Accepted. Empty body.                                         |
+| `400`  | Empty request body.                                           |
+| `401`  | Missing Bearer token.                                         |
+| `403`  | Invalid or unknown ingest token.                              |
+| `413`  | Body exceeds 10 MB.                                           |
+| `415`  | Unsupported `Content-Type`.                                   |
+| `429`  | Upstream Quickwit is rate-limited. `Retry-After` is echoed.   |
+| `503`  | Upstream Quickwit error or network failure. `Retry-After: 5`. |
 
 <Note>
-  Logwiz returns an empty `200` on success rather than a populated OTLP `PartialSuccess` response.
-  OTEL SDKs treat an empty `200` as a full success and do not retry.
+	Logwiz returns an empty `200` on success rather than a populated OTLP `PartialSuccess` response.
+	OTEL SDKs treat an empty `200` as a full success and do not retry.
 </Note>
 
 ## Environment variables
 
-| Variable                           | Value                                            |
-| ---------------------------------- | ------------------------------------------------ |
-| `OTEL_SERVICE_NAME`                | Your service name (lands in `service_name`).    |
-| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | `https://<your-logwiz>/api/otlp/v1/logs`         |
-| `OTEL_EXPORTER_OTLP_LOGS_HEADERS`  | `Authorization=Bearer%20<your-ingest-token>`     |
-| `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL` | `http/protobuf` (default) or `http/json`         |
-| `OTEL_LOG_LEVEL`                   | Minimum severity emitted by the SDK itself.      |
+| Variable                           | Value                                        |
+| ---------------------------------- | -------------------------------------------- |
+| `OTEL_SERVICE_NAME`                | Your service name (lands in `service_name`). |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | `https://<your-logwiz>/api/otlp/v1/logs`     |
+| `OTEL_EXPORTER_OTLP_LOGS_HEADERS`  | `Authorization=Bearer%20<your-ingest-token>` |
+| `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL` | `http/protobuf` (default) or `http/json`     |
+| `OTEL_LOG_LEVEL`                   | Minimum severity emitted by the SDK itself.  |
 
 ## Index target
 

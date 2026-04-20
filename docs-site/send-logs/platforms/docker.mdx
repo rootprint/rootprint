@@ -6,8 +6,8 @@ description: 'Ship every container on a Linux host to Logwiz with an OpenTelemet
 Run an OpenTelemetry Collector sidecar next to your other containers. It tails the Docker log files on the host, parses each line with the `container` operator (which pulls `container.id` and `container.name` from the log file path and Docker's per-container `config.v2.json`), and ships records over OTLP HTTP to Logwiz. No changes to the apps themselves.
 
 <Warning>
-  Linux-only. Docker Desktop on macOS and Windows runs Docker inside a VM — the host path
-  `/var/lib/docker/containers` is not accessible as written on those platforms.
+	Linux-only. Docker Desktop on macOS and Windows runs Docker inside a VM — the host path
+	`/var/lib/docker/containers` is not accessible as written on those platforms.
 </Warning>
 
 ## Setup
@@ -49,6 +49,7 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
     ```
 
     <Note>The `contrib` distribution is required — the `container` operator that parses Docker's per-line JSON log format ships only in `otel/opentelemetry-collector-contrib`, not the core image.</Note>
+
   </Step>
 
   <Step title="Add the collector to your compose file">
@@ -66,13 +67,10 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
     ```
 
     <Note>Both mounts are read-only. `/var/lib/docker/containers` is what the `container` operator reads to enrich each log line with `container.name` and `container.id` — no Docker socket is required.</Note>
+
   </Step>
 
-  <Step title="Start the collector">
-    ```bash
-    docker compose up -d otel-collector
-    ```
-  </Step>
+<Step title="Start the collector">```bash docker compose up -d otel-collector ```</Step>
 
   <Step title="Send a test log line">
     Run a throwaway container that prints one line and exits. The collector picks up the line from the host log file, attaches `container.name=logwiz-smoke-test`, and ships it.
@@ -80,6 +78,7 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
     ```bash
     docker run --rm --name logwiz-smoke-test alpine echo "hello from logwiz"
     ```
+
   </Step>
 
   <Step title="Verify in Logwiz">
