@@ -19,7 +19,7 @@
 <div class="flex h-screen w-screen flex-col">
 	<div class="flex h-12 items-center justify-between border-b border-base-300 bg-base-100 px-4">
 		<a href="/" class="flex items-center gap-2 text-lg font-semibold hover:opacity-80">
-			<img src={logo} alt="Logwiz" class="h-6 w-auto object-contain" />
+			<img src={logo} alt="Logwiz" class="h-6 w-auto rounded-sm object-contain" />
 			Logwiz
 		</a>
 

@@ -19,7 +19,15 @@
   <nav
     class="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between"
   >
-    <a href="/" class="text-xl font-semibold text-base-content tracking-tight">
+    <a
+      href="/"
+      class="flex items-center gap-2 text-xl font-semibold text-base-content tracking-tight"
+    >
+      <img
+        src="/android-chrome-192x192.png"
+        alt="Logwiz"
+        class="h-7 w-7 rounded-sm object-contain"
+      />
       {WebsiteName}
     </a>
 
