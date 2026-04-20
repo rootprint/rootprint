@@ -11,10 +11,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidateAll } from '$app/navigation';
-	import {
-		resetSourceCheckpoint,
-		setSourceEnabled
-	} from '$lib/api/indexes.remote';
+	import { resetSourceCheckpoint, setSourceEnabled } from '$lib/api/indexes.remote';
 	import type { QuickwitSource } from '$lib/types';
 	import { getErrorMessage } from '$lib/utils/error';
 

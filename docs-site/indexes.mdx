@@ -7,7 +7,7 @@ Logwiz reads indexes from your Quickwit instance and presents them as searchable
 
 ## Built-in OpenTelemetry index
 
-The default Logwiz deployment includes `otel-logs-v0_9` — a standard OpenTelemetry logs index created by default. It maps directly to the [OpenTelemetry Log Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/) and is ready to use without any configuration.
+Logwiz ships with `otel-logs-v0_9` as its default OpenTelemetry logs index — the current schema version bundled with Quickwit's `edge` image. Older Quickwit releases (including 0.8.x) still default to `otel-logs-v0_7`, so check your metastore before assuming an index name. The schema maps directly to the [OpenTelemetry Log Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/) and is ready to use without any configuration.
 
 ### Logwiz field defaults
 
@@ -146,5 +146,5 @@ Create the index in Quickwit with whatever schema fits your data, then configure
 
 ## Next steps
 
-- [Send logs](/send-logs) to start ingesting data into any index.
+- [Send logs](/send-logs/overview) to start ingesting data into any index.
 - [Configure index fields](/configuration/index-config) to map log level, message, and traceback for your schema.

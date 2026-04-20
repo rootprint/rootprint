@@ -53,7 +53,7 @@
 	<div class="mt-4 flex flex-col gap-3">
 		{#if loading}
 			<div class="flex items-center gap-2 py-4 text-sm text-base-content/70">
-				<span class="loading loading-spinner loading-sm"></span>
+				<span class="loading loading-sm loading-spinner"></span>
 				Loading token…
 			</div>
 		{:else if tokenValue}

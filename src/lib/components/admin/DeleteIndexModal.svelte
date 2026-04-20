@@ -43,15 +43,15 @@
 
 <Modal bind:open title="Delete Index" onclose={() => (typed = '')}>
 	<p class="mt-2 text-sm text-base-content/60">
-		This permanently deletes the index <strong class="font-mono">{indexId}</strong> and all of its
-		data. This cannot be undone.
+		This permanently deletes the index <strong class="font-mono">{indexId}</strong> and all of its data.
+		This cannot be undone.
 	</p>
 	<p class="mt-4 text-sm">
 		Type <strong class="font-mono">{indexId}</strong> to confirm:
 	</p>
 	<input
 		type="text"
-		class="input input-bordered mt-2 w-full font-mono"
+		class="input-bordered input mt-2 w-full font-mono"
 		autocomplete="off"
 		spellcheck="false"
 		bind:value={typed}

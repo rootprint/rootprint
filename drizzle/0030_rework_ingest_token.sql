@@ -1,5 +1,7 @@
--- Replace token_hash + token_prefix columns with a single plain-text token column.
--- Table is emptied first so the NOT NULL constraint is satisfiable during the INSERT/SELECT.
+-- Rework ingest_token: collapse (token_hash + token_prefix) into a single plain-text `token`,
+-- and replace nullable `index_allowlist` JSON with a required `index_id` text column.
+-- Existing rows cannot be migrated forward: token_hash is irrecoverable to plaintext, and
+-- unscoped / multi-index allowlists have no single target index. Drop all rows and rebuild.
 DELETE FROM `ingest_token`;
 --> statement-breakpoint
 CREATE TABLE `ingest_token_new` (
@@ -12,14 +14,6 @@ CREATE TABLE `ingest_token_new` (
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
 	FOREIGN KEY (`created_by_user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
---> statement-breakpoint
--- No-op: table was emptied above; kept to preserve drizzle-kit's rename-and-swap pattern.
-INSERT INTO `ingest_token_new` (
-	`id`, `name`, `token`, `index_id`, `last_used_at`, `created_by_user_id`, `created_at`
-)
-SELECT
-	`id`, `name`, `token_hash`, `index_id`, `last_used_at`, `created_by_user_id`, `created_at`
-FROM `ingest_token`;
 --> statement-breakpoint
 DROP TABLE `ingest_token`;
 --> statement-breakpoint

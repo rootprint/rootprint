@@ -21,9 +21,9 @@ Ingest endpoints require a bearer token in the `Authorization` header.
 Authorization: Bearer <your-ingest-token>
 ```
 
-Create and revoke ingest tokens in the Logwiz admin panel at **Administration -> Send Logs**. Each token can optionally be scoped to one or more index IDs.
+Create and revoke ingest tokens in the Logwiz admin panel at **Administration → Tokens**. Each token is scoped to exactly one index — one token, one index.
 
-See [Send Logs](/send-logs) for the end-to-end setup flow.
+See [Send Logs](/send-logs/overview) for the end-to-end setup flow.
 
 <Note>The health check endpoint (`GET /api/health`) does not require authentication.</Note>
 
@@ -54,20 +54,15 @@ All error responses return JSON with a `message` field describing the problem.
 | ------ | ---------------------------------------------------------------- |
 | `400`  | Bad request — the body is empty or malformed                     |
 | `401`  | Missing bearer token                                             |
-| `403`  | Token is invalid, revoked, or not scoped for the requested index |
+| `403`  | Token is invalid, revoked, or does not match the requested index |
 | `404`  | Unknown index — Quickwit has no index with the given ID          |
 | `413`  | Request body exceeds the 10 MB limit                             |
-| `429`  | Rate limit exceeded                                              |
 | `502`  | Logwiz could not reach Quickwit to forward the request           |
 | `503`  | Quickwit is unhealthy or unavailable                             |
 
-## Rate limiting
-
-Logwiz applies rate limiting to all ingest requests. The defaults are:
-
-| Variable                   | Default | Description                 |
-| -------------------------- | ------- | --------------------------- |
-| `LOGWIZ_RATE_LIMIT_WINDOW` | `60`    | Window duration in seconds  |
-| `LOGWIZ_RATE_LIMIT_MAX`    | `100`   | Maximum requests per window |
-
-When the limit is exceeded, Logwiz returns `429`. Adjust these values in your environment configuration if your log volume requires a higher throughput.
+<Note>
+	Logwiz does not apply an application-level rate limit to the ingest endpoint. The
+	`LOGWIZ_RATE_LIMIT_WINDOW` and `LOGWIZ_RATE_LIMIT_MAX` variables apply to the authentication
+	endpoints only. Apply your own rate limiting at the reverse proxy or load balancer if you need
+	it.
+</Note>

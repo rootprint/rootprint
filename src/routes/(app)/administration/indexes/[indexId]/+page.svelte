@@ -32,7 +32,11 @@
 			</p>
 		</div>
 		<div class="flex shrink-0 items-center gap-2">
-			<button type="button" class="btn btn-sm btn-outline btn-error" onclick={() => (deleteOpen = true)}>
+			<button
+				type="button"
+				class="btn btn-outline btn-sm btn-error"
+				onclick={() => (deleteOpen = true)}
+			>
 				<Trash2 size={14} />
 				Delete
 			</button>

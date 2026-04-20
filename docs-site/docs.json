@@ -18,6 +18,16 @@
 			"href": "https://github.com/oleksandr-zhyhalo/logwiz"
 		}
 	},
+	"redirects": [
+		{
+			"source": "/send-logs/http-ingest",
+			"destination": "/send-logs/http"
+		},
+		{
+			"source": "/send-logs",
+			"destination": "/send-logs/overview"
+		}
+	],
 	"navigation": {
 		"tabs": [
 			{
@@ -37,7 +47,28 @@
 					},
 					{
 						"group": "Send Logs",
-						"pages": ["send-logs/http-ingest"]
+						"pages": [
+							"send-logs/overview",
+							"send-logs/otlp",
+							{
+								"group": "Languages",
+								"pages": [
+									"send-logs/languages/python",
+									"send-logs/languages/javascript",
+									"send-logs/languages/go",
+									"send-logs/languages/java",
+									"send-logs/languages/dotnet"
+								]
+							},
+							{
+								"group": "Platforms",
+								"pages": ["send-logs/platforms/docker"]
+							},
+							{
+								"group": "Other",
+								"pages": ["send-logs/http"]
+							}
+						]
 					},
 					{
 						"group": "Configuration",

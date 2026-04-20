@@ -1,0 +1,151 @@
+---
+title: 'Send logs from .NET'
+description: 'Ship .NET logs to Logwiz with the OpenTelemetry auto-instrumentation agent or the SDK over OTLP HTTP.'
+---
+
+Logwiz accepts OpenTelemetry logs over OTLP HTTP. .NET apps have two common paths:
+
+- **Auto-instrumentation** — one-time installer script attaches the OTEL CLR profiler. `ILogger<T>` statements are shipped automatically with no code changes.
+- **SDK** — add the `OpenTelemetry.*` NuGet packages and wire `AddOpenTelemetry().UseOtlpExporter()` into your host. More control; requires touching startup code.
+
+Records land in the OTEL logs index pinned by your ingest token (default: `otel-logs-v0_9`).
+
+## Setup
+
+<Steps>
+  <Step title="Install">
+    <Tabs>
+      <Tab title="Auto">
+        ```bash
+        # Linux / macOS
+        curl -sSfL https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation/releases/latest/download/otel-dotnet-auto-install.sh -O
+        sh ./otel-dotnet-auto-install.sh
+
+        # Windows (PowerShell)
+        # Invoke-WebRequest -Uri "https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation/releases/latest/download/OpenTelemetry.DotNet.Auto.psm1" -OutFile "OpenTelemetry.DotNet.Auto.psm1"
+        # Import-Module "./OpenTelemetry.DotNet.Auto.psm1"
+        # Install-OpenTelemetryCore
+        ```
+      </Tab>
+      <Tab title="SDK">
+        ```bash
+        dotnet add package OpenTelemetry.Extensions.Hosting
+        dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Set environment variables">
+    <Tabs>
+      <Tab title="Auto">
+        ```bash
+        # Source the installer-generated script first (bash/zsh)
+        . $HOME/.otel-dotnet-auto/instrument.sh
+
+        # Windows (PowerShell): . $HOME\.otel-dotnet-auto\instrument.ps1
+
+        export OTEL_SERVICE_NAME=my-dotnet-service
+        export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+        export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://<your-logwiz>/api/otlp/v1/logs
+        export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
+        ```
+      </Tab>
+      <Tab title="SDK">
+        ```bash
+        export OTEL_SERVICE_NAME=my-dotnet-service
+        export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+        export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://<your-logwiz>/api/otlp/v1/logs
+        export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
+        ```
+      </Tab>
+    </Tabs>
+
+    <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+  </Step>
+
+  <Step title="Minimal working example">
+    <Tabs>
+      <Tab title="Auto">
+        ```csharp
+        using Microsoft.Extensions.DependencyInjection;
+        using Microsoft.Extensions.Hosting;
+        using Microsoft.Extensions.Logging;
+
+        var builder = Host.CreateApplicationBuilder(args);
+        using var host = builder.Build();
+
+        var logger = host.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Hello from .NET to Logwiz");
+        ```
+      </Tab>
+      <Tab title="SDK">
+        ```csharp
+        using Microsoft.Extensions.DependencyInjection;
+        using Microsoft.Extensions.Hosting;
+        using Microsoft.Extensions.Logging;
+        using OpenTelemetry;
+
+        var builder = Host.CreateApplicationBuilder(args);
+        builder.Services.AddOpenTelemetry().UseOtlpExporter();
+
+        using var host = builder.Build();
+        var logger = host.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Hello from .NET to Logwiz");
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, filter on `service_name:my-dotnet-service`, and your record should appear within ~2 seconds.
+  </Step>
+</Steps>
+
+## Structured logging
+
+Use `ILogger<T>`'s message-template form — .NET turns the named placeholders into structured attributes.
+
+```csharp
+logger.LogInformation("user {UserId} signed up on plan {Plan}", userId, plan);
+```
+
+These land as `attributes.UserId` and `attributes.Plan` in Logwiz and become searchable.
+
+## Framework recipe: ASP.NET Core
+
+With the **SDK** path, add OTEL to the builder once — every `ILogger<T>` resolved from DI ships through OTLP automatically.
+
+```csharp
+using OpenTelemetry;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddOpenTelemetry().UseOtlpExporter();
+
+var app = builder.Build();
+
+app.Use(async (ctx, next) =>
+{
+    var logger = ctx.RequestServices.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("request {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
+    await next();
+});
+
+app.MapGet("/", () => new { ok = true });
+app.Run();
+```
+
+With the **auto** path, drop the `AddOpenTelemetry().UseOtlpExporter()` call — the installer already wires the logger provider.
+
+## Troubleshooting
+
+- **401 / 403** — the Bearer token is missing, malformed, or the `%20` separator is not URL-encoded. Re-check `OTEL_EXPORTER_OTLP_LOGS_HEADERS`.
+- **Auto-instrumentation: no records** — the `instrument.sh` / `instrument.ps1` script must be sourced in the same shell that runs `dotnet`. If you run through `systemd` or similar, set the `CORECLR_*` env vars the script exports.
+- **SDK: nothing visible** — `AddOpenTelemetry().UseOtlpExporter()` must be called before `Build()`. Verify with `builder.Services.BuildServiceProvider().GetRequiredService<ILoggerProvider>()` returning an OTEL provider.
+- **TLS errors against a self-signed endpoint** — install the CA into the OS trust store, or set `SSL_CERT_FILE=/path/to/ca.pem` on Linux.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp)
+- [Indexes](/indexes)
+- [Per Index configuration](/configuration/index-config)

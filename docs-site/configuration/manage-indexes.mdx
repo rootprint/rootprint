@@ -20,10 +20,10 @@ Clicking an index opens its detail page. A header shows the raw index ID, creati
 
 ### Stats strip
 
-| Card               | What it shows                                                                                                                            |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Ingestion · 24h    | Document count ingested in the last 24 hours, with a percentage delta vs the prior 24 hours. Drops of 20% or more are highlighted.       |
-| Index size         | Total on-disk footprint, number of splits, and the average compression ratio when Quickwit reports one.                                  |
+| Card            | What it shows                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Ingestion · 24h | Document count ingested in the last 24 hours, with a percentage delta vs the prior 24 hours. Drops of 20% or more are highlighted. |
+| Index size      | Total on-disk footprint, number of splits, and the average compression ratio when Quickwit reports one.                            |
 
 ### Overview tab
 
@@ -58,7 +58,7 @@ The **Delete** button in the index header permanently removes the index from Qui
 
 - Field-role and visibility configuration.
 - Per-user preferences, search history, saved queries, and shared links tied to the index.
-- Scoped ingest tokens — the index is removed from each token's allowlist. If an allowlist becomes empty, the token is deleted outright so it cannot escalate to all-index scope. Global tokens (no allowlist) are left untouched.
+- Ingest tokens — because each token is scoped to exactly one index, any token pointing at the deleted index is removed.
 
 To prevent accidents, the modal requires you to type the exact index ID before the **Delete** button becomes active. There is no undo.
 
@@ -66,4 +66,4 @@ To prevent accidents, the modal requires you to type the exact index ID before t
 
 - [Indexes](/indexes) — schema details for the built-in OpenTelemetry index and custom index concepts.
 - [Per Index configuration](/configuration/index-config) — field-role mapping and visibility settings.
-- [HTTP Ingestion](/send-logs/http-ingest) — how ingest tokens and the gateway interact with these sources.
+- [HTTP (NDJSON gateway)](/send-logs/http) — how ingest tokens and the gateway interact with these sources.

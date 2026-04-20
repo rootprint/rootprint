@@ -8,7 +8,14 @@
 		indexes: 'Indexes',
 		users: 'Users',
 		authentication: 'Authentication',
-		google: 'Google'
+		google: 'Google',
+		python: 'Python',
+		javascript: 'Node.js',
+		go: 'Go',
+		java: 'Java',
+		dotnet: '.NET',
+		http: 'HTTP',
+		docker: 'Docker'
 	};
 
 	const crumbs = $derived.by(() => {

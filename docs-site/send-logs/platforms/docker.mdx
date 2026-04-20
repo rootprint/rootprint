@@ -1,0 +1,106 @@
+---
+title: 'Send logs from Docker'
+description: 'Ship every container on a Linux host to Logwiz with an OpenTelemetry Collector sidecar.'
+---
+
+Run an OpenTelemetry Collector sidecar next to your other containers. It tails the Docker log files on the host, parses each line with the `container` operator (which pulls `container.id` and `container.name` from the log file path and Docker's per-container `config.v2.json`), and ships records over OTLP HTTP to Logwiz. No changes to the apps themselves.
+
+<Warning>
+  Linux-only. Docker Desktop on macOS and Windows runs Docker inside a VM — the host path
+  `/var/lib/docker/containers` is not accessible as written on those platforms.
+</Warning>
+
+## Setup
+
+<Steps>
+  <Step title="Create the collector config">
+    Save this as `otel-collector-config.yaml` next to your `docker-compose.yml`. Replace `<your-logwiz>` and `<your-ingest-token>` with your values.
+
+    ```yaml
+    receivers:
+      filelog:
+        include: [/var/lib/docker/containers/*/*.log]
+        start_at: end
+        operators:
+          - type: container
+            format: docker
+
+    processors:
+      filter/exclude_self:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["container.name"] == "otel-collector"'
+      batch:
+        timeout: 5s
+
+    exporters:
+      otlphttp:
+        logs_endpoint: https://<your-logwiz>/api/otlp/v1/logs
+        headers:
+          authorization: "Bearer <your-ingest-token>"
+
+    service:
+      pipelines:
+        logs:
+          receivers: [filelog]
+          processors: [filter/exclude_self, batch]
+          exporters: [otlphttp]
+    ```
+
+    <Note>The `contrib` distribution is required — the `container` operator that parses Docker's per-line JSON log format ships only in `otel/opentelemetry-collector-contrib`, not the core image.</Note>
+  </Step>
+
+  <Step title="Add the collector to your compose file">
+    Drop this service alongside your existing ones. No changes to any other service needed — the collector reads every container's logs from the host.
+
+    ```yaml
+    services:
+      otel-collector:
+        image: otel/opentelemetry-collector-contrib:0.113.0
+        container_name: otel-collector
+        restart: unless-stopped
+        volumes:
+          - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+          - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    ```
+
+    <Note>Both mounts are read-only. `/var/lib/docker/containers` is what the `container` operator reads to enrich each log line with `container.name` and `container.id` — no Docker socket is required.</Note>
+  </Step>
+
+  <Step title="Start the collector">
+    ```bash
+    docker compose up -d otel-collector
+    ```
+  </Step>
+
+  <Step title="Send a test log line">
+    Run a throwaway container that prints one line and exits. The collector picks up the line from the host log file, attaches `container.name=logwiz-smoke-test`, and ships it.
+
+    ```bash
+    docker run --rm --name logwiz-smoke-test alpine echo "hello from logwiz"
+    ```
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search and filter on `resource_attributes.container.name:logwiz-smoke-test`. The record typically arrives within ~5 seconds (one batch interval).
+  </Step>
+</Steps>
+
+## Why the self-exclusion filter?
+
+The `filter/exclude_self` processor drops log records whose `container.name` equals `otel-collector`. Without it, every line the collector itself emits would be tailed from its own log file on the host and re-shipped — creating an amplification loop. That's why the compose service pins `container_name: otel-collector`: the filter matches on that exact value.
+
+If you rename the service, update both the `container_name` and the filter condition to match.
+
+## Troubleshooting
+
+- **No logs arriving** — confirm the collector is running (`docker logs otel-collector`). Check that your app containers write to stdout/stderr, not to files that bypass Docker's log driver.
+- **Collector logs flooding back** — the self-exclusion isn't matching. Confirm `container_name: otel-collector` in your compose file matches the filter expression exactly.
+- **`permission denied` on `/var/lib/docker/containers`** — rootless Docker or SELinux restrictions. Run the collector with the `docker` group (`group_add: [docker]` in compose) or append `:z` to the mount.
+- **413 from Logwiz** — individual batches exceed 10 MB (rare). Lower `batch.send_batch_size` in the processor config.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp) — endpoint semantics and response codes
+- [Indexes](/indexes) — `otel-logs-v0_9` schema, `resource_attributes` field

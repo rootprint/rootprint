@@ -51,18 +51,15 @@ export const setSourceEnabled = command(
 	}
 );
 
-export const resetSourceCheckpoint = command(
-	sourceActionSchema,
-	async ({ indexId, sourceId }) => {
-		requireAdmin();
-		try {
-			await indexService.resetSourceCheckpoint(indexId, sourceId);
-		} catch (e) {
-			if (isHttpError(e)) throw e;
-			error(400, e instanceof Error ? e.message : 'Failed to reset source checkpoint');
-		}
+export const resetSourceCheckpoint = command(sourceActionSchema, async ({ indexId, sourceId }) => {
+	requireAdmin();
+	try {
+		await indexService.resetSourceCheckpoint(indexId, sourceId);
+	} catch (e) {
+		if (isHttpError(e)) throw e;
+		error(400, e instanceof Error ? e.message : 'Failed to reset source checkpoint');
 	}
-);
+});
 
 export const deleteSource = command(sourceActionSchema, async ({ indexId, sourceId }) => {
 	requireAdmin();

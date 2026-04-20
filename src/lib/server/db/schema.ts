@@ -159,9 +159,7 @@ export const indexStatsSnapshot = sqliteTable(
 		minTimestamp: integer('min_timestamp'),
 		maxTimestamp: integer('max_timestamp')
 	},
-	(table) => [
-		index('index_stats_snapshot_index_captured').on(table.indexId, table.capturedAt)
-	]
+	(table) => [index('index_stats_snapshot_index_captured').on(table.indexId, table.capturedAt)]
 );
 
 export * from './auth.schema';

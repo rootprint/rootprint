@@ -1,0 +1,78 @@
+---
+title: 'OTLP reference'
+description: 'Logwiz OTLP HTTP endpoint — URL, authentication, content types, limits, and response codes.'
+---
+
+Logwiz exposes an OTLP HTTP endpoint that accepts OpenTelemetry logs, authenticates them with an ingest token, and forwards them to Quickwit's OTLP endpoint. The target index is fixed by the token — the exporter does not choose it.
+
+## Endpoint
+
+```
+POST https://<your-logwiz>/api/otlp/v1/logs
+```
+
+## Authentication
+
+```
+Authorization: Bearer <ingest-token>
+```
+
+When used through `OTEL_EXPORTER_OTLP_LOGS_HEADERS`, the value must be URL-encoded:
+
+```
+OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
+```
+
+<Warning>The `%20` between `Bearer` and the token is required — OTEL SDKs expect header values in URL-encoded form.</Warning>
+
+## Supported content types
+
+- `application/x-protobuf` — the OpenTelemetry specification default for OTLP/HTTP
+- `application/json`
+
+Most OTEL SDKs pick protobuf by default, but some (notably the OpenTelemetry JS HTTP exporters)
+also ship a JSON variant. Set `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=http/json` to switch. Anything
+other than these two content types returns **415 Unsupported Media Type**.
+
+## Size and encoding
+
+- **Maximum body:** 10 MB on the wire (post-compression if `Content-Encoding` is set).
+- `Content-Encoding: gzip` is forwarded to Quickwit unchanged.
+
+## Response codes
+
+| Status | Meaning                                                            |
+| ------ | ------------------------------------------------------------------ |
+| `200`  | Accepted. Empty body.                                              |
+| `400`  | Empty request body.                                                |
+| `401`  | Missing Bearer token.                                              |
+| `403`  | Invalid or unknown ingest token.                                   |
+| `413`  | Body exceeds 10 MB.                                                |
+| `415`  | Unsupported `Content-Type`.                                        |
+| `429`  | Upstream Quickwit is rate-limited. `Retry-After` is echoed.        |
+| `503`  | Upstream Quickwit error or network failure. `Retry-After: 5`.      |
+
+<Note>
+  Logwiz returns an empty `200` on success rather than a populated OTLP `PartialSuccess` response.
+  OTEL SDKs treat an empty `200` as a full success and do not retry.
+</Note>
+
+## Environment variables
+
+| Variable                           | Value                                            |
+| ---------------------------------- | ------------------------------------------------ |
+| `OTEL_SERVICE_NAME`                | Your service name (lands in `service_name`).    |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | `https://<your-logwiz>/api/otlp/v1/logs`         |
+| `OTEL_EXPORTER_OTLP_LOGS_HEADERS`  | `Authorization=Bearer%20<your-ingest-token>`     |
+| `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL` | `http/protobuf` (default) or `http/json`         |
+| `OTEL_LOG_LEVEL`                   | Minimum severity emitted by the SDK itself.      |
+
+## Index target
+
+The target index is pinned by the ingest token, not by the SDK. To write to a different index, create a token scoped to that index in **Administration → Tokens** and use its value in the `Authorization` header. See [Manage indexes](/configuration/manage-indexes).
+
+## Related
+
+- [Send logs overview](/send-logs/overview)
+- [Indexes](/indexes)
+- [Manage indexes](/configuration/manage-indexes)

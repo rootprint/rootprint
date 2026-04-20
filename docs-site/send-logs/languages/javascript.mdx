@@ -1,0 +1,178 @@
+---
+title: 'Send logs from Node.js'
+description: 'Ship Node.js logs to Logwiz using the OpenTelemetry SDK, Pino, or Winston over OTLP HTTP.'
+---
+
+Logwiz accepts OpenTelemetry logs over OTLP HTTP. Node apps can use the plain OTEL SDK, or plug OTLP into [Pino](https://getpino.io/) or [Winston](https://github.com/winstonjs/winston) — all three routes ship records through the same endpoint and land in the OTEL logs index pinned by your ingest token (default: `otel-logs-v0_9`).
+
+## Setup
+
+<Steps>
+  <Step title="Install">
+    <Tabs>
+      <Tab title="OTEL SDK">
+        ```bash
+        npm install @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-http
+        ```
+      </Tab>
+      <Tab title="Pino">
+        ```bash
+        npm install pino pino-opentelemetry-transport
+        ```
+      </Tab>
+      <Tab title="Winston">
+        ```bash
+        npm install winston @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-http @opentelemetry/winston-transport
+        ```
+      </Tab>
+    </Tabs>
+
+    Node.js 18+ is required (for native `fetch` and top-level `await`).
+  </Step>
+
+  <Step title="Set environment variables">
+    ```bash
+    export OTEL_SERVICE_NAME=my-node-service
+    export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://<your-logwiz>/api/otlp/v1/logs
+    export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
+    ```
+
+    <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+  </Step>
+
+  <Step title="Minimal working example">
+    <Tabs>
+      <Tab title="OTEL SDK">
+        ```javascript
+        import { logs } from '@opentelemetry/api-logs';
+        import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
+        import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+
+        const provider = new LoggerProvider({
+            processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+        });
+        logs.setGlobalLoggerProvider(provider);
+
+        logs.getLogger('hello').emit({ severityText: 'INFO', body: 'Hello from Node to Logwiz' });
+        await provider.forceFlush();
+        ```
+      </Tab>
+      <Tab title="Pino">
+        ```javascript
+        import pino from 'pino';
+
+        const transport = pino.transport({
+            target: 'pino-opentelemetry-transport'
+        });
+
+        const log = pino(transport);
+        log.info('Hello from Pino to Logwiz');
+
+        // Short-lived scripts must wait for the worker transport to flush,
+        // otherwise the record never leaves the process.
+        await new Promise((resolve) => transport.on('close', resolve));
+        transport.end();
+        ```
+      </Tab>
+      <Tab title="Winston">
+        ```javascript
+        import { logs } from '@opentelemetry/api-logs';
+        import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
+        import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+        import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport';
+        import winston from 'winston';
+
+        const provider = new LoggerProvider({
+            processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+        });
+        logs.setGlobalLoggerProvider(provider);
+
+        const logger = winston.createLogger({
+            level: 'info',
+            transports: [new OpenTelemetryTransportV3()]
+        });
+
+        logger.info('Hello from Winston to Logwiz');
+
+        // BatchLogRecordProcessor buffers records. Short-lived scripts must
+        // flush the provider before exit, otherwise the batch is dropped.
+        await provider.forceFlush();
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, filter on `service_name:my-node-service`, and your record should appear within ~2 seconds.
+  </Step>
+</Steps>
+
+## Structured logging
+
+Attributes become log-record attributes on the OTEL side — searchable and filterable in Logwiz.
+
+```javascript
+logs.getLogger('app').emit({
+    severityText: 'INFO',
+    body: 'user signed up',
+    attributes: { user_id: 'alice', plan: 'pro' }
+});
+```
+
+With Pino, pass an object as the first argument:
+
+```javascript
+log.info({ user_id: 'alice', plan: 'pro' }, 'user signed up');
+```
+
+## Framework recipe: Express
+
+Initialise the provider once at process start, then log from anywhere. Keep the setup in a separate module (e.g. `otel.js`) and import it before your Express app.
+
+```javascript
+// otel.js
+import { logs } from '@opentelemetry/api-logs';
+import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+
+const provider = new LoggerProvider({
+    processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+});
+logs.setGlobalLoggerProvider(provider);
+export const logger = logs.getLogger('express-app');
+```
+
+```javascript
+// server.js
+import './otel.js';
+import express from 'express';
+import { logger } from './otel.js';
+
+const app = express();
+
+app.use((req, _res, next) => {
+    logger.emit({
+        severityText: 'INFO',
+        body: 'request',
+        attributes: { method: req.method, path: req.path }
+    });
+    next();
+});
+
+app.get('/', (_req, res) => res.json({ ok: true }));
+app.listen(3000);
+```
+
+## Troubleshooting
+
+- **401 / 403** — the Bearer token is missing, malformed, or the `%20` separator is not URL-encoded. Re-check `OTEL_EXPORTER_OTLP_LOGS_HEADERS`.
+- **Nothing in Search** — the batch processor buffers records. For short-lived scripts call `await provider.forceFlush()` before exit.
+- **`fetch is not defined`** — upgrade to Node.js 18+ or pass a polyfilled fetch to the exporter.
+- **Pino transport not emitting** — `pino-opentelemetry-transport` reads the `OTEL_*` env vars itself; make sure they are set in the process that spawns the transport worker.
+- **TLS errors against a self-signed endpoint** — set `NODE_EXTRA_CA_CERTS=/path/to/ca.pem`.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp)
+- [Indexes](/indexes)
+- [Per Index configuration](/configuration/index-config)

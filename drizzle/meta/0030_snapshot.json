@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "576a40df-57d5-48d2-8687-09fe25be258d",
+  "id": "6c0c31d3-c428-46b4-a952-cda821a60736",
   "prevId": "4ce00d4e-36e4-435e-8dfa-cbd4d933e642",
   "tables": {
     "app_settings": {
@@ -213,15 +213,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "token_hash": {
-          "name": "token_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "token_prefix": {
-          "name": "token_prefix",
+        "token": {
+          "name": "token",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -265,19 +258,19 @@
           ],
           "isUnique": true
         },
-        "ingest_token_token_hash_unique": {
-          "name": "ingest_token_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
-          "isUnique": true
-        },
         "ingest_token_created_by": {
           "name": "ingest_token_created_by",
           "columns": [
             "created_by_user_id"
           ],
           "isUnique": false
+        },
+        "ingest_token_token_unique": {
+          "name": "ingest_token_token_unique",
+          "columns": [
+            "token"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {

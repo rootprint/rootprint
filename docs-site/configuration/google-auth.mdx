@@ -21,7 +21,7 @@ Logwiz supports Google OAuth as an additional sign-in method alongside the defau
   </Step>
 
   <Step title="Enter credentials in Logwiz">
-    In Logwiz, go to **Administration → Users** and find the **Google Auth** section. Enter:
+    In Logwiz, go to **Administration → Authentication** and find the **Google Auth** section. Enter:
 
     - **Client ID** — from the Google Cloud Console
     - **Client Secret** — from the Google Cloud Console
@@ -53,10 +53,17 @@ Logwiz supports Google OAuth as an additional sign-in method alongside the defau
 
 ## Removing Google auth
 
-To disable Google sign-in, go to **Administration → Users → Google Auth** and click **Remove Google Auth**, then restart the server:
+To disable Google sign-in, go to **Administration → Authentication → Google Auth** and click **Remove Google Auth**, then restart the server:
 
 ```bash
 docker compose restart logwiz
 ```
 
-After the restart, the Google sign-in button is removed from the sign-in page. Existing accounts that were linked via Google retain their Logwiz account but must use a password to sign in. If a user signed in exclusively via Google and has no password set, an admin can send them a password reset invite from the [user management](/administration/user-management) page.
+After the restart, the Google sign-in button is removed from the sign-in page.
+
+<Warning>
+	Users who signed in exclusively via Google have no password set, and Logwiz blocks password
+	reset for any account still linked to a Google identity. To give a Google-only user password
+	access after disabling Google auth, delete the user from **Administration → Users** and invite
+	them again with a new credential account.
+</Warning>

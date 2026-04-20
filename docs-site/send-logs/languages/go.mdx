@@ -1,0 +1,147 @@
+---
+title: 'Send logs from Go'
+description: 'Ship Go logs to Logwiz with the OpenTelemetry SDK and the slog bridge over OTLP HTTP.'
+---
+
+Logwiz accepts OpenTelemetry logs over OTLP HTTP. The Go SDK's `otlploghttp` exporter speaks this protocol directly, and the `otelslog` bridge lets Go's standard `slog` API emit through it. Records land in the OTEL logs index pinned by your ingest token (default: `otel-logs-v0_9`).
+
+## Setup
+
+<Steps>
+  <Step title="Initialise a module and install the OpenTelemetry packages">
+    ```bash
+    go mod init example.com/logwiz-demo
+    ```
+
+    ```bash
+    go get go.opentelemetry.io/otel \
+        go.opentelemetry.io/otel/log \
+        go.opentelemetry.io/otel/sdk/log \
+        go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp \
+        go.opentelemetry.io/contrib/bridges/otelslog
+    ```
+
+    Go 1.21+ is required (for `log/slog`).
+  </Step>
+
+  <Step title="Set environment variables">
+    ```bash
+    export OTEL_SERVICE_NAME=my-go-service
+    export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://<your-logwiz>/api/otlp/v1/logs
+    export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
+    ```
+
+    <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+  </Step>
+
+  <Step title="Minimal working example">
+    ```go
+    package main
+
+    import (
+        "context"
+
+        "go.opentelemetry.io/contrib/bridges/otelslog"
+        "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+        "go.opentelemetry.io/otel/log/global"
+        sdklog "go.opentelemetry.io/otel/sdk/log"
+    )
+
+    func main() {
+        ctx := context.Background()
+        exporter, err := otlploghttp.New(ctx)
+        if err != nil {
+            panic(err)
+        }
+        provider := sdklog.NewLoggerProvider(
+            sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+        )
+        defer provider.Shutdown(ctx)
+        global.SetLoggerProvider(provider)
+
+        logger := otelslog.NewLogger("hello")
+        logger.Info("Hello from Go to Logwiz")
+    }
+    ```
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, filter on `service_name:my-go-service`, and your record should appear within ~2 seconds.
+  </Step>
+</Steps>
+
+## Structured logging
+
+Pass key/value pairs directly through `slog` — the bridge turns them into log-record attributes.
+
+```go
+logger.Info("user signed up",
+    "user_id", "alice",
+    "plan", "pro",
+)
+```
+
+Or build a request-scoped logger with `slog.With` so attributes propagate automatically:
+
+```go
+reqLogger := logger.With("request_id", reqID)
+reqLogger.Info("processing")
+```
+
+## Framework recipe: Gin
+
+Set up the provider once, then write a middleware that enriches the request logger with route metadata.
+
+```go
+package main
+
+import (
+    "context"
+    "log/slog"
+
+    "github.com/gin-gonic/gin"
+    "go.opentelemetry.io/contrib/bridges/otelslog"
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+    "go.opentelemetry.io/otel/log/global"
+    sdklog "go.opentelemetry.io/otel/sdk/log"
+)
+
+func initLogs(ctx context.Context) func() {
+    exporter, err := otlploghttp.New(ctx)
+    if err != nil {
+        panic(err)
+    }
+    provider := sdklog.NewLoggerProvider(
+        sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+    )
+    global.SetLoggerProvider(provider)
+    slog.SetDefault(otelslog.NewLogger("gin-app"))
+    return func() { _ = provider.Shutdown(ctx) }
+}
+
+func main() {
+    shutdown := initLogs(context.Background())
+    defer shutdown()
+
+    r := gin.New()
+    r.Use(func(c *gin.Context) {
+        slog.Info("request", "method", c.Request.Method, "path", c.FullPath())
+        c.Next()
+    })
+    r.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"ok": true}) })
+    _ = r.Run(":3000")
+}
+```
+
+## Troubleshooting
+
+- **401 / 403** — the Bearer token is missing, malformed, or the `%20` separator is not URL-encoded. Re-check `OTEL_EXPORTER_OTLP_LOGS_HEADERS`.
+- **Nothing in Search** — the batch processor buffers records. Short-lived programs must call `provider.Shutdown(ctx)` or `provider.ForceFlush(ctx)` before exit (the example above does so via `defer`).
+- **`otlploghttp.New` returns `context deadline exceeded`** — the process cannot reach the endpoint. Check DNS/TLS/firewall; try `curl -X POST $OTEL_EXPORTER_OTLP_LOGS_ENDPOINT -H "Authorization: Bearer <token>"` to isolate.
+- **TLS errors against a self-signed endpoint** — set `OTEL_EXPORTER_OTLP_CERTIFICATE=/path/to/ca.pem`.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp)
+- [Indexes](/indexes)
+- [Per Index configuration](/configuration/index-config)

@@ -5,7 +5,7 @@ description: 'Send newline-delimited JSON log events to a Quickwit index through
 
 The ingest endpoint accepts a batch of log events as NDJSON and forwards them to the Quickwit index you specify. Logwiz acts as an authenticated gateway - your log shippers send data here instead of directly to Quickwit, so you can keep Quickwit private and manage access with per-index bearer tokens.
 
-If you want the full setup flow, see [Send Logs](/send-logs).
+If you want the full setup flow, see [Send Logs](/send-logs/overview).
 
 ## Endpoint
 
@@ -19,7 +19,7 @@ POST /api/ingest/{indexId}
 Authorization: Bearer <your-ingest-token>
 ```
 
-You must include a valid ingest token in every request. Create tokens in the Logwiz admin panel at **Administration → Send Logs**. A token can be scoped to specific index IDs; a request for an index outside its allowlist returns `403`.
+You must include a valid ingest token in every request. Create tokens in the Logwiz admin panel at **Administration → Tokens**. Each token is scoped to exactly one index; a request for a different index returns `403`.
 
 ## Path parameters
 
@@ -59,9 +59,9 @@ EOF
 ```
 
 <Tip>
-	The index ID `otel-logs-v0_9` is the standard name for an OpenTelemetry logs index created by
-	Quickwit's OTel ingest API. If you set up Quickwit using its default OTel configuration, this is
-	the index you should target.
+	Logwiz targets `otel-logs-v0_9` for its bundled OpenTelemetry integration. Older Quickwit
+	versions ship `otel-logs-v0_7` as the default OTEL index — check your Quickwit metastore for the
+	exact index ID before pointing a token at it.
 </Tip>
 
 ## Response
@@ -84,10 +84,9 @@ Example success response:
 | ------ | ------------------------------------------------------------------------ |
 | `400`  | The request body is empty or the payload could not be parsed             |
 | `401`  | The `Authorization` header is missing or does not contain a bearer token |
-| `403`  | The token is invalid, revoked, or not scoped for the requested index     |
+| `403`  | The token is invalid, revoked, or does not match the requested index     |
 | `404`  | The specified index does not exist in Quickwit                           |
 | `413`  | The request body exceeds the 10 MB limit                                 |
-| `429`  | The rate limit for the ingest endpoint has been exceeded                 |
 | `502`  | Logwiz could not reach Quickwit to forward the request                   |
 | `503`  | Quickwit is unhealthy or unavailable                                     |
 

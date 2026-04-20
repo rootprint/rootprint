@@ -1,0 +1,63 @@
+---
+title: 'Send logs over HTTP (NDJSON gateway)'
+description: 'Authenticated NDJSON gateway in front of Quickwit — push logs to any index using whatever schema that index expects.'
+---
+
+Logwiz exposes an authenticated NDJSON gateway at `/api/ingest/{indexId}`. Each ingest token is scoped to a single index; Logwiz forwards the request body unmodified to Quickwit. Use this endpoint when you already control the wire format and want to write to a custom-schema index.
+
+<Note>
+  For OpenTelemetry-instrumented apps, prefer the [OTLP endpoint](/send-logs/otlp) — it handles
+  batching, retries, and schema mapping automatically.
+</Note>
+
+## Setup
+
+<Steps>
+  <Step title="Pick the target index">
+    Decide which Quickwit index you'll write to. The default OTEL index is `otel-logs-v0_9` — see [Indexes](/indexes) for its schema, or create a custom index in Quickwit first.
+  </Step>
+
+  <Step title="Create an ingest token">
+    In **Administration → Tokens**, click **Create Token**, pick the target index, and copy the token value from the new row. Tokens are scoped to one index — you cannot reuse a token across indexes.
+  </Step>
+
+  <Step title="POST NDJSON to the gateway">
+    Replace `<your-logwiz>`, `<your-index-id>`, and `<your-ingest-token>`. The payload is one JSON document per line — no trailing comma.
+
+    ```bash
+    curl -X POST 'https://<your-logwiz>/api/ingest/<your-index-id>?commit=wait_for' \
+      -H 'Authorization: Bearer <your-ingest-token>' \
+      -H 'Content-Type: application/x-ndjson' \
+      --data-binary @- <<'EOF'
+    {"timestamp_nanos":1776340800000000000,"severity_text":"INFO","body":{"message":"User logged in"},"service_name":"frontend","attributes":{},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340800000000000,"severity_number":9,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+    {"timestamp_nanos":1776340860000000000,"severity_text":"ERROR","body":{"message":"Checkout failed"},"service_name":"frontend","attributes":{},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340860000000000,"severity_number":17,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+    EOF
+    ```
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, pick your index from the selector, and look for the records you just sent.
+  </Step>
+</Steps>
+
+## Commit modes
+
+`?commit=wait_for` tells Quickwit to index the documents before returning, so records are immediately searchable. Omit it to use Quickwit's default asynchronous commit — higher throughput, but records take longer to appear in Search.
+
+## Payload format
+
+Logwiz forwards the body unchanged. You must send the format your Quickwit index expects — typically NDJSON with `Content-Type: application/x-ndjson`. The payload must match the target index schema; Quickwit rejects documents that don't. See [Indexes](/indexes) for the built-in `otel-logs-v0_9` schema, or [Per Index configuration](/configuration/index-config) for Logwiz's display mapping over your custom schema.
+
+## Troubleshooting
+
+- **401** — missing or malformed Bearer token.
+- **403** — the token is not scoped to the index in the URL. Create a new token for that index in **Administration → Tokens**.
+- **400** — NDJSON parse error. Common causes: trailing comma between objects, a JSON array instead of one-object-per-line, wrong `Content-Type`.
+- **Accepted but not visible in Search** — you didn't pass `?commit=wait_for` and Quickwit hasn't flushed yet. Wait a few seconds or add the parameter.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp) — for OpenTelemetry apps
+- [Indexes](/indexes) — default OTEL schema
+- [Per Index configuration](/configuration/index-config) — map log level, message, and traceback
+- [POST /api/ingest/{indexId}](/api/ingest-logs) — endpoint reference

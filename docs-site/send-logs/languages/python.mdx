@@ -1,0 +1,109 @@
+---
+title: 'Send logs from Python'
+description: 'Ship Python logs to Logwiz with the OpenTelemetry SDK over OTLP HTTP.'
+---
+
+Logwiz accepts OpenTelemetry logs over OTLP HTTP (`proto-http`). The Python SDK's `OTLPLogExporter` speaks this protocol directly — install it, set three env vars, and emit records through `logging`. Records land in the OTEL logs index pinned by your ingest token (default: `otel-logs-v0_9`).
+
+## Setup
+
+<Steps>
+  <Step title="Install the OpenTelemetry SDK">
+    ```bash
+    pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+    ```
+
+    Python 3.8+ is required. For async apps, add `opentelemetry-instrumentation-asyncio`.
+  </Step>
+
+  <Step title="Set environment variables">
+    ```bash
+    export OTEL_SERVICE_NAME=my-python-service
+    export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=https://<your-logwiz>/api/otlp/v1/logs
+    export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<your-ingest-token>
+    ```
+
+    <Warning>The `%20` after `Bearer` is required — OTEL expects URL-encoded header values.</Warning>
+  </Step>
+
+  <Step title="Minimal working example">
+    ```python
+    import logging
+    from opentelemetry._logs import set_logger_provider
+    from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+    from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+    from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+
+    logger_provider = LoggerProvider()
+    set_logger_provider(logger_provider)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+
+    logging.getLogger().addHandler(LoggingHandler(logger_provider=logger_provider))
+    logging.getLogger().setLevel(logging.INFO)
+
+    logging.info("Hello from Python to Logwiz")
+
+    # BatchLogRecordProcessor buffers records. Short-lived scripts must flush
+    # (or shut the provider down) before exit, otherwise the batch is dropped.
+    logger_provider.shutdown()
+    ```
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, filter on `service_name:my-python-service`, and your record should appear within ~2 seconds (one batch interval).
+  </Step>
+</Steps>
+
+## Structured logging
+
+Attach attributes via the `extra` kwarg on the standard `logging` API — the OTEL handler translates them into log record attributes.
+
+```python
+logging.info("user signed up", extra={"user_id": "alice", "plan": "pro"})
+```
+
+They land under `attributes.user_id` and `attributes.plan` in Logwiz and become searchable and filterable.
+
+## Framework recipe: FastAPI
+
+FastAPI apps work the same way — set up the provider once at startup. Put the exporter config in your app factory so every worker process picks it up.
+
+```python
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+import logging
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    provider = LoggerProvider()
+    set_logger_provider(provider)
+    provider.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+    logging.getLogger().addHandler(LoggingHandler(logger_provider=provider))
+    logging.getLogger().setLevel(logging.INFO)
+    yield
+    provider.shutdown()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/")
+def index():
+    logging.info("request received", extra={"route": "/"})
+    return {"ok": True}
+```
+
+## Troubleshooting
+
+- **401 / 403** — the Bearer token is missing, malformed, or the `%20` separator is not URL-encoded. Re-check `OTEL_EXPORTER_OTLP_LOGS_HEADERS`.
+- **Nothing in Search** — records are batched; wait 2–5 s or call `logger_provider.force_flush()` from your script. Also verify `OTEL_SERVICE_NAME` is set so you can filter on `service_name`.
+- **TLS errors against a self-signed endpoint** — set `OTEL_EXPORTER_OTLP_CERTIFICATE=/path/to/ca.pem`.
+- **Records rejected by Quickwit** — the token is scoped to a specific index. If that index's schema doesn't accept the record, create a token for a different index. See [Manage indexes](/configuration/manage-indexes).
+
+## Related
+
+- [OTLP reference](/send-logs/otlp) — endpoint URL, response codes, env-var table
+- [Indexes](/indexes) — `otel-logs-v0_9` schema and custom-index concepts
+- [Per Index configuration](/configuration/index-config) — map log level, message, and traceback fields

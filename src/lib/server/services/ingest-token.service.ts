@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type { CreateIngestTokenInput } from '$lib/schemas/ingest-tokens';
 import { db } from '$lib/server/db';
@@ -41,11 +41,7 @@ export function createIngestToken(
 		})
 		.run();
 
-	const [created] = db
-		.select()
-		.from(ingestToken)
-		.where(eq(ingestToken.token, token))
-		.all();
+	const [created] = db.select().from(ingestToken).where(eq(ingestToken.token, token)).all();
 	if (!created) {
 		throw new Error('Failed to create ingest token');
 	}
@@ -93,4 +89,15 @@ export function verifyIngestToken(
 	}
 
 	return { id: record.id, name: record.name, indexId: record.indexId };
+}
+
+export function getLatestIngestTokenForIndex(indexId: string): string | null {
+	const [row] = db
+		.select({ token: ingestToken.token })
+		.from(ingestToken)
+		.where(eq(ingestToken.indexId, indexId))
+		.orderBy(desc(ingestToken.createdAt))
+		.limit(1)
+		.all();
+	return row?.token ?? null;
 }

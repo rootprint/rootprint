@@ -13,11 +13,11 @@ Navigate to **Administration → Indexes**, click on an index, then open the **C
 
 The visibility setting controls which users can see and query the index.
 
-| Value    | Who can access                                                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `all`    | Every signed-in user.                                                                                                                                |
-| `admin`  | Admin users only. Regular users cannot see or query the index.                                                                                       |
-| `hidden` | No one. The index is invisible in the UI and inaccessible via the API. Use this to temporarily suppress an index without deleting its configuration. |
+| Value    | Who can access                                                                                                                                                                                             |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `all`    | Every signed-in user.                                                                                                                                                                                      |
+| `admin`  | Admin users only. Regular users cannot see or query the index.                                                                                                                                             |
+| `hidden` | Hidden from the index selector and the search APIs. Admins can still manage the index from **Administration → Indexes**, and ingest tokens scoped to a hidden index continue to accept writes. |
 
 ## Display name
 

@@ -8,6 +8,11 @@ export type SortDirection = 'asc' | 'desc';
 
 export type DrawerTab = 'history' | 'saved' | 'shared';
 
+export type NodeLogFlavor = 'otel' | 'pino' | 'winston';
+
+export type JavaLogFlavor = 'agent' | 'sdk';
+export type DotnetLogFlavor = 'auto' | 'sdk';
+
 export const TIME_PRESETS = [
 	{ label: 'Last 5 minutes', code: '5m', seconds: 5 * 60 },
 	{ label: 'Last 15 minutes', code: '15m', seconds: 15 * 60 },

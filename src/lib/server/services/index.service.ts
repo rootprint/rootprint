@@ -249,10 +249,7 @@ export async function setSourceEnabled(
 	}
 }
 
-export async function resetSourceCheckpoint(
-	indexId: string,
-	sourceId: string
-): Promise<void> {
+export async function resetSourceCheckpoint(indexId: string, sourceId: string): Promise<void> {
 	try {
 		await getQuickwitClient().index(indexId).resetSourceCheckpoint(sourceId);
 	} catch (e) {

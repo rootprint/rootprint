@@ -54,7 +54,7 @@
 	</p>
 	<input
 		type="text"
-		class="input input-bordered mt-2 w-full font-mono"
+		class="input-bordered input mt-2 w-full font-mono"
 		autocomplete="off"
 		spellcheck="false"
 		bind:value={typed}
