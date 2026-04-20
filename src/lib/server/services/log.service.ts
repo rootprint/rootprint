@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { BucketAggregationResult } from 'quickwit-js';
 import { AggregationBuilder, ValidationError } from 'quickwit-js';
 
+import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import { getQuickwitClient } from '$lib/server/quickwit';
 import { getFieldConfig } from '$lib/server/services/index.service';
@@ -80,7 +81,7 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 	query.timeRange(startTs, endTs);
 
 	for (const field of filterFields) {
-		query.agg(field, AggregationBuilder.terms(field, { size: 10_000 }));
+		query.agg(field, AggregationBuilder.terms(field, { size: QUICKWIT_AGG_MAX }));
 	}
 
 	const result = await index.search(query).catch(rethrowValidationError);
@@ -139,7 +140,7 @@ export async function searchFieldValues(data: {
 	const query = index
 		.query(combinedQuery)
 		.limit(0)
-		.agg(data.field, AggregationBuilder.terms(data.field, { size: 10_000 }));
+		.agg(data.field, AggregationBuilder.terms(data.field, { size: QUICKWIT_AGG_MAX }));
 
 	query.timeRange(startTs, endTs);
 

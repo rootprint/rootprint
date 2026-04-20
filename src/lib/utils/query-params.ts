@@ -1,5 +1,5 @@
+import { TIME_PRESETS } from '$lib/constants/defaults';
 import type { ParsedQuery, SortDirection, TimeRange, TimezoneMode } from '$lib/types';
-import { TIME_PRESETS } from '$lib/types';
 
 const DEFAULTS = {
 	query: '',

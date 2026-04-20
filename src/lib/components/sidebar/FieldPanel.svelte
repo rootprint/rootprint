@@ -2,6 +2,8 @@
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
+	import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
+	import { storageKeys } from '$lib/constants/storage-keys';
 	import type { IndexField, QuickFilterBucket } from '$lib/types';
 	import { severityDotColor, sortBySeverity } from '$lib/utils/log-helpers';
 	import { parseClauses } from '$lib/utils/query';
@@ -93,7 +95,7 @@
 
 	function saveOpenSections(id: string | null, sections: SvelteSet<string>) {
 		if (!id) return;
-		localStorage.setItem(`logwiz:openSections:${id}`, JSON.stringify([...sections]));
+		localStorage.setItem(storageKeys.openSections(id), JSON.stringify([...sections]));
 	}
 
 	// Restore open sections from localStorage
@@ -102,7 +104,7 @@
 		if (fields.length === 0) return;
 		if (indexId) {
 			const fieldSet = new Set(fields.map((f) => f.name));
-			const savedOpen = loadSet(`logwiz:openSections:${indexId}`);
+			const savedOpen = loadSet(storageKeys.openSections(indexId));
 			for (const f of savedOpen) {
 				if (fieldSet.has(f)) openSections.add(f);
 			}
@@ -115,7 +117,7 @@
 	$effect(() => {
 		collapsedGroups.clear();
 		if (indexId) {
-			for (const g of loadSet(`logwiz:collapsedGroups:${indexId}`)) {
+			for (const g of loadSet(storageKeys.collapsedGroups(indexId))) {
 				collapsedGroups.add(g);
 			}
 		}
@@ -189,7 +191,7 @@
 
 	function saveCollapsedGroups(id: string | null, groups: SvelteSet<string>) {
 		if (!id) return;
-		localStorage.setItem(`logwiz:collapsedGroups:${id}`, JSON.stringify([...groups]));
+		localStorage.setItem(storageKeys.collapsedGroups(id), JSON.stringify([...groups]));
 	}
 
 	function toggleGroup(group: string) {
@@ -360,7 +362,7 @@
 	function getFieldCountLabel(field: string): string {
 		const count = (levelAggregations[field] ?? expandedAggregations[field] ?? []).length;
 		if (count === 0) return '';
-		if (count >= 10_000) return '10000+';
+		if (count >= QUICKWIT_AGG_MAX) return `${QUICKWIT_AGG_MAX}+`;
 		return String(count);
 	}
 </script>

@@ -18,13 +18,10 @@
 	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import { AUTO_REFRESH_INTERVALS } from '$lib/constants/defaults';
+	import { storageKeys } from '$lib/constants/storage-keys';
 	import type { createSearchStore } from '$lib/stores/search.svelte';
-	import {
-		AUTO_REFRESH_INTERVALS,
-		type DrawerTab,
-		type ParsedQuery,
-		type TimeRange
-	} from '$lib/types';
+	import type { DrawerTab, ParsedQuery, TimeRange } from '$lib/types';
 
 	let {
 		store,
@@ -53,11 +50,11 @@
 	let queryInputRef = $state<ReturnType<typeof QueryInput>>();
 	let autoRefreshOpen = $state(false);
 	let autocomplete = $state(
-		browser ? localStorage.getItem('logwiz:autocomplete') !== 'false' : true
+		browser ? localStorage.getItem(storageKeys.autocomplete) !== 'false' : true
 	);
 
 	$effect(() => {
-		if (browser) localStorage.setItem('logwiz:autocomplete', String(autocomplete));
+		if (browser) localStorage.setItem(storageKeys.autocomplete, String(autocomplete));
 	});
 
 	const activeIntervalLabel = $derived(

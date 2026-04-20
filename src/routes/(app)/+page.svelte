@@ -16,6 +16,7 @@
 	import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
 	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
+	import { storageKeys } from '$lib/constants/storage-keys';
 	import { createSearchStore } from '$lib/stores/search.svelte';
 	import type { DrawerTab } from '$lib/types';
 	import { parseWrapMode } from '$lib/utils/wrap-mode';
@@ -35,21 +36,21 @@
 
 	// --- UI-only state ---
 	let wrapMode = $state<'none' | 'wrap'>(
-		browser ? parseWrapMode(localStorage.getItem('logwiz:wrapMode')) : 'none'
+		browser ? parseWrapMode(localStorage.getItem(storageKeys.wrapMode)) : 'none'
 	);
 	let selectedLog = $state<Record<string, unknown> | null>(null);
 	let drawerOpen = $state(false);
 	let chartCollapsed = $state(
-		browser ? localStorage.getItem('logwiz:chartCollapsed') === 'true' : false
+		browser ? localStorage.getItem(storageKeys.chartCollapsed) === 'true' : false
 	);
 	let drawerTab = $state<DrawerTab | null>(null);
 
 	$effect(() => {
-		if (browser) localStorage.setItem('logwiz:chartCollapsed', String(chartCollapsed));
+		if (browser) localStorage.setItem(storageKeys.chartCollapsed, String(chartCollapsed));
 	});
 
 	$effect(() => {
-		if (browser) localStorage.setItem('logwiz:wrapMode', wrapMode);
+		if (browser) localStorage.setItem(storageKeys.wrapMode, wrapMode);
 	});
 
 	// Handle shared log link

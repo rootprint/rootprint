@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { NotFoundError } from 'quickwit-js';
 
+import { OTEL_INDEX_PREFIX } from '$lib/constants/defaults';
 import { db } from '$lib/server/db';
 import {
 	indexesMeta,
@@ -22,8 +23,6 @@ import {
 	type QuickwitField,
 	type SaveIndexConfigFields
 } from '$lib/types';
-
-const OTEL_INDEX_PREFIX = 'otel-logs-';
 
 type MetaDefaults = {
 	displayName: string | null;

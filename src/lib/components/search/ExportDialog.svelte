@@ -2,6 +2,8 @@
 	import { Download, X } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
+	import { EXPORT_MAX_LOGS } from '$lib/constants/ingest';
+
 	let {
 		numHits,
 		query,
@@ -19,8 +21,6 @@
 	type ExportFormat = 'ndjson' | 'csv' | 'text';
 	type DialogState = 'form' | 'progress' | 'error';
 
-	const EXPORT_MAX = 10_000;
-
 	let open = $state(false);
 	let format = $state<ExportFormat>('ndjson');
 	let dialogState = $state<DialogState>('form');
@@ -30,7 +30,7 @@
 	let errorMessage = $state('');
 	let eventSource: EventSource | null = null;
 
-	const effectiveTotal = $derived(Math.min(numHits, EXPORT_MAX));
+	const effectiveTotal = $derived(Math.min(numHits, EXPORT_MAX_LOGS));
 
 	function reset() {
 		dialogState = 'form';
@@ -171,9 +171,9 @@
 					{numHits.toLocaleString()} logs match your search
 				</p>
 
-				{#if numHits > EXPORT_MAX}
+				{#if numHits > EXPORT_MAX_LOGS}
 					<div class="mb-3 alert py-2 text-xs alert-warning">
-						Only the first {EXPORT_MAX.toLocaleString()} logs will be exported
+						Only the first {EXPORT_MAX_LOGS.toLocaleString()} logs will be exported
 					</div>
 				{/if}
 

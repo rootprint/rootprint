@@ -1,5 +1,5 @@
+import { TIME_PRESETS } from '$lib/constants/defaults';
 import type { TimeRange, TimezoneMode } from '$lib/types';
-import { TIME_PRESETS } from '$lib/types';
 
 export function resolveTimeRange(range: TimeRange): { startTs?: number; endTs?: number } {
 	if (range.type === 'absolute') {

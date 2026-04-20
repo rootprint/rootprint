@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 
+import { EXPORT_MAX_LOGS } from '$lib/constants/ingest';
 import type { ExportState } from '$lib/types';
 import { formatAsCsv, formatAsNdjson, formatAsText } from '$lib/utils/export';
 
@@ -8,7 +9,6 @@ function compress(data: Uint8Array<ArrayBuffer>): Uint8Array {
 }
 
 export const EXPORT_BATCH_SIZE = 1_000;
-export const EXPORT_MAX_LOGS = 10_000;
 const CLEANUP_INTERVAL_MS = 60_000;
 const EXPORT_TTL_MS = 5 * 60_000;
 

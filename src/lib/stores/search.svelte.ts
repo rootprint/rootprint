@@ -7,6 +7,8 @@ import { recordSearch } from '$lib/api/history.remote';
 import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
 import { searchFieldValues, searchLogHistogram, searchLogs } from '$lib/api/logs.remote';
 import { getPreference, saveDisplayFields } from '$lib/api/preferences.remote';
+import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
+import { storageKeys } from '$lib/constants/storage-keys';
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import type {
 	IndexField,
@@ -189,7 +191,7 @@ export function createSearchStore(
 			if (urlIdx && indexes.some((i) => i.indexId === urlIdx)) {
 				idx = urlIdx;
 			} else {
-				const saved = localStorage.getItem('logwiz:selectedIndex');
+				const saved = localStorage.getItem(storageKeys.selectedIndex);
 				if (saved && indexes.some((i) => i.indexId === saved)) {
 					idx = saved;
 				} else {
@@ -198,7 +200,7 @@ export function createSearchStore(
 			}
 
 			selectedIndex = idx;
-			localStorage.setItem('logwiz:selectedIndex', idx);
+			localStorage.setItem(storageKeys.selectedIndex, idx);
 			if (urlIdx !== idx) {
 				navigateQuery({ index: idx });
 			}
@@ -230,7 +232,7 @@ export function createSearchStore(
 
 	function handleIndexChange(indexName: string) {
 		selectedIndex = indexName;
-		if (browser) localStorage.setItem('logwiz:selectedIndex', indexName);
+		if (browser) localStorage.setItem(storageKeys.selectedIndex, indexName);
 		aggregations = {};
 		schemaFields = [];
 		fieldsLoading = true; // block auto-search until new fields load
@@ -316,7 +318,7 @@ export function createSearchStore(
 								// Fresh buckets override with real counts, preserving Map insertion order
 								merged.set(fresh.value, fresh);
 							}
-							newAgg[field] = [...merged.values()].slice(0, 10_000);
+							newAgg[field] = [...merged.values()].slice(0, QUICKWIT_AGG_MAX);
 						} else {
 							newAgg[field] = buckets;
 						}

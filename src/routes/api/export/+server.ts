@@ -2,13 +2,10 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { AggregationBuilder } from 'quickwit-js';
 import * as v from 'valibot';
 
+import { EXPORT_MAX_LOGS } from '$lib/constants/ingest';
 import { exportLogsSchema } from '$lib/schemas/export';
 import { getQuickwitClient } from '$lib/server/quickwit';
-import {
-	EXPORT_BATCH_SIZE,
-	EXPORT_MAX_LOGS,
-	exportManager
-} from '$lib/server/services/export.service';
+import { EXPORT_BATCH_SIZE, exportManager } from '$lib/server/services/export.service';
 import { assertIndexAccess, getFieldConfig } from '$lib/server/services/index.service';
 
 async function runExportJob(

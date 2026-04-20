@@ -3,8 +3,9 @@
 
 	import { browser } from '$app/environment';
 	import CollapsibleSection from '$lib/components/ui/CollapsibleSection.svelte';
+	import { SEVERITY_ORDER } from '$lib/constants/severity';
 	import type { TimezoneMode } from '$lib/types';
-	import { getLevelColor, SEVERITY_ORDER } from '$lib/utils/log-helpers';
+	import { getLevelColor } from '$lib/utils/log-helpers';
 	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
 
 	let {

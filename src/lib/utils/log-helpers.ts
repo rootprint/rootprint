@@ -1,23 +1,7 @@
+import { LEVEL_TOKEN_MAP, SEVERITY_ORDER } from '$lib/constants/severity';
 import type { TimezoneMode } from '$lib/types';
 import { resolveFieldValue } from '$lib/utils/field-resolver';
 import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
-
-export const SEVERITY_ORDER = [
-	'trace',
-	'debug',
-	'info',
-	'warn',
-	'warning',
-	'error',
-	'critical',
-	'fatal'
-] as const;
-
-const LEVEL_TOKEN_MAP: Record<string, string> = {
-	warn: 'warning',
-	fatal: 'critical',
-	trace: 'debug'
-};
 
 export function getLevelColor(level: string): string {
 	if (typeof document === 'undefined') return '';

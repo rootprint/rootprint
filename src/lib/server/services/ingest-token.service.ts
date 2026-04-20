@@ -1,5 +1,6 @@
 import { desc, eq } from 'drizzle-orm';
 
+import { TOKEN_PREFIX_LENGTH } from '$lib/constants/ingest';
 import type { CreateIngestTokenInput } from '$lib/schemas/ingest-tokens';
 import { db } from '$lib/server/db';
 import { ingestToken } from '$lib/server/db/schema';
@@ -7,8 +8,6 @@ import { generateIngestToken } from '$lib/server/utils/ingest-token';
 import type { IngestTokenSummary } from '$lib/types';
 
 type TokenRow = typeof ingestToken.$inferSelect;
-
-const TOKEN_PREFIX_LENGTH = 12;
 
 function mapIngestTokenSummary(row: TokenRow): IngestTokenSummary {
 	return {

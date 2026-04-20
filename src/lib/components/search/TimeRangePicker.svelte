@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { ChevronDown, Clock } from 'lucide-svelte';
 
-	import { TIME_PRESETS, type TimeRange, type TimezoneMode } from '$lib/types';
+	import { TIME_PRESETS } from '$lib/constants/defaults';
+	import type { TimeRange, TimezoneMode } from '$lib/types';
 	import { formatTimeRangeLabel } from '$lib/utils/time';
 
 	import Calendar from '../ui/Calendar.svelte';

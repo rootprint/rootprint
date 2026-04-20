@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 
 import { building } from '$app/environment';
+import { API_AUTH_PREFIX, AUTH_PATHS, SETUP_ADMIN_PATH } from '$lib/constants/routes';
 import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
@@ -26,8 +27,6 @@ const authLimiter = new RetryAfterRateLimiter({
 	IP: [config.signinRateLimitMax, 'm']
 });
 
-const AUTH_PATHS = ['/auth/sign-in', '/auth/setup', '/api/auth/sign-in'];
-
 const handleRateLimit: Handle = async ({ event, resolve }) => {
 	if (event.request.method === 'POST' && AUTH_PATHS.some((p) => event.url.pathname.startsWith(p))) {
 		const status = await authLimiter.check(event);
@@ -43,13 +42,13 @@ const handleRateLimit: Handle = async ({ event, resolve }) => {
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
 	if (
-		!event.url.pathname.startsWith('/auth/setup-admin') &&
-		!event.url.pathname.startsWith('/api/auth') &&
+		!event.url.pathname.startsWith(SETUP_ADMIN_PATH) &&
+		!event.url.pathname.startsWith(API_AUTH_PREFIX) &&
 		!hasAdmin()
 	) {
 		return new Response(null, {
 			status: 302,
-			headers: { Location: '/auth/setup-admin' }
+			headers: { Location: SETUP_ADMIN_PATH }
 		});
 	}
 
