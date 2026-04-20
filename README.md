@@ -1,5 +1,8 @@
 <div align="center">
-  <h1>Logwiz</h1>
+  <h1>
+    <img alt="Logwiz logo" src="src/lib/assets/logo.png" width="40" align="center">
+    Logwiz
+  </h1>
   <p>Open-source, self-hosted log management platform that allows you to run search directly on cloud storage.</p>
 
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-%23f1413d.svg?logo=svelte&logoColor=white)](#)
@@ -16,8 +19,12 @@
 
 - **Search & explore** — full-text log search, quick filters, and frequency histogram to visualize log volume over time
 - **Saved queries & export** — bookmark searches, share them with your team, and download results as NDJSON, CSV, or plain text
-- **HTTP ingest API** — authenticated endpoint that forwards logs to Quickwit
+- **OTLP HTTP ingest** — OpenTelemetry-native endpoint with per-index bearer tokens, plus an NDJSON gateway for custom-schema indexes
 - **User management** — invite-based access control with optional Google Authentication
+
+## Status
+
+Logwiz is under active development and has not yet reached a stable 1.0 release. Every release may introduce breaking changes in APIs, configuration, storage schema, or runtime behavior. Pin to an exact version, read the [CHANGELOG](CHANGELOG.md) before upgrading, and expect to revisit your setup between releases.
 
 ## Quick Start
 
