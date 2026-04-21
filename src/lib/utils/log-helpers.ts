@@ -127,3 +127,17 @@ export function isEmpty(value: unknown): boolean {
 		return true;
 	return false;
 }
+
+const TRACE_ID_FIELDS = ['trace_id', 'attributes.trace_id'] as const;
+
+export function extractTraceId(
+	hit: Record<string, unknown>
+): { field: string; value: string } | null {
+	for (const field of TRACE_ID_FIELDS) {
+		const raw = resolveFieldValue(hit, field);
+		if (typeof raw === 'string' && raw.length > 0) {
+			return { field, value: raw };
+		}
+	}
+	return null;
+}

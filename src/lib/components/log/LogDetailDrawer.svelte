@@ -7,7 +7,8 @@
 		ListTree,
 		Loader2,
 		Logs,
-		Share2
+		Share2,
+		Waypoints
 	} from 'lucide-svelte';
 	import { slide } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
@@ -21,6 +22,7 @@
 	import {
 		extractSeverity,
 		extractTimestamp,
+		extractTraceId,
 		flattenObject,
 		isEmpty,
 		severityChipTint,
@@ -131,6 +133,21 @@
 
 	const metaTimestamp = $derived(hit ? extractTimestamp(hit, timestampField, 'utc') : '');
 
+	const traceId = $derived(hit ? extractTraceId(hit) : null);
+
+	const traceIdDisplay = $derived.by(() => {
+		if (!traceId) return '';
+		const v = traceId.value;
+		if (v.length <= 12) return v;
+		return `${v.slice(0, 4)}…${v.slice(-4)}`;
+	});
+
+	function handleTraceClick() {
+		if (!traceId) return;
+		if (onfilter) onfilter(traceId.field, traceId.value);
+		open = false;
+	}
+
 	let hideEmpty = $state(true);
 
 	const filteredParams = $derived(
@@ -194,8 +211,11 @@
 	<div class="flex-1 overflow-auto p-4">
 		{#if activeTab === 'json'}
 			{#if hit}
-				<div class="relative rounded-box bg-base-200">
-					<CopyButton text={prettyJson} class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs" />
+				<div class="relative rounded-box border border-base-300 bg-base-100">
+					<CopyButton
+						text={prettyJson}
+						class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs"
+					/>
 					<div class="py-3 font-['Roboto_Mono',monospace] text-sm">
 						{#each jsonLines as line, i (i)}
 							<div class="flex leading-relaxed">
@@ -215,64 +235,82 @@
 		{:else if activeTab === 'parameters'}
 			{#if hit}
 				{#snippet paramTable(params: [string, unknown][], stripPrefix: boolean)}
-					<table
-						class="table w-full table-fixed rounded-none border-[0.5px] border-base-content/20 table-sm"
-					>
-						<tbody>
-							{#each params as [key, value] (key)}
-								<tr class="group/row hover:bg-base-200/50">
-									<td
-										class="w-2/5 border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs font-medium text-base-content/80"
-										>{stripPrefix ? otelDisplayName(key) : key}</td
-									>
-									<td
-										class="relative border-[0.5px] border-base-content/20 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word]"
-									>
-										{#if value === null || value === undefined}
-											<span class="text-base-content/50 italic">null</span>
-										{:else}
-											{formatFieldValue(value)}
-										{/if}
-										<div
-											class="absolute inset-y-0 right-0 flex items-center pr-1 md:pointer-events-none md:opacity-0 md:group-focus-within/row:pointer-events-auto md:group-focus-within/row:opacity-100 md:group-hover/row:pointer-events-auto md:group-hover/row:opacity-100"
+					<div class="overflow-hidden rounded-box border border-base-300 bg-base-100">
+						<table class="table w-full table-fixed rounded-none">
+							<tbody>
+								{#each params as [key, value] (key)}
+									<tr class="group/row border-b border-base-300 last:border-b-0 hover:bg-base-200/50">
+										<td
+											class="w-2/5 border-r border-base-300 px-3 py-1.5 text-xs font-normal text-base-content/70"
+											>{stripPrefix ? otelDisplayName(key) : key}</td
 										>
+										<td
+											class="relative px-3 py-1.5 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word] text-base-content/90"
+										>
+											{#if value === null || value === undefined}
+												<span class="text-base-content/50 italic">null</span>
+											{:else}
+												{formatFieldValue(value)}
+											{/if}
 											<div
-												class="pointer-events-none h-full w-6 bg-gradient-to-r from-transparent to-base-200/50"
-											></div>
-											<div class="pointer-events-auto flex items-center gap-0.5 bg-base-200/50">
-												{#if onfilter && isFilterable(value)}
+												class="absolute inset-y-0 right-0 flex items-center pr-1 md:pointer-events-none md:opacity-0 md:group-focus-within/row:pointer-events-auto md:group-focus-within/row:opacity-100 md:group-hover/row:pointer-events-auto md:group-hover/row:opacity-100"
+											>
+												<div
+													class="pointer-events-none h-full w-6 bg-gradient-to-r from-transparent to-base-200"
+												></div>
+												<div class="pointer-events-auto flex items-center gap-0.5 bg-base-200">
+													{#if onfilter && isFilterable(value)}
+														<button
+															type="button"
+															class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
+															onclick={() => handleFilterClick(key, value)}
+														>
+															Filter
+														</button>
+													{/if}
 													<button
 														type="button"
 														class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
-														onclick={() => handleFilterClick(key, value)}
+														onclick={() => handleCopy(key, value)}
 													>
-														Filter
+														{copiedField === key ? 'Copied!' : 'Copy'}
 													</button>
-												{/if}
-												<button
-													type="button"
-													class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
-													onclick={() => handleCopy(key, value)}
-												>
-													{copiedField === key ? 'Copied!' : 'Copy'}
-												</button>
+												</div>
 											</div>
-										</div>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				{/snippet}
 
-				<div class="mb-4 flex items-center gap-3">
+				{#if traceId}
+					<div class="mb-3">
+						<button
+							type="button"
+							class="btn btn-outline btn-xs"
+							title={traceId.value}
+							onclick={handleTraceClick}
+						>
+							<Waypoints size={14} class="text-base-content/60" />
+							<span>Filter by trace</span>
+							<span class="font-['Roboto_Mono',monospace] text-base-content/70">
+								{traceIdDisplay}
+							</span>
+						</button>
+					</div>
+				{/if}
+
+				<div class="-mx-4 flex items-center gap-3 border-b border-base-300 px-4 pb-3">
 					<span
 						class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold uppercase {severityChipTint(
 							severity
 						)}"
 					>
 						<span
-							class="h-2 w-2 shrink-0 rounded-full {severityDotColor(severity) ?? 'bg-level-unknown'}"
+							class="h-2 w-2 shrink-0 rounded-full {severityDotColor(severity) ??
+								'bg-level-unknown'}"
 						></span>
 						{severityLabel}
 					</span>
@@ -286,102 +324,115 @@
 					</span>
 				</div>
 
-				{#if messageValue}
-					<div class="mb-4">
-						<div class="mb-1 text-xs font-semibold tracking-wider text-base-content/60 uppercase">
-							{messageField}
+				<div class="pt-4">
+					{#if messageValue}
+						<div class="mb-4">
+							<div
+								class="mb-1.5 text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
+							>
+								{messageField}
+							</div>
+							<div
+								class="rounded-box border border-base-300 bg-base-100 p-3 font-['Roboto_Mono',monospace] text-sm break-all whitespace-pre-wrap"
+							>
+								{messageValue}
+							</div>
 						</div>
-						<div
-							class="rounded-box bg-base-200 p-3 font-['Roboto_Mono',monospace] text-sm break-all whitespace-pre-wrap"
-						>
-							{messageValue}
-						</div>
-					</div>
-				{/if}
+					{/if}
 
-				<label class="mb-3 flex items-center gap-2">
-					<input
-						type="checkbox"
-						class="checkbox checkbox-xs"
-						checked={!hideEmpty}
-						onchange={() => (hideEmpty = !hideEmpty)}
-					/>
-					<span class="text-xs text-base-content/70">Show empty values</span>
-				</label>
+					<label class="mb-3 flex items-center gap-2">
+						<input
+							type="checkbox"
+							class="checkbox checkbox-xs"
+							checked={!hideEmpty}
+							onchange={() => (hideEmpty = !hideEmpty)}
+						/>
+						<span class="text-xs text-base-content/70">Show empty values</span>
+					</label>
 
-				{#if isOtelIndex}
-					{#if attrParams.length > 0}
-						<div class="mb-2">
-							<button
-								type="button"
-								class="flex items-center py-2"
-								onclick={() => (attrCollapsed = !attrCollapsed)}
-							>
-								{#if attrCollapsed}
-									<ChevronRight size={14} class="mr-1 text-base-content/60" />
-								{:else}
-									<ChevronDown size={14} class="mr-1 text-base-content/60" />
+					{#if isOtelIndex}
+						{#if attrParams.length > 0}
+							<div class="mb-2">
+								<button
+									type="button"
+									class="flex items-center gap-2 py-2"
+									onclick={() => (attrCollapsed = !attrCollapsed)}
+								>
+									{#if attrCollapsed}
+										<ChevronRight size={14} class="text-base-content/60" />
+									{:else}
+										<ChevronDown size={14} class="text-base-content/60" />
+									{/if}
+									<span
+										class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
+									>
+										Attributes
+									</span>
+									<span class="badge badge-sm badge-accent">{attrParams.length}</span>
+								</button>
+								{#if !attrCollapsed}
+									<div transition:slide={{ duration: 200 }}>
+										{@render paramTable(attrParams, true)}
+									</div>
 								{/if}
-								<span class="text-xs font-bold tracking-wider text-base-content uppercase">
-									Attributes ({attrParams.length})
-								</span>
-							</button>
-							{#if !attrCollapsed}
-								<div transition:slide={{ duration: 200 }}>
-									{@render paramTable(attrParams, true)}
-								</div>
-							{/if}
-						</div>
-					{/if}
-					{#if resourceAttrParams.length > 0}
-						<div class="mb-2">
-							<button
-								type="button"
-								class="flex items-center py-2"
-								onclick={() => (resourceAttrCollapsed = !resourceAttrCollapsed)}
-							>
-								{#if resourceAttrCollapsed}
-									<ChevronRight size={14} class="mr-1 text-base-content/60" />
-								{:else}
-									<ChevronDown size={14} class="mr-1 text-base-content/60" />
+							</div>
+						{/if}
+						{#if resourceAttrParams.length > 0}
+							<div class="mb-2">
+								<button
+									type="button"
+									class="flex items-center gap-2 py-2"
+									onclick={() => (resourceAttrCollapsed = !resourceAttrCollapsed)}
+								>
+									{#if resourceAttrCollapsed}
+										<ChevronRight size={14} class="text-base-content/60" />
+									{:else}
+										<ChevronDown size={14} class="text-base-content/60" />
+									{/if}
+									<span
+										class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
+									>
+										Resource Attributes
+									</span>
+									<span class="badge badge-sm badge-accent">{resourceAttrParams.length}</span>
+								</button>
+								{#if !resourceAttrCollapsed}
+									<div transition:slide={{ duration: 200 }}>
+										{@render paramTable(resourceAttrParams, true)}
+									</div>
 								{/if}
-								<span class="text-xs font-bold tracking-wider text-base-content uppercase">
-									Resource Attributes ({resourceAttrParams.length})
-								</span>
-							</button>
-							{#if !resourceAttrCollapsed}
-								<div transition:slide={{ duration: 200 }}>
-									{@render paramTable(resourceAttrParams, true)}
-								</div>
-							{/if}
-						</div>
-					{/if}
-					{#if otherParams.length > 0}
-						<div class="mb-2">
-							<button
-								type="button"
-								class="flex items-center py-2"
-								onclick={() => (otherCollapsed = !otherCollapsed)}
-							>
-								{#if otherCollapsed}
-									<ChevronRight size={14} class="mr-1 text-base-content/60" />
-								{:else}
-									<ChevronDown size={14} class="mr-1 text-base-content/60" />
+							</div>
+						{/if}
+						{#if otherParams.length > 0}
+							<div class="mb-2">
+								<button
+									type="button"
+									class="flex items-center gap-2 py-2"
+									onclick={() => (otherCollapsed = !otherCollapsed)}
+								>
+									{#if otherCollapsed}
+										<ChevronRight size={14} class="text-base-content/60" />
+									{:else}
+										<ChevronDown size={14} class="text-base-content/60" />
+									{/if}
+									<span
+										class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
+									>
+										Other Fields
+									</span>
+									<span class="badge badge-sm badge-accent">{otherParams.length}</span>
+								</button>
+								{#if !otherCollapsed}
+									<div transition:slide={{ duration: 200 }}>
+										{@render paramTable(otherParams, false)}
+									</div>
 								{/if}
-								<span class="text-xs font-bold tracking-wider text-base-content uppercase">
-									Other Fields ({otherParams.length})
-								</span>
-							</button>
-							{#if !otherCollapsed}
-								<div transition:slide={{ duration: 200 }}>
-									{@render paramTable(otherParams, false)}
-								</div>
-							{/if}
-						</div>
+							</div>
+						{/if}
+					{:else}
+						{@render paramTable(filteredParams, false)}
 					{/if}
-				{:else}
-					{@render paramTable(filteredParams, false)}
-				{/if}
+				</div>
 			{/if}
 		{:else if activeTab === 'context'}
 			{#if hit}

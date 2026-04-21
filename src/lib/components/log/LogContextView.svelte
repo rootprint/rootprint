@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import { untrack } from 'svelte';
 
 	import { getLogContext, getMoreContext } from '$lib/api/context.remote';
@@ -151,19 +152,24 @@
 <div class="flex h-full flex-col">
 	<!-- Widen the search -->
 	{#if activeLabels.length > 0}
-		<div class="border-b border-base-300 px-4 py-3">
-			<div class="flex flex-wrap gap-1.5">
-				{#each activeLabels.filter((l) => !excludedFields.includes(l.field)) as label (label.field)}
-					<span class="badge gap-1.5 badge-outline font-mono" title={String(label.value)}>
-						{label.field}:{isNumber(label.value)
-							? label.value
-							: `"${formatLabelValue(label.value)}"`}
-						<button class="cursor-pointer text-error" onclick={() => removeLabel(label.field)}
-							>&times;</button
-						>
-					</span>
-				{/each}
-			</div>
+		<div class="flex flex-wrap items-center gap-2 border-b border-base-300 px-4 py-3">
+			<span class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase">
+				Scope
+			</span>
+			{#each activeLabels.filter((l) => !excludedFields.includes(l.field)) as label (label.field)}
+				<span
+					class="inline-flex items-center gap-1.5 rounded border border-base-300 bg-base-200 px-2 py-0.5 font-['Roboto_Mono',monospace] text-xs"
+					title={String(label.value)}
+				>
+					{label.field}:{isNumber(label.value)
+						? label.value
+						: `"${formatLabelValue(label.value)}"`}
+					<button
+						class="cursor-pointer text-error/70 hover:text-error"
+						onclick={() => removeLabel(label.field)}>&times;</button
+					>
+				</span>
+			{/each}
 		</div>
 	{/if}
 
@@ -179,14 +185,22 @@
 		</div>
 	{:else}
 		<!-- Load more (up = newer) -->
-		<div class="border-b border-base-300/50 py-2 text-center">
+		<div class="pt-3 pb-1">
 			{#if loadingMore === 'after'}
-				<span class="loading loading-xs loading-spinner"></span>
+				<div
+					class="flex items-center justify-center rounded-box border border-dashed border-base-300 py-2.5"
+				>
+					<span class="loading loading-xs loading-spinner"></span>
+				</div>
 			{:else if noMoreAfter}
-				<span class="text-xs text-base-content/50">No newer logs</span>
+				<div
+					class="flex items-center justify-center rounded-box border border-dashed border-base-300 py-2.5 text-xs text-base-content/50"
+				>
+					No newer logs
+				</div>
 			{:else}
 				<button
-					class="cursor-pointer text-xs text-primary hover:underline"
+					class="block w-full cursor-pointer rounded-box border border-dashed border-base-300 py-2.5 text-center text-xs text-primary hover:bg-base-200/50"
 					onclick={() => loadMore('after')}
 				>
 					&#8593; Load more
@@ -206,16 +220,20 @@
 
 				<!-- Log row -->
 				<button
-					class="flex w-full cursor-pointer gap-3 border-l-4 px-4 py-1 text-left transition-colors hover:bg-base-200/50 {borderColor} {isSelected
-						? 'sticky top-0 bottom-0 z-10 bg-base-200 outline outline-1 outline-primary/30'
+					class="flex w-full cursor-pointer items-center gap-3 border-l-4 px-4 py-1.5 text-left transition-colors hover:bg-base-200/50 {borderColor} {isSelected
+						? 'sticky top-0 bottom-0 z-10 bg-base-200'
 						: ''}"
 					data-selected={isSelected}
 					onclick={() => (expandedIndex = isExpanded ? null : i)}
 				>
 					<span class="shrink-0 whitespace-nowrap text-base-content/50">{ts}</span>
-					<span class="truncate text-base-content/70">
-						{#if isExpanded}&#9660;{:else}&#9654;{/if}
-						{msg}
+					<span class="flex min-w-0 flex-1 items-center gap-1.5 truncate text-base-content/70">
+						{#if isExpanded}
+							<ChevronDown size={10} class="shrink-0 text-base-content/50" />
+						{:else}
+							<ChevronRight size={10} class="shrink-0 text-base-content/50" />
+						{/if}
+						<span class="truncate">{msg}</span>
 					</span>
 				</button>
 
@@ -241,14 +259,22 @@
 		</div>
 
 		<!-- Load more (down = older) -->
-		<div class="border-t border-base-300/50 py-2 text-center">
+		<div class="pt-1 pb-3">
 			{#if loadingMore === 'before'}
-				<span class="loading loading-xs loading-spinner"></span>
+				<div
+					class="flex items-center justify-center rounded-box border border-dashed border-base-300 py-2.5"
+				>
+					<span class="loading loading-xs loading-spinner"></span>
+				</div>
 			{:else if noMoreBefore}
-				<span class="text-xs text-base-content/50">No older logs</span>
+				<div
+					class="flex items-center justify-center rounded-box border border-dashed border-base-300 py-2.5 text-xs text-base-content/50"
+				>
+					No older logs
+				</div>
 			{:else}
 				<button
-					class="cursor-pointer text-xs text-primary hover:underline"
+					class="block w-full cursor-pointer rounded-box border border-dashed border-base-300 py-2.5 text-center text-xs text-primary hover:bg-base-200/50"
 					onclick={() => loadMore('before')}
 				>
 					&#8595; Load more
