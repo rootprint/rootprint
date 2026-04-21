@@ -7,6 +7,7 @@ import { recordSearch } from '$lib/api/history.remote';
 import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
 import { searchFieldValues, searchLogHistogram, searchLogs } from '$lib/api/logs.remote';
 import { getPreference, saveDisplayFields } from '$lib/api/preferences.remote';
+import { OTEL_INDEX_PREFIX } from '$lib/constants/defaults';
 import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
 import { storageKeys } from '$lib/constants/storage-keys';
 import type { SearchLogsInput } from '$lib/schemas/logs';
@@ -116,6 +117,7 @@ export function createSearchStore(
 	const urlIndex = $derived(parsedQuery().index);
 	const sortDirection = $derived(parsedQuery().sortDirection);
 	const canAutoRefresh = $derived(timeRange.type === 'relative');
+	const isOtelIndex = $derived(selectedIndex?.startsWith(OTEL_INDEX_PREFIX) ?? false);
 
 	const excludedFields = $derived(new Set([fieldConfig.timestampField, fieldConfig.messageField]));
 	const panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
@@ -650,6 +652,9 @@ export function createSearchStore(
 		},
 		get canAutoRefresh() {
 			return canAutoRefresh;
+		},
+		get isOtelIndex() {
+			return isOtelIndex;
 		},
 		// Methods
 		setAutoRefresh,

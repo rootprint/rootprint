@@ -113,7 +113,7 @@
 			onsearch={store.searchFieldValues}
 			loading={store.fieldsLoading}
 			indexId={store.selectedIndex}
-			isOtelIndex={store.selectedIndex?.startsWith('otel-logs-') ?? false}
+			isOtelIndex={store.isOtelIndex}
 		/>
 	</OverlayScrollbarsComponent>
 
@@ -221,6 +221,6 @@
 	timezoneMode={store.timezoneMode}
 	query={data.parsedQuery.query}
 	timeRange={store.absoluteTimeRange}
-	isOtelIndex={store.selectedIndex?.startsWith('otel-logs-') ?? false}
+	isOtelIndex={store.isOtelIndex}
 	onfilter={(field, value) => store.addClause(field, value)}
 />
