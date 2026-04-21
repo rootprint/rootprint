@@ -8,6 +8,10 @@ export type SortDirection = 'asc' | 'desc';
 
 export type DrawerTab = 'history' | 'saved' | 'shared';
 
+export type IndexDetailTab = 'overview' | 'fields' | 'sources' | 'configuration';
+
+export type ExportFormat = 'ndjson' | 'csv' | 'text';
+
 export type NodeLogFlavor = 'otel' | 'pino' | 'winston';
 
 export type JavaLogFlavor = 'agent' | 'sdk';
@@ -212,7 +216,7 @@ export type ExportState = {
 	userId: string;
 	fetched: number;
 	total: number;
-	format: 'ndjson' | 'csv' | 'text';
+	format: ExportFormat;
 	logs: Record<string, unknown>[];
 	result?: Uint8Array;
 	error?: string;

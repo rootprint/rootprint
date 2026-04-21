@@ -1,8 +1,6 @@
-<script lang="ts" module>
-	export type IndexDetailTab = 'overview' | 'fields' | 'sources' | 'configuration';
-</script>
-
 <script lang="ts">
+	import type { IndexDetailTab } from '$lib/types';
+
 	let {
 		activeTab,
 		fieldCount,

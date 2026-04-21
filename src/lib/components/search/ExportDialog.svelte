@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { EXPORT_MAX_LOGS } from '$lib/constants/ingest';
+	import type { ExportFormat } from '$lib/types';
 
 	let {
 		numHits,
@@ -18,7 +19,6 @@
 		indexId: string | null;
 	} = $props();
 
-	type ExportFormat = 'ndjson' | 'csv' | 'text';
 	type DialogState = 'form' | 'progress' | 'error';
 
 	let open = $state(false);

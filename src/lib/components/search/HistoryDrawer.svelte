@@ -32,7 +32,7 @@
 		onrestore: (params: Partial<ParsedQuery>) => void;
 	} = $props();
 
-	let activeTab = $state<'history' | 'saved' | 'shared'>(drawerTab ?? 'history');
+	let activeTab = $state<DrawerTab>(drawerTab ?? 'history');
 	// Bidirectional sync: $derived can't be used because Drawer's bind:open requires a writable value
 	let drawerOpen = $state(drawerTab !== null);
 

@@ -20,6 +20,7 @@ import type {
 	TimeRange
 } from '$lib/types';
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
+import { useDebounce } from '$lib/utils/debounce';
 import { getErrorMessage } from '$lib/utils/error';
 import { extractJsonSubFields } from '$lib/utils/fields';
 import { createLogKeyer } from '$lib/utils/log-helpers';
@@ -241,15 +242,7 @@ export function createSearchStore(
 
 	// --- Field change handlers ---
 
-	function debounce(fn: () => void, ms: number) {
-		let timer: ReturnType<typeof setTimeout>;
-		return () => {
-			clearTimeout(timer);
-			timer = setTimeout(fn, ms);
-		};
-	}
-
-	const debouncedSaveFields = debounce(() => {
+	const { debounced: debouncedSaveFields } = useDebounce(() => {
 		if (selectedIndex) {
 			saveDisplayFields({ indexId: selectedIndex, fields: activeFields }).catch((e) =>
 				toast.error(getErrorMessage(e, 'Failed to save display fields'))

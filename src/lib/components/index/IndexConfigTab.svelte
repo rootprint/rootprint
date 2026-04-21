@@ -3,16 +3,14 @@
 	import { toast } from 'svelte-sonner';
 
 	import { saveIndexConfig } from '$lib/api/indexes.remote';
-	import type { AdminIndexDetail } from '$lib/types';
+	import type { AdminIndexDetail, IndexVisibility } from '$lib/types';
 	import { getErrorMessage } from '$lib/utils/error';
-
-	type Visibility = 'hidden' | 'admin' | 'all';
 
 	let { detail }: { detail: AdminIndexDetail } = $props();
 
 	const configForm = $derived(saveIndexConfig.for(detail.indexId));
 
-	let visibility = $state<Visibility>((detail.visibility as Visibility) ?? 'all');
+	let visibility = $state<IndexVisibility>(detail.visibility ?? 'all');
 	let contextFieldTags = $state<string[]>(
 		Array.isArray(detail.contextFields) ? (detail.contextFields as string[]) : []
 	);
@@ -26,7 +24,7 @@
 	$effect(() => {
 		const id = detail.indexId;
 		untrack(() => {
-			const nextVisibility = (detail.visibility as Visibility) ?? 'all';
+			const nextVisibility = detail.visibility ?? 'all';
 			const nextTags = Array.isArray(detail.contextFields)
 				? (detail.contextFields as string[])
 				: [];

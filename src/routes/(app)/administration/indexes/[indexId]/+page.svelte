@@ -8,7 +8,8 @@
 	import IndexOverviewTab from '$lib/components/index/IndexOverviewTab.svelte';
 	import IndexSourcesTab from '$lib/components/index/IndexSourcesTab.svelte';
 	import IndexStatsRow from '$lib/components/index/IndexStatsRow.svelte';
-	import IndexTabs, { type IndexDetailTab } from '$lib/components/index/IndexTabs.svelte';
+	import IndexTabs from '$lib/components/index/IndexTabs.svelte';
+	import type { IndexDetailTab } from '$lib/types';
 	import { formatEpochLocale } from '$lib/utils/time';
 
 	let { data } = $props();
