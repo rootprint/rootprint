@@ -46,22 +46,23 @@
 				<Callout variant="info">
 					<p>
 						The <InlineCode>container</InlineCode> operator does not emit
-						<InlineCode>container.name</InlineCode> — only <InlineCode>log.iostream</InlineCode> and
-						the parsed timestamp. <InlineCode>transform/enrich</InlineCode> extracts the 64-char
-						container ID from the log file path into <InlineCode>container.id</InlineCode> and uses
-						it as <InlineCode>service.name</InlineCode> when the app hasn't set one itself.
+						<InlineCode>container.name</InlineCode> — only <InlineCode>log.iostream</InlineCode> and the
+						parsed timestamp. <InlineCode>transform/enrich</InlineCode> extracts the 64-char container
+						ID from the log file path into <InlineCode>container.id</InlineCode> and uses it as <InlineCode
+							>service.name</InlineCode
+						> when the app hasn't set one itself.
 					</p>
 				</Callout>
 				<Callout variant="warning">
 					<p>
-						The <InlineCode>filter/exclude_self</InlineCode> processor drops logs from the collector
-						itself — without it, every line the collector emits would be tailed and re-shipped,
-						creating an amplification loop. The filter matches
+						The <InlineCode>filter/exclude_self</InlineCode> processor drops logs from the collector itself
+						— without it, every line the collector emits would be tailed and re-shipped, creating an amplification
+						loop. The filter matches
 						<InlineCode>{'${env:HOSTNAME}'}</InlineCode>, which Docker sets to the collector
 						container's own short (12-char) ID, against the prefix of each record's
 						<InlineCode>container.id</InlineCode>. If you set an explicit
-						<InlineCode>hostname:</InlineCode> on the collector service, the match breaks — leave it
-						unset or update the filter to your chosen value.
+						<InlineCode>hostname:</InlineCode> on the collector service, the match breaks — leave it unset
+						or update the filter to your chosen value.
 					</p>
 				</Callout>
 			</SendLogsStep>
@@ -98,8 +99,8 @@
 					<h3 class="font-semibold">Send a test log line</h3>
 					<p class="mt-1 text-sm text-base-content/60">
 						Run a throwaway container that prints one line and exits. The collector picks the line
-						up from the host log file and ships it with <InlineCode>service.name</InlineCode> set
-						to the container's ID.
+						up from the host log file and ships it with <InlineCode>service.name</InlineCode> set to the
+						container's ID.
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.test} copyTitle="Copy test command" />
@@ -111,9 +112,8 @@
 					<p class="mt-1 text-sm text-base-content/60">
 						Open Search and query for <InlineCode>hello from logwiz</InlineCode>. The record
 						typically arrives within ~5 seconds (the batch interval). For apps that set
-						<InlineCode>service.name</InlineCode> themselves via the OTel SDK, you'll see the
-						SDK-provided name; for bare containers (like the smoke test above), you'll see the
-						container ID.
+						<InlineCode>service.name</InlineCode> themselves via the OTel SDK, you'll see the SDK-provided
+						name; for bare containers (like the smoke test above), you'll see the container ID.
 					</p>
 				</div>
 				<div>

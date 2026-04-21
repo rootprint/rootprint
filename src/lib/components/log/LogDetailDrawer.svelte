@@ -213,10 +213,7 @@
 		{#if activeTab === 'json'}
 			{#if hit}
 				<div class="relative rounded-box border border-base-300 bg-base-100">
-					<CopyButton
-						text={prettyJson}
-						class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs"
-					/>
+					<CopyButton text={prettyJson} class="btn absolute top-2 right-2 z-10 btn-ghost btn-xs" />
 					<div class="py-3 font-['Roboto_Mono',monospace] text-sm">
 						{#each jsonLines as line, i (i)}
 							<div class="flex leading-relaxed">
@@ -240,7 +237,9 @@
 						<table class="table w-full table-fixed rounded-none">
 							<tbody>
 								{#each params as [key, value] (key)}
-									<tr class="group/row border-b border-base-300 last:border-b-0 hover:bg-base-200/50">
+									<tr
+										class="group/row border-b border-base-300 last:border-b-0 hover:bg-base-200/50"
+									>
 										<td
 											class="w-2/5 border-r border-base-300 px-3 py-1.5 text-xs font-normal text-base-content/70"
 											>{stripPrefix ? otelDisplayName(key) : key}</td

@@ -158,9 +158,7 @@
 					class="inline-flex items-center gap-1.5 rounded border border-base-300 bg-base-200 px-2 py-0.5 font-['Roboto_Mono',monospace] text-xs"
 					title={String(label.value)}
 				>
-					{label.field}:{isNumber(label.value)
-						? label.value
-						: `"${formatLabelValue(label.value)}"`}
+					{label.field}:{isNumber(label.value) ? label.value : `"${formatLabelValue(label.value)}"`}
 					<button
 						class="cursor-pointer text-error/70 hover:text-error"
 						onclick={() => removeLabel(label.field)}>&times;</button
