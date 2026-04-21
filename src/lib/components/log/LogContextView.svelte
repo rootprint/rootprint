@@ -6,6 +6,7 @@
 	import type { LogEntry, TimezoneMode } from '$lib/types';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import {
+		createLogKeyer,
 		extractSeverity,
 		extractTimestamp,
 		flattenObject,
@@ -41,12 +42,8 @@
 	let noMoreAfter = $state(false);
 	let expandedIndex = $state<number | null>(null);
 	let error = $state<string | null>(null);
-	let nextKey = $state(0);
 	let fetchSeq = 0;
-
-	function withKeys(hits: Record<string, unknown>[]): LogEntry[] {
-		return hits.map((h) => ({ key: nextKey++, hit: h }));
-	}
+	const withKeys = createLogKeyer();
 
 	async function fetchContext() {
 		const thisSeq = ++fetchSeq;

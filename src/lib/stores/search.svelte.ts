@@ -22,6 +22,7 @@ import type {
 import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
 import { getErrorMessage } from '$lib/utils/error';
 import { extractJsonSubFields } from '$lib/utils/fields';
+import { createLogKeyer } from '$lib/utils/log-helpers';
 import {
 	addClause as addClauseUtil,
 	clearClauses as clearClausesUtil,
@@ -41,11 +42,7 @@ export function createSearchStore(
 	initialIndexes: IndexSummary[],
 	options?: { onFreshSearch?: () => void }
 ) {
-	let nextKey = 0;
-
-	function withKeys(hits: Record<string, unknown>[]): LogEntry[] {
-		return hits.map((hit) => ({ key: nextKey++, hit }));
-	}
+	const withKeys = createLogKeyer();
 
 	// --- Index state ---
 	const indexes = $state(initialIndexes);

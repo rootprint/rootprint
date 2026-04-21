@@ -1,7 +1,13 @@
 import { LEVEL_TOKEN_MAP, SEVERITY_ORDER } from '$lib/constants/severity';
-import type { TimezoneMode } from '$lib/types';
+import type { LogEntry, TimezoneMode } from '$lib/types';
 import { resolveFieldValue } from '$lib/utils/field-resolver';
 import { formatTimestamp, normalizeToMs } from '$lib/utils/time';
+
+export function createLogKeyer() {
+	let nextKey = 0;
+	return (hits: Record<string, unknown>[]): LogEntry[] =>
+		hits.map((hit) => ({ key: nextKey++, hit }));
+}
 
 export function getLevelColor(level: string): string {
 	if (typeof document === 'undefined') return '';
