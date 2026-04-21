@@ -18,7 +18,14 @@
 	import Drawer from '$lib/components/ui/Drawer.svelte';
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
-	import { flattenObject, isEmpty } from '$lib/utils/log-helpers';
+	import {
+		extractSeverity,
+		extractTimestamp,
+		flattenObject,
+		isEmpty,
+		severityChipTint,
+		severityDotColor
+	} from '$lib/utils/log-helpers';
 
 	import LogContextView from './LogContextView.svelte';
 
@@ -117,6 +124,12 @@
 		if (raw == null || raw === '') return null;
 		return String(raw);
 	});
+
+	const severity = $derived(hit ? extractSeverity(hit, levelField) : 'unknown');
+
+	const severityLabel = $derived(severity.toUpperCase());
+
+	const metaTimestamp = $derived(hit ? extractTimestamp(hit, timestampField, 'utc') : '');
 
 	let hideEmpty = $state(true);
 
@@ -251,6 +264,27 @@
 						</tbody>
 					</table>
 				{/snippet}
+
+				<div class="mb-4 flex items-center gap-3">
+					<span
+						class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold uppercase {severityChipTint(
+							severity
+						)}"
+					>
+						<span
+							class="h-2 w-2 shrink-0 rounded-full {severityDotColor(severity) ?? 'bg-level-unknown'}"
+						></span>
+						{severityLabel}
+					</span>
+					{#if metaTimestamp}
+						<span class="font-['Roboto_Mono',monospace] text-sm text-base-content/80">
+							{metaTimestamp}
+						</span>
+					{/if}
+					<span class="ml-auto text-xs font-semibold tracking-wider text-base-content/50 uppercase">
+						UTC
+					</span>
+				</div>
 
 				{#if messageValue}
 					<div class="mb-4">

@@ -68,6 +68,26 @@ export function severityDotColor(severity: string): string | null {
 	}
 }
 
+export function severityChipTint(severity: string): string {
+	switch (severity) {
+		case 'error':
+			return 'bg-level-error/15 text-level-error';
+		case 'fatal':
+		case 'critical':
+			return 'bg-level-critical/15 text-level-critical';
+		case 'warn':
+		case 'warning':
+			return 'bg-level-warning/15 text-level-warning';
+		case 'debug':
+		case 'trace':
+			return 'bg-level-debug/15 text-level-debug';
+		case 'info':
+			return 'bg-level-info/15 text-level-info';
+		default:
+			return 'bg-level-unknown/15 text-level-unknown';
+	}
+}
+
 export function extractTimestamp(
 	doc: Record<string, unknown>,
 	timestampField: string,
