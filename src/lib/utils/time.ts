@@ -11,7 +11,7 @@ export function resolveTimeRange(range: TimeRange): { startTs?: number; endTs?: 
 	return { startTs: endTs - preset.seconds, endTs };
 }
 
-export function formatTimeRangeLabel(range: TimeRange, timezone: 'utc' | 'local'): string {
+export function formatTimeRangeLabel(range: TimeRange, timezone: TimezoneMode): string {
 	if (range.type === 'relative') {
 		const preset = TIME_PRESETS.find((p) => p.code === range.preset);
 		return preset?.label ?? range.preset;

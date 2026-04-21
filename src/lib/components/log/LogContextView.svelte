@@ -3,7 +3,7 @@
 	import { untrack } from 'svelte';
 
 	import { getLogContext, getMoreContext } from '$lib/api/context.remote';
-	import type { LogEntry } from '$lib/types';
+	import type { LogEntry, TimezoneMode } from '$lib/types';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import {
 		extractSeverity,
@@ -18,14 +18,14 @@
 		messageField = 'message',
 		levelField = 'level',
 		timestampField = 'timestamp',
-		timezoneMode = 'utc' as 'utc' | 'local'
+		timezoneMode = 'utc' as TimezoneMode
 	}: {
 		hit: Record<string, unknown>;
 		indexId: string;
 		messageField?: string;
 		levelField?: string;
 		timestampField?: string;
-		timezoneMode?: 'utc' | 'local';
+		timezoneMode?: TimezoneMode;
 	} = $props();
 
 	let logs = $state<LogEntry[]>([]);

@@ -1,3 +1,5 @@
+import type { TimezoneMode } from '$lib/types';
+
 import { formatFieldValue, resolveFieldValue } from './field-resolver';
 import { extractTimestamp } from './log-helpers';
 
@@ -26,7 +28,7 @@ export function computeColumnWidths(
 export function computeTimestampWidth(
 	logs: Record<string, unknown>[],
 	timestampField: string,
-	timezoneMode: 'utc' | 'local'
+	timezoneMode: TimezoneMode
 ): number {
 	const sample = logs.slice(0, SAMPLE_SIZE);
 	let maxLen = 0;

@@ -18,6 +18,7 @@
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import Drawer from '$lib/components/ui/Drawer.svelte';
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
+	import type { TimezoneMode } from '$lib/types';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import {
 		extractSeverity,
@@ -39,7 +40,7 @@
 		indexId = '',
 		messageField = 'message',
 		levelField = 'level',
-		timezoneMode = 'utc' as 'utc' | 'local',
+		timezoneMode = 'utc' as TimezoneMode,
 		query = '',
 		timeRange = null as { start: number; end: number } | null,
 		isOtelIndex = false,
@@ -52,7 +53,7 @@
 		indexId?: string;
 		messageField?: string;
 		levelField?: string;
-		timezoneMode?: 'utc' | 'local';
+		timezoneMode?: TimezoneMode;
 		query?: string;
 		timeRange?: { start: number; end: number } | null;
 		isOtelIndex?: boolean;

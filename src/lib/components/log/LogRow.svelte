@@ -1,5 +1,6 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
+	import type { TimezoneMode } from '$lib/types';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import { extractSeverity, extractTimestamp, severityBorderColor } from '$lib/utils/log-helpers';
 
@@ -12,7 +13,7 @@
 		extraFields = [],
 		columnWidths = {},
 		timestampWidth = 0,
-		timezoneMode = 'local' as 'utc' | 'local',
+		timezoneMode = 'local' as TimezoneMode,
 		onclick = () => {}
 	}: {
 		hit: Record<string, unknown>;
@@ -23,7 +24,7 @@
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
 		timestampWidth?: number;
-		timezoneMode?: 'utc' | 'local';
+		timezoneMode?: TimezoneMode;
 		onclick?: () => void;
 	} = $props();
 
