@@ -425,7 +425,7 @@
 						<label class="flex cursor-pointer items-center gap-2 rounded px-1.5 text-xs">
 							<input
 								type="checkbox"
-								class="checkbox checkbox-xs"
+								class="checkbox checkbox-xs text-white checked:[--input-color:var(--color-primary)]"
 								checked={isChecked(field.name, bucket.value)}
 								onclick={(e) => {
 									e.preventDefault();
@@ -482,7 +482,7 @@
 				onclick={() => onClearClauses()}
 				title="Clear all filters"
 			>
-				<span class="text-xs text-primary">Clear</span>
+				<p class="text-xs text-primary">Clear</p>
 			</button>
 		{/if}
 	</div>
