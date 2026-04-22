@@ -13,12 +13,6 @@ import * as settingsService from '$lib/server/services/settings.service';
 
 const googleSettings = settingsService.getGoogleAuthSettings();
 
-if (googleSettings) {
-	console.log(
-		`[logwiz] Google auth enabled for domains: ${googleSettings.allowedDomains.join(', ')}`
-	);
-}
-
 export const auth = betterAuth({
 	...(config.origin ? { baseURL: config.origin } : {}),
 	secret: config.secret,
