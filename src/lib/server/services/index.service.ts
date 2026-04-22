@@ -14,7 +14,11 @@ import {
 	userPreference
 } from '$lib/server/db/schema';
 import { quickwitClient } from '$lib/server/quickwit';
-import { getIndexMetadata, listIndexMetadata } from '$lib/server/services/quickwit-index.service';
+import {
+	getIndexMetadata,
+	listIndexIdsAndUris,
+	listIndexSummariesRaw
+} from '$lib/server/services/quickwit-index.service';
 import {
 	type AdminIndexDetail,
 	type AdminIndexSummary,
@@ -99,7 +103,7 @@ function strictFastFieldNames(fields: QuickwitField[]): string[] {
 }
 
 export async function getAdminIndexSummaries(): Promise<AdminIndexSummary[]> {
-	const live = await listIndexMetadata();
+	const live = await listIndexSummariesRaw();
 	const metaMap = readMetaMap();
 
 	return live.map((m) => {
@@ -107,8 +111,8 @@ export async function getAdminIndexSummaries(): Promise<AdminIndexSummary[]> {
 		return {
 			indexId: m.indexId,
 			displayName: meta?.displayName ?? null,
-			fieldCount: m.fields.length,
-			sourceCount: m.sources.length,
+			fieldCount: m.fieldCount,
+			sourceCount: m.sourceCount,
 			mode: m.mode,
 			createTimestamp: m.createTimestamp,
 			visibility: meta?.visibility ?? 'all'
@@ -117,7 +121,7 @@ export async function getAdminIndexSummaries(): Promise<AdminIndexSummary[]> {
 }
 
 export async function getIndexes(userRole: string | null | undefined) {
-	const live = await listIndexMetadata();
+	const live = await listIndexIdsAndUris();
 	const metaMap = readMetaMap();
 
 	const isAdmin = userRole === 'admin';
@@ -135,7 +139,7 @@ export async function getIndexes(userRole: string | null | undefined) {
 }
 
 export async function getAdminIndexIds(): Promise<string[]> {
-	const live = await listIndexMetadata();
+	const live = await listIndexIdsAndUris();
 	return live.map((m) => m.indexId);
 }
 

@@ -69,6 +69,35 @@ export async function listIndexMetadata(): Promise<QuickwitIndexMetadata[]> {
 	return all.map(normalize);
 }
 
+export async function listIndexIdsAndUris(): Promise<
+	{ indexId: string; indexUri: string | null }[]
+> {
+	const all = await quickwitClient.listIndexes();
+	return all.map((m) => ({
+		indexId: m.index_config.index_id,
+		indexUri: m.index_config.index_uri ?? null
+	}));
+}
+
+function countFieldLeaves(mappings: FieldMapping[]): number {
+	let n = 0;
+	for (const f of mappings) {
+		n += f.type === 'object' && f.field_mappings ? countFieldLeaves(f.field_mappings) : 1;
+	}
+	return n;
+}
+
+export async function listIndexSummariesRaw() {
+	const all = await quickwitClient.listIndexes();
+	return all.map((m) => ({
+		indexId: m.index_config.index_id,
+		mode: m.index_config.doc_mapping.mode ?? null,
+		createTimestamp: m.create_timestamp ?? null,
+		fieldCount: countFieldLeaves(m.index_config.doc_mapping.field_mappings ?? []),
+		sourceCount: (m.sources ?? []).length
+	}));
+}
+
 export async function getIndexMetadata(indexId: string): Promise<QuickwitIndexMetadata | null> {
 	try {
 		return normalize(await quickwitClient.getIndex(indexId));
