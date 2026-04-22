@@ -4,7 +4,7 @@ import * as v from 'valibot';
 
 import { EXPORT_MAX_LOGS } from '$lib/constants/ingest';
 import { exportLogsSchema } from '$lib/schemas/export';
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import { EXPORT_BATCH_SIZE, exportManager } from '$lib/server/services/export.service';
 import { assertIndexAccess, getFieldConfig } from '$lib/server/services/index.service';
 
@@ -16,8 +16,7 @@ async function runExportJob(
 	messageField: string
 ): Promise<void> {
 	try {
-		const client = getQuickwitClient();
-		const index = client.index(data.indexId);
+		const index = quickwitClient.index(data.indexId);
 
 		let currentOffset = 0;
 		let totalFetched = 0;
@@ -77,8 +76,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	await assertIndexAccess(data.indexId, locals.user.role);
 	const fieldConfig = await getFieldConfig(data.indexId);
 
-	const client = getQuickwitClient();
-	const index = client.index(data.indexId);
+	const index = quickwitClient.index(data.indexId);
 
 	let total: number;
 	try {

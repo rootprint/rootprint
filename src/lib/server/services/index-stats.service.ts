@@ -3,7 +3,7 @@ import type { IndexStats } from 'quickwit-js';
 
 import { db } from '$lib/server/db';
 import { indexStatsSnapshot } from '$lib/server/db/schema';
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import { listIndexMetadata } from '$lib/server/services/quickwit-index.service';
 import type { IndexStatsCard } from '$lib/types';
 
@@ -47,7 +47,7 @@ async function captureAllSnapshots(): Promise<void> {
 		await Promise.allSettled(
 			indexes.map(async (idx) => {
 				try {
-					const stats = await getQuickwitClient().describeIndex(idx.indexId);
+					const stats = await quickwitClient.describeIndex(idx.indexId);
 					db.insert(indexStatsSnapshot)
 						.values({
 							indexId: stats.index_id,
@@ -98,6 +98,6 @@ export async function getIndexStatsCard(indexId: string): Promise<IndexStatsCard
 		.orderBy(desc(indexStatsSnapshot.capturedAt))
 		.limit(2)
 		.all();
-	const live = await getQuickwitClient().describeIndex(indexId);
+	const live = await quickwitClient.describeIndex(indexId);
 	return composeStatsCard(live, snaps);
 }

@@ -13,7 +13,7 @@ import {
 	sharedLink,
 	userPreference
 } from '$lib/server/db/schema';
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import { getIndexMetadata, listIndexMetadata } from '$lib/server/services/quickwit-index.service';
 import {
 	type AdminIndexDetail,
@@ -241,7 +241,7 @@ export async function setSourceEnabled(
 	enabled: boolean
 ): Promise<void> {
 	try {
-		await getQuickwitClient().index(indexId).toggleSource(sourceId, enabled);
+		await quickwitClient.index(indexId).toggleSource(sourceId, enabled);
 	} catch (e) {
 		if (e instanceof NotFoundError) error(404, 'Source not found');
 		throw e;
@@ -250,7 +250,7 @@ export async function setSourceEnabled(
 
 export async function resetSourceCheckpoint(indexId: string, sourceId: string): Promise<void> {
 	try {
-		await getQuickwitClient().index(indexId).resetSourceCheckpoint(sourceId);
+		await quickwitClient.index(indexId).resetSourceCheckpoint(sourceId);
 	} catch (e) {
 		if (e instanceof NotFoundError) error(404, 'Source not found');
 		throw e;
@@ -259,7 +259,7 @@ export async function resetSourceCheckpoint(indexId: string, sourceId: string): 
 
 export async function deleteSource(indexId: string, sourceId: string): Promise<void> {
 	try {
-		await getQuickwitClient().index(indexId).deleteSource(sourceId);
+		await quickwitClient.index(indexId).deleteSource(sourceId);
 	} catch (e) {
 		if (e instanceof NotFoundError) error(404, 'Source not found');
 		throw e;
@@ -268,7 +268,7 @@ export async function deleteSource(indexId: string, sourceId: string): Promise<v
 
 export async function deleteIndex(indexId: string): Promise<void> {
 	try {
-		await getQuickwitClient().deleteIndex(indexId);
+		await quickwitClient.deleteIndex(indexId);
 	} catch (e) {
 		if (e instanceof NotFoundError) error(404, 'Index not found');
 		throw e;

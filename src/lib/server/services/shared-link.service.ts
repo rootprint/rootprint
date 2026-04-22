@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 
 import { db } from '$lib/server/db';
 import { sharedLink } from '$lib/server/db/schema';
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import { extractTimestampSeconds, fingerprint } from '$lib/server/utils/fingerprint';
 
 const SHARE_LINK_TTL_DAYS = 30;
@@ -58,8 +58,7 @@ export async function findMatchingHit(
 	logFingerprint: string,
 	timestampField: string
 ): Promise<Record<string, unknown> | null> {
-	const client = getQuickwitClient();
-	const idx = client.index(indexName);
+	const idx = quickwitClient.index(indexName);
 	const PAGE_SIZE = 200;
 	const MAX_PAGES = 5;
 	let offset = 0;

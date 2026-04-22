@@ -1,7 +1,7 @@
 import type { FastFieldConfig, FieldMapping, IndexMetadata } from 'quickwit-js';
 import { NotFoundError } from 'quickwit-js';
 
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import type { QuickwitField, QuickwitIndexMetadata, QuickwitSource } from '$lib/types';
 
 // Tri-state: null = unset, true = on (boolean true OR { normalizer }), false = explicitly off.
@@ -65,13 +65,13 @@ function normalize(meta: IndexMetadata): QuickwitIndexMetadata {
 }
 
 export async function listIndexMetadata(): Promise<QuickwitIndexMetadata[]> {
-	const all = await getQuickwitClient().listIndexes();
+	const all = await quickwitClient.listIndexes();
 	return all.map(normalize);
 }
 
 export async function getIndexMetadata(indexId: string): Promise<QuickwitIndexMetadata | null> {
 	try {
-		return normalize(await getQuickwitClient().getIndex(indexId));
+		return normalize(await quickwitClient.getIndex(indexId));
 	} catch (e) {
 		if (e instanceof NotFoundError) return null;
 		throw e;

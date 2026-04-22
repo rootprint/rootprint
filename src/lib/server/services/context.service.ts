@@ -1,4 +1,4 @@
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import { extractTimestampSeconds, fingerprint } from '$lib/server/utils/fingerprint';
 import { flattenObject } from '$lib/utils/log-helpers';
 import { escapeFilterValue } from '$lib/utils/query';
@@ -78,8 +78,7 @@ export async function getLogContext(
 	noMoreBefore: boolean;
 }> {
 	const config = await getFieldConfig(indexId);
-	const client = getQuickwitClient();
-	const index = client.index(indexId);
+	const index = quickwitClient.index(indexId);
 
 	const { query: contextQuery, activeLabels } = buildContextQuery(
 		log,
@@ -170,8 +169,7 @@ export async function getMoreContext(
 	limit: number
 ): Promise<Record<string, unknown>[]> {
 	const config = await getFieldConfig(indexId);
-	const client = getQuickwitClient();
-	const index = client.index(indexId);
+	const index = quickwitClient.index(indexId);
 
 	const { query: contextQuery } = buildContextQuery(
 		log,

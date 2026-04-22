@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { db } from '$lib/server/db';
 import { indexesMeta } from '$lib/server/db/schema';
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 
 type CheckStatus = 'ok' | 'error';
 
@@ -23,7 +23,7 @@ const defaultDependencies: HealthDependencies = {
 	checkDatabase: async () => {
 		await db.select({ indexId: indexesMeta.indexId }).from(indexesMeta).limit(1);
 	},
-	checkQuickwit: async () => getQuickwitClient().isHealthy()
+	checkQuickwit: async () => quickwitClient.isHealthy()
 };
 
 function toStatus(settled: PromiseSettledResult<unknown>, isHealthy: boolean = true): CheckStatus {

@@ -9,11 +9,4 @@ function normalizeQuickwitUrl(url: string): string {
 	return url.replace(/\/api\/v1\/?$/, '');
 }
 
-let _client: QuickwitClient | null = null;
-
-export function getQuickwitClient(): QuickwitClient {
-	if (!_client) {
-		_client = new QuickwitClient(normalizeQuickwitUrl(config.quickwitUrl));
-	}
-	return _client;
-}
+export const quickwitClient = new QuickwitClient(normalizeQuickwitUrl(config.quickwitUrl));

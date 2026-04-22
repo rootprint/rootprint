@@ -4,7 +4,7 @@ import { AggregationBuilder, ValidationError } from 'quickwit-js';
 
 import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
 import type { SearchLogsInput } from '$lib/schemas/logs';
-import { getQuickwitClient } from '$lib/server/quickwit';
+import { quickwitClient } from '$lib/server/quickwit';
 import { getFieldConfig } from '$lib/server/services/index.service';
 import type { QuickFilterBucket } from '$lib/types';
 import { formatFieldValue } from '$lib/utils/field-resolver';
@@ -65,8 +65,7 @@ function rethrowValidationError(e: unknown): never {
 
 export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: string[] }) {
 	const config = await getFieldConfig(data.indexId);
-	const client = getQuickwitClient();
-	const index = client.index(data.indexId);
+	const index = quickwitClient.index(data.indexId);
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
@@ -129,8 +128,7 @@ export async function searchFieldValues(data: {
 		return { values: [], totalHits: 0, unsupported: true };
 	}
 
-	const client = getQuickwitClient();
-	const index = client.index(data.indexId);
+	const index = quickwitClient.index(data.indexId);
 
 	const baseQuery = data.query?.trim();
 	const combinedQuery = baseQuery && baseQuery !== '*' ? baseQuery : '*';
@@ -168,8 +166,7 @@ export async function searchLogHistogram(data: {
 	timeRange?: string;
 }) {
 	const config = await getFieldConfig(data.indexId);
-	const client = getQuickwitClient();
-	const index = client.index(data.indexId);
+	const index = quickwitClient.index(data.indexId);
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
