@@ -21,12 +21,6 @@ export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
 
-export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): boolean {
-	if (visibility === 'hidden') return false;
-	if (visibility === 'admin') return isAdmin;
-	return true;
-}
-
 export type AdminIndexSummary = {
 	indexId: string;
 	displayName: string | null;

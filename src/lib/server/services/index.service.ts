@@ -2,10 +2,9 @@ import { error } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { NotFoundError } from 'quickwit-js';
 
-import { OTEL_INDEX_PREFIX } from '$lib/constants/defaults';
 import { db } from '$lib/server/db';
 import {
-	indexesMeta,
+	indexSettings,
 	indexStatsSnapshot,
 	ingestToken,
 	savedQuery,
@@ -15,20 +14,25 @@ import {
 } from '$lib/server/db/schema';
 import { quickwitClient } from '$lib/server/quickwit';
 import {
-	getIndexMetadata,
+	getIndex,
 	listIndexIdsAndUris,
-	listIndexSummariesRaw
+	listIndexSummaries
 } from '$lib/server/services/quickwit-index.service';
 import {
 	type AdminIndexDetail,
 	type AdminIndexSummary,
-	canAccessIndex,
 	type IndexVisibility,
 	type QuickwitField,
 	type SaveIndexConfigFields
 } from '$lib/types';
 
-type MetaDefaults = {
+function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): boolean {
+	if (visibility === 'hidden') return false;
+	if (visibility === 'admin') return isAdmin;
+	return true;
+}
+
+type IndexSettings = {
 	displayName: string | null;
 	visibility: IndexVisibility;
 	levelField: string;
@@ -37,56 +41,30 @@ type MetaDefaults = {
 	contextFields: string[] | null;
 };
 
-function defaultsFor(indexId: string): MetaDefaults {
-	if (indexId.startsWith(OTEL_INDEX_PREFIX)) {
-		return {
-			displayName: null,
-			visibility: 'all',
-			levelField: 'severity_text',
-			messageField: 'body.message',
-			tracebackField: 'attributes.exception.stacktrace',
-			contextFields: null
-		};
-	}
-	return {
-		displayName: null,
-		visibility: 'all',
-		levelField: 'level',
-		messageField: 'message',
-		tracebackField: null,
-		contextFields: null
-	};
+const DEFAULT_SETTINGS: IndexSettings = {
+	displayName: null,
+	visibility: 'all',
+	levelField: 'severity_text',
+	messageField: 'body.message',
+	tracebackField: 'attributes.exception.stacktrace',
+	contextFields: null
+};
+
+type IndexSettingsRow = typeof indexSettings.$inferSelect;
+
+function readIndexSettings(indexId: string): IndexSettings {
+	const [row] = db.select().from(indexSettings).where(eq(indexSettings.indexId, indexId)).all();
+	return row ?? DEFAULT_SETTINGS;
 }
 
-type MetaRow = typeof indexesMeta.$inferSelect;
-
-function readMetaRow(indexId: string): MetaRow | undefined {
-	const [row] = db.select().from(indexesMeta).where(eq(indexesMeta.indexId, indexId)).all();
-	return row;
-}
-
-function readMetaMap(): Map<string, MetaRow> {
+function readIndexSettingsMap(): Map<string, IndexSettingsRow> {
 	return new Map(
 		db
 			.select()
-			.from(indexesMeta)
+			.from(indexSettings)
 			.all()
 			.map((r) => [r.indexId, r])
 	);
-}
-
-function metaWithDefaults(indexId: string): MetaDefaults {
-	const row = readMetaRow(indexId);
-	const defaults = defaultsFor(indexId);
-	if (!row) return defaults;
-	return {
-		displayName: row.displayName ?? defaults.displayName,
-		visibility: row.visibility,
-		levelField: row.levelField,
-		messageField: row.messageField,
-		tracebackField: row.tracebackField ?? defaults.tracebackField,
-		contextFields: row.contextFields ?? defaults.contextFields
-	};
 }
 
 // JSON fields are "fast" unless explicitly fast=false; other fields require fast=true.
@@ -102,70 +80,65 @@ function strictFastFieldNames(fields: QuickwitField[]): string[] {
 	return fields.filter((f) => f.fast === true).map((f) => f.name);
 }
 
-export async function getAdminIndexSummaries(): Promise<AdminIndexSummary[]> {
-	const live = await listIndexSummariesRaw();
-	const metaMap = readMetaMap();
+export async function listIndexesForAdmin(): Promise<AdminIndexSummary[]> {
+	const summaries = await listIndexSummaries();
+	const settingsMap = readIndexSettingsMap();
 
-	return live.map((m) => {
-		const meta = metaMap.get(m.indexId);
+	return summaries.map((summary) => {
+		const settings = settingsMap.get(summary.indexId);
 		return {
-			indexId: m.indexId,
-			displayName: meta?.displayName ?? null,
-			fieldCount: m.fieldCount,
-			sourceCount: m.sourceCount,
-			mode: m.mode,
-			createTimestamp: m.createTimestamp,
-			visibility: meta?.visibility ?? 'all'
+			indexId: summary.indexId,
+			displayName: settings?.displayName ?? null,
+			fieldCount: summary.fieldCount,
+			sourceCount: summary.sourceCount,
+			mode: summary.mode,
+			createTimestamp: summary.createTimestamp,
+			visibility: settings?.visibility ?? 'all'
 		};
 	});
 }
 
-export async function getIndexes(userRole: string | null | undefined) {
-	const live = await listIndexIdsAndUris();
-	const metaMap = readMetaMap();
+export async function listIndexesForUser(userRole: string | null | undefined) {
+	const indexes = await listIndexIdsAndUris();
+	const settingsMap = readIndexSettingsMap();
 
 	const isAdmin = userRole === 'admin';
-	return live
-		.map((m) => {
-			const meta = metaMap.get(m.indexId);
+	return indexes
+		.map((index) => {
+			const settings = settingsMap.get(index.indexId);
 			return {
-				indexId: m.indexId,
-				indexUri: m.indexUri ?? '',
-				displayName: meta?.displayName ?? null,
-				visibility: meta?.visibility ?? 'all'
+				indexId: index.indexId,
+				indexUri: index.indexUri ?? '',
+				displayName: settings?.displayName ?? null,
+				visibility: settings?.visibility ?? 'all'
 			};
 		})
-		.filter((i) => canAccessIndex(i.visibility, isAdmin));
-}
-
-export async function getAdminIndexIds(): Promise<string[]> {
-	const live = await listIndexIdsAndUris();
-	return live.map((m) => m.indexId);
+		.filter((index) => canAccessIndex(index.visibility, isAdmin));
 }
 
 export async function getFieldConfig(indexId: string) {
-	const meta = metaWithDefaults(indexId);
-	const live = await getIndexMetadata(indexId);
-	const fields = live?.fields ?? [];
+	const settings = readIndexSettings(indexId);
+	const index = await getIndex(indexId);
+	const fields = index?.fields ?? [];
 
 	return {
 		indexId,
-		levelField: meta.levelField,
-		timestampField: live?.timestampField ?? 'timestamp',
-		messageField: meta.messageField,
-		tracebackField: meta.tracebackField,
-		contextFields: meta.contextFields,
+		levelField: settings.levelField,
+		timestampField: index?.timestampField ?? 'timestamp',
+		messageField: settings.messageField,
+		tracebackField: settings.tracebackField,
+		contextFields: settings.contextFields,
 		fastFieldNames: strictFastFieldNames(fields),
 		fastJsonFields: fastJsonFieldNames(fields)
 	};
 }
 
 export async function getIndexFields(indexId: string) {
-	const live = await getIndexMetadata(indexId);
-	if (!live) return { fields: [] };
+	const index = await getIndex(indexId);
+	if (!index) return { fields: [] };
 
 	return {
-		fields: live.fields.map((f) => ({
+		fields: index.fields.map((f) => ({
 			name: f.name,
 			type: f.type,
 			fast: isFastField(f)
@@ -174,53 +147,45 @@ export async function getIndexFields(indexId: string) {
 }
 
 export async function saveIndexConfig(indexId: string, fields: SaveIndexConfigFields) {
-	const defaults = defaultsFor(indexId);
 	const provided = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
 	const updatedAt = new Date();
 	await db
-		.insert(indexesMeta)
-		.values({
-			indexId,
-			levelField: defaults.levelField,
-			messageField: defaults.messageField,
-			tracebackField: defaults.tracebackField,
-			...provided,
-			updatedAt
-		})
+		.insert(indexSettings)
+		.values({ indexId, ...provided, updatedAt })
 		.onConflictDoUpdate({
-			target: indexesMeta.indexId,
+			target: indexSettings.indexId,
 			set: { ...provided, updatedAt }
 		});
 }
 
-export async function getAdminIndexDetail(indexId: string): Promise<AdminIndexDetail | null> {
-	const live = await getIndexMetadata(indexId);
-	if (!live) return null;
+export async function getIndexForAdmin(indexId: string): Promise<AdminIndexDetail | null> {
+	const index = await getIndex(indexId);
+	if (!index) return null;
 
-	const meta = metaWithDefaults(indexId);
+	const settings = readIndexSettings(indexId);
 
 	return {
-		indexId: live.indexId,
-		indexUid: live.indexUid,
-		indexUri: live.indexUri,
-		version: live.version,
-		createTimestamp: live.createTimestamp,
-		timestampField: live.timestampField,
-		mode: live.mode,
-		indexFieldPresence: live.indexFieldPresence,
-		storeSource: live.storeSource,
-		storeDocumentSize: live.storeDocumentSize,
-		tagFields: live.tagFields,
-		defaultSearchFields: live.defaultSearchFields,
-		retention: live.retention,
-		levelField: meta.levelField,
-		messageField: meta.messageField,
-		tracebackField: meta.tracebackField,
-		displayName: meta.displayName,
-		visibility: meta.visibility,
-		contextFields: meta.contextFields,
-		fields: live.fields,
-		sources: live.sources
+		indexId: index.indexId,
+		indexUid: index.indexUid,
+		indexUri: index.indexUri,
+		version: index.version,
+		createTimestamp: index.createTimestamp,
+		timestampField: index.timestampField,
+		mode: index.mode,
+		indexFieldPresence: index.indexFieldPresence,
+		storeSource: index.storeSource,
+		storeDocumentSize: index.storeDocumentSize,
+		tagFields: index.tagFields,
+		defaultSearchFields: index.defaultSearchFields,
+		retention: index.retention,
+		levelField: settings.levelField,
+		messageField: settings.messageField,
+		tracebackField: settings.tracebackField,
+		displayName: settings.displayName,
+		visibility: settings.visibility,
+		contextFields: settings.contextFields,
+		fields: index.fields,
+		sources: index.sources
 	};
 }
 
@@ -229,11 +194,11 @@ export async function assertIndexAccess(
 	userRole: string | null | undefined
 ): Promise<void> {
 	const isAdmin = userRole === 'admin';
-	const visibility = readMetaRow(indexId)?.visibility ?? 'all';
+	const { visibility } = readIndexSettings(indexId);
 	if (!canAccessIndex(visibility, isAdmin)) error(403, 'Index not accessible');
 
-	const live = await getIndexMetadata(indexId);
-	if (!live) {
+	const index = await getIndex(indexId);
+	if (!index) {
 		if (isAdmin) error(404, 'Index not found');
 		error(403, 'Index not accessible');
 	}
@@ -280,7 +245,7 @@ export async function deleteIndex(indexId: string): Promise<void> {
 
 	try {
 		db.transaction((tx) => {
-			tx.delete(indexesMeta).where(eq(indexesMeta.indexId, indexId)).run();
+			tx.delete(indexSettings).where(eq(indexSettings.indexId, indexId)).run();
 			tx.delete(indexStatsSnapshot).where(eq(indexStatsSnapshot.indexId, indexId)).run();
 			tx.delete(userPreference).where(eq(userPreference.indexName, indexId)).run();
 			tx.delete(searchHistory).where(eq(searchHistory.indexName, indexId)).run();

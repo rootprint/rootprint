@@ -64,7 +64,7 @@ function normalize(meta: IndexMetadata): QuickwitIndexMetadata {
 	};
 }
 
-export async function listIndexMetadata(): Promise<QuickwitIndexMetadata[]> {
+export async function listIndexes(): Promise<QuickwitIndexMetadata[]> {
 	const all = await quickwitClient.listIndexes();
 	return all.map(normalize);
 }
@@ -87,7 +87,7 @@ function countFieldLeaves(mappings: FieldMapping[]): number {
 	return n;
 }
 
-export async function listIndexSummariesRaw() {
+export async function listIndexSummaries() {
 	const all = await quickwitClient.listIndexes();
 	return all.map((m) => ({
 		indexId: m.index_config.index_id,
@@ -98,7 +98,7 @@ export async function listIndexSummariesRaw() {
 	}));
 }
 
-export async function getIndexMetadata(indexId: string): Promise<QuickwitIndexMetadata | null> {
+export async function getIndex(indexId: string): Promise<QuickwitIndexMetadata | null> {
 	try {
 		return normalize(await quickwitClient.getIndex(indexId));
 	} catch (e) {

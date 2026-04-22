@@ -5,12 +5,12 @@ import type { IndexVisibility } from '$lib/types';
 
 import { user } from './auth.schema';
 
-export const indexesMeta = sqliteTable('indexes_meta', {
+export const indexSettings = sqliteTable('index_settings', {
 	indexId: text('index_id').primaryKey(),
 	displayName: text('display_name'),
 	visibility: text('visibility').$type<IndexVisibility>().notNull().default('all'),
-	levelField: text('level_field').notNull().default('level'),
-	messageField: text('message_field').notNull().default('message'),
+	levelField: text('level_field').notNull().default('severity_text'),
+	messageField: text('message_field').notNull().default('body.message'),
 	tracebackField: text('traceback_field'),
 	contextFields: text('context_fields', { mode: 'json' }).$type<string[] | null>(),
 	createdAt: integer('created_at', { mode: 'timestamp' })

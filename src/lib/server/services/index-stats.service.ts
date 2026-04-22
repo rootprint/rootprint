@@ -4,7 +4,7 @@ import type { IndexStats } from 'quickwit-js';
 import { db } from '$lib/server/db';
 import { indexStatsSnapshot } from '$lib/server/db/schema';
 import { quickwitClient } from '$lib/server/quickwit';
-import { listIndexMetadata } from '$lib/server/services/quickwit-index.service';
+import { listIndexes } from '$lib/server/services/quickwit-index.service';
 import type { IndexStatsCard } from '$lib/types';
 
 const SNAPSHOT_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -42,7 +42,7 @@ export function composeStatsCard(live: IndexStats, snaps: SnapRow[]): IndexStats
 
 async function captureAllSnapshots(): Promise<void> {
 	try {
-		const indexes = await listIndexMetadata();
+		const indexes = await listIndexes();
 		const capturedAt = new Date();
 		await Promise.allSettled(
 			indexes.map(async (idx) => {

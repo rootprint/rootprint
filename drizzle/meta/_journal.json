@@ -218,6 +218,20 @@
       "when": 1776615753085,
       "tag": "0030_rework_ingest_token",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1776857687543,
+      "tag": "0031_new_multiple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1776877344045,
+      "tag": "0032_red_talkback",
+      "breakpoints": true
     }
   ]
 }
