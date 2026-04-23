@@ -16,16 +16,16 @@
 	let {
 		hit,
 		indexId,
-		messageField = 'message',
-		levelField = 'level',
-		timestampField = 'timestamp',
+		messageField,
+		levelField,
+		timestampField,
 		timezoneMode = 'utc' as TimezoneMode
 	}: {
 		hit: Record<string, unknown>;
 		indexId: string;
-		messageField?: string;
-		levelField?: string;
-		timestampField?: string;
+		messageField: string;
+		levelField: string;
+		timestampField: string;
 		timezoneMode?: TimezoneMode;
 	} = $props();
 

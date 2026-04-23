@@ -7,9 +7,9 @@
 	let {
 		hit,
 		wrapMode,
-		levelField = 'level',
-		timestampField = 'timestamp',
-		messageField = 'message',
+		levelField,
+		timestampField,
+		messageField,
 		extraFields = [],
 		columnWidths = {},
 		timestampWidth = 0,
@@ -18,9 +18,9 @@
 	}: {
 		hit: Record<string, unknown>;
 		wrapMode: 'none' | 'wrap';
-		levelField?: string;
-		timestampField?: string;
-		messageField?: string;
+		levelField: string;
+		timestampField: string;
+		messageField: string;
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
 		timestampWidth?: number;

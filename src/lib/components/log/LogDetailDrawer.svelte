@@ -35,11 +35,11 @@
 	let {
 		open = $bindable(false),
 		hit = null,
-		timestampField = 'timestamp',
-		tracebackField = null as string | null,
+		timestampField,
+		tracebackField,
 		indexId = '',
-		messageField = 'message',
-		levelField = 'level',
+		messageField,
+		levelField,
 		timezoneMode = 'utc' as TimezoneMode,
 		query = '',
 		timeRange = null as { start: number; end: number } | null,
@@ -48,11 +48,11 @@
 	}: {
 		open: boolean;
 		hit: Record<string, unknown> | null;
-		timestampField?: string;
-		tracebackField?: string | null;
+		timestampField: string;
+		tracebackField: string | null;
 		indexId?: string;
-		messageField?: string;
-		levelField?: string;
+		messageField: string;
+		levelField: string;
 		timezoneMode?: TimezoneMode;
 		query?: string;
 		timeRange?: { start: number; end: number } | null;
@@ -61,22 +61,6 @@
 	} = $props();
 
 	let sharing = $state(false);
-
-	let copiedField = $state<string | null>(null);
-
-	async function handleCopy(key: string, value: unknown) {
-		const text = value == null ? 'null' : formatFieldValue(value);
-		try {
-			await navigator.clipboard.writeText(text);
-			copiedField = key;
-			toast.success('Value copied to clipboard');
-			setTimeout(() => {
-				if (copiedField === key) copiedField = null;
-			}, 1500);
-		} catch {
-			toast.error('Failed to copy value');
-		}
-	}
 
 	async function handleShare() {
 		if (!hit || !timeRange || sharing) return;
@@ -161,6 +145,15 @@
 		return key;
 	}
 
+	type OtelSectionId = 'attributes' | 'resourceAttributes' | 'other';
+
+	type OtelSection = {
+		id: OtelSectionId;
+		label: string;
+		params: [string, unknown][];
+		displayKey: (key: string) => string;
+	};
+
 	const attrParams = $derived(filteredParams.filter(([key]) => key.startsWith('attributes.')));
 	const resourceAttrParams = $derived(
 		filteredParams.filter(([key]) => key.startsWith('resource_attributes.'))
@@ -171,9 +164,36 @@
 		)
 	);
 
-	let attrCollapsed = $state(false);
-	let resourceAttrCollapsed = $state(false);
-	let otherCollapsed = $state(false);
+	const otelSections = $derived<OtelSection[]>(
+		(
+			[
+				{
+					id: 'attributes',
+					label: 'Attributes',
+					params: attrParams,
+					displayKey: otelDisplayName
+				},
+				{
+					id: 'resourceAttributes',
+					label: 'Resource Attributes',
+					params: resourceAttrParams,
+					displayKey: otelDisplayName
+				},
+				{
+					id: 'other',
+					label: 'Other Fields',
+					params: otherParams,
+					displayKey: (k) => k
+				}
+			] satisfies OtelSection[]
+		).filter((s) => s.params.length > 0)
+	);
+
+	let collapsed = $state<Record<OtelSectionId, boolean>>({
+		attributes: false,
+		resourceAttributes: false,
+		other: false
+	});
 
 	let activeTab = $state<'parameters' | 'json' | 'context' | 'traceback'>('parameters');
 
@@ -232,7 +252,7 @@
 			{/if}
 		{:else if activeTab === 'parameters'}
 			{#if hit}
-				{#snippet paramTable(params: [string, unknown][], stripPrefix: boolean)}
+				{#snippet paramTable(params: [string, unknown][], displayKey: (key: string) => string)}
 					<div class="overflow-hidden rounded-box border border-base-300 bg-base-100">
 						<table class="table w-full table-fixed rounded-none">
 							<tbody>
@@ -242,7 +262,7 @@
 									>
 										<td
 											class="w-2/5 border-r border-base-300 px-3 py-1.5 text-xs font-normal text-base-content/70"
-											>{stripPrefix ? otelDisplayName(key) : key}</td
+											>{displayKey(key)}</td
 										>
 										<td
 											class="relative px-3 py-1.5 border-base-300 font-['Roboto_Mono',monospace] text-xs wrap-break-word text-base-content/90"
@@ -268,13 +288,15 @@
 															Filter
 														</button>
 													{/if}
-													<button
-														type="button"
+													<CopyButton
+														text={() =>
+															value == null ? 'null' : formatFieldValue(value)}
 														class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
-														onclick={() => handleCopy(key, value)}
 													>
-														{copiedField === key ? 'Copied!' : 'Copy'}
-													</button>
+														{#snippet children({ copied })}
+															{copied ? 'Copied!' : 'Copy'}
+														{/snippet}
+													</CopyButton>
 												</div>
 											</div>
 										</td>
@@ -351,14 +373,14 @@
 					</label>
 
 					{#if isOtelIndex}
-						{#if attrParams.length > 0}
+						{#each otelSections as section (section.id)}
 							<div class="mb-2">
 								<button
 									type="button"
 									class="flex items-center gap-2 py-2"
-									onclick={() => (attrCollapsed = !attrCollapsed)}
+									onclick={() => (collapsed[section.id] = !collapsed[section.id])}
 								>
-									{#if attrCollapsed}
+									{#if collapsed[section.id]}
 										<ChevronRight size={14} class="text-base-content/60" />
 									{:else}
 										<ChevronDown size={14} class="text-base-content/60" />
@@ -366,71 +388,19 @@
 									<span
 										class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
 									>
-										Attributes
+										{section.label}
 									</span>
-									<span class="badge badge-sm badge-accent">{attrParams.length}</span>
+									<span class="badge badge-sm badge-accent">{section.params.length}</span>
 								</button>
-								{#if !attrCollapsed}
+								{#if !collapsed[section.id]}
 									<div transition:slide={{ duration: 200 }}>
-										{@render paramTable(attrParams, true)}
+										{@render paramTable(section.params, section.displayKey)}
 									</div>
 								{/if}
 							</div>
-						{/if}
-						{#if resourceAttrParams.length > 0}
-							<div class="mb-2">
-								<button
-									type="button"
-									class="flex items-center gap-2 py-2"
-									onclick={() => (resourceAttrCollapsed = !resourceAttrCollapsed)}
-								>
-									{#if resourceAttrCollapsed}
-										<ChevronRight size={14} class="text-base-content/60" />
-									{:else}
-										<ChevronDown size={14} class="text-base-content/60" />
-									{/if}
-									<span
-										class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
-									>
-										Resource Attributes
-									</span>
-									<span class="badge badge-sm badge-accent">{resourceAttrParams.length}</span>
-								</button>
-								{#if !resourceAttrCollapsed}
-									<div transition:slide={{ duration: 200 }}>
-										{@render paramTable(resourceAttrParams, true)}
-									</div>
-								{/if}
-							</div>
-						{/if}
-						{#if otherParams.length > 0}
-							<div class="mb-2">
-								<button
-									type="button"
-									class="flex items-center gap-2 py-2"
-									onclick={() => (otherCollapsed = !otherCollapsed)}
-								>
-									{#if otherCollapsed}
-										<ChevronRight size={14} class="text-base-content/60" />
-									{:else}
-										<ChevronDown size={14} class="text-base-content/60" />
-									{/if}
-									<span
-										class="text-[11px] font-semibold tracking-wider text-base-content/60 uppercase"
-									>
-										Other Fields
-									</span>
-									<span class="badge badge-sm badge-accent">{otherParams.length}</span>
-								</button>
-								{#if !otherCollapsed}
-									<div transition:slide={{ duration: 200 }}>
-										{@render paramTable(otherParams, false)}
-									</div>
-								{/if}
-							</div>
-						{/if}
+						{/each}
 					{:else}
-						{@render paramTable(filteredParams, false)}
+						{@render paramTable(filteredParams, (k) => k)}
 					{/if}
 				</div>
 			{/if}

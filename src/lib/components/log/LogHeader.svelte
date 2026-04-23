@@ -4,16 +4,16 @@
 	import type { SortDirection } from '$lib/types';
 
 	let {
-		timestampField = 'timestamp',
-		messageField = 'message',
+		timestampField,
+		messageField,
 		extraFields = [],
 		columnWidths = {},
 		timestampWidth = 0,
 		sortDirection = 'asc',
 		ontogglesort
 	}: {
-		timestampField?: string;
-		messageField?: string;
+		timestampField: string;
+		messageField: string;
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
 		timestampWidth?: number;
