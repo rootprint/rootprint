@@ -1,33 +1,11 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
+import { MAX_INGEST_BODY_BYTES } from '$lib/constants/ingest';
 import { config } from '$lib/server/config';
 import { verifyIngestToken } from '$lib/server/services/ingest-token.service';
-
-const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB — on-the-wire size (compressed if Content-Encoding set)
-
-type VerifyResult = { id: number; name: string; indexId: string } | null;
-
-type ForwardArgs = {
-	indexId: string;
-	body: ArrayBuffer;
-	contentType: string;
-	contentEncoding: string | null;
-};
-
-type OtlpDependencies = {
-	verifyToken: (token: string) => VerifyResult;
-	forwardOtlp: (args: ForwardArgs) => Promise<Response>;
-};
+import { extractBearerToken } from '$lib/server/utils/bearer';
 
 const SUPPORTED_MEDIA_TYPES = new Set(['application/x-protobuf']);
-
-function extractBearerToken(authorizationHeader: string | null): string | null {
-	if (!authorizationHeader) return null;
-	const [scheme, ...tokenParts] = authorizationHeader.trim().split(/\s+/);
-	if (!scheme || scheme.toLowerCase() !== 'bearer') return null;
-	const token = tokenParts.join(' ').trim();
-	return token.length > 0 ? token : null;
-}
 
 function parseBaseMediaType(contentTypeHeader: string | null): string | null {
 	if (!contentTypeHeader) return null;
@@ -36,109 +14,83 @@ function parseBaseMediaType(contentTypeHeader: string | null): string | null {
 	return trimmed ? trimmed : null;
 }
 
-function buildUpstreamEndpoint(): string {
-	const quickwitBase = config.quickwitUrl.replace(/\/+$/, '');
-	return `${quickwitBase}/otlp/v1/logs`;
-}
+export const POST: RequestHandler = async ({ request }) => {
+	const token = extractBearerToken(request.headers.get('authorization'));
+	if (!token) {
+		return json({ message: 'Missing bearer token' }, { status: 401 });
+	}
 
-const defaultDependencies: OtlpDependencies = {
-	verifyToken: verifyIngestToken,
-	forwardOtlp: async ({ indexId, body, contentType, contentEncoding }) => {
-		const headers: Record<string, string> = {
-			'content-type': contentType,
-			'qw-otel-logs-index': indexId
-		};
-		if (contentEncoding) {
-			headers['content-encoding'] = contentEncoding;
+	const verified = verifyIngestToken(token);
+	if (!verified) {
+		return json({ message: 'Invalid ingest token' }, { status: 403 });
+	}
+
+	const contentTypeHeader = request.headers.get('content-type');
+	const baseMediaType = parseBaseMediaType(contentTypeHeader);
+	if (!baseMediaType || !SUPPORTED_MEDIA_TYPES.has(baseMediaType)) {
+		return json(
+			{
+				message:
+					'Only application/x-protobuf is accepted. If you are using @opentelemetry/exporter-logs-otlp-http (defaults to JSON), switch to @opentelemetry/exporter-logs-otlp-proto. See /send-logs/otlp for details.'
+			},
+			{ status: 415 }
+		);
+	}
+
+	const contentLength = request.headers.get('content-length');
+	if (contentLength) {
+		const parsedLength = Number.parseInt(contentLength, 10);
+		if (Number.isFinite(parsedLength) && parsedLength > MAX_INGEST_BODY_BYTES) {
+			return json({ message: 'Request body too large' }, { status: 413 });
 		}
-		return fetch(buildUpstreamEndpoint(), {
+	}
+
+	const body = await request.arrayBuffer();
+	if (body.byteLength > MAX_INGEST_BODY_BYTES) {
+		return json({ message: 'Request body too large' }, { status: 413 });
+	}
+	if (body.byteLength === 0) {
+		return json({ message: 'Request body is required' }, { status: 400 });
+	}
+
+	const quickwitBase = config.quickwitUrl.replace(/\/+$/, '');
+	const headers: Record<string, string> = {
+		'content-type': contentTypeHeader as string,
+		'qw-otel-logs-index': verified.indexId
+	};
+	const contentEncoding = request.headers.get('content-encoding');
+	if (contentEncoding) {
+		headers['content-encoding'] = contentEncoding;
+	}
+
+	try {
+		const upstream = await fetch(`${quickwitBase}/otlp/v1/logs`, {
 			method: 'POST',
 			headers,
 			body
 		});
+
+		if (upstream.status >= 500) {
+			return new Response(null, { status: 503, headers: { 'retry-after': '5' } });
+		}
+		if (upstream.status === 429) {
+			const passthroughHeaders = new Headers();
+			const retryAfter = upstream.headers.get('retry-after');
+			if (retryAfter) passthroughHeaders.set('retry-after', retryAfter);
+			return new Response(null, { status: 429, headers: passthroughHeaders });
+		}
+		if (upstream.status >= 400) {
+			const passthroughBody = await upstream.text();
+			const passthroughHeaders = new Headers();
+			const upstreamContentType = upstream.headers.get('content-type');
+			if (upstreamContentType) passthroughHeaders.set('content-type', upstreamContentType);
+			return new Response(passthroughBody, { status: upstream.status, headers: passthroughHeaders });
+		}
+
+		// 2xx — success. Return empty 200 per §5 of the spec (deliberate non-compliance
+		// with full OTLP response-body spec; see docs/superpowers/specs/2026-04-19-otel-ingest-endpoint-design.md §1 Compatibility scope).
+		return new Response(null, { status: 200 });
+	} catch {
+		return new Response(null, { status: 503, headers: { 'retry-after': '5' } });
 	}
 };
-
-export function _createOtlpLogsHandler(
-	dependencies: OtlpDependencies = defaultDependencies
-): RequestHandler {
-	return async ({ request }) => {
-		const token = extractBearerToken(request.headers.get('authorization'));
-		if (!token) {
-			return json({ message: 'Missing bearer token' }, { status: 401 });
-		}
-
-		const verified = dependencies.verifyToken(token);
-		if (!verified) {
-			return json({ message: 'Invalid ingest token' }, { status: 403 });
-		}
-
-		const contentTypeHeader = request.headers.get('content-type');
-		const baseMediaType = parseBaseMediaType(contentTypeHeader);
-		if (!baseMediaType || !SUPPORTED_MEDIA_TYPES.has(baseMediaType)) {
-			return json(
-				{
-					message:
-						'Only application/x-protobuf is accepted. If you are using @opentelemetry/exporter-logs-otlp-http (defaults to JSON), switch to @opentelemetry/exporter-logs-otlp-proto. See /send-logs/otlp for details.'
-				},
-				{ status: 415 }
-			);
-		}
-
-		const contentLength = request.headers.get('content-length');
-		if (contentLength) {
-			const parsedLength = Number.parseInt(contentLength, 10);
-			if (Number.isFinite(parsedLength) && parsedLength > MAX_BODY_BYTES) {
-				return json({ message: 'Request body too large' }, { status: 413 });
-			}
-		}
-
-		const body = await request.arrayBuffer();
-		if (body.byteLength > MAX_BODY_BYTES) {
-			return json({ message: 'Request body too large' }, { status: 413 });
-		}
-		if (body.byteLength === 0) {
-			return json({ message: 'Request body is required' }, { status: 400 });
-		}
-
-		try {
-			const upstream = await dependencies.forwardOtlp({
-				indexId: verified.indexId,
-				body,
-				contentType: contentTypeHeader as string,
-				contentEncoding: request.headers.get('content-encoding')
-			});
-
-			if (upstream.status >= 500) {
-				return new Response(null, {
-					status: 503,
-					headers: { 'retry-after': '5' }
-				});
-			}
-			if (upstream.status === 429) {
-				const headers = new Headers();
-				const retryAfter = upstream.headers.get('retry-after');
-				if (retryAfter) headers.set('retry-after', retryAfter);
-				return new Response(null, { status: 429, headers });
-			}
-			if (upstream.status >= 400) {
-				const passthroughBody = await upstream.text();
-				const headers = new Headers();
-				const upstreamContentType = upstream.headers.get('content-type');
-				if (upstreamContentType) headers.set('content-type', upstreamContentType);
-				return new Response(passthroughBody, { status: upstream.status, headers });
-			}
-
-			// 2xx — success. Return empty 200 per §5 of the spec (deliberate non-compliance
-			// with full OTLP response-body spec; see docs/superpowers/specs/2026-04-19-otel-ingest-endpoint-design.md §1 Compatibility scope).
-			return new Response(null, { status: 200 });
-		} catch {
-			return new Response(null, {
-				status: 503,
-				headers: { 'retry-after': '5' }
-			});
-		}
-	};
-}
-
-export const POST: RequestHandler = _createOtlpLogsHandler();

@@ -34,10 +34,11 @@
 	let togglingRole = $state(false);
 
 	const isSelf = $derived(user.id === currentUserId);
-	const isGoogle = $derived(user.authProvider === 'google');
 	const isPendingOrExpired = $derived(user.status === 'pending' || user.status === 'expired');
-	const canManageInvite = $derived(!isGoogle && isPendingOrExpired);
-	const canResetPassword = $derived(!isGoogle && user.status === 'active' && !isSelf);
+	const canManageInvite = $derived(user.hasCredentialAccount && isPendingOrExpired);
+	const canResetPassword = $derived(
+		user.hasCredentialAccount && user.status === 'active' && !isSelf
+	);
 
 	async function handleRegenerate() {
 		regenerating = true;

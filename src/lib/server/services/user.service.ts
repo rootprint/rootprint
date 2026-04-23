@@ -1,11 +1,11 @@
 import { APIError } from 'better-auth/api';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { account, inviteToken } from '$lib/server/db/schema';
-import { hasGoogleAccount } from '$lib/server/services/auth.service';
+import { hasCredentialAccount } from '$lib/server/services/auth.service';
 import { randomHex } from '$lib/utils/crypto';
 
 const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
@@ -27,11 +27,16 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 		])
 	);
 
-	const googleAccounts = await db
-		.select({ userId: account.userId })
+	const providerAccounts = await db
+		.select({ userId: account.userId, providerId: account.providerId })
 		.from(account)
-		.where(eq(account.providerId, 'google'));
-	const googleUserIds = new Set(googleAccounts.map((a) => a.userId));
+		.where(inArray(account.providerId, ['google', 'credential']));
+	const googleUserIds = new Set(
+		providerAccounts.filter((a) => a.providerId === 'google').map((a) => a.userId)
+	);
+	const credentialUserIds = new Set(
+		providerAccounts.filter((a) => a.providerId === 'credential').map((a) => a.userId)
+	);
 
 	// Better Auth's admin plugin doesn't infer custom additionalFields in listUsers return type
 	type UserWithLastActive = (typeof result.users)[number] & { lastActive?: number };
@@ -53,7 +58,7 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 			role: u.role,
 			lastActive: u.lastActive ? new Date(u.lastActive) : null,
 			status,
-			authProvider: isGoogle ? ('google' as const) : ('credential' as const),
+			hasCredentialAccount: credentialUserIds.has(u.id),
 			inviteUrl: invite?.url ?? null,
 			inviteExpiresAt: invite?.expiresAt ?? null
 		};
@@ -98,8 +103,8 @@ export async function createInvite(
 }
 
 export async function regenerateInvite(userId: string, requestOrigin: string) {
-	if (await hasGoogleAccount(userId)) {
-		throw new Error('Cannot regenerate invite for a Google-authenticated user');
+	if (!(await hasCredentialAccount(userId))) {
+		throw new Error('Cannot regenerate invite: user has no credential account');
 	}
 
 	const publicOrigin = resolvePublicOrigin(requestOrigin);
@@ -150,8 +155,8 @@ export async function resetPassword(
 	if (userId === adminId) {
 		throw new Error('Cannot reset your own password');
 	}
-	if (await hasGoogleAccount(userId)) {
-		throw new Error('Cannot reset password for a Google-authenticated user');
+	if (!(await hasCredentialAccount(userId))) {
+		throw new Error('Cannot reset password: user has no credential account');
 	}
 
 	const publicOrigin = resolvePublicOrigin(requestOrigin);

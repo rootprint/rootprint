@@ -118,7 +118,7 @@ export type User = {
 	role?: string | null;
 	lastActive: Date | null;
 	status: 'pending' | 'active' | 'expired';
-	authProvider: 'google' | 'credential';
+	hasCredentialAccount: boolean;
 	inviteUrl: string | null;
 	inviteExpiresAt: Date | null;
 };
@@ -197,6 +197,8 @@ export type IngestTokenSummary = {
 	createdAt: Date;
 	createdByUserId: string;
 };
+
+export type VerifiedIngestToken = { id: number; name: string; indexId: string };
 
 export type QuickFilterBucket = {
 	value: string;

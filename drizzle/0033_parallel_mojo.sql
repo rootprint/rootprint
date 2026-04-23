@@ -1,0 +1,2 @@
+ALTER TABLE `user` ADD `has_credential_account` integer DEFAULT false NOT NULL;--> statement-breakpoint
+UPDATE `user` SET `has_credential_account` = true WHERE `id` IN (SELECT `user_id` FROM `account` WHERE `provider_id` = 'credential');

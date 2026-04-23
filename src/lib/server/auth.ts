@@ -24,6 +24,12 @@ export const auth = betterAuth({
 				type: 'number',
 				required: false,
 				input: false
+			},
+			hasCredentialAccount: {
+				type: 'boolean',
+				required: false,
+				input: false,
+				defaultValue: false
 			}
 		}
 	},
@@ -75,6 +81,14 @@ export const auth = betterAuth({
 					}
 				},
 				after: async (accountData) => {
+					if (accountData.providerId === 'credential') {
+						db.update(user)
+							.set({ hasCredentialAccount: true })
+							.where(eq(user.id, accountData.userId))
+							.run();
+						return;
+					}
+
 					if (accountData.providerId !== 'google') return;
 
 					try {
@@ -90,12 +104,18 @@ export const auth = betterAuth({
 								.run();
 
 							tx.delete(inviteToken).where(eq(inviteToken.userId, accountData.userId)).run();
+
+							tx.update(user)
+								.set({ hasCredentialAccount: false })
+								.where(eq(user.id, accountData.userId))
+								.run();
 						});
 					} catch (e) {
 						console.error(
 							`[logwiz] Failed to clean up credential data for user ${accountData.userId}:`,
 							e
 						);
+						throw e;
 					}
 				}
 			}

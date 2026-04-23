@@ -61,8 +61,12 @@ export const signOut = command(async () => {
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
 	const result = await authService.setupPassword(data.token, data._password);
 	if (!('success' in result)) {
-		if (result.error === 'google_account') {
-			invalid(issue.token('This account uses Google authentication. Please sign in with Google.'));
+		if (result.error === 'no_credential_account') {
+			invalid(
+				issue.token(
+					"This account doesn't use password authentication. Please sign in with your linked provider."
+				)
+			);
 			return;
 		}
 		invalid(

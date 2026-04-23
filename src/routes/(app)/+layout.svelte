@@ -11,7 +11,7 @@
 	let { children } = $props();
 
 	const user = $derived(page.data.user);
-	const isGoogleUser = $derived(page.data.isGoogleUser ?? false);
+	const hasCredentialAccount = $derived(user?.hasCredentialAccount ?? false);
 	const initials = $derived(avatarInitials(user?.name));
 	let changePasswordOpen = $state(false);
 </script>
@@ -43,7 +43,7 @@
 					<p class="text-sm font-medium">{user?.name ?? 'User'}</p>
 					<p class="text-xs text-base-content/60">{user?.email ?? ''}</p>
 				</div>
-				{#if user?.role === 'admin' || !isGoogleUser}
+				{#if user?.role === 'admin' || hasCredentialAccount}
 					<ul class="menu w-full p-2">
 						{#if user?.role === 'admin'}
 							<li class="w-full">
@@ -53,7 +53,7 @@
 								</a>
 							</li>
 						{/if}
-						{#if !isGoogleUser}
+						{#if hasCredentialAccount}
 							<li class="w-full">
 								<button class="w-full" onclick={() => (changePasswordOpen = true)}>
 									<Lock size={16} class="opacity-70" />

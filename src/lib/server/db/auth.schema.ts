@@ -20,7 +20,10 @@ export const user = sqliteTable('user', {
 	banExpires: integer('ban_expires', { mode: 'timestamp_ms' }),
 	username: text('username').unique(),
 	displayUsername: text('display_username'),
-	lastActive: integer('last_active', { mode: 'timestamp_ms' })
+	lastActive: integer('last_active', { mode: 'timestamp_ms' }),
+	hasCredentialAccount: integer('has_credential_account', { mode: 'boolean' })
+		.default(false)
+		.notNull()
 });
 
 export const session = sqliteTable(

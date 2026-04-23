@@ -7,5 +7,3 @@ export const exportLogsSchema = v.object({
 	endTimestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	format: v.picklist(['ndjson', 'csv', 'text'])
 });
-
-export type ExportLogsInput = v.InferOutput<typeof exportLogsSchema>;

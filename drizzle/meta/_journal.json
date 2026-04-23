@@ -232,6 +232,13 @@
       "when": 1776877344045,
       "tag": "0032_red_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1776940352972,
+      "tag": "0033_parallel_mojo",
+      "breakpoints": true
     }
   ]
 }

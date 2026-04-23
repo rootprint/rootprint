@@ -5,7 +5,7 @@ import type { CreateIngestTokenInput } from '$lib/schemas/ingest-tokens';
 import { db } from '$lib/server/db';
 import { ingestToken } from '$lib/server/db/schema';
 import { generateIngestToken } from '$lib/server/utils/ingest-token';
-import type { IngestTokenSummary } from '$lib/types';
+import type { IngestTokenSummary, VerifiedIngestToken } from '$lib/types';
 
 type TokenRow = typeof ingestToken.$inferSelect;
 
@@ -72,9 +72,7 @@ export function getIngestTokenValue(tokenId: number): { token: string } {
 	return { token: row.token };
 }
 
-export function verifyIngestToken(
-	token: string
-): { id: number; name: string; indexId: string } | null {
+export function verifyIngestToken(token: string): VerifiedIngestToken | null {
 	const [record] = db.select().from(ingestToken).where(eq(ingestToken.token, token)).all();
 	if (!record) return null;
 
