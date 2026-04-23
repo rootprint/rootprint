@@ -216,6 +216,19 @@
 
 <Drawer bind:open {tabs} bind:activeTab>
 	{#snippet actions()}
+		{#if traceId}
+			<button
+				type="button"
+				class="btn btn-ghost btn-xs"
+				title={traceId.value}
+				onclick={handleTraceClick}
+			>
+				<Waypoints size={14} class="text-base-content/60" />
+				<span class="font-['Roboto_Mono',monospace] text-base-content/70">
+					{traceIdDisplay}
+				</span>
+			</button>
+		{/if}
 		<button
 			class="btn btn-ghost btn-xs"
 			title="Share link to this log"
@@ -265,7 +278,7 @@
 											>{displayKey(key)}</td
 										>
 										<td
-											class="relative px-3 py-1.5 border-base-300 font-['Roboto_Mono',monospace] text-xs wrap-break-word text-base-content/90"
+											class="relative border-base-300 px-3 py-1.5 font-['Roboto_Mono',monospace] text-xs wrap-break-word text-base-content/90"
 										>
 											{#if value === null || value === undefined}
 												<span class="text-base-content/50 italic">null</span>
@@ -275,10 +288,7 @@
 											<div
 												class="absolute inset-y-0 right-0 flex items-center pr-1 md:pointer-events-none md:opacity-0 md:group-focus-within/row:pointer-events-auto md:group-focus-within/row:opacity-100 md:group-hover/row:pointer-events-auto md:group-hover/row:opacity-100"
 											>
-												<div
-													class="pointer-events-none h-full w-6 bg-gradient-to-r from-transparent to-base-200"
-												></div>
-												<div class="pointer-events-auto flex items-center gap-0.5 bg-base-200">
+												<div class="pointer-events-auto flex items-center gap-0.5 rounded bg-base-200 px-1">
 													{#if onfilter && isFilterable(value)}
 														<button
 															type="button"
@@ -289,8 +299,7 @@
 														</button>
 													{/if}
 													<CopyButton
-														text={() =>
-															value == null ? 'null' : formatFieldValue(value)}
+														text={() => (value == null ? 'null' : formatFieldValue(value))}
 														class="rounded px-1.5 py-0.5 text-xs text-primary hover:bg-base-300 hover:text-primary"
 													>
 														{#snippet children({ copied })}
@@ -306,23 +315,6 @@
 						</table>
 					</div>
 				{/snippet}
-
-				{#if traceId}
-					<div class="mb-3">
-						<button
-							type="button"
-							class="btn btn-outline btn-xs"
-							title={traceId.value}
-							onclick={handleTraceClick}
-						>
-							<Waypoints size={14} class="text-base-content/60" />
-							<span>Filter by trace</span>
-							<span class="font-['Roboto_Mono',monospace] text-base-content/70">
-								{traceIdDisplay}
-							</span>
-						</button>
-					</div>
-				{/if}
 
 				<div class="-mx-4 flex items-center gap-3 border-b border-base-300 px-4 pb-3">
 					<span
