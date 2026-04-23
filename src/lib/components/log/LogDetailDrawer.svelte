@@ -245,7 +245,7 @@
 											>{stripPrefix ? otelDisplayName(key) : key}</td
 										>
 										<td
-											class="relative px-3 py-1.5 font-['Roboto_Mono',monospace] text-xs [overflow-wrap:break-word] text-base-content/90"
+											class="relative px-3 py-1.5 border-base-300 font-['Roboto_Mono',monospace] text-xs wrap-break-word text-base-content/90"
 										>
 											{#if value === null || value === undefined}
 												<span class="text-base-content/50 italic">null</span>
