@@ -34,7 +34,8 @@ function envInt(name: string, defaultValue: number): number {
 	return parsed;
 }
 
-function resolveSecret(dataDir: string): string {
+function resolveSecret(dataDir: string, envSecret: string | undefined): string {
+	if (envSecret && envSecret.length >= 32) return envSecret;
 	const secretPath = resolve(dataDir, '.secret');
 	if (existsSync(secretPath)) {
 		const existing = readFileSync(secretPath, 'utf-8').trim();
@@ -55,7 +56,7 @@ function loadConfig() {
 	const rateLimitMax = envInt('LOGWIZ_RATE_LIMIT_MAX', 100);
 	const signinRateLimitMax = envInt('LOGWIZ_SIGNIN_RATE_LIMIT_MAX', 5);
 
-	const secret = resolveSecret(dirname(resolve(databasePath)));
+	const secret = resolveSecret(dirname(resolve(databasePath)), envOptional('LOGWIZ_AUTH_SECRET'));
 
 	return {
 		quickwitUrl,
