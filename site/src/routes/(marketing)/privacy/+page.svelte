@@ -57,7 +57,9 @@
         is cookieless.
       </li>
       <li>
-        <strong class="text-base-content font-semibold">No personal data.</strong>
+        <strong class="text-base-content font-semibold"
+          >No personal data.</strong
+        >
         No IP addresses, names, emails, or identifiers that persist across visits.
       </li>
       <li>
@@ -89,7 +91,9 @@
       us. Everything stays on your servers.
     </p>
 
-    <h2 class="mt-10 text-xl font-semibold text-base-content tracking-tight">Contact</h2>
+    <h2 class="mt-10 text-xl font-semibold text-base-content tracking-tight">
+      Contact
+    </h2>
     <p class="mt-4 text-base text-neutral leading-relaxed">
       Questions? <a
         href="https://github.com/oleksandr-zhyhalo/logwiz/issues"

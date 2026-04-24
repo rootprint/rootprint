@@ -242,7 +242,8 @@
       class="max-w-[1200px] mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-2"
     >
       <p class="text-xs text-neutral/70">
-        &copy; {new Date().getFullYear()} Logwiz · Powered by <a
+        &copy; {new Date().getFullYear()} Logwiz · Powered by
+        <a
           href="https://quickwit.io"
           target="_blank"
           rel="noopener noreferrer"

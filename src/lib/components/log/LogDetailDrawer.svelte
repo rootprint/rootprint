@@ -288,7 +288,9 @@
 											<div
 												class="absolute inset-y-0 right-0 flex items-center pr-1 md:pointer-events-none md:opacity-0 md:group-focus-within/row:pointer-events-auto md:group-focus-within/row:opacity-100 md:group-hover/row:pointer-events-auto md:group-hover/row:opacity-100"
 											>
-												<div class="pointer-events-auto flex items-center gap-0.5 rounded bg-base-200 px-1">
+												<div
+													class="pointer-events-auto flex items-center gap-0.5 rounded bg-base-200 px-1"
+												>
 													{#if onfilter && isFilterable(value)}
 														<button
 															type="button"

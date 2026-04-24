@@ -32,7 +32,7 @@
 
 <div
 	class="flex flex-col gap-1 bg-base-200/40 px-4 py-3 not-last:border-b not-last:border-base-300 lg:not-last:border-r lg:not-last:border-b-0 {ring
-		? 'ring-warning/40 ring-1 ring-inset'
+		? 'ring-1 ring-warning/40 ring-inset'
 		: ''}"
 >
 	<div class="text-[10px] font-semibold tracking-wider text-base-content/50 uppercase">

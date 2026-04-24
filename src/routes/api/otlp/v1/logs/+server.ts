@@ -84,7 +84,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			const passthroughHeaders = new Headers();
 			const upstreamContentType = upstream.headers.get('content-type');
 			if (upstreamContentType) passthroughHeaders.set('content-type', upstreamContentType);
-			return new Response(passthroughBody, { status: upstream.status, headers: passthroughHeaders });
+			return new Response(passthroughBody, {
+				status: upstream.status,
+				headers: passthroughHeaders
+			});
 		}
 
 		// 2xx — success. Return empty 200 per §5 of the spec (deliberate non-compliance

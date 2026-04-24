@@ -875,7 +875,10 @@
 </div>
 
 <!-- Built for developers -->
-<section id="for-developers" class="bg-base-200 py-20 relative overflow-hidden scroll-mt-20">
+<section
+  id="for-developers"
+  class="bg-base-200 py-20 relative overflow-hidden scroll-mt-20"
+>
   <div
     class="absolute inset-0 pointer-events-none"
     style="background-image: radial-gradient(circle, oklch(14% 0 0 / 0.04) 1px, transparent 1px); background-size: 24px 24px;"
