@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css"
-  import { navigating } from "$app/stores"
+  import { navigating } from "$app/state"
   import { expoOut } from "svelte/easing"
   import { slide } from "svelte/transition"
   interface Props {
@@ -10,7 +10,7 @@
   let { children }: Props = $props()
 </script>
 
-{#if $navigating}
+{#if navigating.to}
   <!-- 
     Loading animation for next page since svelte doesn't show any indicator. 
      - delay 100ms because most page loads are instant, and we don't want to flash 
