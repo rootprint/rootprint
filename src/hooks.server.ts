@@ -10,8 +10,13 @@ import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
+import { startSnapshotJob } from '$lib/server/jobs/index-stats-snapshot';
 
 let adminExistsCache = false;
+
+if (!building) {
+	startSnapshotJob();
+}
 
 function hasAdmin(): boolean {
 	if (adminExistsCache) return true;

@@ -232,13 +232,22 @@ export type AuthProviderRow = {
 };
 
 export type IndexStatsCard = {
+	lastIngest: {
+		timestamp: number | null;
+		ageSeconds: number | null;
+	};
 	ingestion24h: {
-		value: number | null;
+		count: number | null;
 		deltaPct: number | null;
 	};
 	size: {
 		bytes: number;
+		uncompressedBytes: number;
 		numSplits: number;
 		compressionRatio: number | null;
+	};
+	growth7d: {
+		bytesPerDay: number | null;
+		totalBytes: number | null;
 	};
 };
