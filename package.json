@@ -1,7 +1,7 @@
 {
 	"name": "logwiz",
 	"version": "0.2.1",
-	"description": "Open-source logging UI for Quickwit",
+	"description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
 	"type": "module",
 	"license": "Apache-2.0",
 	"author": "Oleksandr Zhyhalo",
@@ -9,9 +9,11 @@
 		"type": "git",
 		"url": "https://github.com/oleksandr-zhyhalo/logwiz.git"
 	},
-	"homepage": "https://github.com/oleksandr-zhyhalo/logwiz",
+	"homepage": "https://logwiz.io",
 	"keywords": [
 		"logging",
+		"log-management",
+		"object-storage",
 		"quickwit",
 		"log-viewer",
 		"observability"

@@ -17,10 +17,10 @@
   </picture>
 </div>
 
-- **Search & explore** — full-text log search, quick filters, and frequency histogram to visualize log volume over time
-- **Saved queries & export** — bookmark searches, share them with your team, and download results as NDJSON, CSV, or plain text
-- **OTLP HTTP ingest** — OpenTelemetry-native endpoint with per-index bearer tokens, plus an NDJSON gateway for custom-schema indexes
-- **User management** — invite-based access control with optional Google Authentication
+- **Search on object storage** — query logs stored directly on S3 and compatible object storage with Quickwit-powered full-text search
+- **Readable investigation workflow** — use severity-aware log views, structured fields, quick filters, and histograms to move through incidents faster
+- **Open ingest and export paths** — send logs over OTLP HTTP, use the NDJSON gateway for custom schemas, or ingest from sources like SQS, Kafka, or Pulsar
+- **Self-hosted team access** — run Logwiz on your own infrastructure with invite-based access control and Google Authentication
 
 ## Status
 
