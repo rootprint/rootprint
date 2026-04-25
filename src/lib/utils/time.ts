@@ -107,11 +107,6 @@ export function formatEpochLocale(ts: number | null | undefined): string {
 	return new Date(ts * 1000).toLocaleString();
 }
 
-export function formatEpochDate(ts: number | null | undefined): string {
-	if (!ts) return '—';
-	return new Date(ts * 1000).toLocaleDateString();
-}
-
 export function formatRelativeTime(date: Date): string {
 	const ms = Date.now() - date.getTime();
 	const seconds = Math.floor(ms / 1000);

@@ -12,7 +12,7 @@ export const EXPORT_BATCH_SIZE = 1_000;
 const CLEANUP_INTERVAL_MS = 60_000;
 const EXPORT_TTL_MS = 5 * 60_000;
 
-export function _createExportManager() {
+function _createExportManager() {
 	const exports = new Map<string, ExportState>();
 
 	const cleanupTimer = setInterval(() => {

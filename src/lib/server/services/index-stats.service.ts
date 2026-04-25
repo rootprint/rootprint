@@ -59,7 +59,7 @@ export async function captureSnapshots(): Promise<void> {
 	pruneOldSnapshots(new Date(capturedAt.getTime() - RETENTION_MS));
 }
 
-export function pruneOldSnapshots(olderThan: Date): void {
+function pruneOldSnapshots(olderThan: Date): void {
 	db.delete(indexStatsSnapshot).where(lt(indexStatsSnapshot.capturedAt, olderThan)).run();
 }
 

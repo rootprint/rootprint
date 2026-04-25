@@ -92,10 +92,6 @@ export const auth = betterAuth({
 					if (accountData.providerId !== 'google') return;
 
 					try {
-						console.log(
-							`[logwiz] Google account linked for user ${accountData.userId}, cleaning up credential account and invite tokens`
-						);
-
 						db.transaction((tx) => {
 							tx.delete(account)
 								.where(

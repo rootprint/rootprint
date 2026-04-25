@@ -23,7 +23,7 @@ export function setSetting(key: string, value: string): void {
 		.run();
 }
 
-export function deleteSetting(key: string): void {
+function deleteSetting(key: string): void {
 	db.delete(appSettings).where(eq(appSettings.key, key)).run();
 }
 

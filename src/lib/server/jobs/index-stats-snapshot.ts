@@ -27,7 +27,7 @@ export function startSnapshotJob(): void {
 	timer = setTimeout(tick, WARMUP_MS);
 }
 
-export function stopSnapshotJob(): void {
+function stopSnapshotJob(): void {
 	if (timer) clearTimeout(timer);
 	timer = null;
 }
