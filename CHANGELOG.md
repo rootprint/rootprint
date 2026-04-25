@@ -2,6 +2,36 @@
 
 All notable changes to Logwiz are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-04-25
+
+### Added
+
+- **Index stats strip expanded to four cards.** The header on the index detail page now shows **Last ingest**, **Ingestion · 24h**, **Index size**, and **Growth · 7d avg**. The 24-hour and 7-day cards are computed from a new background snapshot job (`index-stats-snapshot.ts`) that captures Quickwit's `describeIndex` output every 5 minutes and prunes rows older than 35 days. New deployments display `—` / `collecting data` until enough history is available.
+- **Trace ID button in the log detail drawer.** Click the trace ID in an expanded log entry to copy it to the clipboard, with a paired clipboard-failure announcement for assistive tech.
+- **Repository hygiene.** GitHub issue templates (bug report, feature request) and a pull request template, plus `CODE_OF_CONDUCT.md` and `SECURITY.md`.
+
+### Changed
+
+- **Field-mapping defaults are now universal.** Previously, only indexes with IDs starting with `otel-logs-` received OpenTelemetry-friendly defaults (`severity_text` / `body.message` / `attributes.exception.stacktrace`); other indexes fell back to `level` / `message` / empty. Every index now uses the OTel-friendly defaults until you save explicit settings in **Administration → Indexes → Configuration**. Existing indexes with saved settings are unaffected.
+- **Password-reset gating moved from Google-presence to credential-presence.** **Reset password** and self-serve password change are now disabled when a user has no credential account (i.e. has only ever signed in via Google). Users who have both a Google and a credential account can now reset their password normally — previously the linked Google account blocked the action. A new `user.has_credential_account` column tracks this.
+- **Log detail drawer rework.** Refactored layout, value-cell styling, and copy interactions for better readability and accessibility.
+- **Internal:** `indexes_meta` table renamed to `index_settings`; ingest gateway and OTLP route extracted bearer parsing into `$lib/server/utils/bearer.ts`; Quickwit client and several services moved from a factory to a singleton import.
+
+### Fixed
+
+- **Inflated 24-hour ingestion metrics.** The previous calendar-aligned histogram could over-report the 24-hour count when snapshot history had gaps. The redesigned card uses snapshot deltas with a tight ±1h anchor window so missing history yields `—` rather than a misleading multi-day total.
+- **Removed a `console.log` that leaked user IDs** during the Google account-linking flow.
+
+### Removed
+
+- Unused `IndexPicker.svelte` component.
+
+### Upgrade notes
+
+1. Back up `sqlite.db` before running migrations.
+2. Migrations `0031`–`0033` will apply on startup. They rename `indexes_meta` → `index_settings` and add `user.has_credential_account` (back-filled from existing `account` rows).
+3. If your index visibility/field configuration was relying on the previous `level` / `message` defaults for non-OTel indexes, save explicit settings on those indexes from **Administration → Indexes → Configuration** before upgrading.
+
 ## [0.2.1] - 2026-04-20
 
 ### Changed
@@ -78,5 +108,6 @@ Major release reshaping the administration experience, adding first-class log-in
 
 See the [git history](https://github.com/oleksandr-zhyhalo/logwiz/commits/main) for releases prior to 0.2.0.
 
+[0.2.2]: https://github.com/oleksandr-zhyhalo/logwiz/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/oleksandr-zhyhalo/logwiz/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/oleksandr-zhyhalo/logwiz/compare/v0.1.11...v0.2.0
