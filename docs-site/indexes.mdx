@@ -11,15 +11,15 @@ Logwiz ships with `otel-logs-v0_9` as its default OpenTelemetry logs index — t
 
 ### Logwiz field defaults
 
-When Logwiz syncs an index whose ID starts with `otel-logs-`, it automatically applies these display defaults on first sync:
+Until you save explicit settings for an index, Logwiz uses these OpenTelemetry-friendly defaults to render its rows and detail drawer:
 
-| Logwiz field    | Default OTel path                 |
+| Logwiz field    | Default path                      |
 | --------------- | --------------------------------- |
 | Level field     | `severity_text`                   |
 | Message field   | `body.message`                    |
 | Traceback field | `attributes.exception.stacktrace` |
 
-You can override any of these in [Per Index configuration](/configuration/index-config).
+The bundled OTel index uses these paths out of the box. For custom-schema indexes, override any of them in [Per Index configuration](/configuration/index-config).
 
 ### Schema
 

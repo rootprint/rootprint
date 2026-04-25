@@ -20,10 +20,18 @@ Clicking an index opens its detail page. A header shows the raw index ID, creati
 
 ### Stats strip
 
-| Card            | What it shows                                                                                                                      |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Ingestion · 24h | Document count ingested in the last 24 hours, with a percentage delta vs the prior 24 hours. Drops of 20% or more are highlighted. |
-| Index size      | Total on-disk footprint, number of splits, and the average compression ratio when Quickwit reports one.                            |
+| Card            | What it shows                                                                                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Last ingest     | Time since the newest document's timestamp. Reads `flowing` while data is arriving (under 5 minutes), warns when nothing has landed in the last 24 hours.              |
+| Ingestion · 24h | Document count ingested in the last 24 hours, with a percentage delta vs the prior 24 hours. Drops of 20% or more are highlighted.                                     |
+| Index size      | Total on-disk footprint, number of splits, and the average compression ratio when Quickwit reports one.                                                                |
+| Growth · 7d avg | Average bytes-per-day added over the past week, derived from a rolling snapshot history. Shows `not enough history` until at least six days of snapshots are recorded. |
+
+<Note>
+	The 24-hour and 7-day cards are computed from a background snapshot job that runs every 5 minutes,
+	so they fill in once the index has been observed long enough. New deployments may show `—` or
+	`collecting data` for a few hours after first boot.
+</Note>
 
 ### Overview tab
 

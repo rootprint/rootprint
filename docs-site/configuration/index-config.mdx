@@ -29,21 +29,21 @@ These settings tell Logwiz which fields in your index carry specific log data.
 
 ### Level field
 
-**Default:** `level`
+**Default:** `severity_text`
 
-The field that contains the log severity or level (e.g. `INFO`, `ERROR`, `WARN`). Logwiz uses this field to color-code log rows and populate the severity filter. Common values include `level`, `severity`, and `severity_text`.
+The field that contains the log severity or level (e.g. `INFO`, `ERROR`, `WARN`). Logwiz uses this field to color-code log rows and populate the severity filter. Common values include `severity_text` (OpenTelemetry), `level`, and `severity`.
 
 ### Message field
 
-**Default:** `message`
+**Default:** `body.message`
 
-The field that contains the primary log message body. This is the text shown in the main log list. Common values include `message` and `body.message` for OpenTelemetry indexes.
+The field that contains the primary log message body. This is the text shown in the main log list. Common values include `body.message` (OpenTelemetry) and `message`.
 
 ### Traceback field
 
-**Default:** _(empty)_
+**Default:** `attributes.exception.stacktrace`
 
-The field that contains stacktrace or traceback data. When configured and a log entry contains data in this field, a **Traceback** tab appears in the log detail drawer. Leave this blank if your index does not include stacktrace data.
+The field that contains stacktrace or traceback data. When configured and a log entry contains data in this field, a **Traceback** tab appears in the log detail drawer. Clear this field if your index does not include stacktrace data.
 
 ### Context fields
 
@@ -57,14 +57,8 @@ All field settings accept dot-notation paths to reference nested fields or field
 - `attributes.exception.stacktrace` — a deeply nested OTel attribute
 - `body.error.stacktrace` — a custom nested path
 
-## OpenTelemetry indexes
+## Defaults are tuned for OpenTelemetry
 
-For indexes created by OpenTelemetry collectors (index IDs beginning with `otel-logs-`), Logwiz automatically applies sensible defaults on first sync:
+The default field mappings shown above match the OpenTelemetry log schema, so the bundled `otel-logs-v0_9` index — and any other index that uses the same field names — works without configuration. For custom-schema indexes, override the values in the Config tab.
 
-| Field           | OTel default                      |
-| --------------- | --------------------------------- |
-| Level field     | `severity_text`                   |
-| Message field   | `body.message`                    |
-| Traceback field | `attributes.exception.stacktrace` |
-
-You can override any of these defaults in the Config tab. If your OTel instrumentation captures exception stacktraces, setting the traceback field to `attributes.exception.stacktrace` enables the Traceback tab with syntax-highlighted Python stacktrace rendering.
+If your OTel instrumentation captures exception stacktraces, the default traceback path (`attributes.exception.stacktrace`) enables the Traceback tab with syntax-highlighted Python stacktrace rendering.
