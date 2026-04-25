@@ -39,7 +39,7 @@
 							"index",
 							{
 								"group": "Installation",
-								"pages": ["install/docker-compose"]
+								"pages": ["install/docker-compose", "install/scaling"]
 							},
 							"quickstart",
 							"indexes"
@@ -71,12 +71,17 @@
 						]
 					},
 					{
+						"group": "Search",
+						"pages": ["search/query-language"]
+					},
+					{
 						"group": "Configuration",
 						"pages": [
 							"configuration/environment-variables",
 							"configuration/google-auth",
 							"configuration/reset-admin-password",
 							"configuration/index-config",
+							"configuration/custom-indexes",
 							"configuration/manage-indexes"
 						]
 					}

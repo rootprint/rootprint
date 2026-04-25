@@ -1,0 +1,97 @@
+---
+title: 'Scaling beyond a single node'
+description: 'Run Logwiz and Quickwit safely above one container — when to switch to PostgreSQL, when Kafka becomes mandatory, and which moves cause silent corruption.'
+---
+
+The bundled Docker Compose is optimized for getting started: one Logwiz container, one Quickwit container, local-disk storage, and the file-backed metastore. That setup is fine for a team's primary log store running tens of MB/s of ingest. Beyond that — multiple Logwiz replicas, multiple Quickwit indexers, an HA deployment — the defaults stop being safe.
+
+This page covers the moves that take you out of the bundled setup, and the ones that look reasonable but quietly break things.
+
+## What you can run in parallel
+
+| Component | Multi-instance? | Notes                                                                                                                           |
+| --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Logwiz    | No              | Logwiz stores its own state (users, tokens, saved queries, snapshot history) in a single SQLite database. Run one instance.    |
+| Quickwit  | Yes, with care  | Quickwit can split into indexer, searcher, metastore, control plane, and janitor services. See the warnings below.              |
+
+Putting a load balancer in front of two Logwiz containers backed by the same `logwiz.db` corrupts the database. If you need higher availability, run Logwiz behind a single warm-standby host with a shared volume and fail over by stopping one and starting the other.
+
+## The metastore is the corruption trap
+
+Quickwit uses the metastore to track which splits exist for which index, what their byte ranges are, and where the index data lives. The default, file-backed metastore — used in the bundled Compose file — is **safe only when exactly one Quickwit process writes to it**.
+
+<Warning>
+	Running two Quickwit processes against the same file-backed metastore (whether on the same host
+	or sharing an S3 prefix) silently corrupts the metastore. Indexes appear and disappear, splits go
+	missing, and there is no recovery short of rebuilding from the source data.
+
+	If you're running anything more than one Quickwit container, switch to the PostgreSQL metastore
+	*before* you scale. There is no migration path from a corrupted file metastore.
+</Warning>
+
+### Switch to the PostgreSQL metastore
+
+Provision a Postgres instance and point Quickwit at it via the `metastore.uri` config key (or `QW_METASTORE_URI` env var):
+
+```yaml
+services:
+  quickwit:
+    image: quickwit/quickwit:edge
+    environment:
+      QW_METASTORE_URI: postgres://quickwit:secret@db:5432/quickwit
+      QW_DEFAULT_INDEX_ROOT_URI: s3://my-bucket/indexes
+```
+
+The Postgres metastore handles concurrent writers and is the prerequisite for everything else on this page. Use a managed Postgres (RDS, Cloud SQL, Neon) unless you already operate Postgres yourself.
+
+See [Quickwit metastore configuration](https://quickwit.io/docs/configuration/metastore-config) for connection-string options and the schema migration steps when upgrading Quickwit.
+
+## Multiple indexers require Kafka
+
+A single Quickwit indexer with 4 vCPUs handles roughly 20–40 MB/s. Above that, you need to run several indexers in parallel — and that requires Kafka, Pulsar, or Kinesis as the source.
+
+The file source and the built-in Ingest API source bind to one indexer process. Configuring multiple indexers against either creates duplicate documents because each indexer reads independently. Quickwit only distributes work across indexers when the source is a partitioned, durable stream.
+
+The practical implications:
+
+- The Logwiz NDJSON gateway and OTLP endpoint both write to Quickwit's Ingest API. They cannot be load-balanced across multiple indexers.
+- For a multi-indexer setup, run a Kafka topic in front of Quickwit and have your shippers write to Kafka directly (or through a Vector/OTel Collector pipeline). Configure a Kafka source on the index from **Administration → Indexes → Sources** or via the Quickwit CLI.
+- Logwiz reads — the search side — scales horizontally without these constraints. Add Quickwit searcher pods freely.
+
+See [Quickwit deployment modes](https://quickwit.io/docs/deployment/deployment-modes) for the full topology.
+
+## Storage backend
+
+Bundled Compose uses a Docker volume on local disk. For anything you want to keep:
+
+- Move index data and the metastore to object storage (S3, Azure Blob, GCS, MinIO).
+- Set `QW_DEFAULT_INDEX_ROOT_URI` and `QW_METASTORE_URI` to paths in the same bucket (or to your Postgres connection string for the metastore).
+- Verify the bucket and credentials are reachable from every Quickwit node before you scale.
+
+The [Docker Compose install page](/install/docker-compose#use-s3-for-storage) shows the S3 setup. The [Quickwit storage reference](https://quickwit.io/docs/configuration/storage-config) covers Azure, GCS, and S3-compatible flavors (MinIO, Garage, DigitalOcean Spaces).
+
+## Sizing rough numbers
+
+Use these as starting points and measure. Quickwit's [AWS cost guide](https://quickwit.io/docs/operating/aws-costs) has the detailed math.
+
+| Resource                   | Per indexer (4 vCPU)                                                              |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| Indexing throughput        | 20–40 MB/s sustained                                                              |
+| Indexer heap               | 2 GB default. Raise (`indexing_resources.heap_size`) on heavy indexes.            |
+| Local cache (`split_store`)| 100 GB by default (`split_store_max_num_bytes`). Sized to fit recent splits.      |
+| Local disk free space      | At least 2× the cache size, plus headroom for in-flight splits.                   |
+
+Searcher nodes are stateless — size them by query concurrency, not data volume. Hot data lives in object storage; the searcher pulls split footers and posting lists on demand and caches them locally.
+
+## Monitoring
+
+Quickwit exposes Prometheus metrics on the same port as the REST API (`/metrics`). For a starter Grafana setup, see [Monitoring Quickwit with Grafana](https://quickwit.io/docs/operating/monitoring-with-grafana).
+
+Logwiz itself does not currently emit Prometheus metrics. The `/api/health` endpoint reports liveness and the connectivity status of the Quickwit backend.
+
+## Related
+
+- [Docker Compose install](/install/docker-compose) — the single-node setup and S3 configuration.
+- [Custom indexes](/configuration/custom-indexes) — where to put `commit_timeout_secs` and `indexing_resources.heap_size`.
+- [Environment variables](/configuration/environment-variables) — the Logwiz-side configuration surface.
+- [Quickwit deployment modes](https://quickwit.io/docs/deployment/deployment-modes) — the upstream guide.

@@ -142,9 +142,10 @@ trace_id:abc123def456...
 
 ## Custom indexes
 
-Create the index in Quickwit with whatever schema fits your data, then configure how Logwiz maps its fields in [Per Index configuration](/configuration/index-config).
+For non-OpenTelemetry data — audit trails, custom application events, third-party log formats — create an index with the schema your data needs. See [Create a custom index](/configuration/custom-indexes) for the YAML structure, field types, tokenizers, and retention policy. Once it exists, configure how Logwiz maps its fields from [Per Index configuration](/configuration/index-config).
 
 ## Next steps
 
 - [Send logs](/send-logs/overview) to start ingesting data into any index.
+- [Search query syntax](/search/query-language) to learn what users can type in the search box.
 - [Configure index fields](/configuration/index-config) to map log level, message, and traceback for your schema.

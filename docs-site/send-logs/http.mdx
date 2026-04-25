@@ -14,7 +14,7 @@ Logwiz exposes an authenticated NDJSON gateway at `/api/ingest/{indexId}`. Each 
 
 <Steps>
   <Step title="Pick the target index">
-    Decide which Quickwit index you'll write to. The default OTEL index is `otel-logs-v0_9` — see [Indexes](/indexes) for its schema, or create a custom index in Quickwit first.
+    Decide which Quickwit index you'll write to. The default OTEL index is `otel-logs-v0_9` — see [Indexes](/indexes) for its schema, or follow [Create a custom index](/configuration/custom-indexes) to define your own first.
   </Step>
 
 <Step title="Create an ingest token">
@@ -61,5 +61,6 @@ Logwiz forwards the body unchanged. You must send the format your Quickwit index
 
 - [OTLP reference](/send-logs/otlp) — for OpenTelemetry apps
 - [Indexes](/indexes) — default OTEL schema
+- [Create a custom index](/configuration/custom-indexes) — define your own schema in Quickwit
 - [Per Index configuration](/configuration/index-config) — map log level, message, and traceback
 - [POST /api/ingest/{indexId}](/api/ingest-logs) — endpoint reference

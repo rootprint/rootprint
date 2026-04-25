@@ -31,11 +31,27 @@ You must include a valid ingest token in every request. Create tokens in the Log
 ## Query parameters
 
 <ParamField query="commit" type="string">
-  Controls when Quickwit commits the ingested documents. Pass `wait_for` to block until the documents are indexed and immediately searchable. Omit this parameter to use Quickwit's default commit behavior (asynchronous).
+	Controls when Quickwit commits the ingested documents. Accepts `auto` (default), `wait_for`, or
+	`force`. See [Commit modes](#commit-modes) below.
 
-Example: `?commit=wait_for`
+	Example: `?commit=wait_for`
 
 </ParamField>
+
+## Commit modes
+
+The `commit` query parameter trades off ingest throughput against search latency. The endpoint forwards your choice to Quickwit unchanged.
+
+| Mode        | Returns when…                                                                | Use when…                                                                       |
+| ----------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `auto`      | The batch is queued. Default. Documents become searchable on the next commit (`commit_timeout_secs`, 60 s by default). | You're shipping a steady stream and can wait up to a minute for results.        |
+| `wait_for`  | The next scheduled commit completes. Latency depends on where you land in the cycle (0–60 s by default). | You want bounded visibility latency without paying for a forced commit.         |
+| `force`     | A commit is triggered specifically for this batch and finishes.              | You're in a synchronous test or a small admin job and need immediate results.   |
+
+<Warning>
+	`force` triggers an extra commit per request. Using it on small, frequent batches creates many tiny
+	splits and significantly degrades indexing performance. Reserve it for one-off scripts or tests.
+</Warning>
 
 ## Request body
 
@@ -77,6 +93,13 @@ Example success response:
 ```json
 { "num_docs_for_processing": 2 }
 ```
+
+<Note>
+	`num_docs_for_processing` is the count of documents accepted for indexing, not the count
+	successfully indexed. If individual documents fail validation against the index schema, Quickwit
+	logs the failure on the server but the API response stays the same. Inspect Quickwit's stdout (or
+	your log shipper) when you suspect documents are being silently dropped.
+</Note>
 
 ## Error responses
 

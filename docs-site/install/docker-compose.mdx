@@ -86,6 +86,19 @@ services:
 
 Set both variables to paths within the same bucket. The bucket must already exist. See [Quickwit storage configuration](https://quickwit.io/docs/configuration/storage-config) for all options, including S3-compatible providers and custom endpoints.
 
+#### Other storage backends
+
+Quickwit also supports Azure Blob Storage, Google Cloud Storage, and S3-compatible providers (MinIO, Garage, DigitalOcean Spaces). The configuration follows the same shape — a URI scheme on `QW_DEFAULT_INDEX_ROOT_URI` and `QW_METASTORE_URI`, plus credentials.
+
+| Backend                  | URI scheme                                | Credentials                                                                  |
+| ------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------- |
+| AWS S3                   | `s3://bucket/path`                        | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`                   |
+| Azure Blob Storage       | `azure://container/path`                  | `QW_AZURE_STORAGE_ACCOUNT`, `QW_AZURE_STORAGE_ACCESS_KEY`                    |
+| Google Cloud Storage     | `s3://bucket/path` with `flavor: gcs`     | HMAC keys via `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`                  |
+| MinIO / Garage / DO Spaces | `s3://bucket/path` with matching `flavor` | Provider-specific keys via `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` and `QW_S3_ENDPOINT` |
+
+S3-compatible providers need a `flavor` set on the storage config so Quickwit picks the right path-style and multipart settings. See the [Quickwit storage reference](https://quickwit.io/docs/configuration/storage-config) for the YAML structure and the full env-var list.
+
 ### Exposing Quickwit on internal networks
 
 If other services on your internal network need to ingest data directly into Quickwit, you can change the port bindings to listen on all interfaces. In `docker-compose.yml`, update the `quickwit` port bindings from:

@@ -1,0 +1,122 @@
+---
+title: 'Search query syntax'
+description: 'Build precise log searches with the Quickwit query language — terms, phrases, ranges, booleans, and field paths.'
+---
+
+The Logwiz search box accepts the [Quickwit query language](https://quickwit.io/docs/reference/query-language). Queries combine field-scoped clauses with boolean operators, and the same syntax works whether you type it in the UI or pass it to the search API.
+
+## Quick reference
+
+| Clause                | Example                              | Matches                                                  |
+| --------------------- | ------------------------------------ | -------------------------------------------------------- |
+| Term                  | `severity_text:ERROR`                | Exact token in the field                                 |
+| Term prefix           | `service_name:api*`                  | Tokens starting with `api`                               |
+| Phrase                | `body.message:"connection timeout"`  | Exact word sequence (requires `record: position`)        |
+| Phrase prefix         | `body.message:"connection tim"*`     | Phrase whose last token is a prefix                      |
+| Term set              | `service_name:IN [api worker cron]`  | Any of the listed tokens                                 |
+| Range (inclusive)     | `severity_number:[13 TO *]`          | `>= 13`                                                  |
+| Range (exclusive)     | `duration_ms:{100 TO 500}`           | `> 100` and `< 500`                                      |
+| Range (half-open)     | `severity_number:>=17`               | `>= 17`                                                  |
+| Exists                | `attributes.user_id:*`               | Documents where the field is present                     |
+| Match all             | `*`                                  | Every document                                           |
+| Boolean               | `severity_text:ERROR AND service_name:api` | Both clauses match                                 |
+| Negation              | `NOT service_name:cron` or `-service_name:cron` | Documents that don't match                  |
+| Grouping              | `(severity_text:ERROR OR severity_text:WARN) AND service_name:api` | Force precedence       |
+
+Operator precedence: `NOT` / `-` > `AND` > `OR`. Use parentheses when you need a different order.
+
+## Field paths
+
+Use dot notation to reach nested JSON fields:
+
+```text
+attributes.http.method:POST
+resource_attributes.k8s.namespace:production
+body.error.stacktrace:"TypeError"
+```
+
+If the field name itself contains a dot and the index has `expand_dots: true` (the default for the bundled OTel index), escape the literal dots with a backslash:
+
+```text
+attributes.k8s\.pod\.name:web-7f4
+```
+
+## Default search fields
+
+A query without a field name searches the index's `default_search_fields`. The bundled `otel-logs-v0_9` index searches `body.message`:
+
+```text
+timeout                 → body.message:timeout
+"connection refused"    → body.message:"connection refused"
+```
+
+To search a different field, name it explicitly: `attributes.exception.type:ValueError`.
+
+## Tokenizers and case sensitivity
+
+How a field was tokenized at index time decides how queries against it match. The two tokenizers used in the bundled OTel index:
+
+| Tokenizer | Used by                                                  | Match behavior                                                                |
+| --------- | -------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `raw`     | `severity_text`, `service_name`, `attributes.*`          | The whole value is one token. Case-sensitive, exact match only.               |
+| `default` | `body`                                                   | Splits on whitespace and punctuation, lowercases. Free-text search.           |
+
+This means `severity_text:error` will **not** match a document with `"severity_text": "ERROR"` — the index stored `ERROR` as a single token. Match the case your shipper sends, or filter via the UI quick-filters which know each field's casing.
+
+<Tip>
+	If you query a custom index and exact-match terms are missing, check the field's tokenizer in
+	**Administration → Indexes → Fields**. The same value indexed with `default` and `raw` produces
+	different match behavior.
+</Tip>
+
+## Time ranges
+
+The Logwiz UI exposes a time picker that bounds every query to a time window — you don't write the timestamp clause yourself. If you call the search API directly, pass `start_timestamp` and `end_timestamp` as **seconds** (regardless of the field's precision):
+
+```http
+GET /api/v1/otel-logs-v0_9/search?query=severity_text:ERROR&start_timestamp=1776340000&end_timestamp=1776343600
+```
+
+## Common log search recipes
+
+```text
+# Errors and worse from a specific service
+severity_number:[17 TO *] AND service_name:api-gateway
+
+# Anything mentioning a request ID, in any attribute path
+attributes.request_id:abc-123 OR resource_attributes.request_id:abc-123
+
+# 5xx responses with slow latency
+attributes.http.status:[500 TO 599] AND attributes.duration_ms:>1000
+
+# All logs that carry a stacktrace
+attributes.exception.stacktrace:*
+
+# Exclude noise from cron and health checks
+NOT service_name:IN [cron healthcheck] AND severity_text:ERROR
+
+# Correlate with a distributed trace
+trace_id:4bf92f3577b34da6a3ce929d0e0e4736
+```
+
+## Escaping special characters
+
+These characters are reserved by the query parser and must be backslash-escaped to appear in a value:
+
+```
++ ^ ` { } " [ ] ( ) ~ ! \ * <space>
+```
+
+For example, to search for the literal string `(test)` in a phrase, wrap it in quotes — the inside of a phrase doesn't need escaping. To search a single term containing parentheses, escape them: `body.message:\(test\)`.
+
+## Limits
+
+- A wildcard cannot be the first character of a term (`*timeout` is not allowed). Use a phrase or full-text query against the body instead.
+- Phrase queries require the field to be indexed with `record: position`. The bundled `body` field meets this; most `raw`-tokenized fields do not.
+- IP fields accept individual addresses. CIDR ranges are not supported — use a numeric range on a parsed component if you need them.
+
+## Related
+
+- [Quickwit query language reference](https://quickwit.io/docs/reference/query-language) — the upstream specification.
+- [Indexes](/indexes) — fields, tokenizers, and the bundled OTel schema.
+- [Per Index configuration](/configuration/index-config) — map message, level, and traceback for custom indexes.
