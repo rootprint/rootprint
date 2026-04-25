@@ -5,6 +5,11 @@ description: 'Reference for all environment variables that control Logwiz behavi
 
 Logwiz reads its configuration from environment variables at startup. For Docker deployments, set these under the `environment` key of the `logwiz` service in `docker-compose.yml`.
 
+<Note>
+	`LOGWIZ_QUICKWIT_URL` must point at a Quickwit `0.9` or later instance. Logwiz does not support
+	older Quickwit releases.
+</Note>
+
 | Variable                       | Required | Default            | Description                                                                                                                                                                                                                                                        |
 | ------------------------------ | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `LOGWIZ_QUICKWIT_URL`          | Yes      | —                  | Quickwit REST API endpoint (e.g. `http://quickwit:7280/api/v1`). Logwiz will refuse to start without it.                                                                                                                                                           |

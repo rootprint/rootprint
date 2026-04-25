@@ -22,7 +22,7 @@ docker compose up -d
 ```yaml
 services:
   quickwit:
-    image: quickwit/quickwit:edge
+    image: quickwit/quickwit:v0.9.0-rc
     container_name: quickwit
     ports:
       - '127.0.0.1:7280:7280'
@@ -75,7 +75,7 @@ Add the following environment variables to the `quickwit` service in your `docke
 ```yaml
 services:
   quickwit:
-    image: quickwit/quickwit:edge
+    image: quickwit/quickwit:v0.9.0-rc
     environment:
       QW_DEFAULT_INDEX_ROOT_URI: s3://your-bucket-name/indexes
       QW_METASTORE_URI: s3://your-bucket-name/metastore
@@ -126,6 +126,10 @@ Quickwit will then be reachable at `http://<host-ip>:7280` from other machines o
 </Warning>
 
 ## Connect to an existing Quickwit instance
+
+<Note>
+	Logwiz only supports Quickwit `0.9` and later.
+</Note>
 
 If you already have a Quickwit cluster running, deploy only the Logwiz container and point it at your instance.
 

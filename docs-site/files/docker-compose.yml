@@ -1,6 +1,6 @@
 services:
   quickwit:
-    image: quickwit/quickwit:edge
+    image: quickwit/quickwit:v0.9.0-rc
     container_name: quickwit
     ports:
       - '127.0.0.1:7280:7280'
