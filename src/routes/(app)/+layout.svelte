@@ -6,9 +6,10 @@
 	import { signOut } from '$lib/api/auth.remote';
 	import logo from '$lib/assets/logo.png';
 	import ChangePasswordModal from '$lib/components/admin/ChangePasswordModal.svelte';
+	import QuickwitStatusBanner from '$lib/components/ui/QuickwitStatusBanner.svelte';
 	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
 
-	let { children } = $props();
+	let { data, children } = $props();
 
 	const user = $derived(page.data.user);
 	const hasCredentialAccount = $derived(user?.hasCredentialAccount ?? false);
@@ -78,6 +79,8 @@
 			</div>
 		</div>
 	</div>
+
+	<QuickwitStatusBanner status={data.quickwitStatus} error={data.quickwitError} />
 
 	<div class="min-h-0 flex-1">
 		{@render children()}

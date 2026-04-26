@@ -9,4 +9,7 @@ function normalizeQuickwitUrl(url: string): string {
 	return url.replace(/\/api\/v1\/?$/, '');
 }
 
-export const quickwitClient = new QuickwitClient(normalizeQuickwitUrl(config.quickwitUrl));
+export const quickwitClient = new QuickwitClient({
+	endpoint: normalizeQuickwitUrl(config.quickwitUrl),
+	timeout: config.quickwitTimeoutMs
+});

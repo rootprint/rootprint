@@ -20,6 +20,7 @@ Logwiz reads its configuration from environment variables at startup. For Docker
 | `LOGWIZ_RATE_LIMIT_WINDOW`     | No       | `60`               | Duration (in seconds) of the rate-limit sliding window.                                                                                                                                                                                                            |
 | `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`              | Maximum requests allowed per window per IP.                                                                                                                                                                                                                        |
 | `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                | Maximum sign-in attempts allowed per window per IP.                                                                                                                                                                                                                |
+| `LOGWIZ_QUICKWIT_TIMEOUT_MS`   | No       | `10000`            | Per-request timeout in milliseconds for all Quickwit HTTP calls (metadata, search, ingest). Lower values fail faster when Quickwit is unreachable; higher values tolerate slow networks.                                                                            |
 
 ## Docker Compose example
 
@@ -42,6 +43,7 @@ services:
       LOGWIZ_RATE_LIMIT_WINDOW: 60
       LOGWIZ_RATE_LIMIT_MAX: 100
       LOGWIZ_SIGNIN_RATE_LIMIT_MAX: 5
+      LOGWIZ_QUICKWIT_TIMEOUT_MS: 10000
     ports:
       - '8282:8282'
     volumes:

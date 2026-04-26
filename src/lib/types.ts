@@ -251,3 +251,5 @@ export type IndexStatsCard = {
 		totalBytes: number | null;
 	};
 };
+
+export type QuickwitStatus = 'ok' | 'unreachable';

@@ -55,6 +55,7 @@ function loadConfig() {
 	const rateLimitWindow = envInt('LOGWIZ_RATE_LIMIT_WINDOW', 60);
 	const rateLimitMax = envInt('LOGWIZ_RATE_LIMIT_MAX', 100);
 	const signinRateLimitMax = envInt('LOGWIZ_SIGNIN_RATE_LIMIT_MAX', 5);
+	const quickwitTimeoutMs = Math.max(1000, envInt('LOGWIZ_QUICKWIT_TIMEOUT_MS', 10000));
 
 	const secret = resolveSecret(dirname(resolve(databasePath)), envOptional('LOGWIZ_AUTH_SECRET'));
 
@@ -66,7 +67,8 @@ function loadConfig() {
 		inviteExpiryHours,
 		rateLimitWindow,
 		rateLimitMax,
-		signinRateLimitMax
+		signinRateLimitMax,
+		quickwitTimeoutMs
 	};
 }
 
