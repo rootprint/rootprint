@@ -12,8 +12,19 @@ const PYTHON_DETECT = /Traceback \(most recent call last\):/;
 
 const PYTHON_FRAME = /^(\s+File\s+)"([^"]+)",\s+line\s+(\d+),\s+in\s+(.+)$/;
 
-const PYTHON_EXCEPTION =
-	/^([A-Za-z_][\w.]*(?:Error|Exception|Warning|Exit|Interrupt|Failure|Fault|Abort|KeyboardInterrupt|SystemExit|StopIteration|StopAsyncIteration|GeneratorExit))(?::\s*(.*))?$/;
+// Split into a simple line-shape regex plus a non-backtracking suffix check.
+// Combining `[\w.]*` with a word-class alternation tail in one pattern triggers
+// quadratic backtracking on long non-matching input.
+const PYTHON_EXCEPTION_LINE = /^([A-Za-z_][\w.]*)(?::\s*(.*))?$/;
+const PYTHON_EXCEPTION_SUFFIX = /(?:Error|Exception|Warning|Exit|Interrupt|Failure|Fault|Abort)$/;
+const PYTHON_EXCEPTION_EXACT = new Set(['StopIteration', 'StopAsyncIteration']);
+
+function isPythonExceptionType(typeName: string): boolean {
+	if (PYTHON_EXCEPTION_SUFFIX.test(typeName)) return true;
+	const dot = typeName.lastIndexOf('.');
+	const last = dot === -1 ? typeName : typeName.slice(dot + 1);
+	return PYTHON_EXCEPTION_EXACT.has(last);
+}
 
 const PYTHON_CHAINED_SEPARATORS = new Set([
 	'During handling of the above exception, another exception occurred:',
@@ -61,8 +72,8 @@ const pythonFormatter: TracebackFormatter = {
 				continue;
 			}
 
-			const exMatch = PYTHON_EXCEPTION.exec(trimmed);
-			if (exMatch && !line.startsWith('  ')) {
+			const exMatch = PYTHON_EXCEPTION_LINE.exec(trimmed);
+			if (exMatch && !line.startsWith('  ') && isPythonExceptionType(exMatch[1])) {
 				const [, exType, exMsg] = exMatch;
 				parts.push(
 					`<div class="mt-2 rounded border-l-3 border-error bg-error/5 px-3 py-1.5">` +
