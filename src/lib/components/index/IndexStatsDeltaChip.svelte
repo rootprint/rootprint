@@ -12,6 +12,8 @@
 
 	const arrow = $derived(tone === 'up' ? '↑' : tone === 'down' ? '↓' : '→');
 
+	const magnitude = $derived(deltaPct == null ? 0 : Math.abs(deltaPct));
+
 	const classes = $derived(
 		tone === 'up'
 			? 'bg-success/15 text-success'
@@ -26,6 +28,6 @@
 		class="mr-1 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold {classes}"
 	>
 		<span>{arrow}</span>
-		<span>{Math.abs(deltaPct!).toFixed(1)}%</span>
+		<span>{magnitude.toFixed(1)}%</span>
 	</span>
 {/if}
