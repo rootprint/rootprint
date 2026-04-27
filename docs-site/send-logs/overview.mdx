@@ -14,6 +14,7 @@ Logwiz accepts logs two ways:
 | -------------------------------------------- | ------------------------------------------------------ |
 | An app in Python, Node.js, Go, Java, or .NET | The matching [language page](#languages) (OTLP SDK)    |
 | Container logs on a Linux host               | [Docker](/send-logs/platforms/docker) (OTEL Collector) |
+| Logs already on disk on a Linux host         | [Vector](/send-logs/log-agents/vector)                 |
 | Existing pipeline that emits your own schema | [HTTP (NDJSON gateway)](/send-logs/http)               |
 | Something else that speaks OTLP              | [OTLP reference](/send-logs/otlp)                      |
 
@@ -33,6 +34,12 @@ Logwiz accepts logs two ways:
 
 <CardGroup cols={3}>
 	<Card title="Docker" icon="docker" href="/send-logs/platforms/docker" />
+</CardGroup>
+
+### Log Agents
+
+<CardGroup cols={3}>
+	<Card title="Vector" icon="bolt" href="/send-logs/log-agents/vector" />
 </CardGroup>
 
 ### Other

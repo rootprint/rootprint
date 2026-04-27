@@ -5,6 +5,7 @@
 	import javaIcon from '@iconify-icons/logos/java';
 	import nodejsIcon from '@iconify-icons/logos/nodejs-icon';
 	import pythonIcon from '@iconify-icons/logos/python';
+	import vectorTimberIcon from '@iconify-icons/logos/vector-timber';
 	import webIcon from '@iconify-icons/mdi/web';
 
 	import SendLogsSourceCard from '$lib/components/admin/SendLogsSourceCard.svelte';
@@ -23,6 +24,12 @@
 		{
 			label: 'Platforms',
 			sources: [{ label: 'Docker', icon: dockerIcon, href: '/administration/send-logs/docker' }]
+		},
+		{
+			label: 'Log Agents',
+			sources: [
+				{ label: 'Vector', icon: vectorTimberIcon, href: '/administration/send-logs/vector' }
+			]
 		},
 		{
 			label: 'Other',

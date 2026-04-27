@@ -1,0 +1,199 @@
+---
+title: 'Send logs with Vector'
+description: 'Tail log files on a Linux host with Vector and ship them to Logwiz over OTLP.'
+---
+
+[Vector](https://vector.dev) is a stand-alone log collector that reads files, applies transforms, and ships records to one or more sinks. This page sets up Vector as a `systemd` service on a Linux host: it tails files under `/var/log/`, shapes each line into the OTLP wire format with a `remap` transform, and ships the result to Logwiz's OTLP endpoint with a Bearer token. Records land in your `otel-logs-v0_9` index, the same index every OpenTelemetry SDK writes to. Vector's `opentelemetry` sink is currently in beta upstream — stable enough for production logs, but worth tracking the [Vector changelog](https://github.com/vectordotdev/vector/releases) for breaking changes.
+
+<Warning>
+	Linux-only. The `file` source paths, `systemctl` invocations, and package-manager install commands
+	below assume a Debian/RHEL-family host. Vector itself runs on macOS and Windows, but this page
+	does not cover those platforms.
+</Warning>
+
+## Setup
+
+<Steps>
+  <Step title="Pick the target index and create an ingest token">
+    The default index for OTLP traffic is `otel-logs-v0_9` — see [Indexes](/indexes) for its
+    schema. In **Administration → Tokens**, click **Create Token**, pick `otel-logs-v0_9`, and
+    copy the token value from the new row. Tokens are scoped to one index — you cannot reuse a
+    token across indexes.
+  </Step>
+
+  <Step title="Install Vector">
+    On Debian and Ubuntu:
+
+    ```bash
+    curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh' | sudo -E bash
+    sudo apt-get install -y vector
+    ```
+
+    On RHEL, Rocky, AlmaLinux, and Fedora:
+
+    ```bash
+    curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.rpm.sh' | sudo -E bash
+    sudo dnf install -y vector
+    ```
+
+    For other Linux distributions, see [Vector's installation
+    docs](https://vector.dev/docs/setup/installation/).
+
+  </Step>
+
+  <Step title="Write the Vector config">
+    Save the following at `/etc/vector/vector.yaml`. Replace `<your-logwiz>` with your Logwiz base
+    URL, `<your-ingest-token>` with the token you copied in step 1, `/var/log/myapp/*.log` with
+    the glob that matches your application's log files, and `myapp` with your service name.
+
+    ```yaml
+    sources:
+      app_logs:
+        type: file
+        include:
+          - /var/log/myapp/*.log
+        read_from: end
+        include_file_path: true
+
+    transforms:
+      to_otlp:
+        type: remap
+        inputs: [app_logs]
+        source: |
+          .resourceLogs = [{
+            "resource": {
+              "attributes": [
+                { "key": "service.name", "value": { "stringValue": "myapp" } },
+                { "key": "host.name", "value": { "stringValue": get_hostname!() } }
+              ]
+            },
+            "scopeLogs": [{
+              "scope": { "name": "vector", "version": "" },
+              "logRecords": [{
+                "timeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                "severityNumber": 9,
+                "severityText": "INFO",
+                "body": { "stringValue": .message },
+                "attributes": [
+                  { "key": "log.file.path", "value": { "stringValue": .file } }
+                ],
+                "traceId": "",
+                "spanId": "",
+                "flags": 0,
+                "droppedAttributesCount": 0
+              }]
+            }]
+          }]
+
+          # Drop the original top-level fields so the sink sees only the OTLP envelope.
+          del(.message)
+          del(.file)
+          del(.host)
+          del(.source_type)
+          del(.timestamp)
+
+    sinks:
+      logwiz:
+        type: opentelemetry
+        inputs: [to_otlp]
+        protocol:
+          type: http
+          uri: https://<your-logwiz>/api/otlp/v1/logs
+          method: post
+          encoding:
+            codec: otlp
+          compression: gzip
+          request:
+            headers:
+              Authorization: "Bearer <your-ingest-token>"
+          batch:
+            timeout_secs: 1
+            max_bytes: 8388608
+    ```
+
+    `read_from: end` skips existing content on first start, so installing Vector against an
+    existing log file does not replay everything that was already there. Flip it to `beginning`
+    if you want a one-time backfill. `batch.max_bytes` is set to 8 MiB — comfortably below
+    Logwiz's 10 MB OTLP body limit even after gzip variance.
+
+  </Step>
+
+  <Step title="Restart Vector">
+    ```bash
+    sudo systemctl restart vector
+    sudo systemctl status vector
+    ```
+
+    The status output should show `active (running)` and the most recent log lines should not
+    contain config-parse or sink-startup errors.
+
+  </Step>
+
+  <Step title="Send a test log line">
+    Create the application log directory if it doesn't exist yet and append a single line:
+
+    ```bash
+    sudo mkdir -p /var/log/myapp
+    echo "$(date -Iseconds) hello from vector" | sudo tee -a /var/log/myapp/test.log
+    ```
+
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, pick `otel-logs-v0_9` from the index selector, and query for
+    `hello from vector`. Records typically appear within 5–10 seconds — the OTLP path commits on
+    Quickwit's normal cadence, there is no `commit=wait_for` knob.
+  </Step>
+</Steps>
+
+## What the remap does
+
+The OTLP wire format is nested: a `resourceLogs` array, each entry containing a `scopeLogs`
+array, each of those containing a `logRecords` array. Vector's `file` source emits a flat event
+with `.message`, `.file`, `.host`, `.source_type`, and `.timestamp` at the top level, so the
+`remap` transform builds the nested envelope itself and then deletes the original top-level
+fields — the `opentelemetry` sink rejects any event with stray fields outside the OTLP shape.
+
+Field-by-field:
+
+- `service.name` (resource attribute) — lands in Quickwit's `service_name` column. Replace the
+  hard-coded `myapp` with whatever you want shown in the Logwiz service filter.
+- `host.name` (resource attribute) — populated from `get_hostname!()` so it's non-empty without
+  any further config.
+- `body.stringValue` — the raw log line. Lands in `body.message` in `otel-logs-v0_9`. To parse
+  structured fields out of the line (JSON, regex), insert another `remap` transform upstream of
+  `to_otlp` and assign the parsed fields to `attributes` instead.
+- `severityText` and `severityNumber` — currently hard-coded to `INFO` / `9`. Real configs should
+  derive these from the log line; the simplest derivation is a `remap` that pattern-matches on
+  the message and overrides both fields.
+- `timeUnixNano` and `observedTimeUnixNano` — both use the time Vector reads the line, not the
+  timestamp embedded in the line itself. Use a regex or JSON parse to populate `timeUnixNano`
+  from your log format if the read time is too coarse for your needs.
+
+## Troubleshooting
+
+- **`401` from Logwiz** — the `Authorization` header is missing or malformed. Confirm the value
+  under `sinks.logwiz.protocol.request.headers.Authorization` reads exactly `Bearer <token>`,
+  with a single space between `Bearer` and the token.
+- **`403` from Logwiz** — the token's index scope does not match `otel-logs-v0_9`, or the token
+  was revoked. Mint a fresh token for `otel-logs-v0_9` in **Administration → Tokens**.
+- **`413` from Logwiz** — a single batch exceeded 10 MB on the wire. Lower
+  `sinks.logwiz.protocol.batch.max_bytes`.
+- **`415` from Logwiz** — encoding is misconfigured. The `encoding.codec` value must be `otlp`;
+  any other value sends a content type Logwiz rejects.
+- **Vector starts cleanly but no logs appear in Logwiz** — `read_from: end` skipped the existing
+  file content. Either append a new line to trigger a read, or set `read_from: beginning` for a
+  one-time replay (Vector remembers the offset across restarts after the first read).
+- **`permission denied` reading `/var/log/...`** — the Vector package installs a `vector` user
+  that owns the service. Either `sudo chmod a+r` the log files, or add `vector` to the group
+  that owns them.
+- **Records arrive but `body` is empty** — confirm the literal `body.stringValue` assignment in
+  the `to_otlp` remap reads the same field the `file` source emits (default: `.message`). If you
+  reordered the remap, make sure `del(.message)` runs after the assignment, not before.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp) — endpoint URL, response codes, body limits.
+- [Indexes](/indexes) — the `otel-logs-v0_9` schema, so you know what you can search.
+- [Manage indexes](/configuration/manage-indexes) — token lifecycle and per-index permissions.

@@ -65,6 +65,10 @@
 								"pages": ["send-logs/platforms/docker"]
 							},
 							{
+								"group": "Log Agents",
+								"pages": ["send-logs/log-agents/vector"]
+							},
+							{
 								"group": "Other",
 								"pages": ["send-logs/http"]
 							}
