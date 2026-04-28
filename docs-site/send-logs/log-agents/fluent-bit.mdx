@@ -1,0 +1,168 @@
+---
+title: 'Send logs with Fluent Bit'
+description: 'Tail log files on a Linux host with Fluent Bit and ship them to Logwiz over OTLP.'
+---
+
+[Fluent Bit](https://fluentbit.io) is a lightweight log forwarder built for edge and host-level collection. This page sets up Fluent Bit as a `systemd` service on a Linux host: it tails files under `/var/log/`, batches the records, and ships them to Logwiz's OTLP endpoint with a Bearer token. Records land in your `otel-logs-v0_9` index, the same index every OpenTelemetry SDK writes to.
+
+<Warning>
+	Linux-only. The `tail` input paths, `systemctl` invocations, and package-manager install commands
+	below assume a Debian/RHEL-family host. Fluent Bit itself runs on macOS and Windows, but this
+	page does not cover those platforms. Fluent Bit's `opentelemetry` output reaches OTLP/HTTP parity
+	in 2.x and later — pin to a recent Fluent Bit release if you can.
+</Warning>
+
+## Setup
+
+<Steps>
+  <Step title="Pick the target index and create an ingest token">
+    The default index for OTLP traffic is `otel-logs-v0_9` — see [Indexes](/indexes) for its
+    schema. In **Administration → Tokens**, click **Create Token**, pick `otel-logs-v0_9`, and
+    copy the token value from the new row. Tokens are scoped to one index — you cannot reuse a
+    token across indexes.
+  </Step>
+
+  <Step title="Install Fluent Bit">
+    On Debian and Ubuntu:
+
+    ```bash
+    curl https://packages.fluentbit.io/fluentbit.key | sudo gpg --dearmor -o /usr/share/keyrings/fluentbit-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/debian/$(lsb_release -cs) $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/fluent-bit.list
+    sudo apt-get update
+    sudo apt-get install -y fluent-bit
+    ```
+
+    On RHEL, Rocky, AlmaLinux, and Fedora:
+
+    ```bash
+    sudo tee /etc/yum.repos.d/fluent-bit.repo <<'EOF'
+    [fluent-bit]
+    name = Fluent Bit
+    baseurl = https://packages.fluentbit.io/centos/$releasever/$basearch/
+    gpgcheck=1
+    gpgkey=https://packages.fluentbit.io/fluentbit.key
+    enabled=1
+    EOF
+    sudo dnf install -y fluent-bit
+    ```
+
+    For other Linux distributions, see [Fluent Bit's installation
+    docs](https://docs.fluentbit.io/manual/installation/getting-started-with-fluent-bit).
+
+  </Step>
+
+  <Step title="Write the Fluent Bit config">
+    Save the following at `/etc/fluent-bit/fluent-bit.conf`. Replace `<your-logwiz-host>` with the
+    hostname of your Logwiz deployment, `<port>` with `443` (HTTPS) or `80` (HTTP) or whatever
+    custom port you serve on, `<your-ingest-token>` with the token you copied in step 1, and
+    `/var/log/myapp/*.log` with the glob that matches your application's log files.
+
+    ```ini
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Daemon        Off
+        HTTP_Server   Off
+
+    [INPUT]
+        Name             tail
+        Path             /var/log/myapp/*.log
+        Tag              myapp.*
+        Read_from_Head   False
+        DB               /var/lib/fluent-bit/myapp.db
+
+    [OUTPUT]
+        Name                  opentelemetry
+        Match                 *
+        Host                  <your-logwiz-host>
+        Port                  <port>
+        Tls                   On
+        Tls.verify            On
+        Logs_uri              /api/otlp/v1/logs
+        Header                Authorization Bearer <your-ingest-token>
+        Logs_body_key         $log
+        Log_response_payload  True
+    ```
+
+    `Read_from_Head False` skips existing content on first start, so installing Fluent Bit against
+    an existing log file does not replay everything that was already there. Flip it to `True` if
+    you want a one-time backfill — Fluent Bit records the offset in the `DB` file, so subsequent
+    restarts pick up where they left off regardless of this setting.
+
+  </Step>
+
+  <Step title="Restart Fluent Bit">
+    ```bash
+    sudo systemctl restart fluent-bit
+    sudo systemctl status fluent-bit
+    ```
+
+    The status output should show `active (running)` and the most recent log lines should not
+    contain config-parse or output-startup errors.
+
+  </Step>
+
+  <Step title="Send a test log line">
+    Create the application log directory if it doesn't exist yet and append a single line:
+
+    ```bash
+    sudo mkdir -p /var/log/myapp
+    echo "$(date -Iseconds) hello from fluent-bit" | sudo tee -a /var/log/myapp/test.log
+    ```
+
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, pick `otel-logs-v0_9` from the index selector, and query for
+    `hello from fluent-bit`. Records typically appear within 5–10 seconds — the OTLP path commits
+    on Quickwit's normal cadence, there is no `commit=wait_for` knob.
+  </Step>
+</Steps>
+
+## Setting `service.name` and `host.name`
+
+The minimum config above does not populate OTLP resource attributes. Fluent Bit's `opentelemetry` output has no resource-attributes parameter — the upstream plugin treats every record-level field as an OTLP log-record attribute, not a resource attribute. The result is that rows show up under **(unknown service)** in the Logwiz service filter, and `host.name` is empty.
+
+To fix this, add a `record_modifier` filter that injects the fields. Insert this `[FILTER]` block between `[INPUT]` and `[OUTPUT]`:
+
+```ini
+[FILTER]
+    Name           record_modifier
+    Match          *
+    Record         service.name myapp
+    Record         host.name ${HOSTNAME}
+```
+
+Replace `myapp` with the value you want to see in the Logwiz service filter. `${HOSTNAME}` is expanded from the Fluent Bit process environment; if you run Fluent Bit under `systemd`, set `Environment=HOSTNAME=%H` in the unit override or pass the value through.
+
+These fields land as OTLP log-record attributes rather than resource attributes — Logwiz's service filter falls back to log-record `service.name` when the resource attribute is missing, so the filter populates correctly. If you need a true resource-attribute split (different services multiplexed through the same Fluent Bit instance), an OpenTelemetry Collector sidecar in front of Fluent Bit is the cleaner option.
+
+## Troubleshooting
+
+- **`401` from Logwiz** — the `Authorization` header is missing or malformed. Confirm the value
+  on the `Header` line reads exactly `Authorization Bearer <token>`, with one space between
+  `Authorization` and `Bearer` and one between `Bearer` and the token.
+- **`403` from Logwiz** — the token's index scope does not match `otel-logs-v0_9`, or the token
+  was revoked. Mint a fresh token for `otel-logs-v0_9` in **Administration → Tokens**.
+- **`413` from Logwiz** — a single batch exceeded 10 MB on the wire. Lower the output batch size
+  by setting `Workers 1` and reducing `Mem_Buf_Limit` on the `[INPUT]` block, or split the
+  upstream load across multiple `[INPUT]` instances.
+- **`415` from Logwiz** — wrong output plugin selected. The `Name` line on the `[OUTPUT]` block
+  must read `opentelemetry`, not `http`. The `http` plugin sends a content type Logwiz's OTLP
+  endpoint rejects.
+- **Fluent Bit starts cleanly but no logs appear in Logwiz** — `Read_from_Head False` skipped the
+  existing file content. Either append a new line to trigger a read, or set `Read_from_Head True`
+  for a one-time replay (Fluent Bit remembers the offset in `DB` after the first read).
+- **`permission denied` reading `/var/log/...`** — the Fluent Bit package installs a `fluent-bit`
+  service user that owns the daemon. Either `sudo chmod a+r` the log files, or add `fluent-bit`
+  to the group that owns them.
+- **Records arrive but `body` is empty** — confirm the `Logs_body_key` value matches the field
+  the `tail` input emits. The `tail` input writes the raw line under the key `log`, so
+  `Logs_body_key $log` is the correct mapping. If you inserted a parser earlier in the chain that
+  renames or unwraps the field, point `Logs_body_key` at the new key.
+
+## Related
+
+- [OTLP reference](/send-logs/otlp) — endpoint URL, response codes, body limits.
+- [Indexes](/indexes) — the `otel-logs-v0_9` schema, so you know what you can search.
+- [Manage indexes](/configuration/manage-indexes) — token lifecycle and per-index permissions.

@@ -6,6 +6,7 @@
 	import nodejsIcon from '@iconify-icons/logos/nodejs-icon';
 	import pythonIcon from '@iconify-icons/logos/python';
 	import vectorTimberIcon from '@iconify-icons/logos/vector-timber';
+	import fluentbitIcon from '@iconify-icons/mdi/bug';
 	import webIcon from '@iconify-icons/mdi/web';
 
 	import SendLogsSourceCard from '$lib/components/admin/SendLogsSourceCard.svelte';
@@ -28,6 +29,7 @@
 		{
 			label: 'Log Agents',
 			sources: [
+				{ label: 'Fluent Bit', icon: fluentbitIcon, href: '/administration/send-logs/fluent-bit' },
 				{ label: 'Vector', icon: vectorTimberIcon, href: '/administration/send-logs/vector' }
 			]
 		},
