@@ -15,9 +15,8 @@
 <SendLogsSourceShell title="Fluent Bit">
 	<Callout variant="warning">
 		<p>
-			Linux-only. The <InlineCode>tail</InlineCode> input paths,
-			<InlineCode>systemctl</InlineCode> invocations, and package-manager install commands below assume
-			a Debian/RHEL-family host. Fluent Bit's
+			The <InlineCode>tail</InlineCode> input paths and <InlineCode>systemctl</InlineCode>
+			invocations below assume a Linux host. Fluent Bit's
 			<InlineCode>opentelemetry</InlineCode> output reaches OTLP/HTTP parity in 2.x and later — pin
 			to a recent Fluent Bit release if you can.
 		</p>
@@ -30,19 +29,21 @@
 			<SendLogsStep number={1}>
 				<div>
 					<h3 class="font-semibold">Install Fluent Bit</h3>
-					<p class="mt-1 text-sm text-base-content/60">On Debian and Ubuntu:</p>
+					<p class="mt-1 text-sm text-base-content/60">
+						Install the Fluent Bit package for your platform from the official downloads page —
+						the per-distro instructions are maintained upstream.
+					</p>
 				</div>
-				<CodeBlock {...data.snippets.apt} copyTitle="Copy apt install" />
-				<p class="text-sm text-base-content/60">On RHEL, Rocky, AlmaLinux, and Fedora:</p>
-				<CodeBlock {...data.snippets.dnf} copyTitle="Copy dnf install" />
-				<p class="text-sm text-base-content/60">
-					For other Linux distributions, see <a
-						href="https://docs.fluentbit.io/manual/installation/getting-started-with-fluent-bit"
+				<div>
+					<a
+						href="https://docs.fluentbit.io/manual/installation/downloads"
 						target="_blank"
 						rel="noreferrer"
-						class="link link-hover">Fluent Bit's installation docs</a
-					>.
-				</p>
+						class="btn gap-2 btn-sm btn-primary"
+					>
+						Open Fluent Bit downloads
+					</a>
+				</div>
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

@@ -6,10 +6,10 @@ description: 'Tail log files on a Linux host with Fluent Bit and ship them to Lo
 [Fluent Bit](https://fluentbit.io) is a lightweight log forwarder built for edge and host-level collection. This page sets up Fluent Bit as a `systemd` service on a Linux host: it tails files under `/var/log/`, batches the records, and ships them to Logwiz's OTLP endpoint with a Bearer token. Records land in your `otel-logs-v0_9` index, the same index every OpenTelemetry SDK writes to.
 
 <Warning>
-	Linux-only. The `tail` input paths, `systemctl` invocations, and package-manager install commands
-	below assume a Debian/RHEL-family host. Fluent Bit itself runs on macOS and Windows, but this
-	page does not cover those platforms. Fluent Bit's `opentelemetry` output reaches OTLP/HTTP parity
-	in 2.x and later — pin to a recent Fluent Bit release if you can.
+	The `tail` input paths and `systemctl` invocations below assume a Linux host. Fluent Bit itself
+	runs on macOS and Windows, but this page does not cover those platforms. Fluent Bit's
+	`opentelemetry` output reaches OTLP/HTTP parity in 2.x and later — pin to a recent Fluent Bit
+	release if you can.
 </Warning>
 
 ## Setup
@@ -23,32 +23,10 @@ description: 'Tail log files on a Linux host with Fluent Bit and ship them to Lo
   </Step>
 
   <Step title="Install Fluent Bit">
-    On Debian and Ubuntu:
-
-    ```bash
-    curl https://packages.fluentbit.io/fluentbit.key | sudo gpg --dearmor -o /usr/share/keyrings/fluentbit-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/debian/$(lsb_release -cs) $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/fluent-bit.list
-    sudo apt-get update
-    sudo apt-get install -y fluent-bit
-    ```
-
-    On RHEL, Rocky, AlmaLinux, and Fedora:
-
-    ```bash
-    sudo tee /etc/yum.repos.d/fluent-bit.repo <<'EOF'
-    [fluent-bit]
-    name = Fluent Bit
-    baseurl = https://packages.fluentbit.io/centos/$releasever/$basearch/
-    gpgcheck=1
-    gpgkey=https://packages.fluentbit.io/fluentbit.key
-    enabled=1
-    EOF
-    sudo dnf install -y fluent-bit
-    ```
-
-    For other Linux distributions, see [Fluent Bit's installation
-    docs](https://docs.fluentbit.io/manual/installation/getting-started-with-fluent-bit).
-
+    Install the Fluent Bit package for your platform from the [official downloads
+    page](https://docs.fluentbit.io/manual/installation/downloads). Per-distro instructions
+    (Debian/Ubuntu apt, RHEL/Fedora dnf, container images, Windows installer) are maintained
+    upstream — pin to a recent release so the `opentelemetry` output is mature.
   </Step>
 
   <Step title="Write the Fluent Bit config">
@@ -69,7 +47,6 @@ description: 'Tail log files on a Linux host with Fluent Bit and ship them to Lo
         Path             /var/log/myapp/*.log
         Tag              myapp.*
         Read_from_Head   False
-        DB               /var/lib/fluent-bit/myapp.db
 
     [OUTPUT]
         Name                  opentelemetry
@@ -86,8 +63,9 @@ description: 'Tail log files on a Linux host with Fluent Bit and ship them to Lo
 
     `Read_from_Head False` skips existing content on first start, so installing Fluent Bit against
     an existing log file does not replay everything that was already there. Flip it to `True` if
-    you want a one-time backfill — Fluent Bit records the offset in the `DB` file, so subsequent
-    restarts pick up where they left off regardless of this setting.
+    you want a one-time backfill. Without a `DB` parameter (covered below), Fluent Bit re-applies
+    `Read_from_Head` on every restart — fine for the first install, worth revisiting once the
+    setup is in production.
 
   </Step>
 
@@ -137,6 +115,27 @@ Replace `myapp` with the value you want to see in the Logwiz service filter. `${
 
 These fields land as OTLP log-record attributes rather than resource attributes — Logwiz's service filter falls back to log-record `service.name` when the resource attribute is missing, so the filter populates correctly. If you need a true resource-attribute split (different services multiplexed through the same Fluent Bit instance), an OpenTelemetry Collector sidecar in front of Fluent Bit is the cleaner option.
 
+## Persisting tail offsets across restarts
+
+By default the wizard config does not persist file offsets, so every Fluent Bit restart re-applies `Read_from_Head` — with `False`, that means lines written between stop and restart are skipped. For production, add a `DB` parameter to the `[INPUT]` block so Fluent Bit checkpoints offsets in SQLite:
+
+```ini
+[INPUT]
+    Name             tail
+    Path             /var/log/myapp/*.log
+    Tag              myapp.*
+    Read_from_Head   False
+    DB               /var/lib/fluent-bit/myapp.db
+```
+
+The Fluent Bit package does not create `/var/lib/fluent-bit/`, so create it first or the `tail` input fails to initialize with `cannot open database ...`:
+
+```bash
+sudo mkdir -p /var/lib/fluent-bit
+```
+
+If your systemd unit drops privileges to a non-root user, also `sudo chown -R fluent-bit:fluent-bit /var/lib/fluent-bit`.
+
 ## Troubleshooting
 
 - **`401` from Logwiz** — the `Authorization` header is missing or malformed. Confirm the value
@@ -156,6 +155,9 @@ These fields land as OTLP log-record attributes rather than resource attributes 
 - **`permission denied` reading `/var/log/...`** — the Fluent Bit package installs a `fluent-bit`
   service user that owns the daemon. Either `sudo chmod a+r` the log files, or add `fluent-bit`
   to the group that owns them.
+- **`cannot open database /var/lib/fluent-bit/myapp.db` / `failed initialize input tail.0`** —
+  you added a `DB` parameter (see [Persisting tail offsets across restarts](#persisting-tail-offsets-across-restarts))
+  but the directory does not exist. `sudo mkdir -p /var/lib/fluent-bit` and restart.
 - **Records arrive but `body` is empty** — confirm the `Logs_body_key` value matches the field
   the `tail` input emits. The `tail` input writes the raw line under the key `log`, so
   `Logs_body_key $log` is the correct mapping. If you inserted a parser earlier in the chain that
