@@ -6,9 +6,8 @@ description: 'Tail log files on a Linux host with Vector and ship them to Logwiz
 [Vector](https://vector.dev) is a stand-alone log collector that reads files, applies transforms, and ships records to one or more sinks. This page sets up Vector as a `systemd` service on a Linux host: it tails files under `/var/log/`, shapes each line into the OTLP wire format with a `remap` transform, and ships the result to Logwiz's OTLP endpoint with a Bearer token. Records land in your `otel-logs-v0_9` index, the same index every OpenTelemetry SDK writes to. Vector's `opentelemetry` sink is currently in beta upstream — stable enough for production logs, but worth tracking the [Vector changelog](https://github.com/vectordotdev/vector/releases) for breaking changes.
 
 <Warning>
-	Linux-only. The `file` source paths, `systemctl` invocations, and package-manager install commands
-	below assume a Debian/RHEL-family host. Vector itself runs on macOS and Windows, but this page
-	does not cover those platforms.
+	The `file` source paths and `systemctl` invocations below assume a Linux host. Vector itself runs
+	on macOS and Windows, but this page does not cover those platforms.
 </Warning>
 
 ## Setup
@@ -22,23 +21,9 @@ description: 'Tail log files on a Linux host with Vector and ship them to Logwiz
   </Step>
 
   <Step title="Install Vector">
-    On Debian and Ubuntu:
-
-    ```bash
-    curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh' | sudo -E bash
-    sudo apt-get install -y vector
-    ```
-
-    On RHEL, Rocky, AlmaLinux, and Fedora:
-
-    ```bash
-    curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.rpm.sh' | sudo -E bash
-    sudo dnf install -y vector
-    ```
-
-    For other Linux distributions, see [Vector's installation
-    docs](https://vector.dev/docs/setup/installation/).
-
+    Install the Vector package for your platform from the [official installation
+    page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu apt,
+    RHEL/Fedora dnf, container images, macOS, Windows) are maintained upstream.
   </Step>
 
   <Step title="Write the Vector config">

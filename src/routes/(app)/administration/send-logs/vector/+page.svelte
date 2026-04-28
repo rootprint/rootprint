@@ -15,11 +15,10 @@
 <SendLogsSourceShell title="Vector">
 	<Callout variant="warning">
 		<p>
-			Linux-only. The <InlineCode>file</InlineCode> source paths,
-			<InlineCode>systemctl</InlineCode> invocations, and package-manager install commands below assume
-			a Debian/RHEL-family host. Vector's
-			<InlineCode>opentelemetry</InlineCode> sink is currently in beta upstream — stable enough for production
-			logs, but worth tracking the Vector changelog for breaking changes.
+			The <InlineCode>file</InlineCode> source paths and <InlineCode>systemctl</InlineCode>
+			invocations below assume a Linux host. Vector's
+			<InlineCode>opentelemetry</InlineCode> sink is currently in beta upstream — stable enough
+			for production logs, but worth tracking the Vector changelog for breaking changes.
 		</p>
 	</Callout>
 
@@ -30,19 +29,21 @@
 			<SendLogsStep number={1}>
 				<div>
 					<h3 class="font-semibold">Install Vector</h3>
-					<p class="mt-1 text-sm text-base-content/60">On Debian and Ubuntu:</p>
+					<p class="mt-1 text-sm text-base-content/60">
+						Install the Vector package for your platform from the official installation page —
+						the per-distro instructions are maintained upstream.
+					</p>
 				</div>
-				<CodeBlock {...data.snippets.apt} copyTitle="Copy apt install" />
-				<p class="text-sm text-base-content/60">On RHEL, Rocky, AlmaLinux, and Fedora:</p>
-				<CodeBlock {...data.snippets.dnf} copyTitle="Copy dnf install" />
-				<p class="text-sm text-base-content/60">
-					For other Linux distributions, see <a
+				<div>
+					<a
 						href="https://vector.dev/docs/setup/installation/"
 						target="_blank"
 						rel="noreferrer"
-						class="link link-hover">Vector's installation docs</a
-					>.
-				</p>
+						class="btn gap-2 btn-sm btn-primary"
+					>
+						Open Vector installation
+					</a>
+				</div>
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

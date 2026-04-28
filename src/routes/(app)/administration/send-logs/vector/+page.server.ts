@@ -3,29 +3,11 @@ import { highlightCode } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
-const APT_INSTALL = `curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh' | sudo -E bash
-sudo apt-get install -y vector`;
-
-const DNF_INSTALL = `curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.rpm.sh' | sudo -E bash
-sudo dnf install -y vector`;
-
 const RESTART_COMMAND = `sudo systemctl restart vector
 sudo systemctl status vector`;
 
 const TEST_COMMAND = `sudo mkdir -p /var/log/myapp
 echo "$(date -Iseconds) hello from vector" | sudo tee -a /var/log/myapp/test.log`;
-
-const APT_SNIPPET = {
-	code: APT_INSTALL,
-	html: await highlightCode(APT_INSTALL, 'bash'),
-	lang: 'bash'
-};
-
-const DNF_SNIPPET = {
-	code: DNF_INSTALL,
-	html: await highlightCode(DNF_INSTALL, 'bash'),
-	lang: 'bash'
-};
 
 const RESTART_SNIPPET = {
 	code: RESTART_COMMAND,
@@ -107,8 +89,6 @@ sinks:
 
 	return {
 		snippets: {
-			apt: APT_SNIPPET,
-			dnf: DNF_SNIPPET,
 			vectorConfig: {
 				code: vectorConfig,
 				html: await highlightCode(vectorConfig, 'yaml'),
