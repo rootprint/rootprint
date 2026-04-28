@@ -53,7 +53,6 @@ description: 'Tail log files on a Linux host with Vector and ship them to Logwiz
         include:
           - /var/log/myapp/*.log
         read_from: end
-        include_file_path: true
 
     transforms:
       to_otlp:

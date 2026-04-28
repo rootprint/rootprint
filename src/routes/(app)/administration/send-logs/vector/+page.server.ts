@@ -49,7 +49,6 @@ export const load: PageServerLoad = async ({ parent }) => {
     include:
       - /var/log/myapp/*.log
     read_from: end
-    include_file_path: true
 
 transforms:
   to_otlp:
