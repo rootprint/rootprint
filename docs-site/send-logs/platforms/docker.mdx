@@ -1,94 +1,158 @@
 ---
 title: 'Send logs from Docker'
-description: 'Ship every container on a Linux host to Logwiz with an OpenTelemetry Collector sidecar.'
+description: 'Ship every container on a Linux host to Logwiz with a Vector sidecar that reads from the Docker daemon and emits OTLP.'
 ---
 
-Run an OpenTelemetry Collector sidecar next to your other containers. It tails the Docker log files on the host, parses each line with the `container` operator, derives `container.id` from the log file path with a `transform` processor, and ships records over OTLP HTTP to Logwiz. No changes to the apps themselves.
+Run a Vector sidecar next to your other containers. It reads each container's logs from the Docker daemon socket, picks up `container.id`, `container.name`, `container.image.name`, and `container.image.id` automatically, infers a severity level from the message, packs the result into an OTLP record, and ships to Logwiz over HTTPS.
 
 <Warning>
-	Linux-only. Docker Desktop on macOS and Windows runs Docker inside a VM — the host path
-	`/var/lib/docker/containers` is not accessible as written on those platforms.
+	Mounting `/var/run/docker.sock` into a container grants it the ability to enumerate and
+	inspect every container on the host. This is standard for log collectors that use the Docker
+	API, but worth being explicit about. The mount below is read-only (`:ro`).
 </Warning>
 
 ## Setup
 
 <Steps>
-  <Step title="Create the collector config">
-    Save this as `otel-collector-config.yaml` next to your `docker-compose.yml`. Replace `<your-logwiz>` and `<your-ingest-token>` with your values.
+  <Step title="Pick the target index and create an ingest token">
+    The default index for OTLP traffic is `otel-logs-v0_9` — see [Indexes](/indexes) for its
+    schema. In **Administration → Tokens**, click **Create Token**, pick `otel-logs-v0_9`, and
+    copy the token value from the new row. Tokens are scoped to one index — you cannot reuse a
+    token across indexes.
+  </Step>
+
+  <Step title="Create the Vector config">
+    Save this as `vector.yaml` next to your `docker-compose.yml`. Replace `<your-logwiz>` with
+    your Logwiz base URL and `<your-ingest-token>` with the token you copied in step 1.
 
     ```yaml
-    receivers:
-      filelog:
-        include: [/var/lib/docker/containers/*/*.log]
-        start_at: end
-        include_file_path: true
-        operators:
-          - type: container
-            format: docker
-            on_error: send_quiet
+    sources:
+      docker:
+        type: docker_logs
+        exclude_containers:
+          - logwiz-vector
 
-    processors:
-      transform/enrich:
-        log_statements:
-          - context: log
-            statements:
-              - merge_maps(resource.attributes, ExtractPatterns(attributes["log.file.path"], "^/var/lib/docker/containers/(?P<container_id>[a-f0-9]{64})/"), "upsert") where attributes["log.file.path"] != nil
-          - context: resource
-            statements:
-              - set(attributes["container.id"], attributes["container_id"]) where attributes["container_id"] != nil
-              - delete_key(attributes, "container_id") where attributes["container_id"] != nil
-              - set(attributes["service.name"], attributes["container.id"]) where attributes["service.name"] == nil and attributes["container.id"] != nil
-      filter/exclude_self:
-        error_mode: ignore
-        logs:
-          log_record:
-            - 'resource.attributes["container.id"] != nil and IsMatch(resource.attributes["container.id"], "^${env:HOSTNAME}")'
-      batch:
-        timeout: 5s
+    transforms:
+      enrich:
+        type: remap
+        inputs: [docker]
+        source: |
+          .message = to_string(.message) ?? ""
+          lower = downcase(.message) ?? ""
+          if match(lower, r'\berror\b|\bfatal\b|\bpanic\b|\bexception\b') {
+            .severity_number = 17
+            .severity_text   = "ERROR"
+          } else if match(lower, r'\bwarn(ing)?\b|\bdeprecated\b|\bretry\b') {
+            .severity_number = 13
+            .severity_text   = "WARN"
+          } else {
+            .severity_number = 9
+            .severity_text   = "INFO"
+          }
 
-    exporters:
-      otlphttp:
-        logs_endpoint: https://<your-logwiz>/api/otlp/v1/logs
-        headers:
-          authorization: "Bearer <your-ingest-token>"
+      to_otlp:
+        type: remap
+        inputs: [enrich]
+        source: |
+          msg = string!(.message)
+          ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
+          if exists(.timestamp) && is_timestamp(.timestamp) {
+            ts_nano = to_unix_timestamp!(.timestamp, unit: "nanoseconds")
+          }
+          sev_num  = to_int(.severity_number) ?? 9
+          sev_text = string(.severity_text)   ?? "INFO"
 
-    service:
-      pipelines:
-        logs:
-          receivers: [filelog]
-          processors: [transform/enrich, filter/exclude_self, batch]
-          exporters: [otlphttp]
+          cname = string(.container_name) ?? ""
+          cname = replace(cname, r'^/', "")
+          svc_name = "unknown_service"
+          if cname != "" { svc_name = cname }
+
+          attrs = [
+            { "key": "container.runtime", "value": { "stringValue": "docker" } }
+          ]
+          if exists(.container_id) { attrs = push(attrs, { "key": "container.id",         "value": { "stringValue": string!(.container_id) } }) }
+          if cname != ""           { attrs = push(attrs, { "key": "container.name",       "value": { "stringValue": cname } }) }
+          if exists(.image)        { attrs = push(attrs, { "key": "container.image.name", "value": { "stringValue": string!(.image) } }) }
+          if exists(.image_id)     { attrs = push(attrs, { "key": "container.image.id",   "value": { "stringValue": string!(.image_id) } }) }
+          if exists(.stream)       { attrs = push(attrs, { "key": "log.iostream",         "value": { "stringValue": string!(.stream) } }) }
+
+          . = {
+            "resourceLogs": [{
+              "resource": {
+                "attributes": [
+                  { "key": "service.name", "value": { "stringValue": svc_name } },
+                  { "key": "host.name",    "value": { "stringValue": get_hostname!() } }
+                ]
+              },
+              "scopeLogs": [{
+                "scope": { "name": "vector", "version": "" },
+                "logRecords": [{
+                  "timeUnixNano":         ts_nano,
+                  "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                  "severityNumber":       sev_num,
+                  "severityText":         sev_text,
+                  "body":                 { "stringValue": msg },
+                  "attributes":           attrs,
+                  "traceId":              "",
+                  "spanId":               "",
+                  "flags":                0,
+                  "droppedAttributesCount": 0
+                }]
+              }]
+            }]
+          }
+
+    sinks:
+      logwiz:
+        type: opentelemetry
+        inputs: [to_otlp]
+        protocol:
+          type: http
+          uri: https://<your-logwiz>/api/otlp/v1/logs
+          method: post
+          encoding:
+            codec: otlp
+          compression: gzip
+          request:
+            headers:
+              Authorization: "Bearer <your-ingest-token>"
+          batch:
+            timeout_secs: 1
+            max_bytes: 8388608
     ```
-
-    <Note>The `contrib` distribution is required — the `container` operator that parses Docker's per-line JSON log format ships only in `otel/opentelemetry-collector-contrib`, not the core image.</Note>
-
-    <Note>The `container` operator itself doesn't read Docker's `config.v2.json`, so it never emits `container.name` — only `log.iostream` and the parsed timestamp. `transform/enrich` works around this by pulling the 64-char container ID out of the log file path and using it as `service.name` when the app hasn't set one itself. Containers already exporting `service.name` via an OTel SDK keep theirs (the `where service.name == nil` guard).</Note>
 
   </Step>
 
-  <Step title="Add the collector to your compose file">
-    Drop this service alongside your existing ones. No changes to any other service needed — the collector reads every container's logs from the host.
+  <Step title="Add the Vector service to your compose file">
+    Drop this service alongside your existing ones. The Vector container reads every other
+    container's logs through the Docker socket — no changes needed to your application services.
 
     ```yaml
     services:
-      otel-collector:
-        image: otel/opentelemetry-collector-contrib:0.113.0
-        container_name: otel-collector
+      logwiz-vector:
+        image: timberio/vector:0.40.0-alpine
+        container_name: logwiz-vector
         restart: unless-stopped
-        user: "0:0"
         volumes:
-          - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
-          - /var/lib/docker/containers:/var/lib/docker/containers:ro
+          - ./vector.yaml:/etc/vector/vector.yaml:ro
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     ```
 
-    <Note>If your Logwiz runs on the same host (not a remote endpoint), point `logs_endpoint` at `http://host.docker.internal:<port>/api/otlp/v1/logs` and add `extra_hosts: ["host.docker.internal:host-gateway"]` to this service. Required on Linux; Docker Desktop resolves it automatically.</Note>
+    The `container_name` and the `exclude_containers` value in `vector.yaml` must match — that's
+    how Vector skips its own logs. Change one, change the other.
 
   </Step>
 
-<Step title="Start the collector">```bash docker compose up -d otel-collector ```</Step>
+  <Step title="Start the Vector service">
+    ```bash
+    docker compose up -d logwiz-vector
+    ```
+
+  </Step>
 
   <Step title="Send a test log line">
-    Run a throwaway container that prints one line and exits. The collector picks up the line from the host log file and ships it with `service.name` set to the container's ID.
+    Run a throwaway container that prints one line and exits. Vector picks it up from the daemon
+    and ships it with `service.name` set to the container's name.
 
     ```bash
     docker run --rm --name logwiz-smoke-test alpine echo "hello from logwiz"
@@ -97,25 +161,63 @@ Run an OpenTelemetry Collector sidecar next to your other containers. It tails t
   </Step>
 
   <Step title="Verify in Logwiz">
-    Open Search and query for `hello from logwiz`. The record typically arrives within ~5 seconds (one batch interval). For apps that set `service.name` themselves via the OTel SDK, you'll see the SDK-provided name; for bare containers (like the smoke test above), you'll see the container ID.
+    Open Search, pick `otel-logs-v0_9` from the index selector, and query for
+    `hello from logwiz`. The record typically arrives within 5 seconds (one batch interval).
+    `service.name` reads `logwiz-smoke-test`; `attributes.container.image.name` reads
+    `alpine`.
   </Step>
 </Steps>
 
-## Why the self-exclusion filter?
+## What the remap does
 
-Without it, every line the collector emits would be tailed from its own log file on the host and re-shipped — creating an amplification loop. Since the `container` operator doesn't provide `container.name`, the filter matches on `container_id` instead: `${env:HOSTNAME}` is expanded at collector startup to the short (12-char) container ID that Docker assigns as the container's hostname by default, and that prefixes the full 64-char ID of the collector's own log file. If you set an explicit `hostname:` in compose, the match breaks — either leave it unset or update the filter to whatever you chose.
+Two `remap` transforms run in sequence. `enrich` infers a severity level from the message body. `to_otlp` packs the message and the Docker-supplied metadata into the OTLP wire format that Logwiz's ingest endpoint expects.
+
+### Severity inference
+
+The message body is lowercased and matched against two pattern families:
+
+- `error`, `fatal`, `panic`, or `exception` (word-boundary) → `severityText: ERROR` (severity number 17).
+- `warn` / `warning`, `deprecated`, or `retry` → `severityText: WARN` (13).
+- Everything else → `severityText: INFO` (9).
+
+`DEBUG` is not inferred — `\bdebug\b` against arbitrary container output false-positives constantly. Apps that need debug-level visibility should emit it via an OpenTelemetry SDK that sets `severityNumber` itself; the OTLP record will carry that through unchanged because the SDK writes to the same endpoint.
+
+### Attributes
+
+`service.name` is derived from the container's name (with the leading `/` Docker prefixes stripped), so a query for `service:my-api` filters Logwiz to one container's events. `host.name` comes from the Vector container's hostname.
+
+Per-event attributes:
+
+| OTLP key | Value |
+|---|---|
+| `container.id` | full 64-char ID |
+| `container.name` | name without leading `/` |
+| `container.image.name` | image reference (e.g., `nginx:latest`) |
+| `container.image.id` | image digest |
+| `container.runtime` | literal `docker` |
+| `log.iostream` | `stdout` or `stderr` |
+
+Container labels are not promoted by default — they're user-defined and unbounded, and adding all of them risks attribute-cardinality issues. To promote a specific label, add one line to the `to_otlp` remap before the `. = { ... }` assignment:
+
+```vrl
+if exists(.label."com.example.team") {
+  attrs = push(attrs, { "key": "team", "value": { "stringValue": string!(.label."com.example.team") } })
+}
+```
+
+### Apps that emit JSON
+
+If a container writes structured JSON to stdout, the body arrives as a string but its content is JSON. Add a `parse_json` step in `enrich` and assign parsed fields to attributes — the OTLP attribute list takes them as-is.
 
 ## Troubleshooting
 
-- **No logs arriving** — confirm the collector is running (`docker logs otel-collector`). Check that your app containers write to stdout/stderr, not to files that bypass Docker's log driver.
-- **`service.name` shows as `unknown_service`** — `transform/enrich` is missing from the pipeline, or `include_file_path: true` is missing on the `filelog` receiver (that's what populates `log.file.path`). Confirm both. For a meaningful service name, instrument your app with an OTel SDK that sets `service.name` itself — `transform/enrich` only provides the container ID as a fallback.
-- **`failed to detect a valid log path` errors in the collector log** — the `container` operator's k8s-metadata step runs a regex that only matches pod log paths (`/var/log/pods/...`) and fails loudly on Docker paths. Noisy but non-fatal: entries are still forwarded. The `on_error: send_quiet` in the config above suppresses it.
-- **`connection refused` to `localhost:<port>`** — inside the collector container, `localhost` is the container itself, not the Docker host. See the `host.docker.internal` Note in the compose step above.
-- **Collector logs flooding back** — the self-exclusion isn't matching. Confirm you haven't set a custom `hostname:` on the collector service in compose; `${env:HOSTNAME}` needs to equal the short container ID for the match to work.
-- **`permission denied` on `/var/lib/docker/containers`** — the `otel/opentelemetry-collector-contrib` image runs as `otel` (UID 10001) by default, but the Docker log directory is root-readable only. The `user: "0:0"` line in the compose snippet above addresses this. On rootless Docker or SELinux hosts, also add `group_add: [docker]` or append `:z` to the mount.
-- **413 from Logwiz** — individual batches exceed 10 MB (rare). Lower `batch.send_batch_size` in the processor config.
+- **`permission denied` opening `/var/run/docker.sock`** — rootless Docker uses `$XDG_RUNTIME_DIR/docker.sock` (typically `/run/user/<uid>/docker.sock`). Adjust the volume mount on the `logwiz-vector` service accordingly.
+- **Vector's own logs flooding back** — `exclude_containers` in `vector.yaml` does not match the compose service's `container_name`. Both must be the same string. If you renamed the service in your compose file, update `exclude_containers` to match.
+- **`service.name` shows as `unknown_service`** — the Vector compose service was started without `container_name` set, so Docker assigned a generated name like `<project>_logwiz-vector_1`. Pin `container_name` on every service whose `service.name` you want to read cleanly.
+- **`401`, `403`, `413`, `415` from Logwiz** — same response codes as a misconfigured Vector setup of any kind. See [Send logs with Vector](/send-logs/log-agents/vector#troubleshooting) for full diagnoses.
 
 ## Related
 
-- [OTLP reference](/send-logs/otlp) — endpoint semantics and response codes
-- [Indexes](/indexes) — `otel-logs-v0_9` schema, `resource_attributes` field
+- [Send logs with Vector](/send-logs/log-agents/vector) — generic Vector setup for tailing files on a host.
+- [OTLP reference](/send-logs/otlp) — endpoint URL, response codes, body limits.
+- [Indexes](/indexes) — the `otel-logs-v0_9` schema.

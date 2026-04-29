@@ -4,16 +4,15 @@ import { highlightCode } from '$lib/server/syntax';
 import type { PageServerLoad } from './$types';
 
 const COMPOSE_FRAGMENT = `services:
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.113.0
-    container_name: otel-collector
+  logwiz-vector:
+    image: timberio/vector:0.40.0-alpine
+    container_name: logwiz-vector
     restart: unless-stopped
-    user: "0:0"
     volumes:
-      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro`;
+      - ./vector.yaml:/etc/vector/vector.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro`;
 
-const RUN_COMMAND = 'docker compose up -d otel-collector';
+const RUN_COMMAND = 'docker compose up -d logwiz-vector';
 
 const TEST_COMMAND = 'docker run --rm --name logwiz-smoke-test alpine echo "hello from logwiz"';
 
@@ -39,47 +38,99 @@ export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
 	if (!token) return {};
 
-	const collectorConfig = `receivers:
-  filelog:
-    include: [/var/lib/docker/containers/*/*.log]
-    start_at: end
-    include_file_path: true
-    operators:
-      - type: container
-        format: docker
-        on_error: send_quiet
+	const collectorConfig = `sources:
+  docker:
+    type: docker_logs
+    exclude_containers:
+      - logwiz-vector
 
-processors:
-  transform/enrich:
-    log_statements:
-      - context: log
-        statements:
-          - merge_maps(resource.attributes, ExtractPatterns(attributes["log.file.path"], "^/var/lib/docker/containers/(?P<container_id>[a-f0-9]{64})/"), "upsert") where attributes["log.file.path"] != nil
-      - context: resource
-        statements:
-          - set(attributes["container.id"], attributes["container_id"]) where attributes["container_id"] != nil
-          - delete_key(attributes, "container_id") where attributes["container_id"] != nil
-          - set(attributes["service.name"], attributes["container.id"]) where attributes["service.name"] == nil and attributes["container.id"] != nil
-  filter/exclude_self:
-    error_mode: ignore
-    logs:
-      log_record:
-        - 'resource.attributes["container.id"] != nil and IsMatch(resource.attributes["container.id"], "^\${env:HOSTNAME}")'
-  batch:
-    timeout: 5s
+transforms:
+  enrich:
+    type: remap
+    inputs: [docker]
+    source: |
+      .message = to_string(.message) ?? ""
+      lower = downcase(.message) ?? ""
+      if match(lower, r'\\berror\\b|\\bfatal\\b|\\bpanic\\b|\\bexception\\b') {
+        .severity_number = 17
+        .severity_text   = "ERROR"
+      } else if match(lower, r'\\bwarn(ing)?\\b|\\bdeprecated\\b|\\bretry\\b') {
+        .severity_number = 13
+        .severity_text   = "WARN"
+      } else {
+        .severity_number = 9
+        .severity_text   = "INFO"
+      }
 
-exporters:
-  otlphttp:
-    logs_endpoint: ${origin}${OTLP_LOGS_INGEST_PATH}
-    headers:
-      authorization: "Bearer ${token}"
+  to_otlp:
+    type: remap
+    inputs: [enrich]
+    source: |
+      msg = string!(.message)
+      ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
+      if exists(.timestamp) && is_timestamp(.timestamp) {
+        ts_nano = to_unix_timestamp!(.timestamp, unit: "nanoseconds")
+      }
+      sev_num  = to_int(.severity_number) ?? 9
+      sev_text = string(.severity_text)   ?? "INFO"
 
-service:
-  pipelines:
-    logs:
-      receivers: [filelog]
-      processors: [transform/enrich, filter/exclude_self, batch]
-      exporters: [otlphttp]`;
+      cname = string(.container_name) ?? ""
+      cname = replace(cname, r'^/', "")
+      svc_name = "unknown_service"
+      if cname != "" { svc_name = cname }
+
+      attrs = [
+        { "key": "container.runtime", "value": { "stringValue": "docker" } }
+      ]
+      if exists(.container_id) { attrs = push(attrs, { "key": "container.id",         "value": { "stringValue": string!(.container_id) } }) }
+      if cname != ""           { attrs = push(attrs, { "key": "container.name",       "value": { "stringValue": cname } }) }
+      if exists(.image)        { attrs = push(attrs, { "key": "container.image.name", "value": { "stringValue": string!(.image) } }) }
+      if exists(.image_id)     { attrs = push(attrs, { "key": "container.image.id",   "value": { "stringValue": string!(.image_id) } }) }
+      if exists(.stream)       { attrs = push(attrs, { "key": "log.iostream",         "value": { "stringValue": string!(.stream) } }) }
+
+      . = {
+        "resourceLogs": [{
+          "resource": {
+            "attributes": [
+              { "key": "service.name", "value": { "stringValue": svc_name } },
+              { "key": "host.name",    "value": { "stringValue": get_hostname!() } }
+            ]
+          },
+          "scopeLogs": [{
+            "scope": { "name": "vector", "version": "" },
+            "logRecords": [{
+              "timeUnixNano":         ts_nano,
+              "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+              "severityNumber":       sev_num,
+              "severityText":         sev_text,
+              "body":                 { "stringValue": msg },
+              "attributes":           attrs,
+              "traceId":              "",
+              "spanId":               "",
+              "flags":                0,
+              "droppedAttributesCount": 0
+            }]
+          }]
+        }]
+      }
+
+sinks:
+  logwiz:
+    type: opentelemetry
+    inputs: [to_otlp]
+    protocol:
+      type: http
+      uri: ${origin}${OTLP_LOGS_INGEST_PATH}
+      method: post
+      encoding:
+        codec: otlp
+      compression: gzip
+      request:
+        headers:
+          Authorization: "Bearer ${token}"
+      batch:
+        timeout_secs: 1
+        max_bytes: 8388608`;
 
 	return {
 		snippets: {
