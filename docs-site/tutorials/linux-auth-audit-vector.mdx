@@ -1,0 +1,254 @@
+---
+title: 'Audit Linux authentication events with Vector'
+description: 'Ship /var/log/auth.log to Logwiz with Vector and search SSH, sudo, and PAM events by user, source IP, and severity.'
+---
+
+`/var/log/auth.log` carries every authentication event a Debian or Ubuntu host produces — SSH attempts, `sudo` invocations, `su`, PAM, `login`. This tutorial sets up Vector as a `systemd` service that tails the file, parses each line into structured fields (timestamp, severity, source IP, user), and ships the result to Logwiz over OTLP. Records land in `otel-logs-v0_9` and become searchable by program, source address, target user, and severity.
+
+<Warning>
+	Paths and `systemctl` invocations below assume Debian or Ubuntu. RHEL, Fedora, and their
+	derivatives write the same content to `/var/log/secure`; this tutorial does not cover that path.
+</Warning>
+
+## Setup
+
+<Steps>
+  <Step title="Pick the target index and create an ingest token">
+    The default index for OTLP traffic is `otel-logs-v0_9` — see [Indexes](/indexes) for its
+    schema. In **Administration → Tokens**, click **Create Token**, pick `otel-logs-v0_9`, and
+    copy the token value from the new row. Tokens are scoped to one index — you cannot reuse a
+    token across indexes.
+  </Step>
+
+  <Step title="Install Vector">
+    Install the Vector package for your platform from the [official installation
+    page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu apt,
+    RHEL/Fedora dnf, container images) are maintained upstream.
+  </Step>
+
+  <Step title="Write the Vector config">
+    Save the following at `/etc/vector/vector.yaml`. Replace `<your-logwiz>` with your Logwiz base
+    URL and `<your-ingest-token>` with the token you copied in step 1.
+
+    ```yaml
+    sources:
+      auth_logs:
+        type: file
+        include:
+          - /var/log/auth.log
+        read_from: end
+
+    transforms:
+      parse_auth:
+        type: remap
+        inputs: [auth_logs]
+        source: |
+          parsed, err = parse_regex(.message, r'^(?P<ts>\S+)\s+(?P<hostname>\S+)\s+(?P<program>[^\[\s:]+)(?:\[(?P<pid>\d+)\])?:\s+(?P<msg>.*)$')
+          if err == null {
+            ts_obj, ts_err = parse_timestamp(parsed.ts, format: "%+")
+            if ts_err == null {
+              .timestamp = ts_obj
+            }
+            .hostname = parsed.hostname
+            .program  = parsed.program
+            if parsed.pid != null && parsed.pid != "" {
+              .pid, _ = to_int(parsed.pid)
+            }
+            .message = parsed.msg
+          }
+          lower = downcase(string!(.message))
+          if match(lower, r'failed password|authentication failure|invalid user|connection reset|max retries|ignoring max retries') {
+            .severity_number = 13
+            .severity_text   = "WARN"
+          } else if match(lower, r'\berror\b|fatal') {
+            .severity_number = 17
+            .severity_text   = "ERROR"
+          } else {
+            .severity_number = 9
+            .severity_text   = "INFO"
+          }
+          ip_match, ip_err = parse_regex(.message, r'(?:from\s+(?:invalid user \S+\s+)?|rhost=)(?P<ip>\d{1,3}(?:\.\d{1,3}){3})(?:\s+port\s+(?P<port>\d+))?')
+          if ip_err == null {
+            .source_ip = ip_match.ip
+            if ip_match.port != null && ip_match.port != "" {
+              .source_port, _ = to_int(ip_match.port)
+            }
+          }
+          u1, e1 = parse_regex(.message, r'invalid user (?P<u>\S+)')
+          if e1 == null {
+            .ssh_user = u1.u
+          } else {
+            u2, e2 = parse_regex(.message, r'user=(?P<u>\S+)')
+            if e2 == null {
+              .ssh_user = u2.u
+            } else {
+              u3, e3 = parse_regex(.message, r'for (?P<u>\S+) from')
+              if e3 == null {
+                .ssh_user = u3.u
+              }
+            }
+          }
+
+      to_otlp:
+        type: remap
+        inputs: [parse_auth]
+        source: |
+          msg       = string!(.message)
+          file_path = string(.file) ?? ""
+          ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
+          if exists(.timestamp) && is_timestamp(.timestamp) {
+            ts_nano = to_unix_timestamp!(.timestamp, unit: "nanoseconds")
+          }
+          sev_num  = to_int(.severity_number) ?? 9
+          sev_text = string(.severity_text)   ?? "INFO"
+          svc_name = string(.program)         ?? "auth"
+          attrs = [
+            { "key": "log.file.path", "value": { "stringValue": file_path } }
+          ]
+          if exists(.program)     { attrs = push(attrs, { "key": "process.name",   "value": { "stringValue": string!(.program) } }) }
+          if exists(.pid)         { attrs = push(attrs, { "key": "process.pid",    "value": { "intValue":    to_int!(.pid) } }) }
+          if exists(.hostname)    { attrs = push(attrs, { "key": "host.name",      "value": { "stringValue": string!(.hostname) } }) }
+          if exists(.source_ip)   { attrs = push(attrs, { "key": "source.address", "value": { "stringValue": string!(.source_ip) } }) }
+          if exists(.source_port) { attrs = push(attrs, { "key": "source.port",    "value": { "intValue":    to_int!(.source_port) } }) }
+          if exists(.ssh_user)    { attrs = push(attrs, { "key": "user.name",      "value": { "stringValue": string!(.ssh_user) } }) }
+          . = {
+            "resourceLogs": [{
+              "resource": {
+                "attributes": [
+                  { "key": "service.name", "value": { "stringValue": svc_name } },
+                  { "key": "host.name",    "value": { "stringValue": get_hostname!() } }
+                ]
+              },
+              "scopeLogs": [{
+                "scope": { "name": "vector", "version": "" },
+                "logRecords": [{
+                  "timeUnixNano":         ts_nano,
+                  "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                  "severityNumber":       sev_num,
+                  "severityText":         sev_text,
+                  "body":                 { "stringValue": msg },
+                  "attributes":           attrs,
+                  "traceId":              "",
+                  "spanId":               "",
+                  "flags":                0,
+                  "droppedAttributesCount": 0
+                }]
+              }]
+            }]
+          }
+
+    sinks:
+      logwiz:
+        type: opentelemetry
+        inputs: [to_otlp]
+        protocol:
+          type: http
+          uri: https://<your-logwiz>/api/otlp/v1/logs
+          method: post
+          encoding:
+            codec: otlp
+          compression: gzip
+          request:
+            headers:
+              Authorization: "Bearer <your-ingest-token>"
+          batch:
+            timeout_secs: 1
+            max_bytes: 8388608
+    ```
+
+    `read_from: end` skips existing content on first start, so installing Vector against an
+    existing `auth.log` does not replay every historical event. Flip it to `beginning` if you want
+    a one-time backfill.
+
+  </Step>
+
+  <Step title="Restart Vector">
+    ```bash
+    sudo systemctl restart vector
+    sudo systemctl status vector
+    ```
+
+    The status output should show `active (running)` and the most recent log lines should not
+    contain config-parse or sink-startup errors.
+
+  </Step>
+
+  <Step title="Trigger an auth event for the test">
+    The simplest way to write a fresh entry to `auth.log` is to force a `sudo` re-prompt:
+
+    ```bash
+    sudo -k
+    sudo true
+    ```
+
+    `sudo -k` clears the cached credential, and `sudo true` immediately re-prompts — both write
+    PAM session records to `auth.log`.
+
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, pick `otel-logs-v0_9` from the index selector, and query
+    `attributes.process.name:sudo`. Records typically appear within 5–10 seconds.
+  </Step>
+</Steps>
+
+## How the parsing works
+
+Two `remap` transforms run in sequence. The first, `parse_auth`, turns each raw syslog line into structured fields. The second, `to_otlp`, packs those fields into the OTLP wire format that Logwiz's ingest endpoint expects.
+
+`parse_auth` runs four extractions:
+
+- **Syslog framing** — a regex against `.message` peels off `ts`, `hostname`, `program`, and optional `pid`, leaving the human-readable text in `msg`. The original `.message` is replaced with just the message body so downstream queries match against the meaningful part of the line, not the syslog wrapper.
+- **Timestamp** — `parse_timestamp` with format `%+` accepts the ISO 8601 timestamps that modern syslog daemons write. If the parse fails, `.timestamp` is left unset and `to_otlp` falls back to Vector's read time.
+- **Severity** — the message body is lowercased, then matched against two pattern families. Authentication failure phrases (`failed password`, `authentication failure`, `invalid user`, brute-force noise) bump the record to `WARN` (severity 13). Explicit `error` or `fatal` tokens push it to `ERROR` (17). Everything else stays at `INFO` (9).
+- **SSH-specific extractions** — three regexes pull out source IP/port and the target username. These only fire on lines that match (for example, `Failed password for root from 1.2.3.4 port 5555`); on `sudo`, `su`, and PAM lines they leave the fields unset.
+
+`to_otlp` assembles the OTLP envelope. `service.name` is derived from the parsed `program` so SSH events show as `service:sshd`, sudo as `service:sudo`, and so on — Logwiz's service filter will list every auth program separately. Per-event attributes are pushed conditionally inside `if exists(...)` guards, so the OTLP record never carries empty `stringValue` attributes for SSH-only fields on a `sudo` event.
+
+## Useful searches
+
+Once Vector has been running for a minute or two against an active host, the parsed fields make these queries possible. Run them in the Logwiz search box against `otel-logs-v0_9`.
+
+Everything worth a look — filters out routine session-open/close noise, leaving WARN and ERROR.
+
+```text
+severity_number:>=13
+```
+
+Failed SSH logins — bad passwords, invalid users, key rejections.
+
+```text
+attributes.process.name:sshd AND severity_text:WARN
+```
+
+`sudo` invocations — every privilege escalation on the host, success or failure.
+
+```text
+attributes.process.name:sudo
+```
+
+Activity from a single source IP — pivot from a suspect address back to everything it touched. Swap in an IP you spotted in the failed-SSH results.
+
+```text
+attributes.source.address:1.2.3.4
+```
+
+Auth events targeting a single account — across SSH, `sudo`, and `su`. Useful for surfacing brute-force attempts against high-value usernames.
+
+```text
+attributes.user.name:root
+```
+
+## Troubleshooting
+
+- **`permission denied` reading `/var/log/auth.log`** — Vector's `vector` user does not have read access. The cleanest fix on Debian/Ubuntu is `sudo usermod -aG adm vector` (the `adm` group owns `auth.log`) followed by a Vector restart. If that's not available, `sudo chmod a+r /var/log/auth.log` works but loosens permissions for every user on the host.
+- **Records arrive but `attributes.process.name` is missing** — the syslog regex didn't match. Most often this means the line is in RFC 5424 format or your daemon emits a non-standard prefix. Inspect the raw `body.message` in Logwiz to see the shape of the line, then adjust the regex in the `parse_auth` transform.
+- **`severity_text` is always `INFO` even for failures** — the message-pattern match runs against a lowercased copy, so case is not the issue. Check that the failure phrases your daemon actually writes match one of the alternations in the `match(lower, ...)` block; some PAM modules use phrasing the default patterns don't catch. Add the missing pattern to the alternation.
+- **SSH-specific fields (`source_ip`, `ssh_user`) are missing on `sudo` or PAM events** — by design. Those extractions only fire on SSH log lines. The other fields (`process.name`, `host.name`, `severity_text`) populate for every event.
+- **`401`, `403`, `413`, `415` from Logwiz** — same four codes as a misconfigured Vector setup of any kind. See [Send logs with Vector](/send-logs/log-agents/vector#troubleshooting) for full diagnoses.
+
+## Related
+
+- [Send logs with Vector](/send-logs/log-agents/vector) — general-purpose Vector setup for arbitrary log files.
+- [OTLP reference](/send-logs/otlp) — endpoint URL, response codes, body limits.
+- [Indexes](/indexes) — the `otel-logs-v0_9` schema, so you know what you can search.

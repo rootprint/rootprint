@@ -75,6 +75,10 @@
 						]
 					},
 					{
+						"group": "Tutorials",
+						"pages": ["tutorials/linux-auth-audit-vector"]
+					},
+					{
 						"group": "Search",
 						"pages": ["search/query-language"]
 					},
