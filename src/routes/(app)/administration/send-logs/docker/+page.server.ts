@@ -5,7 +5,7 @@ import type { PageServerLoad } from './$types';
 
 const COMPOSE_FRAGMENT = `services:
   logwiz-vector:
-    image: timberio/vector:0.40.0-alpine
+    image: timberio/vector:0.54.0-alpine
     container_name: logwiz-vector
     restart: unless-stopped
     volumes:
@@ -50,7 +50,7 @@ transforms:
     inputs: [docker]
     source: |
       .message = to_string(.message) ?? ""
-      lower = downcase(.message) ?? ""
+      lower = downcase(.message)
       if match(lower, r'\\berror\\b|\\bfatal\\b|\\bpanic\\b|\\bexception\\b') {
         .severity_number = 17
         .severity_text   = "ERROR"
@@ -67,7 +67,7 @@ transforms:
     inputs: [enrich]
     source: |
       msg = string!(.message)
-      ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
+      ts_nano = to_unix_timestamp(now(), unit: "nanoseconds")
       if exists(.timestamp) && is_timestamp(.timestamp) {
         ts_nano = to_unix_timestamp!(.timestamp, unit: "nanoseconds")
       }
@@ -100,7 +100,7 @@ transforms:
             "scope": { "name": "vector", "version": "" },
             "logRecords": [{
               "timeUnixNano":         ts_nano,
-              "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+              "observedTimeUnixNano": to_unix_timestamp(now(), unit: "nanoseconds"),
               "severityNumber":       sev_num,
               "severityText":         sev_text,
               "body":                 { "stringValue": msg },
