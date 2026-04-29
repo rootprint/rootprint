@@ -12,7 +12,7 @@
 	let { data } = $props();
 </script>
 
-<SendLogsSourceShell title="Go">
+<SendLogsSourceShell title="Go" docHref="https://docs.logwiz.io/send-logs/languages/go">
 	{#if !data.token || !data.snippets}
 		<SendLogsTokenCallout />
 	{:else}
@@ -32,12 +32,6 @@
 				<CodeBlock {...data.snippets.init} copyTitle="Copy init command" />
 				<p class="text-sm text-base-content/70">Then add the OpenTelemetry packages:</p>
 				<CodeBlock {...data.snippets.get} copyTitle="Copy get command" />
-				<Callout variant="info">
-					<p>
-						Go 1.21+ required. The OTel Go logs API is still in beta — pin SDK versions in
-						<InlineCode>go.mod</InlineCode>.
-					</p>
-				</Callout>
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

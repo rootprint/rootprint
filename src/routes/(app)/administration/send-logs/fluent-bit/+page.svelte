@@ -4,7 +4,6 @@
 	import SendLogsSourceShell from '$lib/components/admin/SendLogsSourceShell.svelte';
 	import SendLogsStep from '$lib/components/admin/SendLogsStep.svelte';
 	import SendLogsTokenCallout from '$lib/components/admin/SendLogsTokenCallout.svelte';
-	import Callout from '$lib/components/ui/Callout.svelte';
 	import CodeBlock from '$lib/components/ui/CodeBlock.svelte';
 	import InlineCode from '$lib/components/ui/InlineCode.svelte';
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/constants/defaults';
@@ -12,16 +11,10 @@
 	let { data } = $props();
 </script>
 
-<SendLogsSourceShell title="Fluent Bit">
-	<Callout variant="warning">
-		<p>
-			The <InlineCode>tail</InlineCode> input paths and <InlineCode>systemctl</InlineCode>
-			invocations below assume a Linux host. Fluent Bit's
-			<InlineCode>opentelemetry</InlineCode> output reaches OTLP/HTTP parity in 2.x and later — pin
-			to a recent Fluent Bit release if you can.
-		</p>
-	</Callout>
-
+<SendLogsSourceShell
+	title="Fluent Bit"
+	docHref="https://docs.logwiz.io/send-logs/log-agents/fluent-bit"
+>
 	{#if !data.token || !data.snippets}
 		<SendLogsTokenCallout />
 	{:else}

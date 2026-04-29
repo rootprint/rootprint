@@ -18,7 +18,7 @@
 	}
 </script>
 
-<SendLogsSourceShell title="HTTP">
+<SendLogsSourceShell title="HTTP" docHref="https://docs.logwiz.io/send-logs/http">
 	<p class="text-sm text-base-content/70">
 		Logwiz is an authenticated NDJSON gateway in front of Quickwit. Use this to push logs to any
 		index you own, in whatever shape that index's schema expects.
@@ -102,13 +102,6 @@
 							title="Copy endpoint URL"
 						/>
 					</div>
-					<Callout variant="info">
-						<p>
-							<InlineCode>?commit=wait_for</InlineCode> makes Quickwit index the documents before returning,
-							so records are immediately searchable. Drop it to use the default async commit — higher
-							throughput, longer visibility lag.
-						</p>
-					</Callout>
 				</SendLogsStep>
 
 				<SendLogsStep number={3}>

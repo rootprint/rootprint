@@ -26,7 +26,7 @@
 	const activeFlavor = $derived(data.flavors?.[flavor]);
 </script>
 
-<SendLogsSourceShell title=".NET">
+<SendLogsSourceShell title=".NET" docHref="https://docs.logwiz.io/send-logs/languages/dotnet">
 	{#if !data.token || !data.flavors || !activeFlavor}
 		<SendLogsTokenCallout />
 	{:else}
@@ -67,18 +67,6 @@
 					</p>
 				</div>
 				<CodeBlock {...activeFlavor.install} copyTitle="Copy install command" />
-				{#if flavor === 'auto'}
-					<Callout variant="info">
-						<p>
-							.NET 6+ supported. The Linux/macOS script is shown; the PowerShell equivalent is in
-							comments.
-						</p>
-					</Callout>
-				{:else}
-					<Callout variant="info">
-						<p>.NET 6+ recommended. Works with ASP.NET Core and generic hosts.</p>
-					</Callout>
-				{/if}
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

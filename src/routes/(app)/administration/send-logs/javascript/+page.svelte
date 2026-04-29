@@ -27,7 +27,10 @@
 	const activeFlavor = $derived(data.flavors?.[flavor]);
 </script>
 
-<SendLogsSourceShell title="Node.js">
+<SendLogsSourceShell
+	title="Node.js"
+	docHref="https://docs.logwiz.io/send-logs/languages/javascript"
+>
 	{#if !data.token || !data.envVars || !activeFlavor}
 		<SendLogsTokenCallout />
 	{:else}
@@ -65,9 +68,6 @@
 					</p>
 				</div>
 				<CodeBlock {...activeFlavor.install} copyTitle="Copy install command" />
-				<Callout variant="info">
-					<p>Node 18+ required. ESM and CommonJS both work — the examples below use ESM.</p>
-				</Callout>
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

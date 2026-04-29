@@ -4,7 +4,6 @@
 	import SendLogsSourceShell from '$lib/components/admin/SendLogsSourceShell.svelte';
 	import SendLogsStep from '$lib/components/admin/SendLogsStep.svelte';
 	import SendLogsTokenCallout from '$lib/components/admin/SendLogsTokenCallout.svelte';
-	import Callout from '$lib/components/ui/Callout.svelte';
 	import CodeBlock from '$lib/components/ui/CodeBlock.svelte';
 	import InlineCode from '$lib/components/ui/InlineCode.svelte';
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/constants/defaults';
@@ -12,16 +11,7 @@
 	let { data } = $props();
 </script>
 
-<SendLogsSourceShell title="Vector">
-	<Callout variant="warning">
-		<p>
-			The <InlineCode>file</InlineCode> source paths and <InlineCode>systemctl</InlineCode>
-			invocations below assume a Linux host. Vector's
-			<InlineCode>opentelemetry</InlineCode> sink is currently in beta upstream — stable enough
-			for production logs, but worth tracking the Vector changelog for breaking changes.
-		</p>
-	</Callout>
-
+<SendLogsSourceShell title="Vector" docHref="https://docs.logwiz.io/send-logs/log-agents/vector">
 	{#if !data.token || !data.snippets}
 		<SendLogsTokenCallout />
 	{:else}

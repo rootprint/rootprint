@@ -12,7 +12,7 @@
 	let { data } = $props();
 </script>
 
-<SendLogsSourceShell title="Python">
+<SendLogsSourceShell title="Python" docHref="https://docs.logwiz.io/send-logs/languages/python">
 	{#if !data.token || !data.snippets}
 		<SendLogsTokenCallout />
 	{:else}
@@ -25,12 +25,6 @@
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.install} copyTitle="Copy install command" />
-				<Callout variant="info">
-					<p>
-						Python 3.8+ is required. For async apps, add
-						<InlineCode>opentelemetry-instrumentation-asyncio</InlineCode>.
-					</p>
-				</Callout>
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

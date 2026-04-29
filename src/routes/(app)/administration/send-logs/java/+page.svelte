@@ -26,7 +26,7 @@
 	const activeFlavor = $derived(data.flavors?.[flavor]);
 </script>
 
-<SendLogsSourceShell title="Java">
+<SendLogsSourceShell title="Java" docHref="https://docs.logwiz.io/send-logs/languages/java">
 	{#if !data.token || !data.flavors || !activeFlavor}
 		<SendLogsTokenCallout />
 	{:else}
@@ -67,18 +67,6 @@
 					</p>
 				</div>
 				<CodeBlock {...activeFlavor.install} copyTitle="Copy install command" />
-				{#if flavor === 'agent'}
-					<Callout variant="info">
-						<p>Java 8+ supported. Auto-bridges Logback, Log4j2, and JUL.</p>
-					</Callout>
-				{:else}
-					<Callout variant="info">
-						<p>
-							Java 17+ recommended. The logs API is stable in
-							<InlineCode>opentelemetry-api</InlineCode> since 1.27.
-						</p>
-					</Callout>
-				{/if}
 			</SendLogsStep>
 
 			<SendLogsStep number={2}>

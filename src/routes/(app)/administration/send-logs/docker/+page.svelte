@@ -4,7 +4,6 @@
 	import SendLogsSourceShell from '$lib/components/admin/SendLogsSourceShell.svelte';
 	import SendLogsStep from '$lib/components/admin/SendLogsStep.svelte';
 	import SendLogsTokenCallout from '$lib/components/admin/SendLogsTokenCallout.svelte';
-	import Callout from '$lib/components/ui/Callout.svelte';
 	import CodeBlock from '$lib/components/ui/CodeBlock.svelte';
 	import InlineCode from '$lib/components/ui/InlineCode.svelte';
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/constants/defaults';
@@ -12,16 +11,7 @@
 	let { data } = $props();
 </script>
 
-<SendLogsSourceShell title="Docker">
-	<Callout variant="warning">
-		<p>
-			Mounting <InlineCode>/var/run/docker.sock</InlineCode> into a container grants it the
-			ability to enumerate and inspect every container on the host. This is standard for log
-			collectors that use the Docker API, but worth being explicit about. The mount below is
-			read-only (<InlineCode>:ro</InlineCode>).
-		</p>
-	</Callout>
-
+<SendLogsSourceShell title="Docker" docHref="https://docs.logwiz.io/send-logs/platforms/docker">
 	{#if !data.token || !data.snippets}
 		<SendLogsTokenCallout />
 	{:else}
