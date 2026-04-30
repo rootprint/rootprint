@@ -31,10 +31,10 @@ export const regenerateInvite = command(regenerateInviteSchema, async (data) => 
 });
 
 export const removeUser = command(removeUserSchema, async (data) => {
-	const admin = requireAdmin();
+	requireAdmin();
 	const event = getRequestEvent();
 	try {
-		await userService.removeUser(event.request.headers, admin.id, data.userId);
+		await userService.removeUser(event.request.headers, data.userId);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to remove user');
 	}

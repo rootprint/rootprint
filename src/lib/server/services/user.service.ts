@@ -1,4 +1,3 @@
-import { APIError } from 'better-auth/api';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { auth } from '$lib/server/auth';
@@ -8,9 +7,14 @@ import { account, inviteToken } from '$lib/server/db/schema';
 import { hasCredentialAccount } from '$lib/server/services/auth.service';
 import { randomHex } from '$lib/utils/crypto';
 
-const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
-
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
+
+async function issueInviteToken(userId: string) {
+	const expiresAt = new Date(Date.now() + config.inviteExpiryHours * 60 * 60 * 1000);
+	const token = randomHex(32);
+	await db.insert(inviteToken).values({ userId, token, expiresAt });
+	return { inviteUrl: buildInviteUrl(token) };
+}
 
 export async function listUsersWithInvites(headers: Headers) {
 	const result = await auth.api.listUsers({ headers, query: {} });
@@ -27,12 +31,11 @@ export async function listUsersWithInvites(headers: Headers) {
 		.select({ userId: account.userId, providerId: account.providerId })
 		.from(account)
 		.where(inArray(account.providerId, ['google', 'credential']));
-	const googleUserIds = new Set(
-		providerAccounts.filter((a) => a.providerId === 'google').map((a) => a.userId)
-	);
-	const credentialUserIds = new Set(
-		providerAccounts.filter((a) => a.providerId === 'credential').map((a) => a.userId)
-	);
+	const googleUserIds = new Set<string>();
+	const credentialUserIds = new Set<string>();
+	for (const a of providerAccounts) {
+		(a.providerId === 'google' ? googleUserIds : credentialUserIds).add(a.userId);
+	}
 
 	// Better Auth's admin plugin doesn't infer custom additionalFields in listUsers return type
 	type UserWithLastActive = (typeof result.users)[number] & { lastActive?: number };
@@ -42,10 +45,12 @@ export async function listUsersWithInvites(headers: Headers) {
 	return (result.users as UserWithLastActive[]).map((u) => {
 		const invite = inviteMap.get(u.id);
 		const isGoogle = googleUserIds.has(u.id);
-		const status: 'active' | 'pending' | 'expired' = (() => {
-			if (isGoogle || !invite) return 'active';
-			return invite.expiresAt.getTime() < now ? 'expired' : 'pending';
-		})();
+		const status: 'active' | 'pending' | 'expired' =
+			isGoogle || !invite
+				? 'active'
+				: invite.expiresAt.getTime() < now
+					? 'expired'
+					: 'pending';
 
 		return {
 			id: u.id,
@@ -67,33 +72,17 @@ export async function createInvite(
 ) {
 	const tempPassword = randomHex(32);
 
-	let created;
-	try {
-		created = await auth.api.createUser({
-			headers,
-			body: {
-				email: data.email,
-				password: tempPassword,
-				name: data.name,
-				role: data.role
-			}
-		});
-	} catch (e) {
-		if (e instanceof APIError) {
-			throw new Error(e.message || 'Failed to create user', { cause: e });
+	const created = await auth.api.createUser({
+		headers,
+		body: {
+			email: data.email,
+			password: tempPassword,
+			name: data.name,
+			role: data.role
 		}
-		throw e;
-	}
-
-	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
-	const token = randomHex(32);
-	await db.insert(inviteToken).values({
-		userId: created.user.id,
-		token,
-		expiresAt
 	});
 
-	return { inviteUrl: buildInviteUrl(token) };
+	return issueInviteToken(created.user.id);
 }
 
 export async function regenerateInvite(userId: string) {
@@ -102,22 +91,10 @@ export async function regenerateInvite(userId: string) {
 	}
 
 	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
-
-	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
-	const token = randomHex(32);
-	await db.insert(inviteToken).values({
-		userId,
-		token,
-		expiresAt
-	});
-
-	return { inviteUrl: buildInviteUrl(token) };
+	return issueInviteToken(userId);
 }
 
-export async function removeUser(headers: Headers, adminId: string, userId: string) {
-	if (userId === adminId) {
-		throw new Error('Cannot remove yourself');
-	}
+export async function removeUser(headers: Headers, userId: string) {
 	await auth.api.removeUser({
 		headers,
 		body: { userId }
@@ -159,14 +136,5 @@ export async function resetPassword(
 		.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
 
 	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
-
-	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
-	const token = randomHex(32);
-	await db.insert(inviteToken).values({
-		userId,
-		token,
-		expiresAt
-	});
-
-	return { inviteUrl: buildInviteUrl(token) };
+	return issueInviteToken(userId);
 }
