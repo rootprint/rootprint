@@ -119,12 +119,15 @@ export async function listIndexesForUser(userRole: string | null | undefined) {
 export async function getFieldConfig(indexId: string) {
 	const settings = readIndexSettings(indexId);
 	const index = await getIndex(indexId);
-	const fields = index?.fields ?? [];
+	if (!index) error(404, 'Index not found');
+	if (!index.timestampField) error(500, `Index "${indexId}" has no timestamp_field`);
+
+	const fields = index.fields;
 
 	return {
 		indexId,
 		levelField: settings.levelField,
-		timestampField: index?.timestampField ?? 'timestamp',
+		timestampField: index.timestampField,
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
 		contextFields: settings.contextFields,

@@ -56,9 +56,9 @@ export function createSearchStore(
 		messageField: string;
 		tracebackField: string | null;
 	}>({
-		levelField: 'level',
-		timestampField: 'timestamp',
-		messageField: 'message',
+		levelField: 'severity_text',
+		timestampField: 'timestamp_nanos',
+		messageField: 'body.message',
 		tracebackField: null
 	});
 	let indexFields = $state<IndexField[]>([]);
