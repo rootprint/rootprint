@@ -26,6 +26,7 @@ services:
       LOGWIZ_DATABASE_PATH: /app/data/logwiz.db
       LOGWIZ_ADMIN_USERNAME: logwiz
       LOGWIZ_ADMIN_PASSWORD: logwiz
+      ORIGIN: http://localhost:8282
     healthcheck:
       test:
         [

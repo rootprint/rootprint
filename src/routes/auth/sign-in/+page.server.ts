@@ -3,9 +3,9 @@ import { isGoogleAuthConfigured } from '$lib/server/services/settings.service';
 
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => {
+export const load: PageServerLoad = async () => {
 	return {
 		googleAuthEnabled: isGoogleAuthConfigured(),
-		origin: config.origin || event.url.origin
+		origin: config.origin
 	};
 };

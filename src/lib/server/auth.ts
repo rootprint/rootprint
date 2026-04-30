@@ -14,7 +14,7 @@ import * as settingsService from '$lib/server/services/settings.service';
 const googleSettings = settingsService.getGoogleAuthSettings();
 
 export const auth = betterAuth({
-	...(config.origin ? { baseURL: config.origin } : {}),
+	baseURL: config.origin,
 	secret: config.secret,
 	emailAndPassword: { enabled: true, disableSignUp: true },
 	database: drizzleAdapter(db, { provider: 'sqlite' }),

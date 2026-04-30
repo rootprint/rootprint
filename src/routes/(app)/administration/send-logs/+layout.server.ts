@@ -7,7 +7,7 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = (event) => {
 	event.setHeaders({ 'cache-control': 'private, no-store' });
 	return {
-		origin: config.origin || event.url.origin,
+		origin: config.origin,
 		token: getLatestIngestTokenForIndex(DEFAULT_OTEL_LOGS_INDEX_ID)
 	};
 };

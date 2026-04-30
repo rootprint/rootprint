@@ -15,7 +15,7 @@ export const createInvite = command(createInviteSchema, async (data) => {
 	requireAdmin();
 	const event = getRequestEvent();
 	try {
-		return await userService.createInvite(event.request.headers, data, event.url.origin);
+		return await userService.createInvite(event.request.headers, data);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to create user');
 	}
@@ -23,9 +23,8 @@ export const createInvite = command(createInviteSchema, async (data) => {
 
 export const regenerateInvite = command(regenerateInviteSchema, async (data) => {
 	requireAdmin();
-	const event = getRequestEvent();
 	try {
-		return await userService.regenerateInvite(data.userId, event.url.origin);
+		return await userService.regenerateInvite(data.userId);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to regenerate invite');
 	}
@@ -55,12 +54,7 @@ export const resetPassword = command(resetPasswordSchema, async (data) => {
 	const admin = requireAdmin();
 	const event = getRequestEvent();
 	try {
-		return await userService.resetPassword(
-			event.request.headers,
-			admin.id,
-			data.userId,
-			event.url.origin
-		);
+		return await userService.resetPassword(event.request.headers, admin.id, data.userId);
 	} catch (e) {
 		error(400, e instanceof Error ? e.message : 'Failed to reset password');
 	}

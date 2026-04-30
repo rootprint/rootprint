@@ -3,9 +3,9 @@ import * as settingsService from '$lib/server/services/settings.service';
 
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => {
+export const load: PageServerLoad = async () => {
 	return {
-		origin: config.origin || event.url.origin,
+		origin: config.origin,
 		settings: settingsService.getGoogleAuthSettingsView()
 	};
 };

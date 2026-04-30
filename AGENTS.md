@@ -119,8 +119,7 @@ bun run lint && bun run check && LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api
 ## Security and Runtime Notes
 
 - Required env vars for app/build: `LOGWIZ_QUICKWIT_URL`.
-- `ORIGIN` is optional and auto-detected from the incoming request URL in typical deployments.
-- Set `ORIGIN` explicitly when behind a reverse proxy or when enforcing a strict canonical public URL.
+- `ORIGIN` is required and defaults to `http://localhost:8282`. Override for local dev (`http://localhost:5173`) or any non-default deployment (e.g. behind a reverse proxy at `https://logs.example.com`).
 - Auth and rate-limit behavior is centralized in `src/hooks.server.ts`.
 - Do not bypass `requireUser()` / `requireAdmin()` for protected remote functions.
 

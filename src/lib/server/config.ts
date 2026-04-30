@@ -49,7 +49,7 @@ function resolveSecret(dataDir: string, envSecret: string | undefined): string {
 
 function loadConfig() {
 	const quickwitUrl = envRequired('LOGWIZ_QUICKWIT_URL');
-	const origin = envOptional('ORIGIN');
+	const origin = envString('ORIGIN', 'http://localhost:8282');
 	const databasePath = envString('LOGWIZ_DATABASE_PATH', './data/logwiz.db');
 	const inviteExpiryHours = envInt('LOGWIZ_INVITE_EXPIRY_HOURS', 48);
 	const rateLimitWindow = envInt('LOGWIZ_RATE_LIMIT_WINDOW', 60);

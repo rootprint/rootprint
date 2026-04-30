@@ -10,20 +10,16 @@ import { randomHex } from '$lib/utils/crypto';
 
 const INVITE_EXPIRY_MS = () => config.inviteExpiryHours * 60 * 60 * 1000;
 
-const resolvePublicOrigin = (requestOrigin: string) => config.origin ?? requestOrigin;
+const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 
-const buildInviteUrl = (origin: string, token: string) => `${origin}/auth/setup?token=${token}`;
-
-export async function listUsersWithInvites(headers: Headers, requestOrigin: string) {
-	const publicOrigin = resolvePublicOrigin(requestOrigin);
-
+export async function listUsersWithInvites(headers: Headers) {
 	const result = await auth.api.listUsers({ headers, query: {} });
 
 	const pendingInvites = await db.select().from(inviteToken);
 	const inviteMap = new Map(
 		pendingInvites.map((inv) => [
 			inv.userId,
-			{ url: buildInviteUrl(publicOrigin, inv.token), expiresAt: inv.expiresAt }
+			{ url: buildInviteUrl(inv.token), expiresAt: inv.expiresAt }
 		])
 	);
 
@@ -67,10 +63,8 @@ export async function listUsersWithInvites(headers: Headers, requestOrigin: stri
 
 export async function createInvite(
 	headers: Headers,
-	data: { email: string; name: string; role: 'user' | 'admin' },
-	requestOrigin: string
+	data: { email: string; name: string; role: 'user' | 'admin' }
 ) {
-	const publicOrigin = resolvePublicOrigin(requestOrigin);
 	const tempPassword = randomHex(32);
 
 	let created;
@@ -99,15 +93,14 @@ export async function createInvite(
 		expiresAt
 	});
 
-	return { inviteUrl: buildInviteUrl(publicOrigin, token) };
+	return { inviteUrl: buildInviteUrl(token) };
 }
 
-export async function regenerateInvite(userId: string, requestOrigin: string) {
+export async function regenerateInvite(userId: string) {
 	if (!(await hasCredentialAccount(userId))) {
 		throw new Error('Cannot regenerate invite: user has no credential account');
 	}
 
-	const publicOrigin = resolvePublicOrigin(requestOrigin);
 	await db.delete(inviteToken).where(eq(inviteToken.userId, userId));
 
 	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS());
@@ -118,7 +111,7 @@ export async function regenerateInvite(userId: string, requestOrigin: string) {
 		expiresAt
 	});
 
-	return { inviteUrl: buildInviteUrl(publicOrigin, token) };
+	return { inviteUrl: buildInviteUrl(token) };
 }
 
 export async function removeUser(headers: Headers, adminId: string, userId: string) {
@@ -149,8 +142,7 @@ export async function setUserRole(
 export async function resetPassword(
 	headers: Headers,
 	adminId: string,
-	userId: string,
-	requestOrigin: string
+	userId: string
 ): Promise<{ inviteUrl: string }> {
 	if (userId === adminId) {
 		throw new Error('Cannot reset your own password');
@@ -158,8 +150,6 @@ export async function resetPassword(
 	if (!(await hasCredentialAccount(userId))) {
 		throw new Error('Cannot reset password: user has no credential account');
 	}
-
-	const publicOrigin = resolvePublicOrigin(requestOrigin);
 
 	await auth.api.revokeUserSessions({ headers, body: { userId } });
 
@@ -178,5 +168,5 @@ export async function resetPassword(
 		expiresAt
 	});
 
-	return { inviteUrl: buildInviteUrl(publicOrigin, token) };
+	return { inviteUrl: buildInviteUrl(token) };
 }
