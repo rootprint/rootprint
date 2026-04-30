@@ -220,8 +220,6 @@ export function createSearchStore(
 			schemaFields = indexFieldsResult.fields;
 			fieldConfig = config;
 			activeFields = pref.displayFields;
-
-			// search() removed — auto-search fires when fieldsLoading becomes false
 		} catch {
 			indexFields = [];
 			activeFields = [];
@@ -242,17 +240,13 @@ export function createSearchStore(
 
 	// --- Field change handlers ---
 
-	const { debounced: debouncedSaveFields } = useDebounce(() => {
+	const { debounced: handleFieldsChange } = useDebounce(() => {
 		if (selectedIndex) {
 			saveDisplayFields({ indexId: selectedIndex, fields: activeFields }).catch((e) =>
 				toast.error(getErrorMessage(e, 'Failed to save display fields'))
 			);
 		}
 	}, 500);
-
-	function handleFieldsChange() {
-		debouncedSaveFields();
-	}
 
 	// --- Search ---
 
