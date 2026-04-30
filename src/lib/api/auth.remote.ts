@@ -9,6 +9,7 @@ import {
 	setupPasswordSchema,
 	signInSchema
 } from '$lib/schemas/auth';
+import { auth } from '$lib/server/auth';
 import * as authService from '$lib/server/services/auth.service';
 
 export const signIn = form(signInSchema, async (data, issue) => {
@@ -17,9 +18,15 @@ export const signIn = form(signInSchema, async (data, issue) => {
 
 	try {
 		if (isEmail) {
-			await authService.signInEmail(event.request.headers, data.identifier, data._password);
+			await auth.api.signInEmail({
+				headers: event.request.headers,
+				body: { email: data.identifier, password: data._password }
+			});
 		} else {
-			await authService.signInUsername(event.request.headers, data.identifier, data._password);
+			await auth.api.signInUsername({
+				headers: event.request.headers,
+				body: { username: data.identifier, password: data._password }
+			});
 		}
 	} catch (e) {
 		if (e instanceof APIError) {
@@ -55,7 +62,7 @@ export const setupAdmin = form(setupAdminSchema, async (data, issue) => {
 
 export const signOut = command(async () => {
 	const event = getRequestEvent();
-	await authService.signOut(event.request.headers);
+	await auth.api.signOut({ headers: event.request.headers });
 });
 
 export const setupPassword = form(setupPasswordSchema, async (data, issue) => {
@@ -86,7 +93,7 @@ export const changeOwnPassword = command(changeOwnPasswordSchema, async (data) =
 	const event = getRequestEvent();
 	try {
 		await authService.changeOwnPassword(
-			currentUser.id,
+			currentUser.hasCredentialAccount ?? false,
 			event.request.headers,
 			data._currentPassword,
 			data._password

@@ -13,24 +13,6 @@ export async function hasCredentialAccount(userId: string): Promise<boolean> {
 	return !!row;
 }
 
-export async function signInEmail(headers: Headers, email: string, password: string) {
-	await auth.api.signInEmail({
-		body: { email, password },
-		headers
-	});
-}
-
-export async function signInUsername(headers: Headers, username: string, password: string) {
-	await auth.api.signInUsername({
-		body: { username, password },
-		headers
-	});
-}
-
-export async function signOut(headers: Headers) {
-	await auth.api.signOut({ headers });
-}
-
 export async function setupPassword(
 	token: string,
 	password: string
@@ -53,12 +35,13 @@ export async function setupPassword(
 
 	const hashedPw = await hashPassword(password);
 
-	await db
-		.update(account)
-		.set({ password: hashedPw })
-		.where(and(eq(account.userId, invite.userId), eq(account.providerId, 'credential')));
-
-	await db.delete(inviteToken).where(eq(inviteToken.id, invite.id));
+	await db.transaction(async (tx) => {
+		await tx
+			.update(account)
+			.set({ password: hashedPw })
+			.where(and(eq(account.userId, invite.userId), eq(account.providerId, 'credential')));
+		await tx.delete(inviteToken).where(eq(inviteToken.id, invite.id));
+	});
 
 	return { success: true };
 }
@@ -80,12 +63,12 @@ export async function validateInviteToken(
 }
 
 export async function changeOwnPassword(
-	userId: string,
+	hasCredential: boolean,
 	headers: Headers,
 	currentPassword: string,
 	newPassword: string
 ) {
-	if (!(await hasCredentialAccount(userId))) {
+	if (!hasCredential) {
 		throw new Error('This account has no password to change');
 	}
 
