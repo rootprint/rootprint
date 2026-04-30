@@ -4,6 +4,22 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { savedQuery, user } from '$lib/server/db/schema';
 
+async function loadOwnedOrThrow(
+	id: number,
+	userId: string,
+	{ allowAdmin, role }: { allowAdmin: boolean; role?: string | null }
+) {
+	const [existing] = await db.select().from(savedQuery).where(eq(savedQuery.id, id));
+	if (!existing) {
+		error(404, 'Query not found');
+	}
+	const isAdminOverride = allowAdmin && role === 'admin';
+	if (existing.userId !== userId && !isAdminOverride) {
+		error(403, 'Forbidden');
+	}
+	return existing;
+}
+
 export async function getSavedQueries(userId: string, indexId: string) {
 	return db
 		.select()
@@ -26,33 +42,17 @@ export async function saveQuery(
 }
 
 export async function deleteSavedQuery(userId: string, id: number, role?: string | null) {
-	const [existing] = await db.select().from(savedQuery).where(eq(savedQuery.id, id));
-	if (!existing) return;
-	if (existing.userId !== userId && role !== 'admin') {
-		error(403, 'Forbidden');
-	}
+	await loadOwnedOrThrow(id, userId, { allowAdmin: true, role });
 	await db.delete(savedQuery).where(eq(savedQuery.id, id));
 }
 
 export async function shareQuery(userId: string, id: number) {
-	const [existing] = await db.select().from(savedQuery).where(eq(savedQuery.id, id));
-	if (!existing) {
-		error(404, 'Query not found');
-	}
-	if (existing.userId !== userId) {
-		error(403, 'Forbidden');
-	}
+	await loadOwnedOrThrow(id, userId, { allowAdmin: false });
 	await db.update(savedQuery).set({ isShared: true }).where(eq(savedQuery.id, id));
 }
 
-export async function unshareQuery(userId: string, role: string | null | undefined, id: number) {
-	const [existing] = await db.select().from(savedQuery).where(eq(savedQuery.id, id));
-	if (!existing) {
-		error(404, 'Query not found');
-	}
-	if (existing.userId !== userId && role !== 'admin') {
-		error(403, 'Forbidden');
-	}
+export async function unshareQuery(userId: string, id: number, role?: string | null) {
+	await loadOwnedOrThrow(id, userId, { allowAdmin: true, role });
 	await db.update(savedQuery).set({ isShared: false }).where(eq(savedQuery.id, id));
 }
 

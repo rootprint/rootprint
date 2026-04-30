@@ -25,5 +25,5 @@ export const shareQuery = command(shareQuerySchema, async (data) => {
 
 export const unshareQuery = command(unshareQuerySchema, async (data) => {
 	const user = requireUser();
-	await savedQueryService.unshareQuery(user.id, user.role, data.id);
+	await savedQueryService.unshareQuery(user.id, data.id, user.role);
 });
