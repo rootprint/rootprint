@@ -6,9 +6,9 @@
 	import nodejsIcon from '@iconify-icons/logos/nodejs-icon';
 	import pythonIcon from '@iconify-icons/logos/python';
 	import vectorTimberIcon from '@iconify-icons/logos/vector-timber';
-	import fluentbitIcon from '@iconify-icons/mdi/bug';
 	import webIcon from '@iconify-icons/mdi/web';
 
+	import fluentBitLogo from '$lib/assets/fluent-bit-logo.png';
 	import SendLogsSourceCard from '$lib/components/admin/SendLogsSourceCard.svelte';
 
 	const sections = [
@@ -29,7 +29,11 @@
 		{
 			label: 'Log Agents',
 			sources: [
-				{ label: 'Fluent Bit', icon: fluentbitIcon, href: '/administration/send-logs/fluent-bit' },
+				{
+					label: 'Fluent Bit',
+					iconSrc: fluentBitLogo,
+					href: '/administration/send-logs/fluent-bit'
+				},
 				{ label: 'Vector', icon: vectorTimberIcon, href: '/administration/send-logs/vector' }
 			]
 		},
@@ -53,7 +57,7 @@
 			<h3 class="text-sm font-semibold text-base-content/70">{section.label}</h3>
 			<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
 				{#each section.sources as source (source.href)}
-					<SendLogsSourceCard label={source.label} icon={source.icon} href={source.href} />
+					<SendLogsSourceCard {...source} />
 				{/each}
 			</div>
 		</section>
