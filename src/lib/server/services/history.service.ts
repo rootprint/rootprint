@@ -2,23 +2,22 @@ import { and, desc, eq, notInArray } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
 import { searchHistory } from '$lib/server/db/schema';
+import type { TimeRange } from '$lib/types';
 
 const MAX_HISTORY_PER_USER = 100;
 
-function normalizeForDedup(data: {
-	query: string;
-	timeRange: { type: string; start?: number; end?: number; preset?: string };
-}): string {
-	const tr = Object.keys(data.timeRange)
-		.sort((a, b) => a.localeCompare(b))
-		.reduce(
-			(acc, k) => {
-				acc[k] = (data.timeRange as Record<string, unknown>)[k];
-				return acc;
-			},
-			{} as Record<string, unknown>
-		);
-	return JSON.stringify({ q: data.query, tr });
+function isSameSearch(
+	a: { query: string; timeRange: TimeRange },
+	b: { query: string; timeRange: TimeRange }
+): boolean {
+	if (a.query !== b.query) return false;
+	if (a.timeRange.type === 'relative' && b.timeRange.type === 'relative') {
+		return a.timeRange.preset === b.timeRange.preset;
+	}
+	if (a.timeRange.type === 'absolute' && b.timeRange.type === 'absolute') {
+		return a.timeRange.start === b.timeRange.start && a.timeRange.end === b.timeRange.end;
+	}
+	return false;
 }
 
 export async function getHistory(userId: string, indexId: string) {
@@ -32,11 +31,7 @@ export async function getHistory(userId: string, indexId: string) {
 
 export async function recordSearch(
 	userId: string,
-	data: {
-		indexId: string;
-		query: string;
-		timeRange: { type: string; start?: number; end?: number; preset?: string };
-	}
+	data: { indexId: string; query: string; timeRange: TimeRange }
 ) {
 	const [latest] = await db
 		.select()
@@ -45,7 +40,7 @@ export async function recordSearch(
 		.orderBy(desc(searchHistory.executedAt))
 		.limit(1);
 
-	if (latest && normalizeForDedup(latest) === normalizeForDedup(data)) {
+	if (latest && isSameSearch({ query: latest.query, timeRange: latest.timeRange as TimeRange }, data)) {
 		return;
 	}
 
@@ -65,7 +60,7 @@ export async function recordSearch(
 
 	const keepIds = keep.map((e) => e.id);
 
-	if (keepIds.length === MAX_HISTORY_PER_USER) {
+	if (keepIds.length >= MAX_HISTORY_PER_USER) {
 		await db
 			.delete(searchHistory)
 			.where(and(eq(searchHistory.userId, userId), notInArray(searchHistory.id, keepIds)));
