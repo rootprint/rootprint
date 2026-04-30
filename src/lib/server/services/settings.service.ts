@@ -1,15 +1,15 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
 import { appSettings } from '$lib/server/db/schema';
 import type { AuthProviderRow, GoogleAuthSettings, GoogleAuthSettingsView } from '$lib/types';
 
 function getSetting(key: string): string | null {
-	const [row] = db
+	const row = db
 		.select({ value: appSettings.value })
 		.from(appSettings)
 		.where(eq(appSettings.key, key))
-		.all();
+		.get();
 	return row?.value ?? null;
 }
 
@@ -21,10 +21,6 @@ export function setSetting(key: string, value: string): void {
 			set: { value, updatedAt: new Date() }
 		})
 		.run();
-}
-
-function deleteSetting(key: string): void {
-	db.delete(appSettings).where(eq(appSettings.key, key)).run();
 }
 
 export function getGoogleAuthSettings(): GoogleAuthSettings | null {
@@ -62,9 +58,9 @@ export function isGoogleAuthConfigured(): boolean {
 }
 
 export function deleteGoogleAuthSettings(): void {
-	deleteSetting('google_client_id');
-	deleteSetting('google_client_secret');
-	deleteSetting('google_allowed_domains');
+	db.delete(appSettings)
+		.where(inArray(appSettings.key, ['google_client_id', 'google_client_secret', 'google_allowed_domains']))
+		.run();
 }
 
 export function getAuthProviderRows(): AuthProviderRow[] {
