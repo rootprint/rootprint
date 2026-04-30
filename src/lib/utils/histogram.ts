@@ -7,10 +7,6 @@ const INTERVAL_THRESHOLDS: [number, number][] = [
 	[30 * 24 * 60 * 60, 21600] // ≤30d → 6h
 ];
 
-export function computeHistogramInterval(windowSeconds: number): string {
-	return `${computeHistogramIntervalSeconds(windowSeconds)}s`;
-}
-
 export function computeHistogramIntervalSeconds(windowSeconds: number): number {
 	for (const [threshold, interval] of INTERVAL_THRESHOLDS) {
 		if (windowSeconds <= threshold) {

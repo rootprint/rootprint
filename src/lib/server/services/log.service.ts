@@ -3,17 +3,17 @@ import type { BucketAggregationResult } from 'quickwit-js';
 import { AggregationBuilder, ValidationError } from 'quickwit-js';
 
 import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
-import type { SearchLogsInput } from '$lib/schemas/logs';
+import type {
+	SearchFieldValuesInput,
+	SearchLogHistogramInput,
+	SearchLogsInput
+} from '$lib/schemas/logs';
 import { quickwitClient } from '$lib/server/quickwit';
 import { getFieldConfig } from '$lib/server/services/index.service';
 import type { QuickFilterBucket } from '$lib/types';
 import { formatFieldValue } from '$lib/utils/field-resolver';
-import {
-	computeHistogramInterval,
-	computeHistogramIntervalSeconds,
-	padHistogramBuckets
-} from '$lib/utils/histogram';
-import { resolveTimeRange } from '$lib/utils/time';
+import { computeHistogramIntervalSeconds, padHistogramBuckets } from '$lib/utils/histogram';
+import { normalizeToMs, resolveTimeRange } from '$lib/utils/time';
 
 function resolveTimestamps(data: {
 	startTimestamp?: number;
@@ -25,35 +25,25 @@ function resolveTimestamps(data: {
 	}
 
 	if (data.startTimestamp !== undefined || data.endTimestamp !== undefined) {
-		throw new Error('Both startTimestamp and endTimestamp must be provided together');
+		error(400, 'Both startTimestamp and endTimestamp must be provided together');
 	}
 
 	const preset = data.timeRange ?? '15m';
 	const resolved = resolveTimeRange({ type: 'relative', preset });
 	if (resolved.startTs === undefined || resolved.endTs === undefined) {
-		throw new Error(`Unknown time range preset: ${preset}`);
+		error(400, `Unknown time range preset: ${preset}`);
 	}
 	return { startTs: resolved.startTs, endTs: resolved.endTs };
 }
 
-function partitionFastFields(
+function isFastFieldSupported(
+	field: string,
 	fastFieldNames: string[],
-	requestedFields: string[],
 	fastJsonFields: string[]
-): { fast: string[]; unsupported: string[] } {
-	if (requestedFields.length === 0) return { fast: [], unsupported: [] };
-
-	const fastSet = new Set(fastFieldNames);
-	for (const f of requestedFields) {
-		if (!fastSet.has(f) && fastJsonFields.some((j) => f.startsWith(`${j}.`))) {
-			fastSet.add(f);
-		}
-	}
-
-	return {
-		fast: requestedFields.filter((f) => fastSet.has(f)),
-		unsupported: requestedFields.filter((f) => !fastSet.has(f))
-	};
+): boolean {
+	return (
+		fastFieldNames.includes(field) || fastJsonFields.some((j) => field.startsWith(`${j}.`))
+	);
 }
 
 function rethrowValidationError(e: unknown): never {
@@ -63,7 +53,18 @@ function rethrowValidationError(e: unknown): never {
 	throw e;
 }
 
-export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: string[] }) {
+function toQuickFilterBuckets(
+	buckets: BucketAggregationResult['buckets'] | undefined
+): QuickFilterBucket[] {
+	return (buckets ?? [])
+		.map((bucket) => ({
+			value: formatFieldValue(bucket.key),
+			count: bucket.doc_count
+		}))
+		.filter((entry) => entry.value !== '');
+}
+
+export async function searchLogs(data: SearchLogsInput) {
 	const config = await getFieldConfig(data.indexId);
 	const index = quickwitClient.index(data.indexId);
 
@@ -86,18 +87,8 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 	const result = await index.search(query).catch(rethrowValidationError);
 
 	const aggregations: Record<string, QuickFilterBucket[]> = {};
-	if (result.aggregations) {
-		for (const [field, agg] of Object.entries(result.aggregations)) {
-			const bucketAgg = agg as BucketAggregationResult;
-			if (bucketAgg.buckets) {
-				aggregations[field] = bucketAgg.buckets
-					.map((bucket) => ({
-						value: formatFieldValue(bucket.key),
-						count: bucket.doc_count
-					}))
-					.filter((entry) => entry.value !== '');
-			}
-		}
+	for (const [field, agg] of Object.entries(result.aggregations ?? {})) {
+		aggregations[field] = toQuickFilterBuckets((agg as BucketAggregationResult).buckets);
 	}
 
 	return {
@@ -109,29 +100,15 @@ export async function searchLogs(data: SearchLogsInput & { quickFilterFields?: s
 	};
 }
 
-export async function searchFieldValues(data: {
-	indexId: string;
-	field: string;
-	searchTerm: string;
-	query?: string;
-	startTimestamp?: number;
-	endTimestamp?: number;
-	timeRange?: string;
-}) {
+export async function searchFieldValues(data: SearchFieldValuesInput) {
 	const config = await getFieldConfig(data.indexId);
-	const { unsupported } = partitionFastFields(
-		config.fastFieldNames,
-		[data.field],
-		config.fastJsonFields
-	);
-	if (unsupported.length > 0) {
+	if (!isFastFieldSupported(data.field, config.fastFieldNames, config.fastJsonFields)) {
 		return { values: [], totalHits: 0, unsupported: true };
 	}
 
 	const index = quickwitClient.index(data.indexId);
 
-	const baseQuery = data.query?.trim();
-	const combinedQuery = baseQuery && baseQuery !== '*' ? baseQuery : '*';
+	const combinedQuery = data.query?.trim() || '*';
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
@@ -144,41 +121,30 @@ export async function searchFieldValues(data: {
 
 	const result = await index.search(query).catch(rethrowValidationError);
 
-	const bucketAgg = result.aggregations?.[data.field] as
-		| { buckets?: { key: string; doc_count: number }[] }
-		| undefined;
+	const bucketAgg = result.aggregations?.[data.field] as BucketAggregationResult | undefined;
 	const searchLower = data.searchTerm.toLowerCase();
-	const values: QuickFilterBucket[] = (bucketAgg?.buckets ?? [])
-		.map((bucket) => ({
-			value: formatFieldValue(bucket.key),
-			count: bucket.doc_count
-		}))
-		.filter((entry) => entry.value !== '' && entry.value.toLowerCase().includes(searchLower));
+	const values = toQuickFilterBuckets(bucketAgg?.buckets).filter((entry) =>
+		entry.value.toLowerCase().includes(searchLower)
+	);
 
 	return { values, totalHits: result.num_hits, unsupported: false };
 }
 
-export async function searchLogHistogram(data: {
-	indexId: string;
-	query: string;
-	startTimestamp?: number;
-	endTimestamp?: number;
-	timeRange?: string;
-}) {
+export async function searchLogHistogram(data: SearchLogHistogramInput) {
 	const config = await getFieldConfig(data.indexId);
 	const index = quickwitClient.index(data.indexId);
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
 	const windowSeconds = endTs - startTs;
-	const interval = computeHistogramInterval(windowSeconds);
+	const intervalSec = computeHistogramIntervalSeconds(windowSeconds);
 
 	const query = index
 		.query(data.query || '*')
 		.limit(0)
 		.agg(
 			'histogram',
-			AggregationBuilder.dateHistogram(config.timestampField, interval, {
+			AggregationBuilder.dateHistogram(config.timestampField, `${intervalSec}s`, {
 				aggs: {
 					levels: AggregationBuilder.terms(config.levelField, { size: 20 })
 				}
@@ -189,29 +155,19 @@ export async function searchLogHistogram(data: {
 
 	const result = await index.search(query).catch(rethrowValidationError);
 
-	const histAgg = result.aggregations?.histogram as
-		| {
-				buckets?: {
-					key: number;
-					doc_count: number;
-					levels?: { buckets?: { key: string; doc_count: number }[] };
-				}[];
-		  }
-		| undefined;
+	const histAgg = result.aggregations?.histogram as BucketAggregationResult | undefined;
 
 	const bucketMap = new Map<number, Record<string, number>>();
 	for (const b of histAgg?.buckets ?? []) {
+		const levelsAgg = (b as { levels?: BucketAggregationResult }).levels;
 		const levels: Record<string, number> = {};
-		if (b.levels?.buckets) {
-			for (const lb of b.levels.buckets) {
-				levels[String(lb.key)] = lb.doc_count;
-			}
+		for (const lb of levelsAgg?.buckets ?? []) {
+			levels[String(lb.key)] = lb.doc_count;
 		}
-		const ts = b.key > 1e12 ? Math.floor(b.key / 1000) : b.key;
+		const ts = Math.floor(normalizeToMs(Number(b.key)) / 1000);
 		bucketMap.set(ts, levels);
 	}
 
-	const intervalSec = computeHistogramIntervalSeconds(windowSeconds);
 	const buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
 
 	return { buckets };
