@@ -1,5 +1,4 @@
 import { quickwitClient } from '$lib/server/quickwit';
-import { extractTimestampSeconds, fingerprint } from '$lib/server/utils/fingerprint';
 import { flattenObject } from '$lib/utils/log-helpers';
 import { escapeFilterValue } from '$lib/utils/query';
 import { normalizeToMs } from '$lib/utils/time';
@@ -54,6 +53,15 @@ function buildContextQuery(
 	return { query: parts.join(' AND '), activeLabels };
 }
 
+// Both copies of a duplicated hit originate from the same Quickwit `_source`
+// payload in the same response cycle, so flattened+sorted entries match
+// byte-for-byte without needing a content hash or timestamp normalization.
+function logKey(hit: Record<string, unknown>): string {
+	const entries = flattenObject(hit);
+	entries.sort((a, b) => a[0].localeCompare(b[0]));
+	return JSON.stringify(entries);
+}
+
 function extractTimestampMs(log: Record<string, unknown>, timestampField: string): number {
 	const flat = flattenObject(log);
 	const entry = flat.find(([key]) => key === timestampField);
@@ -63,6 +71,10 @@ function extractTimestampMs(log: Record<string, unknown>, timestampField: string
 	const ms = new Date(String(raw)).getTime();
 	if (Number.isNaN(ms)) throw new Error(`Invalid timestamp value: ${JSON.stringify(raw)}`);
 	return ms;
+}
+
+function extractTimestampSeconds(log: Record<string, unknown>, timestampField: string): number {
+	return Math.floor(extractTimestampMs(log, timestampField) / 1000);
 }
 
 export async function getLogContext(
@@ -90,9 +102,7 @@ export async function getLogContext(
 	);
 
 	const anchorTs = extractTimestampSeconds(log, config.timestampField);
-	const selectedFp = fingerprint(log, config.timestampField);
 
-	// Fetch newer and older logs in parallel
 	const afterQuery = index
 		.query(contextQuery)
 		.limit(51)
@@ -112,42 +122,29 @@ export async function getLogContext(
 		index.search(beforeQuery)
 	]);
 
-	// Combine all hits, dedup by fingerprint
-	const seen = new Set<string>();
-	seen.add(selectedFp);
-
-	const combined: Record<string, unknown>[] = [];
-	for (const h of afterResult.hits) {
-		const fp = fingerprint(h, config.timestampField);
-		if (!seen.has(fp)) {
-			seen.add(fp);
-			combined.push(h);
-		}
-	}
-	for (const h of beforeResult.hits) {
-		const fp = fingerprint(h, config.timestampField);
-		if (!seen.has(fp)) {
-			seen.add(fp);
+	const seen = new Set<string>([logKey(log)]);
+	const combined: Record<string, unknown>[] = [log];
+	for (const h of [...afterResult.hits, ...beforeResult.hits]) {
+		const key = logKey(h);
+		if (!seen.has(key)) {
+			seen.add(key);
 			combined.push(h);
 		}
 	}
 
-	// Add selected log and sort everything by timestamp DESC
-	combined.push(log);
-	combined.sort((a, b) => {
-		return (
-			extractTimestampMs(b, config.timestampField) - extractTimestampMs(a, config.timestampField)
-		);
-	});
-
-	// Find selected log position
-	let selectedIndex = 0;
-	for (let i = 0; i < combined.length; i++) {
-		if (fingerprint(combined[i], config.timestampField) === selectedFp) {
-			selectedIndex = i;
-			break;
+	const tsCache = new WeakMap<object, number>();
+	const ts = (h: Record<string, unknown>) => {
+		let v = tsCache.get(h);
+		if (v === undefined) {
+			v = extractTimestampMs(h, config.timestampField);
+			tsCache.set(h, v);
 		}
-	}
+		return v;
+	};
+	combined.sort((a, b) => ts(b) - ts(a));
+
+	const selectedIndex = combined.indexOf(log);
+	if (selectedIndex < 0) throw new Error('Selected log lost during context assembly');
 
 	return {
 		hits: combined,

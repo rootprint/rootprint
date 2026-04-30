@@ -130,8 +130,7 @@ export const sharedLink = sqliteTable('shared_link', {
 	query: text('query').notNull().default(''),
 	startTime: integer('start_time').notNull(),
 	endTime: integer('end_time').notNull(),
-	logTimestamp: integer('log_timestamp').notNull(),
-	logFingerprint: text('log_fingerprint').notNull(),
+	hit: text('hit', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.default(sql`(unixepoch())`)
 		.notNull()

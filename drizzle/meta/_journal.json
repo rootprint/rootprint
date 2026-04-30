@@ -239,6 +239,13 @@
       "when": 1776940352972,
       "tag": "0033_parallel_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1777557032965,
+      "tag": "0034_drop_shared_link_fingerprint",
+      "breakpoints": true
     }
   ]
 }

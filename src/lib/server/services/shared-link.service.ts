@@ -3,8 +3,6 @@ import { nanoid } from 'nanoid';
 
 import { db } from '$lib/server/db';
 import { sharedLink } from '$lib/server/db/schema';
-import { quickwitClient } from '$lib/server/quickwit';
-import { extractTimestampSeconds, fingerprint } from '$lib/server/utils/fingerprint';
 
 const SHARE_LINK_TTL_DAYS = 30;
 const SHARE_LINK_TTL_MS = SHARE_LINK_TTL_DAYS * 24 * 60 * 60 * 1000;
@@ -15,12 +13,8 @@ export async function createSharedLink(
 	query: string,
 	startTime: number,
 	endTime: number,
-	hit: Record<string, unknown>,
-	timestampField: string
+	hit: Record<string, unknown>
 ): Promise<string> {
-	const logFingerprint = fingerprint(hit, timestampField);
-	const logTimestamp = extractTimestampSeconds(hit, timestampField);
-
 	const MAX_RETRIES = 3;
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		const code = nanoid(21);
@@ -32,8 +26,7 @@ export async function createSharedLink(
 				query,
 				startTime,
 				endTime,
-				logTimestamp,
-				logFingerprint
+				hit
 			});
 			return code;
 		} catch (err: unknown) {
@@ -50,34 +43,4 @@ export async function resolveSharedLink(code: string) {
 	if (!link) return null;
 	if (Date.now() - link.createdAt.getTime() >= SHARE_LINK_TTL_MS) return null;
 	return link;
-}
-
-export async function findMatchingHit(
-	indexName: string,
-	logTimestamp: number,
-	logFingerprint: string,
-	timestampField: string
-): Promise<Record<string, unknown> | null> {
-	const idx = quickwitClient.index(indexName);
-	const PAGE_SIZE = 200;
-	const MAX_PAGES = 5;
-	let offset = 0;
-
-	for (let page = 0; page < MAX_PAGES; page++) {
-		const q = idx.query('*').limit(PAGE_SIZE).offset(offset).sortBy(timestampField, 'asc');
-		q.timeRange(logTimestamp, logTimestamp + 1);
-
-		const result = await idx.search(q);
-
-		for (const hit of result.hits) {
-			if (fingerprint(hit, timestampField) === logFingerprint) {
-				return hit;
-			}
-		}
-
-		if (result.hits.length < PAGE_SIZE) break;
-		offset += result.hits.length;
-	}
-
-	return null;
 }

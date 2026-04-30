@@ -71,8 +71,7 @@
 				query,
 				startTime: timeRange.start,
 				endTime: timeRange.end,
-				hit,
-				timestampField
+				hit
 			});
 			const url = `${window.location.origin}/share/${code}`;
 			await navigator.clipboard.writeText(url);

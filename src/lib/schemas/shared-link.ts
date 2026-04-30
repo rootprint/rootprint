@@ -5,8 +5,7 @@ export const createSharedLinkSchema = v.object({
 	query: v.string(),
 	startTime: v.number(),
 	endTime: v.number(),
-	hit: v.record(v.string(), v.unknown()),
-	timestampField: v.string()
+	hit: v.record(v.string(), v.unknown())
 });
 
 export const resolveSharedHitSchema = v.object({
