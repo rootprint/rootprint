@@ -2,13 +2,13 @@
 	import { ArrowDown, ArrowUp } from 'lucide-svelte';
 
 	import type { SortDirection } from '$lib/types';
+	import { TIMESTAMP_COLUMN_WIDTH } from '$lib/utils/column-width';
 
 	let {
 		timestampField,
 		messageField,
 		extraFields = [],
 		columnWidths = {},
-		timestampWidth = 0,
 		sortDirection = 'asc',
 		ontogglesort
 	}: {
@@ -16,7 +16,6 @@
 		messageField: string;
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
-		timestampWidth?: number;
 		sortDirection?: SortDirection;
 		ontogglesort?: () => void;
 	} = $props();
@@ -28,7 +27,7 @@
 	<button
 		type="button"
 		class="flex shrink-0 cursor-pointer items-center gap-1 py-px transition-colors hover:text-base-content/60"
-		style={timestampWidth ? `min-width: ${timestampWidth}ch` : undefined}
+		style="min-width: {TIMESTAMP_COLUMN_WIDTH}ch"
 		title="Sort {sortDirection === 'desc' ? 'oldest first' : 'newest first'}"
 		onclick={ontogglesort}
 	>

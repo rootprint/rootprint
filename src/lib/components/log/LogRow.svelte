@@ -1,6 +1,7 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
 	import type { TimezoneMode } from '$lib/types';
+	import { TIMESTAMP_COLUMN_WIDTH } from '$lib/utils/column-width';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import { extractSeverity, extractTimestamp, severityBorderColor } from '$lib/utils/log-helpers';
 
@@ -12,7 +13,6 @@
 		messageField,
 		extraFields = [],
 		columnWidths = {},
-		timestampWidth = 0,
 		timezoneMode = 'local' as TimezoneMode,
 		onclick = () => {}
 	}: {
@@ -23,7 +23,6 @@
 		messageField: string;
 		extraFields?: string[];
 		columnWidths?: Record<string, number>;
-		timestampWidth?: number;
 		timezoneMode?: TimezoneMode;
 		onclick?: () => void;
 	} = $props();
@@ -62,7 +61,7 @@
 >
 	<span
 		class="shrink-0 py-px text-base-content/60"
-		style={timestampWidth ? `min-width: ${timestampWidth}ch` : undefined}
+		style="min-width: {TIMESTAMP_COLUMN_WIDTH}ch"
 		>{extractTimestamp(hit, timestampField, timezoneMode)}</span
 	><span class="shrink-0 px-1.5 text-base-content/20">|</span>
 	{#each extraFields as field (field)}

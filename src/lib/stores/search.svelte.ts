@@ -19,7 +19,7 @@ import type {
 	QuickFilterBucket,
 	TimeRange
 } from '$lib/types';
-import { computeColumnWidths, computeTimestampWidth } from '$lib/utils/column-width';
+import { computeColumnWidths } from '$lib/utils/column-width';
 import { useDebounce } from '$lib/utils/debounce';
 import { getErrorMessage } from '$lib/utils/error';
 import { extractJsonSubFields } from '$lib/utils/fields';
@@ -105,13 +105,6 @@ export function createSearchStore(
 	// --- Derived state ---
 	const timeRange = $derived(parsedQuery().timeRange);
 	const timezoneMode = $derived(parsedQuery().timezoneMode);
-	const timestampWidth = $derived(
-		computeTimestampWidth(
-			logs.map((e) => e.hit),
-			fieldConfig.timestampField,
-			timezoneMode
-		)
-	);
 	const urlIndex = $derived(parsedQuery().index);
 	const sortDirection = $derived(parsedQuery().sortDirection);
 	const canAutoRefresh = $derived(timeRange.type === 'relative');
@@ -605,9 +598,6 @@ export function createSearchStore(
 		},
 		get columnWidths() {
 			return columnWidths;
-		},
-		get timestampWidth() {
-			return timestampWidth;
 		},
 		get aggregations() {
 			return aggregations;

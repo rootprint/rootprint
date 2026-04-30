@@ -168,7 +168,6 @@
 							messageField={store.fieldConfig.messageField}
 							extraFields={store.activeFields}
 							columnWidths={store.columnWidths}
-							timestampWidth={store.timestampWidth}
 							sortDirection={store.sortDirection}
 							ontogglesort={store.toggleSortDirection}
 						/>
@@ -183,7 +182,6 @@
 							messageField={store.fieldConfig.messageField}
 							extraFields={store.activeFields}
 							columnWidths={store.columnWidths}
-							timestampWidth={store.timestampWidth}
 							onclick={() => {
 								selectedLog = entry.hit;
 								drawerOpen = true;
