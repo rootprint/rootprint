@@ -5,6 +5,9 @@ import { normalizeToMs } from '$lib/utils/time';
 
 import { getFieldConfig } from './index.service';
 
+// 50 neighbors per direction + the anchor itself, before dedup.
+const INITIAL_HITS_PER_DIRECTION = 51;
+
 function isExcludedField(key: string, excluded: Set<string>, prefixes: string[]): boolean {
 	if (excluded.has(key)) return true;
 	for (const prefix of prefixes) {
@@ -14,26 +17,22 @@ function isExcludedField(key: string, excluded: Set<string>, prefixes: string[])
 }
 
 function buildContextQuery(
-	log: Record<string, unknown>,
+	flat: [string, unknown][],
 	contextFields: string[] | null,
 	excludedFields: string[],
 	messageField: string,
 	timestampField: string,
 	levelField: string
 ): { query: string; activeLabels: { field: string; value: unknown }[] } {
-	const flat = flattenObject(log);
 	const excluded = new Set([...excludedFields, messageField, timestampField, levelField]);
 	const excludedPrefixes = [messageField, timestampField, levelField];
 
-	let candidates: [string, unknown][];
-	if (contextFields && contextFields.length > 0) {
-		const allowed = new Set(contextFields);
-		candidates = flat.filter(
-			([key]) => allowed.has(key) && !isExcludedField(key, excluded, excludedPrefixes)
-		);
-	} else {
-		candidates = flat.filter(([key]) => !isExcludedField(key, excluded, excludedPrefixes));
-	}
+	const allowed = contextFields?.length ? new Set(contextFields) : null;
+	const candidates = flat.filter(
+		([key]) =>
+			!isExcludedField(key, excluded, excludedPrefixes) &&
+			(allowed === null || allowed.has(key))
+	);
 
 	const scalars = candidates.filter(
 		([, value]) => value !== null && value !== undefined && typeof value !== 'object'
@@ -56,14 +55,12 @@ function buildContextQuery(
 // Both copies of a duplicated hit originate from the same Quickwit `_source`
 // payload in the same response cycle, so flattened+sorted entries match
 // byte-for-byte without needing a content hash or timestamp normalization.
-function logKey(hit: Record<string, unknown>): string {
-	const entries = flattenObject(hit);
-	entries.sort((a, b) => a[0].localeCompare(b[0]));
-	return JSON.stringify(entries);
+function logKey(flat: [string, unknown][]): string {
+	const sorted = [...flat].sort((a, b) => a[0].localeCompare(b[0]));
+	return JSON.stringify(sorted);
 }
 
-function extractTimestampMs(log: Record<string, unknown>, timestampField: string): number {
-	const flat = flattenObject(log);
+function extractTimestampMs(flat: [string, unknown][], timestampField: string): number {
 	const entry = flat.find(([key]) => key === timestampField);
 	if (!entry) throw new Error(`Timestamp field "${timestampField}" not found in log`);
 	const raw = entry[1];
@@ -71,10 +68,6 @@ function extractTimestampMs(log: Record<string, unknown>, timestampField: string
 	const ms = new Date(String(raw)).getTime();
 	if (Number.isNaN(ms)) throw new Error(`Invalid timestamp value: ${JSON.stringify(raw)}`);
 	return ms;
-}
-
-function extractTimestampSeconds(log: Record<string, unknown>, timestampField: string): number {
-	return Math.floor(extractTimestampMs(log, timestampField) / 1000);
 }
 
 export async function getLogContext(
@@ -92,8 +85,10 @@ export async function getLogContext(
 	const config = await getFieldConfig(indexId);
 	const index = quickwitClient.index(indexId);
 
+	const flatLog = flattenObject(log);
+
 	const { query: contextQuery, activeLabels } = buildContextQuery(
-		log,
+		flatLog,
 		config.contextFields,
 		excludedFields,
 		config.messageField,
@@ -101,18 +96,18 @@ export async function getLogContext(
 		config.levelField
 	);
 
-	const anchorTs = extractTimestampSeconds(log, config.timestampField);
+	const anchorTs = Math.floor(extractTimestampMs(flatLog, config.timestampField) / 1000);
 
 	const afterQuery = index
 		.query(contextQuery)
-		.limit(51)
+		.limit(INITIAL_HITS_PER_DIRECTION)
 		.offset(0)
 		.sortBy(config.timestampField, 'asc');
 	afterQuery.timeRange(anchorTs);
 
 	const beforeQuery = index
 		.query(contextQuery)
-		.limit(51)
+		.limit(INITIAL_HITS_PER_DIRECTION)
 		.offset(0)
 		.sortBy(config.timestampField, 'desc');
 	beforeQuery.timeRange(undefined, anchorTs);
@@ -122,10 +117,10 @@ export async function getLogContext(
 		index.search(beforeQuery)
 	]);
 
-	const seen = new Set<string>([logKey(log)]);
+	const seen = new Set<string>([logKey(flatLog)]);
 	const combined: Record<string, unknown>[] = [log];
 	for (const h of [...afterResult.hits, ...beforeResult.hits]) {
-		const key = logKey(h);
+		const key = logKey(flattenObject(h));
 		if (!seen.has(key)) {
 			seen.add(key);
 			combined.push(h);
@@ -136,7 +131,7 @@ export async function getLogContext(
 	const ts = (h: Record<string, unknown>) => {
 		let v = tsCache.get(h);
 		if (v === undefined) {
-			v = extractTimestampMs(h, config.timestampField);
+			v = extractTimestampMs(flattenObject(h), config.timestampField);
 			tsCache.set(h, v);
 		}
 		return v;
@@ -151,8 +146,8 @@ export async function getLogContext(
 		selectedIndex,
 		anchorTs,
 		activeLabels,
-		noMoreAfter: afterResult.hits.length < 51,
-		noMoreBefore: beforeResult.hits.length < 51
+		noMoreAfter: afterResult.hits.length < INITIAL_HITS_PER_DIRECTION,
+		noMoreBefore: beforeResult.hits.length < INITIAL_HITS_PER_DIRECTION
 	};
 }
 
@@ -168,8 +163,10 @@ export async function getMoreContext(
 	const config = await getFieldConfig(indexId);
 	const index = quickwitClient.index(indexId);
 
+	const flatLog = flattenObject(log);
+
 	const { query: contextQuery } = buildContextQuery(
-		log,
+		flatLog,
 		config.contextFields,
 		excludedFields,
 		config.messageField,
@@ -194,11 +191,7 @@ export async function getMoreContext(
 
 	if (direction === 'after') {
 		// ASC results → reverse to DESC for display
-		const reversed: Record<string, unknown>[] = [];
-		for (let i = result.hits.length - 1; i >= 0; i--) {
-			reversed.push(result.hits[i]);
-		}
-		return reversed;
+		return [...result.hits].reverse();
 	}
 	return result.hits;
 }
