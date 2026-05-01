@@ -77,7 +77,7 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
         source: |
           parsed, err = parse_json(.message)
           if err == null && is_object(parsed) {
-            . = merge!(., object!(parsed))
+            . = merge(., object!(parsed))
           }
 
           level = downcase(string(.level) ?? "info")
@@ -111,7 +111,7 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
           ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
           ts_float, ts_err = to_float(.ts)
           if ts_err == null {
-            ts_nano = to_int(ts_float * 1000000000.0) ?? ts_nano
+            ts_nano = to_int(ts_float * 1000000000.0)
           }
 
           sev_num  = to_int(.severity_number) ?? 9
@@ -146,8 +146,10 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
             if exists(.request.proto) {
               parts = split(string!(.request.proto), "/")
               if length(parts) == 2 {
-                attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(parts[0]) } })
-                attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": parts[1] } })
+                proto_name = downcase(string!(parts[0]))
+                proto_version = string!(parts[1])
+                attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": proto_name } })
+                attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": proto_version } })
               }
             }
             ua = .request.headers."User-Agent"
@@ -265,20 +267,12 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
     paths.
   </Step>
 
-  <Step title="Configure Caddy to log to stdout">
-    In containerized setups Caddy should write JSON to stdout so Docker captures it as the
-    container's log stream. Edit your `Caddyfile` — the `log` block goes on every site whose
-    access log you want shipped. Leave the default JSON encoder in place.
+  <Step title="Enable access logs if needed">
+    If `docker logs caddy` already shows the request/access logs you want to ship, skip this
+    step. If you only see startup logs and runtime errors, add the following `log` block to each
+    site whose access logs you want shipped. Leave the default JSON encoder in place.
 
     ```caddyfile
-    # Global block — Caddy runtime errors
-    {
-        log default {
-            output stdout
-        }
-    }
-
-    # Per-site — JSON access log
     example.com {
         log {
             output stdout
@@ -287,7 +281,7 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
     }
     ```
 
-    The Caddy container will be restarted in step 4 below.
+    If you change the `Caddyfile`, restart the Caddy container in step 4 below.
 
   </Step>
 
@@ -330,7 +324,7 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
         source: |
           parsed, err = parse_json(.message)
           if err == null && is_object(parsed) {
-            . = merge!(., object!(parsed))
+            . = merge(., object!(parsed))
           }
 
           level = downcase(string(.level) ?? "info")
@@ -363,7 +357,7 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
           ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
           ts_float, ts_err = to_float(.ts)
           if ts_err == null {
-            ts_nano = to_int(ts_float * 1000000000.0) ?? ts_nano
+            ts_nano = to_int(ts_float * 1000000000.0)
           }
 
           sev_num  = to_int(.severity_number) ?? 9
@@ -411,8 +405,10 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
             if exists(.request.proto) {
               parts = split(string!(.request.proto), "/")
               if length(parts) == 2 {
-                attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(parts[0]) } })
-                attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": parts[1] } })
+                proto_name = downcase(string!(parts[0]))
+                proto_version = string!(parts[1])
+                attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": proto_name } })
+                attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": proto_version } })
               }
             }
             ua = .request.headers."User-Agent"
@@ -480,17 +476,20 @@ Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` 
 
   </Step>
 
-  <Step title="Start Vector and reload Caddy">
+  <Step title="Start Vector and restart Caddy if needed">
     Bring the Vector sidecar up first so it's already streaming before Caddy restarts on the new
     logging config.
 
     ```bash
     docker compose up -d logwiz-vector
+
+    # If you changed the Caddyfile in step 1, also restart Caddy:
     docker compose restart <your-caddy-service-name>
     ```
 
     Replace `<your-caddy-service-name>` with the Compose service key for Caddy. That's the name
-    under `services:`, which can differ from `container_name`.
+    under `services:`, which can differ from `container_name`. If you skipped step 1 because
+    access logs are already enabled, you only need to start Vector here.
 
   </Step>
 

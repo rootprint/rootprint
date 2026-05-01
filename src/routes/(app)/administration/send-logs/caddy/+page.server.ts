@@ -29,15 +29,7 @@ const BARE_TEST_COMMAND = 'curl -i http://localhost/';
 
 // ---------- Docker flavor static snippets ----------
 
-const DOCKER_CADDYFILE = `# Global block — Caddy runtime errors
-{
-    log default {
-        output stdout
-    }
-}
-
-# Per-site — JSON access log
-example.com {
+const DOCKER_CADDYFILE = `example.com {
     log {
         output stdout
     }
@@ -54,6 +46,8 @@ const DOCKER_COMPOSE_FRAGMENT = `services:
       - /var/run/docker.sock:/var/run/docker.sock:ro`;
 
 const DOCKER_RUN_COMMAND = `docker compose up -d logwiz-vector
+
+# If you changed the Caddyfile in step 1, also restart Caddy:
 docker compose restart <your-caddy-service-name>`;
 
 const DOCKER_TEST_COMMAND = 'curl -i http://localhost/';
@@ -123,7 +117,7 @@ transforms:
     source: |
       parsed, err = parse_json(.message)
       if err == null && is_object(parsed) {
-        . = merge!(., object!(parsed))
+        . = merge(., object!(parsed))
       }
 
       level = downcase(string(.level) ?? "info")
@@ -157,7 +151,7 @@ transforms:
       ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
       ts_float, ts_err = to_float(.ts)
       if ts_err == null {
-        ts_nano = to_int(ts_float * 1000000000.0) ?? ts_nano
+        ts_nano = to_int(ts_float * 1000000000.0)
       }
 
       sev_num  = to_int(.severity_number) ?? 9
@@ -192,8 +186,10 @@ transforms:
         if exists(.request.proto) {
           parts = split(string!(.request.proto), "/")
           if length(parts) == 2 {
-            attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(parts[0]) } })
-            attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": parts[1] } })
+            proto_name = downcase(string!(parts[0]))
+            proto_version = string!(parts[1])
+            attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": proto_name } })
+            attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": proto_version } })
           }
         }
         ua = .request.headers."User-Agent"
@@ -257,7 +253,7 @@ transforms:
     source: |
       parsed, err = parse_json(.message)
       if err == null && is_object(parsed) {
-        . = merge!(., object!(parsed))
+        . = merge(., object!(parsed))
       }
 
       level = downcase(string(.level) ?? "info")
@@ -290,7 +286,7 @@ transforms:
       ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
       ts_float, ts_err = to_float(.ts)
       if ts_err == null {
-        ts_nano = to_int(ts_float * 1000000000.0) ?? ts_nano
+        ts_nano = to_int(ts_float * 1000000000.0)
       }
 
       sev_num  = to_int(.severity_number) ?? 9
@@ -338,8 +334,10 @@ transforms:
         if exists(.request.proto) {
           parts = split(string!(.request.proto), "/")
           if length(parts) == 2 {
-            attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(parts[0]) } })
-            attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": parts[1] } })
+            proto_name = downcase(string!(parts[0]))
+            proto_version = string!(parts[1])
+            attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": proto_name } })
+            attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": proto_version } })
           }
         }
         ua = .request.headers."User-Agent"

@@ -124,12 +124,13 @@
 			<ol class="flex flex-col">
 				<SendLogsStep number={1}>
 					<div>
-						<h3 class="font-semibold">Configure Caddy to log to stdout</h3>
+						<h3 class="font-semibold">Enable access logs if needed</h3>
 						<p class="mt-1 text-sm text-base-content/60">
-							In containerized setups the convention is to write JSON to stdout so Docker captures
-							it. Edit your <InlineCode>Caddyfile</InlineCode> — the <InlineCode>log</InlineCode> block
-							goes on every site whose access log you want shipped. Leave the default JSON encoder in
-							place. You'll restart the Caddy container in step 4.
+							If <InlineCode>docker logs caddy</InlineCode> already shows the request/access logs you
+							want to ship, skip this step. If you only see startup logs and runtime errors, add the following
+							<InlineCode>log</InlineCode> block to each site whose access logs you want shipped. Leave
+							the default JSON encoder in place. If you change the
+							<InlineCode>Caddyfile</InlineCode>, restart the Caddy container in step 4.
 						</p>
 					</div>
 					<CodeBlock {...dockerSnippets.caddyfile} copyTitle="Copy Caddyfile snippet" />
@@ -167,13 +168,14 @@
 
 				<SendLogsStep number={4}>
 					<div>
-						<h3 class="font-semibold">Start Vector and reload Caddy</h3>
+						<h3 class="font-semibold">Start Vector and restart Caddy if needed</h3>
 						<p class="mt-1 text-sm text-base-content/60">
 							Bring the Vector sidecar up first so it's already streaming before Caddy restarts on
 							the new logging config. Replace
 							<InlineCode>{'<your-caddy-service-name>'}</InlineCode> with the Compose service key for
 							Caddy. That's the name under <InlineCode>services:</InlineCode>, which can differ from
-							<InlineCode>container_name</InlineCode>.
+							<InlineCode>container_name</InlineCode>. If you skipped step 1 because access logs are
+							already enabled, you only need to start Vector here.
 						</p>
 					</div>
 					<CodeBlock {...dockerSnippets.run} copyTitle="Copy run command" />
