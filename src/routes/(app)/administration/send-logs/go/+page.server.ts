@@ -1,5 +1,5 @@
-import { OTLP_LOGS_INGEST_PATH } from '$lib/constants/defaults';
-import { highlightCode } from '$lib/server/syntax';
+import { otelEnv } from '$lib/server/send-logs';
+import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
@@ -38,42 +38,22 @@ func main() {
 	logger.Info("Hello from Go to Logwiz")
 }`;
 
-const INIT_SNIPPET = {
-	code: INIT_COMMAND,
-	html: await highlightCode(INIT_COMMAND, 'bash'),
-	lang: 'bash'
-};
-
-const GET_SNIPPET = {
-	code: GET_COMMAND,
-	html: await highlightCode(GET_COMMAND, 'bash'),
-	lang: 'bash'
-};
-
-const EXAMPLE_SNIPPET = {
-	code: EXAMPLE_CODE,
-	html: await highlightCode(EXAMPLE_CODE, 'go'),
-	lang: 'go'
-};
+const [initSnippet, getSnippet, exampleSnippet] = await Promise.all([
+	snippet(INIT_COMMAND, 'bash'),
+	snippet(GET_COMMAND, 'bash'),
+	snippet(EXAMPLE_CODE, 'go')
+]);
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
 	if (!token) return {};
 
-	const envVars = `export OTEL_SERVICE_NAME=my-go-service
-export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=${origin}${OTLP_LOGS_INGEST_PATH}
-export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20${token}`;
-
 	return {
 		snippets: {
-			init: INIT_SNIPPET,
-			get: GET_SNIPPET,
-			envVars: {
-				code: envVars,
-				html: await highlightCode(envVars, 'bash'),
-				lang: 'bash'
-			},
-			example: EXAMPLE_SNIPPET
+			init: initSnippet,
+			get: getSnippet,
+			envVars: await snippet(otelEnv({ origin, token, serviceName: 'my-go-service' }), 'bash'),
+			example: exampleSnippet
 		}
 	};
 };

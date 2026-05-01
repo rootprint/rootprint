@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { Search } from 'lucide-svelte';
-
 	import SendLogsSourceShell from '$lib/components/admin/SendLogsSourceShell.svelte';
 	import SendLogsStep from '$lib/components/admin/SendLogsStep.svelte';
 	import SendLogsTokenCallout from '$lib/components/admin/SendLogsTokenCallout.svelte';
+	import VerifySearchStep from '$lib/components/admin/VerifySearchStep.svelte';
 	import CodeBlock from '$lib/components/ui/CodeBlock.svelte';
 	import InlineCode from '$lib/components/ui/InlineCode.svelte';
-	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/constants/defaults';
 
 	let { data } = $props();
 </script>
@@ -65,28 +63,13 @@
 				<CodeBlock {...data.snippets.test} copyTitle="Copy test command" />
 			</SendLogsStep>
 
-			<SendLogsStep number={5} isLast>
-				<div>
-					<h3 class="font-semibold">Verify in Logwiz</h3>
-					<p class="mt-1 text-sm text-base-content/60">
-						Open Search and query for <InlineCode>hello from logwiz</InlineCode>. The record
-						typically arrives within ~5 seconds (one batch interval).
-						<InlineCode>service.name</InlineCode> reads
-						<InlineCode>logwiz-smoke-test</InlineCode>;
-						<InlineCode>attributes.container.image.name</InlineCode> reads
-						<InlineCode>alpine</InlineCode>.
-					</p>
-				</div>
-				<div>
-					<a
-						href="/?index={encodeURIComponent(DEFAULT_OTEL_LOGS_INDEX_ID)}"
-						class="btn gap-2 btn-sm btn-accent"
-					>
-						<Search size={14} />
-						Open Search
-					</a>
-				</div>
-			</SendLogsStep>
+			<VerifySearchStep number={5}>
+				Open Search and query for <InlineCode>hello from logwiz</InlineCode>. The record typically
+				arrives within ~5 seconds (one batch interval).
+				<InlineCode>service.name</InlineCode> reads <InlineCode>logwiz-smoke-test</InlineCode>;
+				<InlineCode>attributes.container.image.name</InlineCode> reads
+				<InlineCode>alpine</InlineCode>.
+			</VerifySearchStep>
 		</ol>
 	{/if}
 </SendLogsSourceShell>

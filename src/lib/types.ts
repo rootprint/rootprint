@@ -14,9 +14,6 @@ export type ExportFormat = 'ndjson' | 'csv' | 'text';
 
 export type NodeLogFlavor = 'otel' | 'pino' | 'winston';
 
-export type JavaLogFlavor = 'agent' | 'sdk';
-export type DotnetLogFlavor = 'auto' | 'sdk';
-
 export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';

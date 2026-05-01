@@ -1,6 +1,6 @@
 import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/constants/defaults';
 import { getLatestIngestTokenForIndex } from '$lib/server/services/ingest-token.service';
-import { highlightCode } from '$lib/server/syntax';
+import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
@@ -41,11 +41,7 @@ EOF`;
 		token,
 		endpointUrl,
 		snippets: {
-			curl: {
-				code: curl,
-				html: await highlightCode(curl, 'bash'),
-				lang: 'bash'
-			}
+			curl: await snippet(curl, 'bash')
 		}
 	};
 };

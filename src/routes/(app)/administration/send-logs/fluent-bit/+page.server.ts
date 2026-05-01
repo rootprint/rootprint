@@ -1,5 +1,5 @@
 import { OTLP_LOGS_INGEST_PATH } from '$lib/constants/defaults';
-import { highlightCode } from '$lib/server/syntax';
+import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
@@ -9,17 +9,10 @@ sudo systemctl status fluent-bit`;
 const TEST_COMMAND = `sudo mkdir -p /var/log/myapp
 echo "$(date -Iseconds) hello from fluent-bit" | sudo tee -a /var/log/myapp/test.log`;
 
-const RESTART_SNIPPET = {
-	code: RESTART_COMMAND,
-	html: await highlightCode(RESTART_COMMAND, 'bash'),
-	lang: 'bash'
-};
-
-const TEST_SNIPPET = {
-	code: TEST_COMMAND,
-	html: await highlightCode(TEST_COMMAND, 'bash'),
-	lang: 'bash'
-};
+const [restartSnippet, testSnippet] = await Promise.all([
+	snippet(RESTART_COMMAND, 'bash'),
+	snippet(TEST_COMMAND, 'bash')
+]);
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
@@ -56,13 +49,9 @@ export const load: PageServerLoad = async ({ parent }) => {
 
 	return {
 		snippets: {
-			fluentBitConfig: {
-				code: fluentBitConfig,
-				html: await highlightCode(fluentBitConfig, 'ini'),
-				lang: 'ini'
-			},
-			restart: RESTART_SNIPPET,
-			test: TEST_SNIPPET
+			fluentBitConfig: await snippet(fluentBitConfig, 'ini'),
+			restart: restartSnippet,
+			test: testSnippet
 		}
 	};
 };

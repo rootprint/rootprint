@@ -55,9 +55,7 @@
 								"pages": [
 									"send-logs/languages/python",
 									"send-logs/languages/javascript",
-									"send-logs/languages/go",
-									"send-logs/languages/java",
-									"send-logs/languages/dotnet"
+									"send-logs/languages/go"
 								]
 							},
 							{

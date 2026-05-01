@@ -1,5 +1,5 @@
-import { OTLP_LOGS_INGEST_PATH } from '$lib/constants/defaults';
-import { highlightCode } from '$lib/server/syntax';
+import { otelEnv } from '$lib/server/send-logs';
+import { type CodeSnippet, snippet } from '$lib/server/syntax';
 import type { NodeLogFlavor } from '$lib/types';
 
 import type { PageServerLoad } from './$types';
@@ -52,55 +52,38 @@ const logger = winston.createLogger({
 logger.info('Hello from Winston to Logwiz');`;
 
 type FlavorSnippets = {
-	install: { code: string; html: string; lang: string };
-	example: { code: string; html: string; lang: string };
+	install: CodeSnippet;
+	example: CodeSnippet;
 };
 
 const [
-	otelInstallHtml,
-	otelExampleHtml,
-	pinoInstallHtml,
-	pinoExampleHtml,
-	winstonInstallHtml,
-	winstonExampleHtml
+	otelInstallSnippet,
+	otelExampleSnippet,
+	pinoInstallSnippet,
+	pinoExampleSnippet,
+	winstonInstallSnippet,
+	winstonExampleSnippet
 ] = await Promise.all([
-	highlightCode(OTEL_INSTALL, 'bash'),
-	highlightCode(OTEL_EXAMPLE, 'javascript'),
-	highlightCode(PINO_INSTALL, 'bash'),
-	highlightCode(PINO_EXAMPLE, 'javascript'),
-	highlightCode(WINSTON_INSTALL, 'bash'),
-	highlightCode(WINSTON_EXAMPLE, 'javascript')
+	snippet(OTEL_INSTALL, 'bash'),
+	snippet(OTEL_EXAMPLE, 'javascript'),
+	snippet(PINO_INSTALL, 'bash'),
+	snippet(PINO_EXAMPLE, 'javascript'),
+	snippet(WINSTON_INSTALL, 'bash'),
+	snippet(WINSTON_EXAMPLE, 'javascript')
 ]);
 
 const FLAVORS: Record<NodeLogFlavor, FlavorSnippets> = {
-	otel: {
-		install: { code: OTEL_INSTALL, html: otelInstallHtml, lang: 'bash' },
-		example: { code: OTEL_EXAMPLE, html: otelExampleHtml, lang: 'javascript' }
-	},
-	pino: {
-		install: { code: PINO_INSTALL, html: pinoInstallHtml, lang: 'bash' },
-		example: { code: PINO_EXAMPLE, html: pinoExampleHtml, lang: 'javascript' }
-	},
-	winston: {
-		install: { code: WINSTON_INSTALL, html: winstonInstallHtml, lang: 'bash' },
-		example: { code: WINSTON_EXAMPLE, html: winstonExampleHtml, lang: 'javascript' }
-	}
+	otel: { install: otelInstallSnippet, example: otelExampleSnippet },
+	pino: { install: pinoInstallSnippet, example: pinoExampleSnippet },
+	winston: { install: winstonInstallSnippet, example: winstonExampleSnippet }
 };
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
 	if (!token) return {};
 
-	const envVars = `export OTEL_SERVICE_NAME=my-node-service
-export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=${origin}${OTLP_LOGS_INGEST_PATH}
-export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20${token}`;
-
 	return {
-		envVars: {
-			code: envVars,
-			html: await highlightCode(envVars, 'bash'),
-			lang: 'bash'
-		},
+		envVars: await snippet(otelEnv({ origin, token, serviceName: 'my-node-service' }), 'bash'),
 		flavors: FLAVORS
 	};
 };

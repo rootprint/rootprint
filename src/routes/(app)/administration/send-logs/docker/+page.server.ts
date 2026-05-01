@@ -1,5 +1,5 @@
-import { OTLP_LOGS_INGEST_PATH } from '$lib/constants/defaults';
-import { highlightCode } from '$lib/server/syntax';
+import { vectorOtlpSink } from '$lib/server/send-logs';
+import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
@@ -16,23 +16,11 @@ const RUN_COMMAND = 'docker compose up -d logwiz-vector';
 
 const TEST_COMMAND = 'docker run --rm --name logwiz-smoke-test alpine echo "hello from logwiz"';
 
-const COMPOSE_SNIPPET = {
-	code: COMPOSE_FRAGMENT,
-	html: await highlightCode(COMPOSE_FRAGMENT, 'yaml'),
-	lang: 'yaml'
-};
-
-const RUN_SNIPPET = {
-	code: RUN_COMMAND,
-	html: await highlightCode(RUN_COMMAND, 'bash'),
-	lang: 'bash'
-};
-
-const TEST_SNIPPET = {
-	code: TEST_COMMAND,
-	html: await highlightCode(TEST_COMMAND, 'bash'),
-	lang: 'bash'
-};
+const [composeSnippet, runSnippet, testSnippet] = await Promise.all([
+	snippet(COMPOSE_FRAGMENT, 'yaml'),
+	snippet(RUN_COMMAND, 'bash'),
+	snippet(TEST_COMMAND, 'bash')
+]);
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
@@ -114,34 +102,14 @@ transforms:
         }]
       }
 
-sinks:
-  logwiz:
-    type: opentelemetry
-    inputs: [to_otlp]
-    protocol:
-      type: http
-      uri: ${origin}${OTLP_LOGS_INGEST_PATH}
-      method: post
-      encoding:
-        codec: otlp
-      compression: gzip
-      request:
-        headers:
-          Authorization: "Bearer ${token}"
-      batch:
-        timeout_secs: 1
-        max_bytes: 8388608`;
+${vectorOtlpSink({ origin, token })}`;
 
 	return {
 		snippets: {
-			collectorConfig: {
-				code: collectorConfig,
-				html: await highlightCode(collectorConfig, 'yaml'),
-				lang: 'yaml'
-			},
-			compose: COMPOSE_SNIPPET,
-			run: RUN_SNIPPET,
-			test: TEST_SNIPPET
+			collectorConfig: await snippet(collectorConfig, 'yaml'),
+			compose: composeSnippet,
+			run: runSnippet,
+			test: testSnippet
 		}
 	};
 };

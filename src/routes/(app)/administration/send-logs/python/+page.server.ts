@@ -1,5 +1,5 @@
-import { OTLP_LOGS_INGEST_PATH } from '$lib/constants/defaults';
-import { highlightCode } from '$lib/server/syntax';
+import { otelEnv } from '$lib/server/send-logs';
+import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
@@ -20,35 +20,20 @@ logging.getLogger().setLevel(logging.INFO)
 
 logging.info("Hello from Python to Logwiz")`;
 
-const INSTALL_SNIPPET = {
-	code: INSTALL_COMMAND,
-	html: await highlightCode(INSTALL_COMMAND, 'bash'),
-	lang: 'bash'
-};
-
-const EXAMPLE_SNIPPET = {
-	code: EXAMPLE_CODE,
-	html: await highlightCode(EXAMPLE_CODE, 'python'),
-	lang: 'python'
-};
+const [installSnippet, exampleSnippet] = await Promise.all([
+	snippet(INSTALL_COMMAND, 'bash'),
+	snippet(EXAMPLE_CODE, 'python')
+]);
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
 	if (!token) return {};
 
-	const envVars = `export OTEL_SERVICE_NAME=my-python-service
-export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=${origin}${OTLP_LOGS_INGEST_PATH}
-export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20${token}`;
-
 	return {
 		snippets: {
-			install: INSTALL_SNIPPET,
-			envVars: {
-				code: envVars,
-				html: await highlightCode(envVars, 'bash'),
-				lang: 'bash'
-			},
-			example: EXAMPLE_SNIPPET
+			install: installSnippet,
+			envVars: await snippet(otelEnv({ origin, token, serviceName: 'my-python-service' }), 'bash'),
+			example: exampleSnippet
 		}
 	};
 };

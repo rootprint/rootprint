@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { AlertTriangle, Search } from 'lucide-svelte';
+	import { AlertTriangle } from 'lucide-svelte';
 
 	import CreateTokenModal from '$lib/components/admin/CreateTokenModal.svelte';
 	import SendLogsSourceShell from '$lib/components/admin/SendLogsSourceShell.svelte';
 	import SendLogsStep from '$lib/components/admin/SendLogsStep.svelte';
+	import VerifySearchStep from '$lib/components/admin/VerifySearchStep.svelte';
 	import Callout from '$lib/components/ui/Callout.svelte';
 	import CodeBlock from '$lib/components/ui/CodeBlock.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
@@ -116,24 +117,10 @@
 					<CodeBlock {...data.snippets.curl} copyTitle="Copy example" />
 				</SendLogsStep>
 
-				<SendLogsStep number={4} isLast>
-					<div>
-						<h3 class="font-semibold">Verify in Logwiz</h3>
-						<p class="mt-1 text-sm text-base-content/60">
-							Open Search, pick <InlineCode>{data.selectedIndexId}</InlineCode> from the index selector,
-							and look for the records you just sent.
-						</p>
-					</div>
-					<div>
-						<a
-							href="/?index={encodeURIComponent(data.selectedIndexId)}"
-							class="btn gap-2 btn-sm btn-accent"
-						>
-							<Search size={14} />
-							Open Search
-						</a>
-					</div>
-				</SendLogsStep>
+				<VerifySearchStep number={4} indexId={data.selectedIndexId}>
+					Open Search, pick <InlineCode>{data.selectedIndexId}</InlineCode> from the index selector, and
+					look for the records you just sent.
+				</VerifySearchStep>
 			{/if}
 		</ol>
 	{/if}

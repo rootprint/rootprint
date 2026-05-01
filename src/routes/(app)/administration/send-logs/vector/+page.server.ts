@@ -1,5 +1,5 @@
-import { OTLP_LOGS_INGEST_PATH } from '$lib/constants/defaults';
-import { highlightCode } from '$lib/server/syntax';
+import { vectorOtlpSink } from '$lib/server/send-logs';
+import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
@@ -9,17 +9,10 @@ sudo systemctl status vector`;
 const TEST_COMMAND = `sudo mkdir -p /var/log/myapp
 echo "$(date -Iseconds) hello from vector" | sudo tee -a /var/log/myapp/test.log`;
 
-const RESTART_SNIPPET = {
-	code: RESTART_COMMAND,
-	html: await highlightCode(RESTART_COMMAND, 'bash'),
-	lang: 'bash'
-};
-
-const TEST_SNIPPET = {
-	code: TEST_COMMAND,
-	html: await highlightCode(TEST_COMMAND, 'bash'),
-	lang: 'bash'
-};
+const [restartSnippet, testSnippet] = await Promise.all([
+	snippet(RESTART_COMMAND, 'bash'),
+	snippet(TEST_COMMAND, 'bash')
+]);
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { token, origin } = await parent();
@@ -69,33 +62,13 @@ transforms:
       del(.source_type)
       del(.timestamp)
 
-sinks:
-  logwiz:
-    type: opentelemetry
-    inputs: [to_otlp]
-    protocol:
-      type: http
-      uri: ${origin}${OTLP_LOGS_INGEST_PATH}
-      method: post
-      encoding:
-        codec: otlp
-      compression: gzip
-      request:
-        headers:
-          Authorization: "Bearer ${token}"
-      batch:
-        timeout_secs: 1
-        max_bytes: 8388608`;
+${vectorOtlpSink({ origin, token })}`;
 
 	return {
 		snippets: {
-			vectorConfig: {
-				code: vectorConfig,
-				html: await highlightCode(vectorConfig, 'yaml'),
-				lang: 'yaml'
-			},
-			restart: RESTART_SNIPPET,
-			test: TEST_SNIPPET
+			vectorConfig: await snippet(vectorConfig, 'yaml'),
+			restart: restartSnippet,
+			test: testSnippet
 		}
 	};
 };

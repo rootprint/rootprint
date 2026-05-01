@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { Search } from 'lucide-svelte';
-
 	import SendLogsSourceShell from '$lib/components/admin/SendLogsSourceShell.svelte';
 	import SendLogsStep from '$lib/components/admin/SendLogsStep.svelte';
 	import SendLogsTokenCallout from '$lib/components/admin/SendLogsTokenCallout.svelte';
+	import VerifySearchStep from '$lib/components/admin/VerifySearchStep.svelte';
 	import CodeBlock from '$lib/components/ui/CodeBlock.svelte';
 	import InlineCode from '$lib/components/ui/InlineCode.svelte';
-	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/constants/defaults';
 
 	let { data } = $props();
 </script>
@@ -70,25 +68,11 @@
 				<CodeBlock {...data.snippets.test} copyTitle="Copy test command" />
 			</SendLogsStep>
 
-			<SendLogsStep number={5} isLast>
-				<div>
-					<h3 class="font-semibold">Verify in Logwiz</h3>
-					<p class="mt-1 text-sm text-base-content/60">
-						Search for <InlineCode>hello from vector</InlineCode>. Records typically appear within
-						5–10 seconds — the OTLP path commits on Quickwit's normal cadence, there is no
-						<InlineCode>commit=wait_for</InlineCode> knob.
-					</p>
-				</div>
-				<div>
-					<a
-						href="/?index={encodeURIComponent(DEFAULT_OTEL_LOGS_INDEX_ID)}"
-						class="btn gap-2 btn-sm btn-accent"
-					>
-						<Search size={14} />
-						Open Search
-					</a>
-				</div>
-			</SendLogsStep>
+			<VerifySearchStep number={5}>
+				Search for <InlineCode>hello from vector</InlineCode>. Records typically appear within 5–10
+				seconds — the OTLP path commits on Quickwit's normal cadence, there is no
+				<InlineCode>commit=wait_for</InlineCode> knob.
+			</VerifySearchStep>
 		</ol>
 	{/if}
 </SendLogsSourceShell>
