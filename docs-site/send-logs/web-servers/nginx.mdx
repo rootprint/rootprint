@@ -58,21 +58,40 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
             parsed, err = parse_nginx_log(.message, format: "error")
           }
           if err == null && is_object(parsed) {
-            . = merge!(., object!(parsed))
+            . = merge(., object(parsed))
             .nginx_format = if exists(.severity) { "error" } else { "access" }
           }
 
           if .nginx_format == "error" {
             sev = downcase(string(.severity) ?? "info")
-            if sev == "debug"  { .severity_number = 5;  .severity_text = "DEBUG" }
-            else if sev == "info"   { .severity_number = 9;  .severity_text = "INFO" }
-            else if sev == "notice" { .severity_number = 10; .severity_text = "NOTICE" }
-            else if sev == "warn"   { .severity_number = 13; .severity_text = "WARN" }
-            else if sev == "error"  { .severity_number = 17; .severity_text = "ERROR" }
-            else if sev == "crit"   { .severity_number = 19; .severity_text = "CRIT" }
-            else if sev == "alert"  { .severity_number = 21; .severity_text = "ALERT" }
-            else if sev == "emerg"  { .severity_number = 23; .severity_text = "EMERG" }
-            else                    { .severity_number = 9;  .severity_text = "INFO" }
+            if sev == "debug" {
+              .severity_number = 5
+              .severity_text   = "DEBUG"
+            } else if sev == "info" {
+              .severity_number = 9
+              .severity_text   = "INFO"
+            } else if sev == "notice" {
+              .severity_number = 10
+              .severity_text   = "NOTICE"
+            } else if sev == "warn" {
+              .severity_number = 13
+              .severity_text   = "WARN"
+            } else if sev == "error" {
+              .severity_number = 17
+              .severity_text   = "ERROR"
+            } else if sev == "crit" {
+              .severity_number = 19
+              .severity_text   = "CRIT"
+            } else if sev == "alert" {
+              .severity_number = 21
+              .severity_text   = "ALERT"
+            } else if sev == "emerg" {
+              .severity_number = 23
+              .severity_text   = "EMERG"
+            } else {
+              .severity_number = 9
+              .severity_text   = "INFO"
+            }
           } else {
             .severity_number = 9
             .severity_text   = "INFO"
@@ -86,12 +105,9 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
           file_path = string(.file) ?? ""
           fmt       = string(.nginx_format) ?? "access"
 
-          ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
-          if exists(.timestamp) {
-            ts_val, ts_err = to_unix_timestamp(to_timestamp!(.timestamp), unit: "nanoseconds")
-            if ts_err == null {
-              ts_nano = ts_val
-            }
+          ts_nano = to_unix_timestamp(now(), unit: "nanoseconds")
+          if exists(.timestamp) && is_timestamp(.timestamp) {
+            ts_nano = to_unix_timestamp!(.timestamp, unit: "nanoseconds")
           }
 
           sev_num  = to_int(.severity_number) ?? 9
@@ -114,9 +130,9 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
                   attrs = push(attrs, { "key": "url.path", "value": { "stringValue": request_parts[1] } })
                 }
                 if length(request_parts) >= 3 {
-                  proto_parts = split(request_parts[2], "/")
+                  proto_parts = split!(request_parts[2], "/")
                   if length(proto_parts) == 2 {
-                    attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(proto_parts[0]) } })
+                    attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase!(proto_parts[0]) } })
                     attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": proto_parts[1] } })
                   }
                 }
@@ -191,7 +207,7 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
                 "scope": { "name": "vector", "version": "" },
                 "logRecords": [{
                   "timeUnixNano":         ts_nano,
-                  "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                  "observedTimeUnixNano": to_unix_timestamp(now(), unit: "nanoseconds"),
                   "severityNumber":       sev_num,
                   "severityText":         sev_text,
                   "body":                 { "stringValue": msg },
