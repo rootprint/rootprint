@@ -65,6 +65,10 @@
 								"pages": ["send-logs/platforms/docker"]
 							},
 							{
+								"group": "Web Servers",
+								"pages": ["send-logs/web-servers/caddy", "send-logs/web-servers/nginx"]
+							},
+							{
 								"group": "Log Agents",
 								"pages": ["send-logs/log-agents/fluent-bit", "send-logs/log-agents/vector"]
 							},

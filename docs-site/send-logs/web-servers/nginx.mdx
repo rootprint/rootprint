@@ -1,0 +1,356 @@
+---
+title: 'Send nginx logs with Vector'
+description: 'Tail nginx''s default `combined` access logs and error logs with Vector and ship them to Logwiz over OTLP, with the access fields mapped to OpenTelemetry HTTP semantic conventions.'
+---
+
+[nginx](https://nginx.org) writes plain-text logs by default — `combined` format for access logs and a separate text format for error logs. This page sets up Vector as a `systemd` service that tails `/var/log/nginx/access.log` and `/var/log/nginx/error.log`, parses each line with Vector's built-in `parse_nginx_log`, maps the error-log `severity` field to OTel severity, and ships the result to Logwiz's OTLP endpoint with a Bearer token. Records land in the `otel-logs-v0_9` index with `service.name: nginx` and OpenTelemetry HTTP attributes (`http.request.method`, `url.path`, `http.response.status_code`, `client.address`, `user_agent.original`, …) pre-populated.
+
+<Warning>
+	Paths and `systemctl` invocations below assume Debian or Ubuntu. nginx itself runs on every
+	major platform, but this page does not cover macOS, Windows, or FreeBSD.
+</Warning>
+
+## Setup
+
+<Steps>
+  <Step title="Pick the target index and create an ingest token">
+    The default index for OTLP traffic is `otel-logs-v0_9` — see [Indexes](/indexes) for its
+    schema. In **Administration → Tokens**, click **Create Token**, pick `otel-logs-v0_9`, and
+    copy the token value from the new row. Tokens are scoped to one index — you cannot reuse a
+    token across indexes.
+  </Step>
+
+  <Step title="Confirm nginx is logging to file">
+    Stock nginx already writes `combined`-format access logs to
+    `/var/log/nginx/access.log` and error logs to `/var/log/nginx/error.log` — the wizard
+    targets those defaults. No `nginx.conf` changes are required. If you have replaced the
+    default `log_format` with a custom one, the parser below will fall back to leaving the
+    raw line in `body`; either revert to the default `combined` format or extend the
+    `parse_nginx` remap to handle your custom shape.
+  </Step>
+
+  <Step title="Install Vector">
+    Install the Vector package for your platform from the [official installation
+    page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu
+    apt, RHEL/Fedora dnf, container images) are maintained upstream.
+  </Step>
+
+  <Step title="Write the Vector config">
+    Save the following at `/etc/vector/vector.yaml`. Replace `<your-logwiz>` with your Logwiz
+    base URL and `<your-ingest-token>` with the token you copied in step 1.
+
+    ```yaml
+    sources:
+      nginx_logs:
+        type: file
+        include:
+          - /var/log/nginx/access.log
+          - /var/log/nginx/error.log
+        read_from: end
+
+    transforms:
+      parse_nginx:
+        type: remap
+        inputs: [nginx_logs]
+        source: |
+          parsed, err = parse_nginx_log(.message, format: "combined")
+          if err != null {
+            parsed, err = parse_nginx_log(.message, format: "error")
+          }
+          if err == null && is_object(parsed) {
+            . = merge!(., object!(parsed))
+            .nginx_format = if exists(.severity) { "error" } else { "access" }
+          }
+
+          if .nginx_format == "error" {
+            sev = downcase(string(.severity) ?? "info")
+            if sev == "debug"  { .severity_number = 5;  .severity_text = "DEBUG" }
+            else if sev == "info"   { .severity_number = 9;  .severity_text = "INFO" }
+            else if sev == "notice" { .severity_number = 10; .severity_text = "NOTICE" }
+            else if sev == "warn"   { .severity_number = 13; .severity_text = "WARN" }
+            else if sev == "error"  { .severity_number = 17; .severity_text = "ERROR" }
+            else if sev == "crit"   { .severity_number = 19; .severity_text = "CRIT" }
+            else if sev == "alert"  { .severity_number = 21; .severity_text = "ALERT" }
+            else if sev == "emerg"  { .severity_number = 23; .severity_text = "EMERG" }
+            else                    { .severity_number = 9;  .severity_text = "INFO" }
+          } else {
+            .severity_number = 9
+            .severity_text   = "INFO"
+          }
+
+      to_otlp:
+        type: remap
+        inputs: [parse_nginx]
+        source: |
+          msg       = string(.message) ?? ""
+          file_path = string(.file) ?? ""
+          fmt       = string(.nginx_format) ?? "access"
+
+          ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
+          if exists(.timestamp) {
+            ts_val, ts_err = to_unix_timestamp(to_timestamp!(.timestamp), unit: "nanoseconds")
+            if ts_err == null {
+              ts_nano = ts_val
+            }
+          }
+
+          sev_num  = to_int(.severity_number) ?? 9
+          sev_text = string(.severity_text)   ?? "INFO"
+
+          attrs = [
+            { "key": "log.file.path",  "value": { "stringValue": file_path } },
+            { "key": "nginx.format",   "value": { "stringValue": fmt } }
+          ]
+
+          if fmt == "access" {
+            if exists(.request) {
+              req_str = string!(.request)
+              if req_str != "" && req_str != "-" {
+                request_parts = split(req_str, " ")
+                if length(request_parts) >= 1 {
+                  attrs = push(attrs, { "key": "http.request.method", "value": { "stringValue": request_parts[0] } })
+                }
+                if length(request_parts) >= 2 {
+                  attrs = push(attrs, { "key": "url.path", "value": { "stringValue": request_parts[1] } })
+                }
+                if length(request_parts) >= 3 {
+                  proto_parts = split(request_parts[2], "/")
+                  if length(proto_parts) == 2 {
+                    attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(proto_parts[0]) } })
+                    attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": proto_parts[1] } })
+                  }
+                }
+              }
+            }
+            if exists(.status) {
+              status_int, status_err = to_int(.status)
+              if status_err == null {
+                attrs = push(attrs, { "key": "http.response.status_code", "value": { "intValue": status_int } })
+              }
+            }
+            if exists(.size) {
+              size_int, size_err = to_int(.size)
+              if size_err == null {
+                attrs = push(attrs, { "key": "http.response.body.size", "value": { "intValue": size_int } })
+              }
+            }
+            if exists(.client) {
+              attrs = push(attrs, { "key": "client.address", "value": { "stringValue": string!(.client) } })
+            }
+            if exists(.agent) && string!(.agent) != "-" {
+              attrs = push(attrs, { "key": "user_agent.original", "value": { "stringValue": string!(.agent) } })
+            }
+            if exists(.referer) && string!(.referer) != "-" {
+              attrs = push(attrs, { "key": "http.request.header.referer", "value": { "stringValue": string!(.referer) } })
+            }
+            if exists(.user) && string!(.user) != "-" {
+              attrs = push(attrs, { "key": "enduser.id", "value": { "stringValue": string!(.user) } })
+            }
+          } else {
+            if exists(.pid) {
+              pid_int, pid_err = to_int(.pid)
+              if pid_err == null {
+                attrs = push(attrs, { "key": "process.pid", "value": { "intValue": pid_int } })
+              }
+            }
+            if exists(.tid) {
+              tid_int, tid_err = to_int(.tid)
+              if tid_err == null {
+                attrs = push(attrs, { "key": "thread.id", "value": { "intValue": tid_int } })
+              }
+            }
+            if exists(.cid) {
+              cid_int, cid_err = to_int(.cid)
+              if cid_err == null {
+                attrs = push(attrs, { "key": "nginx.connection_id", "value": { "intValue": cid_int } })
+              }
+            }
+            if exists(.client) {
+              attrs = push(attrs, { "key": "client.address", "value": { "stringValue": string!(.client) } })
+            }
+            if exists(.host) {
+              attrs = push(attrs, { "key": "server.address", "value": { "stringValue": string!(.host) } })
+            }
+            if exists(.server) {
+              attrs = push(attrs, { "key": "nginx.server", "value": { "stringValue": string!(.server) } })
+            }
+            if exists(.upstream) {
+              attrs = push(attrs, { "key": "nginx.upstream", "value": { "stringValue": string!(.upstream) } })
+            }
+          }
+
+          . = {
+            "resourceLogs": [{
+              "resource": {
+                "attributes": [
+                  { "key": "service.name", "value": { "stringValue": "nginx" } },
+                  { "key": "host.name",    "value": { "stringValue": get_hostname!() } }
+                ]
+              },
+              "scopeLogs": [{
+                "scope": { "name": "vector", "version": "" },
+                "logRecords": [{
+                  "timeUnixNano":         ts_nano,
+                  "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                  "severityNumber":       sev_num,
+                  "severityText":         sev_text,
+                  "body":                 { "stringValue": msg },
+                  "attributes":           attrs,
+                  "traceId":              "",
+                  "spanId":               "",
+                  "flags":                0,
+                  "droppedAttributesCount": 0
+                }]
+              }]
+            }]
+          }
+
+    sinks:
+      logwiz:
+        type: opentelemetry
+        inputs: [to_otlp]
+        protocol:
+          type: http
+          uri: https://<your-logwiz>/api/otlp/v1/logs
+          method: post
+          encoding:
+            codec: otlp
+          compression: gzip
+          request:
+            headers:
+              Authorization: "Bearer <your-ingest-token>"
+          batch:
+            timeout_secs: 1
+            max_bytes: 8388608
+    ```
+
+    `read_from: end` skips existing content on first start, so installing Vector against an
+    existing `access.log` does not replay every historical request. Flip it to `beginning` if
+    you want a one-time backfill.
+  </Step>
+
+  <Step title="Grant Vector read access to /var/log/nginx">
+    nginx's Debian/Ubuntu package owns `/var/log/nginx/` as `www-data:adm` with mode `640`,
+    so Vector's `vector` user cannot read it. The `adm` group is the read-side convention for
+    log files on those distros — add `vector` to it:
+
+    ```bash
+    sudo usermod -aG adm vector
+    ```
+  </Step>
+
+  <Step title="Restart Vector">
+    ```bash
+    sudo systemctl restart vector
+    sudo systemctl status vector
+    ```
+
+    The status output should show `active (running)` and the most recent log lines should not
+    contain config-parse or sink-startup errors.
+  </Step>
+
+  <Step title="Send a test request">
+    Hit any site nginx is serving so it writes a fresh access-log line:
+
+    ```bash
+    curl -i http://localhost/
+    ```
+
+    Replace `http://localhost/` with whichever site URL nginx is configured for.
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, pick `otel-logs-v0_9` from the index selector, and query
+    `service.name:nginx`. Records typically appear within 5–10 seconds.
+  </Step>
+</Steps>
+
+## What the parsing does
+
+Two `remap` transforms run in sequence. The first, `parse_nginx`, turns each raw text line into structured fields and assigns severity. The second, `to_otlp`, packs those fields into the OTLP wire format that Logwiz's ingest endpoint expects.
+
+`parse_nginx`:
+
+- **Format detection** — `parse_nginx_log(format: "combined")` is tried first; if that errors, `parse_nginx_log(format: "error")` runs. Vector's built-in parsers handle escape sequences and optional fields; we chain rather than parse in parallel because every line is unambiguously one or the other and `combined` is overwhelmingly more common. If both fail (custom `log_format`, malformed line) the event falls through with the raw `.message` intact rather than being dropped.
+- **`nginx_format` discriminator** — `"access"` if the parsed object has no `.severity` field, `"error"` otherwise. Lets the OTLP transform branch on a single boolean check instead of re-probing field presence.
+- **Severity** — error-log entries map nginx's `severity` field directly to OTel: `debug` → 5/DEBUG, `info` → 9/INFO, `notice` → 10/NOTICE, `warn` → 13/WARN, `error` → 17/ERROR, `crit` → 19/CRIT, `alert` → 21/ALERT, `emerg` → 23/EMERG. Access entries default to 9/INFO — the combined format has no severity field, every request is implicitly informational. No status-code override; a 5xx access entry stays at INFO. Filter on `attributes.http.response.status_code` for triage.
+
+`to_otlp` assembles the OTLP envelope. `service.name` is hard-coded to `nginx` (resource attribute). The `if fmt == "access"` branch is what makes one VRL block handle both files cleanly: error-log entries get `process.pid`, `thread.id`, `nginx.connection_id`, and (when present) the upstream/server context fields; access-log entries get the full HTTP semantic-convention attribute set. `parse_nginx_log("combined")` returns the request line as a single `.request` field (e.g. `"GET /api/foo HTTP/1.1"`), so the access branch splits it on whitespace to populate `http.request.method`, `url.path`, `network.protocol.name`, and `network.protocol.version` separately. Malformed request lines (`-`, empty) skip those attributes rather than emitting partial data.
+
+| OTLP key                       | Source field                                   | Format |
+| ------------------------------ | ---------------------------------------------- | ------ |
+| `http.request.method`          | first whitespace-delimited segment of `.request`        | access |
+| `url.path`                     | second segment of `.request`                            | access |
+| `network.protocol.name`        | third segment of `.request`, split on `/`, lowercased   | access |
+| `network.protocol.version`     | third segment of `.request`, split on `/`               | access |
+| `http.response.status_code`    | `.status`                                               | access |
+| `http.response.body.size`      | `.size`                                                 | access |
+| `client.address`               | `.client`                                               | both   |
+| `user_agent.original`          | `.agent` (skipped if `-`)                               | access |
+| `http.request.header.referer`  | `.referer` (skipped if `-`)                             | access |
+| `enduser.id`                   | `.user` (skipped if `-`)                                | access |
+| `process.pid`                  | `.pid`                                                  | error  |
+| `thread.id`                    | `.tid`                                                  | error  |
+| `nginx.connection_id`          | `.cid` (when present)                                   | error  |
+| `server.address`               | `.host` (when present)                                  | error  |
+| `nginx.server`                 | `.server` (when present — server block)                 | error  |
+| `nginx.upstream`               | `.upstream` (when present)                              | error  |
+| `nginx.format`                 | `"access"` or `"error"` discriminator                   | both   |
+| `log.file.path`                | Vector's `.file` source attribute                       | both   |
+
+`timeUnixNano` is derived from the parsed `.timestamp` field; `parse_nginx_log` returns it as a Vector `Timestamp` value, so we convert with `to_unix_timestamp` directly. If the field is missing or the conversion fails, Vector's read time is used as a fallback. The final `. = { resourceLogs: [...] }` reassignment replaces the event entirely, so the OTLP sink sees only the envelope.
+
+## Useful searches
+
+Run these in the Logwiz search box against `otel-logs-v0_9`.
+
+Every 5xx response nginx returned, across all sites:
+
+```text
+service.name:nginx AND attributes.http.response.status_code:>=500
+```
+
+All 4xx responses for one URL prefix — useful for spotting bad clients hammering one endpoint:
+
+```text
+service.name:nginx AND attributes.url.path:/api/* AND attributes.http.response.status_code:>=400
+```
+
+Activity from a single source IP — pivot from a suspect address back to everything it touched:
+
+```text
+attributes.client.address:1.2.3.4
+```
+
+Failed POSTs only:
+
+```text
+service.name:nginx AND attributes.http.request.method:POST AND attributes.http.response.status_code:>=400
+```
+
+Error-log entries only (skip access logs):
+
+```text
+service.name:nginx AND attributes.nginx.format:error
+```
+
+Upstream failures — the things that page someone:
+
+```text
+service.name:nginx AND attributes.nginx.format:error AND attributes.nginx.upstream:*
+```
+
+## Troubleshooting
+
+- **`permission denied` reading `/var/log/nginx/access.log`** — Vector's `vector` user is not in the `adm` group. Run `sudo usermod -aG adm vector` and restart Vector. If that's not available, `sudo chmod a+r /var/log/nginx/*.log` works but loosens permissions for every user on the host.
+- **Records arrive but `attributes.http.*` are missing** — the entry came from `error.log` (no access fields), by design. Filter access-log entries with `attributes.nginx.format:access`.
+- **`body` looks like a raw nginx line instead of a structured message** — the access log is using a non-default `log_format` directive in `nginx.conf`. The parser expects nginx's stock combined format. Either remove the custom `log_format` or extend the `parse_nginx` remap to handle the alternate shape.
+- **`severity_text` is always `INFO` for access entries even on 5xx** — by design. nginx's combined format has no severity field; this parser trusts the source. Filter on `attributes.http.response.status_code:>=500` to surface server errors.
+- **`401`, `403`, `413`, `415` from Logwiz** — same response codes as a misconfigured Vector setup of any kind. See [Send logs with Vector](/send-logs/log-agents/vector#troubleshooting) for full diagnoses.
+
+## Related
+
+- [Send logs with Vector](/send-logs/log-agents/vector) — generic Vector setup for tailing files on a host.
+- [Send Caddy logs with Vector](/send-logs/web-servers/caddy) — sibling page for Caddy.
+- [OTLP reference](/send-logs/otlp) — endpoint URL, response codes, body limits.
+- [Indexes](/indexes) — the `otel-logs-v0_9` schema, so you know what you can search.
