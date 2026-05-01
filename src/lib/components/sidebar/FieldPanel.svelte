@@ -5,6 +5,7 @@
 	import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
 	import { storageKeys } from '$lib/constants/storage-keys';
 	import type { IndexField, QuickFilterBucket } from '$lib/types';
+	import { isOtelAttr, isOtelResourceAttr, otelDisplayName } from '$lib/utils/fields';
 	import { severityDotColor, sortBySeverity } from '$lib/utils/log-helpers';
 	import { parseClauses } from '$lib/utils/query';
 	import { formatCountAsPercent } from '$lib/utils/quick-filter-percent';
@@ -42,47 +43,44 @@
 		isOtelIndex?: boolean;
 	} = $props();
 
-	let clauses = $derived(parseClauses(query));
-
-	let openSections = new SvelteSet<string>();
-	let expandedAggregations = $state<Record<string, QuickFilterBucket[]>>({});
-	let loadingSections = new SvelteSet<string>();
-
-	let searchTerms = $state<Record<string, string>>({});
-	let searchResults = $state<
-		Record<string, { values: QuickFilterBucket[]; totalHits: number } | null>
-	>({});
-	let loadingSearch = new SvelteSet<string>();
-	let expandedCounts = $state<Record<string, number>>({});
-	let debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
-
 	const INITIAL_SHOW_COUNT = 10;
 	const PAGE_SIZE = 100;
 
-	function resetIndexScopedState() {
-		for (const timer of Object.values(debounceTimers)) clearTimeout(timer);
-		debounceTimers = {};
+	let clauses = $derived(parseClauses(query));
+	let hasAnyFilters = $derived(clauses.length > 0);
 
-		expandedAggregations = {};
-		searchTerms = {};
-		searchResults = {};
-		expandedCounts = {};
+	type SearchResult = { values: QuickFilterBucket[]; totalHits: number };
+	type FieldState = {
+		aggregations: QuickFilterBucket[] | null;
+		searchTerm: string;
+		searchResult: SearchResult | null;
+		showCount: number;
+		loadingAggregations: boolean;
+		loadingSearch: boolean;
+	};
 
-		loadingSections.clear();
-		loadingSearch.clear();
-		prevRefreshKey = '';
+	let openSections = new SvelteSet<string>();
+	let collapsedGroups = new SvelteSet<string>();
+	let nonFastCollapsed = $state(true);
+	let fieldStates = $state<Record<string, FieldState>>({});
+
+	let debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+	let prevRefreshKey = '';
+
+	function fieldState(name: string): FieldState {
+		const existing = fieldStates[name];
+		if (existing) return existing;
+		const created: FieldState = {
+			aggregations: null,
+			searchTerm: '',
+			searchResult: null,
+			showCount: INITIAL_SHOW_COUNT,
+			loadingAggregations: false,
+			loadingSearch: false
+		};
+		fieldStates[name] = created;
+		return created;
 	}
-
-	// --- localStorage persistence for open sections ---
-
-	let previousIndexId: string | null = null;
-
-	$effect(() => {
-		const nextIndexId = indexId ?? null;
-		if (nextIndexId === previousIndexId) return;
-		previousIndexId = nextIndexId;
-		resetIndexScopedState();
-	});
 
 	function loadSet(key: string): string[] {
 		try {
@@ -93,27 +91,30 @@
 		}
 	}
 
-	function saveOpenSections(id: string | null, sections: SvelteSet<string>) {
-		if (!id) return;
-		localStorage.setItem(storageKeys.openSections(id), JSON.stringify([...sections]));
+	function saveSet(key: string, set: SvelteSet<string>) {
+		localStorage.setItem(key, JSON.stringify([...set]));
 	}
 
-	// Restore open sections from localStorage
+	$effect(() => {
+		void indexId;
+		for (const timer of Object.values(debounceTimers)) clearTimeout(timer);
+		debounceTimers = {};
+		fieldStates = {};
+		prevRefreshKey = '';
+	});
+
 	$effect(() => {
 		openSections.clear();
 		if (fields.length === 0) return;
 		if (indexId) {
 			const fieldSet = new Set(fields.map((f) => f.name));
-			const savedOpen = loadSet(storageKeys.openSections(indexId));
-			for (const f of savedOpen) {
-				if (fieldSet.has(f)) openSections.add(f);
+			for (const name of loadSet(storageKeys.openSections(indexId))) {
+				if (fieldSet.has(name)) openSections.add(name);
 			}
 		}
-		// Always open the level field by default
 		if (levelField) openSections.add(levelField);
 	});
 
-	// Restore collapsed groups from localStorage
 	$effect(() => {
 		collapsedGroups.clear();
 		if (indexId) {
@@ -123,16 +124,12 @@
 		}
 	});
 
-	// Clean up debounce timers
 	$effect(() => {
 		return () => {
 			for (const timer of Object.values(debounceTimers)) clearTimeout(timer);
 		};
 	});
 
-	// Re-fetch expanded field aggregations when query or numHits changes
-	// (query changes on filter toggle, numHits changes on new search results)
-	let prevRefreshKey = '';
 	$effect(() => {
 		const key = `${query}\0${numHits}`;
 		if (prevRefreshKey && key !== prevRefreshKey) {
@@ -146,15 +143,13 @@
 		const search = onsearch;
 		const fieldsToRefresh = [...openSections].filter((f) => f !== levelField);
 		Promise.allSettled(
-			fieldsToRefresh.map((fieldName) =>
-				search(fieldName, searchTerms[fieldName]?.trim() || '').then((result) => {
-					expandedAggregations = { ...expandedAggregations, [fieldName]: result.values };
+			fieldsToRefresh.map((name) =>
+				search(name, fieldStates[name]?.searchTerm.trim() ?? '').then((result) => {
+					fieldState(name).aggregations = result.values;
 				})
 			)
 		);
 	}
-
-	// --- Field sorting: level field first, then fast fields, then non-fast ---
 
 	let fastFields = $derived.by(() => {
 		const level: IndexField[] = [];
@@ -168,82 +163,74 @@
 	});
 
 	let nonFastFields = $derived(fields.filter((f) => !f.fast));
-	let nonFastCollapsed = $state(true);
 
-	// --- OTel field grouping ---
-	let topLevelFields = $derived(
-		isOtelIndex
-			? fastFields.filter(
-					(f) => !f.name.startsWith('resource_attributes.') && !f.name.startsWith('attributes.')
-				)
-			: fastFields
-	);
+	type FieldGroup = {
+		key: string;
+		label: string;
+		fields: IndexField[];
+		indented: boolean;
+	};
 
-	let resourceAttrFields = $derived(
-		isOtelIndex ? fastFields.filter((f) => f.name.startsWith('resource_attributes.')) : []
-	);
-
-	let attrFields = $derived(
-		isOtelIndex ? fastFields.filter((f) => f.name.startsWith('attributes.')) : []
-	);
-
-	let collapsedGroups = new SvelteSet<string>();
-
-	function saveCollapsedGroups(id: string | null, groups: SvelteSet<string>) {
-		if (!id) return;
-		localStorage.setItem(storageKeys.collapsedGroups(id), JSON.stringify([...groups]));
-	}
+	let fastGroups = $derived.by<FieldGroup[]>(() => {
+		if (!isOtelIndex) {
+			return [{ key: 'all', label: '', fields: fastFields, indented: false }];
+		}
+		const top: IndexField[] = [];
+		const attrs: IndexField[] = [];
+		const resourceAttrs: IndexField[] = [];
+		for (const f of fastFields) {
+			if (isOtelResourceAttr(f.name)) resourceAttrs.push(f);
+			else if (isOtelAttr(f.name)) attrs.push(f);
+			else top.push(f);
+		}
+		return [
+			{ key: 'top', label: '', fields: top, indented: false },
+			{ key: 'attributes', label: 'Attributes', fields: attrs, indented: true },
+			{
+				key: 'resource_attributes',
+				label: 'Resource Attributes',
+				fields: resourceAttrs,
+				indented: true
+			}
+		];
+	});
 
 	function toggleGroup(group: string) {
-		if (collapsedGroups.has(group)) {
-			collapsedGroups.delete(group);
-		} else {
-			collapsedGroups.add(group);
-		}
-		saveCollapsedGroups(indexId, collapsedGroups);
+		if (collapsedGroups.has(group)) collapsedGroups.delete(group);
+		else collapsedGroups.add(group);
+		if (indexId) saveSet(storageKeys.collapsedGroups(indexId), collapsedGroups);
 	}
-
-	// --- Expand/collapse ---
 
 	async function toggleSection(field: IndexField) {
 		if (!field.fast) return;
-		if (openSections.has(field.name)) {
-			openSections.delete(field.name);
+		const name = field.name;
+		if (openSections.has(name)) {
+			openSections.delete(name);
 		} else {
-			openSections.add(field.name);
-			// Lazy-load aggregations if not the level field and not already loaded
-			if (field.name !== levelField && !expandedAggregations[field.name] && onsearch) {
-				loadingSections.add(field.name);
+			openSections.add(name);
+			if (name !== levelField && !fieldStates[name]?.aggregations && onsearch) {
+				fieldState(name).loadingAggregations = true;
 				try {
-					const result = await onsearch(field.name, '');
-					expandedAggregations = {
-						...expandedAggregations,
-						[field.name]: result.values
-					};
+					const result = await onsearch(name, '');
+					fieldState(name).aggregations = result.values;
 				} catch {
 					// Leave empty on error
 				} finally {
-					loadingSections.delete(field.name);
+					if (fieldStates[name]) fieldStates[name].loadingAggregations = false;
 				}
 			}
 		}
-		saveOpenSections(indexId, openSections);
+		if (indexId) saveSet(storageKeys.openSections(indexId), openSections);
 	}
 
-	// --- Aggregation data access ---
-
-	function getAggregations(field: string): QuickFilterBucket[] {
-		if (field === levelField) {
-			return levelAggregations[field] ?? [];
-		}
-		return expandedAggregations[field] ?? [];
+	function getAggregations(name: string): QuickFilterBucket[] {
+		if (name === levelField) return levelAggregations[name] ?? [];
+		return fieldStates[name]?.aggregations ?? [];
 	}
 
-	function getDenominator(field: string): number {
-		return searchResults[field]?.totalHits ?? numHits;
+	function getDenominator(name: string): number {
+		return fieldStates[name]?.searchResult?.totalHits ?? numHits;
 	}
-
-	// --- Display values (same logic as old QuickFilterPanel) ---
 
 	function getActiveValues(field: string): string[] {
 		const seen = new Set<string>();
@@ -266,27 +253,26 @@
 		return getAggregations(field).length + getGhostValues(field).length;
 	}
 
-	function getDisplayValues(field: string): QuickFilterBucket[] {
-		const searched = searchResults[field];
-		if (searched !== null && searched !== undefined) {
-			return searched.values;
-		}
-		const active = getActiveValues(field);
+	function getDisplayValues(name: string): QuickFilterBucket[] {
+		const s = fieldStates[name];
+		if (s?.searchResult) return s.searchResult.values;
+
+		const active = getActiveValues(name);
 		const activeSet = new Set(active);
-		const aggBuckets = getAggregations(field);
+		const aggBuckets = getAggregations(name);
 		const aggValueMap = new Map(aggBuckets.map((b) => [b.value, b]));
 		const activeBuckets: QuickFilterBucket[] = active.map(
 			(value) => aggValueMap.get(value) ?? { value, count: null }
 		);
 		const remainingBuckets = aggBuckets.filter((b) => !activeSet.has(b.value));
-		const limit = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
+		const limit = s?.showCount ?? INITIAL_SHOW_COUNT;
 		return [...activeBuckets, ...remainingBuckets.slice(0, limit)];
 	}
 
-	function getAggregationRemaining(field: string): number {
-		const activeSet = new Set(getActiveValues(field));
-		const total = getAggregations(field).filter((b) => !activeSet.has(b.value)).length;
-		const shown = expandedCounts[field] ?? INITIAL_SHOW_COUNT;
+	function getAggregationRemaining(name: string): number {
+		const activeSet = new Set(getActiveValues(name));
+		const total = getAggregations(name).filter((b) => !activeSet.has(b.value)).length;
+		const shown = fieldStates[name]?.showCount ?? INITIAL_SHOW_COUNT;
 		return Math.max(0, total - shown);
 	}
 
@@ -296,71 +282,52 @@
 		return sortedValues.map((v) => byValue.get(v) ?? { value: v, count: null });
 	}
 
-	// --- Search within expanded field ---
-
-	function handleSearchInput(field: string, value: string) {
-		searchTerms = { ...searchTerms, [field]: value };
-		clearTimeout(debounceTimers[field]);
+	function handleSearchInput(name: string, value: string) {
+		const s = fieldState(name);
+		s.searchTerm = value;
+		clearTimeout(debounceTimers[name]);
 
 		if (!value.trim()) {
-			searchResults = { ...searchResults, [field]: null };
-			loadingSearch.delete(field);
+			s.searchResult = null;
+			s.loadingSearch = false;
 			return;
 		}
 
-		loadingSearch.add(field);
-		debounceTimers[field] = setTimeout(async () => {
-			const currentTerm = searchTerms[field];
+		s.loadingSearch = true;
+		debounceTimers[name] = setTimeout(async () => {
+			const currentTerm = fieldStates[name]?.searchTerm;
 			if (!currentTerm?.trim() || !onsearch) {
-				loadingSearch.delete(field);
+				if (fieldStates[name]) fieldStates[name].loadingSearch = false;
 				return;
 			}
 			try {
-				const result = await onsearch(field, currentTerm.trim());
-				if (searchTerms[field] === currentTerm) {
-					searchResults = { ...searchResults, [field]: result };
-				}
+				const result = await onsearch(name, currentTerm.trim());
+				const live = fieldStates[name];
+				if (live && live.searchTerm === currentTerm) live.searchResult = result;
 			} catch {
-				if (searchTerms[field] === currentTerm) {
-					searchResults = { ...searchResults, [field]: null };
-				}
+				const live = fieldStates[name];
+				if (live && live.searchTerm === currentTerm) live.searchResult = null;
 			} finally {
-				loadingSearch.delete(field);
+				if (fieldStates[name]) fieldStates[name].loadingSearch = false;
 			}
 		}, 300);
 	}
 
-	// --- Filter toggling ---
-
 	function toggleValue(field: string, value: string) {
-		if (hasClause(field, value)) {
-			onRemoveClause(field, value);
-		} else {
-			onAddClause(field, value);
-		}
-	}
-
-	function isChecked(field: string, value: string): boolean {
-		return hasClause(field, value);
+		if (hasClause(field, value)) onRemoveClause(field, value);
+		else onAddClause(field, value);
 	}
 
 	function hasActiveClausesForField(field: string): boolean {
 		return clauses.some((c) => c.field === field && !c.exclude);
 	}
 
-	// --- Filter state ---
-
-	let hasAnyFilters = $derived(clauses.length > 0);
-
 	function displayName(field: IndexField): string {
-		if (!isOtelIndex) return field.name;
-		if (field.name.startsWith('resource_attributes.')) return field.name.slice(20);
-		if (field.name.startsWith('attributes.')) return field.name.slice(11);
-		return field.name;
+		return isOtelIndex ? otelDisplayName(field.name) : field.name;
 	}
 
-	function getFieldCountLabel(field: string): string {
-		const count = (levelAggregations[field] ?? expandedAggregations[field] ?? []).length;
+	function getFieldCountLabel(name: string): string {
+		const count = (levelAggregations[name] ?? fieldStates[name]?.aggregations ?? []).length;
 		if (count === 0) return '';
 		if (count >= QUICKWIT_AGG_MAX) return `${QUICKWIT_AGG_MAX}+`;
 		return String(count);
@@ -368,44 +335,55 @@
 </script>
 
 {#snippet fieldValues(field: IndexField, isLevel: boolean, indented: boolean = false)}
+	{@const name = field.name}
+	{@const state = fieldStates[name]}
+	{@const isLoading = state?.loadingAggregations ?? false}
+	{@const isSearching = state?.loadingSearch ?? false}
+	{@const searchTerm = state?.searchTerm.trim() ?? ''}
+	{@const displayValues = getDisplayValues(name)}
+	{@const totalValues = getTotalValueCount(name)}
+	{@const remaining = getAggregationRemaining(name)}
+	{@const denominator = getDenominator(name)}
+	{@const shown = state?.showCount ?? INITIAL_SHOW_COUNT}
+	{@const anyActiveForField = hasActiveClausesForField(name)}
+
 	<div class="{indented ? 'pr-3 pl-6' : 'px-3'} pb-3">
-		{#if loadingSections.has(field.name)}
+		{#if isLoading}
 			<div class="flex items-center gap-2 py-1">
 				<span class="loading loading-xs loading-spinner"></span>
 				<span class="text-xs text-base-content/50">Loading...</span>
 			</div>
-		{:else if getTotalValueCount(field.name) > INITIAL_SHOW_COUNT}
+		{:else if totalValues > INITIAL_SHOW_COUNT}
 			<input
 				type="text"
 				class="input input-xs mb-2 w-full border-base-300 bg-base-200/50"
 				placeholder="Search values..."
-				value={searchTerms[field.name] ?? ''}
-				oninput={(e) => handleSearchInput(field.name, e.currentTarget.value)}
+				value={state?.searchTerm ?? ''}
+				oninput={(e) => handleSearchInput(name, e.currentTarget.value)}
 			/>
 		{/if}
 
-		{#if loadingSearch.has(field.name)}
+		{#if isSearching}
 			<div class="flex items-center gap-2 py-1">
 				<span class="loading loading-xs loading-spinner"></span>
 				<span class="text-xs text-base-content/50">Searching...</span>
 			</div>
-		{:else if !loadingSections.has(field.name) && getDisplayValues(field.name).length === 0}
+		{:else if !isLoading && displayValues.length === 0}
 			<p class="py-1 text-xs text-base-content/50">
-				{searchTerms[field.name]?.trim() ? 'No matching values' : 'No values found'}
+				{searchTerm ? 'No matching values' : 'No values found'}
 			</p>
-		{:else if !loadingSections.has(field.name)}
+		{:else if !isLoading}
 			<div class="flex flex-col gap-1">
-				{#each isLevel ? sortBucketsBySeverity(getDisplayValues(field.name)) : getDisplayValues(field.name) as bucket (bucket.value)}
+				{#each isLevel ? sortBucketsBySeverity(displayValues) : displayValues as bucket (bucket.value)}
+					{@const isActive = hasClause(name, bucket.value)}
 					{#if isLevel}
 						{@const dotColor = severityDotColor(bucket.value.toLowerCase())}
-						{@const isActive = isChecked(field.name, bucket.value)}
-						{@const anyActive = hasActiveClausesForField(field.name)}
-						{@const showFull = !anyActive || isActive}
+						{@const showFull = !anyActiveForField || isActive}
 						<button
 							class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 text-xs transition-colors duration-150"
 							role="checkbox"
 							aria-checked={isActive}
-							onclick={() => toggleValue(field.name, bucket.value)}
+							onclick={() => toggleValue(name, bucket.value)}
 						>
 							<span
 								class="h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-150 {showFull
@@ -418,7 +396,7 @@
 									: 'text-base-content/40'}">{bucket.value}</span
 							>
 							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums">
-								{formatCountAsPercent(bucket.count, getDenominator(field.name))}
+								{formatCountAsPercent(bucket.count, denominator)}
 							</span>
 						</button>
 					{:else}
@@ -426,40 +404,32 @@
 							<input
 								type="checkbox"
 								class="checkbox checkbox-xs text-white checked:[--input-color:var(--color-primary)]"
-								checked={isChecked(field.name, bucket.value)}
+								checked={isActive}
 								onclick={(e) => {
 									e.preventDefault();
-									toggleValue(field.name, bucket.value);
+									toggleValue(name, bucket.value);
 								}}
 							/>
 							<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
 							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums">
-								{formatCountAsPercent(bucket.count, getDenominator(field.name))}
+								{formatCountAsPercent(bucket.count, denominator)}
 							</span>
 						</label>
 					{/if}
 				{/each}
 			</div>
 
-			{#if !searchTerms[field.name]?.trim() && getAggregationRemaining(field.name) > 0}
+			{#if !searchTerm && remaining > 0}
 				<button
 					class="mt-1 text-xs text-primary hover:underline"
-					onclick={() => {
-						expandedCounts = {
-							...expandedCounts,
-							[field.name]: (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) + PAGE_SIZE
-						};
-					}}
+					onclick={() => (fieldState(name).showCount += PAGE_SIZE)}
 				>
-					Show more ({getAggregationRemaining(field.name)} remaining)
+					Show more ({remaining} remaining)
 				</button>
-			{:else if !searchTerms[field.name]?.trim() && (expandedCounts[field.name] ?? INITIAL_SHOW_COUNT) > INITIAL_SHOW_COUNT && getTotalValueCount(field.name) > INITIAL_SHOW_COUNT}
+			{:else if !searchTerm && shown > INITIAL_SHOW_COUNT && totalValues > INITIAL_SHOW_COUNT}
 				<button
 					class="mt-1 text-xs text-primary hover:underline"
-					onclick={() => {
-						const { [field.name]: _, ...rest } = expandedCounts;
-						expandedCounts = rest;
-					}}
+					onclick={() => (fieldState(name).showCount = INITIAL_SHOW_COUNT)}
 				>
 					Show less
 				</button>
@@ -468,8 +438,64 @@
 	</div>
 {/snippet}
 
+{#snippet fieldRow(field: IndexField, indented: boolean = false)}
+	{@const isLevel = field.name === levelField}
+	{@const isOpen = openSections.has(field.name)}
+	{@const countLabel = getFieldCountLabel(field.name)}
+
+	<div class="border-b border-base-300/50">
+		<div class="flex w-full items-center px-3 py-1.5{indented ? ' pl-6' : ''}">
+			<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
+				{#if isOpen}
+					<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
+				{:else}
+					<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+				{/if}
+				<span
+					class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
+					title={field.name}
+				>
+					{displayName(field)}
+				</span>
+			</button>
+			{#if countLabel}
+				<span class="text-[10px] text-base-content/40">({countLabel})</span>
+			{/if}
+		</div>
+
+		{#if isOpen}
+			{@render fieldValues(field, isLevel, indented)}
+		{/if}
+	</div>
+{/snippet}
+
+{#snippet groupHeader(opts: {
+	label: string;
+	count: number;
+	isCollapsed: boolean;
+	onToggle: () => void;
+	dim?: boolean;
+})}
+	<div class="border-b border-base-300/50">
+		<button class="flex w-full items-center px-3 py-1.5" onclick={opts.onToggle}>
+			{#if opts.isCollapsed}
+				<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
+			{:else}
+				<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
+			{/if}
+			<span
+				class="flex-1 text-left text-xs font-medium {opts.dim
+					? 'text-base-content/60'
+					: 'text-base-content'}"
+			>
+				{opts.label}
+			</span>
+			<span class="text-[10px] text-base-content/40">({opts.count})</span>
+		</button>
+	</div>
+{/snippet}
+
 <div class="flex flex-col bg-base-100">
-	<!-- Panel header -->
 	<div class="flex items-center border-b border-base-300 px-3 py-2">
 		<h3
 			class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
@@ -497,211 +523,34 @@
 		</div>
 	{:else}
 		<div class="flex flex-col">
-			<!-- Fast fields (expandable with filter values) -->
-			{#if isOtelIndex}
-				<!-- OTel grouped layout -->
-
-				<!-- Top-level fields (flat) -->
-				{#each topLevelFields as field (field.name)}
-					{@const isLevel = field.name === levelField}
-					{@const isOpen = openSections.has(field.name)}
-
-					<div class="border-b border-base-300/50">
-						<div class="flex w-full items-center px-3 py-1.5">
-							<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
-								{#if isOpen}
-									<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-								{:else}
-									<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-								{/if}
-								<span
-									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
-									title={field.name}
-								>
-									{displayName(field)}
-								</span>
-							</button>
-							{#if getFieldCountLabel(field.name)}
-								<span class="text-[10px] text-base-content/40">
-									({getFieldCountLabel(field.name)})
-								</span>
-							{/if}
-						</div>
-
-						{#if isOpen}
-							{@render fieldValues(field, isLevel)}
-						{/if}
-					</div>
-				{/each}
-
-				<!-- Attributes group -->
-				{#if attrFields.length > 0}
-					<div class="border-b border-base-300/50">
-						<button
-							class="flex w-full items-center px-3 py-1.5"
-							onclick={() => toggleGroup('attributes')}
-						>
-							{#if collapsedGroups.has('attributes')}
-								<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-							{:else}
-								<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-							{/if}
-							<span class="flex-1 text-left text-xs font-medium text-base-content">Attributes</span>
-							<span class="text-[10px] text-base-content/40">
-								({attrFields.length})
-							</span>
-						</button>
-					</div>
-
-					{#if !collapsedGroups.has('attributes')}
-						{#each attrFields as field (field.name)}
-							{@const isOpen = openSections.has(field.name)}
-
-							<div class="border-b border-base-300/50">
-								<div class="flex w-full items-center px-3 py-1.5 pl-6">
-									<button
-										class="flex min-w-0 flex-1 items-center"
-										onclick={() => toggleSection(field)}
-									>
-										{#if isOpen}
-											<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-										{:else}
-											<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-										{/if}
-										<span
-											class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
-											title={field.name}
-										>
-											{displayName(field)}
-										</span>
-									</button>
-									{#if getFieldCountLabel(field.name)}
-										<span class="text-[10px] text-base-content/40">
-											({getFieldCountLabel(field.name)})
-										</span>
-									{/if}
-								</div>
-
-								{#if isOpen}
-									{@render fieldValues(field, false, true)}
-								{/if}
-							</div>
+			{#each fastGroups as group (group.key)}
+				{@const hasHeader = group.label !== ''}
+				{@const collapsed = hasHeader && collapsedGroups.has(group.key)}
+				{#if group.fields.length > 0}
+					{#if hasHeader}
+						{@render groupHeader({
+							label: group.label,
+							count: group.fields.length,
+							isCollapsed: collapsed,
+							onToggle: () => toggleGroup(group.key)
+						})}
+					{/if}
+					{#if !collapsed}
+						{#each group.fields as field (field.name)}
+							{@render fieldRow(field, group.indented)}
 						{/each}
 					{/if}
 				{/if}
+			{/each}
 
-				<!-- Resource Attributes group -->
-				{#if resourceAttrFields.length > 0}
-					<div class="border-b border-base-300/50">
-						<button
-							class="flex w-full items-center px-3 py-1.5"
-							onclick={() => toggleGroup('resource_attributes')}
-						>
-							{#if collapsedGroups.has('resource_attributes')}
-								<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-							{:else}
-								<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-							{/if}
-							<span class="flex-1 text-left text-xs font-medium text-base-content"
-								>Resource Attributes</span
-							>
-							<span class="text-[10px] text-base-content/40">
-								({resourceAttrFields.length})
-							</span>
-						</button>
-					</div>
-
-					{#if !collapsedGroups.has('resource_attributes')}
-						{#each resourceAttrFields as field (field.name)}
-							{@const isOpen = openSections.has(field.name)}
-
-							<div class="border-b border-base-300/50">
-								<div class="flex w-full items-center px-3 py-1.5 pl-6">
-									<button
-										class="flex min-w-0 flex-1 items-center"
-										onclick={() => toggleSection(field)}
-									>
-										{#if isOpen}
-											<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-										{:else}
-											<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-										{/if}
-										<span
-											class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
-											title={field.name}
-										>
-											{displayName(field)}
-										</span>
-									</button>
-									{#if getFieldCountLabel(field.name)}
-										<span class="text-[10px] text-base-content/40">
-											({getFieldCountLabel(field.name)})
-										</span>
-									{/if}
-								</div>
-
-								{#if isOpen}
-									{@render fieldValues(field, false, true)}
-								{/if}
-							</div>
-						{/each}
-					{/if}
-				{/if}
-			{:else}
-				<!-- Non-OTel flat layout (existing behavior) -->
-				{#each fastFields as field (field.name)}
-					{@const isLevel = field.name === levelField}
-					{@const isOpen = openSections.has(field.name)}
-
-					<div class="border-b border-base-300/50">
-						<div class="flex w-full items-center px-3 py-1.5">
-							<button class="flex min-w-0 flex-1 items-center" onclick={() => toggleSection(field)}>
-								{#if isOpen}
-									<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-								{:else}
-									<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-								{/if}
-								<span
-									class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
-									title={field.name}
-								>
-									{field.name}
-								</span>
-							</button>
-							{#if getFieldCountLabel(field.name)}
-								<span class="text-[10px] text-base-content/40">
-									({getFieldCountLabel(field.name)})
-								</span>
-							{/if}
-						</div>
-
-						{#if isOpen}
-							{@render fieldValues(field, isLevel)}
-						{/if}
-					</div>
-				{/each}
-			{/if}
-
-			<!-- Non-fast fields (collapsible section, view toggle only) -->
 			{#if nonFastFields.length > 0}
-				<div class="border-b border-base-300/50">
-					<button
-						class="flex w-full items-center px-3 py-1.5"
-						onclick={() => (nonFastCollapsed = !nonFastCollapsed)}
-					>
-						{#if nonFastCollapsed}
-							<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
-						{:else}
-							<ChevronDown size={12} class="mr-1 shrink-0 text-base-content/60" />
-						{/if}
-						<span class="flex-1 text-left text-xs font-medium text-base-content/60">
-							Other Fields
-						</span>
-						<span class="text-[10px] text-base-content/40">
-							({nonFastFields.length})
-						</span>
-					</button>
-				</div>
+				{@render groupHeader({
+					label: 'Other Fields',
+					count: nonFastFields.length,
+					isCollapsed: nonFastCollapsed,
+					onToggle: () => (nonFastCollapsed = !nonFastCollapsed),
+					dim: true
+				})}
 
 				{#if !nonFastCollapsed}
 					{#each nonFastFields as field (field.name)}

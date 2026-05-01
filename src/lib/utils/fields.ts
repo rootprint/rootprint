@@ -1,5 +1,22 @@
 import type { IndexField } from '$lib/types';
 
+export const OTEL_ATTR_PREFIX = 'attributes.';
+export const OTEL_RESOURCE_ATTR_PREFIX = 'resource_attributes.';
+
+export function isOtelAttr(name: string): boolean {
+	return name.startsWith(OTEL_ATTR_PREFIX);
+}
+
+export function isOtelResourceAttr(name: string): boolean {
+	return name.startsWith(OTEL_RESOURCE_ATTR_PREFIX);
+}
+
+export function otelDisplayName(name: string): string {
+	if (isOtelResourceAttr(name)) return name.slice(OTEL_RESOURCE_ATTR_PREFIX.length);
+	if (isOtelAttr(name)) return name.slice(OTEL_ATTR_PREFIX.length);
+	return name;
+}
+
 function inferType(value: unknown): string {
 	if (typeof value === 'number') return 'u64';
 	if (typeof value === 'boolean') return 'bool';

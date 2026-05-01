@@ -21,6 +21,11 @@
 	import type { TimezoneMode } from '$lib/types';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import {
+		isOtelAttr,
+		isOtelResourceAttr,
+		otelDisplayName
+	} from '$lib/utils/fields';
+	import {
 		extractSeverity,
 		extractTimestamp,
 		extractTraceId,
@@ -138,12 +143,6 @@
 		hideEmpty ? flatParams.filter(([, value]) => !isEmpty(value)) : flatParams
 	);
 
-	function otelDisplayName(key: string): string {
-		if (key.startsWith('resource_attributes.')) return key.slice(20);
-		if (key.startsWith('attributes.')) return key.slice(11);
-		return key;
-	}
-
 	type OtelSectionId = 'attributes' | 'resourceAttributes' | 'other';
 
 	type OtelSection = {
@@ -153,14 +152,10 @@
 		displayKey: (key: string) => string;
 	};
 
-	const attrParams = $derived(filteredParams.filter(([key]) => key.startsWith('attributes.')));
-	const resourceAttrParams = $derived(
-		filteredParams.filter(([key]) => key.startsWith('resource_attributes.'))
-	);
+	const attrParams = $derived(filteredParams.filter(([key]) => isOtelAttr(key)));
+	const resourceAttrParams = $derived(filteredParams.filter(([key]) => isOtelResourceAttr(key)));
 	const otherParams = $derived(
-		filteredParams.filter(
-			([key]) => !key.startsWith('attributes.') && !key.startsWith('resource_attributes.')
-		)
+		filteredParams.filter(([key]) => !isOtelAttr(key) && !isOtelResourceAttr(key))
 	);
 
 	const otelSections = $derived<OtelSection[]>(
