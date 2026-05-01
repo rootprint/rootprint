@@ -1,16 +1,18 @@
 ---
 title: 'Send Caddy logs with Vector'
-description: 'Tail Caddy''s JSON access and error logs with Vector and ship them to Logwiz over OTLP, with the access fields mapped to OpenTelemetry HTTP semantic conventions.'
+description: "Tail Caddy's JSON access and error logs with Vector and ship them to Logwiz over OTLP, with the access fields mapped to OpenTelemetry HTTP semantic conventions."
 ---
 
-[Caddy](https://caddyserver.com) writes structured JSON logs by default. This page sets up Vector as a `systemd` service that tails `/var/log/caddy/access.log` and `/var/log/caddy/error.log`, parses each line with `parse_json`, maps Caddy's `level` field to OTel severity, and ships the result to Logwiz's OTLP endpoint with a Bearer token. Records land in the `otel-logs-v0_9` index with `service.name: caddy` and OpenTelemetry HTTP attributes (`http.request.method`, `url.path`, `http.response.status_code`, `client.address`, `user_agent.original`, …) pre-populated.
+[Caddy](https://caddyserver.com) writes structured JSON logs by default. Vector parses each line with `parse_json`, maps Caddy's `level` field to OTel severity, and ships the result to Logwiz's OTLP endpoint with a Bearer token. Records land in the `otel-logs-v0_9` index with `service.name: caddy` and OpenTelemetry HTTP attributes (`http.request.method`, `url.path`, `http.response.status_code`, `client.address`, `user_agent.original`, …) pre-populated.
+
+Two setup paths are documented below. **Bare-metal** runs Vector as a `systemd` service that tails `/var/log/caddy/*.log` — pick this if Caddy is installed via your distro's package manager. **Docker** runs Vector as a sidecar container that reads Caddy's stdout via the Docker socket — pick this if Caddy runs as a container.
 
 <Warning>
-	Paths and `systemctl` invocations below assume Debian or Ubuntu. Caddy itself runs on every
-	major platform, but this page does not cover macOS or Windows.
+	Bare-metal paths and `systemctl` invocations below assume Debian or Ubuntu. The Docker setup
+	assumes Docker Engine + Docker Compose. Other runtimes (Kubernetes, Podman) are not covered.
 </Warning>
 
-## Setup
+## Setup (bare-metal)
 
 <Steps>
   <Step title="Pick the target index and create an ingest token">
@@ -46,13 +48,14 @@ description: 'Tail Caddy''s JSON access and error logs with Vector and ship them
     ```bash
     sudo systemctl reload caddy
     ```
+
   </Step>
 
-  <Step title="Install Vector">
-    Install the Vector package for your platform from the [official installation
-    page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu
-    apt, RHEL/Fedora dnf, container images) are maintained upstream.
-  </Step>
+<Step title="Install Vector">
+	Install the Vector package for your platform from the [official installation
+	page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu apt,
+	RHEL/Fedora dnf, container images) are maintained upstream.
+</Step>
 
   <Step title="Write the Vector config">
     Save the following at `/etc/vector/vector.yaml`. Replace `<your-logwiz>` with your Logwiz
@@ -213,6 +216,7 @@ description: 'Tail Caddy''s JSON access and error logs with Vector and ship them
     `read_from: end` skips existing content on first start, so installing Vector against an
     existing `access.log` does not replay every historical request. Flip it to `beginning` if
     you want a one-time backfill.
+
   </Step>
 
   <Step title="Grant Vector read access to /var/log/caddy">
@@ -222,6 +226,7 @@ description: 'Tail Caddy''s JSON access and error logs with Vector and ship them
     ```bash
     sudo usermod -aG caddy vector
     ```
+
   </Step>
 
   <Step title="Restart Vector">
@@ -232,6 +237,7 @@ description: 'Tail Caddy''s JSON access and error logs with Vector and ship them
 
     The status output should show `active (running)` and the most recent log lines should not
     contain config-parse or sink-startup errors.
+
   </Step>
 
   <Step title="Send a test request">
@@ -242,11 +248,267 @@ description: 'Tail Caddy''s JSON access and error logs with Vector and ship them
     ```
 
     Replace `http://localhost/` with whichever site URL you configured the `log` block on.
+
   </Step>
 
   <Step title="Verify in Logwiz">
     Open Search, pick `otel-logs-v0_9` from the index selector, and query
     `service.name:caddy`. Records typically appear within 5–10 seconds.
+  </Step>
+</Steps>
+
+## Setup (Docker)
+
+<Steps>
+  <Step title="Pick the target index and create an ingest token">
+    Same as the bare-metal setup — see step 1 above. The token works identically across both
+    paths.
+  </Step>
+
+  <Step title="Configure Caddy to log to stdout">
+    In containerized setups Caddy should write JSON to stdout so Docker captures it as the
+    container's log stream. Edit your `Caddyfile` — the `log` block goes on every site whose
+    access log you want shipped. Leave the default JSON encoder in place.
+
+    ```caddyfile
+    # Global block — Caddy runtime errors
+    {
+        log default {
+            output stdout
+        }
+    }
+
+    # Per-site — JSON access log
+    example.com {
+        log {
+            output stdout
+        }
+        # ... rest of the site config
+    }
+    ```
+
+    The Caddy container will be restarted in step 4 below.
+
+  </Step>
+
+  <Step title="Add the Vector sidecar to your compose file">
+    Drop this service alongside your existing ones. Vector reads every container's logs through
+    the Docker socket — no changes needed to your application services.
+
+    ```yaml
+    services:
+      logwiz-vector:
+        image: timberio/vector:0.54.0-alpine
+        container_name: logwiz-vector
+        restart: unless-stopped
+        volumes:
+          - ./vector.yaml:/etc/vector/vector.yaml:ro
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+    ```
+
+    The `include_containers` value in `vector.yaml` (next step) is set to `caddy`. Either set
+    `container_name: caddy` on your Caddy compose service, or update `include_containers` to match
+    the actual container name shown by `docker ps --format '{{.Names}}'`.
+
+  </Step>
+
+  <Step title="Save the Vector config">
+    Save the following as `vector.yaml` next to your `compose.yml`. Replace `<your-logwiz>` with
+    your Logwiz base URL and `<your-ingest-token>` with the token you copied in step 1.
+
+    ```yaml
+    sources:
+      caddy:
+        type: docker_logs
+        include_containers:
+          - caddy
+
+    transforms:
+      parse_caddy:
+        type: remap
+        inputs: [caddy]
+        source: |
+          parsed, err = parse_json(.message)
+          if err == null && is_object(parsed) {
+            . = merge!(., object!(parsed))
+          }
+
+          level = downcase(string(.level) ?? "info")
+          if level == "debug" {
+            .severity_number = 5
+            .severity_text   = "DEBUG"
+          } else if level == "info" {
+            .severity_number = 9
+            .severity_text   = "INFO"
+          } else if level == "warn" {
+            .severity_number = 13
+            .severity_text   = "WARN"
+          } else if level == "error" {
+            .severity_number = 17
+            .severity_text   = "ERROR"
+          } else if level == "panic" || level == "fatal" {
+            .severity_number = 21
+            .severity_text   = "FATAL"
+          } else {
+            .severity_number = 9
+            .severity_text   = "INFO"
+          }
+
+      to_otlp:
+        type: remap
+        inputs: [parse_caddy]
+        source: |
+          msg = string(.msg) ?? string(.message) ?? ""
+
+          ts_nano = to_unix_timestamp!(now(), unit: "nanoseconds")
+          ts_float, ts_err = to_float(.ts)
+          if ts_err == null {
+            ts_nano = to_int(ts_float * 1000000000.0) ?? ts_nano
+          }
+
+          sev_num  = to_int(.severity_number) ?? 9
+          sev_text = string(.severity_text)   ?? "INFO"
+
+          attrs = [
+            { "key": "container.runtime", "value": { "stringValue": "docker" } }
+          ]
+          if exists(.container_id) {
+            attrs = push(attrs, { "key": "container.id", "value": { "stringValue": string!(.container_id) } })
+          }
+          if exists(.container_name) {
+            cname = replace(string!(.container_name), r'^/', "")
+            attrs = push(attrs, { "key": "container.name", "value": { "stringValue": cname } })
+          }
+          if exists(.image) {
+            attrs = push(attrs, { "key": "container.image.name", "value": { "stringValue": string!(.image) } })
+          }
+          if exists(.stream) {
+            attrs = push(attrs, { "key": "log.iostream", "value": { "stringValue": string!(.stream) } })
+          }
+          if exists(.logger) {
+            attrs = push(attrs, { "key": "caddy.logger", "value": { "stringValue": string!(.logger) } })
+          }
+
+          if exists(.request) {
+            if exists(.request.method) {
+              attrs = push(attrs, { "key": "http.request.method", "value": { "stringValue": string!(.request.method) } })
+            }
+            if exists(.request.uri) {
+              attrs = push(attrs, { "key": "url.path", "value": { "stringValue": string!(.request.uri) } })
+            }
+            if exists(.request.host) {
+              attrs = push(attrs, { "key": "server.address", "value": { "stringValue": string!(.request.host) } })
+            }
+            if exists(.request.remote_ip) {
+              attrs = push(attrs, { "key": "client.address", "value": { "stringValue": string!(.request.remote_ip) } })
+            }
+            if exists(.request.remote_port) {
+              port_int, port_err = to_int(.request.remote_port)
+              if port_err == null {
+                attrs = push(attrs, { "key": "client.port", "value": { "intValue": port_int } })
+              }
+            }
+            if exists(.request.proto) {
+              parts = split(string!(.request.proto), "/")
+              if length(parts) == 2 {
+                attrs = push(attrs, { "key": "network.protocol.name",    "value": { "stringValue": downcase(parts[0]) } })
+                attrs = push(attrs, { "key": "network.protocol.version", "value": { "stringValue": parts[1] } })
+              }
+            }
+            ua = .request.headers."User-Agent"
+            if is_array(ua) && length!(ua) > 0 {
+              attrs = push(attrs, { "key": "user_agent.original", "value": { "stringValue": string!(ua[0]) } })
+            }
+            if exists(.status) {
+              status_int, status_err = to_int(.status)
+              if status_err == null {
+                attrs = push(attrs, { "key": "http.response.status_code", "value": { "intValue": status_int } })
+              }
+            }
+            if exists(.size) {
+              size_int, size_err = to_int(.size)
+              if size_err == null {
+                attrs = push(attrs, { "key": "http.response.body.size", "value": { "intValue": size_int } })
+              }
+            }
+          }
+
+          . = {
+            "resourceLogs": [{
+              "resource": {
+                "attributes": [
+                  { "key": "service.name", "value": { "stringValue": "caddy" } },
+                  { "key": "host.name",    "value": { "stringValue": get_hostname!() } }
+                ]
+              },
+              "scopeLogs": [{
+                "scope": { "name": "vector", "version": "" },
+                "logRecords": [{
+                  "timeUnixNano":         ts_nano,
+                  "observedTimeUnixNano": to_unix_timestamp!(now(), unit: "nanoseconds"),
+                  "severityNumber":       sev_num,
+                  "severityText":         sev_text,
+                  "body":                 { "stringValue": msg },
+                  "attributes":           attrs,
+                  "traceId":              "",
+                  "spanId":               "",
+                  "flags":                0,
+                  "droppedAttributesCount": 0
+                }]
+              }]
+            }]
+          }
+
+    sinks:
+      logwiz:
+        type: opentelemetry
+        inputs: [to_otlp]
+        protocol:
+          type: http
+          uri: https://<your-logwiz>/api/otlp/v1/logs
+          method: post
+          encoding:
+            codec: otlp
+          compression: gzip
+          request:
+            headers:
+              Authorization: "Bearer <your-ingest-token>"
+          batch:
+            timeout_secs: 1
+            max_bytes: 8388608
+    ```
+
+  </Step>
+
+  <Step title="Start Vector and reload Caddy">
+    Bring the Vector sidecar up first so it's already streaming before Caddy restarts on the new
+    logging config.
+
+    ```bash
+    docker compose up -d logwiz-vector
+    docker compose restart <your-caddy-service-name>
+    ```
+
+    Replace `<your-caddy-service-name>` with the Compose service key for Caddy. That's the name
+    under `services:`, which can differ from `container_name`.
+
+  </Step>
+
+  <Step title="Send a test request">
+    ```bash
+    curl -i http://localhost/
+    ```
+
+    The command above assumes your Caddy container publishes port 80 on the host. Substitute the
+    port you've mapped, or run `curl` from inside the compose network.
+
+  </Step>
+
+  <Step title="Verify in Logwiz">
+    Open Search, pick `otel-logs-v0_9` from the index selector, and query `service.name:caddy`.
+    Records typically appear within 5–10 seconds. `attributes.container.name` reads whatever
+    Docker reports for your Caddy container. If you set `container_name: caddy`, it reads
+    `caddy`. `attributes.container.image.name` reads whichever Caddy image you're running.
   </Step>
 </Steps>
 
@@ -261,20 +523,23 @@ Two `remap` transforms run in sequence. The first, `parse_caddy`, turns each raw
 
 `to_otlp` assembles the OTLP envelope. `service.name` is hard-coded to `caddy` (resource attribute). The `if exists(.request)` branch is what makes one VRL block handle both access and error logs cleanly: error-log entries (no `.request` block) get only `log.file.path` and `caddy.logger`, while access-log entries get the full HTTP semantic-convention attribute set.
 
-| OTLP key                       | Source field                                        |
-| ------------------------------ | --------------------------------------------------- |
-| `http.request.method`          | `.request.method`                                   |
-| `url.path`                     | `.request.uri`                                      |
-| `server.address`               | `.request.host`                                     |
-| `client.address`               | `.request.remote_ip`                                |
-| `client.port`                  | `.request.remote_port` (parsed to int)              |
-| `network.protocol.name`        | first half of `.request.proto` split on `/`         |
-| `network.protocol.version`     | second half of `.request.proto`                     |
-| `user_agent.original`          | first element of `.request.headers."User-Agent"`    |
-| `http.response.status_code`    | `.status`                                           |
-| `http.response.body.size`      | `.size`                                             |
-| `caddy.logger`                 | `.logger` (e.g., `http.log.access`, `http.log.error`) |
-| `log.file.path`                | Vector's `.file` source attribute                   |
+The Docker setup additionally attaches Vector's `docker_logs` metadata as `container.id`, `container.name`, `container.image.name`, `container.runtime: "docker"`, and `log.iostream` (`stdout`/`stderr`) — `log.file.path` is omitted because the source is the Docker daemon, not a file on disk.
+
+| OTLP key                                                                                      | Source field                                          |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `http.request.method`                                                                         | `.request.method`                                     |
+| `url.path`                                                                                    | `.request.uri`                                        |
+| `server.address`                                                                              | `.request.host`                                       |
+| `client.address`                                                                              | `.request.remote_ip`                                  |
+| `client.port`                                                                                 | `.request.remote_port` (parsed to int)                |
+| `network.protocol.name`                                                                       | first half of `.request.proto` split on `/`           |
+| `network.protocol.version`                                                                    | second half of `.request.proto`                       |
+| `user_agent.original`                                                                         | first element of `.request.headers."User-Agent"`      |
+| `http.response.status_code`                                                                   | `.status`                                             |
+| `http.response.body.size`                                                                     | `.size`                                               |
+| `caddy.logger`                                                                                | `.logger` (e.g., `http.log.access`, `http.log.error`) |
+| `log.file.path`                                                                               | Vector's `.file` source attribute                     |
+| `container.id`, `container.name`, `container.image.name`, `container.runtime`, `log.iostream` | Vector's `docker_logs` source (Docker setup only)     |
 
 `timeUnixNano` is derived from Caddy's `.ts` (float seconds since epoch); if the field is missing or unparseable, Vector's read time is used as a fallback. The final `. = { resourceLogs: [...] }` reassignment replaces the event entirely, so the OTLP sink sees only the envelope.
 
@@ -306,6 +571,14 @@ Failed POSTs only:
 service.name:caddy AND attributes.http.request.method:POST AND attributes.http.response.status_code:>=400
 ```
 
+Filter to one Caddy container by name — handy when multiple Caddy instances ship to the same
+index from different hosts. Replace `<your-caddy-container-name>` with the actual name from
+`docker ps --format '{{.Names}}'`:
+
+```text
+service.name:caddy AND attributes.container.name:<your-caddy-container-name>
+```
+
 Access-log entries only (skip Caddy's runtime/error logger):
 
 ```text
@@ -319,6 +592,9 @@ service.name:caddy AND attributes.caddy.logger:http.log.access
 - **`body` looks like raw JSON instead of just the message** — the access log is using a non-default `format` directive in the Caddyfile. The parser expects Caddy's default JSON encoder. Either remove the `format` directive or extend the `parse_caddy` remap to handle the alternate shape.
 - **`severity_text` is always `INFO` even for 5xx responses** — by design. Caddy emits every HTTP access at `level: info` regardless of status code; this parser trusts the source. Filter on `attributes.http.response.status_code:>=500` to surface server errors.
 - **`401`, `403`, `413`, `415` from Logwiz** — same response codes as a misconfigured Vector setup of any kind. See [Send logs with Vector](/send-logs/log-agents/vector#troubleshooting) for full diagnoses.
+- **Docker setup ships zero logs** — `include_containers` does not match the Caddy container's actual name. Run `docker ps --format '{{.Names}}'` to see the real names. Either set `container_name: caddy` on your Caddy compose service or update `include_containers` in `vector.yaml`.
+- **Vector container exits with `permission denied` on `/var/run/docker.sock`** — rootless Docker or SELinux. Either run Docker rootful, add `:z` to the socket mount on SELinux hosts, or grant the Vector image's user access to the docker group inside the image.
+- **`host.name` always reads the Vector container ID** — by default `get_hostname!()` returns the container's hostname, which Docker sets to the container ID. Set `hostname: <your-host>` on the `logwiz-vector` compose service to override.
 
 ## Related
 

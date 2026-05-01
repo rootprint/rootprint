@@ -14,6 +14,8 @@ export type ExportFormat = 'ndjson' | 'csv' | 'text';
 
 export type NodeLogFlavor = 'otel' | 'pino' | 'winston';
 
+export type CaddyLogFlavor = 'bare-metal' | 'docker';
+
 export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
