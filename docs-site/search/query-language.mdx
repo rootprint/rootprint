@@ -7,21 +7,21 @@ The Logwiz search box accepts the [Quickwit query language](https://quickwit.io/
 
 ## Quick reference
 
-| Clause                | Example                              | Matches                                                  |
-| --------------------- | ------------------------------------ | -------------------------------------------------------- |
-| Term                  | `severity_text:ERROR`                | Exact token in the field                                 |
-| Term prefix           | `service_name:api*`                  | Tokens starting with `api`                               |
-| Phrase                | `body.message:"connection timeout"`  | Exact word sequence (requires `record: position`)        |
-| Phrase prefix         | `body.message:"connection tim"*`     | Phrase whose last token is a prefix                      |
-| Term set              | `service_name:IN [api worker cron]`  | Any of the listed tokens                                 |
-| Range (inclusive)     | `severity_number:[13 TO *]`          | `>= 13`                                                  |
-| Range (exclusive)     | `duration_ms:{100 TO 500}`           | `> 100` and `< 500`                                      |
-| Range (half-open)     | `severity_number:>=17`               | `>= 17`                                                  |
-| Exists                | `attributes.user_id:*`               | Documents where the field is present                     |
-| Match all             | `*`                                  | Every document                                           |
-| Boolean               | `severity_text:ERROR AND service_name:api` | Both clauses match                                 |
-| Negation              | `NOT service_name:cron` or `-service_name:cron` | Documents that don't match                  |
-| Grouping              | `(severity_text:ERROR OR severity_text:WARN) AND service_name:api` | Force precedence       |
+| Clause            | Example                                                            | Matches                                           |
+| ----------------- | ------------------------------------------------------------------ | ------------------------------------------------- |
+| Term              | `severity_text:ERROR`                                              | Exact token in the field                          |
+| Term prefix       | `service_name:api*`                                                | Tokens starting with `api`                        |
+| Phrase            | `body.message:"connection timeout"`                                | Exact word sequence (requires `record: position`) |
+| Phrase prefix     | `body.message:"connection tim"*`                                   | Phrase whose last token is a prefix               |
+| Term set          | `service_name:IN [api worker cron]`                                | Any of the listed tokens                          |
+| Range (inclusive) | `severity_number:[13 TO *]`                                        | `>= 13`                                           |
+| Range (exclusive) | `duration_ms:{100 TO 500}`                                         | `> 100` and `< 500`                               |
+| Range (half-open) | `severity_number:>=17`                                             | `>= 17`                                           |
+| Exists            | `attributes.user_id:*`                                             | Documents where the field is present              |
+| Match all         | `*`                                                                | Every document                                    |
+| Boolean           | `severity_text:ERROR AND service_name:api`                         | Both clauses match                                |
+| Negation          | `NOT service_name:cron` or `-service_name:cron`                    | Documents that don't match                        |
+| Grouping          | `(severity_text:ERROR OR severity_text:WARN) AND service_name:api` | Force precedence                                  |
 
 Operator precedence: `NOT` / `-` > `AND` > `OR`. Use parentheses when you need a different order.
 
@@ -56,10 +56,10 @@ To search a different field, name it explicitly: `attributes.exception.type:Valu
 
 How a field was tokenized at index time decides how queries against it match. The two tokenizers used in the bundled OTel index:
 
-| Tokenizer | Used by                                                  | Match behavior                                                                |
-| --------- | -------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `raw`     | `severity_text`, `service_name`, `attributes.*`          | The whole value is one token. Case-sensitive, exact match only.               |
-| `default` | `body`                                                   | Splits on whitespace and punctuation, lowercases. Free-text search.           |
+| Tokenizer | Used by                                         | Match behavior                                                      |
+| --------- | ----------------------------------------------- | ------------------------------------------------------------------- |
+| `raw`     | `severity_text`, `service_name`, `attributes.*` | The whole value is one token. Case-sensitive, exact match only.     |
+| `default` | `body`                                          | Splits on whitespace and punctuation, lowercases. Free-text search. |
 
 This means `severity_text:error` will **not** match a document with `"severity_text": "ERROR"` — the index stored `ERROR` as a single token. Match the case your shipper sends, or filter via the UI quick-filters which know each field's casing.
 

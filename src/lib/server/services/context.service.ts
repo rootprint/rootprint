@@ -30,8 +30,7 @@ function buildContextQuery(
 	const allowed = contextFields?.length ? new Set(contextFields) : null;
 	const candidates = flat.filter(
 		([key]) =>
-			!isExcludedField(key, excluded, excludedPrefixes) &&
-			(allowed === null || allowed.has(key))
+			!isExcludedField(key, excluded, excludedPrefixes) && (allowed === null || allowed.has(key))
 	);
 
 	const scalars = candidates.filter(

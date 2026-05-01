@@ -40,7 +40,10 @@ export async function recordSearch(
 		.orderBy(desc(searchHistory.executedAt))
 		.limit(1);
 
-	if (latest && isSameSearch({ query: latest.query, timeRange: latest.timeRange as TimeRange }, data)) {
+	if (
+		latest &&
+		isSameSearch({ query: latest.query, timeRange: latest.timeRange as TimeRange }, data)
+	) {
 		return;
 	}
 

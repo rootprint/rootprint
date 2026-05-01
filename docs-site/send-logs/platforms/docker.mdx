@@ -6,9 +6,9 @@ description: 'Ship every container on a Linux host to Logwiz with a Vector sidec
 Run a Vector sidecar next to your other containers. It reads each container's logs from the Docker daemon socket, picks up `container.id`, `container.name`, `container.image.name`, and `container.image.id` automatically, infers a severity level from the message, packs the result into an OTLP record, and ships to Logwiz over HTTPS.
 
 <Warning>
-	Mounting `/var/run/docker.sock` into a container grants it the ability to enumerate and
-	inspect every container on the host. This is standard for log collectors that use the Docker
-	API, but worth being explicit about. The mount below is read-only (`:ro`).
+	Mounting `/var/run/docker.sock` into a container grants it the ability to enumerate and inspect
+	every container on the host. This is standard for log collectors that use the Docker API, but
+	worth being explicit about. The mount below is read-only (`:ro`).
 </Warning>
 
 ## Setup
@@ -188,14 +188,14 @@ The message body is lowercased and matched against two pattern families:
 
 Per-event attributes:
 
-| OTLP key | Value |
-|---|---|
-| `container.id` | full 64-char ID |
-| `container.name` | name without leading `/` |
+| OTLP key               | Value                                  |
+| ---------------------- | -------------------------------------- |
+| `container.id`         | full 64-char ID                        |
+| `container.name`       | name without leading `/`               |
 | `container.image.name` | image reference (e.g., `nginx:latest`) |
-| `container.image.id` | image digest |
-| `container.runtime` | literal `docker` |
-| `log.iostream` | `stdout` or `stderr` |
+| `container.image.id`   | image digest                           |
+| `container.runtime`    | literal `docker`                       |
+| `log.iostream`         | `stdout` or `stderr`                   |
 
 Container labels are not promoted by default — they're user-defined and unbounded, and adding all of them risks attribute-cardinality issues. To promote a specific label, add one line to the `to_otlp` remap before the `. = { ... }` assignment:
 

@@ -52,20 +52,20 @@ curl -X POST 'http://quickwit:7280/api/v1/indexes' \
 The index appears in **Administration → Indexes** on the next page load — no Logwiz restart needed.
 
 <Note>
-	Logwiz proxies index management actions to Quickwit but does not currently expose an "create index"
-	form in the admin UI. Create the index through Quickwit's REST API or CLI, then configure its
-	display from Logwiz.
+	Logwiz proxies index management actions to Quickwit but does not currently expose an "create
+	index" form in the admin UI. Create the index through Quickwit's REST API or CLI, then configure
+	its display from Logwiz.
 </Note>
 
 ## Schema modes
 
 The `mode` field on `doc_mapping` decides what Quickwit does with fields you didn't declare in `field_mappings`.
 
-| Mode      | Behavior                                                                                                                              |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `dynamic` | Default. Unknown fields are stored under a JSON catch-all and remain searchable. Most flexible — recommended unless you need rigour.  |
-| `lenient` | Unknown fields are silently dropped at indexing. Useful when you want a stable schema but don't want noisy errors from extra fields.  |
-| `strict`  | Unknown fields cause Quickwit to reject the document. The bundled `otel-logs-v0_9` index uses this mode.                              |
+| Mode      | Behavior                                                                                                                             |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `dynamic` | Default. Unknown fields are stored under a JSON catch-all and remain searchable. Most flexible — recommended unless you need rigour. |
+| `lenient` | Unknown fields are silently dropped at indexing. Useful when you want a stable schema but don't want noisy errors from extra fields. |
+| `strict`  | Unknown fields cause Quickwit to reject the document. The bundled `otel-logs-v0_9` index uses this mode.                             |
 
 In `dynamic` mode, you can tune how unmapped fields are handled with `dynamic_mapping`:
 
@@ -82,19 +82,19 @@ doc_mapping:
 
 ## Field types
 
-| Type       | Use for                                       | Notable parameters                                  |
-| ---------- | --------------------------------------------- | --------------------------------------------------- |
-| `text`     | Searchable strings                            | `tokenizer`, `record`, `fieldnorms`                 |
-| `i64`      | Signed integers                               | `coerce`, `output_format`                           |
-| `u64`      | Unsigned integers                             | `coerce`, `output_format`                           |
-| `f64`      | Floating point                                | `coerce`, `output_format`                           |
-| `datetime` | Timestamps                                    | `input_formats`, `output_format`, `fast_precision`  |
-| `bool`     | True/false                                    | —                                                   |
-| `ip`       | IPv4/IPv6 addresses                           | —                                                   |
-| `bytes`    | Binary blobs                                  | `input_format` (`base64` or `hex`), `output_format` |
-| `json`     | Free-form key-value blobs                     | `tokenizer`, `expand_dots`                          |
-| `array<T>` | Repeated values of any scalar type            | Inherits the inner type's parameters                |
-| `object`   | Nested struct (no arrays of objects)          | `field_mappings`                                    |
+| Type       | Use for                              | Notable parameters                                  |
+| ---------- | ------------------------------------ | --------------------------------------------------- |
+| `text`     | Searchable strings                   | `tokenizer`, `record`, `fieldnorms`                 |
+| `i64`      | Signed integers                      | `coerce`, `output_format`                           |
+| `u64`      | Unsigned integers                    | `coerce`, `output_format`                           |
+| `f64`      | Floating point                       | `coerce`, `output_format`                           |
+| `datetime` | Timestamps                           | `input_formats`, `output_format`, `fast_precision`  |
+| `bool`     | True/false                           | —                                                   |
+| `ip`       | IPv4/IPv6 addresses                  | —                                                   |
+| `bytes`    | Binary blobs                         | `input_format` (`base64` or `hex`), `output_format` |
+| `json`     | Free-form key-value blobs            | `tokenizer`, `expand_dots`                          |
+| `array<T>` | Repeated values of any scalar type   | Inherits the inner type's parameters                |
+| `object`   | Nested struct (no arrays of objects) | `field_mappings`                                    |
 
 Add `fast: true` to any field you want to filter, range-query, sort, or aggregate on. `fast` is the column-store backing for everything Quickwit does at scan time; without it, range queries fall back to the inverted index and lose efficiency.
 
@@ -102,13 +102,13 @@ Add `fast: true` to any field you want to filter, range-query, sort, or aggregat
 
 Pick a tokenizer based on how you want the field queried. Tokenization happens at index time and cannot be changed without recreating the index.
 
-| Tokenizer            | Behavior                                                       | Use for                                                |
-| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
-| `raw`                | One token, no processing. Case-sensitive.                      | IDs, enums, hostnames, severity labels                 |
-| `default`            | Whitespace + punctuation split, lowercased                     | Free-text search on message bodies                     |
-| `en_stem`            | `default` plus English stemming (`running` → `run`)            | Free-text search where you want morphological matches  |
-| `chinese_compatible` | Per-character CJK splitting plus `default` behavior            | Mixed CJK and Latin text                               |
-| `lowercase`          | Lowercase, no tokenization                                     | Case-insensitive enum-like fields                      |
+| Tokenizer            | Behavior                                            | Use for                                               |
+| -------------------- | --------------------------------------------------- | ----------------------------------------------------- |
+| `raw`                | One token, no processing. Case-sensitive.           | IDs, enums, hostnames, severity labels                |
+| `default`            | Whitespace + punctuation split, lowercased          | Free-text search on message bodies                    |
+| `en_stem`            | `default` plus English stemming (`running` → `run`) | Free-text search where you want morphological matches |
+| `chinese_compatible` | Per-character CJK splitting plus `default` behavior | Mixed CJK and Latin text                              |
+| `lowercase`          | Lowercase, no tokenization                          | Case-insensitive enum-like fields                     |
 
 The bundled OTel index uses `raw` for `severity_text` and `service_name`, and `default` for `body`. The same choices work well for most application logs.
 
@@ -155,10 +155,10 @@ A query like `timeout` then translates to `message:timeout OR attributes.error_c
 
 Most deployments don't need to change these, but two are worth knowing:
 
-| Setting                            | Default       | What it does                                                                                              |
-| ---------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------- |
-| `commit_timeout_secs`              | `60`          | Maximum seconds a document can sit in the indexer queue before a commit is forced.                        |
-| `indexing_resources.heap_size`     | `2000000000`  | Indexer heap per source. Raise it on hosts that ingest >40 MB/s.                                          |
+| Setting                        | Default      | What it does                                                                       |
+| ------------------------------ | ------------ | ---------------------------------------------------------------------------------- |
+| `commit_timeout_secs`          | `60`         | Maximum seconds a document can sit in the indexer queue before a commit is forced. |
+| `indexing_resources.heap_size` | `2000000000` | Indexer heap per source. Raise it on hosts that ingest >40 MB/s.                   |
 
 Lowering `commit_timeout_secs` makes new documents searchable sooner at the cost of more, smaller splits. The bundled OTel index keeps the default 60 s.
 

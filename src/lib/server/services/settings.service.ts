@@ -59,7 +59,13 @@ export function isGoogleAuthConfigured(): boolean {
 
 export function deleteGoogleAuthSettings(): void {
 	db.delete(appSettings)
-		.where(inArray(appSettings.key, ['google_client_id', 'google_client_secret', 'google_allowed_domains']))
+		.where(
+			inArray(appSettings.key, [
+				'google_client_id',
+				'google_client_secret',
+				'google_allowed_domains'
+			])
+		)
 		.run();
 }
 

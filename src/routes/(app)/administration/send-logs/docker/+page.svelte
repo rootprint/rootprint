@@ -31,9 +31,9 @@
 				<div>
 					<h3 class="font-semibold">Add the Vector service to your compose file</h3>
 					<p class="mt-1 text-sm text-base-content/60">
-						Drop this service alongside your existing ones. The Vector container reads every
-						other container's logs through the Docker socket — no changes needed to your
-						application services.
+						Drop this service alongside your existing ones. The Vector container reads every other
+						container's logs through the Docker socket — no changes needed to your application
+						services.
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.compose} copyTitle="Copy compose fragment" />
@@ -58,9 +58,8 @@
 				<div>
 					<h3 class="font-semibold">Send a test log line</h3>
 					<p class="mt-1 text-sm text-base-content/60">
-						Run a throwaway container that prints one line and exits. Vector picks it up from
-						the daemon and ships it with <InlineCode>service.name</InlineCode> set to the
-						container's name.
+						Run a throwaway container that prints one line and exits. Vector picks it up from the
+						daemon and ships it with <InlineCode>service.name</InlineCode> set to the container's name.
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.test} copyTitle="Copy test command" />

@@ -20,11 +20,7 @@
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
 	import type { TimezoneMode } from '$lib/types';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
-	import {
-		isOtelAttr,
-		isOtelResourceAttr,
-		otelDisplayName
-	} from '$lib/utils/fields';
+	import { isOtelAttr, isOtelResourceAttr, otelDisplayName } from '$lib/utils/fields';
 	import {
 		extractSeverity,
 		extractTimestamp,

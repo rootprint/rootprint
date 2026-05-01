@@ -34,7 +34,7 @@ You must include a valid ingest token in every request. Create tokens in the Log
 	Controls when Quickwit commits the ingested documents. Accepts `auto` (default), `wait_for`, or
 	`force`. See [Commit modes](#commit-modes) below.
 
-	Example: `?commit=wait_for`
+    Example: `?commit=wait_for`
 
 </ParamField>
 
@@ -42,15 +42,16 @@ You must include a valid ingest token in every request. Create tokens in the Log
 
 The `commit` query parameter trades off ingest throughput against search latency. The endpoint forwards your choice to Quickwit unchanged.
 
-| Mode        | Returns when…                                                                | Use when…                                                                       |
-| ----------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `auto`      | The batch is queued. Default. Documents become searchable on the next commit (`commit_timeout_secs`, 60 s by default). | You're shipping a steady stream and can wait up to a minute for results.        |
-| `wait_for`  | The next scheduled commit completes. Latency depends on where you land in the cycle (0–60 s by default). | You want bounded visibility latency without paying for a forced commit.         |
-| `force`     | A commit is triggered specifically for this batch and finishes.              | You're in a synchronous test or a small admin job and need immediate results.   |
+| Mode       | Returns when…                                                                                                          | Use when…                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `auto`     | The batch is queued. Default. Documents become searchable on the next commit (`commit_timeout_secs`, 60 s by default). | You're shipping a steady stream and can wait up to a minute for results.      |
+| `wait_for` | The next scheduled commit completes. Latency depends on where you land in the cycle (0–60 s by default).               | You want bounded visibility latency without paying for a forced commit.       |
+| `force`    | A commit is triggered specifically for this batch and finishes.                                                        | You're in a synchronous test or a small admin job and need immediate results. |
 
 <Warning>
-	`force` triggers an extra commit per request. Using it on small, frequent batches creates many tiny
-	splits and significantly degrades indexing performance. Reserve it for one-off scripts or tests.
+	`force` triggers an extra commit per request. Using it on small, frequent batches creates many
+	tiny splits and significantly degrades indexing performance. Reserve it for one-off scripts or
+	tests.
 </Warning>
 
 ## Request body

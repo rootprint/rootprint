@@ -41,9 +41,7 @@ function isFastFieldSupported(
 	fastFieldNames: string[],
 	fastJsonFields: string[]
 ): boolean {
-	return (
-		fastFieldNames.includes(field) || fastJsonFields.some((j) => field.startsWith(`${j}.`))
-	);
+	return fastFieldNames.includes(field) || fastJsonFields.some((j) => field.startsWith(`${j}.`));
 }
 
 function rethrowValidationError(e: unknown): never {

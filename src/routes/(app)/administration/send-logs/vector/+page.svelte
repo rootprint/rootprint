@@ -20,8 +20,8 @@
 				<div>
 					<h3 class="font-semibold">Install Vector</h3>
 					<p class="mt-1 text-sm text-base-content/60">
-						Install the Vector package for your platform from the official installation page —
-						the per-distro instructions are maintained upstream.
+						Install the Vector package for your platform from the official installation page — the
+						per-distro instructions are maintained upstream.
 					</p>
 				</div>
 				<div>

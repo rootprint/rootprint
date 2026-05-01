@@ -46,11 +46,7 @@ export async function listUsersWithInvites(headers: Headers) {
 		const invite = inviteMap.get(u.id);
 		const isGoogle = googleUserIds.has(u.id);
 		const status: 'active' | 'pending' | 'expired' =
-			isGoogle || !invite
-				? 'active'
-				: invite.expiresAt.getTime() < now
-					? 'expired'
-					: 'pending';
+			isGoogle || !invite ? 'active' : invite.expiresAt.getTime() < now ? 'expired' : 'pending';
 
 		return {
 			id: u.id,

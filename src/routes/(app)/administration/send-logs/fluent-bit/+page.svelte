@@ -23,8 +23,8 @@
 				<div>
 					<h3 class="font-semibold">Install Fluent Bit</h3>
 					<p class="mt-1 text-sm text-base-content/60">
-						Install the Fluent Bit package for your platform from the official downloads page —
-						the per-distro instructions are maintained upstream.
+						Install the Fluent Bit package for your platform from the official downloads page — the
+						per-distro instructions are maintained upstream.
 					</p>
 				</div>
 				<div>
@@ -45,9 +45,8 @@
 					<p class="mt-1 text-sm text-base-content/60">
 						Save this at <InlineCode>/etc/fluent-bit/fluent-bit.conf</InlineCode>. The endpoint and
 						token are prefilled. Replace
-						<InlineCode>/var/log/myapp/*.log</InlineCode> with the glob that matches your
-						application's log files, and <InlineCode>myapp.*</InlineCode> with a tag that identifies
-						your service.
+						<InlineCode>/var/log/myapp/*.log</InlineCode> with the glob that matches your application's
+						log files, and <InlineCode>myapp.*</InlineCode> with a tag that identifies your service.
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.fluentBitConfig} copyTitle="Copy fluent-bit.conf" />
@@ -57,8 +56,8 @@
 				<div>
 					<h3 class="font-semibold">Restart Fluent Bit</h3>
 					<p class="mt-1 text-sm text-base-content/60">
-						The status output should show <InlineCode>active (running)</InlineCode> with no
-						config-parse or output-startup errors in the recent log lines.
+						The status output should show <InlineCode>active (running)</InlineCode> with no config-parse
+						or output-startup errors in the recent log lines.
 					</p>
 				</div>
 				<CodeBlock {...data.snippets.restart} copyTitle="Copy restart command" />

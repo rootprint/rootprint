@@ -59,9 +59,7 @@
 		}
 	}}
 >
-	<span
-		class="shrink-0 py-px text-base-content/60"
-		style="min-width: {TIMESTAMP_COLUMN_WIDTH}ch"
+	<span class="shrink-0 py-px text-base-content/60" style="min-width: {TIMESTAMP_COLUMN_WIDTH}ch"
 		>{extractTimestamp(hit, timestampField, timezoneMode)}</span
 	><span class="shrink-0 px-1.5 text-base-content/20">|</span>
 	{#each extraFields as field (field)}

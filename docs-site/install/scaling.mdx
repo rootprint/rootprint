@@ -9,10 +9,10 @@ This page covers the moves that take you out of the bundled setup, and the ones 
 
 ## What you can run in parallel
 
-| Component | Multi-instance? | Notes                                                                                                                           |
-| --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Logwiz    | No              | Logwiz stores its own state (users, tokens, saved queries, snapshot history) in a single SQLite database. Run one instance.    |
-| Quickwit  | Yes, with care  | Quickwit can split into indexer, searcher, metastore, control plane, and janitor services. See the warnings below.              |
+| Component | Multi-instance? | Notes                                                                                                                       |
+| --------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Logwiz    | No              | Logwiz stores its own state (users, tokens, saved queries, snapshot history) in a single SQLite database. Run one instance. |
+| Quickwit  | Yes, with care  | Quickwit can split into indexer, searcher, metastore, control plane, and janitor services. See the warnings below.          |
 
 Putting a load balancer in front of two Logwiz containers backed by the same `logwiz.db` corrupts the database. If you need higher availability, run Logwiz behind a single warm-standby host with a shared volume and fail over by stopping one and starting the other.
 
@@ -25,8 +25,9 @@ Quickwit uses the metastore to track which splits exist for which index, what th
 	or sharing an S3 prefix) silently corrupts the metastore. Indexes appear and disappear, splits go
 	missing, and there is no recovery short of rebuilding from the source data.
 
-	If you're running anything more than one Quickwit container, switch to the PostgreSQL metastore
-	*before* you scale. There is no migration path from a corrupted file metastore.
+    If you're running anything more than one Quickwit container, switch to the PostgreSQL metastore
+    *before* you scale. There is no migration path from a corrupted file metastore.
+
 </Warning>
 
 ### Switch to the PostgreSQL metastore
@@ -74,12 +75,12 @@ The [Docker Compose install page](/install/docker-compose#use-s3-for-storage) sh
 
 Use these as starting points and measure. Quickwit's [AWS cost guide](https://quickwit.io/docs/operating/aws-costs) has the detailed math.
 
-| Resource                   | Per indexer (4 vCPU)                                                              |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| Indexing throughput        | 20–40 MB/s sustained                                                              |
-| Indexer heap               | 2 GB default. Raise (`indexing_resources.heap_size`) on heavy indexes.            |
-| Local cache (`split_store`)| 100 GB by default (`split_store_max_num_bytes`). Sized to fit recent splits.      |
-| Local disk free space      | At least 2× the cache size, plus headroom for in-flight splits.                   |
+| Resource                    | Per indexer (4 vCPU)                                                         |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| Indexing throughput         | 20–40 MB/s sustained                                                         |
+| Indexer heap                | 2 GB default. Raise (`indexing_resources.heap_size`) on heavy indexes.       |
+| Local cache (`split_store`) | 100 GB by default (`split_store_max_num_bytes`). Sized to fit recent splits. |
+| Local disk free space       | At least 2× the cache size, plus headroom for in-flight splits.              |
 
 Searcher nodes are stateless — size them by query concurrency, not data volume. Hot data lives in object storage; the searcher pulls split footers and posting lists on demand and caches them locally.
 
