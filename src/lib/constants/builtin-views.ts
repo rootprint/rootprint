@@ -19,8 +19,8 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 			'resource_attributes.host.name',
 			'attributes.client.address',
 			'attributes.http.request.method',
-			'attributes.http.request.uri',
-			'attributes.http.status_code'
+			'attributes.http.response.status_code',
+			'attributes.url.path'
 		],
 		icon: { iconSrc: caddyLogo }
 	},
