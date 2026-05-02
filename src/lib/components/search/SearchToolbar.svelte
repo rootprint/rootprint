@@ -16,26 +16,48 @@
 	import ExportDialog from '$lib/components/search/ExportDialog.svelte';
 	import QueryInput from '$lib/components/search/QueryInput.svelte';
 	import SaveQueryModal from '$lib/components/search/SaveQueryModal.svelte';
+	import SaveViewModal from '$lib/components/search/SaveViewModal.svelte';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
+	import ViewPicker from '$lib/components/search/ViewPicker.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { AUTO_REFRESH_INTERVALS } from '$lib/constants/defaults';
 	import { storageKeys } from '$lib/constants/storage-keys';
 	import type { createSearchStore } from '$lib/stores/search.svelte';
-	import type { DrawerTab, ParsedQuery, TimeRange } from '$lib/types';
+	import type { DrawerTab, ParsedQuery, TimeRange, ViewSummary } from '$lib/types';
 
 	let {
 		store,
 		wrapMode = $bindable('none' as 'none' | 'wrap'),
 		drawerTab = $bindable(null as DrawerTab | null),
-		parsedQuery
+		parsedQuery,
+		userViews
 	}: {
 		store: ReturnType<typeof createSearchStore>;
 		wrapMode: 'none' | 'wrap';
 		drawerTab: DrawerTab | null;
 		parsedQuery: ParsedQuery;
+		userViews: ViewSummary[];
 	} = $props();
 
 	let saveModalOpen = $state(false);
+	let saveViewModalOpen = $state(false);
+	let viewModalEntry = $state<{
+		indexId: string;
+		query: string;
+		columns: string[];
+		defaultName?: string;
+	} | null>(null);
+
+	function openSaveCurrent() {
+		if (!store.selectedIndex) return;
+		viewModalEntry = {
+			indexId: store.selectedIndex,
+			query: parsedQuery.query,
+			columns: store.activeFields,
+			defaultName: ''
+		};
+		saveViewModalOpen = true;
+	}
 
 	const drawerButtons: { id: DrawerTab; icon: typeof Clock; title: string }[] = [
 		{ id: 'history', icon: Clock, title: 'History' },
@@ -73,6 +95,16 @@
 				<option value={idx.indexId}>{idx.displayName || idx.indexId}</option>
 			{/each}
 		</select>
+
+		{#if store.isOtelIndex}
+			<ViewPicker
+				activeView={store.activeView}
+				{userViews}
+				onApply={store.applyView}
+				onClear={store.clearActiveView}
+				onSaveAsNew={openSaveCurrent}
+			/>
+		{/if}
 
 		<div class="join ml-auto">
 			{#each drawerButtons as { id, icon: Icon, title } (id)}
@@ -239,5 +271,10 @@
 		entry={store.selectedIndex
 			? { indexId: store.selectedIndex, query: queryInputRef?.getValue() ?? parsedQuery.query }
 			: null}
+	/>
+	<SaveViewModal
+		bind:open={saveViewModalOpen}
+		entry={viewModalEntry}
+		onSaved={(id) => store.applyView({ kind: 'user', id })}
 	/>
 </div>

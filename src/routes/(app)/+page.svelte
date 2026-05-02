@@ -29,9 +29,14 @@
 
 	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
 
-	const store = createSearchStore(() => data.parsedQuery, data.indexes, {
-		onFreshSearch: () => osRef?.osInstance()?.elements().viewport.scrollTo(0, 0)
-	});
+	const store = createSearchStore(
+		() => data.parsedQuery,
+		data.indexes,
+		() => data.views,
+		{
+			onFreshSearch: () => osRef?.osInstance()?.elements().viewport.scrollTo(0, 0)
+		}
+	);
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
@@ -118,7 +123,13 @@
 	</OverlayScrollbarsComponent>
 
 	<div class="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-		<SearchToolbar {store} bind:wrapMode bind:drawerTab parsedQuery={data.parsedQuery} />
+		<SearchToolbar
+			{store}
+			bind:wrapMode
+			bind:drawerTab
+			parsedQuery={data.parsedQuery}
+			userViews={data.views}
+		/>
 
 		{#if store.hasSearched}
 			<LogFrequencyChart

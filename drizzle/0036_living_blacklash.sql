@@ -1,0 +1,1 @@
+ALTER TABLE `view` DROP COLUMN `is_shared`;

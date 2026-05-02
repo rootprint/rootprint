@@ -7,18 +7,23 @@ import { recordSearch } from '$lib/api/history.remote';
 import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
 import { searchFieldValues, searchLogHistogram, searchLogs } from '$lib/api/logs.remote';
 import { getPreference, saveDisplayFields } from '$lib/api/preferences.remote';
+import { BUILTIN_VIEWS } from '$lib/constants/builtin-views';
 import { OTEL_INDEX_PREFIX } from '$lib/constants/defaults';
 import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
 import { storageKeys } from '$lib/constants/storage-keys';
 import type { SearchLogsInput } from '$lib/schemas/logs';
 import type {
+	ActiveViewRef,
+	BuiltinView,
 	IndexField,
 	IndexSummary,
 	LogEntry,
 	ParsedQuery,
 	QuickFilterBucket,
-	TimeRange
+	TimeRange,
+	ViewSummary
 } from '$lib/types';
+import { readActiveView, writeActiveView } from '$lib/utils/active-view-storage';
 import { computeColumnWidths } from '$lib/utils/column-width';
 import { useDebounce } from '$lib/utils/debounce';
 import { getErrorMessage } from '$lib/utils/error';
@@ -38,9 +43,22 @@ import { resolveTimeRange } from '$lib/utils/time';
 
 const BATCH_SIZE = 50;
 
+function resolveActiveView(
+	ref: ActiveViewRef | null,
+	builtins: BuiltinView[],
+	userViewList: ViewSummary[]
+): BuiltinView | ViewSummary | null {
+	if (ref === null) return null;
+	if (ref.kind === 'user') {
+		return userViewList.find((v) => v.id === ref.id) ?? null;
+	}
+	return builtins.find((v) => v.slug === ref.slug) ?? null;
+}
+
 export function createSearchStore(
 	parsedQuery: () => ParsedQuery,
 	initialIndexes: IndexSummary[],
+	userViews: () => ViewSummary[],
 	options?: { onFreshSearch?: () => void }
 ) {
 	const withKeys = createLogKeyer();
@@ -64,8 +82,15 @@ export function createSearchStore(
 	let indexFields = $state<IndexField[]>([]);
 	let schemaFields = $state<IndexField[]>([]);
 	let activeFields = $state<string[]>([]);
+	// Snapshot of the user's saved display-fields preference. Refreshed when
+	// the index loads and after each debounced autosave with no view active.
+	// Restored into activeFields when the user clears the active view.
+	let savedDisplayFields = $state<string[]>([]);
 	let fieldsLoading = $state(false);
 	const quickFilterFields = $derived(indexFields.filter((f) => f.fast).map((f) => f.name));
+
+	// --- Active view (per-index, persisted in localStorage) ---
+	let activeViewRef = $state<ActiveViewRef | null>(null);
 
 	// --- Search result state ---
 	let logs = $state<LogEntry[]>([]);
@@ -112,6 +137,10 @@ export function createSearchStore(
 
 	const excludedFields = $derived(new Set([fieldConfig.timestampField, fieldConfig.messageField]));
 	const panelAvailableFields = $derived(indexFields.filter((f) => !excludedFields.has(f.name)));
+
+	const activeView = $derived<BuiltinView | ViewSummary | null>(
+		resolveActiveView(activeViewRef, BUILTIN_VIEWS, userViews())
+	);
 
 	// --- Internal helpers ---
 
@@ -173,6 +202,46 @@ export function createSearchStore(
 			.catch((e) => console.warn('Failed to record search history', e));
 	}
 
+	// --- View actions ---
+
+	// Reads the stored ref for `indexName`, applies the view's columns to
+	// `activeFields` and sets `activeViewRef` if it resolves. Self-heals stale
+	// built-in refs by clearing localStorage; leaves user refs intact (they may
+	// resolve after data.views refreshes for the new URL index on next load).
+	// Caller is responsible for any URL navigation.
+	function hydrateActiveViewForIndex(indexName: string): BuiltinView | ViewSummary | null {
+		const ref = readActiveView(indexName);
+		if (!ref) {
+			activeViewRef = null;
+			return null;
+		}
+		const view = resolveActiveView(ref, BUILTIN_VIEWS, userViews());
+		if (view) {
+			activeViewRef = ref;
+			activeFields = [...view.columns];
+			return view;
+		}
+		if (ref.kind === 'builtin') writeActiveView(indexName, null);
+		activeViewRef = null;
+		return null;
+	}
+
+	function applyView(ref: ActiveViewRef): void {
+		const view = resolveActiveView(ref, BUILTIN_VIEWS, userViews());
+		if (!view) return;
+		activeViewRef = ref;
+		if (selectedIndex) writeActiveView(selectedIndex, ref);
+		activeFields = [...view.columns];
+		navigateQuery({ query: view.query }, { push: true });
+	}
+
+	function clearActiveView(): void {
+		activeViewRef = null;
+		if (selectedIndex) writeActiveView(selectedIndex, null);
+		activeFields = [...savedDisplayFields];
+		navigateQuery({ query: '' }, { push: true });
+	}
+
 	// --- Index loading ---
 
 	function initIndexes() {
@@ -194,6 +263,9 @@ export function createSearchStore(
 
 			selectedIndex = idx;
 			localStorage.setItem(storageKeys.selectedIndex, idx);
+
+			hydrateActiveViewForIndex(idx);
+
 			if (urlIdx !== idx) {
 				navigateQuery({ index: idx });
 			}
@@ -212,10 +284,13 @@ export function createSearchStore(
 			indexFields = indexFieldsResult.fields;
 			schemaFields = indexFieldsResult.fields;
 			fieldConfig = config;
-			activeFields = pref.displayFields;
+			savedDisplayFields = pref.displayFields;
+			if (activeViewRef === null) {
+				activeFields = pref.displayFields;
+			}
 		} catch {
 			indexFields = [];
-			activeFields = [];
+			if (activeViewRef === null) activeFields = [];
 		} finally {
 			fieldsLoading = false;
 		}
@@ -227,18 +302,31 @@ export function createSearchStore(
 		aggregations = {};
 		schemaFields = [];
 		fieldsLoading = true; // block auto-search until new fields load
-		navigateQuery({ index: indexName, query: '' });
+
+		const view = hydrateActiveViewForIndex(indexName);
+		if (view) {
+			navigateQuery({ index: indexName, query: view.query });
+		} else {
+			activeFields = [];
+			navigateQuery({ index: indexName, query: '' });
+		}
+
 		loadFieldsForIndex(indexName);
 	}
 
 	// --- Field change handlers ---
 
 	const { debounced: handleFieldsChange } = useDebounce(() => {
-		if (selectedIndex) {
-			saveDisplayFields({ indexId: selectedIndex, fields: activeFields }).catch((e) =>
-				toast.error(getErrorMessage(e, 'Failed to save display fields'))
-			);
-		}
+		if (!selectedIndex) return;
+		// Only persist column changes when no view is active. While a view is
+		// active, column edits stay session-only — clearing the view restores
+		// the user's saved default columns. Use the resolved `activeView` (not
+		// the raw ref) so that a stale ref does not silently suppress autosave.
+		if (activeView !== null) return;
+		savedDisplayFields = [...activeFields];
+		saveDisplayFields({ indexId: selectedIndex, fields: activeFields }).catch((e) =>
+			toast.error(getErrorMessage(e, 'Failed to save display fields'))
+		);
 	}, 500);
 
 	// --- Search ---
@@ -290,11 +378,9 @@ export function createSearchStore(
 						if (field === fieldConfig.levelField) {
 							const merged = new Map<string, QuickFilterBucket>();
 							for (const prev of aggregations[field] ?? []) {
-								// Carry over old values with count nulled (they're stale)
 								merged.set(prev.value, { value: prev.value, count: null });
 							}
 							for (const fresh of buckets) {
-								// Fresh buckets override with real counts, preserving Map insertion order
 								merged.set(fresh.value, fresh);
 							}
 							newAgg[field] = [...merged.values()].slice(0, QUICKWIT_AGG_MAX);
@@ -340,7 +426,6 @@ export function createSearchStore(
 
 			hasSearched = true;
 
-			// Record history for user-initiated fresh searches only
 			if (!append && shouldRecordHistory) {
 				shouldRecordHistory = false;
 				recordCurrentSearch(parsedQuery().query);
@@ -414,7 +499,6 @@ export function createSearchStore(
 		const knownBuckets = aggregations[field];
 		const knownValues = knownBuckets?.map((b) => b.value);
 
-		// If adding this value would select all known values, clear the clause instead
 		if (knownValues && shouldAutoClear(knownValues, field, currentQuery, value, exclude)) {
 			let cleared = currentQuery;
 			for (const v of knownValues) {
@@ -510,8 +594,6 @@ export function createSearchStore(
 		});
 
 		// Pause auto-refresh when tab is hidden, resume when visible.
-		// We manage the timer directly here instead of calling startAutoRefresh()
-		// because startAutoRefresh() calls stopAutoRefresh() which resets autoRefreshInterval.
 		$effect(() => {
 			if (!browser) return;
 			const interval = autoRefreshInterval;
@@ -618,6 +700,9 @@ export function createSearchStore(
 		get panelAvailableFields() {
 			return panelAvailableFields;
 		},
+		get activeView() {
+			return activeView;
+		},
 		get queryText() {
 			return getQueryText();
 		},
@@ -644,6 +729,8 @@ export function createSearchStore(
 		removeClause,
 		hasClause: hasClauseCheck,
 		clearClauses: clearAllClauses,
-		toggleSortDirection
+		toggleSortDirection,
+		applyView,
+		clearActiveView
 	};
 }

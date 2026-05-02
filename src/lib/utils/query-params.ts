@@ -19,7 +19,6 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 		params.set('q', state.query);
 	}
 
-	// Time range
 	if (state.timeRange.type === 'relative') {
 		if (state.timeRange.preset !== DEFAULTS.timeRangePreset) {
 			params.set('from', state.timeRange.preset);
@@ -29,12 +28,10 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 		params.set('to', String(state.timeRange.end));
 	}
 
-	// Timezone
 	if (state.timezoneMode !== DEFAULTS.timezoneMode) {
 		params.set('tz', state.timezoneMode);
 	}
 
-	// Sort direction
 	if (state.sortDirection !== DEFAULTS.sortDirection) {
 		params.set('sort', state.sortDirection);
 	}
@@ -43,13 +40,9 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 }
 
 export function deserialize(params: URLSearchParams): ParsedQuery {
-	// Index
 	const index = params.get('index');
-
-	// Query
 	const query = params.get('q') ?? '';
 
-	// Time range
 	const from = params.get('from');
 	const to = params.get('to');
 	let timeRange: TimeRange;
@@ -62,11 +55,9 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 		timeRange = { type: 'relative', preset: DEFAULTS.timeRangePreset };
 	}
 
-	// Timezone
 	const tz = params.get('tz');
 	const timezoneMode: TimezoneMode = tz === 'utc' || tz === 'local' ? tz : DEFAULTS.timezoneMode;
 
-	// Sort direction
 	const sort = params.get('sort');
 	const sortDirection: SortDirection =
 		sort === 'asc' || sort === 'desc' ? sort : DEFAULTS.sortDirection;

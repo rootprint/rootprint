@@ -175,6 +175,34 @@ export type SharedQueryEntry = {
 	createdAt: Date;
 };
 
+export type ViewSummary = {
+	id: number;
+	userId: string;
+	indexName: string;
+	name: string;
+	query: string;
+	columns: string[];
+	createdAt: Date;
+};
+
+// One of `icon` (iconify) or `iconSrc` (image asset URL) is set; preference
+// goes to iconify when both happen to be present.
+export type BuiltinViewIcon =
+	| { iconifyIcon: import('@iconify/types').IconifyIcon }
+	| { iconSrc: string };
+
+export type BuiltinView = {
+	slug: string;
+	name: string;
+	query: string;
+	columns: string[];
+	icon: BuiltinViewIcon;
+};
+
+export type ActiveViewRef =
+	| { kind: 'builtin'; slug: string }
+	| { kind: 'user'; id: number };
+
 export type GoogleAuthSettings = {
 	clientId: string;
 	clientSecret: string;

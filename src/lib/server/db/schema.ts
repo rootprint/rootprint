@@ -120,6 +120,24 @@ export const savedQuery = sqliteTable(
 	(table) => [index('saved_query_user_index').on(table.userId, table.indexName)]
 );
 
+export const view = sqliteTable(
+	'view',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		indexName: text('index_name').notNull(),
+		name: text('name').notNull(),
+		query: text('query').notNull().default(''),
+		columns: text('columns', { mode: 'json' }).$type<string[]>().notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.default(sql`(unixepoch())`)
+			.notNull()
+	},
+	(table) => [index('view_user_index').on(table.userId, table.indexName)]
+);
+
 export const sharedLink = sqliteTable('shared_link', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	code: text('code').notNull().unique(),

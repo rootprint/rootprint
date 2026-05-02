@@ -246,6 +246,27 @@
       "when": 1777557032965,
       "tag": "0034_drop_shared_link_fingerprint",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1777659416343,
+      "tag": "0035_empty_zeigeist",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1777662416400,
+      "tag": "0036_living_blacklash",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1746057600000,
+      "tag": "0037_rename_view_baseline_filter",
+      "breakpoints": true
     }
   ]
 }
