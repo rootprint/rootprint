@@ -3,11 +3,13 @@ import { snippet } from '$lib/server/syntax';
 
 import type { PageServerLoad } from './$types';
 
-const INSTALL_COMMAND = 'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http';
+const INSTALL_COMMAND =
+	'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http opentelemetry-instrumentation-logging';
 
 const EXAMPLE_CODE = `import logging
 from opentelemetry._logs import set_logger_provider
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
+from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 
@@ -18,7 +20,9 @@ logger_provider.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter
 logging.getLogger().addHandler(LoggingHandler(logger_provider=logger_provider))
 logging.getLogger().setLevel(logging.INFO)
 
-logging.info("Hello from Python to Logwiz")`;
+logging.info("Hello from Python to Logwiz")
+
+logger_provider.shutdown()`;
 
 const [installSnippet, exampleSnippet] = await Promise.all([
 	snippet(INSTALL_COMMAND, 'bash'),
