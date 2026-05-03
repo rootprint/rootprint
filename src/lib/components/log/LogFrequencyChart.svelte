@@ -31,6 +31,7 @@
 	let chartWidth = $state(400);
 	let chart: uPlotLib | null = null;
 	let uPlotCtor: typeof uPlotLib | null = null;
+	let chartBuildId = 0;
 
 	// Collect all unique levels from data in the defined stacking order
 	let levels = $derived.by(() => {
@@ -98,6 +99,7 @@
 
 	async function buildChart() {
 		if (!browser || !chartEl || collapsed || !columnarData) return;
+		const buildId = ++chartBuildId;
 
 		// Sync width from actual DOM before building — ResizeObserver is async
 		// and may not have fired yet, so chartWidth could still be the 400px default
@@ -115,8 +117,8 @@
 			uPlotCtor = mod.default;
 		}
 
-		// Re-check state after async import — user may have collapsed or unmounted
-		if (!chartEl || collapsed || !columnarData) return;
+		// Re-check state after async import — user may have collapsed, searched, or unmounted
+		if (!chartEl || collapsed || !columnarData || buildId !== chartBuildId) return;
 
 		const UPlot = uPlotCtor;
 
@@ -346,7 +348,24 @@
 				tooltipIdx = null;
 			}}
 		>
-			<div bind:this={chartEl}></div>
+			{#if columnarData}
+				<div bind:this={chartEl}></div>
+			{:else}
+				<div
+					class="flex h-[150px] items-center justify-center rounded bg-base-200/30"
+				>
+					{#if loading}
+						<span class="loading loading-sm loading-spinner" aria-label="Loading frequency chart"></span>
+					{:else}
+						<div class="flex flex-col items-center gap-1">
+							<p class="text-sm text-base-content/60">No frequency data</p>
+							<p class="text-xs text-base-content/40">
+								Try adjusting your time range or query filters
+							</p>
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			{#if tooltipVisible && tooltipIdx != null && columnarData}
 				<div

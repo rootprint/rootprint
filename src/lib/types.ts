@@ -280,3 +280,5 @@ export type IndexStatsCard = {
 };
 
 export type QuickwitStatus = 'ok' | 'unreachable';
+
+export type LoadingMode = 'idle' | 'fresh' | 'appending';

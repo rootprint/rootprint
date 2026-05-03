@@ -17,6 +17,7 @@ import type {
 	BuiltinView,
 	IndexField,
 	IndexSummary,
+	LoadingMode,
 	LogEntry,
 	ParsedQuery,
 	QuickFilterBucket,
@@ -93,9 +94,17 @@ export function createSearchStore(
 	// --- Search result state ---
 	let logs = $state<LogEntry[]>([]);
 	let numHits = $state(0);
-	let loading = $state(false);
+	let loadingModeState = $state<LoadingMode>('idle');
 	let hasSearched = $state(false);
 	let searchError = $state<string | null>(null);
+
+	const loadingMode = $derived<LoadingMode>(
+		loadingModeState !== 'idle'
+			? loadingModeState
+			: selectedIndex !== null && !hasSearched && searchError === null
+				? 'fresh'
+				: 'idle'
+	);
 	let searchStartTimestamp = $state<number | undefined>(undefined);
 	let searchEndTimestamp = $state<number | undefined>(undefined);
 
@@ -104,6 +113,7 @@ export function createSearchStore(
 	let histogramLoading = $state(false);
 	let histogramRequestId = 0;
 	let searchRequestId = 0;
+	let searchCompletedCount = $state(0);
 
 	// --- Level buckets state ---
 	let levelBucketsLoading = $state(false);
@@ -339,7 +349,7 @@ export function createSearchStore(
 
 		const requestId = ++searchRequestId;
 
-		loading = true;
+		loadingModeState = append ? 'appending' : 'fresh';
 		searchError = null;
 
 		try {
@@ -379,6 +389,7 @@ export function createSearchStore(
 				options?.onFreshSearch?.();
 			}
 			numHits = result.numHits;
+			searchCompletedCount++;
 
 			if (result.hits.length > 0) {
 				const jsonFields = new Map(
@@ -418,7 +429,7 @@ export function createSearchStore(
 			toast.error(message);
 		} finally {
 			if (requestId === searchRequestId) {
-				loading = false;
+				loadingModeState = 'idle';
 			}
 		}
 	}
@@ -688,8 +699,11 @@ export function createSearchStore(
 		get numHits() {
 			return numHits;
 		},
-		get loading() {
-			return loading;
+		get searchCompletedCount() {
+			return searchCompletedCount;
+		},
+		get loadingMode() {
+			return loadingMode;
 		},
 		get hasSearched() {
 			return hasSearched;

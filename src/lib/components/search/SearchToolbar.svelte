@@ -170,10 +170,10 @@
 					<button
 						class="btn join-item btn-sm btn-accent"
 						onclick={() => queryInputRef?.submit()}
-						disabled={store.loading || !store.selectedIndex}
+						disabled={store.loadingMode !== 'idle' || !store.selectedIndex}
 					>
 						<Play size={14} />
-						{store.loading && !store.logs.length ? 'Running...' : 'Run query'}
+						{store.loadingMode !== 'idle' && !store.logs.length ? 'Running...' : 'Run query'}
 					</button>
 				{/if}
 				<button

@@ -15,6 +15,7 @@
 		levelField,
 		levelAggregations = {},
 		numHits,
+		searchCompletedCount,
 		query,
 		onAddClause,
 		onRemoveClause,
@@ -30,6 +31,7 @@
 		levelField: string;
 		levelAggregations: Record<string, QuickFilterBucket[]>;
 		numHits: number;
+		searchCompletedCount: number;
 		query: string;
 		onAddClause: (field: string, value: string, exclude?: boolean) => void;
 		onRemoveClause: (field: string, value: string, exclude?: boolean) => void;
@@ -52,13 +54,13 @@
 	let hasAnyFilters = $derived(clauses.length > 0);
 
 	type SearchResult = { values: QuickFilterBucket[]; totalHits: number };
+	type FieldStatus = 'idle' | 'loading-cold' | 'loading-warm' | 'searching';
 	type FieldState = {
 		aggregations: QuickFilterBucket[] | null;
 		searchTerm: string;
 		searchResult: SearchResult | null;
 		showCount: number;
-		loadingAggregations: boolean;
-		loadingSearch: boolean;
+		status: FieldStatus;
 	};
 
 	let openSections = new SvelteSet<string>();
@@ -67,7 +69,30 @@
 	let fieldStates = $state<Record<string, FieldState>>({});
 
 	let debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
-	let prevRefreshKey = '';
+	let prevQuery: string | null = null;
+	let prevSearchCount: number | null = null;
+	let refreshSeq = 0;
+
+	// svelte-ignore state_referenced_locally
+	let showFieldsLoader = $state(loading && fields.length === 0);
+
+	$effect(() => {
+		if (!loading) {
+			showFieldsLoader = false;
+			return;
+		}
+
+		if (fields.length === 0) {
+			showFieldsLoader = true;
+			return;
+		}
+
+		// Index swap with prior fields still visible: delay 250ms to suppress flash.
+		const timer = setTimeout(() => {
+			showFieldsLoader = true;
+		}, 250);
+		return () => clearTimeout(timer);
+	});
 
 	function fieldState(name: string): FieldState {
 		const existing = fieldStates[name];
@@ -77,8 +102,7 @@
 			searchTerm: '',
 			searchResult: null,
 			showCount: INITIAL_SHOW_COUNT,
-			loadingAggregations: false,
-			loadingSearch: false
+			status: 'idle'
 		};
 		fieldStates[name] = created;
 		return created;
@@ -102,7 +126,8 @@
 		for (const timer of Object.values(debounceTimers)) clearTimeout(timer);
 		debounceTimers = {};
 		fieldStates = {};
-		prevRefreshKey = '';
+		prevQuery = null;
+		prevSearchCount = null;
 	});
 
 	$effect(() => {
@@ -132,25 +157,56 @@
 		};
 	});
 
+	// Show the loading indicator immediately on query change so the user gets
+	// instant feedback. The actual fetch fires later from the next effect, once
+	// the main search completes (so field-value queries inherit the freshly
+	// resolved searchStartTimestamp/searchEndTimestamp).
 	$effect(() => {
-		const key = `${query}\0${numHits}`;
-		if (prevRefreshKey && key !== prevRefreshKey) {
+		const q = query;
+		if (prevQuery !== null && q !== prevQuery && openSections.size > 0) {
+			for (const name of openSections) {
+				if (name === levelField) continue;
+				const s = fieldState(name);
+				const next: FieldStatus = s.aggregations !== null ? 'loading-warm' : 'loading-cold';
+				if (s.status !== next) s.status = next;
+			}
+		}
+		prevQuery = q;
+	});
+
+	$effect(() => {
+		const count = searchCompletedCount;
+		if (prevSearchCount !== null && count !== prevSearchCount) {
 			refreshExpandedFields();
 		}
-		prevRefreshKey = key;
+		prevSearchCount = count;
 	});
 
 	function refreshExpandedFields() {
 		if (!onsearch) return;
 		const search = onsearch;
+		const seq = ++refreshSeq;
 		const fieldsToRefresh = [...openSections].filter((f) => f !== levelField);
-		Promise.allSettled(
-			fieldsToRefresh.map((name) =>
-				search(name, fieldStates[name]?.searchTerm.trim() ?? '').then((result) => {
-					fieldState(name).aggregations = result.values;
+		for (const name of fieldsToRefresh) {
+			const s = fieldState(name);
+			s.status = s.aggregations !== null ? 'loading-warm' : 'loading-cold';
+		}
+
+		for (const name of fieldsToRefresh) {
+			search(name, fieldStates[name]?.searchTerm.trim() ?? '')
+				.then((result) => {
+					if (seq !== refreshSeq) return;
+					const live = fieldStates[name];
+					if (!live) return;
+					live.aggregations = result.values;
+					live.status = 'idle';
 				})
-			)
-		);
+				.catch(() => {
+					if (seq !== refreshSeq) return;
+					const live = fieldStates[name];
+					if (live) live.status = 'idle';
+				});
+		}
 	}
 
 	let fastFields = $derived.by(() => {
@@ -206,23 +262,35 @@
 	async function toggleSection(field: IndexField) {
 		if (!field.fast) return;
 		const name = field.name;
-		if (openSections.has(name)) {
+		const wasOpen = openSections.has(name);
+		if (wasOpen) {
 			openSections.delete(name);
+			if (debounceTimers[name]) {
+				clearTimeout(debounceTimers[name]);
+				delete debounceTimers[name];
+			}
+			delete fieldStates[name];
 		} else {
 			openSections.add(name);
-			if (name !== levelField && !fieldStates[name]?.aggregations && onsearch) {
-				fieldState(name).loadingAggregations = true;
-				try {
-					const result = await onsearch(name, '');
-					fieldState(name).aggregations = result.values;
-				} catch {
-					// Leave empty on error
-				} finally {
-					if (fieldStates[name]) fieldStates[name].loadingAggregations = false;
-				}
-			}
 		}
 		if (indexId) saveSet(storageKeys.openSections(indexId), openSections);
+
+		if (wasOpen) return;
+		if (name === levelField || fieldStates[name]?.aggregations || !onsearch) return;
+
+		const seq = ++refreshSeq;
+		fieldState(name).status = 'loading-cold';
+		try {
+			const result = await onsearch(name, '');
+			if (seq !== refreshSeq) return;
+			fieldState(name).aggregations = result.values;
+		} catch {
+			if (seq !== refreshSeq) return;
+		} finally {
+			if (seq === refreshSeq && fieldStates[name]) {
+				fieldStates[name].status = 'idle';
+			}
+		}
 	}
 
 	function getAggregations(name: string): QuickFilterBucket[] {
@@ -291,15 +359,15 @@
 
 		if (!value.trim()) {
 			s.searchResult = null;
-			s.loadingSearch = false;
+			s.status = 'idle';
 			return;
 		}
 
-		s.loadingSearch = true;
+		s.status = 'searching';
 		debounceTimers[name] = setTimeout(async () => {
 			const currentTerm = fieldStates[name]?.searchTerm;
 			if (!currentTerm?.trim() || !onsearch) {
-				if (fieldStates[name]) fieldStates[name].loadingSearch = false;
+				if (fieldStates[name]) fieldStates[name].status = 'idle';
 				return;
 			}
 			try {
@@ -310,7 +378,7 @@
 				const live = fieldStates[name];
 				if (live && live.searchTerm === currentTerm) live.searchResult = null;
 			} finally {
-				if (fieldStates[name]) fieldStates[name].loadingSearch = false;
+				if (fieldStates[name]) fieldStates[name].status = 'idle';
 			}
 		}, 300);
 	}
@@ -334,13 +402,23 @@
 		if (count >= QUICKWIT_AGG_MAX) return `${QUICKWIT_AGG_MAX}+`;
 		return String(count);
 	}
+
+	function statusFor(name: string): FieldStatus {
+		if (name === levelField) return levelLoading ? 'loading-warm' : 'idle';
+		return fieldStates[name]?.status ?? 'idle';
+	}
+
+	function isFieldPulsing(name: string): boolean {
+		const s = statusFor(name);
+		return s === 'loading-warm' || s === 'searching';
+	}
 </script>
 
 {#snippet fieldValues(field: IndexField, isLevel: boolean, indented: boolean = false)}
 	{@const name = field.name}
 	{@const state = fieldStates[name]}
-	{@const isLoading = state?.loadingAggregations ?? false}
-	{@const isSearching = state?.loadingSearch ?? false}
+	{@const status = statusFor(name)}
+	{@const isPulsing = isFieldPulsing(name)}
 	{@const searchTerm = state?.searchTerm.trim() ?? ''}
 	{@const displayValues = getDisplayValues(name)}
 	{@const totalValues = getTotalValueCount(name)}
@@ -350,12 +428,7 @@
 	{@const anyActiveForField = hasActiveClausesForField(name)}
 
 	<div class="{indented ? 'pr-3 pl-6' : 'px-3'} pb-3">
-		{#if isLoading || (isLevel && levelLoading && displayValues.length === 0)}
-			<div class="flex items-center gap-2 py-1">
-				<span class="loading loading-xs loading-spinner"></span>
-				<span class="text-xs text-base-content/50">Loading...</span>
-			</div>
-		{:else if totalValues > INITIAL_SHOW_COUNT}
+		{#if totalValues > INITIAL_SHOW_COUNT}
 			<input
 				type="text"
 				class="input input-xs mb-2 w-full border-base-300 bg-base-200/50"
@@ -365,16 +438,21 @@
 			/>
 		{/if}
 
-		{#if isSearching}
-			<div class="flex items-center gap-2 py-1">
-				<span class="loading loading-xs loading-spinner"></span>
-				<span class="text-xs text-base-content/50">Searching...</span>
+		{#if status === 'loading-cold'}
+			<div class="flex flex-col gap-0.5">
+				{#each ['70%', '55%', '80%', '45%'] as w}
+					<div class="effect-pulse flex items-center gap-2 px-1.5 py-1">
+						<span class="h-2.5 w-2.5 shrink-0 rounded-full bg-base-300/60"></span>
+						<span class="h-2.5 flex-1 rounded bg-base-300/60" style="max-width: {w}"></span>
+						<span class="h-2.5 w-8 shrink-0 rounded bg-base-300/60"></span>
+					</div>
+				{/each}
 			</div>
-		{:else if !isLoading && !(isLevel && levelLoading) && displayValues.length === 0}
+		{:else if displayValues.length === 0 && status === 'idle'}
 			<p class="py-1 text-xs text-base-content/50">
 				{searchTerm ? 'No matching values' : 'No values found'}
 			</p>
-		{:else if !isLoading}
+		{:else}
 			<div class="flex flex-col gap-1">
 				{#each isLevel ? sortBucketsBySeverity(displayValues) : displayValues as bucket (bucket.value)}
 					{@const isActive = hasClause(name, bucket.value)}
@@ -397,7 +475,7 @@
 									? ''
 									: 'text-base-content/40'}">{bucket.value}</span
 							>
-							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums">
+							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums{isPulsing ? ' effect-pulse' : ''}">
 								{formatCountAsPercent(bucket.count, denominator)}
 							</span>
 						</button>
@@ -413,7 +491,7 @@
 								}}
 							/>
 							<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
-							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums">
+							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums{isPulsing ? ' effect-pulse' : ''}">
 								{formatCountAsPercent(bucket.count, denominator)}
 							</span>
 						</label>
@@ -444,6 +522,7 @@
 	{@const isLevel = field.name === levelField}
 	{@const isOpen = openSections.has(field.name)}
 	{@const countLabel = getFieldCountLabel(field.name)}
+	{@const isPulsing = isFieldPulsing(field.name)}
 
 	<div class="border-b border-base-300/50">
 		<div class="flex w-full items-center px-3 py-1.5{indented ? ' pl-6' : ''}">
@@ -454,7 +533,7 @@
 					<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
 				{/if}
 				<span
-					class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content"
+					class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content{isPulsing ? ' effect-pulse' : ''}"
 					title={field.name}
 				>
 					{displayName(field)}
@@ -515,11 +594,14 @@
 		{/if}
 	</div>
 
-	{#if loading}
-		<div class="flex flex-1 items-center justify-center py-4">
-			<span class="loading loading-sm loading-spinner"></span>
+	{#if loading && showFieldsLoader}
+		<div class="flex flex-1 items-center justify-center py-6">
+			<div class="flex items-center gap-2">
+				<span class="loading loading-sm loading-spinner"></span>
+				<span class="text-xs text-base-content/60">Loading...</span>
+			</div>
 		</div>
-	{:else if fields.length === 0}
+	{:else if !loading && fields.length === 0}
 		<div class="px-3 py-2">
 			<p class="text-[11px] text-base-content/50">No fields available</p>
 		</div>
@@ -572,3 +654,18 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	@keyframes effect-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.45;
+		}
+	}
+	.effect-pulse {
+		animation: effect-pulse 1.4s ease-in-out infinite;
+	}
+</style>
