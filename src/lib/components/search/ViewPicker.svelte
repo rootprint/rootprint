@@ -6,8 +6,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import { deleteView } from '$lib/api/views.remote';
 	import { BUILTIN_VIEWS } from '$lib/constants/builtin-views';
-	import { getErrorMessage } from '$lib/utils/error';
 	import type { ActiveViewRef, BuiltinView, BuiltinViewIcon, ViewSummary } from '$lib/types';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	let {
 		activeView,
@@ -121,11 +121,7 @@
 		</button>
 	{:else}
 		<div class="join">
-			<button
-				type="button"
-				class="btn join-item btn-ghost btn-sm"
-				onclick={() => (open = !open)}
-			>
+			<button type="button" class="btn join-item btn-ghost btn-sm" onclick={() => (open = !open)}>
 				<span class="flex items-center gap-1.5">
 					{#if activeBuiltin}
 						{@render builtinIcon(activeBuiltin.icon)}
@@ -149,17 +145,16 @@
 	{/if}
 
 	{#if open}
-		<div class="dropdown-content z-20 mt-1 w-72 rounded-box bg-base-100 p-3 shadow-lg ring-1 ring-base-300">
+		<div
+			class="dropdown-content z-20 mt-1 w-72 rounded-box bg-base-100 p-3 shadow-lg ring-1 ring-base-300"
+		>
 			<div class="mb-2 flex items-center gap-2 px-1">
 				<ListFilter size={14} class="text-base-content/60" />
 				<span class="text-sm font-medium">Views</span>
 			</div>
 
 			<div class="relative mb-2">
-				<Search
-					size={12}
-					class="absolute top-1/2 left-2 -translate-y-1/2 text-base-content/40"
-				/>
+				<Search size={12} class="absolute top-1/2 left-2 -translate-y-1/2 text-base-content/40" />
 				<input
 					type="text"
 					placeholder="Search views..."
@@ -172,7 +167,9 @@
 				{#each filteredItems as item (item.kind === 'builtin' ? `b:${item.slug}` : `u:${item.id}`)}
 					<div class="flex items-center gap-1">
 						<button
-							class="btn flex-1 justify-start btn-ghost btn-sm {isItemActive(item) ? 'btn-active' : ''}"
+							class="btn flex-1 justify-start btn-ghost btn-sm {isItemActive(item)
+								? 'btn-active'
+								: ''}"
 							onclick={() => selectItem(item)}
 						>
 							{#if item.kind === 'builtin'}
@@ -184,7 +181,7 @@
 						</button>
 						{#if item.kind === 'user'}
 							<button
-								class="btn text-error btn-ghost btn-square btn-xs"
+								class="btn btn-square text-error btn-ghost btn-xs"
 								aria-label={`Delete ${item.name}`}
 								onclick={() => handleDelete(item.id, item.name)}
 							>
@@ -201,10 +198,7 @@
 
 			<div class="divider my-2"></div>
 
-			<button
-				class="btn justify-start btn-ghost text-primary btn-sm"
-				onclick={handleSaveAsNew}
-			>
+			<button class="btn justify-start text-primary btn-ghost btn-sm" onclick={handleSaveAsNew}>
 				Save current as view…
 			</button>
 		</div>

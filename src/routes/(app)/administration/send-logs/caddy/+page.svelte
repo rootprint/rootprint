@@ -172,7 +172,7 @@
 						<p class="mt-1 text-sm text-base-content/60">
 							Bring the Vector sidecar up first so it's already streaming before Caddy restarts on
 							the new logging config. Replace
-							<InlineCode>{'<your-caddy-service-name>'}</InlineCode> with the Compose service key for
+							<InlineCode>&lt;your-caddy-service-name&gt;</InlineCode> with the Compose service key for
 							Caddy. That's the name under <InlineCode>services:</InlineCode>, which can differ from
 							<InlineCode>container_name</InlineCode>. If you skipped step 1 because access logs are
 							already enabled, you only need to start Vector here.

@@ -351,11 +351,10 @@
 			{#if columnarData}
 				<div bind:this={chartEl}></div>
 			{:else}
-				<div
-					class="flex h-[150px] items-center justify-center rounded bg-base-200/30"
-				>
+				<div class="flex h-[150px] items-center justify-center rounded bg-base-200/30">
 					{#if loading}
-						<span class="loading loading-sm loading-spinner" aria-label="Loading frequency chart"></span>
+						<span class="loading loading-sm loading-spinner" aria-label="Loading frequency chart"
+						></span>
 					{:else}
 						<div class="flex flex-col items-center gap-1">
 							<p class="text-sm text-base-content/60">No frequency data</p>

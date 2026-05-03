@@ -266,9 +266,9 @@
 			openSections.delete(name);
 			if (debounceTimers[name]) {
 				clearTimeout(debounceTimers[name]);
-				delete debounceTimers[name];
+				Reflect.deleteProperty(debounceTimers, name);
 			}
-			delete fieldStates[name];
+			Reflect.deleteProperty(fieldStates, name);
 		} else {
 			openSections.add(name);
 		}
@@ -439,7 +439,7 @@
 
 		{#if status === 'loading-cold'}
 			<div class="flex flex-col gap-0.5">
-				{#each ['70%', '55%', '80%', '45%'] as w}
+				{#each ['70%', '55%', '80%', '45%'] as w (w)}
 					<div class="effect-pulse flex items-center gap-2 px-1.5 py-1">
 						<span class="h-2.5 w-2.5 shrink-0 rounded-full bg-base-300/60"></span>
 						<span class="h-2.5 flex-1 rounded bg-base-300/60" style="max-width: {w}"></span>
@@ -474,7 +474,11 @@
 									? ''
 									: 'text-base-content/40'}">{bucket.value}</span
 							>
-							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums{isPulsing ? ' effect-pulse' : ''}">
+							<span
+								class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums{isPulsing
+									? ' effect-pulse'
+									: ''}"
+							>
 								{formatCountAsPercent(bucket.count, denominator)}
 							</span>
 						</button>
@@ -490,7 +494,11 @@
 								}}
 							/>
 							<span class="min-w-0 flex-1 truncate">{bucket.value}</span>
-							<span class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums{isPulsing ? ' effect-pulse' : ''}">
+							<span
+								class="w-10 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums{isPulsing
+									? ' effect-pulse'
+									: ''}"
+							>
 								{formatCountAsPercent(bucket.count, denominator)}
 							</span>
 						</label>
@@ -532,7 +540,9 @@
 					<ChevronRight size={12} class="mr-1 shrink-0 text-base-content/60" />
 				{/if}
 				<span
-					class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content{isPulsing ? ' effect-pulse' : ''}"
+					class="min-w-0 flex-1 truncate text-left text-xs font-medium text-base-content{isPulsing
+						? ' effect-pulse'
+						: ''}"
 					title={field.name}
 				>
 					{displayName(field)}

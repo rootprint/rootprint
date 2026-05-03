@@ -199,9 +199,7 @@ export type BuiltinView = {
 	icon: BuiltinViewIcon;
 };
 
-export type ActiveViewRef =
-	| { kind: 'builtin'; slug: string }
-	| { kind: 'user'; id: number };
+export type ActiveViewRef = { kind: 'builtin'; slug: string } | { kind: 'user'; id: number };
 
 export type GoogleAuthSettings = {
 	clientId: string;

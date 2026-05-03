@@ -30,8 +30,7 @@ export async function saveView(
 }
 
 export async function deleteView(userId: string, id: number, role?: string | null) {
-	const where =
-		role === 'admin' ? eq(view.id, id) : and(eq(view.id, id), eq(view.userId, userId));
+	const where = role === 'admin' ? eq(view.id, id) : and(eq(view.id, id), eq(view.userId, userId));
 	const [deleted] = await db.delete(view).where(where).returning({ id: view.id });
 	if (!deleted) error(404, 'View not found');
 }

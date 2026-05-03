@@ -1,13 +1,13 @@
 ---
 title: 'Send nginx logs with Vector'
-description: 'Tail nginx''s default `combined` access logs and error logs with Vector and ship them to Logwiz over OTLP, with the access fields mapped to OpenTelemetry HTTP semantic conventions.'
+description: "Tail nginx's default `combined` access logs and error logs with Vector and ship them to Logwiz over OTLP, with the access fields mapped to OpenTelemetry HTTP semantic conventions."
 ---
 
 [nginx](https://nginx.org) writes plain-text logs by default — `combined` format for access logs and a separate text format for error logs. This page sets up Vector as a `systemd` service that tails `/var/log/nginx/access.log` and `/var/log/nginx/error.log`, parses each line with Vector's built-in `parse_nginx_log`, maps the error-log `severity` field to OTel severity, and ships the result to Logwiz's OTLP endpoint with a Bearer token. Records land in the `otel-logs-v0_9` index with `service.name: nginx` and OpenTelemetry HTTP attributes (`http.request.method`, `url.path`, `http.response.status_code`, `client.address`, `user_agent.original`, …) pre-populated.
 
 <Warning>
-	Paths and `systemctl` invocations below assume Debian or Ubuntu. nginx itself runs on every
-	major platform, but this page does not cover macOS, Windows, or FreeBSD.
+	Paths and `systemctl` invocations below assume Debian or Ubuntu. nginx itself runs on every major
+	platform, but this page does not cover macOS, Windows, or FreeBSD.
 </Warning>
 
 ## Setup
@@ -20,20 +20,19 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
     token across indexes.
   </Step>
 
-  <Step title="Confirm nginx is logging to file">
-    Stock nginx already writes `combined`-format access logs to
-    `/var/log/nginx/access.log` and error logs to `/var/log/nginx/error.log` — the wizard
-    targets those defaults. No `nginx.conf` changes are required. If you have replaced the
-    default `log_format` with a custom one, the parser below will fall back to leaving the
-    raw line in `body`; either revert to the default `combined` format or extend the
-    `parse_nginx` remap to handle your custom shape.
-  </Step>
+<Step title="Confirm nginx is logging to file">
+	Stock nginx already writes `combined`-format access logs to `/var/log/nginx/access.log` and error
+	logs to `/var/log/nginx/error.log` — the wizard targets those defaults. No `nginx.conf` changes
+	are required. If you have replaced the default `log_format` with a custom one, the parser below
+	will fall back to leaving the raw line in `body`; either revert to the default `combined` format
+	or extend the `parse_nginx` remap to handle your custom shape.
+</Step>
 
-  <Step title="Install Vector">
-    Install the Vector package for your platform from the [official installation
-    page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu
-    apt, RHEL/Fedora dnf, container images) are maintained upstream.
-  </Step>
+<Step title="Install Vector">
+	Install the Vector package for your platform from the [official installation
+	page](https://vector.dev/docs/setup/installation/). Per-distro instructions (Debian/Ubuntu apt,
+	RHEL/Fedora dnf, container images) are maintained upstream.
+</Step>
 
   <Step title="Write the Vector config">
     Save the following at `/etc/vector/vector.yaml`. Replace `<your-logwiz>` with your Logwiz
@@ -243,6 +242,7 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
     `read_from: end` skips existing content on first start, so installing Vector against an
     existing `access.log` does not replay every historical request. Flip it to `beginning` if
     you want a one-time backfill.
+
   </Step>
 
   <Step title="Grant Vector read access to /var/log/nginx">
@@ -253,6 +253,7 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
     ```bash
     sudo usermod -aG adm vector
     ```
+
   </Step>
 
   <Step title="Restart Vector">
@@ -263,6 +264,7 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
 
     The status output should show `active (running)` and the most recent log lines should not
     contain config-parse or sink-startup errors.
+
   </Step>
 
   <Step title="Send a test request">
@@ -273,6 +275,7 @@ description: 'Tail nginx''s default `combined` access logs and error logs with V
     ```
 
     Replace `http://localhost/` with whichever site URL nginx is configured for.
+
   </Step>
 
   <Step title="Verify in Logwiz">
@@ -293,26 +296,26 @@ Two `remap` transforms run in sequence. The first, `parse_nginx`, turns each raw
 
 `to_otlp` assembles the OTLP envelope. `service.name` is hard-coded to `nginx` (resource attribute). The `if fmt == "access"` branch is what makes one VRL block handle both files cleanly: error-log entries get `process.pid`, `thread.id`, `nginx.connection_id`, and (when present) the upstream/server context fields; access-log entries get the full HTTP semantic-convention attribute set. `parse_nginx_log("combined")` returns the request line as a single `.request` field (e.g. `"GET /api/foo HTTP/1.1"`), so the access branch splits it on whitespace to populate `http.request.method`, `url.path`, `network.protocol.name`, and `network.protocol.version` separately. Malformed request lines (`-`, empty) skip those attributes rather than emitting partial data.
 
-| OTLP key                       | Source field                                   | Format |
-| ------------------------------ | ---------------------------------------------- | ------ |
-| `http.request.method`          | first whitespace-delimited segment of `.request`        | access |
-| `url.path`                     | second segment of `.request`                            | access |
-| `network.protocol.name`        | third segment of `.request`, split on `/`, lowercased   | access |
-| `network.protocol.version`     | third segment of `.request`, split on `/`               | access |
-| `http.response.status_code`    | `.status`                                               | access |
-| `http.response.body.size`      | `.size`                                                 | access |
-| `client.address`               | `.client`                                               | both   |
-| `user_agent.original`          | `.agent` (skipped if `-`)                               | access |
-| `http.request.header.referer`  | `.referer` (skipped if `-`)                             | access |
-| `enduser.id`                   | `.user` (skipped if `-`)                                | access |
-| `process.pid`                  | `.pid`                                                  | error  |
-| `thread.id`                    | `.tid`                                                  | error  |
-| `nginx.connection_id`          | `.cid` (when present)                                   | error  |
-| `server.address`               | `.host` (when present)                                  | error  |
-| `nginx.server`                 | `.server` (when present — server block)                 | error  |
-| `nginx.upstream`               | `.upstream` (when present)                              | error  |
-| `nginx.format`                 | `"access"` or `"error"` discriminator                   | both   |
-| `log.file.path`                | Vector's `.file` source attribute                       | both   |
+| OTLP key                      | Source field                                          | Format |
+| ----------------------------- | ----------------------------------------------------- | ------ |
+| `http.request.method`         | first whitespace-delimited segment of `.request`      | access |
+| `url.path`                    | second segment of `.request`                          | access |
+| `network.protocol.name`       | third segment of `.request`, split on `/`, lowercased | access |
+| `network.protocol.version`    | third segment of `.request`, split on `/`             | access |
+| `http.response.status_code`   | `.status`                                             | access |
+| `http.response.body.size`     | `.size`                                               | access |
+| `client.address`              | `.client`                                             | both   |
+| `user_agent.original`         | `.agent` (skipped if `-`)                             | access |
+| `http.request.header.referer` | `.referer` (skipped if `-`)                           | access |
+| `enduser.id`                  | `.user` (skipped if `-`)                              | access |
+| `process.pid`                 | `.pid`                                                | error  |
+| `thread.id`                   | `.tid`                                                | error  |
+| `nginx.connection_id`         | `.cid` (when present)                                 | error  |
+| `server.address`              | `.host` (when present)                                | error  |
+| `nginx.server`                | `.server` (when present — server block)               | error  |
+| `nginx.upstream`              | `.upstream` (when present)                            | error  |
+| `nginx.format`                | `"access"` or `"error"` discriminator                 | both   |
+| `log.file.path`               | Vector's `.file` source attribute                     | both   |
 
 `timeUnixNano` is derived from the parsed `.timestamp` field; `parse_nginx_log` returns it as a Vector `Timestamp` value, so we convert with `to_unix_timestamp` directly. If the field is missing or the conversion fails, Vector's read time is used as a fallback. The final `. = { resourceLogs: [...] }` reassignment replaces the event entirely, so the OTLP sink sees only the envelope.
 

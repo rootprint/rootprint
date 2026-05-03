@@ -1,5 +1,4 @@
 import { browser } from '$app/environment';
-
 import { storageKeys } from '$lib/constants/storage-keys';
 import type { ActiveViewRef } from '$lib/types';
 
@@ -31,10 +30,8 @@ export function writeActiveView(indexId: string, ref: ActiveViewRef | null): voi
 		const raw = localStorage.getItem(storageKeys.activeView);
 		const parsed = raw ? JSON.parse(raw) : null;
 		const map: StoredMap =
-			parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-				? (parsed as StoredMap)
-				: {};
-		if (ref === null) delete map[indexId];
+			parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as StoredMap) : {};
+		if (ref === null) Reflect.deleteProperty(map, indexId);
 		else map[indexId] = ref;
 		localStorage.setItem(storageKeys.activeView, JSON.stringify(map));
 	} catch {
