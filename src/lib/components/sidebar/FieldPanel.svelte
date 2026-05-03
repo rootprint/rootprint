@@ -127,7 +127,6 @@
 		debounceTimers = {};
 		fieldStates = {};
 		prevQuery = null;
-		prevSearchCount = null;
 	});
 
 	$effect(() => {
@@ -577,7 +576,7 @@
 {/snippet}
 
 <div class="flex flex-col bg-base-100">
-	<div class="flex items-center border-b border-base-300 px-3 py-2">
+	<div class="flex min-h-10 items-center border-b border-base-300 px-3 py-2">
 		<h3
 			class="flex-1 text-left text-xs font-semibold tracking-wider text-base-content/80 uppercase"
 		>
