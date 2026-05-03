@@ -68,8 +68,6 @@ export async function searchLogs(data: SearchLogsInput) {
 
 	const { startTs, endTs } = resolveTimestamps(data);
 
-	const filterFields = data.quickFilterFields ?? [];
-
 	const query = index
 		.query(data.query || '*')
 		.limit(data.limit)
@@ -78,23 +76,13 @@ export async function searchLogs(data: SearchLogsInput) {
 
 	query.timeRange(startTs, endTs);
 
-	for (const field of filterFields) {
-		query.agg(field, AggregationBuilder.terms(field, { size: QUICKWIT_AGG_MAX }));
-	}
-
 	const result = await index.search(query).catch(rethrowValidationError);
-
-	const aggregations: Record<string, QuickFilterBucket[]> = {};
-	for (const [field, agg] of Object.entries(result.aggregations ?? {})) {
-		aggregations[field] = toQuickFilterBuckets((agg as BucketAggregationResult).buckets);
-	}
 
 	return {
 		hits: result.hits,
 		numHits: result.num_hits,
 		startTimestamp: startTs,
-		endTimestamp: endTs,
-		aggregations
+		endTimestamp: endTs
 	};
 }
 

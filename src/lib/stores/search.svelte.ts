@@ -87,8 +87,6 @@ export function createSearchStore(
 	// Restored into activeFields when the user clears the active view.
 	let savedDisplayFields = $state<string[]>([]);
 	let fieldsLoading = $state(false);
-	const quickFilterFields = $derived(indexFields.filter((f) => f.fast).map((f) => f.name));
-
 	// --- Active view (per-index, persisted in localStorage) ---
 	let activeViewRef = $state<ActiveViewRef | null>(null);
 
@@ -106,6 +104,10 @@ export function createSearchStore(
 	let histogramLoading = $state(false);
 	let histogramRequestId = 0;
 	let searchRequestId = 0;
+
+	// --- Level buckets state ---
+	let levelBucketsLoading = $state(false);
+	let levelBucketsRequestId = 0;
 
 	// --- Column widths ---
 	const columnWidths = $derived(
@@ -353,6 +355,7 @@ export function createSearchStore(
 
 			if (!append) {
 				fetchHistogram();
+				fetchLevelBuckets(timeParams);
 			}
 
 			const result = await searchLogs({
@@ -361,7 +364,6 @@ export function createSearchStore(
 				...timeParams,
 				offset: append ? logs.length : 0,
 				limit: BATCH_SIZE,
-				quickFilterFields,
 				sortDirection
 			});
 
@@ -369,30 +371,6 @@ export function createSearchStore(
 
 			searchStartTimestamp = result.startTimestamp;
 			searchEndTimestamp = result.endTimestamp;
-
-			if (!append && result.aggregations) {
-				const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
-				if (hasActiveClauses) {
-					const newAgg: Record<string, QuickFilterBucket[]> = {};
-					for (const [field, buckets] of Object.entries(result.aggregations)) {
-						if (field === fieldConfig.levelField) {
-							const merged = new Map<string, QuickFilterBucket>();
-							for (const prev of aggregations[field] ?? []) {
-								merged.set(prev.value, { value: prev.value, count: null });
-							}
-							for (const fresh of buckets) {
-								merged.set(fresh.value, fresh);
-							}
-							newAgg[field] = [...merged.values()].slice(0, QUICKWIT_AGG_MAX);
-						} else {
-							newAgg[field] = buckets;
-						}
-					}
-					aggregations = newAgg;
-				} else {
-					aggregations = result.aggregations;
-				}
-			}
 
 			if (append) {
 				logs = [...logs, ...withKeys(result.hits)];
@@ -471,6 +449,53 @@ export function createSearchStore(
 		} finally {
 			if (requestId === histogramRequestId) {
 				histogramLoading = false;
+			}
+		}
+	}
+
+	async function fetchLevelBuckets(
+		timeParams: Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>
+	) {
+		if (selectedIndex === null) return;
+
+		const requestId = ++levelBucketsRequestId;
+		levelBucketsLoading = true;
+		try {
+			const queryText = getQueryText();
+			const levelField = fieldConfig.levelField;
+			const result = await searchFieldValues({
+				indexId: selectedIndex,
+				field: levelField,
+				searchTerm: '',
+				query: queryText || '*',
+				...timeParams
+			});
+			if (requestId !== levelBucketsRequestId) return;
+
+			if (result.unsupported) {
+				aggregations = {};
+				return;
+			}
+
+			const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
+			if (hasActiveClauses) {
+				const merged = new Map<string, QuickFilterBucket>();
+				for (const prev of aggregations[levelField] ?? []) {
+					merged.set(prev.value, { value: prev.value, count: null });
+				}
+				for (const fresh of result.values) {
+					merged.set(fresh.value, fresh);
+				}
+				aggregations = { [levelField]: [...merged.values()].slice(0, QUICKWIT_AGG_MAX) };
+			} else {
+				aggregations = { [levelField]: result.values };
+			}
+		} catch {
+			if (requestId !== levelBucketsRequestId) return;
+			// Leave existing aggregations in place on transient failure.
+		} finally {
+			if (requestId === levelBucketsRequestId) {
+				levelBucketsLoading = false;
 			}
 		}
 	}
@@ -677,6 +702,9 @@ export function createSearchStore(
 		},
 		get histogramLoading() {
 			return histogramLoading;
+		},
+		get levelBucketsLoading() {
+			return levelBucketsLoading;
 		},
 		get columnWidths() {
 			return columnWidths;

@@ -117,6 +117,7 @@
 			onClearClauses={store.clearClauses}
 			onsearch={store.searchFieldValues}
 			loading={store.fieldsLoading}
+			levelLoading={store.levelBucketsLoading}
 			indexId={store.selectedIndex}
 			isOtelIndex={store.isOtelIndex}
 		/>

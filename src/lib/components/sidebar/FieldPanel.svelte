@@ -23,7 +23,8 @@
 		onsearch,
 		loading = false,
 		indexId = null,
-		isOtelIndex = false
+		isOtelIndex = false,
+		levelLoading = false
 	}: {
 		fields: IndexField[];
 		levelField: string;
@@ -41,6 +42,7 @@
 		loading?: boolean;
 		indexId?: string | null;
 		isOtelIndex?: boolean;
+		levelLoading?: boolean;
 	} = $props();
 
 	const INITIAL_SHOW_COUNT = 10;
@@ -348,7 +350,7 @@
 	{@const anyActiveForField = hasActiveClausesForField(name)}
 
 	<div class="{indented ? 'pr-3 pl-6' : 'px-3'} pb-3">
-		{#if isLoading}
+		{#if isLoading || (isLevel && levelLoading && displayValues.length === 0)}
 			<div class="flex items-center gap-2 py-1">
 				<span class="loading loading-xs loading-spinner"></span>
 				<span class="text-xs text-base-content/50">Loading...</span>
@@ -368,7 +370,7 @@
 				<span class="loading loading-xs loading-spinner"></span>
 				<span class="text-xs text-base-content/50">Searching...</span>
 			</div>
-		{:else if !isLoading && displayValues.length === 0}
+		{:else if !isLoading && !(isLevel && levelLoading) && displayValues.length === 0}
 			<p class="py-1 text-xs text-base-content/50">
 				{searchTerm ? 'No matching values' : 'No values found'}
 			</p>
