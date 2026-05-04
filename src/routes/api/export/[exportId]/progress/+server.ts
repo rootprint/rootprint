@@ -1,16 +1,21 @@
-import type { RequestHandler } from '@sveltejs/kit';
-
+import { requireUser } from '$lib/middleware/auth';
 import { exportManager } from '$lib/server/services/export.service';
+import type { ExportStatus } from '$lib/types';
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-	if (!locals.user) {
-		return new Response('Unauthorized', { status: 401 });
-	}
+import type { RequestHandler } from './$types';
 
-	const exportId = params.exportId ?? '';
+type ProgressFrame =
+	| { status: Extract<ExportStatus, 'fetching'>; fetched: number; total: number }
+	| { status: Extract<ExportStatus, 'compressing' | 'complete'> }
+	| { status: Extract<ExportStatus, 'error'>; message: string };
+
+export const GET: RequestHandler = async ({ params }) => {
+	const user = requireUser();
+
+	const { exportId } = params;
 	const initialState = exportManager.get(exportId);
 
-	if (!initialState || initialState.userId !== locals.user.id) {
+	if (!initialState || initialState.userId !== user.id) {
 		return new Response('Export not found', { status: 404 });
 	}
 
@@ -19,8 +24,18 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	const stream = new ReadableStream({
 		start(controller) {
-			function send(data: Record<string, unknown>) {
-				controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+			let lastFrameKey = '';
+
+			function send(frame: ProgressFrame) {
+				const key =
+					frame.status === 'fetching'
+						? `fetching:${frame.fetched}:${frame.total}`
+						: frame.status === 'error'
+							? `error:${frame.message}`
+							: frame.status;
+				if (key === lastFrameKey) return;
+				lastFrameKey = key;
+				controller.enqueue(encoder.encode(`data: ${JSON.stringify(frame)}\n\n`));
 			}
 
 			function poll() {

@@ -1,16 +1,15 @@
-import type { RequestHandler } from '@sveltejs/kit';
-
+import { requireUser } from '$lib/middleware/auth';
 import { exportManager } from '$lib/server/services/export.service';
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-	if (!locals.user) {
-		return new Response('Unauthorized', { status: 401 });
-	}
+import type { RequestHandler } from './$types';
 
-	const exportId = params.exportId ?? '';
+export const GET: RequestHandler = async ({ params }) => {
+	const user = requireUser();
+
+	const { exportId } = params;
 	const state = exportManager.get(exportId);
 
-	if (!state || state.status !== 'complete' || !state.result || state.userId !== locals.user.id) {
+	if (!state || state.status !== 'complete' || !state.result || state.userId !== user.id) {
 		return new Response('Export not found or not ready', { status: 404 });
 	}
 
@@ -22,7 +21,6 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		}
 	});
 
-	// Clean up after serving
 	exportManager.delete(exportId);
 
 	return response;

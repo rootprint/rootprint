@@ -3,17 +3,18 @@ import { AggregationBuilder } from 'quickwit-js';
 import * as v from 'valibot';
 
 import { EXPORT_MAX_LOGS } from '$lib/constants/ingest';
+import { requireUser } from '$lib/middleware/auth';
 import { exportLogsSchema } from '$lib/schemas/export';
 import { quickwitClient } from '$lib/server/quickwit';
 import { EXPORT_BATCH_SIZE, exportManager } from '$lib/server/services/export.service';
 import { assertIndexAccess, getFieldConfig } from '$lib/server/services/index.service';
 
+type FieldConfig = Awaited<ReturnType<typeof getFieldConfig>>;
+
 async function runExportJob(
 	exportId: string,
 	data: v.InferOutput<typeof exportLogsSchema>,
-	timestampField: string,
-	levelField: string,
-	messageField: string
+	fieldConfig: FieldConfig
 ): Promise<void> {
 	try {
 		const index = quickwitClient.index(data.indexId);
@@ -31,8 +32,8 @@ async function runExportJob(
 				.query(data.query || '*')
 				.limit(batchLimit)
 				.offset(currentOffset)
-				.sortBy(timestampField, 'desc')
-				.agg('_export', AggregationBuilder.terms(timestampField, { size: 1 }));
+				.sortBy(fieldConfig.timestampField, 'desc')
+				.agg('_export', AggregationBuilder.terms(fieldConfig.timestampField, { size: 1 }));
 
 			query.timeRange(data.startTimestamp, data.endTimestamp);
 
@@ -48,17 +49,20 @@ async function runExportJob(
 			if (hits.length < batchLimit) break;
 		}
 
-		await exportManager.finalize(exportId, timestampField, levelField, messageField);
+		await exportManager.finalize(
+			exportId,
+			fieldConfig.timestampField,
+			fieldConfig.levelField,
+			fieldConfig.messageField
+		);
 	} catch (e) {
 		const message = e instanceof Error ? e.message : 'Unknown export error';
 		exportManager.setError(exportId, message);
 	}
 }
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.user) {
-		return json({ message: 'Unauthorized' }, { status: 401 });
-	}
+export const POST: RequestHandler = async ({ request }) => {
+	const user = requireUser();
 
 	let body: unknown;
 	try {
@@ -73,8 +77,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const data = parsed.output;
-	await assertIndexAccess(data.indexId, locals.user.role);
-	const fieldConfig = await getFieldConfig(data.indexId);
+	const [, fieldConfig] = await Promise.all([
+		assertIndexAccess(data.indexId, user.role),
+		getFieldConfig(data.indexId)
+	]);
 
 	const index = quickwitClient.index(data.indexId);
 
@@ -103,16 +109,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		format: data.format,
 		total,
 		filename,
-		userId: locals.user.id
+		userId: user.id
 	});
 
-	runExportJob(
-		exportId,
-		data,
-		fieldConfig.timestampField,
-		fieldConfig.levelField,
-		fieldConfig.messageField
-	);
+	void runExportJob(exportId, data, fieldConfig);
 
 	return json({ exportId });
 };

@@ -1,9 +1,9 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-import { MAX_INGEST_BODY_BYTES } from '$lib/constants/ingest';
-import { config } from '$lib/server/config';
+import { quickwitClient } from '$lib/server/quickwit';
 import { verifyIngestToken } from '$lib/server/services/ingest-token.service';
 import { extractBearerToken } from '$lib/server/utils/bearer';
+import { readBoundedIngestBody } from '$lib/server/utils/ingest-body';
 
 const SUPPORTED_MEDIA_TYPES = new Set(['application/x-protobuf']);
 
@@ -25,7 +25,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ message: 'Invalid ingest token' }, { status: 403 });
 	}
 
-	const contentTypeHeader = request.headers.get('content-type');
+	const contentTypeHeader = request.headers.get('content-type') ?? '';
 	const baseMediaType = parseBaseMediaType(contentTypeHeader);
 	if (!baseMediaType || !SUPPORTED_MEDIA_TYPES.has(baseMediaType)) {
 		return json(
@@ -37,25 +37,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		);
 	}
 
-	const contentLength = request.headers.get('content-length');
-	if (contentLength) {
-		const parsedLength = Number.parseInt(contentLength, 10);
-		if (Number.isFinite(parsedLength) && parsedLength > MAX_INGEST_BODY_BYTES) {
-			return json({ message: 'Request body too large' }, { status: 413 });
-		}
-	}
+	const bodyOrResponse = await readBoundedIngestBody(request);
+	if (bodyOrResponse instanceof Response) return bodyOrResponse;
 
-	const body = await request.arrayBuffer();
-	if (body.byteLength > MAX_INGEST_BODY_BYTES) {
-		return json({ message: 'Request body too large' }, { status: 413 });
-	}
-	if (body.byteLength === 0) {
-		return json({ message: 'Request body is required' }, { status: 400 });
-	}
-
-	const quickwitBase = config.quickwitUrl.replace(/\/+$/, '');
 	const headers: Record<string, string> = {
-		'content-type': contentTypeHeader as string,
+		'content-type': contentTypeHeader,
 		'qw-otel-logs-index': verified.indexId
 	};
 	const contentEncoding = request.headers.get('content-encoding');
@@ -64,10 +50,10 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	try {
-		const upstream = await fetch(`${quickwitBase}/otlp/v1/logs`, {
+		const upstream = await fetch(`${quickwitClient.endpoint}/otlp/v1/logs`, {
 			method: 'POST',
 			headers,
-			body
+			body: bodyOrResponse
 		});
 
 		if (upstream.status >= 500) {

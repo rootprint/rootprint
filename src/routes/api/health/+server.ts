@@ -6,63 +6,24 @@ import { quickwitClient } from '$lib/server/quickwit';
 
 type CheckStatus = 'ok' | 'error';
 
-type HealthPayload = {
-	status: CheckStatus;
-	checks: {
-		database: CheckStatus;
-		quickwit: CheckStatus;
-	};
-};
-
-type HealthDependencies = {
-	checkDatabase: () => Promise<void>;
-	checkQuickwit: () => Promise<boolean>;
-};
-
-const defaultDependencies: HealthDependencies = {
-	checkDatabase: async () => {
-		await db.select({ indexId: indexSettings.indexId }).from(indexSettings).limit(1);
-	},
-	checkQuickwit: async () => quickwitClient.isHealthy()
-};
-
-function toStatus(settled: PromiseSettledResult<unknown>, isHealthy: boolean = true): CheckStatus {
-	if (settled.status === 'rejected') return 'error';
-	return isHealthy ? 'ok' : 'error';
-}
-
-async function runHealthChecks(
-	dependencies: HealthDependencies = defaultDependencies
-): Promise<HealthPayload> {
+export const GET: RequestHandler = async () => {
 	const [database, quickwit] = await Promise.allSettled([
-		dependencies.checkDatabase(),
-		dependencies.checkQuickwit()
+		db.select({ indexId: indexSettings.indexId }).from(indexSettings).limit(1),
+		quickwitClient.isHealthy()
 	]);
 
-	const checks = {
-		database: toStatus(database),
-		quickwit: toStatus(quickwit, quickwit.status === 'fulfilled' && quickwit.value)
+	const checks: { database: CheckStatus; quickwit: CheckStatus } = {
+		database: database.status === 'fulfilled' ? 'ok' : 'error',
+		quickwit: quickwit.status === 'fulfilled' && quickwit.value ? 'ok' : 'error'
 	};
 
-	return {
-		status: checks.database === 'ok' && checks.quickwit === 'ok' ? 'ok' : 'error',
-		checks
-	};
-}
+	const status: CheckStatus = checks.database === 'ok' && checks.quickwit === 'ok' ? 'ok' : 'error';
 
-export function _createHealthHandler(
-	dependencies: HealthDependencies = defaultDependencies
-): RequestHandler {
-	return async () => {
-		const health = await runHealthChecks(dependencies);
-
-		return json(health, {
-			status: health.status === 'ok' ? 200 : 503,
-			headers: {
-				'cache-control': 'no-store'
-			}
-		});
-	};
-}
-
-export const GET: RequestHandler = _createHealthHandler();
+	return json(
+		{ status, checks },
+		{
+			status: status === 'ok' ? 200 : 503,
+			headers: { 'cache-control': 'no-store' }
+		}
+	);
+};
