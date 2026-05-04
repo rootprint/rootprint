@@ -1,15 +1,16 @@
 import type { Formatter } from '$lib/types';
 
-function resolveSegments(current: unknown, segments: string[]): unknown {
-	if (segments.length === 0) return current;
+function resolveSegments(current: unknown, segments: string[], from: number, to: number): unknown {
+	if (from >= to) return current;
 	if (current === null || current === undefined || typeof current !== 'object') return undefined;
 
 	const record = current as Record<string, unknown>;
+	let key = '';
 
-	for (let i = 1; i <= segments.length; i++) {
-		const key = segments.slice(0, i).join('.');
+	for (let i = from; i < to; i++) {
+		key = i === from ? segments[i] : `${key}.${segments[i]}`;
 		if (key in record) {
-			const result = resolveSegments(record[key], segments.slice(i));
+			const result = resolveSegments(record[key], segments, i + 1, to);
 			if (result !== undefined) return result;
 		}
 	}
@@ -17,35 +18,27 @@ function resolveSegments(current: unknown, segments: string[]): unknown {
 	return undefined;
 }
 
-function resolve(obj: Record<string, unknown>, path: string): unknown {
-	return resolveSegments(obj, path.split('.'));
-}
-
 export function resolveFieldValue(hit: Record<string, unknown>, path: string): unknown {
-	// Try direct resolve first
-	const direct = resolve(hit, path);
+	const segments = path.split('.');
+	const direct = resolveSegments(hit, segments, 0, segments.length);
 	if (direct !== undefined) return direct;
 
-	// Try JSON-in-string fallback at each split point
-	if (path.includes('.')) {
-		const segments = path.split('.');
-		for (let i = segments.length - 1; i >= 1; i--) {
-			const parentPath = segments.slice(0, i).join('.');
-			const subPath = segments.slice(i).join('.');
-			const parentValue = resolve(hit, parentPath);
-			if (typeof parentValue === 'string') {
-				let parsed: unknown;
-				try {
-					parsed = JSON.parse(parentValue);
-				} catch {
-					continue;
-				}
-				if (parsed !== null && typeof parsed === 'object') {
-					const result = resolveSegments(parsed, subPath.split('.'));
-					if (result !== undefined) return result;
-				}
-			}
+	if (segments.length < 2) return undefined;
+
+	for (let i = segments.length - 1; i >= 1; i--) {
+		const parent = resolveSegments(hit, segments, 0, i);
+		if (typeof parent !== 'string') continue;
+
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(parent);
+		} catch {
+			continue;
 		}
+		if (parsed === null || typeof parsed !== 'object') continue;
+
+		const result = resolveSegments(parsed, segments, i, segments.length);
+		if (result !== undefined) return result;
 	}
 
 	return undefined;

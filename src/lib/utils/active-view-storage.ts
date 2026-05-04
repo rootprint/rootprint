@@ -27,10 +27,7 @@ export function readActiveView(indexId: string): ActiveViewRef | null {
 export function writeActiveView(indexId: string, ref: ActiveViewRef | null): void {
 	if (!browser) return;
 	try {
-		const raw = localStorage.getItem(storageKeys.activeView);
-		const parsed = raw ? JSON.parse(raw) : null;
-		const map: StoredMap =
-			parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as StoredMap) : {};
+		const map = readMap();
 		if (ref === null) Reflect.deleteProperty(map, indexId);
 		else map[indexId] = ref;
 		localStorage.setItem(storageKeys.activeView, JSON.stringify(map));

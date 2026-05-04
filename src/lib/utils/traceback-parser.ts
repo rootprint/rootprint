@@ -1,11 +1,15 @@
 import type { TracebackFormatter } from '$lib/types';
 
+const HTML_ESCAPES: Record<string, string> = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;'
+};
+const HTML_ESCAPE_RE = /[&<>"]/g;
+
 function escapeHtml(s: string): string {
-	return s
-		.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;')
-		.replaceAll('"', '&quot;');
+	return s.replace(HTML_ESCAPE_RE, (ch) => HTML_ESCAPES[ch]);
 }
 
 const PYTHON_DETECT = /Traceback \(most recent call last\):/;
@@ -39,10 +43,13 @@ const pythonFormatter: TracebackFormatter = {
 	highlight(text: string): string {
 		const lines = text.split('\n');
 		const parts: string[] = [];
+		let prevWasFrame = false;
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
 			const trimmed = line.trim();
+			const wasFrame = prevWasFrame;
+			prevWasFrame = false;
 
 			if (PYTHON_CHAINED_SEPARATORS.has(trimmed)) {
 				parts.push(
@@ -69,6 +76,7 @@ const pythonFormatter: TracebackFormatter = {
 						`<span class="text-[#b294bb]">${escapeHtml(funcName)}</span>` +
 						`</div>`
 				);
+				prevWasFrame = true;
 				continue;
 			}
 
@@ -84,7 +92,7 @@ const pythonFormatter: TracebackFormatter = {
 				continue;
 			}
 
-			if (line.startsWith('    ') && i > 0 && PYTHON_FRAME.exec(lines[i - 1])) {
+			if (wasFrame && line.startsWith('    ')) {
 				parts.push(
 					`<div class="border-l-2 border-base-content/20 py-px pl-7 text-base-content/80">${escapeHtml(line.trimStart())}</div>`
 				);

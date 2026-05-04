@@ -1,11 +1,15 @@
 import { TIME_PRESETS } from '$lib/constants/defaults';
 import type { TimeRange, TimezoneMode } from '$lib/types';
 
+const PRESET_BY_CODE = new Map<string, (typeof TIME_PRESETS)[number]>(
+	TIME_PRESETS.map((p) => [p.code, p])
+);
+
 export function resolveTimeRange(range: TimeRange): { startTs?: number; endTs?: number } {
 	if (range.type === 'absolute') {
 		return { startTs: range.start, endTs: range.end };
 	}
-	const preset = TIME_PRESETS.find((p) => p.code === range.preset);
+	const preset = PRESET_BY_CODE.get(range.preset);
 	if (!preset) return {};
 	const endTs = Math.floor(Date.now() / 1000);
 	return { startTs: endTs - preset.seconds, endTs };
@@ -13,7 +17,7 @@ export function resolveTimeRange(range: TimeRange): { startTs?: number; endTs?: 
 
 export function formatTimeRangeLabel(range: TimeRange, timezone: TimezoneMode): string {
 	if (range.type === 'relative') {
-		const preset = TIME_PRESETS.find((p) => p.code === range.preset);
+		const preset = PRESET_BY_CODE.get(range.preset);
 		return preset?.label ?? range.preset;
 	}
 	const opts: Intl.DateTimeFormatOptions = {
@@ -30,8 +34,6 @@ export function formatTimeRangeLabel(range: TimeRange, timezone: TimezoneMode): 
 	return `${start} → ${end}`;
 }
 
-// --- Epoch normalization ---
-
 /**
  * Normalize a numeric epoch timestamp (seconds, ms, µs, or ns) to milliseconds.
  */
@@ -41,8 +43,6 @@ export function normalizeToMs(value: number): number {
 	if (value < 1e16) return Math.floor(value / 1_000); // microseconds
 	return Math.floor(value / 1_000_000); // nanoseconds
 }
-
-// --- Shared timestamp formatting ---
 
 function pad2(n: number): string {
 	return String(n).padStart(2, '0');
@@ -66,37 +66,25 @@ function parts(ms: number, tz: TimezoneMode) {
 	};
 }
 
-/**
- * Format a millisecond timestamp to "YYYY-MM-DD HH:MM:SS.mmm".
- * Used by LogRow for the timestamp column.
- */
+/** "YYYY-MM-DD HH:MM:SS.mmm" */
 export function formatTimestamp(ms: number, timezone: TimezoneMode): string {
 	const p = parts(ms, timezone);
 	return `${p.Y}-${p.M}-${p.D} ${p.h}:${p.m}:${p.s}.${p.ms}`;
 }
 
-/**
- * Format a unix-seconds timestamp to "HH:MM".
- * Used by the chart x-axis for short time ranges.
- */
+/** "HH:MM" */
 export function formatChartTime(tsSec: number, timezone: TimezoneMode): string {
 	const p = parts(tsSec * 1000, timezone);
 	return `${p.h}:${p.m}`;
 }
 
-/**
- * Format a unix-seconds timestamp to "MM-DD HH:MM".
- * Used by the chart x-axis for longer time ranges.
- */
+/** "MM-DD HH:MM" */
 export function formatChartDate(tsSec: number, timezone: TimezoneMode): string {
 	const p = parts(tsSec * 1000, timezone);
 	return `${p.M}-${p.D} ${p.h}:${p.m}`;
 }
 
-/**
- * Format a unix-seconds timestamp to "YYYY-MM-DD HH:MM:SS".
- * Used by the chart tooltip.
- */
+/** "YYYY-MM-DD HH:MM:SS" */
 export function formatChartTooltip(tsSec: number, timezone: TimezoneMode): string {
 	const p = parts(tsSec * 1000, timezone);
 	return `${p.Y}-${p.M}-${p.D} ${p.h}:${p.m}:${p.s}`;

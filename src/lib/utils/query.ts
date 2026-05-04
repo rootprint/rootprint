@@ -1,13 +1,13 @@
 import type { Clause } from '$lib/types';
 
+const ESCAPE_TRIGGER_RE = /[\s:()[\]{}!+\-~^"\\*?/&|]/;
+
 export function escapeFilterValue(value: string): string {
-	if (/[\s:()[\]{}!+\-~^"\\*?/&|]/.test(value)) {
+	if (ESCAPE_TRIGGER_RE.test(value)) {
 		return `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
 	}
 	return value;
 }
-
-// --- Internal helpers ---
 
 type ClauseMatch = {
 	field: string;
@@ -20,16 +20,21 @@ type ClauseMatch = {
 	values?: string[];
 };
 
+const WHITESPACE_RE = /\s/;
+const FIELD_START_RE = /[@$_A-Za-z-]/;
+const FIELD_BODY_RE = /[@$_/.A-Za-z0-9-]/;
+const ASCII_LETTER_RE = /[A-Za-z]/;
+
 function isWhitespace(ch: string): boolean {
-	return /\s/.test(ch);
+	return WHITESPACE_RE.test(ch);
 }
 
 function isFieldStartChar(ch: string): boolean {
-	return /[@$_A-Za-z-]/.test(ch);
+	return FIELD_START_RE.test(ch);
 }
 
 function isFieldBodyChar(ch: string): boolean {
-	return /[@$_/.A-Za-z0-9-]/.test(ch);
+	return FIELD_BODY_RE.test(ch);
 }
 
 function unquote(raw: string): string {
@@ -130,7 +135,6 @@ function parseGroupValueToken(rawToken: string): string | null {
 }
 
 function splitOrGroup(inner: string): string[] | null {
-	// Quote-aware split on ' OR '. Reject advanced group syntax.
 	const values: string[] = [];
 	let current = '';
 	let inQuote = false;
@@ -210,7 +214,7 @@ function hasUnaryNotBefore(input: string, clauseStart: number): boolean {
 	if (i < 0) return false;
 
 	const tokenEnd = i + 1;
-	while (i >= 0 && /[A-Za-z]/.test(input[i])) i--;
+	while (i >= 0 && ASCII_LETTER_RE.test(input[i])) i--;
 	const token = input.slice(i + 1, tokenEnd);
 	if (token.toUpperCase() !== 'NOT') return false;
 
@@ -366,8 +370,6 @@ function parseClauseMatches(query: string): ClauseMatch[] {
 	return matches;
 }
 
-// --- Public API ---
-
 export function parseClauses(query: string): Clause[] {
 	const clauses: Clause[] = [];
 
@@ -390,53 +392,60 @@ export function hasClause(query: string, field: string, value: string, exclude =
 	);
 }
 
-export function addClause(query: string, field: string, value: string, exclude = false): string {
-	if (hasClause(query, field, value, exclude)) return query;
+function collectMatchValues(matches: ClauseMatch[]): string[] {
+	const values: string[] = [];
+	for (const match of matches) {
+		if (match.kind === 'group') {
+			if (match.values) values.push(...match.values);
+		} else if (match.value !== undefined) {
+			values.push(match.value);
+		}
+	}
+	return values;
+}
 
-	// Remove from opposite polarity if present
-	if (hasClause(query, field, value, !exclude)) {
-		query = removeClause(query, field, value, !exclude);
+function formatClause(field: string, values: string[], exclude: boolean): string {
+	const prefix = exclude ? '-' : '';
+	if (values.length === 1) {
+		return `${prefix}${field}:${escapeFilterValue(values[0])}`;
+	}
+	return `${prefix}${field}:(${values.map(escapeFilterValue).join(' OR ')})`;
+}
+
+export function addClause(query: string, field: string, value: string, exclude = false): string {
+	const allMatches = parseClauseMatches(query);
+
+	const sameFieldMatches: ClauseMatch[] = [];
+	const oppositeFieldMatches: ClauseMatch[] = [];
+	for (const match of allMatches) {
+		if (match.field !== field) continue;
+		if (match.exclude === exclude) sameFieldMatches.push(match);
+		else oppositeFieldMatches.push(match);
 	}
 
-	const prefix = exclude ? '-' : '';
+	if (collectMatchValues(sameFieldMatches).includes(value)) return query;
 
-	// Collect all matching clauses for this field+polarity
-	const matches = parseClauseMatches(query).filter(
-		(m) => m.field === field && m.exclude === exclude
-	);
+	if (collectMatchValues(oppositeFieldMatches).includes(value)) {
+		query = removeClause(query, field, value, !exclude);
+		return addClause(query, field, value, exclude);
+	}
 
-	if (matches.length === 0) {
-		// No existing clause for this field — append
-		const clause = `${prefix}${field}:${escapeFilterValue(value)}`;
+	if (sameFieldMatches.length === 0) {
+		const clause = formatClause(field, [value], exclude);
 		return query ? `${query} ${clause}` : clause;
 	}
 
-	// Gather all existing values from every clause for this field
-	const allValues: string[] = [];
-	for (const match of matches) {
-		if (match.kind === 'group') {
-			allValues.push(...(match.values ?? []));
-		} else if (match.value !== undefined) {
-			allValues.push(match.value);
-		}
-	}
-	allValues.push(value);
-	const uniqueValues = [...new Set(allValues)];
+	const uniqueValues = [...new Set([...collectMatchValues(sameFieldMatches), value])];
+	const replacement = formatClause(field, uniqueValues, exclude);
 
-	// Build single merged clause
-	const replacement =
-		uniqueValues.length === 1
-			? `${prefix}${field}:${escapeFilterValue(uniqueValues[0])}`
-			: `${prefix}${field}:(${uniqueValues.map(escapeFilterValue).join(' OR ')})`;
-
-	// Remove all duplicate clauses (reverse order to preserve positions), keep the first
 	let result = query;
-	for (let i = matches.length - 1; i > 0; i--) {
-		result = result.slice(0, matches[i].start) + result.slice(matches[i].end);
+	for (let i = sameFieldMatches.length - 1; i > 0; i--) {
+		result = result.slice(0, sameFieldMatches[i].start) + result.slice(sameFieldMatches[i].end);
 	}
-
-	// Replace the first clause with the merged one
-	result = result.slice(0, matches[0].start) + replacement + result.slice(matches[0].end);
+	result =
+		result.slice(0, sameFieldMatches[0].start) +
+		replacement +
+		result.slice(sameFieldMatches[0].end);
 	return cleanWhitespace(result);
 }
 
@@ -454,13 +463,7 @@ export function removeClause(query: string, field: string, value: string, exclud
 				return cleanWhitespace(query.slice(0, match.start) + query.slice(match.end));
 			}
 
-			const prefix = exclude ? '-' : '';
-			if (values.length === 1) {
-				const replacement = `${prefix}${field}:${escapeFilterValue(values[0])}`;
-				return cleanWhitespace(query.slice(0, match.start) + replacement + query.slice(match.end));
-			}
-
-			const replacement = `${prefix}${field}:(${values.map(escapeFilterValue).join(' OR ')})`;
+			const replacement = formatClause(field, values, exclude);
 			return cleanWhitespace(query.slice(0, match.start) + replacement + query.slice(match.end));
 		}
 
@@ -489,7 +492,6 @@ export function consolidateClauses(query: string): string {
 	const matches = parseClauseMatches(query);
 	if (matches.length < 2) return query;
 
-	// Group by field + polarity
 	const groups = new Map<string, ClauseMatch[]>();
 	for (const match of matches) {
 		const key = `${match.exclude ? '-' : ''}${match.field}`;
@@ -498,58 +500,24 @@ export function consolidateClauses(query: string): string {
 		groups.set(key, list);
 	}
 
-	// Check if any field has duplicates
-	let hasDuplicates = false;
-	for (const list of groups.values()) {
-		if (list.length > 1) {
-			hasDuplicates = true;
-			break;
-		}
-	}
-	if (!hasDuplicates) return query;
-
-	// Build consolidated query — process groups in reverse document order
-	// so that splicing doesn't shift earlier positions
-	const toProcess: { fieldMatches: ClauseMatch[]; field: string; exclude: boolean }[] = [];
-	for (const [, fieldMatches] of groups) {
-		if (fieldMatches.length < 2) continue;
-		toProcess.push({
-			fieldMatches,
-			field: fieldMatches[0].field,
-			exclude: fieldMatches[0].exclude
-		});
-	}
-
-	let result = query;
-	// Collect all removals and replacements, process from end to start
 	const ops: { start: number; end: number; replacement?: string }[] = [];
-	for (const { fieldMatches, field, exclude } of toProcess) {
-		const prefix = exclude ? '-' : '';
-		const allValues: string[] = [];
-		for (const match of fieldMatches) {
-			if (match.kind === 'group') {
-				allValues.push(...(match.values ?? []));
-			} else if (match.value !== undefined) {
-				allValues.push(match.value);
-			}
-		}
+	for (const fieldMatches of groups.values()) {
+		if (fieldMatches.length < 2) continue;
 
-		const uniqueValues = [...new Set(allValues)];
+		const { field, exclude } = fieldMatches[0];
+		const uniqueValues = [...new Set(collectMatchValues(fieldMatches))];
+		const replacement = formatClause(field, uniqueValues, exclude);
 
-		const replacement =
-			uniqueValues.length === 1
-				? `${prefix}${field}:${escapeFilterValue(uniqueValues[0])}`
-				: `${prefix}${field}:(${uniqueValues.map(escapeFilterValue).join(' OR ')})`;
-
-		// First match gets the replacement, rest get removed
 		ops.push({ start: fieldMatches[0].start, end: fieldMatches[0].end, replacement });
 		for (let i = 1; i < fieldMatches.length; i++) {
 			ops.push({ start: fieldMatches[i].start, end: fieldMatches[i].end });
 		}
 	}
 
-	// Sort by start position descending so splicing doesn't shift earlier positions
+	if (ops.length === 0) return query;
+
 	ops.sort((a, b) => b.start - a.start);
+	let result = query;
 	for (const op of ops) {
 		if (op.replacement !== undefined) {
 			result = result.slice(0, op.start) + op.replacement + result.slice(op.end);
@@ -568,31 +536,36 @@ export function shouldAutoClear(
 	newValue: string,
 	exclude: boolean
 ): boolean {
-	// Only auto-clear positive (non-exclude) filters
 	if (exclude) return false;
-
-	// Need at least 2 known values — single value auto-clear would be a confusing no-op
 	if (knownValues.length < 2) return false;
 
-	// If the new value is already in the query, this isn't completing the set
-	if (hasClause(currentQuery, field, newValue, false)) return false;
+	const fieldClauses = parseClauses(currentQuery).filter((c) => c.field === field);
+	const positiveValues = new Set<string>();
+	for (const clause of fieldClauses) {
+		if (clause.exclude) return false;
+		positiveValues.add(clause.value);
+	}
 
-	// Mixed polarity guard — if any exclude clause exists for this field, skip
-	if (parseClauses(currentQuery).some((c) => c.field === field && c.exclude)) return false;
+	if (positiveValues.has(newValue)) return false;
 
-	// Check if every other known value already has a positive clause
-	const allKnownCovered = knownValues.every(
-		(v) => v === newValue || hasClause(currentQuery, field, v, false)
-	);
-	if (!allKnownCovered) return false;
+	for (const v of knownValues) {
+		if (v !== newValue && !positiveValues.has(v)) return false;
+	}
 
-	// Guard: if extra positive clauses exist beyond knownValues + newValue, don't auto-clear
 	const allowed = new Set([...knownValues, newValue]);
-	const hasExtras = parseClauses(currentQuery).some(
-		(c) => c.field === field && !c.exclude && !allowed.has(c.value)
-	);
-	return !hasExtras;
+	for (const v of positiveValues) {
+		if (!allowed.has(v)) return false;
+	}
+
+	return true;
 }
+
+const UNQUOTED_AND_RE = /\s+AND\s+/iy;
+const COLLAPSE_WS_RE = /\s{2,}/g;
+const LEADING_OPERATOR_RE = /^(AND|OR)\s+/i;
+const TRAILING_OPERATOR_RE = /\s+(AND|OR)$/i;
+const DOUBLE_OPERATOR_RE = /\b(AND|OR)\s+(AND|OR)\b/gi;
+const LONE_NOT_RE = /^NOT$/i;
 
 function stripUnquotedAnd(s: string): string {
 	let result = '';
@@ -615,11 +588,14 @@ function stripUnquotedAnd(s: string): string {
 			result += s.slice(start, i);
 			continue;
 		}
-		const andMatch = /\s/.test(s[i]) ? s.slice(i).match(/^\s+AND\s+/i) : null;
-		if (andMatch) {
-			result += ' ';
-			i += andMatch[0].length;
-			continue;
+		if (WHITESPACE_RE.test(s[i])) {
+			UNQUOTED_AND_RE.lastIndex = i;
+			const andMatch = UNQUOTED_AND_RE.exec(s);
+			if (andMatch) {
+				result += ' ';
+				i += andMatch[0].length;
+				continue;
+			}
 		}
 		result += s[i];
 		i++;
@@ -630,12 +606,12 @@ function stripUnquotedAnd(s: string): string {
 function cleanWhitespace(s: string): string {
 	return stripUnquotedAnd(
 		s
-			.replaceAll(/\s{2,}/g, ' ')
+			.replaceAll(COLLAPSE_WS_RE, ' ')
 			.trim()
-			.replace(/^(AND|OR)\s+/i, '')
-			.replace(/\s+(AND|OR)$/i, '')
-			.replaceAll(/\b(AND|OR)\s+(AND|OR)\b/gi, '$1')
-			.replace(/^NOT$/i, '')
+			.replace(LEADING_OPERATOR_RE, '')
+			.replace(TRAILING_OPERATOR_RE, '')
+			.replaceAll(DOUBLE_OPERATOR_RE, '$1')
+			.replace(LONE_NOT_RE, '')
 			.trim()
 	);
 }

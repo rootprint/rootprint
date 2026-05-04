@@ -20,11 +20,12 @@ export function getLevelColor(level: string): string {
 	);
 }
 
+const SEVERITY_ORDER_INDEX = new Map<string, number>(SEVERITY_ORDER.map((v, i) => [v, i]));
+
 export function sortBySeverity(values: string[]): string[] {
-	const orderMap: Map<string, number> = new Map(SEVERITY_ORDER.map((v, i) => [v, i]));
 	return [...values].sort((a, b) => {
-		const ai = orderMap.get(a.toLowerCase()) ?? SEVERITY_ORDER.length;
-		const bi = orderMap.get(b.toLowerCase()) ?? SEVERITY_ORDER.length;
+		const ai = SEVERITY_ORDER_INDEX.get(a.toLowerCase()) ?? SEVERITY_ORDER.length;
+		const bi = SEVERITY_ORDER_INDEX.get(b.toLowerCase()) ?? SEVERITY_ORDER.length;
 		return ai - bi;
 	});
 }
@@ -34,64 +35,45 @@ export function extractSeverity(doc: Record<string, unknown>, levelField: string
 	return (raw == null ? 'unknown' : String(raw)).toLowerCase();
 }
 
+type SeverityStyle = { border: string; dot: string | null; chip: string };
+
+function levelStyle(token: string): SeverityStyle {
+	return {
+		border: `border-l-level-${token}`,
+		dot: `bg-level-${token}`,
+		chip: `bg-level-${token}/15 text-level-${token}`
+	};
+}
+
+const SEVERITY_STYLES: Record<string, SeverityStyle> = {
+	error: levelStyle('error'),
+	critical: levelStyle('critical'),
+	warning: levelStyle('warning'),
+	debug: levelStyle('debug'),
+	info: levelStyle('info')
+};
+
+const SEVERITY_FALLBACK: SeverityStyle = {
+	border: 'border-l-level-unknown/30',
+	dot: null,
+	chip: 'bg-level-unknown/15 text-level-unknown'
+};
+
+function severityStyle(severity: string): SeverityStyle {
+	const canonical = LEVEL_TOKEN_MAP[severity] ?? severity;
+	return SEVERITY_STYLES[canonical] ?? SEVERITY_FALLBACK;
+}
+
 export function severityBorderColor(severity: string): string {
-	switch (severity) {
-		case 'error':
-			return 'border-l-level-error';
-		case 'fatal':
-		case 'critical':
-			return 'border-l-level-critical';
-		case 'warn':
-		case 'warning':
-			return 'border-l-level-warning';
-		case 'debug':
-		case 'trace':
-			return 'border-l-level-debug';
-		case 'info':
-			return 'border-l-level-info';
-		default:
-			return 'border-l-level-unknown/30';
-	}
+	return severityStyle(severity).border;
 }
 
 export function severityDotColor(severity: string): string | null {
-	switch (severity) {
-		case 'error':
-			return 'bg-level-error';
-		case 'fatal':
-		case 'critical':
-			return 'bg-level-critical';
-		case 'warn':
-		case 'warning':
-			return 'bg-level-warning';
-		case 'debug':
-		case 'trace':
-			return 'bg-level-debug';
-		case 'info':
-			return 'bg-level-info';
-		default:
-			return null;
-	}
+	return severityStyle(severity).dot;
 }
 
 export function severityChipTint(severity: string): string {
-	switch (severity) {
-		case 'error':
-			return 'bg-level-error/15 text-level-error';
-		case 'fatal':
-		case 'critical':
-			return 'bg-level-critical/15 text-level-critical';
-		case 'warn':
-		case 'warning':
-			return 'bg-level-warning/15 text-level-warning';
-		case 'debug':
-		case 'trace':
-			return 'bg-level-debug/15 text-level-debug';
-		case 'info':
-			return 'bg-level-info/15 text-level-info';
-		default:
-			return 'bg-level-unknown/15 text-level-unknown';
-	}
+	return severityStyle(severity).chip;
 }
 
 export function extractTimestamp(
@@ -108,16 +90,25 @@ export function extractTimestamp(
 	return formatTimestamp(ms, timezoneMode);
 }
 
-export function flattenObject(obj: Record<string, unknown>, prefix = ''): [string, unknown][] {
-	const result: [string, unknown][] = [];
-	for (const [key, value] of Object.entries(obj)) {
+function walkFlatten(
+	obj: Record<string, unknown>,
+	prefix: string,
+	out: [string, unknown][]
+): void {
+	for (const key of Object.keys(obj)) {
+		const value = obj[key];
 		const fullKey = prefix ? `${prefix}.${key}` : key;
 		if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-			result.push(...flattenObject(value as Record<string, unknown>, fullKey));
+			walkFlatten(value as Record<string, unknown>, fullKey, out);
 		} else {
-			result.push([fullKey, value]);
+			out.push([fullKey, value]);
 		}
 	}
+}
+
+export function flattenObject(obj: Record<string, unknown>, prefix = ''): [string, unknown][] {
+	const result: [string, unknown][] = [];
+	walkFlatten(obj, prefix, result);
 	return result;
 }
 
