@@ -8,7 +8,7 @@ import { getIndexConfig, getIndexFields } from '$lib/api/indexes.remote';
 import { searchFieldValues, searchLogHistogram, searchLogs } from '$lib/api/logs.remote';
 import { getPreference, saveDisplayFields } from '$lib/api/preferences.remote';
 import { BUILTIN_VIEWS } from '$lib/constants/builtin-views';
-import { OTEL_INDEX_PREFIX } from '$lib/constants/defaults';
+import { DEFAULT_FIELD_CONFIG, OTEL_INDEX_PREFIX } from '$lib/constants/defaults';
 import { QUICKWIT_AGG_MAX } from '$lib/constants/ingest';
 import { storageKeys } from '$lib/constants/storage-keys';
 import type { SearchLogsInput } from '$lib/schemas/logs';
@@ -64,34 +64,25 @@ export function createSearchStore(
 ) {
 	const withKeys = createLogKeyer();
 
-	// --- Index state ---
 	const indexes = $state(initialIndexes);
 	let selectedIndex = $state<string | null>(null);
 
-	// --- Field config state ---
 	let fieldConfig = $state<{
 		levelField: string;
 		timestampField: string;
 		messageField: string;
 		tracebackField: string | null;
-	}>({
-		levelField: 'severity_text',
-		timestampField: 'timestamp_nanos',
-		messageField: 'body.message',
-		tracebackField: null
-	});
+	}>({ ...DEFAULT_FIELD_CONFIG });
 	let indexFields = $state<IndexField[]>([]);
 	let schemaFields = $state<IndexField[]>([]);
 	let activeFields = $state<string[]>([]);
 	// Snapshot of the user's saved display-fields preference. Refreshed when
 	// the index loads and after each debounced autosave with no view active.
 	// Restored into activeFields when the user clears the active view.
-	let savedDisplayFields = $state<string[]>([]);
+	let savedDisplayFields: string[] = [];
 	let fieldsLoading = $state(false);
-	// --- Active view (per-index, persisted in localStorage) ---
 	let activeViewRef = $state<ActiveViewRef | null>(null);
 
-	// --- Search result state ---
 	let logs = $state<LogEntry[]>([]);
 	let numHits = $state(0);
 	let loadingModeState = $state<LoadingMode>('idle');
@@ -105,41 +96,30 @@ export function createSearchStore(
 				? 'fresh'
 				: 'idle'
 	);
-	let searchStartTimestamp = $state<number | undefined>(undefined);
-	let searchEndTimestamp = $state<number | undefined>(undefined);
+	let searchStartTimestamp: number | undefined;
+	let searchEndTimestamp: number | undefined;
 
-	// --- Histogram state ---
 	let histogramData = $state<{ timestamp: number; levels: Record<string, number> }[]>([]);
 	let histogramLoading = $state(false);
 	let histogramRequestId = 0;
 	let searchRequestId = 0;
 	let searchCompletedCount = $state(0);
 
-	// --- Level buckets state ---
 	let levelBucketsLoading = $state(false);
 	let levelBucketsRequestId = 0;
 
-	// --- Column widths ---
-	const columnWidths = $derived(
-		computeColumnWidths(
-			logs.map((e) => e.hit),
-			activeFields
-		)
-	);
+	const logHits = $derived(logs.map((e) => e.hit));
+	const columnWidths = $derived(computeColumnWidths(logHits, activeFields));
 
-	// --- Aggregations ---
 	let aggregations = $state<Record<string, QuickFilterBucket[]>>({});
 
-	// --- Search version ---
 	let searchVersion = $state(0);
 	let lastSearchedKey = '';
 	let shouldRecordHistory = false;
 
-	// --- Auto-refresh state ---
 	let autoRefreshInterval = $state<number | null>(null);
 	let autoRefreshTimerId: ReturnType<typeof setInterval> | null = null;
 
-	// --- Derived state ---
 	const timeRange = $derived(parsedQuery().timeRange);
 	const timezoneMode = $derived(parsedQuery().timezoneMode);
 	const urlIndex = $derived(parsedQuery().index);
@@ -154,19 +134,13 @@ export function createSearchStore(
 		resolveActiveView(activeViewRef, BUILTIN_VIEWS, userViews())
 	);
 
-	// --- Internal helpers ---
-
 	function getQueryText(): string {
 		return parsedQuery().query || '*';
 	}
 
 	function buildTimeParams(
-		range: TimeRange,
-		override?: { startTimestamp?: number; endTimestamp?: number }
+		range: TimeRange
 	): Pick<SearchLogsInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'> {
-		if (override) {
-			return { startTimestamp: override.startTimestamp, endTimestamp: override.endTimestamp };
-		}
 		if (range.type === 'relative') {
 			return { timeRange: range.preset as SearchLogsInput['timeRange'] };
 		}
@@ -176,8 +150,6 @@ export function createSearchStore(
 	function bumpSearch() {
 		searchVersion++;
 	}
-
-	// --- Navigation ---
 
 	function navigateQuery(partial: Partial<ParsedQuery>, opts?: { push?: boolean }) {
 		if (partial.query !== undefined) {
@@ -213,8 +185,6 @@ export function createSearchStore(
 			})
 			.catch((e) => console.warn('Failed to record search history', e));
 	}
-
-	// --- View actions ---
 
 	// Reads the stored ref for `indexName`, applies the view's columns to
 	// `activeFields` and sets `activeViewRef` if it resolves. Self-heals stale
@@ -254,35 +224,29 @@ export function createSearchStore(
 		navigateQuery({ query: '' }, { push: true });
 	}
 
-	// --- Index loading ---
+	function pickInitialIndex(urlIdx: string | null): string {
+		if (urlIdx && indexes.some((i) => i.indexId === urlIdx)) return urlIdx;
+		const saved = localStorage.getItem(storageKeys.selectedIndex);
+		if (saved && indexes.some((i) => i.indexId === saved)) return saved;
+		return indexes[0].indexId;
+	}
 
 	function initIndexes() {
 		if (!browser) return;
-		if (indexes.length > 0 && selectedIndex === null) {
-			const urlIdx = urlIndex;
+		if (indexes.length === 0 || selectedIndex !== null) return;
 
-			let idx: string;
-			if (urlIdx && indexes.some((i) => i.indexId === urlIdx)) {
-				idx = urlIdx;
-			} else {
-				const saved = localStorage.getItem(storageKeys.selectedIndex);
-				if (saved && indexes.some((i) => i.indexId === saved)) {
-					idx = saved;
-				} else {
-					idx = indexes[0].indexId;
-				}
-			}
+		const urlIdx = urlIndex;
+		const idx = pickInitialIndex(urlIdx);
 
-			selectedIndex = idx;
-			localStorage.setItem(storageKeys.selectedIndex, idx);
+		selectedIndex = idx;
+		localStorage.setItem(storageKeys.selectedIndex, idx);
 
-			hydrateActiveViewForIndex(idx);
+		hydrateActiveViewForIndex(idx);
 
-			if (urlIdx !== idx) {
-				navigateQuery({ index: idx });
-			}
-			loadFieldsForIndex(idx);
+		if (urlIdx !== idx) {
+			navigateQuery({ index: idx });
 		}
+		loadFieldsForIndex(idx);
 	}
 
 	async function loadFieldsForIndex(indexName: string) {
@@ -326,8 +290,6 @@ export function createSearchStore(
 		loadFieldsForIndex(indexName);
 	}
 
-	// --- Field change handlers ---
-
 	const { debounced: handleFieldsChange } = useDebounce(() => {
 		if (!selectedIndex) return;
 		// Only persist column changes when no view is active. While a view is
@@ -340,8 +302,6 @@ export function createSearchStore(
 			toast.error(getErrorMessage(e, 'Failed to save display fields'))
 		);
 	}, 500);
-
-	// --- Search ---
 
 	async function search(opts?: { append?: boolean }) {
 		const append = opts?.append ?? false;
@@ -357,10 +317,7 @@ export function createSearchStore(
 			const currentTimeRange = timeRange;
 
 			const timeParams = append
-				? buildTimeParams(currentTimeRange, {
-						startTimestamp: searchStartTimestamp,
-						endTimestamp: searchEndTimestamp
-					})
+				? { startTimestamp: searchStartTimestamp, endTimestamp: searchEndTimestamp }
 				: buildTimeParams(currentTimeRange);
 
 			if (!append) {
@@ -370,7 +327,7 @@ export function createSearchStore(
 
 			const result = await searchLogs({
 				indexId: selectedIndex,
-				query: queryText || '*',
+				query: queryText,
 				...timeParams,
 				offset: append ? logs.length : 0,
 				limit: BATCH_SIZE,
@@ -397,17 +354,17 @@ export function createSearchStore(
 				);
 				if (jsonFields.size > 0) {
 					const discovered = extractJsonSubFields(result.hits, jsonFields);
-					const nonJson = schemaFields.filter((f) => f.type !== 'json');
 					if (append) {
-						const existingDiscovered = indexFields.filter(
-							(f) => !schemaFields.some((s) => s.name === f.name)
-						);
+						const schemaNames = new Set(schemaFields.map((f) => f.name));
+						const existingDiscovered = indexFields.filter((f) => !schemaNames.has(f.name));
 						const existingNames = new Set(existingDiscovered.map((f) => f.name));
 						const newDiscovered = discovered.filter((f) => !existingNames.has(f.name));
 						if (newDiscovered.length > 0) {
+							const nonJson = schemaFields.filter((f) => f.type !== 'json');
 							indexFields = [...nonJson, ...existingDiscovered, ...newDiscovered];
 						}
 					} else {
+						const nonJson = schemaFields.filter((f) => f.type !== 'json');
 						indexFields = [...nonJson, ...discovered];
 					}
 				}
@@ -434,8 +391,6 @@ export function createSearchStore(
 		}
 	}
 
-	// --- Histogram ---
-
 	async function fetchHistogram() {
 		if (selectedIndex === null) return;
 
@@ -449,7 +404,7 @@ export function createSearchStore(
 
 			const result = await searchLogHistogram({
 				indexId: selectedIndex,
-				query: queryText || '*',
+				query: queryText,
 				...timeParams
 			});
 			if (requestId !== histogramRequestId) return;
@@ -474,11 +429,12 @@ export function createSearchStore(
 		try {
 			const queryText = getQueryText();
 			const levelField = fieldConfig.levelField;
+			const queryStr = parsedQuery().query;
 			const result = await searchFieldValues({
 				indexId: selectedIndex,
 				field: levelField,
 				searchTerm: '',
-				query: queryText || '*',
+				query: queryText,
 				...timeParams
 			});
 			if (requestId !== levelBucketsRequestId) return;
@@ -488,7 +444,7 @@ export function createSearchStore(
 				return;
 			}
 
-			const hasActiveClauses = parseClauses(parsedQuery().query).length > 0;
+			const hasActiveClauses = queryStr.length > 0 && parseClauses(queryStr).length > 0;
 			if (hasActiveClauses) {
 				const merged = new Map<string, QuickFilterBucket>();
 				for (const prev of aggregations[levelField] ?? []) {
@@ -511,8 +467,6 @@ export function createSearchStore(
 		}
 	}
 
-	// --- Field value search ---
-
 	async function searchFieldValuesHandler(
 		field: string,
 		searchTerm: string
@@ -523,7 +477,7 @@ export function createSearchStore(
 			indexId: selectedIndex,
 			field,
 			searchTerm,
-			query: queryText || '*',
+			query: queryText,
 			startTimestamp: searchStartTimestamp,
 			endTimestamp: searchEndTimestamp
 		});
@@ -567,21 +521,21 @@ export function createSearchStore(
 		navigateQuery({ sortDirection: current === 'desc' ? 'asc' : 'desc' });
 	}
 
-	// --- Auto-refresh ---
-
-	function startAutoRefresh(intervalMs: number) {
-		stopAutoRefresh();
-		autoRefreshInterval = intervalMs;
-		autoRefreshTimerId = setInterval(() => {
-			bumpSearch();
-		}, intervalMs);
-	}
-
-	function stopAutoRefresh() {
+	function clearAutoRefreshTimer() {
 		if (autoRefreshTimerId !== null) {
 			clearInterval(autoRefreshTimerId);
 			autoRefreshTimerId = null;
 		}
+	}
+
+	function startAutoRefresh(intervalMs: number) {
+		clearAutoRefreshTimer();
+		autoRefreshInterval = intervalMs;
+		autoRefreshTimerId = setInterval(() => bumpSearch(), intervalMs);
+	}
+
+	function stopAutoRefresh() {
+		clearAutoRefreshTimer();
 		autoRefreshInterval = null;
 	}
 
@@ -593,11 +547,10 @@ export function createSearchStore(
 		}
 	}
 
-	// --- Start loading immediately ---
 	initIndexes();
 
-	// --- Setup auto-search effect (must be called in component context) ---
-
+	// Must be called in component context — sets up $effects that drive the
+	// auto-search loop and auto-refresh visibility handling.
 	function setupAutoSearch() {
 		// Restore index in URL when it's lost (e.g. clicking the logo link)
 		$effect(() => {
@@ -622,14 +575,14 @@ export function createSearchStore(
 			search();
 		});
 
-		// Stop auto-refresh when switching to absolute time range
 		$effect(() => {
 			if (!canAutoRefresh && autoRefreshInterval !== null) {
 				stopAutoRefresh();
 			}
 		});
 
-		// Pause auto-refresh when tab is hidden, resume when visible.
+		// Pause the timer while the tab is hidden (preserves the configured
+		// interval so resume works), and fire one immediate refresh on return.
 		$effect(() => {
 			if (!browser) return;
 			const interval = autoRefreshInterval;
@@ -637,13 +590,10 @@ export function createSearchStore(
 
 			function onVisibilityChange() {
 				if (document.hidden) {
-					if (autoRefreshTimerId !== null) {
-						clearInterval(autoRefreshTimerId);
-						autoRefreshTimerId = null;
-					}
+					clearAutoRefreshTimer();
 				} else if (autoRefreshInterval !== null) {
 					bumpSearch();
-					autoRefreshTimerId = setInterval(() => bumpSearch(), autoRefreshInterval);
+					startAutoRefresh(autoRefreshInterval);
 				}
 			}
 
@@ -651,13 +601,10 @@ export function createSearchStore(
 			return () => document.removeEventListener('visibilitychange', onVisibilityChange);
 		});
 
-		// Clean up auto-refresh timer on component destroy
 		$effect(() => {
 			return () => stopAutoRefresh();
 		});
 	}
-
-	// --- Return public API ---
 
 	return {
 		get indexes() {
@@ -757,7 +704,6 @@ export function createSearchStore(
 		get isOtelIndex() {
 			return isOtelIndex;
 		},
-		// Methods
 		setAutoRefresh,
 		navigateQuery,
 		runQuery,

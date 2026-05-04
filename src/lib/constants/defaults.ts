@@ -2,6 +2,13 @@ export const DEFAULT_OTEL_LOGS_INDEX_ID = 'otel-logs-v0_9';
 export const OTLP_LOGS_INGEST_PATH = '/api/otlp/v1/logs';
 export const OTEL_INDEX_PREFIX = 'otel-logs-';
 
+export const DEFAULT_FIELD_CONFIG = {
+	levelField: 'severity_text',
+	timestampField: 'timestamp_nanos',
+	messageField: 'body.message',
+	tracebackField: null
+} as const;
+
 export const TIME_PRESETS = [
 	{ label: 'Last 5 minutes', code: '5m', seconds: 5 * 60 },
 	{ label: 'Last 15 minutes', code: '15m', seconds: 15 * 60 },
