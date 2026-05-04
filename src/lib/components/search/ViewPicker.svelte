@@ -40,11 +40,11 @@
 		...userViews.map((v) => ({ kind: 'user' as const, id: v.id, name: v.name }))
 	]);
 
-	const filteredItems = $derived(
-		searchTerm.trim() === ''
-			? items
-			: items.filter((i) => i.name.toLowerCase().includes(searchTerm.trim().toLowerCase()))
-	);
+	const filteredItems = $derived.by(() => {
+		const term = searchTerm.trim().toLowerCase();
+		if (!term) return items;
+		return items.filter((i) => i.name.toLowerCase().includes(term));
+	});
 
 	const activeBuiltin = $derived(activeView && 'slug' in activeView ? activeView : null);
 	const activeUserView = $derived(activeView && 'id' in activeView ? activeView : null);

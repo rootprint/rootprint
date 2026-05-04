@@ -4,6 +4,7 @@
 	import { dndzone } from 'svelte-dnd-action';
 
 	import type { IndexField } from '$lib/types';
+	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	let {
 		activeFields = $bindable(),
@@ -126,14 +127,7 @@
 						bind:value={searchTerm}
 					/>
 				</div>
-				<OverlayScrollbarsComponent
-					options={{
-						scrollbars: { theme: 'os-theme-dark', autoHide: 'leave', autoHideDelay: 400 },
-						overflow: { x: 'hidden' }
-					}}
-					defer
-					class="max-h-64"
-				>
+				<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="max-h-64">
 					<div class="px-1 py-1">
 						{#each availableFields as field (field.name)}
 							<button
@@ -159,20 +153,16 @@
 						<Plus size={14} />
 					</button>
 				</div>
-				<OverlayScrollbarsComponent
-					options={{
-						scrollbars: { theme: 'os-theme-dark', autoHide: 'leave', autoHideDelay: 400 },
-						overflow: { x: 'hidden' }
-					}}
-					defer
-					class="max-h-72"
-				>
+				{#snippet pinnedRow(field: string)}
+					<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
+						<span class="w-4 shrink-0"></span>
+						<span class="flex-1 truncate">{field}</span>
+					</div>
+				{/snippet}
+				<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="max-h-72">
 					<div class="flex flex-col px-1 py-1">
 						{#each pinnedFields as field (field)}
-							<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
-								<span class="w-4 shrink-0"></span>
-								<span class="flex-1 truncate">{field}</span>
-							</div>
+							{@render pinnedRow(field)}
 						{/each}
 
 						{#if dndItems.length > 0}
@@ -204,10 +194,7 @@
 						{/if}
 
 						{#each pinnedFieldsEnd as field (field)}
-							<div class="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-base-content/50">
-								<span class="w-4 shrink-0"></span>
-								<span class="flex-1 truncate">{field}</span>
-							</div>
+							{@render pinnedRow(field)}
 						{/each}
 					</div>
 				</OverlayScrollbarsComponent>

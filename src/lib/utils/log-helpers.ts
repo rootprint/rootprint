@@ -37,20 +37,32 @@ export function extractSeverity(doc: Record<string, unknown>, levelField: string
 
 type SeverityStyle = { border: string; dot: string | null; chip: string };
 
-function levelStyle(token: string): SeverityStyle {
-	return {
-		border: `border-l-level-${token}`,
-		dot: `bg-level-${token}`,
-		chip: `bg-level-${token}/15 text-level-${token}`
-	};
-}
-
 const SEVERITY_STYLES: Record<string, SeverityStyle> = {
-	error: levelStyle('error'),
-	critical: levelStyle('critical'),
-	warning: levelStyle('warning'),
-	debug: levelStyle('debug'),
-	info: levelStyle('info')
+	error: {
+		border: 'border-l-level-error',
+		dot: 'bg-level-error',
+		chip: 'bg-level-error/15 text-level-error'
+	},
+	critical: {
+		border: 'border-l-level-critical',
+		dot: 'bg-level-critical',
+		chip: 'bg-level-critical/15 text-level-critical'
+	},
+	warning: {
+		border: 'border-l-level-warning',
+		dot: 'bg-level-warning',
+		chip: 'bg-level-warning/15 text-level-warning'
+	},
+	debug: {
+		border: 'border-l-level-debug',
+		dot: 'bg-level-debug',
+		chip: 'bg-level-debug/15 text-level-debug'
+	},
+	info: {
+		border: 'border-l-level-info',
+		dot: 'bg-level-info',
+		chip: 'bg-level-info/15 text-level-info'
+	}
 };
 
 const SEVERITY_FALLBACK: SeverityStyle = {

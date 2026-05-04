@@ -12,6 +12,8 @@ export type IndexDetailTab = 'overview' | 'fields' | 'sources' | 'configuration'
 
 export type ExportFormat = 'ndjson' | 'csv' | 'text';
 
+export type WrapMode = 'none' | 'wrap';
+
 export type NodeLogFlavor = 'otel' | 'pino' | 'winston';
 
 export type CaddyLogFlavor = 'bare-metal' | 'docker';

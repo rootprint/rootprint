@@ -18,7 +18,7 @@
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
 	import { storageKeys } from '$lib/constants/storage-keys';
 	import { createSearchStore } from '$lib/stores/search.svelte';
-	import type { DrawerTab } from '$lib/types';
+	import type { DrawerTab, WrapMode } from '$lib/types';
 	import { parseWrapMode } from '$lib/utils/wrap-mode';
 
 	let { data } = $props();
@@ -40,7 +40,7 @@
 	store.setupAutoSearch();
 
 	// --- UI-only state ---
-	let wrapMode = $state<'none' | 'wrap'>(
+	let wrapMode = $state<WrapMode>(
 		browser ? parseWrapMode(localStorage.getItem(storageKeys.wrapMode)) : 'none'
 	);
 	let selectedLog = $state<Record<string, unknown> | null>(null);

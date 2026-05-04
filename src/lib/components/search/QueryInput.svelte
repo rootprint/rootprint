@@ -6,6 +6,7 @@
 	import type { IndexField } from '$lib/types';
 	import { useDebounce } from '$lib/utils/debounce';
 	import { getQueryContext, validateQuery } from '$lib/utils/lucene';
+	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	interface Props {
 		externalValue: string;
@@ -17,7 +18,6 @@
 
 	let { externalValue, fields, autocomplete = true, onsubmit, onsearchvalues }: Props = $props();
 
-	// --- Internal state (owns the localBuffer pattern from +page.svelte) ---
 	let localBuffer = $state('');
 	let focused = $state(false);
 	let showDropdown = $state(false);
@@ -64,17 +64,13 @@
 		}
 	});
 
-	// Display value: localBuffer when focused, externalValue when not
 	let displayValue = $derived(focused ? localBuffer : externalValue);
 
-	// Sync externalValue into localBuffer when not focused
 	$effect(() => {
 		if (!focused) {
 			localBuffer = externalValue;
 		}
 	});
-
-	// --- Autocomplete logic ---
 
 	function updateSuggestions() {
 		if (!inputEl || !autocomplete) {
@@ -94,7 +90,6 @@
 				.map((f) => f.name)
 				.filter((name) => name.toLowerCase().includes(frag))
 				.slice(0, 10);
-			// Hide if the only suggestion exactly matches what's already typed
 			if (suggestions.length === 1 && suggestions[0] === ctx.fragment) {
 				suggestions = [];
 			}
@@ -107,8 +102,6 @@
 			suggestions = [];
 		}
 	}
-
-	// --- Selection logic ---
 
 	async function selectSuggestion(suggestion: string) {
 		const ctx = lastContext;
@@ -136,8 +129,6 @@
 		inputEl?.focus();
 		updateSuggestions();
 	}
-
-	// --- Event handlers ---
 
 	function handleInput(e: Event) {
 		localBuffer = (e.currentTarget as HTMLInputElement).value;
@@ -218,11 +209,10 @@
 	}
 
 	function handleSuggestionMousedown(e: MouseEvent, suggestion: string) {
-		e.preventDefault(); // Prevent input blur
+		e.preventDefault();
 		selectSuggestion(suggestion);
 	}
 
-	// Generate unique IDs for ARIA
 	const listboxId = `query-listbox-${Math.random().toString(36).slice(2, 8)}`;
 	function optionId(idx: number) {
 		return `${listboxId}-option-${idx}`;
@@ -253,14 +243,7 @@
 			class="absolute top-full z-50 mt-1 max-h-64 w-64 overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-lg"
 			style:left="{dropdownLeft}px"
 		>
-			<OverlayScrollbarsComponent
-				options={{
-					scrollbars: { theme: 'os-theme-dark', autoHide: 'leave', autoHideDelay: 400 },
-					overflow: { x: 'hidden' }
-				}}
-				defer
-				class="max-h-64"
-			>
+			<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="max-h-64">
 				<ul id={listboxId} role="listbox">
 					{#if lastContext.type === 'value'}
 						<li class="px-3 py-1 text-xs tracking-wide text-base-content/60 uppercase">

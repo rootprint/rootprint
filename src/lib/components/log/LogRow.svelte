@@ -1,6 +1,6 @@
 <script lang="ts">
 	import JsonHighlight from '$lib/components/ui/JsonHighlight.svelte';
-	import type { TimezoneMode } from '$lib/types';
+	import type { TimezoneMode, WrapMode } from '$lib/types';
 	import { TIMESTAMP_COLUMN_WIDTH } from '$lib/utils/column-width';
 	import { formatFieldValue, resolveFieldValue } from '$lib/utils/field-resolver';
 	import { extractSeverity, extractTimestamp, severityBorderColor } from '$lib/utils/log-helpers';
@@ -17,7 +17,7 @@
 		onclick = () => {}
 	}: {
 		hit: Record<string, unknown>;
-		wrapMode: 'none' | 'wrap';
+		wrapMode: WrapMode;
 		levelField: string;
 		timestampField: string;
 		messageField: string;

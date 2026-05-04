@@ -23,17 +23,17 @@
 	import { AUTO_REFRESH_INTERVALS } from '$lib/constants/defaults';
 	import { storageKeys } from '$lib/constants/storage-keys';
 	import type { createSearchStore } from '$lib/stores/search.svelte';
-	import type { DrawerTab, ParsedQuery, TimeRange, ViewSummary } from '$lib/types';
+	import type { DrawerTab, ParsedQuery, TimeRange, ViewSummary, WrapMode } from '$lib/types';
 
 	let {
 		store,
-		wrapMode = $bindable('none' as 'none' | 'wrap'),
-		drawerTab = $bindable(null as DrawerTab | null),
+		wrapMode = $bindable<WrapMode>('none'),
+		drawerTab = $bindable<DrawerTab | null>(null),
 		parsedQuery,
 		userViews
 	}: {
 		store: ReturnType<typeof createSearchStore>;
-		wrapMode: 'none' | 'wrap';
+		wrapMode: WrapMode;
 		drawerTab: DrawerTab | null;
 		parsedQuery: ParsedQuery;
 		userViews: ViewSummary[];

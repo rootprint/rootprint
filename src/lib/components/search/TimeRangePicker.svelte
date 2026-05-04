@@ -22,7 +22,6 @@
 	let open = $state(false);
 	let container = $state<HTMLDivElement | null>(null);
 
-	// Custom date range state
 	let fromDate = $state<Date | null>(new Date());
 	let toDate = $state<Date | null>(new Date());
 	let fromTime = $state('00:00');
@@ -104,13 +103,20 @@
 		if (e.key === 'Escape') close();
 	}
 
+	$effect(() => {
+		if (!open) return;
+		document.addEventListener('click', handleWindowClick, true);
+		document.addEventListener('keydown', handleKeydown);
+		return () => {
+			document.removeEventListener('click', handleWindowClick, true);
+			document.removeEventListener('keydown', handleKeydown);
+		};
+	});
+
 	let buttonLabel = $derived(formatTimeRangeLabel(value, timezoneMode));
 </script>
 
-<svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
-<!-- TODO: Rethink how to place this and display -->
 <div class="relative" bind:this={container}>
-	<!-- Trigger button -->
 	<button class="btn gap-2 border-base-content/20 bg-base-100 font-normal btn-sm" onclick={toggle}>
 		<span class="text-sm">{buttonLabel}</span>
 		<span class="text-base-content/50">|</span>
@@ -123,7 +129,6 @@
 		</span>
 	</button>
 
-	<!-- Dropdown panel -->
 	{#if open}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
@@ -131,7 +136,6 @@
 			onclick={(e) => e.stopPropagation()}
 		>
 			<div class="flex">
-				<!-- Preset list -->
 				<div class="w-48 border-r border-base-300 py-1">
 					{#each TIME_PRESETS as preset (preset.code)}
 						{@const isActive = value.type === 'relative' && value.preset === preset.code}
@@ -147,7 +151,6 @@
 					{/each}
 				</div>
 
-				<!-- Custom date range -->
 				<div class="p-3">
 					<div class="mb-2 flex items-center justify-between">
 						<span class="text-xs font-medium text-base-content/60">Custom Range</span>
@@ -219,7 +222,6 @@
 				</div>
 			</div>
 
-			<!-- Timezone footer -->
 			<div class="flex items-center justify-between border-t border-base-300 px-4 py-2 text-xs">
 				<Clock size={14} class="text-base-content/50" />
 				<div class="join">

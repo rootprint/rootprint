@@ -32,6 +32,12 @@
 
 	const effectiveTotal = $derived(Math.min(numHits, EXPORT_MAX_LOGS));
 
+	const FORMATS: { value: ExportFormat; label: string }[] = [
+		{ value: 'ndjson', label: 'NDJSON' },
+		{ value: 'csv', label: 'CSV' },
+		{ value: 'text', label: 'Text' }
+	];
+
 	function reset() {
 		dialogState = 'form';
 		fetched = 0;
@@ -94,12 +100,17 @@
 		eventSource = new EventSource(`/api/export/${exportId}/progress`);
 
 		eventSource.onmessage = (event) => {
-			const data = JSON.parse(event.data);
+			let data: { status: string; fetched?: number; total?: number; message?: string };
+			try {
+				data = JSON.parse(event.data);
+			} catch {
+				return;
+			}
 
 			switch (data.status) {
 				case 'fetching':
-					fetched = data.fetched;
-					total = data.total;
+					fetched = data.fetched ?? 0;
+					total = data.total ?? 0;
 					progressStatus = `Fetching ${fetched.toLocaleString()} / ${total.toLocaleString()} logs...`;
 					break;
 				case 'compressing':
@@ -156,10 +167,10 @@
 						Format
 					</div>
 					<div class="join w-full">
-						{#each [['ndjson', 'NDJSON'], ['csv', 'CSV'], ['text', 'Text']] as [value, label] (value)}
+						{#each FORMATS as { value, label } (value)}
 							<button
 								class="btn join-item flex-1 btn-xs {format === value ? 'btn-accent' : ''}"
-								onclick={() => (format = value as ExportFormat)}
+								onclick={() => (format = value)}
 							>
 								{label}
 							</button>
