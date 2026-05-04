@@ -90,11 +90,7 @@ export function extractTimestamp(
 	return formatTimestamp(ms, timezoneMode);
 }
 
-function walkFlatten(
-	obj: Record<string, unknown>,
-	prefix: string,
-	out: [string, unknown][]
-): void {
+function walkFlatten(obj: Record<string, unknown>, prefix: string, out: [string, unknown][]): void {
 	for (const key of Object.keys(obj)) {
 		const value = obj[key];
 		const fullKey = prefix ? `${prefix}.${key}` : key;

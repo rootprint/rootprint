@@ -2,8 +2,9 @@
 	import { toast } from 'svelte-sonner';
 
 	import { createInvite } from '$lib/api/users.remote';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
+	import type { UserRole } from '$lib/types';
 	import { getErrorMessage } from '$lib/utils/error';
 
 	let {
@@ -16,7 +17,7 @@
 
 	let email = $state('');
 	let name = $state('');
-	let role = $state<'admin' | 'user'>('user');
+	let role = $state<UserRole>('user');
 	let inviteUrl = $state('');
 	let loading = $state(false);
 
@@ -49,19 +50,7 @@
 			<p class="text-sm text-base-content/60">
 				Share this link with <strong>{name}</strong> to complete their account setup:
 			</p>
-			<div class="flex gap-2">
-				<input
-					type="text"
-					class="input-bordered input input-sm flex-1 font-mono text-xs"
-					value={inviteUrl}
-					readonly
-				/>
-				<CopyButton text={inviteUrl} class="btn btn-sm btn-neutral">
-					{#snippet children({ copied })}
-						{copied ? 'Copied!' : 'Copy'}
-					{/snippet}
-				</CopyButton>
-			</div>
+			<CopyableField value={inviteUrl} ariaLabel="Invite link" />
 			<div class="modal-action">
 				<button class="btn" onclick={handleClose}>Done</button>
 			</div>

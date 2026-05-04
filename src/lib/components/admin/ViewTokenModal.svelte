@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { getIngestToken } from '$lib/api/ingest-tokens.remote';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import type { IngestTokenSummary } from '$lib/types';
 	import { getErrorMessage } from '$lib/utils/error';
@@ -45,6 +45,7 @@
 	}
 
 	function handleDone() {
+		handleClose();
 		open = false;
 	}
 </script>
@@ -57,19 +58,7 @@
 				Loading token…
 			</div>
 		{:else if tokenValue}
-			<div class="flex gap-2">
-				<input
-					type="text"
-					class="input-bordered input input-sm flex-1 font-mono text-xs"
-					readonly
-					value={tokenValue}
-				/>
-				<CopyButton text={tokenValue} class="btn btn-sm btn-neutral">
-					{#snippet children({ copied })}
-						{copied ? 'Copied!' : 'Copy'}
-					{/snippet}
-				</CopyButton>
-			</div>
+			<CopyableField value={tokenValue} ariaLabel="Ingest token" />
 		{/if}
 		<div class="modal-action">
 			<button type="button" class="btn btn-primary" onclick={handleDone}>Close</button>

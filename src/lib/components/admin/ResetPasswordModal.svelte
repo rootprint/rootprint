@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { resetPassword } from '$lib/api/users.remote';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { getErrorMessage } from '$lib/utils/error';
 
@@ -67,13 +67,8 @@
 			Share this setup link with <strong>{userName}</strong>. It expires per invite policy.
 		</p>
 
-		<div class="mt-4 flex items-center gap-2">
-			<input type="text" readonly value={inviteUrl} class="input input-sm w-full font-mono" />
-			<CopyButton text={inviteUrl} class="btn btn-sm">
-				{#snippet children({ copied })}
-					{copied ? 'Copied' : 'Copy'}
-				{/snippet}
-			</CopyButton>
+		<div class="mt-4">
+			<CopyableField value={inviteUrl} ariaLabel="Setup link" />
 		</div>
 
 		<div class="modal-action">

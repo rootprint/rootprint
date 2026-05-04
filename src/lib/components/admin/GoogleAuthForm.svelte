@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { X } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
@@ -131,10 +132,11 @@
 						{domain}
 						<button
 							type="button"
-							class="text-xs opacity-60 hover:opacity-100"
+							class="opacity-60 hover:opacity-100"
+							aria-label="Remove {domain}"
 							onclick={() => removeDomain(domain)}
 						>
-							x
+							<X size={12} />
 						</button>
 					</span>
 				{/each}

@@ -110,6 +110,8 @@ export type IndexSummary = {
 
 export type LogEntry = { key: number; hit: Record<string, unknown> };
 
+export type UserRole = 'admin' | 'user';
+
 export type User = {
 	id: string;
 	name: string;
@@ -121,6 +123,10 @@ export type User = {
 	inviteUrl: string | null;
 	inviteExpiresAt: Date | null;
 };
+
+export type AdminUserTarget = { id: string; name: string };
+
+export type MemberFilter = 'all' | 'admin' | 'pending';
 
 export type Clause = { field: string; value: string; exclude: boolean };
 

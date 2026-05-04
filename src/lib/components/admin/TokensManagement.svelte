@@ -29,23 +29,18 @@
 		return tokens.filter((t) => t.name.toLowerCase().includes(q));
 	});
 
-	function emptyMessage(): string {
-		if (search.trim() !== '') return 'No tokens match your search.';
-		return 'No ingest tokens yet.';
-	}
+	const emptyMessage = $derived(
+		search.trim() !== '' ? 'No tokens match your search.' : 'No ingest tokens yet.'
+	);
 
 	function openDeleteModal(token: IngestTokenSummary) {
 		target = token;
 		deleteOpen = true;
 	}
 
-	function openViewModal(t: IngestTokenSummary) {
-		viewTarget = t;
+	function openViewModal(token: IngestTokenSummary) {
+		viewTarget = token;
 		viewOpen = true;
-	}
-
-	function scopeLabel(token: IngestTokenSummary): string {
-		return token.indexId;
 	}
 </script>
 
@@ -91,7 +86,7 @@
 				</div>
 
 				<div class="shrink-0">
-					<span class="badge badge-outline badge-sm">{scopeLabel(token)}</span>
+					<span class="badge badge-outline badge-sm">{token.indexId}</span>
 				</div>
 
 				<span class="shrink-0 text-xs text-base-content/60">
@@ -117,7 +112,7 @@
 			</div>
 		{:else}
 			<div class="py-10 text-center text-sm text-base-content/60">
-				{emptyMessage()}
+				{emptyMessage}
 			</div>
 		{/each}
 	</div>

@@ -12,7 +12,7 @@
 	} from 'lucide-svelte';
 
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import type { User } from '$lib/types';
+	import type { AdminUserTarget, User } from '$lib/types';
 
 	let {
 		user,
@@ -26,12 +26,11 @@
 		currentUserId: string | undefined;
 		onRegenerate: (userId: string) => Promise<void>;
 		onToggleRole: (user: User) => Promise<void>;
-		onResetPassword: (user: { id: string; name: string }) => void;
-		onRemove: (user: { id: string; name: string }) => void;
+		onResetPassword: (user: AdminUserTarget) => void;
+		onRemove: (user: AdminUserTarget) => void;
 	} = $props();
 
-	let regenerating = $state(false);
-	let togglingRole = $state(false);
+	let pending = $state<'regenerate' | 'toggle-role' | null>(null);
 
 	const isSelf = $derived(user.id === currentUserId);
 	const isPendingOrExpired = $derived(user.status === 'pending' || user.status === 'expired');
@@ -41,20 +40,20 @@
 	);
 
 	async function handleRegenerate() {
-		regenerating = true;
+		pending = 'regenerate';
 		try {
 			await onRegenerate(user.id);
 		} finally {
-			regenerating = false;
+			pending = null;
 		}
 	}
 
 	async function handleToggleRole() {
-		togglingRole = true;
+		pending = 'toggle-role';
 		try {
 			await onToggleRole(user);
 		} finally {
-			togglingRole = false;
+			pending = null;
 		}
 	}
 </script>
@@ -99,8 +98,8 @@
 					</li>
 				{/if}
 				<li>
-					<button type="button" onclick={handleRegenerate} disabled={regenerating}>
-						{#if regenerating}
+					<button type="button" onclick={handleRegenerate} disabled={pending === 'regenerate'}>
+						{#if pending === 'regenerate'}
 							<Loader size={14} class="animate-spin" />
 						{:else}
 							<RefreshCw size={14} />
@@ -111,8 +110,8 @@
 			{/if}
 
 			<li>
-				<button type="button" onclick={handleToggleRole} disabled={togglingRole}>
-					{#if togglingRole}
+				<button type="button" onclick={handleToggleRole} disabled={pending === 'toggle-role'}>
+					{#if pending === 'toggle-role'}
 						<Loader size={14} class="animate-spin" />
 					{:else if user.role === 'admin'}
 						<ShieldOff size={14} />

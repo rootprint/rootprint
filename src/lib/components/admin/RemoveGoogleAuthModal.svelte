@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { removeGoogleAuthSettings } from '$lib/api/settings.remote';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
+	import { getErrorMessage } from '$lib/utils/error';
 
 	let {
 		open = $bindable(false)
@@ -20,8 +21,8 @@
 			toast.success('Google auth settings removed');
 			open = false;
 			await goto('/administration/authentication?saved=google', { invalidateAll: true });
-		} catch {
-			toast.error('Failed to remove settings');
+		} catch (e) {
+			toast.error(getErrorMessage(e, 'Failed to remove settings'));
 		} finally {
 			loading = false;
 		}

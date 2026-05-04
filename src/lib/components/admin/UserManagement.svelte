@@ -5,7 +5,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { regenerateInvite, setUserRole } from '$lib/api/users.remote';
-	import type { User } from '$lib/types';
+	import type { AdminUserTarget, MemberFilter, User } from '$lib/types';
 	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
 	import { getErrorMessage } from '$lib/utils/error';
 	import { formatRelativeTime } from '$lib/utils/time';
@@ -17,15 +17,12 @@
 
 	let { users }: { users: User[] } = $props();
 
-	type FilterKind = 'all' | 'admin' | 'pending';
-	type Target = { id: string; name: string };
-
-	let filter = $state<FilterKind>('all');
+	let filter = $state<MemberFilter>('all');
 	let search = $state('');
 	let inviteOpen = $state(false);
 	let resetOpen = $state(false);
 	let removeOpen = $state(false);
-	let target = $state<Target | null>(null);
+	let target = $state<AdminUserTarget | null>(null);
 
 	const currentUserId = $derived(page.data.user?.id);
 
@@ -39,12 +36,12 @@
 		});
 	});
 
-	function emptyMessage(): string {
+	const emptyMessage = $derived.by(() => {
 		if (search.trim() !== '') return 'No members match your search.';
 		if (filter === 'admin') return 'No admins yet.';
 		if (filter === 'pending') return 'No pending invites.';
 		return 'No members.';
-	}
+	});
 
 	async function handleRegenerate(userId: string) {
 		try {
@@ -67,12 +64,12 @@
 		}
 	}
 
-	function openResetModal(user: Target) {
+	function openResetModal(user: AdminUserTarget) {
 		target = user;
 		resetOpen = true;
 	}
 
-	function openRemoveModal(user: Target) {
+	function openRemoveModal(user: AdminUserTarget) {
 		target = user;
 		removeOpen = true;
 	}
@@ -177,7 +174,7 @@
 			</div>
 		{:else}
 			<div class="py-10 text-center text-sm text-base-content/60">
-				{emptyMessage()}
+				{emptyMessage}
 			</div>
 		{/each}
 	</div>
