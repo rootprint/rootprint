@@ -1,3 +1,4 @@
+import goIcon from '@iconify-icons/logos/go';
 import nginxIcon from '@iconify-icons/logos/nginx';
 import nodejsIcon from '@iconify-icons/logos/nodejs-icon';
 import pythonIcon from '@iconify-icons/logos/python';
@@ -16,6 +17,7 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 		name: 'Caddy',
 		query: 'service_name:"caddy"',
 		columns: [
+			'service_name',
 			'resource_attributes.host.name',
 			'attributes.client.address',
 			'attributes.http.request.method',
@@ -28,7 +30,7 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 		slug: 'nginx',
 		name: 'Nginx',
 		query: 'service_name:"nginx"',
-		columns: ['resource_attributes.host.name'],
+		columns: ['service_name', 'resource_attributes.host.name'],
 		icon: { iconifyIcon: nginxIcon }
 	},
 	{
@@ -53,5 +55,12 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 			'resource_attributes.process.runtime.version'
 		],
 		icon: { iconifyIcon: nodejsIcon }
+	},
+	{
+		slug: 'go-sdk',
+		name: 'Go SDK',
+		query: 'resource_attributes.telemetry\\.sdk\\.language:"go"',
+		columns: ['service_name'],
+		icon: { iconifyIcon: goIcon }
 	}
 ];
