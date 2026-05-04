@@ -36,20 +36,17 @@
 	// Bidirectional sync: $derived can't be used because Drawer's bind:open requires a writable value
 	let drawerOpen = $state(drawerTab !== null);
 
-	// drawerTab → open + activeTab
 	$effect(() => {
-		drawerOpen = drawerTab !== null;
-		if (drawerTab) activeTab = drawerTab;
+		if (drawerTab !== null) {
+			drawerOpen = true;
+			activeTab = drawerTab;
+		} else {
+			drawerOpen = false;
+		}
 	});
 
-	// activeTab changed inside drawer → sync back to drawerTab
 	$effect(() => {
-		if (drawerOpen) drawerTab = activeTab;
-	});
-
-	// drawer closed → drawerTab = null
-	$effect(() => {
-		if (!drawerOpen) drawerTab = null;
+		drawerTab = drawerOpen ? activeTab : null;
 	});
 
 	let savingEntry = $state<{ indexName: string; query: string } | null>(null);

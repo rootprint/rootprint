@@ -89,13 +89,11 @@ export function createSearchStore(
 	let hasSearched = $state(false);
 	let searchError = $state<string | null>(null);
 
-	const loadingMode = $derived<LoadingMode>(
-		loadingModeState !== 'idle'
-			? loadingModeState
-			: selectedIndex !== null && !hasSearched && searchError === null
-				? 'fresh'
-				: 'idle'
-	);
+	const loadingMode = $derived.by<LoadingMode>(() => {
+		if (loadingModeState !== 'idle') return loadingModeState;
+		if (selectedIndex !== null && !hasSearched && searchError === null) return 'fresh';
+		return 'idle';
+	});
 	let searchStartTimestamp: number | undefined;
 	let searchEndTimestamp: number | undefined;
 
@@ -290,7 +288,7 @@ export function createSearchStore(
 		loadFieldsForIndex(indexName);
 	}
 
-	const { debounced: handleFieldsChange } = useDebounce(() => {
+	const { debounced: handleFieldsChange, cleanup: cancelFieldsDebounce } = useDebounce(() => {
 		if (!selectedIndex) return;
 		// Only persist column changes when no view is active. While a view is
 		// active, column edits stay session-only — clearing the view restores
@@ -603,6 +601,10 @@ export function createSearchStore(
 
 		$effect(() => {
 			return () => stopAutoRefresh();
+		});
+
+		$effect(() => {
+			return () => cancelFieldsDebounce();
 		});
 	}
 

@@ -12,20 +12,13 @@ import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { startSnapshotJob } from '$lib/server/jobs/index-stats-snapshot';
 
-let adminExistsCache = false;
-
 if (!building) {
 	startSnapshotJob();
 }
 
 function hasAdmin(): boolean {
-	if (adminExistsCache) return true;
 	const [row] = db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).limit(1).all();
-	if (row) {
-		adminExistsCache = true;
-		return true;
-	}
-	return false;
+	return row !== undefined;
 }
 
 const authLimiter = new RetryAfterRateLimiter({
