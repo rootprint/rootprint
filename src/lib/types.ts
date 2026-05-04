@@ -20,6 +20,8 @@ export type IndexField = { name: string; type: string; fast: boolean };
 
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
 
+export type IndexRetention = { period?: string; schedule?: string };
+
 export type AdminIndexSummary = {
 	indexId: string;
 	displayName: string | null;
@@ -63,7 +65,7 @@ export type QuickwitIndexMetadata = {
 	storeDocumentSize: boolean | null;
 	tagFields: string[] | null;
 	defaultSearchFields: string[] | null;
-	retention: unknown;
+	retention: IndexRetention | null;
 	fields: QuickwitField[];
 	sources: QuickwitSource[];
 };
@@ -81,7 +83,7 @@ export type AdminIndexDetail = {
 	storeDocumentSize: boolean | null;
 	tagFields: string[] | null;
 	defaultSearchFields: string[] | null;
-	retention: unknown;
+	retention: IndexRetention | null;
 	levelField: string | null;
 	messageField: string | null;
 	tracebackField: string | null;

@@ -11,9 +11,7 @@
 	const configForm = $derived(saveIndexConfig.for(detail.indexId));
 
 	let visibility = $state<IndexVisibility>(detail.visibility ?? 'all');
-	let contextFieldTags = $state<string[]>(
-		Array.isArray(detail.contextFields) ? (detail.contextFields as string[]) : []
-	);
+	let contextFieldTags = $state<string[]>(detail.contextFields ?? []);
 	let contextFieldInput = $state('');
 
 	const contextFieldsSerialized = $derived(JSON.stringify(contextFieldTags));
@@ -25,9 +23,7 @@
 		const id = detail.indexId;
 		untrack(() => {
 			const nextVisibility = detail.visibility ?? 'all';
-			const nextTags = Array.isArray(detail.contextFields)
-				? (detail.contextFields as string[])
-				: [];
+			const nextTags = detail.contextFields ?? [];
 			configForm.fields.set({
 				indexId: id,
 				displayName: detail.displayName ?? '',

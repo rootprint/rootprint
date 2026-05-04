@@ -1,15 +1,14 @@
 <script lang="ts">
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import type { AdminIndexDetail } from '$lib/types';
+	import type { AdminIndexDetail, IndexRetention } from '$lib/types';
 
 	let { detail }: { detail: AdminIndexDetail } = $props();
 
-	function formatRetention(ret: unknown): string {
-		if (!ret || typeof ret !== 'object') return '—';
-		const r = ret as Record<string, unknown>;
+	function formatRetention(ret: IndexRetention | null): string {
+		if (!ret) return '—';
 		const parts: string[] = [];
-		if (r.period) parts.push(`period: ${r.period}`);
-		if (r.schedule) parts.push(`schedule: ${r.schedule}`);
+		if (ret.period) parts.push(`period: ${ret.period}`);
+		if (ret.schedule) parts.push(`schedule: ${ret.schedule}`);
 		return parts.length > 0 ? parts.join(', ') : '—';
 	}
 </script>

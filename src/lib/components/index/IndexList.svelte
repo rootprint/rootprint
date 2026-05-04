@@ -2,19 +2,25 @@
 	import { ChevronRight, Database, EyeOff, Globe, Search, ShieldUser } from 'lucide-svelte';
 
 	import type { AdminIndexSummary, IndexVisibility } from '$lib/types';
+	import { formatCountLabel } from '$lib/utils/format';
 
 	let { indexes }: { indexes: AdminIndexSummary[] } = $props();
 
 	let search = $state('');
+	const trimmedSearch = $derived(search.trim());
 
 	const filtered = $derived.by(() => {
-		const q = search.trim().toLowerCase();
+		const q = trimmedSearch.toLowerCase();
 		if (!q) return indexes;
 		return indexes.filter(
 			(i) =>
 				i.indexId.toLowerCase().includes(q) || (i.displayName?.toLowerCase().includes(q) ?? false)
 		);
 	});
+
+	const countLabel = $derived(
+		formatCountLabel(filtered.length, indexes.length, 'index', 'indexes', trimmedSearch.length > 0)
+	);
 
 	const visibilityMeta: Record<IndexVisibility, { icon: typeof Globe; label: string }> = {
 		all: { icon: Globe, label: 'Public' },
@@ -41,9 +47,7 @@
 			/>
 		</label>
 
-		<span class="text-sm text-base-content/60">
-			{filtered.length} index{filtered.length === 1 ? '' : 'es'}
-		</span>
+		<span class="text-sm text-base-content/60">{countLabel}</span>
 	</div>
 
 	<div class="divide-y divide-base-300 rounded-box border border-base-300">
@@ -74,7 +78,7 @@
 			</a>
 		{:else}
 			<div class="py-10 text-center text-sm text-base-content/60">
-				{#if search.trim() !== ''}
+				{#if trimmedSearch}
 					No indexes match your search.
 				{:else}
 					No indexes synced yet.

@@ -4,6 +4,7 @@
 	import DeleteSourceModal from '$lib/components/admin/DeleteSourceModal.svelte';
 	import SourceActionsMenu from '$lib/components/index/SourceActionsMenu.svelte';
 	import type { QuickwitSource } from '$lib/types';
+	import { formatCountLabel } from '$lib/utils/format';
 
 	let {
 		indexId,
@@ -16,19 +17,17 @@
 	let filter = $state('');
 	let deleteOpen = $state(false);
 	let pendingDeleteId = $state('');
+	const trimmedFilter = $derived(filter.trim());
 
 	const filtered = $derived.by(() => {
-		const q = filter.trim().toLowerCase();
+		const q = trimmedFilter.toLowerCase();
 		if (!q) return sources;
 		return sources.filter((s) => s.sourceId.toLowerCase().includes(q));
 	});
 
-	const countLabel = $derived.by(() => {
-		if (filter.trim().length > 0) {
-			return `${filtered.length} of ${sources.length}`;
-		}
-		return `${sources.length} source${sources.length === 1 ? '' : 's'}`;
-	});
+	const countLabel = $derived(
+		formatCountLabel(filtered.length, sources.length, 'source', 'sources', trimmedFilter.length > 0)
+	);
 
 	function openDelete(source: QuickwitSource) {
 		pendingDeleteId = source.sourceId;
@@ -79,7 +78,7 @@
 			</div>
 		{:else}
 			<div class="py-10 text-center text-sm text-base-content/60">
-				{#if filter.trim() !== ''}
+				{#if trimmedFilter}
 					No sources match your search.
 				{:else}
 					No sources configured.

@@ -9,7 +9,6 @@
 
 	let { stats }: { stats: IndexStatsCard } = $props();
 
-	// --- Last ingest ---
 	const lastIngestDate = $derived(
 		stats.lastIngest.timestamp != null ? new Date(stats.lastIngest.timestamp * 1000) : null
 	);
@@ -45,7 +44,6 @@
 		return 'default';
 	});
 
-	// --- Ingestion · 24h ---
 	const ingestionValue = $derived(
 		stats.ingestion24h.count == null ? '—' : formatCompactNumber(stats.ingestion24h.count)
 	);
@@ -58,14 +56,12 @@
 		stats.ingestion24h.deltaPct != null && stats.ingestion24h.deltaPct <= -20
 	);
 
-	// --- Index size ---
 	const sizeCaption = $derived(
 		stats.size.compressionRatio != null
 			? `${stats.size.numSplits} splits · ${stats.size.compressionRatio.toFixed(1)}× compression`
 			: `${stats.size.numSplits} splits`
 	);
 
-	// --- Growth · 7d avg ---
 	const growthValue = $derived.by(() => {
 		if (stats.growth7d.bytesPerDay == null) return '—';
 		const sign = stats.growth7d.bytesPerDay < 0 ? '−' : '';
@@ -79,30 +75,26 @@
 	});
 </script>
 
-<div
-	class="grid grid-cols-1 overflow-hidden rounded-t-2xl border border-base-300 md:grid-cols-2 lg:grid-cols-4"
+<IndexStatsCell
+	label={STATS_LABELS.lastIngest}
+	value={lastIngestValue}
+	caption={lastIngestCaption}
+	captionTone={lastIngestTone}
+/>
+
+<IndexStatsCell
+	label={STATS_LABELS.ingestion24h}
+	value={ingestionValue}
+	caption={ingestionCaption}
+	ring={ingestionRing}
 >
-	<IndexStatsCell
-		label={STATS_LABELS.lastIngest}
-		value={lastIngestValue}
-		caption={lastIngestCaption}
-		captionTone={lastIngestTone}
-	/>
+	<IndexStatsDeltaChip deltaPct={stats.ingestion24h.deltaPct} />
+</IndexStatsCell>
 
-	<IndexStatsCell
-		label={STATS_LABELS.ingestion24h}
-		value={ingestionValue}
-		caption={ingestionCaption}
-		ring={ingestionRing}
-	>
-		<IndexStatsDeltaChip deltaPct={stats.ingestion24h.deltaPct} />
-	</IndexStatsCell>
+<IndexStatsCell
+	label={STATS_LABELS.size}
+	value={formatBytes(stats.size.bytes)}
+	caption={sizeCaption}
+/>
 
-	<IndexStatsCell
-		label={STATS_LABELS.size}
-		value={formatBytes(stats.size.bytes)}
-		caption={sizeCaption}
-	/>
-
-	<IndexStatsCell label={STATS_LABELS.growth7d} value={growthValue} caption={growthCaption} />
-</div>
+<IndexStatsCell label={STATS_LABELS.growth7d} value={growthValue} caption={growthCaption} />

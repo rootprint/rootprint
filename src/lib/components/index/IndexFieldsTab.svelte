@@ -2,23 +2,22 @@
 	import { Search } from 'lucide-svelte';
 
 	import type { QuickwitField } from '$lib/types';
+	import { formatCountLabel } from '$lib/utils/format';
 
 	let { fields }: { fields: QuickwitField[] } = $props();
 
 	let filter = $state('');
+	const trimmedFilter = $derived(filter.trim());
 
 	const filtered = $derived.by(() => {
-		const query = filter.trim().toLowerCase();
-		if (!query) return fields;
-		return fields.filter((field) => field.name.toLowerCase().includes(query));
+		const q = trimmedFilter.toLowerCase();
+		if (!q) return fields;
+		return fields.filter((field) => field.name.toLowerCase().includes(q));
 	});
 
-	const countLabel = $derived.by(() => {
-		if (filter.trim().length > 0) {
-			return `${filtered.length} of ${fields.length}`;
-		}
-		return `${fields.length} field${fields.length === 1 ? '' : 's'}`;
-	});
+	const countLabel = $derived(
+		formatCountLabel(filtered.length, fields.length, 'field', 'fields', trimmedFilter.length > 0)
+	);
 </script>
 
 <div class="flex flex-col gap-3">
@@ -89,6 +88,16 @@
 						</td>
 						<td class="text-base-content/60">{field.record ?? '—'}</td>
 						<td class="text-base-content/60">{field.tokenizer ?? '—'}</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="7" class="py-10 text-center text-sm text-base-content/60">
+							{#if trimmedFilter}
+								No fields match your search.
+							{:else}
+								No fields defined.
+							{/if}
+						</td>
 					</tr>
 				{/each}
 			</tbody>
