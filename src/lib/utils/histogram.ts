@@ -1,3 +1,5 @@
+import type { HistogramBucket } from '$lib/types';
+
 const INTERVAL_THRESHOLDS: [number, number][] = [
 	[10 * 60 - 1, 1], // <10m → 1s
 	[60 * 60, 10], // ≤1h  → 10s
@@ -17,11 +19,11 @@ export function computeHistogramIntervalSeconds(windowSeconds: number): number {
 }
 
 export function padHistogramBuckets(
-	bucketMap: Map<number, Record<string, number>>,
+	bucketMap: Map<number, { levels: Record<string, number>; count: number }>,
 	startTs: number,
 	endTs: number,
 	fallbackIntervalSec: number
-): { timestamp: number; levels: Record<string, number> }[] {
+): HistogramBucket[] {
 	const sortedKeys = [...bucketMap.keys()].sort((a, b) => a - b);
 
 	// Quickwit's date_histogram produces uniform bucket spacing,
@@ -47,9 +49,14 @@ export function padHistogramBuckets(
 	}
 
 	const MAX_BUCKETS = 2000;
-	const buckets: { timestamp: number; levels: Record<string, number> }[] = [];
+	const buckets: HistogramBucket[] = [];
 	for (let ts = gridStart; ts <= endTs && buckets.length < MAX_BUCKETS; ts += intervalSec) {
-		buckets.push({ timestamp: ts, levels: bucketMap.get(ts) ?? {} });
+		const entry = bucketMap.get(ts);
+		buckets.push({
+			timestamp: ts,
+			levels: entry?.levels ?? {},
+			count: entry?.count ?? 0
+		});
 	}
 
 	return buckets;

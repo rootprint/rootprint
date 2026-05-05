@@ -15,6 +15,7 @@ import type { SearchLogsInput } from '$lib/schemas/logs';
 import type {
 	ActiveViewRef,
 	BuiltinView,
+	HistogramBucket,
 	IndexField,
 	IndexSummary,
 	LoadingMode,
@@ -97,7 +98,7 @@ export function createSearchStore(
 	let searchStartTimestamp: number | undefined;
 	let searchEndTimestamp: number | undefined;
 
-	let histogramData = $state<{ timestamp: number; levels: Record<string, number> }[]>([]);
+	let histogramData = $state<HistogramBucket[]>([]);
 	let histogramLoading = $state(false);
 	let histogramRequestId = 0;
 	let searchRequestId = 0;

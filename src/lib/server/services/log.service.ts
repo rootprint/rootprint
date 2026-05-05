@@ -120,21 +120,27 @@ export async function searchLogHistogram(data: SearchLogHistogramInput) {
 	const config = await getFieldConfig(data.indexId);
 	const index = quickwitClient.index(data.indexId);
 
+	const hasLevelField = isFastFieldSupported(
+		config.levelField,
+		config.fastFieldNames,
+		config.fastJsonFields
+	);
+
 	const { startTs, endTs } = resolveTimestamps(data);
 
 	const windowSeconds = endTs - startTs;
 	const intervalSec = computeHistogramIntervalSeconds(windowSeconds);
+
+	const histogramOptions = hasLevelField
+		? { aggs: { levels: AggregationBuilder.terms(config.levelField, { size: 20 }) } }
+		: undefined;
 
 	const query = index
 		.query(data.query || '*')
 		.limit(0)
 		.agg(
 			'histogram',
-			AggregationBuilder.dateHistogram(config.timestampField, `${intervalSec}s`, {
-				aggs: {
-					levels: AggregationBuilder.terms(config.levelField, { size: 20 })
-				}
-			})
+			AggregationBuilder.dateHistogram(config.timestampField, `${intervalSec}s`, histogramOptions)
 		);
 
 	query.timeRange(startTs, endTs);
@@ -143,7 +149,7 @@ export async function searchLogHistogram(data: SearchLogHistogramInput) {
 
 	const histAgg = result.aggregations?.histogram as BucketAggregationResult | undefined;
 
-	const bucketMap = new Map<number, Record<string, number>>();
+	const bucketMap = new Map<number, { levels: Record<string, number>; count: number }>();
 	for (const b of histAgg?.buckets ?? []) {
 		const levelsAgg = (b as { levels?: BucketAggregationResult }).levels;
 		const levels: Record<string, number> = {};
@@ -151,7 +157,7 @@ export async function searchLogHistogram(data: SearchLogHistogramInput) {
 			levels[String(lb.key)] = lb.doc_count;
 		}
 		const ts = Math.floor(normalizeToMs(Number(b.key)) / 1000);
-		bucketMap.set(ts, levels);
+		bucketMap.set(ts, { levels, count: b.doc_count });
 	}
 
 	const buckets = padHistogramBuckets(bucketMap, startTs, endTs, intervalSec);
