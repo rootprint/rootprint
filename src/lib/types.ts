@@ -20,6 +20,12 @@ export type CaddyLogFlavor = 'bare-metal' | 'docker';
 
 export type IndexField = { name: string; type: string; fast: boolean };
 
+export type HistogramBucket = {
+	timestamp: number;
+	levels: Record<string, number>;
+	count: number;
+};
+
 export type IndexVisibility = 'hidden' | 'admin' | 'all';
 
 export type IndexRetention = { period?: string; schedule?: string };

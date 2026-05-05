@@ -4,7 +4,7 @@
 	import { browser } from '$app/environment';
 	import CollapsibleSection from '$lib/components/ui/CollapsibleSection.svelte';
 	import { SEVERITY_ORDER } from '$lib/constants/severity';
-	import type { TimezoneMode } from '$lib/types';
+	import type { HistogramBucket, TimezoneMode } from '$lib/types';
 	import { getLevelColor } from '$lib/utils/log-helpers';
 	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
 
@@ -16,7 +16,7 @@
 		numHits = 0,
 		onbrush
 	}: {
-		data: { timestamp: number; levels: Record<string, number> }[];
+		data: HistogramBucket[];
 		timezoneMode: TimezoneMode;
 		loading: boolean;
 		collapsed: boolean;
@@ -33,13 +33,19 @@
 	let uPlotCtor: typeof uPlotLib | null = null;
 	let chartBuildId = 0;
 
-	// Collect all unique levels from data in the defined stacking order
+	// Collect all unique levels from data in the defined stacking order.
+	// When the data has buckets but no level keys at all (index without a
+	// level field, or all docs in window lack a level), fall back to a
+	// synthetic UNKNOWN series.
 	let levels = $derived.by(() => {
 		const seen = new Set<string>();
 		for (const bucket of data) {
 			for (const key of Object.keys(bucket.levels)) {
 				seen.add(key.toUpperCase());
 			}
+		}
+		if (seen.size === 0 && data.length > 0) {
+			return ['UNKNOWN'];
 		}
 		const ordered: string[] = [];
 		for (const level of LEVEL_ORDER) {
@@ -60,13 +66,23 @@
 		if (data.length === 0) return null;
 
 		const timestamps: number[] = data.map((b) => b.timestamp);
-		const rawSeries: number[][] = levels.map((level) =>
-			data.map((b) => {
-				// Match case-insensitively
-				const key = Object.keys(b.levels).find((k) => k.toUpperCase() === level);
-				return key ? (b.levels[key] ?? 0) : 0;
-			})
-		);
+
+		// Synthetic UNKNOWN mode: data has no level keys, so source bar height
+		// from the per-bucket total count.
+		const isSyntheticUnknown =
+			levels.length === 1 &&
+			levels[0] === 'UNKNOWN' &&
+			!data.some((b) => Object.keys(b.levels).length > 0);
+
+		const rawSeries: number[][] = isSyntheticUnknown
+			? [data.map((b) => b.count)]
+			: levels.map((level) =>
+					data.map((b) => {
+						// Match case-insensitively
+						const key = Object.keys(b.levels).find((k) => k.toUpperCase() === level);
+						return key ? (b.levels[key] ?? 0) : 0;
+					})
+				);
 
 		// Build stacked series (cumulative)
 		const stackedSeries: number[][] = [];
