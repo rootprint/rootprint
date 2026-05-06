@@ -5,7 +5,12 @@ import { eq } from 'drizzle-orm';
 import { RetryAfterRateLimiter } from 'sveltekit-rate-limiter/server';
 
 import { building } from '$app/environment';
-import { API_AUTH_PREFIX, AUTH_PATHS, SETUP_ADMIN_PATH } from '$lib/constants/routes';
+import {
+	API_AUTH_PREFIX,
+	AUTH_GATE_BYPASS_PREFIXES,
+	AUTH_PATHS,
+	SETUP_ADMIN_PATH
+} from '$lib/constants/routes';
 import { auth } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { db } from '$lib/server/db';
@@ -65,6 +70,19 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 				.where(eq(user.id, session.user.id))
 				.run();
 		}
+	}
+
+	if (
+		!event.locals.user &&
+		!AUTH_GATE_BYPASS_PREFIXES.some((p) => event.url.pathname.startsWith(p))
+	) {
+		const returnTo = event.url.pathname + event.url.search;
+		const loginUrl =
+			returnTo === '/' ? '/auth/sign-in' : `/auth/sign-in?returnTo=${encodeURIComponent(returnTo)}`;
+		return new Response(null, {
+			status: 302,
+			headers: { Location: loginUrl }
+		});
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });
