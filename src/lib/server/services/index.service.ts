@@ -99,6 +99,8 @@ export async function listIndexesForAdmin(): Promise<AdminIndexSummary[]> {
 }
 
 export async function listIndexesForUser(userRole: string | null | undefined) {
+	if (!userRole) return [];
+
 	const indexes = await listIndexIdsAndUris();
 	const settingsMap = readIndexSettingsMap();
 
