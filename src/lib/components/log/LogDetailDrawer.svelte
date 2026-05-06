@@ -7,9 +7,12 @@
 		ListTree,
 		Loader2,
 		Logs,
+		Search,
 		Share2,
-		Waypoints
+		Waypoints,
+		X
 	} from 'lucide-svelte';
+	import { untrack } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
 
@@ -62,6 +65,74 @@
 	} = $props();
 
 	let sharing = $state(false);
+
+	type OtelSectionId = 'attributes' | 'resourceAttributes' | 'other';
+
+	let searchOpen = $state(false);
+	let searchQuery = $state('');
+	const trimmedQuery = $derived(searchQuery.trim());
+	let inputEl: HTMLInputElement | null = $state(null);
+	let prevCollapsed = $state<Record<OtelSectionId, boolean> | null>(null);
+
+	function containsMatch(text: string, q: string): boolean {
+		return text.toLowerCase().includes(q.toLowerCase());
+	}
+
+	function highlightSegments(text: string, q: string): Array<{ text: string; match: boolean }> {
+		if (!q) return [{ text, match: false }];
+		const lowerText = text.toLowerCase();
+		const lowerQ = q.toLowerCase();
+		const segments: Array<{ text: string; match: boolean }> = [];
+		let cursor = 0;
+		while (cursor < text.length) {
+			const idx = lowerText.indexOf(lowerQ, cursor);
+			if (idx === -1) {
+				segments.push({ text: text.slice(cursor), match: false });
+				break;
+			}
+			if (idx > cursor) {
+				segments.push({ text: text.slice(cursor, idx), match: false });
+			}
+			segments.push({ text: text.slice(idx, idx + lowerQ.length), match: true });
+			cursor = idx + lowerQ.length;
+		}
+		return segments;
+	}
+
+	function openSearch() {
+		if (!searchOpen) {
+			prevCollapsed = { ...collapsed };
+		}
+		searchOpen = true;
+	}
+
+	function closeSearch() {
+		searchOpen = false;
+		searchQuery = '';
+		if (prevCollapsed) {
+			collapsed = prevCollapsed;
+			prevCollapsed = null;
+		}
+	}
+
+	$effect(() => {
+		if (searchOpen && inputEl) {
+			inputEl.focus();
+		}
+	});
+
+	$effect(() => {
+		if (!open && searchOpen) {
+			closeSearch();
+		}
+	});
+
+	$effect(() => {
+		void hit;
+		untrack(() => {
+			if (searchOpen) closeSearch();
+		});
+	});
 
 	async function handleShare() {
 		if (!hit || !timeRange || sharing) return;
@@ -139,8 +210,6 @@
 		hideEmpty ? flatParams.filter(([, value]) => !isEmpty(value)) : flatParams
 	);
 
-	type OtelSectionId = 'attributes' | 'resourceAttributes' | 'other';
-
 	type OtelSection = {
 		id: OtelSectionId;
 		label: string;
@@ -178,6 +247,17 @@
 			] satisfies OtelSection[]
 		).filter((s) => s.params.length > 0)
 	);
+
+	const sectionHasMatch = $derived.by(() => {
+		const q = trimmedQuery;
+		if (q === '') return () => false;
+		return (section: OtelSection) =>
+			section.params.some(
+				([k, v]) =>
+					containsMatch(section.displayKey(k), q) ||
+					(v != null && containsMatch(formatFieldValue(v), q))
+			);
+	});
 
 	let collapsed = $state<Record<OtelSectionId, boolean>>({
 		attributes: false,
@@ -219,6 +299,44 @@
 				</span>
 			</button>
 		{/if}
+		{#if searchOpen}
+			<label class="input input-xs h-7 items-center gap-1 pr-1">
+				<Search size={14} class="opacity-60" />
+				<input
+					bind:this={inputEl}
+					bind:value={searchQuery}
+					type="text"
+					placeholder="Filter fields…"
+					aria-label="Filter parameters"
+					class="w-40 text-xs"
+					onkeydown={(e) => {
+						if (e.key === 'Escape') {
+							e.preventDefault();
+							e.stopPropagation();
+							closeSearch();
+						}
+					}}
+				/>
+				<button
+					type="button"
+					class="cursor-pointer opacity-60 hover:opacity-100"
+					aria-label="Close search"
+					onclick={closeSearch}
+				>
+					<X size={14} />
+				</button>
+			</label>
+		{:else}
+			<button
+				type="button"
+				class="btn btn-ghost btn-xs"
+				title="Search fields"
+				aria-label="Search fields"
+				onclick={openSearch}
+			>
+				<Search size={14} />
+			</button>
+		{/if}
 		<button
 			class="btn btn-ghost btn-xs"
 			title="Share link to this log"
@@ -256,6 +374,15 @@
 		{:else if activeTab === 'parameters'}
 			{#if hit}
 				{#snippet paramTable(params: [string, unknown][], displayKey: (key: string) => string)}
+					{#snippet highlight(text: string)}
+						{#if trimmedQuery === ''}{text}{:else}
+							{#each highlightSegments(text, trimmedQuery) as seg, i (i)}
+								{#if seg.match}<mark class="rounded bg-warning/30 px-0.5 text-warning-content"
+										>{seg.text}</mark
+									>{:else}{seg.text}{/if}
+							{/each}
+						{/if}
+					{/snippet}
 					<div class="overflow-hidden rounded-box border border-base-300 bg-base-100">
 						<table class="table w-full table-fixed rounded-none">
 							<tbody>
@@ -265,15 +392,16 @@
 									>
 										<td
 											class="w-2/5 border-r border-base-300 px-3 py-1.5 text-xs font-normal text-base-content/70"
-											>{displayKey(key)}</td
 										>
+											{@render highlight(displayKey(key))}
+										</td>
 										<td
 											class="relative border-base-300 px-3 py-1.5 font-['Roboto_Mono',monospace] text-xs wrap-break-word text-base-content/90"
 										>
 											{#if value === null || value === undefined}
 												<span class="text-base-content/50 italic">null</span>
 											{:else}
-												{formatFieldValue(value)}
+												{@render highlight(formatFieldValue(value))}
 											{/if}
 											<div
 												class="absolute inset-y-0 right-0 flex items-center pr-1 md:pointer-events-none md:opacity-0 md:group-focus-within/row:pointer-events-auto md:group-focus-within/row:opacity-100 md:group-hover/row:pointer-events-auto md:group-hover/row:opacity-100"
@@ -364,7 +492,7 @@
 									class="flex items-center gap-2 py-2"
 									onclick={() => (collapsed[section.id] = !collapsed[section.id])}
 								>
-									{#if collapsed[section.id]}
+									{#if collapsed[section.id] && !sectionHasMatch(section)}
 										<ChevronRight size={14} class="text-base-content/60" />
 									{:else}
 										<ChevronDown size={14} class="text-base-content/60" />
@@ -376,7 +504,7 @@
 									</span>
 									<span class="badge badge-sm badge-accent">{section.params.length}</span>
 								</button>
-								{#if !collapsed[section.id]}
+								{#if !collapsed[section.id] || sectionHasMatch(section)}
 									<div transition:slide={{ duration: 200 }}>
 										{@render paramTable(section.params, section.displayKey)}
 									</div>
