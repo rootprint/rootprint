@@ -9,6 +9,7 @@
 
 	import caddyLogo from '$lib/assets/caddy-logo.png';
 	import fluentBitLogo from '$lib/assets/fluent-bit-logo.png';
+	import zigLogo from '$lib/assets/zig-logo.svg';
 	import SendLogsSourceCard from '$lib/components/admin/SendLogsSourceCard.svelte';
 
 	const sections = [
@@ -17,7 +18,8 @@
 			sources: [
 				{ label: 'Python', icon: pythonIcon, href: '/administration/send-logs/python' },
 				{ label: 'Node.js', icon: nodejsIcon, href: '/administration/send-logs/javascript' },
-				{ label: 'Go', icon: goIcon, href: '/administration/send-logs/go' }
+				{ label: 'Go', icon: goIcon, href: '/administration/send-logs/go' },
+				{ label: 'Zig', iconSrc: zigLogo, href: '/administration/send-logs/zig' }
 			]
 		},
 		{
