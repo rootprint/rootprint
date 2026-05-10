@@ -12,6 +12,7 @@
 		python: 'Python',
 		javascript: 'Node.js',
 		go: 'Go',
+		zig: 'Zig',
 		java: 'Java',
 		dotnet: '.NET',
 		http: 'HTTP',
