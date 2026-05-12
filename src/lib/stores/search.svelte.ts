@@ -43,7 +43,7 @@ import {
 import { buildQueryUrl, serialize } from '$lib/utils/query-params';
 import { resolveTimeRange } from '$lib/utils/time';
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 200;
 
 function resolveActiveView(
 	ref: ActiveViewRef | null,
@@ -103,6 +103,7 @@ export function createSearchStore(
 	let histogramRequestId = 0;
 	let searchRequestId = 0;
 	let searchCompletedCount = $state(0);
+	let prefetching = $state(false);
 
 	let levelBucketsLoading = $state(false);
 	let levelBucketsRequestId = 0;
@@ -302,14 +303,29 @@ export function createSearchStore(
 		);
 	}, 500);
 
-	async function search(opts?: { append?: boolean }) {
-		const append = opts?.append ?? false;
+	// Uses raw `loadingModeState` (not the `loadingMode` derived) because the
+	// derived can synthesize 'fresh' before any search has completed, which
+	// would incorrectly suppress the auto-prefetch trigger.
+	function shouldStartNextBatch(): boolean {
+		return loadingModeState === 'idle' && !prefetching && logs.length < numHits;
+	}
+
+	async function search(opts?: { append?: boolean; silent?: boolean }) {
+		const silent = opts?.silent ?? false;
+		// Silent fetches are always appends. A silent fresh search makes no sense.
+		const append = silent ? true : (opts?.append ?? false);
 		if (selectedIndex === null) return;
 
 		const requestId = ++searchRequestId;
 
-		loadingModeState = append ? 'appending' : 'fresh';
-		searchError = null;
+		if (silent) {
+			prefetching = true;
+		} else {
+			loadingModeState = append ? 'appending' : 'fresh';
+			searchError = null;
+		}
+
+		let success = false;
 
 		try {
 			const queryText = getQueryText();
@@ -375,8 +391,13 @@ export function createSearchStore(
 				shouldRecordHistory = false;
 				recordCurrentSearch(parsedQuery().query);
 			}
+
+			success = true;
 		} catch (e) {
 			if (requestId !== searchRequestId) return;
+			// Silent (prefetch) errors are swallowed — no toast, no UI change.
+			// `finally` still runs and clears `prefetching` when this request is current.
+			if (silent) return;
 			const message = getErrorMessage(e, 'Search failed');
 			searchError = message;
 			logs = [];
@@ -385,8 +406,21 @@ export function createSearchStore(
 			toast.error(message);
 		} finally {
 			if (requestId === searchRequestId) {
-				loadingModeState = 'idle';
+				if (silent) {
+					prefetching = false;
+				} else {
+					prefetching = false;
+					loadingModeState = 'idle';
+				}
 			}
+		}
+
+		// Auto-prefetch: after a successful fresh search, fire one silent append in
+		// the background to keep ~1 page buffered ahead. We do NOT chain after an
+		// append — the next prefetch is scroll-triggered to honor the
+		// "1 page ahead at a time" invariant.
+		if (success && !silent && !append && shouldStartNextBatch()) {
+			search({ append: true, silent: true });
 		}
 	}
 
@@ -654,6 +688,9 @@ export function createSearchStore(
 		},
 		get loadingMode() {
 			return loadingMode;
+		},
+		get prefetching() {
+			return prefetching;
 		},
 		get hasSearched() {
 			return hasSearched;

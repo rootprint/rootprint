@@ -110,13 +110,16 @@
 		const viewport = osInstance.elements().viewport;
 		const { scrollTop, scrollHeight, clientHeight } = viewport;
 
-		// Infinite scroll
+		// Top up the "1 page ahead" buffer when the user nears the end of the
+		// currently-loaded logs. Silent path -> no spinner unless Quickwit is
+		// slow enough that the user out-scrolls the response.
 		if (
-			scrollHeight - scrollTop - clientHeight < 300 &&
+			scrollHeight - scrollTop - clientHeight < 1500 &&
 			store.loadingMode === 'idle' &&
+			!store.prefetching &&
 			store.logs.length < store.numHits
 		) {
-			store.search({ append: true });
+			store.search({ append: true, silent: true });
 		}
 	}
 </script>
