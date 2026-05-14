@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/bun';
+import { QuickwitError } from 'quickwit-js';
 import { ValiError } from 'valibot';
 
 import { config } from './config.js';
@@ -31,10 +32,16 @@ export const app = new Hono<AppEnv>();
 app.use('*', requestContext);
 app.use('*', cors({ origin: config.frontendUrl, credentials: true }));
 
-app.onError((err, c) => {
+app.onError((rawErr, c) => {
   const requestId = c.get('requestId');
   // oxlint-disable-next-line no-shadow
   const logger = c.get('logger');
+
+  let err: Error = rawErr;
+  if (rawErr instanceof QuickwitError) {
+    const qwErr: QuickwitError = rawErr;
+    err = new HttpError(qwErr.status ?? 500, `QUICKWIT_${qwErr.code}`, qwErr.message);
+  }
 
   if (c.req.path.startsWith('/v1/')) {
     if (err instanceof HttpError) return otlpErrorFromHttpError(err);
