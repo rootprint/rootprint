@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 
 import { config } from '../config.js';
 import { user } from '../db/schema.js';
 import type { AppEnv } from '../env.js';
-import { auth } from '../lib/auth.js';
+import { auth, type Session } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import type { Logger } from '../lib/logger.js';
 import { internal, unauthorized } from '../utils/http-error.js';
@@ -36,3 +36,9 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
   bumpLastActive(session.user.id, c.get('logger'));
   await next();
 };
+
+export function requireSession<E extends AppEnv>(c: Context<E>): NonNullable<Session> {
+  const s = c.get('session') as Session | undefined;
+  if (!s) throw internal('Session missing — middleware misconfigured');
+  return s;
+}

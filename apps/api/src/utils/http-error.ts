@@ -1,24 +1,24 @@
-export type ErrorDetail = { path: string; message: string };
+import type { ApiErrorDetail } from '../types.js';
 
 export class HttpError extends Error {
   constructor(
     public readonly statusCode: number,
     public readonly code: string,
     message: string,
-    public readonly details?: ErrorDetail[],
+    public readonly details?: ApiErrorDetail[],
   ) {
     super(message);
     this.name = 'HttpError';
   }
 }
 
-export const badRequest = (message: string, code = 'BAD_REQUEST', details?: ErrorDetail[]) => new HttpError(400, code, message, details);
+export const badRequest = (message: string, code = 'BAD_REQUEST', details?: ApiErrorDetail[]) => new HttpError(400, code, message, details);
 export const unauthorized = (message: string, code = 'UNAUTHORIZED') => new HttpError(401, code, message);
 export const forbidden = (message: string, code = 'FORBIDDEN') => new HttpError(403, code, message);
 export const notFound = (message: string, code = 'NOT_FOUND') => new HttpError(404, code, message);
 export const conflict = (message: string, code = 'CONFLICT') => new HttpError(409, code, message);
 export const unsupportedMediaType = (message: string, code = 'UNSUPPORTED_MEDIA_TYPE') => new HttpError(415, code, message);
-export const unprocessable = (message: string, code = 'UNPROCESSABLE_ENTITY', details?: ErrorDetail[]) => new HttpError(422, code, message, details);
+export const unprocessable = (message: string, code = 'UNPROCESSABLE_ENTITY', details?: ApiErrorDetail[]) => new HttpError(422, code, message, details);
 export const tooManyRequests = (message: string, code = 'TOO_MANY_REQUESTS') => new HttpError(429, code, message);
 export const internal = (message: string, code = 'INTERNAL') => new HttpError(500, code, message);
 export const serviceUnavailable = (message: string, code = 'SERVICE_UNAVAILABLE') => new HttpError(503, code, message);

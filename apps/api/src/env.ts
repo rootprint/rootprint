@@ -1,6 +1,6 @@
 import type { Logger } from './lib/logger.js';
 import type { Session } from './lib/auth.js';
-import type { VerifiedIngestToken } from './services/token.service.js';
+import type { VerifiedIngestToken } from './services/ingest-token.service.js';
 
 export type AppEnv = {
   Variables: {

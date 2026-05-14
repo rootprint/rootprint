@@ -164,7 +164,7 @@ export type Preferences = {
   displayFields: string[] | null;
 };
 
-export type GoogleAuthStatus = {
+export type GoogleAuthSettings = {
   configured: boolean;
   allowedDomains: string[];
 };

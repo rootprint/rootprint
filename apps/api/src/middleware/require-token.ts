@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 
 import type { AppEnv } from '../env.js';
 import { db } from '../lib/db.js';
-import { verifyIngestToken } from '../services/token.service.js';
+import { verifyIngestToken } from '../services/ingest-token.service.js';
 import { extractBearerToken } from '../utils/bearer.js';
 import { forbidden, unauthorized } from '../utils/http-error.js';
 

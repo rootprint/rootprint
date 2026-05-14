@@ -2,13 +2,19 @@ import { inArray } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
 import { appSettings } from '../db/schema.js';
-import type { GoogleAuthStatus } from '../types.js';
+import type { GoogleAuthSettings } from '../types.js';
 
 const GOOGLE_CLIENT_ID = 'google_client_id';
 const GOOGLE_CLIENT_SECRET = 'google_client_secret';
 const GOOGLE_ALLOWED_DOMAINS = 'google_allowed_domains';
 
-export async function getGoogleAuthStatus(db: Db): Promise<GoogleAuthStatus> {
+export type GoogleAuthCredentials = {
+  clientId: string;
+  clientSecret: string;
+  allowedDomains: string[];
+};
+
+async function loadGoogleSettingsByKey(db: Db): Promise<Map<string, string>> {
   const rows = await db
     .select({ key: appSettings.key, value: appSettings.value })
     .from(appSettings)
@@ -17,10 +23,27 @@ export async function getGoogleAuthStatus(db: Db): Promise<GoogleAuthStatus> {
       GOOGLE_CLIENT_SECRET,
       GOOGLE_ALLOWED_DOMAINS,
     ]));
+  return new Map(rows.map((r) => [r.key, r.value]));
+}
 
-  const byKey = new Map(rows.map((r) => [r.key, r.value]));
+export async function getGoogleAuthStatus(db: Db): Promise<GoogleAuthSettings> {
+  const byKey = await loadGoogleSettingsByKey(db);
   return {
     configured: byKey.has(GOOGLE_CLIENT_ID) && byKey.has(GOOGLE_CLIENT_SECRET),
+    allowedDomains: parseDomains(byKey.get(GOOGLE_ALLOWED_DOMAINS) ?? null),
+  };
+}
+
+export async function loadGoogleAuthForBetterAuth(
+  db: Db,
+): Promise<GoogleAuthCredentials | undefined> {
+  const byKey = await loadGoogleSettingsByKey(db);
+  const clientId = byKey.get(GOOGLE_CLIENT_ID);
+  const clientSecret = byKey.get(GOOGLE_CLIENT_SECRET);
+  if (!clientId || !clientSecret) return undefined;
+  return {
+    clientId,
+    clientSecret,
     allowedDomains: parseDomains(byKey.get(GOOGLE_ALLOWED_DOMAINS) ?? null),
   };
 }

@@ -1,11 +1,11 @@
 meta {
-  name: Update Index Config
+  name: Update Index
   type: http
   seq: 4
 }
 
 patch {
-  url: {{baseUrl}}/api/indexes/{{indexId}}/config
+  url: {{baseUrl}}/api/indexes/{{indexId}}
   body: json
   auth: none
 }

@@ -81,7 +81,7 @@ export async function createInvite(
   return { inviteUrl: buildInviteUrl(token) };
 }
 
-export async function regenerateInvite(db: Db, userId: string): Promise<{ inviteUrl: string }> {
+export async function resendInvite(db: Db, userId: string): Promise<{ inviteUrl: string }> {
   const hasCred = await hasCredentialAccount(db, userId);
   if (!hasCred) {
     throw badRequest('User has no credential account');

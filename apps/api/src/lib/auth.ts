@@ -3,23 +3,21 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { admin } from 'better-auth/plugins';
 import type { UserWithRole } from 'better-auth/plugins/admin';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { config } from '../config.js';
 import * as authSchema from '../db/auth.schema.js';
-import { account, appSettings, inviteToken, user } from '../db/schema.js';
+import { account, inviteToken, user } from '../db/schema.js';
 import type { Db } from '../db/index.js';
 import { getGoogleAllowedDomains } from '../services/auth.service.js';
+import {
+  loadGoogleAuthForBetterAuth,
+  type GoogleAuthCredentials,
+} from '../services/settings.service.js';
 import { db } from './db.js';
 import { logger } from './logger.js';
 
-type GoogleSettings = {
-  clientId: string;
-  clientSecret: string;
-  allowedDomains: string[];
-};
-
-function buildAuth(database: Db, google?: GoogleSettings) {
+function buildAuth(database: Db, google?: GoogleAuthCredentials) {
   const opts: BetterAuthOptions = {
     database: drizzleAdapter(database, { provider: 'pg', schema: authSchema }),
     plugins: [admin()],
@@ -83,43 +81,17 @@ function buildAuth(database: Db, google?: GoogleSettings) {
   return betterAuth(opts);
 }
 
-async function loadGoogleSettings(database: Db): Promise<GoogleSettings | undefined> {
-  const rows = await database
-    .select()
-    .from(appSettings)
-    .where(inArray(appSettings.key, [
-      'google_client_id',
-      'google_client_secret',
-      'google_allowed_domains',
-    ]));
-
-  const clientId = rows.find((r) => r.key === 'google_client_id')?.value;
-  const clientSecret = rows.find((r) => r.key === 'google_client_secret')?.value;
-  if (!clientId || !clientSecret) return undefined;
-
-  const raw = rows.find((r) => r.key === 'google_allowed_domains')?.value;
-  let allowedDomains: string[] = [];
-  if (raw) {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        allowedDomains = parsed.filter((d): d is string => typeof d === 'string');
-      }
-    } catch {
-      // Malformed value. Treated as empty — request-time hook will reject Google sign-ins.
-    }
-  }
-
-  if (allowedDomains.length === 0) {
+async function loadGoogle(database: Db): Promise<GoogleAuthCredentials | undefined> {
+  const google = await loadGoogleAuthForBetterAuth(database);
+  if (google && google.allowedDomains.length === 0) {
     logger.warn(
       'google credentials are configured but google_allowed_domains is empty or missing — all Google sign-ins will be rejected',
     );
   }
-
-  return { clientId, clientSecret, allowedDomains };
+  return google;
 }
 
-const initialGoogle = await loadGoogleSettings(db).catch((err: unknown) => {
+const initialGoogle = await loadGoogle(db).catch((err: unknown) => {
   logger.warn({ err }, 'failed to load google settings at startup; continuing without google provider');
   return undefined;
 });
@@ -127,7 +99,7 @@ const initialGoogle = await loadGoogleSettings(db).catch((err: unknown) => {
 export let auth = buildAuth(db, initialGoogle);
 
 export async function reloadAuth(): Promise<void> {
-  const google = await loadGoogleSettings(db);
+  const google = await loadGoogle(db);
   auth = buildAuth(db, google);
 }
 

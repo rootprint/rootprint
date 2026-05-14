@@ -1,0 +1,11 @@
+meta {
+  name: Resend Invite
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/invites/{{userId}}/resend
+  body: none
+  auth: none
+}

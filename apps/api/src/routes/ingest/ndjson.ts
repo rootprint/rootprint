@@ -9,7 +9,7 @@ import { tapBytes } from './tap-bytes.js';
 
 export const ndjsonRouter = new Hono<AppEnv>();
 
-ndjsonRouter.post('/', requireToken, async (c) => {
+ndjsonRouter.post('/ndjson', requireToken, async (c) => {
   const token = c.get('token')!;
   const upstreamUrl = `${config.quickwitUrl}/api/v1/${encodeURIComponent(token.indexId)}/ingest`;
   const contentType = c.req.header('content-type') ?? CONTENT_TYPE_JSON;

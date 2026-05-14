@@ -69,6 +69,7 @@ export async function updateOwnedSavedQuery(
   db: Db,
   userId: string,
   id: number,
+  indexName: string,
   patch: { name?: string; description?: string | null; query?: string },
 ): Promise<SavedQuery> {
   const updates: Partial<typeof patch> = {};
@@ -80,7 +81,13 @@ export async function updateOwnedSavedQuery(
     const [row] = await db
       .update(savedQuery)
       .set(updates)
-      .where(and(eq(savedQuery.id, id), eq(savedQuery.userId, userId)))
+      .where(
+        and(
+          eq(savedQuery.id, id),
+          eq(savedQuery.userId, userId),
+          eq(savedQuery.indexName, indexName),
+        ),
+      )
       .returning();
     if (row) return toPublic(row);
   } catch (err) {
@@ -94,12 +101,19 @@ export async function deleteOwnedSavedQuery(
   db: Db,
   userId: string,
   id: number,
-): Promise<string> {
+  indexName: string,
+): Promise<void> {
   const [row] = await db
     .delete(savedQuery)
-    .where(and(eq(savedQuery.id, id), eq(savedQuery.userId, userId)))
-    .returning({ indexName: savedQuery.indexName });
-  if (row) return row.indexName;
+    .where(
+      and(
+        eq(savedQuery.id, id),
+        eq(savedQuery.userId, userId),
+        eq(savedQuery.indexName, indexName),
+      ),
+    )
+    .returning({ id: savedQuery.id });
+  if (row) return;
   throw await missOrForbidden(db, id, 'Saved query');
 }
 

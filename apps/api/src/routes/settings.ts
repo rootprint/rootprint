@@ -38,24 +38,24 @@ export const settingsRouter = new Hono<AppEnv>();
 
 settingsRouter.use('*', requireAdmin);
 
-settingsRouter.get('/google-auth', async (c) =>
+settingsRouter.get('/auth/google', async (c) =>
   c.json(await getGoogleAuthStatus(db)),
 );
 
-settingsRouter.put('/google-auth', async (c) => {
+settingsRouter.put('/auth/google/credentials', async (c) => {
   const body = v.parse(CredentialsBody, await c.req.json());
   await putGoogleAuthCredentials(db, body);
   await reloadAuth();
   return c.body(null, 204);
 });
 
-settingsRouter.delete('/google-auth', async (c) => {
+settingsRouter.delete('/auth/google/credentials', async (c) => {
   await deleteGoogleAuthCredentials(db);
   await reloadAuth();
   return c.body(null, 204);
 });
 
-settingsRouter.put('/google-auth/allowed-domains', async (c) => {
+settingsRouter.put('/auth/google/allowed-domains', async (c) => {
   const body = v.parse(AllowedDomainsBody, await c.req.json());
   await putGoogleAuthAllowedDomains(db, body);
   return c.body(null, 204);
