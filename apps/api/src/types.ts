@@ -168,3 +168,7 @@ export type ShareView = {
   endTime: number;
   hit: Record<string, unknown>;
 };
+
+export type Preferences = {
+  displayFields: string[] | null;
+};
