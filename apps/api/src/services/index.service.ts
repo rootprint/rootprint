@@ -15,7 +15,7 @@ import {
   ingestToken,
   savedQuery,
   searchHistory,
-  sharedLink,
+  share,
   userPreference,
   view,
 } from "../db/schema.js";
@@ -271,7 +271,7 @@ export async function deleteIndex(
         .where(eq(searchHistory.indexName, indexId));
       await tx.delete(savedQuery).where(eq(savedQuery.indexName, indexId));
       await tx.delete(view).where(eq(view.indexName, indexId));
-      await tx.delete(sharedLink).where(eq(sharedLink.indexName, indexId));
+      await tx.delete(share).where(eq(share.indexName, indexId));
       await tx.delete(ingestToken).where(eq(ingestToken.indexId, indexId));
     });
   } catch (err) {

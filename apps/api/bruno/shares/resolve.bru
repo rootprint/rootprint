@@ -1,0 +1,15 @@
+meta {
+  name: Resolve Share
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/shares/{{shareCode}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  shareCode: 
+}

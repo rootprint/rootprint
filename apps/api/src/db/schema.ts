@@ -150,7 +150,7 @@ export const view = pgTable(
   (table) => [index("view_user_index").on(table.userId, table.indexName)],
 );
 
-export const sharedLink = pgTable("shared_link", {
+export const share = pgTable("share", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().unique(),
   userId: text("user_id")

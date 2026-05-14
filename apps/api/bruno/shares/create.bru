@@ -1,0 +1,25 @@
+meta {
+  name: Create Share
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/shares
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "indexName": "{{indexId}}",
+    "query": "severity_text:ERROR",
+    "startTime": 1715000000,
+    "endTime": 1715100000,
+    "hit": {
+      "body": { "message": "sample log" },
+      "severity_text": "ERROR",
+      "timestamp": "2026-05-14T12:00:00Z"
+    }
+  }
+}

@@ -141,3 +141,30 @@ export type SavedQuery = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type Share = {
+  id: number;
+  code: string;
+  indexName: string;
+  query: string;
+  startTime: number;
+  endTime: number;
+  hit: Record<string, unknown>;
+  createdAt: Date;
+};
+
+export type ShareCreateInput = {
+  indexName: string;
+  query: string;
+  startTime: number;
+  endTime: number;
+  hit: Record<string, unknown>;
+};
+
+export type ShareView = {
+  indexName: string;
+  query: string;
+  startTime: number;
+  endTime: number;
+  hit: Record<string, unknown>;
+};
