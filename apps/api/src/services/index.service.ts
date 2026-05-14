@@ -89,17 +89,13 @@ export async function saveIndexConfig(
   indexId: string,
   fields: SaveIndexConfigFields,
 ): Promise<void> {
-  const provided = Object.fromEntries(
-    Object.entries(fields).filter(([, value]) => value !== undefined),
-  ) as SaveIndexConfigFields;
   const updatedAt = new Date();
-
   await db
     .insert(indexSettings)
-    .values({ indexId, ...provided, updatedAt })
+    .values({ indexId, ...fields, updatedAt })
     .onConflictDoUpdate({
       target: indexSettings.indexId,
-      set: { ...provided, updatedAt },
+      set: { ...fields, updatedAt },
     });
 }
 
@@ -160,13 +156,17 @@ export async function getFieldConfig(
   db: Db,
   qw: QuickwitClient,
   indexId: string,
+  isAdmin: boolean,
 ): Promise<FieldConfig> {
   const [settings, index] = await Promise.all([
     getIndexSettings(db, indexId),
     qwGetIndex(qw, indexId),
   ]);
 
-  if (!index) throw notFound('Index not found');
+  if (!canAccessIndex(settings.visibility, isAdmin)) {
+    throw indexAccessError(isAdmin, "denied");
+  }
+  if (!index) throw indexAccessError(isAdmin, "missing");
   if (!index.timestampField)
     throw internal(`Index "${indexId}" has no timestamp_field`);
 

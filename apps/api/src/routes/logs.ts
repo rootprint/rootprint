@@ -3,19 +3,17 @@ import * as v from 'valibot';
 
 import type { AppEnv as BaseEnv } from '../env.js';
 import { db } from '../lib/db.js';
+import { isAdmin } from '../lib/auth.js';
 import { quickwit } from '../lib/quickwit.js';
 import {
-  canAccessIndex,
-  getIndexSettings,
+  getFieldConfig,
   type FieldConfig,
 } from '../services/index.service.js';
 import { fieldValues, histogramLogs, searchLogs } from '../services/log.service.js';
-import { getIndex } from '../services/quickwit-index.service.js';
-import { badRequest, indexAccessError, internal } from '../utils/http-error.js';
+import { IndexIdParams } from '../utils/params.js';
 
 type LogsEnv = BaseEnv & { Variables: BaseEnv['Variables'] & { fieldConfig: FieldConfig } };
 
-const IndexIdParams = v.object({ indexId: v.pipe(v.string(), v.minLength(1)) });
 const FieldParams = v.object({
   indexId: v.pipe(v.string(), v.minLength(1)),
   field: v.pipe(v.string(), v.minLength(1)),
@@ -52,7 +50,13 @@ const HistogramQuery = v.object({
   q: v.optional(v.string()),
   startTs: v.optional(toNum),
   endTs: v.optional(toNum),
-  interval: v.pipe(v.string(), v.minLength(1)),
+  interval: v.pipe(
+    v.string(),
+    v.regex(
+      /^[1-9]\d*[smhdwMy]$/,
+      'interval must be a positive integer followed by s, m, h, d, w, M, or y',
+    ),
+  ),
 });
 
 const FieldValuesQuery = v.object({
@@ -66,33 +70,16 @@ const FieldValuesQuery = v.object({
   }))),
 });
 
-const requireIndexAccess: MiddlewareHandler<LogsEnv> = async (c, next) => {
+const withFieldConfig: MiddlewareHandler<LogsEnv> = async (c, next) => {
   const { indexId } = v.parse(IndexIdParams, c.req.param());
-  const isAdmin = c.get('session')?.user.role === 'admin';
-
-  const [settings, index] = await Promise.all([
-    getIndexSettings(db, indexId),
-    getIndex(quickwit, indexId),
-  ]);
-
-  if (!canAccessIndex(settings.visibility, isAdmin)) throw indexAccessError(isAdmin, 'denied');
-  if (!index) throw indexAccessError(isAdmin, 'missing');
-  if (!index.timestampField) throw internal(`Index "${indexId}" has no timestamp_field`);
-
-  c.set('fieldConfig', {
-    indexId,
-    levelField: settings.levelField,
-    timestampField: index.timestampField,
-    messageField: settings.messageField,
-    tracebackField: settings.tracebackField,
-    contextFields: settings.contextFields,
-  });
+  const config = await getFieldConfig(db, quickwit, indexId, isAdmin(c.get('session')));
+  c.set('fieldConfig', config);
   await next();
 };
 
 export const logsRouter = new Hono<LogsEnv>();
 
-logsRouter.get('/:indexId/search', requireIndexAccess, async (c) => {
+logsRouter.get('/:indexId/search', withFieldConfig, async (c) => {
   const q = v.parse(SearchQuery, c.req.query());
   return c.json(
     await searchLogs(quickwit, c.get('fieldConfig'), {
@@ -102,15 +89,12 @@ logsRouter.get('/:indexId/search', requireIndexAccess, async (c) => {
   );
 });
 
-logsRouter.get('/:indexId/histogram', requireIndexAccess, async (c) => {
+logsRouter.get('/:indexId/histogram', withFieldConfig, async (c) => {
   const { q, startTs, endTs, interval } = v.parse(HistogramQuery, c.req.query());
-  if (!/^[1-9]\d*[smhdwMy]$/.test(interval)) {
-    throw badRequest('interval must be a positive integer followed by s, m, h, d, w, M, or y');
-  }
   return c.json(await histogramLogs(quickwit, c.get('fieldConfig'), { query: q, startTs, endTs, interval }));
 });
 
-logsRouter.get('/:indexId/field-values/:field', requireIndexAccess, async (c) => {
+logsRouter.get('/:indexId/field-values/:field', withFieldConfig, async (c) => {
   const { field } = v.parse(FieldParams, c.req.param());
   const { q, startTs, endTs, limit } = v.parse(FieldValuesQuery, c.req.query());
   return c.json(await fieldValues(quickwit, c.get('fieldConfig'), field, { query: q, startTs, endTs, limit }));

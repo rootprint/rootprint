@@ -136,3 +136,6 @@ type BaseSession = NonNullable<Awaited<ReturnType<AuthInstance['api']['getSessio
 export type Session =
   | (Omit<BaseSession, 'user'> & { user: BaseSession['user'] & Partial<Pick<UserWithRole, 'role' | 'banned'>> })
   | null;
+
+export const isAdmin = (session: Session | undefined): boolean =>
+  session?.user.role === 'admin';

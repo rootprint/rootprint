@@ -48,6 +48,7 @@ export const userPreference = pgTable(
   },
   (table) => [
     uniqueIndex("user_preference_unique").on(table.userId, table.indexName),
+    index("user_preference_index_name").on(table.indexName),
   ],
 );
 
@@ -81,7 +82,10 @@ export const ingestToken = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [index("ingest_token_created_by").on(table.createdByUserId)],
+  (table) => [
+    index("ingest_token_created_by").on(table.createdByUserId),
+    index("ingest_token_index_id").on(table.indexId),
+  ],
 );
 
 export const searchHistory = pgTable(
@@ -105,6 +109,7 @@ export const searchHistory = pgTable(
       table.indexName,
       table.executedAt,
     ),
+    index("search_history_index_name").on(table.indexName),
   ],
 );
 
@@ -131,6 +136,7 @@ export const savedQuery = pgTable(
       table.indexName,
       table.name,
     ),
+    index("saved_query_index_name").on(table.indexName),
   ],
 );
 
@@ -147,22 +153,29 @@ export const view = pgTable(
     columns: jsonb("columns").$type<string[]>().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [index("view_user_index").on(table.userId, table.indexName)],
+  (table) => [
+    index("view_user_index").on(table.userId, table.indexName),
+    index("view_index_name").on(table.indexName),
+  ],
 );
 
-export const share = pgTable("share", {
-  id: serial("id").primaryKey(),
-  code: text("code").notNull().unique(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  indexName: text("index_name").notNull(),
-  query: text("query").notNull().default(""),
-  startTime: integer("start_time").notNull(),
-  endTime: integer("end_time").notNull(),
-  hit: jsonb("hit").$type<Record<string, unknown>>().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const share = pgTable(
+  "share",
+  {
+    id: serial("id").primaryKey(),
+    code: text("code").notNull().unique(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    indexName: text("index_name").notNull(),
+    query: text("query").notNull().default(""),
+    startTime: integer("start_time").notNull(),
+    endTime: integer("end_time").notNull(),
+    hit: jsonb("hit").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("share_index_name").on(table.indexName)],
+);
 
 export const appSettings = pgTable("app_settings", {
   key: text("key").primaryKey(),

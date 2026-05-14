@@ -4,6 +4,7 @@ import * as v from 'valibot';
 
 import type { AppEnv } from '../env.js';
 import { db } from '../lib/db.js';
+import { isAdmin } from '../lib/auth.js';
 import { quickwit } from '../lib/quickwit.js';
 import { assertIndexAccess } from '../services/index.service.js';
 import { createShare, resolveShare } from '../services/share.service.js';
@@ -39,8 +40,7 @@ sharesRouter.post(
   async (c) => {
     const body = v.parse(CreateBody, await c.req.json());
     const session = c.get('session')!;
-    const isAdmin = session.user.role === 'admin';
-    await assertIndexAccess(db, quickwit, body.indexName, isAdmin);
+    await assertIndexAccess(db, quickwit, body.indexName, isAdmin(session));
     const result = await createShare(db, session.user.id, body);
     return c.json(result, 201);
   },
@@ -49,8 +49,7 @@ sharesRouter.post(
 sharesRouter.get('/:code', async (c) => {
   const { code } = v.parse(CodeParams, c.req.param());
   const session = c.get('session')!;
-  const isAdmin = session.user.role === 'admin';
   const row = await resolveShare(db, code);
-  await assertIndexAccess(db, quickwit, row.indexName, isAdmin);
+  await assertIndexAccess(db, quickwit, row.indexName, isAdmin(session));
   return c.json(row);
 });

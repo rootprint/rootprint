@@ -1,30 +1,24 @@
-import { Hono, type MiddlewareHandler } from "hono";
+import { Hono } from "hono";
 import * as v from "valibot";
 
-import type { AppEnv as BaseEnv } from "../env.js";
+import { INDEX_VISIBILITIES } from "../constants/index-visibility.js";
+import type { AppEnv } from "../env.js";
 import { db } from "../lib/db.js";
 import { quickwit } from "../lib/quickwit.js";
 import { requireAdmin } from "../middleware/require-admin.js";
+import { requireIndexAccess } from "../middleware/require-index-access.js";
 import {
-  canAccessIndex,
   deleteIndex,
   deleteSource,
   getIndexDetail,
   getIndexFields,
-  getIndexSettings,
   listIndexes,
   saveIndexConfig,
   setSourceEnabled,
-  type IndexSettings,
 } from "../services/index.service.js";
-import { getIndex } from "../services/quickwit-index.service.js";
-import { indexAccessError, notFound } from "../utils/http-error.js";
+import { notFound } from "../utils/http-error.js";
+import { IndexIdParams } from "../utils/params.js";
 
-type IndexEnv = BaseEnv & {
-  Variables: BaseEnv["Variables"] & { indexSettings: IndexSettings };
-};
-
-const IndexIdParams = v.object({ indexId: v.pipe(v.string(), v.minLength(1)) });
 const SourceParams = v.object({
   indexId: v.pipe(v.string(), v.minLength(1)),
   sourceId: v.pipe(v.string(), v.minLength(1)),
@@ -32,7 +26,7 @@ const SourceParams = v.object({
 
 const SaveConfigBody = v.object({
   displayName: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(128)))),
-  visibility: v.optional(v.picklist(["hidden", "admin", "all"])),
+  visibility: v.optional(v.picklist(INDEX_VISIBILITIES)),
   levelField: v.optional(v.pipe(v.string(), v.minLength(1))),
   messageField: v.optional(v.pipe(v.string(), v.minLength(1))),
   tracebackField: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
@@ -41,20 +35,7 @@ const SaveConfigBody = v.object({
 
 const ToggleSourceBody = v.object({ enabled: v.boolean() });
 
-const requireIndexAccess: MiddlewareHandler<IndexEnv> = async (c, next) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  const settings = await getIndexSettings(db, indexId);
-  const isAdmin = c.get("session")?.user.role === "admin";
-  if (!canAccessIndex(settings.visibility, isAdmin)) {
-    throw indexAccessError(isAdmin, "denied");
-  }
-  const index = await getIndex(quickwit, indexId);
-  if (!index) throw indexAccessError(isAdmin, "missing");
-  c.set("indexSettings", settings);
-  await next();
-};
-
-export const indexesRouter = new Hono<IndexEnv>();
+export const indexesRouter = new Hono<AppEnv>();
 
 indexesRouter.get("/", async (c) =>
   c.json(await listIndexes(db, quickwit, c.get("session")?.user.role)),

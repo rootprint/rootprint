@@ -3,25 +3,17 @@ import * as v from 'valibot';
 
 import type { AppEnv } from '../env.js';
 import { db } from '../lib/db.js';
+import { isAdmin } from '../lib/auth.js';
 import { quickwit } from '../lib/quickwit.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
 import { assertIndexAccess } from '../services/index.service.js';
 import {
   createSavedQuery,
-  deleteSavedQuery,
+  deleteOwnedSavedQuery,
   listSavedQueries,
-  loadOwnedSavedQuery,
-  updateSavedQuery,
+  updateOwnedSavedQuery,
 } from '../services/saved-query.service.js';
-import { conflict, isUniqueViolation } from '../utils/http-error.js';
-
-const IdParams = v.object({
-  id: v.pipe(
-    v.string(),
-    v.regex(/^[1-9]\d*$/, 'id must be a positive integer'),
-    v.transform(Number),
-  ),
-});
+import { IdParams } from '../utils/params.js';
 
 const CreateBody = v.object({
   name: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
@@ -41,9 +33,6 @@ const PatchBody = v.pipe(
   ),
 );
 
-const NAME_TAKEN = 'SAVED_QUERY_NAME_TAKEN';
-const NAME_TAKEN_MSG = 'A saved query with this name already exists';
-
 export const savedQueriesRouter = new Hono<AppEnv>();
 
 savedQueriesRouter.get('/:indexId', requireIndexAccess, async (c) => {
@@ -56,37 +45,26 @@ savedQueriesRouter.post('/:indexId', requireIndexAccess, async (c) => {
   const indexId = c.req.param('indexId')!;
   const body = v.parse(CreateBody, await c.req.json());
   const session = c.get('session')!;
-  try {
-    const created = await createSavedQuery(db, session.user.id, {
-      indexName: indexId,
-      ...body,
-    });
-    return c.json(created, 201);
-  } catch (err) {
-    if (isUniqueViolation(err)) throw conflict(NAME_TAKEN_MSG, NAME_TAKEN);
-    throw err;
-  }
+  const created = await createSavedQuery(db, session.user.id, {
+    indexName: indexId,
+    ...body,
+  });
+  return c.json(created, 201);
 });
 
 savedQueriesRouter.patch('/:id', async (c) => {
   const { id } = v.parse(IdParams, c.req.param());
   const body = v.parse(PatchBody, await c.req.json());
   const session = c.get('session')!;
-  const row = await loadOwnedSavedQuery(db, session.user.id, id);
-  await assertIndexAccess(db, quickwit, row.indexName, session.user.role === 'admin');
-  try {
-    return c.json(await updateSavedQuery(db, id, body));
-  } catch (err) {
-    if (isUniqueViolation(err)) throw conflict(NAME_TAKEN_MSG, NAME_TAKEN);
-    throw err;
-  }
+  const updated = await updateOwnedSavedQuery(db, session.user.id, id, body);
+  await assertIndexAccess(db, quickwit, updated.indexName, isAdmin(session));
+  return c.json(updated);
 });
 
 savedQueriesRouter.delete('/:id', async (c) => {
   const { id } = v.parse(IdParams, c.req.param());
   const session = c.get('session')!;
-  const row = await loadOwnedSavedQuery(db, session.user.id, id);
-  await assertIndexAccess(db, quickwit, row.indexName, session.user.role === 'admin');
-  await deleteSavedQuery(db, id);
+  const indexName = await deleteOwnedSavedQuery(db, session.user.id, id);
+  await assertIndexAccess(db, quickwit, indexName, isAdmin(session));
   return c.body(null, 204);
 });

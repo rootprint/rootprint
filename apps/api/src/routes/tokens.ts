@@ -10,18 +10,11 @@ import {
   getIngestTokenValue,
   listIngestTokens,
 } from '../services/token.service.js';
+import { IdParams } from '../utils/params.js';
 
 const CreateBody = v.object({
   name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
   indexId: v.pipe(v.string(), v.minLength(1)),
-});
-
-const IdParams = v.object({
-  id: v.pipe(
-    v.string(),
-    v.regex(/^[1-9]\d*$/, 'id must be a positive integer'),
-    v.transform(Number),
-  ),
 });
 
 export const tokensRouter = new Hono<AppEnv>();

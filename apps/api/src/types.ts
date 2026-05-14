@@ -1,6 +1,8 @@
 // apps/api/src/types.ts
 // Shared TypeScript types consumed by both the api itself and downstream
 // workspace packages. Pure types only — no runtime exports.
+import type { INDEX_VISIBILITIES } from './constants/index-visibility.js';
+
 export type HealthResponse = {
   status: 'ok';
 };
@@ -20,7 +22,7 @@ export type ApiErrorBody = {
   };
 };
 
-export type IndexVisibility = 'hidden' | 'admin' | 'all';
+export type IndexVisibility = (typeof INDEX_VISIBILITIES)[number];
 
 export type IndexField = {
   name: string;
@@ -140,17 +142,6 @@ export type SavedQuery = {
   query: string;
   createdAt: Date;
   updatedAt: Date;
-};
-
-export type Share = {
-  id: number;
-  code: string;
-  indexName: string;
-  query: string;
-  startTime: number;
-  endTime: number;
-  hit: Record<string, unknown>;
-  createdAt: Date;
 };
 
 export type ShareCreateInput = {
