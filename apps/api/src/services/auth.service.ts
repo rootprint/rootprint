@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { config } from '../config.js';
 import type { Db } from '../db/index.js';
-import { account, inviteToken, user } from '../db/schema.js';
+import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
 import { badRequest, conflict } from '../utils/http-error.js';
 
@@ -111,4 +111,21 @@ export async function setupPassword(
   });
 
   return userId;
+}
+
+export async function getGoogleAllowedDomains(db: Db): Promise<string[]> {
+  const rows = await db
+    .select({ value: appSettings.value })
+    .from(appSettings)
+    .where(eq(appSettings.key, 'google_allowed_domains'))
+    .limit(1);
+  if (rows.length === 0) return [];
+  try {
+    const parsed: unknown = JSON.parse(rows[0]!.value);
+    return Array.isArray(parsed)
+      ? parsed.filter((d): d is string => typeof d === 'string')
+      : [];
+  } catch {
+    return [];
+  }
 }

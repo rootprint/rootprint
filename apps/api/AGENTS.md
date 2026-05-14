@@ -108,6 +108,8 @@ Sibling top-level dirs:
 - Better Auth setup lives in `src/lib/auth.ts`. Database tables follow Better Auth's schema (`src/db/auth.schema.ts`).
 - Session-based auth (cookies) for the web app; ingest tokens for log producers (`require-token` middleware).
 - Google OAuth is configured at runtime via the admin settings UI (writes to `app_settings`). The `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` env vars are **not** read.
+- Google sign-in is gated by a domain allowlist stored in `app_settings.google_allowed_domains` (JSON-encoded `string[]`). If creds are present but the allowlist is empty or missing, all Google sign-ins are rejected and a startup warning is logged.
+- Linking a Google account to a user deletes that user's credential row and any pending invite. Account linking is auto-enabled (Google is a trusted provider) — an existing user signing in with Google for the first time gets attached to their existing row instead of getting a duplicate.
 
 ## Environment Variables
 
