@@ -131,3 +131,13 @@ export type CreateIngestTokenInput = {
 export type IngestTokenValue = {
   token: string;
 };
+
+export type SavedQuery = {
+  id: number;
+  indexName: string;
+  name: string;
+  description: string | null;
+  query: string;
+  createdAt: Date;
+  updatedAt: Date;
+};

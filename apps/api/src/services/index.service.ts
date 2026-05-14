@@ -20,7 +20,7 @@ import {
   view,
 } from "../db/schema.js";
 import { logger } from "../lib/logger.js";
-import { internal, notFound } from "../utils/http-error.js";
+import { indexAccessError, internal, notFound } from "../utils/http-error.js";
 import {
   getIndex as qwGetIndex,
   listIndexes as qwListIndexes,
@@ -276,5 +276,23 @@ export async function deleteIndex(
     });
   } catch (err) {
     logger.warn({ err, indexId }, 'deleteIndex DB cleanup failed');
+  }
+}
+
+export async function assertIndexAccess(
+  db: Db,
+  qw: QuickwitClient,
+  indexId: string,
+  isAdmin: boolean,
+): Promise<void> {
+  const [settings, index] = await Promise.all([
+    getIndexSettings(db, indexId),
+    qwGetIndex(qw, indexId),
+  ]);
+  if (!canAccessIndex(settings.visibility, isAdmin)) {
+    throw indexAccessError(isAdmin, "denied");
+  }
+  if (!index) {
+    throw indexAccessError(isAdmin, "missing");
   }
 }

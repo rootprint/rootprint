@@ -1,5 +1,4 @@
 import {
-  boolean,
   index,
   integer,
   jsonb,
@@ -120,11 +119,18 @@ export const savedQuery = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     query: text("query").notNull().default(""),
-    isShared: boolean("is_shared").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
   },
   (table) => [
-    index("saved_query_user_index").on(table.userId, table.indexName),
+    uniqueIndex("saved_query_user_index_name_unique").on(
+      table.userId,
+      table.indexName,
+      table.name,
+    ),
   ],
 );
 

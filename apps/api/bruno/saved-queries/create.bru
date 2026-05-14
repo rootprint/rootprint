@@ -1,0 +1,19 @@
+meta {
+  name: Create Saved Query
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/saved-queries/{{indexId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Errors last 24h",
+    "description": "Quick triage filter",
+    "query": "level:error"
+  }
+}

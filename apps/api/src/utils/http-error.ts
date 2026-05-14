@@ -29,11 +29,13 @@ export function indexAccessError(isAdmin: boolean, kind: 'denied' | 'missing'): 
 }
 
 export function isUniqueViolation(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  if ((err as { code?: unknown }).code === '23505') return true;
+  const cause = (err as { cause?: unknown }).cause;
   return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as { code: unknown }).code === '23505'
+    typeof cause === 'object' &&
+    cause !== null &&
+    (cause as { code?: unknown }).code === '23505'
   );
 }
 

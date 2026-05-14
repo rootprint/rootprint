@@ -1,0 +1,1 @@
+DROP INDEX "saved_query_user_index";

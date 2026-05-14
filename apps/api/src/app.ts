@@ -15,6 +15,7 @@ import { indexesRouter } from './routes/indexes.js';
 import { ndjsonRouter } from './routes/ingest/ndjson.js';
 import { otlpRouter } from './routes/ingest/otlp.js';
 import { logsRouter } from './routes/logs.js';
+import { savedQueriesRouter } from './routes/saved-queries.js';
 import { tokensRouter } from './routes/tokens.js';
 import { usersRouter } from './routes/users.js';
 import { HttpError } from './utils/http-error.js';
@@ -123,6 +124,7 @@ export const routes = app
   .route('/api/logs', withAuth(logsRouter))
   .route('/api/users', withAuth(usersRouter))
   .route('/api/tokens', withAuth(tokensRouter))
+  .route('/api/saved-queries', withAuth(savedQueriesRouter))
   .route('/api/ingest', ndjsonRouter)
   .route('/v1', otlpRouter);
 

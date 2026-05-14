@@ -15,6 +15,20 @@
       "when": 1778502200459,
       "tag": "0001_busy_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778784620074,
+      "tag": "0002_add_saved_query_updated_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778784620100,
+      "tag": "0003_drop_saved_query_user_index",
+      "breakpoints": true
     }
   ]
 }
