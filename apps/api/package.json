@@ -17,7 +17,7 @@
     "dev": "bun --hot src/app.ts",
     "build": "bun build src/app.ts --target=bun --outdir=dist",
     "check": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint .",
+    "lint": "oxlint",
     "start": "bun run dist/app.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

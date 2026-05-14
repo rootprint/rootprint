@@ -33,6 +33,7 @@ app.use('*', cors({ origin: config.frontendUrl, credentials: true }));
 
 app.onError((err, c) => {
   const requestId = c.get('requestId');
+  // oxlint-disable-next-line no-shadow
   const logger = c.get('logger');
 
   if (c.req.path.startsWith('/v1/')) {

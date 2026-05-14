@@ -34,7 +34,7 @@ bun --filter api db:migrate
 bun run dev:api        # or: bun --filter <workspace> dev
 ```
 
-Root convenience scripts: `dev:api`, `build:api`, `start:api`, `check`, `format`, `format:check`. Workspace-specific scripts run via `bun --filter <workspace> <script>`.
+Root convenience scripts: `dev:api`, `build:api`, `start:api`, `check`, `lint`, `format`, `format:check`. Workspace-specific scripts run via `bun --filter <workspace> <script>`.
 
 ## Shared Rules (all workspaces)
 
@@ -48,6 +48,7 @@ Root convenience scripts: `dev:api`, `build:api`, `start:api`, `check`, `format`
 
 ```bash
 bun --filter '*' check
+bun run lint
 bun run format:check
 bun --filter api build
 ```

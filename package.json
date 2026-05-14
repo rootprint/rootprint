@@ -30,12 +30,13 @@
     "build:api": "bun --filter api build",
     "start:api": "bun --filter api start",
     "check": "bun --filter '*' check",
+    "lint": "bun --filter '*' lint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@types/node": "^22.19.15",
-    "eslint": "^10.1.0",
+    "oxlint": "^1.64.0",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3"
   },

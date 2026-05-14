@@ -26,7 +26,7 @@ bun --filter api dev         # hot-reload via `bun --hot`
 bun --filter api build       # bundle to dist/
 bun --filter api start       # run dist/app.js
 bun --filter api check       # tsc --noEmit
-bun --filter api lint        # eslint
+bun --filter api lint        # oxlint
 ```
 
 Root convenience: `bun run dev:api`, `bun run build:api`, `bun run start:api`.
