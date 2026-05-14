@@ -1,0 +1,11 @@
+meta {
+  name: Get Index Config
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/config
+  body: none
+  auth: none
+}

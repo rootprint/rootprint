@@ -1,4 +1,4 @@
-version: 0.9
+version: 0.8
 
 cluster_id: quickwit-local
 node_id: quickwit-node-1

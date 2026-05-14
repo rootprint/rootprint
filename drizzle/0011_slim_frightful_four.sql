@@ -1,1 +1,0 @@
-ALTER TABLE `qw_index` ADD `traceback_field` text;

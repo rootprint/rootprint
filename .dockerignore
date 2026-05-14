@@ -1,9 +1,0 @@
-node_modules
-.svelte-kit
-build
-.git
-.quickwit
-data
-.env
-.env.*
-!.env.example

@@ -1,0 +1,18 @@
+meta {
+  name: Field Values
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/logs/{{indexId}}/field-values/{{field}}
+  body: none
+  auth: none
+}
+
+params:query {
+  ~q: error
+  ~startTs: 1700000000
+  ~endTs: 1800000000
+  ~limit: 20
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Setup Admin
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/setup-admin
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Admin",
+    "email": "admin@example.com",
+    "password": "changeme123"
+  }
+}

@@ -1,1 +1,0 @@
-ALTER TABLE `qw_index` ADD `sticky_filter_fields` text;

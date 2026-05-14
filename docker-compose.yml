@@ -1,6 +1,19 @@
 services:
+  db:
+    image: postgres:17
+    container_name: logwiz-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=logwiz
+      - POSTGRES_PASSWORD=logwiz
+      - POSTGRES_DB=logwiz
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   quickwit:
-    image: quickwit/quickwit:v0.9.0-rc
+    image: quickwit/quickwit:edge
     container_name: quickwit
     ports:
       - '127.0.0.1:7280:7280' # REST API + Web UI (local only)
@@ -15,31 +28,5 @@ services:
       timeout: 5s
       retries: 10
 
-  logwiz:
-    build: .
-    container_name: logwiz
-    depends_on:
-      quickwit:
-        condition: service_healthy
-    environment:
-      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
-      LOGWIZ_DATABASE_PATH: /app/data/logwiz.db
-      LOGWIZ_ADMIN_USERNAME: logwiz
-      LOGWIZ_ADMIN_PASSWORD: logwiz
-      ORIGIN: http://localhost:8282
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'bun -e "fetch(''http://localhost:8282/api/health'').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"'
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - '8282:8282'
-    volumes:
-      - logwiz-data:/app/data
-
 volumes:
-  logwiz-data:
+  postgres_data:

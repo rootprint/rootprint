@@ -1,0 +1,11 @@
+meta {
+  name: Delete Token
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/tokens/{{tokenId}}
+  body: none
+  auth: none
+}

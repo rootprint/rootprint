@@ -1,0 +1,20 @@
+meta {
+  name: Ingest NDJSON
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/ingest
+  body: text
+  auth: none
+}
+
+headers {
+  authorization: Bearer {{ingestToken}}
+  content-type: application/x-ndjson
+}
+
+body:text {
+  {"ts":"2026-05-12T10:00:00Z","severity_text":"INFO","body":{"message":"hello from bruno"}}
+}

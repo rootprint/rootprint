@@ -1,0 +1,18 @@
+meta {
+  name: Create Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/tokens
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "prod-logs",
+    "indexId": "{{indexId}}"
+  }
+}

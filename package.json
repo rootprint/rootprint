@@ -1,91 +1,43 @@
 {
-	"name": "logwiz",
-	"version": "0.2.2",
-	"description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
-	"type": "module",
-	"license": "Apache-2.0",
-	"author": "Oleksandr Zhyhalo",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/oleksandr-zhyhalo/logwiz.git"
-	},
-	"homepage": "https://logwiz.io",
-	"keywords": [
-		"logging",
-		"log-management",
-		"object-storage",
-		"quickwit",
-		"log-viewer",
-		"observability"
-	],
-	"engines": {
-		"bun": ">=1.0.0"
-	},
-	"scripts": {
-		"dev": "bunx --bun vite dev",
-		"build": "bunx --bun vite build",
-		"preview": "bunx --bun vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix",
-		"format": "prettier --write .",
-		"format:check": "prettier --check .",
-		"knip": "knip",
-		"db:push": "drizzle-kit push",
-		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio",
-		"auth:schema": "better-auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
-	},
-	"devDependencies": {
-		"@better-auth/cli": "~1.4.21",
-		"@eslint/js": "^10.0.1",
-		"@iconify/types": "^2.0.0",
-		"@sveltejs/kit": "^2.55.0",
-		"@sveltejs/vite-plugin-svelte": "^6.2.4",
-		"@tailwindcss/vite": "^4.2.2",
-		"@types/bun": "^1.3.11",
-		"@types/node": "^22.19.15",
-		"@types/textarea-caret": "^3.0.4",
-		"drizzle-kit": "^0.31.10",
-		"eslint": "^10.1.0",
-		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-simple-import-sort": "^12.1.1",
-		"eslint-plugin-svelte": "^3.17.0",
-		"globals": "^17.4.0",
-		"knip": "^6.3.0",
-		"prettier": "^3.8.1",
-		"prettier-plugin-svelte": "^3.5.1",
-		"prettier-plugin-tailwindcss": "^0.7.2",
-		"svelte": "^5.55.0",
-		"svelte-adapter-bun": "^1.0.1",
-		"svelte-check": "^4.4.5",
-		"tailwindcss": "^4.2.2",
-		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.58.0",
-		"vite": "^8.0.2",
-		"vite-plugin-devtools-json": "^1.0.0"
-	},
-	"dependencies": {
-		"@iconify-icons/logos": "^1.2.36",
-		"@iconify-icons/mdi": "^1.2.48",
-		"@iconify/svelte": "^5.2.1",
-		"better-auth": "~1.4.22",
-		"daisyui": "^5.5.19",
-		"drizzle-orm": "^0.45.1",
-		"lucide-svelte": "^0.577.0",
-		"nanoid": "^5.1.7",
-		"overlayscrollbars": "^2.14.0",
-		"overlayscrollbars-svelte": "^0.5.5",
-		"quickwit-js": "^0.3.7",
-		"shiki": "^4.0.2",
-		"svelte-dnd-action": "^0.9.69",
-		"svelte-sonner": "^1.1.0",
-		"sveltekit-rate-limiter": "^0.7.0",
-		"textarea-caret": "^3.1.0",
-		"uplot": "^1.6.32",
-		"valibot": "^1.3.1"
-	}
+  "name": "logwiz",
+  "version": "0.2.2",
+  "description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
+  "type": "module",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "Oleksandr Zhyhalo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oleksandr-zhyhalo/logwiz.git"
+  },
+  "homepage": "https://logwiz.io",
+  "keywords": [
+    "logging",
+    "log-management",
+    "object-storage",
+    "quickwit",
+    "log-viewer",
+    "observability"
+  ],
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "bun --filter api dev",
+    "build:api": "bun --filter api build",
+    "start:api": "bun --filter api start",
+    "check": "bun --filter '*' check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.15",
+    "eslint": "^10.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "bun@1.3.11"
 }

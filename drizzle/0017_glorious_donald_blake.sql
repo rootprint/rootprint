@@ -1,1 +1,0 @@
-ALTER TABLE `qw_index` ADD `context_fields` text;
