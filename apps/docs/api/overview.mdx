@@ -1,0 +1,67 @@
+---
+title: 'Logwiz public HTTP API — endpoints and authentication'
+description: "A concise reference for Logwiz's public HTTP API, covering base URL, authentication, available endpoints, error codes, and rate limiting."
+---
+
+Logwiz exposes a small public HTTP API for ingesting logs into Quickwit and checking service health. All endpoints are served from your Logwiz instance URL and require no additional infrastructure beyond a running Logwiz deployment.
+
+## Base URL
+
+All API requests are made to your Logwiz instance. Replace the example below with your own deployment URL.
+
+```
+https://logs.example.com
+```
+
+## Authentication
+
+Ingest endpoints require a bearer token in the `Authorization` header.
+
+```http
+Authorization: Bearer <your-ingest-token>
+```
+
+Create and revoke ingest tokens in the Logwiz admin panel at **Administration → Tokens**. Each token is scoped to exactly one index — one token, one index.
+
+See [Send Logs](/send-logs/overview) for the end-to-end setup flow.
+
+<Note>The health check endpoint (`GET /api/health`) does not require authentication.</Note>
+
+## Content type
+
+When sending log data to the ingest endpoint, set the `Content-Type` header to `application/x-ndjson`. The body must be newline-delimited JSON — one JSON object per line.
+
+```http
+Content-Type: application/x-ndjson
+```
+
+## Endpoints
+
+| Method | Path                                        | Description                                         |
+| ------ | ------------------------------------------- | --------------------------------------------------- |
+| `POST` | [`/api/ingest/{indexId}`](/api/ingest-logs) | Ingest one or more log events into a Quickwit index |
+| `GET`  | `/api/health`                               | Check the health of Logwiz and its dependencies     |
+
+## Error responses
+
+All error responses return JSON with a `message` field describing the problem.
+
+```json
+{ "message": "Invalid ingest token" }
+```
+
+| Status | Meaning                                                          |
+| ------ | ---------------------------------------------------------------- |
+| `400`  | Bad request — the body is empty or malformed                     |
+| `401`  | Missing bearer token                                             |
+| `403`  | Token is invalid, revoked, or does not match the requested index |
+| `404`  | Unknown index — Quickwit has no index with the given ID          |
+| `413`  | Request body exceeds the 10 MB limit                             |
+| `502`  | Logwiz could not reach Quickwit to forward the request           |
+| `503`  | Quickwit is unhealthy or unavailable                             |
+
+<Note>
+	Logwiz does not apply an application-level rate limit to the ingest endpoint. The
+	`LOGWIZ_RATE_LIMIT_WINDOW` and `LOGWIZ_RATE_LIMIT_MAX` variables apply to the authentication
+	endpoints only. Apply your own rate limiting at the reverse proxy or load balancer if you need it.
+</Note>

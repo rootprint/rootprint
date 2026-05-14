@@ -29,7 +29,7 @@ Logwiz is under active development and has not yet reached a stable 1.0 release.
 ## Quick Start
 
 ```bash
-curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/docs-site/files/docker-compose.yml
+curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/apps/docs/files/docker-compose.yml
 docker compose up -d
 ```
 
@@ -37,9 +37,12 @@ For full installation options, see [docs.logwiz.io/install/docker-compose](https
 
 ## Repository Layout
 
-- `./` - the main Logwiz application
-- `site/` - the marketing site
-- `docs-site/` - the documentation site built with Mintlify
+Logwiz is organized as a Bun-workspace monorepo under `apps/`:
+
+- `apps/api/` - Hono backend (logs ingest, search proxy, auth)
+- `apps/web/` - SvelteKit log viewer UI
+- `apps/landing/` - marketing site (logwiz.io)
+- `apps/docs/` - Mintlify documentation site (docs.logwiz.io)
 
 ## License
 

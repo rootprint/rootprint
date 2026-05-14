@@ -1,0 +1,121 @@
+---
+title: 'POST /api/ingest/{indexId} — ingest log events'
+description: 'Send newline-delimited JSON log events to a Quickwit index through the Logwiz ingest gateway. Requires a bearer token. Accepts up to 10 MB per request.'
+---
+
+The ingest endpoint accepts a batch of log events as NDJSON and forwards them to the Quickwit index you specify. Logwiz acts as an authenticated gateway - your log shippers send data here instead of directly to Quickwit, so you can keep Quickwit private and manage access with per-index bearer tokens.
+
+If you want the full setup flow, see [Send Logs](/send-logs/overview).
+
+## Endpoint
+
+```http
+POST /api/ingest/{indexId}
+```
+
+## Authentication
+
+```http
+Authorization: Bearer <your-ingest-token>
+```
+
+You must include a valid ingest token in every request. Create tokens in the Logwiz admin panel at **Administration → Tokens**. Each token is scoped to exactly one index; a request for a different index returns `403`.
+
+## Path parameters
+
+<ParamField path="indexId" type="string" required>
+	The ID of the Quickwit index to ingest logs into (for example, `otel-logs-v0_9`). The index must
+	exist in Quickwit.
+</ParamField>
+
+## Query parameters
+
+<ParamField query="commit" type="string">
+	Controls when Quickwit commits the ingested documents. Accepts `auto` (default), `wait_for`, or
+	`force`. See [Commit modes](#commit-modes) below.
+
+    Example: `?commit=wait_for`
+
+</ParamField>
+
+## Commit modes
+
+The `commit` query parameter trades off ingest throughput against search latency. The endpoint forwards your choice to Quickwit unchanged.
+
+| Mode       | Returns when…                                                                                                          | Use when…                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `auto`     | The batch is queued. Default. Documents become searchable on the next commit (`commit_timeout_secs`, 60 s by default). | You're shipping a steady stream and can wait up to a minute for results.      |
+| `wait_for` | The next scheduled commit completes. Latency depends on where you land in the cycle (0–60 s by default).               | You want bounded visibility latency without paying for a forced commit.       |
+| `force`    | A commit is triggered specifically for this batch and finishes.                                                        | You're in a synchronous test or a small admin job and need immediate results. |
+
+<Warning>
+	`force` triggers an extra commit per request. Using it on small, frequent batches creates many
+	tiny splits and significantly degrades indexing performance. Reserve it for one-off scripts or
+	tests.
+</Warning>
+
+## Request body
+
+Set `Content-Type: application/x-ndjson`. The body must contain one JSON object per line. Each line represents a single log event. The body cannot be empty and must not exceed 10 MB.
+
+<Note>
+	NDJSON (Newline Delimited JSON) means each log entry is a complete JSON object on its own line,
+	with a newline character (`\n`) between entries. There is no wrapping array.
+</Note>
+
+## Example request
+
+```bash
+curl -X POST 'https://logs.example.com/api/ingest/otel-logs-v0_9?commit=wait_for' \
+  -H 'Authorization: Bearer logwiz_abc123' \
+  -H 'Content-Type: application/x-ndjson' \
+  --data-binary @- <<'EOF'
+{"timestamp_nanos":1776340800000000000,"severity_text":"INFO","body":{"message":"User logged in"},"service_name":"frontend","attributes":{"user_id":"alice"},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340800000000000,"severity_number":9,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+{"timestamp_nanos":1776340860000000000,"severity_text":"ERROR","body":{"message":"Connection timeout"},"service_name":"api-gateway","attributes":{},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340860000000000,"severity_number":17,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+EOF
+```
+
+<Tip>
+	Logwiz targets `otel-logs-v0_9` for its bundled OpenTelemetry integration. Older Quickwit versions
+	ship `otel-logs-v0_7` as the default OTEL index — check your Quickwit metastore for the exact
+	index ID before pointing a token at it.
+</Tip>
+
+## Response
+
+Logwiz proxies the response from Quickwit directly. On success, Quickwit returns `200`.
+
+<ResponseField name="num_docs_for_processing" type="number">
+	The number of log events accepted for indexing in this request.
+</ResponseField>
+
+Example success response:
+
+```json
+{ "num_docs_for_processing": 2 }
+```
+
+<Note>
+	`num_docs_for_processing` is the count of documents accepted for indexing, not the count
+	successfully indexed. If individual documents fail validation against the index schema, Quickwit
+	logs the failure on the server but the API response stays the same. Inspect Quickwit's stdout (or
+	your log shipper) when you suspect documents are being silently dropped.
+</Note>
+
+## Error responses
+
+| Status | Cause                                                                    |
+| ------ | ------------------------------------------------------------------------ |
+| `400`  | The request body is empty or the payload could not be parsed             |
+| `401`  | The `Authorization` header is missing or does not contain a bearer token |
+| `403`  | The token is invalid, revoked, or does not match the requested index     |
+| `404`  | The specified index does not exist in Quickwit                           |
+| `413`  | The request body exceeds the 10 MB limit                                 |
+| `502`  | Logwiz could not reach Quickwit to forward the request                   |
+| `503`  | Quickwit is unhealthy or unavailable                                     |
+
+All error responses include a JSON body with a `message` field:
+
+```json
+{ "message": "Invalid ingest token" }
+```

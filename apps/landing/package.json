@@ -1,5 +1,5 @@
 {
-  "name": "logwiz-site",
+  "name": "landing",
   "version": "0.0.1",
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",

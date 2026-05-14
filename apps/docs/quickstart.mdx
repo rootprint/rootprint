@@ -1,0 +1,66 @@
+---
+title: 'Get started with Logwiz in under five minutes'
+description: 'Deploy Logwiz with Docker Compose, create an ingest token, and send your first logs to a Quickwit index — all in under five minutes.'
+---
+
+This guide walks you through deploying Logwiz locally, signing in, and sending your first logs. The whole process takes about five minutes and requires only Docker.
+
+<Steps>
+  <Step title="Install Logwiz">
+    Follow the [Docker Compose installation guide](/install/docker-compose) to start Logwiz. The quickest option is:
+
+    ```bash
+    curl -O https://raw.githubusercontent.com/oleksandr-zhyhalo/logwiz/main/docs-site/files/docker-compose.yml
+    docker compose up -d
+    ```
+
+  </Step>
+
+<Step title="Create the admin account">
+	Open [http://localhost:8282](http://localhost:8282) in your browser. On first boot, Logwiz
+	redirects you to the setup wizard at `/auth/setup-admin`. Enter your desired admin credentials and
+	submit the form. You will be signed in automatically after setup completes.
+</Step>
+
+  <Step title="Create an ingest token">
+    Logwiz requires a bearer token to accept log data. To create one:
+
+    1. In the top navigation, go to **Administration → Tokens**.
+    2. Click **Create Token**, give it a name, and pick the index it will write to.
+    3. Click the eye icon on the token row to reveal and copy the value.
+
+    You will use this token in the next step to authenticate your log shipper.
+
+  </Step>
+
+  <Step title="Send sample logs">
+    Use `curl` to post a couple of NDJSON log entries to the bundled `otel-logs-v0_9` index. Replace `<your-ingest-token>` with the token you just copied:
+
+    ```bash
+    curl -X POST 'http://localhost:8282/api/ingest/otel-logs-v0_9?commit=wait_for' \
+      -H 'Authorization: Bearer <your-ingest-token>' \
+      -H 'Content-Type: application/x-ndjson' \
+      --data-binary @- <<'EOF'
+    {"timestamp_nanos":1776340800000000000,"severity_text":"INFO","body":{"message":"User logged in"},"service_name":"frontend","attributes":{"user_id":"alice"},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340800000000000,"severity_number":9,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+    {"timestamp_nanos":1776340860000000000,"severity_text":"ERROR","body":{"message":"Connection timeout"},"service_name":"api-gateway","attributes":{},"resource_attributes":{},"trace_id":"","span_id":"","trace_flags":0,"observed_timestamp_nanos":1776340860000000000,"severity_number":17,"dropped_attributes_count":0,"resource_dropped_attributes_count":0,"scope_name":"","scope_version":"","scope_attributes":{},"scope_dropped_attributes_count":0}
+    EOF
+    ```
+
+    The `?commit=wait_for` parameter tells Quickwit to index the documents before returning a response, so the logs are immediately searchable.
+
+    The ingest endpoint accepts NDJSON format — one JSON object per line, with no trailing comma.
+
+  </Step>
+
+  <Step title="Search your logs">
+    Go back to [http://localhost:8282](http://localhost:8282) and select the `otel-logs-v0_9` index. The two log entries you sent appear in the results. Try filtering by `severity_text:ERROR` to see only the error entry.
+  </Step>
+</Steps>
+
+## Next steps
+
+- [Read the Send Logs guide](/send-logs/overview) to understand the default OpenTelemetry path and the authenticated HTTP gateway.
+- [Learn the search query syntax](/search/query-language) to filter your logs precisely.
+- [Configure your index fields](/configuration/index-config) to map log level, message, and traceback fields for your data schema.
+- [Set up Google OAuth](/configuration/google-auth) to let your team sign in with their company Google accounts.
+- [Explore the Ingest API reference](/api/ingest-logs) for endpoint-level details.

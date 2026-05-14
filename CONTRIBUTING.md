@@ -1,8 +1,6 @@
 # Contributing to Logwiz
 
-Thanks for contributing to Logwiz. This repository contains the main application, the
-marketing site, and the docs site, so keeping changes focused and well-explained makes reviews
-faster and safer.
+Thanks for contributing to Logwiz. This repository is a Bun-workspace monorepo containing the API server, the web app, the marketing site, and the docs site under `apps/`. Keeping changes focused and well-explained makes reviews faster and safer.
 
 ## Ways to contribute
 
@@ -33,31 +31,28 @@ Prerequisites:
 bun install
 cp .env.example .env
 docker compose up quickwit -d
-bun run db:push
-bun run dev
+bun --filter api db:migrate
+bun run dev:api        # or: bun --filter <workspace> dev
 ```
 
 Notes:
 
-- `LOGWIZ_QUICKWIT_URL` is required. The default local value is already provided in
-  `.env.example`.
-- `ORIGIN` is optional and is usually only needed behind a reverse proxy or when enforcing a
-  canonical public URL.
-- Additional optional settings are documented in `.env.example`.
+- The required env vars are documented in `.env.example` and in `apps/api/AGENTS.md`.
+- `FRONTEND_URL` (used by `apps/api` for CORS) defaults to `http://localhost:5173`. Override it when running behind a reverse proxy or under a non-default deployment.
 
 ## Repository layout
 
-- `./` - main Logwiz application
-- `site/` - marketing site
-- `docs-site/` - documentation site
+- `apps/api/` - Hono backend (logs ingest, search proxy, auth)
+- `apps/web/` - SvelteKit log viewer UI
+- `apps/landing/` - marketing site (logwiz.io)
+- `apps/docs/` - Mintlify documentation site (docs.logwiz.io)
 
 ## Development guidelines
 
-- Use TypeScript with strict typing. Avoid `any` unless it is genuinely unavoidable.
-- Put shared app types in `src/lib/types.ts`.
-- Keep server-only logic in the server layer and follow the existing remote function pattern in
-  `src/lib/api/*.remote.ts`.
-- This project does not use automated tests. Verify changes manually and rely on `bun run check`.
+- Use TypeScript with strict typing. Avoid `any` unless genuinely unavoidable.
+- Backend types: `apps/api/src/types.ts`. Frontend types: `apps/web/src/lib/types.ts`.
+- Backend routes follow the Hono pattern in `apps/api/src/routes/*.ts`. Service logic in `apps/api/src/services/*.service.ts`.
+- This project does not use automated tests in any workspace. Verify changes manually.
 - Match the existing code style:
   - tabs for indentation
   - single quotes
@@ -67,19 +62,31 @@ Notes:
 ## Useful commands
 
 ```bash
-bun run dev
-bun run lint
-bun run check
-bun run format
+bun --filter <workspace> dev      # dev server for one workspace
+bun --filter '*' check            # type-check every workspace
+bun run format                    # prettier write
+bun run format:check              # prettier check (CI uses this)
 ```
 
-If you change database or auth contracts, the following commands may also be relevant:
+Per-workspace builds:
 
 ```bash
-bun run db:push
-bun run db:generate
-bun run db:migrate
-bun run auth:schema
+bun --filter api build
+bun --filter landing build        # apps/landing
+```
+
+Database and auth utility commands live in `apps/api`:
+
+```bash
+bun --filter api db:generate
+bun --filter api db:migrate
+bun --filter api db:studio
+```
+
+Proto regeneration (after upstream OTEL or googleapis refresh):
+
+```bash
+bun --filter api proto:gen
 ```
 
 ## Before opening a pull request
@@ -87,9 +94,9 @@ bun run auth:schema
 Run the same core checks that CI runs:
 
 ```bash
-bun run lint
-bun run check
-LOGWIZ_QUICKWIT_URL=http://placeholder:7280/api/v1 bun run build
+bun --filter '*' check
+bun run format:check
+bun --filter api build
 ```
 
 ## Pull request expectations

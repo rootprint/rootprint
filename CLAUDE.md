@@ -2,30 +2,33 @@
 
 ## Project Overview
 
-Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io).
+Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io). It is organized as a Bun-workspace monorepo under `apps/`.
 
-- **Frontend**: Svelte 5 with SvelteKit (Remote Functions for API layer)
-- **Auth**: Better Auth
-- **Quickwit API**: `quickwit-js` library
-- **Styling**: DaisyUI (via Tailwind CSS)
+- **Backend** (`apps/api`): Hono on Bun. Drizzle ORM + PostgreSQL, Better Auth, Quickwit via `quickwit-js`, Valibot, pino, buf/protobuf. 
+- **Frontend** (`apps/web`): Svelte 5 + SvelteKit. Tailwind v4 + DaisyUI. Calls `apps/api` over HTTP.
+- **Marketing** (`apps/landing`): SvelteKit static site for logwiz.io.
+- **Docs** (`apps/docs`): Mintlify site for docs.logwiz.io.
 
 ## Project Configuration
 
-| Setting         | Value                                                           |
-| --------------- | --------------------------------------------------------------- |
-| Language        | TypeScript                                                      |
-| Package Manager | bun                                                             |
-| Add-ons         | prettier, tailwindcss, drizzle, better-auth, devtools-json, mcp |
+| Setting         | Value                                             |
+| --------------- | ------------------------------------------------- |
+| Language        | TypeScript (strict, extends `tsconfig.base.json`) |
+| Package Manager | bun (workspaces under `apps/*`)                   |
+| Backend stack   | hono, drizzle, better-auth, valibot, pino, buf    |
+| Frontend stack  | svelte 5, sveltekit, tailwindcss v4, daisyui      |
 
 ## Rules
 
 ### Types
 
-- All types must be defined in `src/lib/types.ts`.
+- Backend (apps/api): shared types in `apps/api/src/types.ts`; re-exported via `exports['./types']`. Cross-workspace consumers import as `import type { ... } from 'api/types'`.
+- Frontend (apps/web): app types in `apps/web/src/lib/types.ts`.
+- Pure types only — no runtime exports in `types.ts` files.
 
-### Data Loading
+### Data Loading (apps/web)
 
-Data loading should be handled in dedicated files alongside the page component(only if possible and not overcomplicated):
+Data loading in `apps/web` should be handled in dedicated files alongside the page component (only if practical and not overcomplicated):
 
 | File                | When to use                                             |
 | ------------------- | ------------------------------------------------------- |
@@ -33,15 +36,17 @@ Data loading should be handled in dedicated files alongside the page component(o
 | `+page.ts`          | Needs browser-only APIs or client-side state            |
 | `+layout.server.ts` | Data shared across many pages                           |
 
----
-
-You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+This guidance is SvelteKit-specific and only applies inside `apps/web`.
 
 ### Tests
 
-Do not write tests for this project. No unit, integration, or end-to-end tests are needed — skip test authoring unless explicitly requested.
+Do not write tests for this project. No unit, integration, or end-to-end tests are needed in any workspace — skip test authoring unless explicitly requested.
 
-## Available MCP Tools:
+---
+
+You are able to use the Svelte MCP server when working in `apps/web` or `apps/landing`, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+
+## Available MCP Tools (use when working in Svelte workspaces)
 
 ### 1. list-sections
 
@@ -56,7 +61,7 @@ After calling the list-sections tool, you MUST analyze the returned documentatio
 ### 3. svelte-autofixer
 
 Analyzes Svelte code and returns issues and suggestions.
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
+You MUST use this tool whenever writing Svelte code before sending the code to the user. Keep calling it until no issues or suggestions are returned.
 
 ### 4. playground-link
 
@@ -65,4 +70,4 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 ## More
 
-See [more details](./AGENTS.md)
+See [more details](./AGENTS.md).

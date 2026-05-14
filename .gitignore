@@ -9,7 +9,7 @@ node_modules
 /build
 dist/
 data/
-docs/
+/docs/
 
 # Quickwit
 .quickwit/

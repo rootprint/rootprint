@@ -1,6 +1,6 @@
 # Vendored Protobuf Sources
 
-These `.proto` files are vendored from upstream so that `pnpm run proto:gen` is offline-buildable. See `docs/superpowers/specs/2026-05-12-ingest-design.md` §2.2 for the rationale.
+These `.proto` files are vendored from upstream so that `bun run proto:gen` is offline-buildable. See `docs/superpowers/specs/2026-05-12-ingest-design.md` §2.2 for the rationale.
 
 ## Version pins
 
@@ -28,7 +28,7 @@ curl -sf -o $PROTO_ROOT/google/rpc/status.proto $GOOG_BASE/status.proto
 curl -sf -o $PROTO_ROOT/google/rpc/code.proto   $GOOG_BASE/code.proto
 ```
 
-After refreshing, update the table above with the new pins and run `pnpm run proto:gen`. Review the diff in `apps/api/src/gen/` to confirm only intended changes.
+After refreshing, update the table above with the new pins and run `bun run proto:gen`. Review the diff in `apps/api/src/gen/` to confirm only intended changes.
 
 ## Modifying
 
