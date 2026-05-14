@@ -163,3 +163,8 @@ export type ShareView = {
 export type Preferences = {
   displayFields: string[] | null;
 };
+
+export type GoogleAuthStatus = {
+  configured: boolean;
+  allowedDomains: string[];
+};

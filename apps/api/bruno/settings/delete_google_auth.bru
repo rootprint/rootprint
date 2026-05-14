@@ -1,0 +1,11 @@
+meta {
+  name: Delete Google Auth Credentials
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/settings/google-auth
+  body: none
+  auth: none
+}
