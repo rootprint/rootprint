@@ -103,12 +103,13 @@ export async function setUserRole(
   adminId: string,
   userId: string,
   role: UserRole,
+  headers: Headers,
 ): Promise<void> {
   if (userId === adminId) {
     throw badRequest('Cannot change your own role');
   }
   try {
-    await (auth.api as any).setRole({ body: { userId, role } });
+    await (auth.api as any).setRole({ body: { userId, role }, headers });
   } catch (err) {
     throw fromAuthApiError(err, 'Failed to change role');
   }

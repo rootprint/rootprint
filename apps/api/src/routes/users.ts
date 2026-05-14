@@ -45,7 +45,7 @@ usersRouter.patch('/:userId/role', async (c) => {
   const { userId } = v.parse(UserIdParams, c.req.param());
   const body = v.parse(SetRoleBody, await c.req.json());
   const adminId = c.get('session')!.user.id;
-  await userService.setUserRole(auth, adminId, userId, body.role);
+  await userService.setUserRole(auth, adminId, userId, body.role, c.req.raw.headers);
   return c.body(null, 204);
 });
 
