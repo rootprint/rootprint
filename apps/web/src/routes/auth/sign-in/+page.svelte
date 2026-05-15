@@ -3,8 +3,12 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authClient } from '$lib/auth-client';
-	import { signInSchema, type SignInInput } from '$lib/schemas/auth';
-	import { safeReturnTo } from '$lib/constants/routes';
+	import { safeReturnTo } from '$lib/return-to';
+
+	const signInSchema = v.object({
+		email: v.pipe(v.string(), v.email()),
+		password: v.pipe(v.string(), v.minLength(1))
+	});
 
 	let email = $state('');
 	let password = $state('');
@@ -18,33 +22,23 @@
 		fieldErrors = {};
 		submitting = true;
 		try {
-			let input: SignInInput;
-			try {
-				input = v.parse(signInSchema, { email, password });
-			} catch (err) {
-				if (err instanceof v.ValiError) {
-					for (const issue of err.issues) {
-						const key = issue.path?.[0]?.key as string | undefined;
-						if (key) fieldErrors[key] = issue.message;
-					}
-					return;
+			const parsed = v.safeParse(signInSchema, { email, password });
+			if (!parsed.success) {
+				for (const issue of parsed.issues) {
+					const key = issue.path?.[0]?.key as string | undefined;
+					if (key) fieldErrors[key] = issue.message;
 				}
-				throw err;
+				return;
 			}
 
-			const result = await authClient.signIn.email({
-				email: input.email,
-				password: input.password
-			});
-
+			const result = await authClient.signIn.email(parsed.output);
 			if (result?.error) {
 				formError = result.error.message ?? 'Sign-in failed';
 				return;
 			}
 
 			await invalidate('app:session');
-			const returnTo = safeReturnTo(page.url.searchParams.get('returnTo'));
-			await goto(returnTo);
+			await goto(safeReturnTo(page.url.searchParams.get('returnTo')));
 		} finally {
 			submitting = false;
 		}

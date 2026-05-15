@@ -1,35 +1,31 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
+import { api } from '$lib/api/client';
 import { authClient } from '$lib/auth-client';
-import { ROUTES } from '$lib/constants/routes';
-
-type Bootstrap = { needsSetupAdmin: boolean };
 
 export const ssr = false;
 export const prerender = false;
 
-export const load: LayoutLoad = async ({ fetch, url, depends }) => {
+export const load: LayoutLoad = async ({ url, depends }) => {
 	depends('app:session');
 
 	const [bootstrapRes, sessionRes] = await Promise.all([
-		fetch('/api/auth/bootstrap'),
+		api.api.auth.bootstrap.$get(),
 		authClient.getSession({ fetchOptions: { credentials: 'same-origin' } })
 	]);
 
 	if (!bootstrapRes.ok) {
 		throw new Error(`Failed to load bootstrap status (${bootstrapRes.status})`);
 	}
-	const bootstrap = (await bootstrapRes.json()) as Bootstrap;
-
+	const bootstrap = await bootstrapRes.json();
 	const session = sessionRes?.data ?? null;
 
-	const isOnSetupAdmin = url.pathname.startsWith(ROUTES.setupAdmin);
-
+	const isOnSetupAdmin = url.pathname.startsWith('/auth/setup-admin');
 	if (bootstrap.needsSetupAdmin && !isOnSetupAdmin) {
-		throw redirect(303, ROUTES.setupAdmin);
+		throw redirect(303, '/auth/setup-admin');
 	}
 	if (!bootstrap.needsSetupAdmin && isOnSetupAdmin) {
-		throw redirect(303, ROUTES.signIn);
+		throw redirect(303, '/auth/sign-in');
 	}
 
 	return { bootstrap, session };

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { goto, invalidate } from '$app/navigation';
-	import { ROUTES } from '$lib/constants/routes';
 
 	let { data } = $props();
 	let signingOut = $state(false);
@@ -11,7 +10,7 @@
 		try {
 			await authClient.signOut();
 			await invalidate('app:session');
-			await goto(ROUTES.signIn);
+			await goto('/auth/sign-in');
 		} finally {
 			signingOut = false;
 		}

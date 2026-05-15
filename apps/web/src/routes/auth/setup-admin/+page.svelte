@@ -1,8 +1,8 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
-	import { setupAdminSchema, type SetupAdminInput } from '$lib/schemas/auth';
-	import { ROUTES } from '$lib/constants/routes';
+	import { api } from '$lib/api/client';
+	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 	import type { ApiErrorBody } from 'api/types';
 
 	let name = $state('');
@@ -18,27 +18,17 @@
 		fieldErrors = {};
 		submitting = true;
 		try {
-			let input: SetupAdminInput;
-			try {
-				input = v.parse(setupAdminSchema, { name, email, password });
-			} catch (err) {
-				if (err instanceof v.ValiError) {
-					for (const issue of err.issues) {
-						const key = issue.path?.[0]?.key as string | undefined;
-						if (key) fieldErrors[key] = issue.message;
-					}
-					return;
+			const parsed = v.safeParse(setupAdminSchema, { name, email, password });
+			if (!parsed.success) {
+				for (const issue of parsed.issues) {
+					const key = issue.path?.[0]?.key as string | undefined;
+					if (key) fieldErrors[key] = issue.message;
 				}
-				throw err;
+				return;
 			}
+			const input: SetupAdminInput = parsed.output;
 
-			const res = await fetch('/api/auth/setup-admin', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				credentials: 'same-origin',
-				body: JSON.stringify(input)
-			});
-
+			const res = await api.api.auth['setup-admin'].$post({ json: input });
 			if (!res.ok) {
 				const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
 				formError = body?.error?.message ?? `Setup failed (${res.status})`;
@@ -49,7 +39,7 @@
 			}
 
 			await invalidate('app:session');
-			await goto(ROUTES.signIn);
+			await goto('/auth/sign-in');
 		} finally {
 			submitting = false;
 		}
