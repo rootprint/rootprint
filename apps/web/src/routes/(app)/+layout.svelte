@@ -7,7 +7,7 @@
 	const user = $derived(data.session!.user);
 </script>
 
-<div class="flex h-screen w-screen flex-col">
+<div class="flex min-h-0 w-full flex-1 flex-col">
 	<TopBar
 		user={{
 			id: user.id,

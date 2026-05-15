@@ -1,6 +1,3 @@
-// apps/api/src/types.ts
-// Shared TypeScript types consumed by both the api itself and downstream
-// workspace packages. Pure types only — no runtime exports.
 import type { INDEX_VISIBILITIES } from './constants/index-visibility.js';
 
 export type HealthResponse = {
@@ -167,4 +164,21 @@ export type Preferences = {
 export type GoogleAuthSettings = {
   configured: boolean;
   allowedDomains: string[];
+};
+
+export type ComponentStatus = 'ok' | 'degraded' | 'down';
+
+export type SystemInfo = {
+  mode: 'self-hosted';
+  build: {
+    version: string;
+    commit: string;
+    builtAt: string;
+  };
+  components: {
+    api: 'ok';
+    postgres: ComponentStatus;
+    quickwit: ComponentStatus;
+  };
+  startedAt: string;
 };
