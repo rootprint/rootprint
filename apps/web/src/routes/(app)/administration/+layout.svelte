@@ -4,7 +4,7 @@
 	let { children } = $props();
 </script>
 
-<div class="flex h-full min-h-0">
+<div class="flex min-h-0 flex-1">
 	<AdminNav />
 
 	<div class="min-w-0 flex-1 overflow-y-auto">
