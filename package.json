@@ -1,44 +1,45 @@
 {
-  "name": "logwiz",
-  "version": "0.2.2",
-  "description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
-  "type": "module",
-  "private": true,
-  "license": "Apache-2.0",
-  "author": "Oleksandr Zhyhalo",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oleksandr-zhyhalo/logwiz.git"
-  },
-  "homepage": "https://logwiz.io",
-  "keywords": [
-    "logging",
-    "log-management",
-    "object-storage",
-    "quickwit",
-    "log-viewer",
-    "observability"
-  ],
-  "engines": {
-    "bun": ">=1.0.0"
-  },
-  "workspaces": [
-    "apps/*"
-  ],
-  "scripts": {
-    "dev:api": "bun --filter api dev",
-    "build:api": "bun --filter api build",
-    "start:api": "bun --filter api start",
-    "check": "bun --filter '*' check",
-    "lint": "bun --filter '*' lint",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "devDependencies": {
-    "@types/node": "^22.19.15",
-    "oxlint": "^1.64.0",
-    "prettier": "^3.8.1",
-    "typescript": "^5.9.3"
-  },
-  "packageManager": "bun@1.3.11"
+	"name": "logwiz",
+	"version": "0.2.2",
+	"description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
+	"type": "module",
+	"private": true,
+	"license": "Apache-2.0",
+	"author": "Oleksandr Zhyhalo",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/oleksandr-zhyhalo/logwiz.git"
+	},
+	"homepage": "https://logwiz.io",
+	"keywords": [
+		"logging",
+		"log-management",
+		"object-storage",
+		"quickwit",
+		"log-viewer",
+		"observability"
+	],
+	"engines": {
+		"bun": ">=1.0.0"
+	},
+	"workspaces": [
+		"apps/*"
+	],
+	"scripts": {
+		"dev:api": "bun --filter api dev",
+		"dev:web": "bun --filter web dev",
+		"build:api": "bun --filter api build",
+		"start:api": "bun --filter api start",
+		"check": "bun --filter '*' check",
+		"lint": "bun --filter '*' lint",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"devDependencies": {
+		"@types/node": "^22.19.15",
+		"oxlint": "^1.64.0",
+		"prettier": "^3.8.1",
+		"typescript": "^5.9.3"
+	},
+	"packageManager": "bun@1.3.11"
 }

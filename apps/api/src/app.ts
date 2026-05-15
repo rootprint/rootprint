@@ -24,11 +24,10 @@ import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 
-function withAuth<E extends AppEnv>(router: Hono<E>): Hono<AppEnv> {
-  const wrapped = new Hono<AppEnv>();
-  wrapped.use('*', requireUser);
-  wrapped.route('/', router as unknown as Hono<AppEnv>);
-  return wrapped;
+function withAuth<E extends AppEnv, S extends Record<string, any>>(
+  router: Hono<E, S, "">,
+) {
+  return new Hono<AppEnv>().use('*', requireUser).route('/', router);
 }
 
 function errorJson(

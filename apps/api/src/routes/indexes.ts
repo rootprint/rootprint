@@ -104,7 +104,6 @@ const PutPreferencesBody = v.object({
 });
 
 type IndexesEnv = AppEnv & { Variables: AppEnv["Variables"] & { fieldConfig: FieldConfig } };
-export const indexesRouter = new Hono<IndexesEnv>();
 
 const withFieldConfig: MiddlewareHandler<IndexesEnv> = async (c, next) => {
   const { indexId } = v.parse(IndexIdParams, c.req.param());
@@ -113,94 +112,84 @@ const withFieldConfig: MiddlewareHandler<IndexesEnv> = async (c, next) => {
   await next();
 };
 
-indexesRouter.get("/", async (c) =>
-  c.json(await listIndexes(db, quickwit, c.get("session")?.user.role)),
-);
-
-indexesRouter.get("/:indexId/fields", requireIndexAccess, async (c) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  return c.json(await getIndexFields(quickwit, indexId));
-});
-
-indexesRouter.get("/:indexId", requireIndexAccess, requireAdmin, async (c) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  const detail = await getIndexDetail(db, quickwit, indexId);
-  if (!detail) throw notFound("Index not found");
-  return c.json(detail);
-});
-
-indexesRouter.patch("/:indexId", requireIndexAccess, requireAdmin, async (c) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  const body = v.parse(SaveConfigBody, await c.req.json());
-  await saveIndexConfig(db, indexId, body);
-  return c.body(null, 204);
-});
-
-indexesRouter.delete("/:indexId", requireIndexAccess, requireAdmin, async (c) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  await deleteIndex(db, quickwit, indexId);
-  return c.body(null, 204);
-});
-
-indexesRouter.patch(
-  "/:indexId/sources/:sourceId",
-  requireIndexAccess,
-  requireAdmin,
-  async (c) => {
-    const { indexId, sourceId } = v.parse(SourceParams, c.req.param());
-    const { enabled } = v.parse(ToggleSourceBody, await c.req.json());
-    await setSourceEnabled(quickwit, indexId, sourceId, enabled);
+// Routes are chained so Hono propagates request/response types for the RPC client.
+export const indexesRouter = new Hono<IndexesEnv>()
+  .get("/", async (c) =>
+    c.json(await listIndexes(db, quickwit, c.get("session")?.user.role)),
+  )
+  .get("/:indexId/fields", requireIndexAccess, async (c) => {
+    const { indexId } = v.parse(IndexIdParams, c.req.param());
+    return c.json(await getIndexFields(quickwit, indexId));
+  })
+  .get("/:indexId", requireIndexAccess, requireAdmin, async (c) => {
+    const { indexId } = v.parse(IndexIdParams, c.req.param());
+    const detail = await getIndexDetail(db, quickwit, indexId);
+    if (!detail) throw notFound("Index not found");
+    return c.json(detail);
+  })
+  .patch("/:indexId", requireIndexAccess, requireAdmin, async (c) => {
+    const { indexId } = v.parse(IndexIdParams, c.req.param());
+    const body = v.parse(SaveConfigBody, await c.req.json());
+    await saveIndexConfig(db, indexId, body);
     return c.body(null, 204);
-  },
-);
-
-indexesRouter.delete(
-  "/:indexId/sources/:sourceId",
-  requireIndexAccess,
-  requireAdmin,
-  async (c) => {
-    const { indexId, sourceId } = v.parse(SourceParams, c.req.param());
-    await deleteSource(quickwit, indexId, sourceId);
+  })
+  .delete("/:indexId", requireIndexAccess, requireAdmin, async (c) => {
+    const { indexId } = v.parse(IndexIdParams, c.req.param());
+    await deleteIndex(db, quickwit, indexId);
     return c.body(null, 204);
-  },
-);
-
-indexesRouter.get("/:indexId/logs", requireIndexAccess, withFieldConfig, async (c) => {
-  const q = v.parse(SearchQuery, c.req.query());
-  return c.json(
-    await searchLogs(quickwit, c.get("fieldConfig"), {
-      query: q.q, limit: q.limit, offset: q.offset, startTs: q.startTs, endTs: q.endTs,
-      sortOrder: q.sortOrder, countAll: q.countAll,
-    }),
-  );
-});
-
-indexesRouter.get("/:indexId/logs/histogram", requireIndexAccess, withFieldConfig, async (c) => {
-  const { q, startTs, endTs, interval } = v.parse(HistogramQuery, c.req.query());
-  return c.json(
-    await histogramLogs(quickwit, c.get("fieldConfig"), { query: q, startTs, endTs, interval }),
-  );
-});
-
-indexesRouter.get("/:indexId/fields/:field/values", requireIndexAccess, withFieldConfig, async (c) => {
-  const { field } = v.parse(FieldParams, c.req.param());
-  const { q, startTs, endTs, limit } = v.parse(FieldValuesQuery, c.req.query());
-  return c.json(
-    await fieldValues(quickwit, c.get("fieldConfig"), field, { query: q, startTs, endTs, limit }),
-  );
-});
-
-indexesRouter.get("/:indexId/preferences", requireIndexAccess, async (c) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  const session = requireSession(c);
-  return c.json(await getPreferences(db, session.user.id, indexId));
-});
-
-indexesRouter.put("/:indexId/preferences", requireIndexAccess, async (c) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  const body = v.parse(PutPreferencesBody, await c.req.json());
-  const session = requireSession(c);
-  return c.json(await putPreferences(db, session.user.id, indexId, body));
-});
-
-indexesRouter.route("/:indexId/saved-queries", savedQueriesRouter);
+  })
+  .patch(
+    "/:indexId/sources/:sourceId",
+    requireIndexAccess,
+    requireAdmin,
+    async (c) => {
+      const { indexId, sourceId } = v.parse(SourceParams, c.req.param());
+      const { enabled } = v.parse(ToggleSourceBody, await c.req.json());
+      await setSourceEnabled(quickwit, indexId, sourceId, enabled);
+      return c.body(null, 204);
+    },
+  )
+  .delete(
+    "/:indexId/sources/:sourceId",
+    requireIndexAccess,
+    requireAdmin,
+    async (c) => {
+      const { indexId, sourceId } = v.parse(SourceParams, c.req.param());
+      await deleteSource(quickwit, indexId, sourceId);
+      return c.body(null, 204);
+    },
+  )
+  .get("/:indexId/logs", requireIndexAccess, withFieldConfig, async (c) => {
+    const q = v.parse(SearchQuery, c.req.query());
+    return c.json(
+      await searchLogs(quickwit, c.get("fieldConfig"), {
+        query: q.q, limit: q.limit, offset: q.offset, startTs: q.startTs, endTs: q.endTs,
+        sortOrder: q.sortOrder, countAll: q.countAll,
+      }),
+    );
+  })
+  .get("/:indexId/logs/histogram", requireIndexAccess, withFieldConfig, async (c) => {
+    const { q, startTs, endTs, interval } = v.parse(HistogramQuery, c.req.query());
+    return c.json(
+      await histogramLogs(quickwit, c.get("fieldConfig"), { query: q, startTs, endTs, interval }),
+    );
+  })
+  .get("/:indexId/fields/:field/values", requireIndexAccess, withFieldConfig, async (c) => {
+    const { field } = v.parse(FieldParams, c.req.param());
+    const { q, startTs, endTs, limit } = v.parse(FieldValuesQuery, c.req.query());
+    return c.json(
+      await fieldValues(quickwit, c.get("fieldConfig"), field, { query: q, startTs, endTs, limit }),
+    );
+  })
+  .get("/:indexId/preferences", requireIndexAccess, async (c) => {
+    const { indexId } = v.parse(IndexIdParams, c.req.param());
+    const session = requireSession(c);
+    return c.json(await getPreferences(db, session.user.id, indexId));
+  })
+  .put("/:indexId/preferences", requireIndexAccess, async (c) => {
+    const { indexId } = v.parse(IndexIdParams, c.req.param());
+    const body = v.parse(PutPreferencesBody, await c.req.json());
+    const session = requireSession(c);
+    return c.json(await putPreferences(db, session.user.id, indexId, body));
+  })
+  .route("/:indexId/saved-queries", savedQueriesRouter);
