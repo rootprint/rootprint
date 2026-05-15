@@ -20,9 +20,9 @@
 			<li>
 				<a
 					href={section.href}
-					class="relative block rounded px-3 py-1.5 text-sm transition-colors"
-					class:nav-active={active}
-					class:nav-inactive={!active}
+					class="relative block rounded px-3 py-1.5 text-sm transition-colors {active
+						? 'text-base-content bg-base-200'
+						: 'text-base-content/60 hover:text-base-content hover:bg-base-200/60'}"
 				>
 					{#if active}
 						<span class="bg-primary absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"></span>
@@ -33,17 +33,3 @@
 		{/each}
 	</ul>
 </nav>
-
-<style>
-	.nav-active {
-		color: var(--color-base-content);
-		background-color: var(--color-base-200);
-	}
-	.nav-inactive {
-		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
-	}
-	.nav-inactive:hover {
-		color: var(--color-base-content);
-		background-color: color-mix(in oklab, var(--color-base-200) 60%, transparent);
-	}
-</style>

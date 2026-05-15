@@ -22,9 +22,9 @@
 	<nav class="flex h-full items-center gap-1">
 		<a
 			href="/"
-			class="relative flex h-full items-center px-3 text-sm transition-colors"
-			class:text-base-content={onLogs}
-			class:text-base-content-60={!onLogs}
+			class="relative flex h-full items-center px-3 text-sm transition-colors {onLogs
+				? 'text-base-content'
+				: 'text-base-content/60'}"
 		>
 			Logs
 			<span
@@ -36,9 +36,9 @@
 		{#if isAdmin}
 			<a
 				href="/administration"
-				class="relative flex h-full items-center px-3 text-sm transition-colors"
-				class:text-base-content={onAdmin}
-				class:text-base-content-60={!onAdmin}
+				class="relative flex h-full items-center px-3 text-sm transition-colors {onAdmin
+					? 'text-base-content'
+					: 'text-base-content/60'}"
 			>
 				Administration
 				<span
@@ -54,9 +54,3 @@
 
 	<UserMenu {user} />
 </header>
-
-<style>
-	.text-base-content-60 {
-		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
-	}
-</style>
