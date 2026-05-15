@@ -11,7 +11,7 @@ export const load: LayoutLoad = async ({ url, depends }) => {
 
 	const [bootstrapRes, sessionRes] = await Promise.all([
 		api.api.auth.bootstrap.$get(),
-		authClient.getSession({ fetchOptions: { credentials: 'same-origin' } })
+		authClient.getSession()
 	]);
 
 	if (!bootstrapRes.ok) {

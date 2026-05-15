@@ -4,11 +4,7 @@
 	import { page } from '$app/state';
 	import { authClient } from '$lib/auth-client';
 	import { safeReturnTo } from '$lib/return-to';
-
-	const signInSchema = v.object({
-		email: v.pipe(v.string(), v.email()),
-		password: v.pipe(v.string(), v.minLength(1))
-	});
+	import { signInSchema } from 'api/schemas';
 
 	let email = $state('');
 	let password = $state('');

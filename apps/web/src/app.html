@@ -48,10 +48,6 @@
 		</div>
 		<div style="display: contents">%sveltekit.body%</div>
 		<script>
-			window.addEventListener('sveltekit:start', () => {
-				const el = document.getElementById('boot-loader');
-				if (el) el.classList.add('hidden');
-			});
 			setTimeout(() => {
 				const el = document.getElementById('boot-loader');
 				if (el) el.classList.add('hidden');

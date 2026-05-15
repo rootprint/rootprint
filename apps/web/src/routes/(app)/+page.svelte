@@ -18,8 +18,8 @@
 </script>
 
 <div class="container mx-auto p-8">
-	<h1 class="text-3xl font-bold">Welcome, {data.user.name}</h1>
-	<p class="mt-2 opacity-70">Signed in as {data.user.email}.</p>
+	<h1 class="text-3xl font-bold">Welcome, {data.session!.user.name}</h1>
+	<p class="mt-2 opacity-70">Signed in as {data.session!.user.email}.</p>
 	<button class="btn btn-outline mt-6" onclick={signOut} disabled={signingOut}>
 		{signingOut ? 'Signing out…' : 'Sign out'}
 	</button>

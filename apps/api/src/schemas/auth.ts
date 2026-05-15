@@ -7,6 +7,12 @@ export const setupAdminSchema = v.object({
 });
 export type SetupAdminInput = v.InferOutput<typeof setupAdminSchema>;
 
+export const signInSchema = v.object({
+  email: v.pipe(v.string(), v.email()),
+  password: v.pipe(v.string(), v.minLength(1)),
+});
+export type SignInInput = v.InferOutput<typeof signInSchema>;
+
 export const verifyInviteSchema = v.object({
   token: v.pipe(v.string(), v.minLength(1), v.maxLength(128)),
 });
