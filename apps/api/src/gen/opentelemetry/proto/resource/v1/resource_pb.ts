@@ -16,46 +16,49 @@
 // @generated from file opentelemetry/proto/resource/v1/resource.proto (package opentelemetry.proto.resource.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { KeyValue } from "../../common/v1/common_pb.js";
-import { file_opentelemetry_proto_common_v1_common } from "../../common/v1/common_pb.js";
-import type { Message } from "@bufbuild/protobuf";
+import type { GenFile, GenMessage } from '@bufbuild/protobuf/codegenv2';
+import { fileDesc, messageDesc } from '@bufbuild/protobuf/codegenv2';
+import type { KeyValue } from '../../common/v1/common_pb.js';
+import { file_opentelemetry_proto_common_v1_common } from '../../common/v1/common_pb.js';
+import type { Message } from '@bufbuild/protobuf';
 
 /**
  * Describes the file opentelemetry/proto/resource/v1/resource.proto.
  */
-export const file_opentelemetry_proto_resource_v1_resource: GenFile = /*@__PURE__*/
-  fileDesc("Ci5vcGVudGVsZW1ldHJ5L3Byb3RvL3Jlc291cmNlL3YxL3Jlc291cmNlLnByb3RvEh9vcGVudGVsZW1ldHJ5LnByb3RvLnJlc291cmNlLnYxImkKCFJlc291cmNlEjsKCmF0dHJpYnV0ZXMYASADKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5LZXlWYWx1ZRIgChhkcm9wcGVkX2F0dHJpYnV0ZXNfY291bnQYAiABKA1CgwEKImlvLm9wZW50ZWxlbWV0cnkucHJvdG8ucmVzb3VyY2UudjFCDVJlc291cmNlUHJvdG9QAVoqZ28ub3BlbnRlbGVtZXRyeS5pby9wcm90by9vdGxwL3Jlc291cmNlL3YxqgIfT3BlblRlbGVtZXRyeS5Qcm90by5SZXNvdXJjZS5WMWIGcHJvdG8z", [file_opentelemetry_proto_common_v1_common]);
+export const file_opentelemetry_proto_resource_v1_resource: GenFile /*@__PURE__*/ = fileDesc(
+	'Ci5vcGVudGVsZW1ldHJ5L3Byb3RvL3Jlc291cmNlL3YxL3Jlc291cmNlLnByb3RvEh9vcGVudGVsZW1ldHJ5LnByb3RvLnJlc291cmNlLnYxImkKCFJlc291cmNlEjsKCmF0dHJpYnV0ZXMYASADKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5LZXlWYWx1ZRIgChhkcm9wcGVkX2F0dHJpYnV0ZXNfY291bnQYAiABKA1CgwEKImlvLm9wZW50ZWxlbWV0cnkucHJvdG8ucmVzb3VyY2UudjFCDVJlc291cmNlUHJvdG9QAVoqZ28ub3BlbnRlbGVtZXRyeS5pby9wcm90by9vdGxwL3Jlc291cmNlL3YxqgIfT3BlblRlbGVtZXRyeS5Qcm90by5SZXNvdXJjZS5WMWIGcHJvdG8z',
+	[file_opentelemetry_proto_common_v1_common]
+);
 
 /**
  * Resource information.
  *
  * @generated from message opentelemetry.proto.resource.v1.Resource
  */
-export type Resource = Message<"opentelemetry.proto.resource.v1.Resource"> & {
-  /**
-   * Set of attributes that describe the resource.
-   * Attribute keys MUST be unique (it is not allowed to have more than one
-   * attribute with the same key).
-   *
-   * @generated from field: repeated opentelemetry.proto.common.v1.KeyValue attributes = 1;
-   */
-  attributes: KeyValue[];
+export type Resource = Message<'opentelemetry.proto.resource.v1.Resource'> & {
+	/**
+	 * Set of attributes that describe the resource.
+	 * Attribute keys MUST be unique (it is not allowed to have more than one
+	 * attribute with the same key).
+	 *
+	 * @generated from field: repeated opentelemetry.proto.common.v1.KeyValue attributes = 1;
+	 */
+	attributes: KeyValue[];
 
-  /**
-   * dropped_attributes_count is the number of dropped attributes. If the value is 0, then
-   * no attributes were dropped.
-   *
-   * @generated from field: uint32 dropped_attributes_count = 2;
-   */
-  droppedAttributesCount: number;
+	/**
+	 * dropped_attributes_count is the number of dropped attributes. If the value is 0, then
+	 * no attributes were dropped.
+	 *
+	 * @generated from field: uint32 dropped_attributes_count = 2;
+	 */
+	droppedAttributesCount: number;
 };
 
 /**
  * Describes the message opentelemetry.proto.resource.v1.Resource.
  * Use `create(ResourceSchema)` to create a new message.
  */
-export const ResourceSchema: GenMessage<Resource> = /*@__PURE__*/
-  messageDesc(file_opentelemetry_proto_resource_v1_resource, 0);
-
+export const ResourceSchema: GenMessage<Resource> /*@__PURE__*/ = messageDesc(
+	file_opentelemetry_proto_resource_v1_resource,
+	0
+);

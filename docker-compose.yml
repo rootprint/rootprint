@@ -16,14 +16,14 @@ services:
     image: quickwit/quickwit:edge
     container_name: quickwit
     ports:
-      - '127.0.0.1:7280:7280' # REST API + Web UI (local only)
-      - '127.0.0.1:7281:7281' # gRPC (local only)
+      - "127.0.0.1:7280:7280" # REST API + Web UI (local only)
+      - "127.0.0.1:7281:7281" # gRPC (local only)
     volumes:
       - ./quickwit.yaml:/quickwit/config/quickwit.yaml:ro
       - ./.quickwit/qwdata:/quickwit/qwdata
-    command: ['run']
+    command: ["run"]
     healthcheck:
-      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/7280"']
+      test: ["CMD-SHELL", 'bash -c "echo > /dev/tcp/localhost/7280"']
       interval: 10s
       timeout: 5s
       retries: 10

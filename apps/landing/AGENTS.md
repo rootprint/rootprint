@@ -28,16 +28,16 @@ bun --filter landing format_check # prettier check
 
 ## Source Layout
 
-| Path | Purpose |
-| --- | --- |
-| `src/routes/` | SvelteKit pages (landing, pricing, features, etc.) |
-| `src/lib/` | Components and helpers shared across pages |
-| `src/app.html` | HTML shell |
-| `src/app.css` | Tailwind entry; global styles |
-| `src/config.ts` | Site-level config (canonical URL, nav, etc.) |
-| `static/` | Public assets served at the root |
-| `svelte.config.js` | SvelteKit config (uses `adapter-static`) |
-| `vite.config.ts`, `postcss.config.js`, `tsconfig.json` | Tooling configs |
+| Path                                                   | Purpose                                            |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| `src/routes/`                                          | SvelteKit pages (landing, pricing, features, etc.) |
+| `src/lib/`                                             | Components and helpers shared across pages         |
+| `src/app.html`                                         | HTML shell                                         |
+| `src/app.css`                                          | Tailwind entry; global styles                      |
+| `src/config.ts`                                        | Site-level config (canonical URL, nav, etc.)       |
+| `static/`                                              | Public assets served at the root                   |
+| `svelte.config.js`                                     | SvelteKit config (uses `adapter-static`)           |
+| `vite.config.ts`, `postcss.config.js`, `tsconfig.json` | Tooling configs                                    |
 
 ## Content Scope
 

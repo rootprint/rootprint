@@ -4,7 +4,7 @@
 
 Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io). It is organized as a Bun-workspace monorepo under `apps/`.
 
-- **Backend** (`apps/api`): Hono on Bun. Drizzle ORM + PostgreSQL, Better Auth, Quickwit via `quickwit-js`, Valibot, pino, buf/protobuf. 
+- **Backend** (`apps/api`): Hono on Bun. Drizzle ORM + PostgreSQL, Better Auth, Quickwit via `quickwit-js`, Valibot, pino, buf/protobuf.
 - **Frontend** (`apps/web`): Svelte 5 + SvelteKit. Tailwind v4 + DaisyUI. Calls `apps/api` over HTTP.
 - **Marketing** (`apps/landing`): SvelteKit static site for logwiz.io.
 - **Docs** (`apps/docs`): Mintlify site for docs.logwiz.io.

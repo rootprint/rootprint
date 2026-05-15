@@ -25,18 +25,12 @@ import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 
-function withAuth<E extends AppEnv, S extends Record<string, any>>(
-  router: Hono<E, S, "">,
-) {
-  return new Hono<AppEnv>().use('*', requireUser).route('/', router);
+function withAuth<E extends AppEnv, S extends Record<string, any>>(router: Hono<E, S, ''>) {
+	return new Hono<AppEnv>().use('*', requireUser).route('/', router);
 }
 
-function errorJson(
-  c: Context,
-  body: ApiErrorBody['error'],
-  status: ContentfulStatusCode,
-) {
-  return c.json({ error: body }, status);
+function errorJson(c: Context, body: ApiErrorBody['error'], status: ContentfulStatusCode) {
+	return c.json({ error: body }, status);
 }
 
 export const app = new Hono<AppEnv>();
@@ -45,116 +39,124 @@ app.use('*', requestContext);
 app.use('*', cors({ origin: config.frontendUrl, credentials: true }));
 
 app.onError((rawErr, c) => {
-  const requestId = c.get('requestId');
-  const log = c.get('logger');
+	const requestId = c.get('requestId');
+	const log = c.get('logger');
 
-  let err: Error = rawErr;
-  if (rawErr instanceof QuickwitError) {
-    const qwErr: QuickwitError = rawErr;
-    err = new HttpError(qwErr.status ?? 500, `QUICKWIT_${qwErr.code}`, qwErr.message);
-  }
+	let err: Error = rawErr;
+	if (rawErr instanceof QuickwitError) {
+		const qwErr: QuickwitError = rawErr;
+		err = new HttpError(qwErr.status ?? 500, `QUICKWIT_${qwErr.code}`, qwErr.message);
+	}
 
-  if (c.req.path.startsWith('/v1/')) {
-    if (err instanceof HttpError) return otlpErrorFromHttpError(err);
-    log.error({ err }, 'OTLP route unexpected error');
-    return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
-  }
+	if (c.req.path.startsWith('/v1/')) {
+		if (err instanceof HttpError) return otlpErrorFromHttpError(err);
+		log.error({ err }, 'OTLP route unexpected error');
+		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
+	}
 
-  if (err instanceof HttpError) {
-    const isServerError = err.statusCode >= 500;
-    if (isServerError) {
-      log.error({ err }, 'server error');
-    } else {
-      log.debug(
-        { err: err.message, code: err.code, statusCode: err.statusCode },
-        'client error',
-      );
-    }
-    return errorJson(
-      c,
-      {
-        code: err.code,
-        message: isServerError ? 'Internal server error' : err.message,
-        statusCode: err.statusCode,
-        requestId,
-        ...(!isServerError && err.details ? { details: err.details } : {}),
-      },
-      err.statusCode as ContentfulStatusCode,
-    );
-  }
+	if (err instanceof HttpError) {
+		const isServerError = err.statusCode >= 500;
+		if (isServerError) {
+			log.error({ err }, 'server error');
+		} else {
+			log.debug({ err: err.message, code: err.code, statusCode: err.statusCode }, 'client error');
+		}
+		return errorJson(
+			c,
+			{
+				code: err.code,
+				message: isServerError ? 'Internal server error' : err.message,
+				statusCode: err.statusCode,
+				requestId,
+				...(!isServerError && err.details ? { details: err.details } : {})
+			},
+			err.statusCode as ContentfulStatusCode
+		);
+	}
 
-  if (err instanceof ValiError) {
-    const details: ApiErrorDetail[] = err.issues.map((issue) => ({
-      path:
-        Array.isArray(issue.path) && issue.path.length > 0
-          ? issue.path.map((p: { key: unknown }) => String(p.key)).join('.')
-          : '(root)',
-      message: issue.message,
-    }));
-    log.debug({ err: err.message }, 'validation error');
-    return errorJson(
-      c,
-      { code: 'VALIDATION_FAILED', message: 'Request validation failed', statusCode: 400, requestId, details },
-      400,
-    );
-  }
+	if (err instanceof ValiError) {
+		const details: ApiErrorDetail[] = err.issues.map((issue) => ({
+			path:
+				Array.isArray(issue.path) && issue.path.length > 0
+					? issue.path.map((p: { key: unknown }) => String(p.key)).join('.')
+					: '(root)',
+			message: issue.message
+		}));
+		log.debug({ err: err.message }, 'validation error');
+		return errorJson(
+			c,
+			{
+				code: 'VALIDATION_FAILED',
+				message: 'Request validation failed',
+				statusCode: 400,
+				requestId,
+				details
+			},
+			400
+		);
+	}
 
-  if (err instanceof SyntaxError) {
-    log.debug({ err: err.message }, 'invalid json body');
-    return errorJson(
-      c,
-      { code: 'INVALID_JSON', message: 'Invalid JSON body', statusCode: 400, requestId },
-      400,
-    );
-  }
+	if (err instanceof SyntaxError) {
+		log.debug({ err: err.message }, 'invalid json body');
+		return errorJson(
+			c,
+			{ code: 'INVALID_JSON', message: 'Invalid JSON body', statusCode: 400, requestId },
+			400
+		);
+	}
 
-  log.error({ err }, 'unhandled error');
-  return errorJson(
-    c,
-    { code: 'INTERNAL', message: 'Internal server error', statusCode: 500, requestId },
-    500,
-  );
+	log.error({ err }, 'unhandled error');
+	return errorJson(
+		c,
+		{ code: 'INTERNAL', message: 'Internal server error', statusCode: 500, requestId },
+		500
+	);
 });
 
 app.notFound((c) => {
-  if (c.req.path.startsWith('/v1/')) {
-    return otlpError(404, Code.NOT_FOUND, 'Route not found');
-  }
-  return errorJson(
-    c,
-    { code: 'ROUTE_NOT_FOUND', message: 'Route not found', statusCode: 404, requestId: c.get('requestId') },
-    404,
-  );
+	if (c.req.path.startsWith('/v1/')) {
+		return otlpError(404, Code.NOT_FOUND, 'Route not found');
+	}
+	return errorJson(
+		c,
+		{
+			code: 'ROUTE_NOT_FOUND',
+			message: 'Route not found',
+			statusCode: 404,
+			requestId: c.get('requestId')
+		},
+		404
+	);
 });
 
 export const routes = app
-  .route('/api/health', healthRouter)
-  .route('/api/system', systemRouter)
-  .route('/api/auth', authRouter)
-  .route('/api/indexes', withAuth(indexesRouter))
-  .route('/api/users', withAuth(usersRouter))
-  .route('/api/invites', withAuth(invitesRouter))
-  .route('/api/ingest-tokens', withAuth(ingestTokensRouter))
-  .route('/api/shares', withAuth(sharesRouter))
-  .route('/api/settings', withAuth(settingsRouter))
-  .route('/api/ingest', ndjsonRouter)
-  .route('/v1', otlpRouter);
+	.route('/api/health', healthRouter)
+	.route('/api/system', systemRouter)
+	.route('/api/auth', authRouter)
+	.route('/api/indexes', withAuth(indexesRouter))
+	.route('/api/users', withAuth(usersRouter))
+	.route('/api/invites', withAuth(invitesRouter))
+	.route('/api/ingest-tokens', withAuth(ingestTokensRouter))
+	.route('/api/shares', withAuth(sharesRouter))
+	.route('/api/settings', withAuth(settingsRouter))
+	.route('/api/ingest', ndjsonRouter)
+	.route('/v1', otlpRouter);
 
 if (config.serveWeb) {
-  app.use('/*', serveStatic({ root: config.webRoot }));
+	app.use('/*', serveStatic({ root: config.webRoot }));
 
-  app.get('*', async (c) => {
-    const path = c.req.path;
-    if (path.startsWith('/api/') || path.startsWith('/v1/')) return c.notFound();
-    const html = await Bun.file(`${config.webRoot}/index.html`).text();
-    return c.html(html);
-  });
+	app.get('*', async (c) => {
+		const path = c.req.path;
+		if (path.startsWith('/api/') || path.startsWith('/v1/')) return c.notFound();
+		const html = await Bun.file(`${config.webRoot}/index.html`).text();
+		return c.html(html);
+	});
 }
 
 const server = Bun.serve({
-  fetch: app.fetch,
-  hostname: config.host,
-  port: config.port,
+	fetch: app.fetch,
+	hostname: config.host,
+	port: config.port
 });
 
 logger.info({ host: server.hostname, port: server.port }, 'api listening');

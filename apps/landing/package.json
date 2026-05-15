@@ -1,6 +1,17 @@
 {
   "name": "landing",
   "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "format": "prettier --write --plugin prettier-plugin-svelte ./",
+    "format_check": "prettier --check --plugin prettier-plugin-svelte ./"
+  },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.21.1",
@@ -22,16 +33,5 @@
     "@sveltejs/kit": {
       "cookie": "^0.7.0"
     }
-  },
-  "private": true,
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "format": "prettier --write --plugin prettier-plugin-svelte ./",
-    "format_check": "prettier --check --plugin prettier-plugin-svelte ./"
-  },
-  "type": "module"
+  }
 }

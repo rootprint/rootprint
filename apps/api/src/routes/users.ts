@@ -14,26 +14,26 @@ const UserIdParams = v.object({ userId: v.pipe(v.string(), v.minLength(1)) });
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const usersRouter = new Hono<AppEnv>()
-  .use('*', requireAdmin)
-  .get('/', async (c) => c.json(await userService.listUsers(db)))
-  .delete('/:userId', async (c) => {
-    const { userId } = v.parse(UserIdParams, c.req.param());
-    await userService.removeUser(auth, userId);
-    return c.body(null, 204);
-  })
-  .put(
-    '/:userId/role',
-    validator('json', (value) => v.parse(setUserRoleSchema, value)),
-    async (c) => {
-      const { userId } = v.parse(UserIdParams, c.req.param());
-      const { role } = c.req.valid('json');
-      const adminId = requireSession(c).user.id;
-      await userService.setUserRole(auth, adminId, userId, role, c.req.raw.headers);
-      return c.body(null, 204);
-    },
-  )
-  .post('/:userId/password-resets', async (c) => {
-    const { userId } = v.parse(UserIdParams, c.req.param());
-    const adminId = requireSession(c).user.id;
-    return c.json(await userService.resetPassword(db, auth, adminId, userId));
-  });
+	.use('*', requireAdmin)
+	.get('/', async (c) => c.json(await userService.listUsers(db)))
+	.delete('/:userId', async (c) => {
+		const { userId } = v.parse(UserIdParams, c.req.param());
+		await userService.removeUser(auth, userId);
+		return c.body(null, 204);
+	})
+	.put(
+		'/:userId/role',
+		validator('json', (value) => v.parse(setUserRoleSchema, value)),
+		async (c) => {
+			const { userId } = v.parse(UserIdParams, c.req.param());
+			const { role } = c.req.valid('json');
+			const adminId = requireSession(c).user.id;
+			await userService.setUserRole(auth, adminId, userId, role, c.req.raw.headers);
+			return c.body(null, 204);
+		}
+	)
+	.post('/:userId/password-resets', async (c) => {
+		const { userId } = v.parse(UserIdParams, c.req.param());
+		const adminId = requireSession(c).user.id;
+		return c.json(await userService.resetPassword(db, auth, adminId, userId));
+	});

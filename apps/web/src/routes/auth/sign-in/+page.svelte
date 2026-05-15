@@ -5,12 +5,22 @@
 	import { authClient } from '$lib/auth-client';
 	import { safeReturnTo } from '$lib/return-to';
 	import { signInSchema } from 'api/schemas';
+	import GoogleIcon from '@iconify-svelte/logos/google-icon';
+
+	let { data } = $props();
 
 	let email = $state('');
 	let password = $state('');
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
+
+	async function signInWithGoogle() {
+		await authClient.signIn.social({
+			provider: 'google',
+			callbackURL: safeReturnTo(page.url.searchParams.get('returnTo')),
+		});
+	}
 
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -48,6 +58,18 @@
 	<div role="alert" class="alert alert-error mt-6 text-sm">{formError}</div>
 {/if}
 
+{#if data.providers.google.enabled}
+	<button
+		type="button"
+		class="btn btn-outline mt-6 w-full gap-2"
+		onclick={signInWithGoogle}
+	>
+		<GoogleIcon class="h-4 w-4" />
+		Continue with Google
+	</button>
+
+	<div class="divider my-4 text-xs opacity-60">or</div>
+{/if}
 <form class="mt-6 space-y-3" {onsubmit}>
 	<label class="input w-full" class:input-error={fieldErrors.email}>
 		<span class="label">Email</span>

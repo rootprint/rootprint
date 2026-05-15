@@ -1,5 +1,5 @@
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from "date-fns";
 
 export function formatRelativeTime(date: Date): string {
-	return formatDistanceToNow(date, { addSuffix: true });
+  return formatDistanceToNow(date, { addSuffix: true });
 }

@@ -16,15 +16,16 @@
 // @generated from file opentelemetry/proto/common/v1/common.proto (package opentelemetry.proto.common.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message } from "@bufbuild/protobuf";
+import type { GenFile, GenMessage } from '@bufbuild/protobuf/codegenv2';
+import { fileDesc, messageDesc } from '@bufbuild/protobuf/codegenv2';
+import type { Message } from '@bufbuild/protobuf';
 
 /**
  * Describes the file opentelemetry/proto/common/v1/common.proto.
  */
-export const file_opentelemetry_proto_common_v1_common: GenFile = /*@__PURE__*/
-  fileDesc("CipvcGVudGVsZW1ldHJ5L3Byb3RvL2NvbW1vbi92MS9jb21tb24ucHJvdG8SHW9wZW50ZWxlbWV0cnkucHJvdG8uY29tbW9uLnYxIowCCghBbnlWYWx1ZRIWCgxzdHJpbmdfdmFsdWUYASABKAlIABIUCgpib29sX3ZhbHVlGAIgASgISAASEwoJaW50X3ZhbHVlGAMgASgDSAASFgoMZG91YmxlX3ZhbHVlGAQgASgBSAASQAoLYXJyYXlfdmFsdWUYBSABKAsyKS5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5BcnJheVZhbHVlSAASQwoMa3ZsaXN0X3ZhbHVlGAYgASgLMisub3BlbnRlbGVtZXRyeS5wcm90by5jb21tb24udjEuS2V5VmFsdWVMaXN0SAASFQoLYnl0ZXNfdmFsdWUYByABKAxIAEIHCgV2YWx1ZSJFCgpBcnJheVZhbHVlEjcKBnZhbHVlcxgBIAMoCzInLm9wZW50ZWxlbWV0cnkucHJvdG8uY29tbW9uLnYxLkFueVZhbHVlIkcKDEtleVZhbHVlTGlzdBI3CgZ2YWx1ZXMYASADKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5LZXlWYWx1ZSJPCghLZXlWYWx1ZRILCgNrZXkYASABKAkSNgoFdmFsdWUYAiABKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5BbnlWYWx1ZSKUAQoUSW5zdHJ1bWVudGF0aW9uU2NvcGUSDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJEjsKCmF0dHJpYnV0ZXMYAyADKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5LZXlWYWx1ZRIgChhkcm9wcGVkX2F0dHJpYnV0ZXNfY291bnQYBCABKA1CewogaW8ub3BlbnRlbGVtZXRyeS5wcm90by5jb21tb24udjFCC0NvbW1vblByb3RvUAFaKGdvLm9wZW50ZWxlbWV0cnkuaW8vcHJvdG8vb3RscC9jb21tb24vdjGqAh1PcGVuVGVsZW1ldHJ5LlByb3RvLkNvbW1vbi5WMWIGcHJvdG8z");
+export const file_opentelemetry_proto_common_v1_common: GenFile /*@__PURE__*/ = fileDesc(
+	'CipvcGVudGVsZW1ldHJ5L3Byb3RvL2NvbW1vbi92MS9jb21tb24ucHJvdG8SHW9wZW50ZWxlbWV0cnkucHJvdG8uY29tbW9uLnYxIowCCghBbnlWYWx1ZRIWCgxzdHJpbmdfdmFsdWUYASABKAlIABIUCgpib29sX3ZhbHVlGAIgASgISAASEwoJaW50X3ZhbHVlGAMgASgDSAASFgoMZG91YmxlX3ZhbHVlGAQgASgBSAASQAoLYXJyYXlfdmFsdWUYBSABKAsyKS5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5BcnJheVZhbHVlSAASQwoMa3ZsaXN0X3ZhbHVlGAYgASgLMisub3BlbnRlbGVtZXRyeS5wcm90by5jb21tb24udjEuS2V5VmFsdWVMaXN0SAASFQoLYnl0ZXNfdmFsdWUYByABKAxIAEIHCgV2YWx1ZSJFCgpBcnJheVZhbHVlEjcKBnZhbHVlcxgBIAMoCzInLm9wZW50ZWxlbWV0cnkucHJvdG8uY29tbW9uLnYxLkFueVZhbHVlIkcKDEtleVZhbHVlTGlzdBI3CgZ2YWx1ZXMYASADKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5LZXlWYWx1ZSJPCghLZXlWYWx1ZRILCgNrZXkYASABKAkSNgoFdmFsdWUYAiABKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5BbnlWYWx1ZSKUAQoUSW5zdHJ1bWVudGF0aW9uU2NvcGUSDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJEjsKCmF0dHJpYnV0ZXMYAyADKAsyJy5vcGVudGVsZW1ldHJ5LnByb3RvLmNvbW1vbi52MS5LZXlWYWx1ZRIgChhkcm9wcGVkX2F0dHJpYnV0ZXNfY291bnQYBCABKA1CewogaW8ub3BlbnRlbGVtZXRyeS5wcm90by5jb21tb24udjFCC0NvbW1vblByb3RvUAFaKGdvLm9wZW50ZWxlbWV0cnkuaW8vcHJvdG8vb3RscC9jb21tb24vdjGqAh1PcGVuVGVsZW1ldHJ5LlByb3RvLkNvbW1vbi5WMWIGcHJvdG8z'
+);
 
 /**
  * AnyValue is used to represent any type of attribute value. AnyValue may contain a
@@ -33,64 +34,74 @@ export const file_opentelemetry_proto_common_v1_common: GenFile = /*@__PURE__*/
  *
  * @generated from message opentelemetry.proto.common.v1.AnyValue
  */
-export type AnyValue = Message<"opentelemetry.proto.common.v1.AnyValue"> & {
-  /**
-   * The value is one of the listed fields. It is valid for all values to be unspecified
-   * in which case this AnyValue is considered to be "empty".
-   *
-   * @generated from oneof opentelemetry.proto.common.v1.AnyValue.value
-   */
-  value: {
-    /**
-     * @generated from field: string string_value = 1;
-     */
-    value: string;
-    case: "stringValue";
-  } | {
-    /**
-     * @generated from field: bool bool_value = 2;
-     */
-    value: boolean;
-    case: "boolValue";
-  } | {
-    /**
-     * @generated from field: int64 int_value = 3;
-     */
-    value: bigint;
-    case: "intValue";
-  } | {
-    /**
-     * @generated from field: double double_value = 4;
-     */
-    value: number;
-    case: "doubleValue";
-  } | {
-    /**
-     * @generated from field: opentelemetry.proto.common.v1.ArrayValue array_value = 5;
-     */
-    value: ArrayValue;
-    case: "arrayValue";
-  } | {
-    /**
-     * @generated from field: opentelemetry.proto.common.v1.KeyValueList kvlist_value = 6;
-     */
-    value: KeyValueList;
-    case: "kvlistValue";
-  } | {
-    /**
-     * @generated from field: bytes bytes_value = 7;
-     */
-    value: Uint8Array;
-    case: "bytesValue";
-  } | { case: undefined; value?: undefined };
+export type AnyValue = Message<'opentelemetry.proto.common.v1.AnyValue'> & {
+	/**
+	 * The value is one of the listed fields. It is valid for all values to be unspecified
+	 * in which case this AnyValue is considered to be "empty".
+	 *
+	 * @generated from oneof opentelemetry.proto.common.v1.AnyValue.value
+	 */
+	value:
+		| {
+				/**
+				 * @generated from field: string string_value = 1;
+				 */
+				value: string;
+				case: 'stringValue';
+		  }
+		| {
+				/**
+				 * @generated from field: bool bool_value = 2;
+				 */
+				value: boolean;
+				case: 'boolValue';
+		  }
+		| {
+				/**
+				 * @generated from field: int64 int_value = 3;
+				 */
+				value: bigint;
+				case: 'intValue';
+		  }
+		| {
+				/**
+				 * @generated from field: double double_value = 4;
+				 */
+				value: number;
+				case: 'doubleValue';
+		  }
+		| {
+				/**
+				 * @generated from field: opentelemetry.proto.common.v1.ArrayValue array_value = 5;
+				 */
+				value: ArrayValue;
+				case: 'arrayValue';
+		  }
+		| {
+				/**
+				 * @generated from field: opentelemetry.proto.common.v1.KeyValueList kvlist_value = 6;
+				 */
+				value: KeyValueList;
+				case: 'kvlistValue';
+		  }
+		| {
+				/**
+				 * @generated from field: bytes bytes_value = 7;
+				 */
+				value: Uint8Array;
+				case: 'bytesValue';
+		  }
+		| { case: undefined; value?: undefined };
 };
 
 /**
  * Describes the message opentelemetry.proto.common.v1.AnyValue.
  * Use `create(AnyValueSchema)` to create a new message.
  */
-export const AnyValueSchema: GenMessage<AnyValue> = /*@__PURE__*/
-  messageDesc(file_opentelemetry_proto_common_v1_common, 0);
+export const AnyValueSchema: GenMessage<AnyValue> /*@__PURE__*/ = messageDesc(
+	file_opentelemetry_proto_common_v1_common,
+	0
+);
 
 /**
  * ArrayValue is a list of AnyValue messages. We need ArrayValue as a message
@@ -98,21 +109,23 @@ export const AnyValueSchema: GenMessage<AnyValue> = /*@__PURE__*/
  *
  * @generated from message opentelemetry.proto.common.v1.ArrayValue
  */
-export type ArrayValue = Message<"opentelemetry.proto.common.v1.ArrayValue"> & {
-  /**
-   * Array of values. The array may be empty (contain 0 elements).
-   *
-   * @generated from field: repeated opentelemetry.proto.common.v1.AnyValue values = 1;
-   */
-  values: AnyValue[];
+export type ArrayValue = Message<'opentelemetry.proto.common.v1.ArrayValue'> & {
+	/**
+	 * Array of values. The array may be empty (contain 0 elements).
+	 *
+	 * @generated from field: repeated opentelemetry.proto.common.v1.AnyValue values = 1;
+	 */
+	values: AnyValue[];
 };
 
 /**
  * Describes the message opentelemetry.proto.common.v1.ArrayValue.
  * Use `create(ArrayValueSchema)` to create a new message.
  */
-export const ArrayValueSchema: GenMessage<ArrayValue> = /*@__PURE__*/
-  messageDesc(file_opentelemetry_proto_common_v1_common, 1);
+export const ArrayValueSchema: GenMessage<ArrayValue> /*@__PURE__*/ = messageDesc(
+	file_opentelemetry_proto_common_v1_common,
+	1
+);
 
 /**
  * KeyValueList is a list of KeyValue messages. We need KeyValueList as a message
@@ -123,24 +136,26 @@ export const ArrayValueSchema: GenMessage<ArrayValue> = /*@__PURE__*/
  *
  * @generated from message opentelemetry.proto.common.v1.KeyValueList
  */
-export type KeyValueList = Message<"opentelemetry.proto.common.v1.KeyValueList"> & {
-  /**
-   * A collection of key/value pairs of key-value pairs. The list may be empty (may
-   * contain 0 elements).
-   * The keys MUST be unique (it is not allowed to have more than one
-   * value with the same key).
-   *
-   * @generated from field: repeated opentelemetry.proto.common.v1.KeyValue values = 1;
-   */
-  values: KeyValue[];
+export type KeyValueList = Message<'opentelemetry.proto.common.v1.KeyValueList'> & {
+	/**
+	 * A collection of key/value pairs of key-value pairs. The list may be empty (may
+	 * contain 0 elements).
+	 * The keys MUST be unique (it is not allowed to have more than one
+	 * value with the same key).
+	 *
+	 * @generated from field: repeated opentelemetry.proto.common.v1.KeyValue values = 1;
+	 */
+	values: KeyValue[];
 };
 
 /**
  * Describes the message opentelemetry.proto.common.v1.KeyValueList.
  * Use `create(KeyValueListSchema)` to create a new message.
  */
-export const KeyValueListSchema: GenMessage<KeyValueList> = /*@__PURE__*/
-  messageDesc(file_opentelemetry_proto_common_v1_common, 2);
+export const KeyValueListSchema: GenMessage<KeyValueList> /*@__PURE__*/ = messageDesc(
+	file_opentelemetry_proto_common_v1_common,
+	2
+);
 
 /**
  * KeyValue is a key-value pair that is used to store Span attributes, Link
@@ -148,63 +163,64 @@ export const KeyValueListSchema: GenMessage<KeyValueList> = /*@__PURE__*/
  *
  * @generated from message opentelemetry.proto.common.v1.KeyValue
  */
-export type KeyValue = Message<"opentelemetry.proto.common.v1.KeyValue"> & {
-  /**
-   * @generated from field: string key = 1;
-   */
-  key: string;
+export type KeyValue = Message<'opentelemetry.proto.common.v1.KeyValue'> & {
+	/**
+	 * @generated from field: string key = 1;
+	 */
+	key: string;
 
-  /**
-   * @generated from field: opentelemetry.proto.common.v1.AnyValue value = 2;
-   */
-  value?: AnyValue | undefined;
+	/**
+	 * @generated from field: opentelemetry.proto.common.v1.AnyValue value = 2;
+	 */
+	value?: AnyValue | undefined;
 };
 
 /**
  * Describes the message opentelemetry.proto.common.v1.KeyValue.
  * Use `create(KeyValueSchema)` to create a new message.
  */
-export const KeyValueSchema: GenMessage<KeyValue> = /*@__PURE__*/
-  messageDesc(file_opentelemetry_proto_common_v1_common, 3);
+export const KeyValueSchema: GenMessage<KeyValue> /*@__PURE__*/ = messageDesc(
+	file_opentelemetry_proto_common_v1_common,
+	3
+);
 
 /**
  * InstrumentationScope is a message representing the instrumentation scope information
- * such as the fully qualified name and version. 
+ * such as the fully qualified name and version.
  *
  * @generated from message opentelemetry.proto.common.v1.InstrumentationScope
  */
-export type InstrumentationScope = Message<"opentelemetry.proto.common.v1.InstrumentationScope"> & {
-  /**
-   * An empty instrumentation scope name means the name is unknown.
-   *
-   * @generated from field: string name = 1;
-   */
-  name: string;
+export type InstrumentationScope = Message<'opentelemetry.proto.common.v1.InstrumentationScope'> & {
+	/**
+	 * An empty instrumentation scope name means the name is unknown.
+	 *
+	 * @generated from field: string name = 1;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: string version = 2;
-   */
-  version: string;
+	/**
+	 * @generated from field: string version = 2;
+	 */
+	version: string;
 
-  /**
-   * Additional attributes that describe the scope. [Optional].
-   * Attribute keys MUST be unique (it is not allowed to have more than one
-   * attribute with the same key).
-   *
-   * @generated from field: repeated opentelemetry.proto.common.v1.KeyValue attributes = 3;
-   */
-  attributes: KeyValue[];
+	/**
+	 * Additional attributes that describe the scope. [Optional].
+	 * Attribute keys MUST be unique (it is not allowed to have more than one
+	 * attribute with the same key).
+	 *
+	 * @generated from field: repeated opentelemetry.proto.common.v1.KeyValue attributes = 3;
+	 */
+	attributes: KeyValue[];
 
-  /**
-   * @generated from field: uint32 dropped_attributes_count = 4;
-   */
-  droppedAttributesCount: number;
+	/**
+	 * @generated from field: uint32 dropped_attributes_count = 4;
+	 */
+	droppedAttributesCount: number;
 };
 
 /**
  * Describes the message opentelemetry.proto.common.v1.InstrumentationScope.
  * Use `create(InstrumentationScopeSchema)` to create a new message.
  */
-export const InstrumentationScopeSchema: GenMessage<InstrumentationScope> = /*@__PURE__*/
-  messageDesc(file_opentelemetry_proto_common_v1_common, 4);
-
+export const InstrumentationScopeSchema: GenMessage<InstrumentationScope> /*@__PURE__*/ =
+	messageDesc(file_opentelemetry_proto_common_v1_common, 4);

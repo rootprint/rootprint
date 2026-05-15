@@ -184,7 +184,7 @@ Every load is `+page.ts` / `+layout.ts`. Hard rule for `apps/web` per the root `
 
 ### URL and storage shape
 
-Saved queries and shared links encode state in the URL. Phase 4 inherits `main`'s URL shape so existing share URLs round-trip. Phase 0 ports `query-params.ts` and `storage-keys.ts` unchanged. UX cleanups that *break* either shape are out of scope unless flagged and decided explicitly.
+Saved queries and shared links encode state in the URL. Phase 4 inherits `main`'s URL shape so existing share URLs round-trip. Phase 0 ports `query-params.ts` and `storage-keys.ts` unchanged. UX cleanups that _break_ either shape are out of scope unless flagged and decided explicitly.
 
 ### Toasts
 
@@ -196,12 +196,12 @@ Saved queries and shared links encode state in the URL. Phase 4 inherits `main`'
 
 ### Dependencies per phase
 
-| Phase | New dependencies |
-|-------|------------------|
-| 0     | `lucide-svelte`, `svelte-sonner`, `date-fns` |
-| 1–3   | none |
+| Phase | New dependencies                                                                  |
+| ----- | --------------------------------------------------------------------------------- |
+| 0     | `lucide-svelte`, `svelte-sonner`, `date-fns`                                      |
+| 1–3   | none                                                                              |
 | 4     | `overlayscrollbars`, `overlayscrollbars-svelte`, charting lib (verify on porting) |
-| 5–7   | none expected |
+| 5–7   | none expected                                                                     |
 
 Keep package.json deltas reviewable; avoid pulling heavy deps before their phase.
 

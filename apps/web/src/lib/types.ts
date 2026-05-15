@@ -1,6 +1,6 @@
-import type { InferResponseType } from 'hono/client';
+import type { InferResponseType } from "hono/client";
 
-import type { api } from '$lib/api/client';
+import type { api } from "$lib/api/client";
 
 export type UserView = InferResponseType<typeof api.api.users.$get>[number];
 

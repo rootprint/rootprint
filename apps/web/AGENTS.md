@@ -27,17 +27,17 @@ bun --filter web lint             # oxlint
 
 ## Source Layout
 
-| Path                                        | Purpose                                              |
-| ------------------------------------------- | ---------------------------------------------------- |
-| `src/routes/`                               | SvelteKit pages and layouts                          |
-| `src/routes/(app)/`                         | Authenticated product routes (group layout)         |
-| `src/routes/auth/`                          | Sign-in, first-time admin setup                      |
-| `src/lib/api/client.ts`                     | Hono RPC client (`hc<AppType>`)                      |
-| `src/lib/auth-client.ts`                    | Better Auth client                                   |
-| `src/lib/types.ts`                          | App-local types (pure types only)                    |
-| `src/app.html`                              | HTML shell + boot loader + Google Fonts             |
-| `src/app.css`                               | Tailwind entry + DaisyUI theme + design tokens      |
-| `svelte.config.js`, `vite.config.ts`        | Tooling configs                                      |
+| Path                                 | Purpose                                        |
+| ------------------------------------ | ---------------------------------------------- |
+| `src/routes/`                        | SvelteKit pages and layouts                    |
+| `src/routes/(app)/`                  | Authenticated product routes (group layout)    |
+| `src/routes/auth/`                   | Sign-in, first-time admin setup                |
+| `src/lib/api/client.ts`              | Hono RPC client (`hc<AppType>`)                |
+| `src/lib/auth-client.ts`             | Better Auth client                             |
+| `src/lib/types.ts`                   | App-local types (pure types only)              |
+| `src/app.html`                       | HTML shell + boot loader + Google Fonts        |
+| `src/app.css`                        | Tailwind entry + DaisyUI theme + design tokens |
+| `svelte.config.js`, `vite.config.ts` | Tooling configs                                |
 
 ## Data Loading
 
@@ -66,20 +66,20 @@ Do not introduce a second theme or add a `data-theme` override elsewhere. If you
 
 Use semantic DaisyUI classes (`bg-base-100`, `text-base-content`, `btn-primary`, …) — never the raw hex values. The current mapping:
 
-| Role            | Use for                                                |
-| --------------- | ------------------------------------------------------ |
-| `base-100`      | App canvas (white)                                     |
-| `base-200`      | Elevated panels, cards, the auth card                  |
-| `base-300`      | Field backgrounds, dividers                            |
-| `base-content`  | Default text                                           |
-| `primary`       | Brand-green action — primary buttons, focal highlights |
-| `secondary`     | Dark-green text on green, or inverted accent contexts  |
-| `accent`        | Blue informational accent (used sparingly)             |
-| `neutral`       | Strong neutral surface (e.g. inverted dark button)     |
-| `info`          | Code-identifier blue                                   |
-| `success`       | Confirmation                                           |
-| `warning`       | Caution                                                |
-| `error`         | Field/form errors                                      |
+| Role           | Use for                                                |
+| -------------- | ------------------------------------------------------ |
+| `base-100`     | App canvas (white)                                     |
+| `base-200`     | Elevated panels, cards, the auth card                  |
+| `base-300`     | Field backgrounds, dividers                            |
+| `base-content` | Default text                                           |
+| `primary`      | Brand-green action — primary buttons, focal highlights |
+| `secondary`    | Dark-green text on green, or inverted accent contexts  |
+| `accent`       | Blue informational accent (used sparingly)             |
+| `neutral`      | Strong neutral surface (e.g. inverted dark button)     |
+| `info`         | Code-identifier blue                                   |
+| `success`      | Confirmation                                           |
+| `warning`      | Caution                                                |
+| `error`        | Field/form errors                                      |
 
 The brand-green is the visual signature. Use it for one primary CTA per surface — not for decoration.
 

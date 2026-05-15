@@ -1,63 +1,63 @@
 <!doctype html>
 <html lang="en" data-theme="logwiz">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="/favicon.ico" sizes="any" />
-		<link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
-		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-		<link rel="manifest" href="/site.webmanifest" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>logwiz</title>
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap"
-		/>
-		<style>
-			#boot-loader {
-				position: fixed;
-				inset: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				background: #ffffff;
-				color: #8d8d8d;
-				font-family: 'Roboto Mono', ui-monospace, monospace;
-				font-size: 12px;
-				letter-spacing: 0.08em;
-				text-transform: uppercase;
-				z-index: 9999;
-			}
-			#boot-loader.hidden {
-				display: none;
-			}
-			#boot-loader .spinner {
-				width: 28px;
-				height: 28px;
-				border: 2px solid #e8e9ed;
-				border-top-color: #008060;
-				border-radius: 50%;
-				animation: boot-spin 0.8s linear infinite;
-			}
-			@keyframes boot-spin {
-				to {
-					transform: rotate(360deg);
-				}
-			}
-		</style>
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div id="boot-loader" aria-busy="true" aria-label="Loading">
-			<div class="spinner" role="presentation"></div>
-		</div>
-		<div style="display: contents">%sveltekit.body%</div>
-		<script>
-			setTimeout(() => {
-				const el = document.getElementById('boot-loader');
-				if (el) el.classList.add('hidden');
-			}, 5000);
-		</script>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>logwiz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap"
+    />
+    <style>
+      #boot-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        color: #8d8d8d;
+        font-family: "Roboto Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        z-index: 9999;
+      }
+      #boot-loader.hidden {
+        display: none;
+      }
+      #boot-loader .spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid #e8e9ed;
+        border-top-color: #008060;
+        border-radius: 50%;
+        animation: boot-spin 0.8s linear infinite;
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div id="boot-loader" aria-busy="true" aria-label="Loading">
+      <div class="spinner" role="presentation"></div>
+    </div>
+    <div style="display: contents">%sveltekit.body%</div>
+    <script>
+      setTimeout(() => {
+        const el = document.getElementById("boot-loader");
+        if (el) el.classList.add("hidden");
+      }, 5000);
+    </script>
+  </body>
 </html>

@@ -14,43 +14,43 @@ import { unprocessable } from '../utils/http-error.js';
 const SHARE_BODY_LIMIT = 64 * 1024;
 
 const CreateBody = v.pipe(
-  v.object({
-    indexName: v.pipe(v.string(), v.minLength(1)),
-    query: v.string(),
-    startTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
-    endTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
-    hit: v.record(v.string(), v.unknown()),
-  }),
-  v.check((b) => b.endTime >= b.startTime, 'endTime must be >= startTime'),
+	v.object({
+		indexName: v.pipe(v.string(), v.minLength(1)),
+		query: v.string(),
+		startTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		endTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		hit: v.record(v.string(), v.unknown())
+	}),
+	v.check((b) => b.endTime >= b.startTime, 'endTime must be >= startTime')
 );
 
 const CodeParams = v.object({
-  code: v.pipe(v.string(), v.length(10)),
+	code: v.pipe(v.string(), v.length(10))
 });
 
 export const sharesRouter = new Hono<AppEnv>();
 
 sharesRouter.post(
-  '/',
-  bodyLimit({
-    maxSize: SHARE_BODY_LIMIT,
-    onError: () => {
-      throw unprocessable('Share payload exceeds 64KB', 'PAYLOAD_TOO_LARGE');
-    },
-  }),
-  async (c) => {
-    const body = v.parse(CreateBody, await c.req.json());
-    const session = requireSession(c);
-    await assertIndexAccess(db, quickwit, body.indexName, isAdmin(session));
-    const result = await createShare(db, session.user.id, body);
-    return c.json(result, 201);
-  },
+	'/',
+	bodyLimit({
+		maxSize: SHARE_BODY_LIMIT,
+		onError: () => {
+			throw unprocessable('Share payload exceeds 64KB', 'PAYLOAD_TOO_LARGE');
+		}
+	}),
+	async (c) => {
+		const body = v.parse(CreateBody, await c.req.json());
+		const session = requireSession(c);
+		await assertIndexAccess(db, quickwit, body.indexName, isAdmin(session));
+		const result = await createShare(db, session.user.id, body);
+		return c.json(result, 201);
+	}
 );
 
 sharesRouter.get('/:code', async (c) => {
-  const { code } = v.parse(CodeParams, c.req.param());
-  const session = requireSession(c);
-  const row = await resolveShare(db, code);
-  await assertIndexAccess(db, quickwit, row.indexName, isAdmin(session));
-  return c.json(row);
+	const { code } = v.parse(CodeParams, c.req.param());
+	const session = requireSession(c);
+	const row = await resolveShare(db, code);
+	await assertIndexAccess(db, quickwit, row.indexName, isAdmin(session));
+	return c.json(row);
 });

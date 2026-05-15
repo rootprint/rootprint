@@ -9,7 +9,7 @@ import { assertIndexAccess } from '../services/index.service.js';
 import { IndexIdParams } from '../utils/params.js';
 
 export const requireIndexAccess: MiddlewareHandler<AppEnv> = async (c, next) => {
-  const { indexId } = v.parse(IndexIdParams, c.req.param());
-  await assertIndexAccess(db, quickwit, indexId, isAdmin(c.get('session')));
-  await next();
+	const { indexId } = v.parse(IndexIdParams, c.req.param());
+	await assertIndexAccess(db, quickwit, indexId, isAdmin(c.get('session')));
+	await next();
 };

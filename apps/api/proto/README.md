@@ -4,11 +4,11 @@ These `.proto` files are vendored from upstream so that `bun run proto:gen` is o
 
 ## Version pins
 
-| Source | Tag / Commit | Notes |
-|---|---|---|
-| `opentelemetry-proto` | `v1.5.0` | https://github.com/open-telemetry/opentelemetry-proto/releases/tag/v1.5.0 |
-| `googleapis` | `a0cedfb6af9305b49db07dccaa7d0c8985e07e70` | googleapis has no release tags; pinned to `master` as of vendoring. |
-| `protocolbuffers/protobuf` (for `any.proto`) | `v25.3` | No longer vendored — resolved from @bufbuild/protobuf/wkt by codegen. Kept in the table for historical reference; remove this row in a future refresh if no one cares. |
+| Source                                       | Tag / Commit                               | Notes                                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `opentelemetry-proto`                        | `v1.5.0`                                   | https://github.com/open-telemetry/opentelemetry-proto/releases/tag/v1.5.0                                                                                              |
+| `googleapis`                                 | `a0cedfb6af9305b49db07dccaa7d0c8985e07e70` | googleapis has no release tags; pinned to `master` as of vendoring.                                                                                                    |
+| `protocolbuffers/protobuf` (for `any.proto`) | `v25.3`                                    | No longer vendored — resolved from @bufbuild/protobuf/wkt by codegen. Kept in the table for historical reference; remove this row in a future refresh if no one cares. |
 
 ## Refresh recipe
 

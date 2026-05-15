@@ -1,48 +1,48 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1778498281879,
-      "tag": "0000_typical_anthem",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1778502200459,
-      "tag": "0001_busy_eddie_brock",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1778784620074,
-      "tag": "0002_add_saved_query_updated_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1778784620100,
-      "tag": "0003_drop_saved_query_user_index",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1778794340918,
-      "tag": "0004_glamorous_thunderball",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1778795568970,
-      "tag": "0005_easy_terror",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1778498281879,
+			"tag": "0000_typical_anthem",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1778502200459,
+			"tag": "0001_busy_eddie_brock",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1778784620074,
+			"tag": "0002_add_saved_query_updated_at",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1778784620100,
+			"tag": "0003_drop_saved_query_user_index",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1778794340918,
+			"tag": "0004_glamorous_thunderball",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1778795568970,
+			"tag": "0005_easy_terror",
+			"breakpoints": true
+		}
+	]
 }

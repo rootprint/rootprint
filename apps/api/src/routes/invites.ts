@@ -13,16 +13,16 @@ const InviteUserIdParams = v.object({ userId: v.pipe(v.string(), v.minLength(1))
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const invitesRouter = new Hono<AppEnv>()
-  .use('*', requireAdmin)
-  .post(
-    '/',
-    validator('json', (value) => v.parse(createInviteSchema, value)),
-    async (c) => {
-      const result = await userService.createInvite(db, auth, c.req.valid('json'));
-      return c.json(result, 201);
-    },
-  )
-  .post('/:userId/resend', async (c) => {
-    const { userId } = v.parse(InviteUserIdParams, c.req.param());
-    return c.json(await userService.resendInvite(db, userId));
-  });
+	.use('*', requireAdmin)
+	.post(
+		'/',
+		validator('json', (value) => v.parse(createInviteSchema, value)),
+		async (c) => {
+			const result = await userService.createInvite(db, auth, c.req.valid('json'));
+			return c.json(result, 201);
+		}
+	)
+	.post('/:userId/resend', async (c) => {
+		const { userId } = v.parse(InviteUserIdParams, c.req.param());
+		return c.json(await userService.resendInvite(db, userId));
+	});
