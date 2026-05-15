@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Search, UserPlus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { crossfade } from 'svelte/transition';
+	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
 	import { api } from '$lib/api/client';
@@ -14,6 +16,17 @@
 	import { formatRelativeTime } from '$lib/utils/time';
 
 	type Filter = 'all' | 'admin' | 'pending';
+
+	const [send, receive] = crossfade({
+		duration: 200,
+		easing: cubicInOut
+	});
+
+	const filterOptions: { id: Filter; label: string }[] = [
+		{ id: 'all', label: 'All' },
+		{ id: 'admin', label: 'Admin' },
+		{ id: 'pending', label: 'Pending' }
+	];
 
 	let { data } = $props();
 	const users = $derived(data.users);
@@ -90,30 +103,38 @@
 </script>
 
 <div class="mx-auto max-w-5xl px-12 py-12">
-	<p class="eyebrow">Administration · Users</p>
+	<p class="eyebrow">Administration / Users</p>
 	<h1 class="mt-3 text-h1">Users</h1>
 	<p class="text-base-content/60 mt-3 text-sm">
 		Invite new members, manage roles, and revoke access.
 	</p>
 
-	<div class="mt-8 flex flex-wrap items-center gap-3">
-		<div role="tablist" class="hairline rounded-box flex p-0.5">
-			{#each [{ id: 'all', label: 'All' }, { id: 'admin', label: 'Admin' }, { id: 'pending', label: 'Pending' }] as opt (opt.id)}
+	<div class="mt-8 flex flex-wrap items-center gap-4">
+		<div role="tablist" class="flex h-8 items-center gap-5">
+			{#each filterOptions as opt (opt.id)}
 				{@const active = filter === opt.id}
 				<button
 					type="button"
 					role="tab"
-					class="rounded px-3 py-1 text-xs transition-colors {active
-						? 'text-base-content bg-base-200'
-						: 'text-base-content/60'}"
-					onclick={() => (filter = opt.id as Filter)}
+					aria-selected={active}
+					class="relative flex h-full items-center text-sm transition-colors {active
+						? 'text-base-content'
+						: 'text-base-content/50 hover:text-base-content'}"
+					onclick={() => (filter = opt.id)}
 				>
 					{opt.label}
+					{#if active}
+						<span
+							in:receive={{ key: 'users-filter-indicator' }}
+							out:send={{ key: 'users-filter-indicator' }}
+							class="bg-primary absolute right-0 -bottom-px left-0 h-px"
+						></span>
+					{/if}
 				</button>
 			{/each}
 		</div>
 
-		<label class="input flex-1">
+		<label class="input input-sm flex-1">
 			<Search size={14} class="opacity-60" />
 			<input
 				type="search"
@@ -123,10 +144,10 @@
 			/>
 		</label>
 
-		<span class="text-base-content/60 font-mono text-xs">{countLabel}</span>
+		<span class="text-base-content/60 font-mono text-xs">[{countLabel}]</span>
 
 		<button class="btn btn-primary btn-sm" onclick={() => (inviteOpen = true)}>
-			<UserPlus size={16} />
+			<UserPlus size={14} />
 			Invite user
 		</button>
 	</div>

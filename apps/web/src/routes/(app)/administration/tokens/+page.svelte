@@ -172,7 +172,7 @@
 </script>
 
 <div class="mx-auto max-w-5xl px-12 py-12">
-	<p class="eyebrow">Administration · Tokens</p>
+	<p class="eyebrow">Administration / Tokens</p>
 	<h1 class="mt-3 text-h1">Ingest tokens</h1>
 	<p class="text-base-content/60 mt-3 text-sm">Create and manage tokens for sending logs.</p>
 
@@ -182,8 +182,8 @@
 		</p>
 	{/if}
 
-	<div class="mt-8 flex flex-wrap items-center gap-3">
-		<label class="input flex-1">
+	<div class="mt-8 flex flex-wrap items-center gap-4">
+		<label class="input input-sm flex-1">
 			<Search size={14} class="opacity-60" />
 			<input
 				type="search"
@@ -192,9 +192,9 @@
 				bind:value={search}
 			/>
 		</label>
-		<span class="text-base-content/60 font-mono text-xs">{countLabel}</span>
+		<span class="text-base-content/60 font-mono text-xs">[{countLabel}]</span>
 		<button class="btn btn-primary btn-sm" onclick={openCreate} disabled={noIndexes}>
-			<Plus size={16} />
+			<Plus size={14} />
 			Create token
 		</button>
 	</div>
@@ -208,10 +208,12 @@
 						{token.tokenPrefix}…
 					</div>
 				</div>
-				<div class="text-base-content/70 shrink-0 font-mono text-xs">{token.indexId}</div>
-				<span class="text-base-content/50 shrink-0 font-mono text-xs">
-					{token.lastUsedAt ? formatRelativeTime(new Date(token.lastUsedAt)) : 'Never'}
-				</span>
+				<div class="shrink-0 text-right">
+					<div class="text-base-content/70 font-mono text-xs">{token.indexId}</div>
+					<div class="text-base-content/50 mt-0.5 font-mono text-xs">
+						{token.lastUsedAt ? formatRelativeTime(new Date(token.lastUsedAt)) : 'Never'}
+					</div>
+				</div>
 				<button
 					type="button"
 					class="btn btn-square btn-ghost btn-sm"

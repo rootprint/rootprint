@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import logo from '$lib/assets/logo.png';
 	import UserMenu from './UserMenu.svelte';
 
 	type User = { id: string; name: string | null; email: string; role: string };
@@ -14,9 +13,8 @@
 </script>
 
 <header class="hairline bg-base-100 flex h-12 items-center gap-6 border-x-0 border-t-0 px-4">
-	<a href="/" class="flex items-center gap-2 hover:opacity-80">
-		<img src={logo} alt="Logwiz" class="h-6 w-auto rounded-sm object-contain" />
-		<span class="text-base tracking-tight">Logwiz</span>
+	<a href="/" class="font-mono text-sm tracking-wider lowercase hover:opacity-80">
+		<span class="text-primary">/</span>logwiz
 	</a>
 
 	<nav class="flex h-full items-center gap-1">

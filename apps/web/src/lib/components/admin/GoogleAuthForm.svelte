@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { X } from 'lucide-svelte';
-	import { untrack } from 'svelte';
+	import { Pencil, X } from 'lucide-svelte';
+	import { tick, untrack } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
-	import {
-		googleAllowedDomainsSchema,
-		googleCredentialsSchema
-	} from 'api/schemas';
+	import { googleAllowedDomainsSchema, googleCredentialsSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
@@ -30,15 +28,34 @@
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 	let removeOpen = $state(false);
+	let editingCredentials = $state(false);
+	let clientIdInput = $state<HTMLInputElement | null>(null);
+	let clientSecretInput = $state<HTMLInputElement | null>(null);
 
 	const isConfigured = $derived(settings.configured);
 	const callbackUrl = $derived(`${origin}/api/auth/callback/google`);
 
-	const credentialsHint = $derived(
-		isConfigured
-			? 'Leave both fields blank to keep current credentials.'
-			: 'Required to enable Google sign-in.'
-	);
+	const credentialsHint = $derived.by(() => {
+		if (!isConfigured) return 'Required to enable Google sign-in.';
+		if (editingCredentials) return 'Both fields are required when rotating credentials.';
+		return 'Credentials are stored. Use the edit icon to rotate them.';
+	});
+
+	async function startEditCredentials(focus: 'id' | 'secret') {
+		editingCredentials = true;
+		clientId = '';
+		clientSecret = '';
+		await tick();
+		(focus === 'id' ? clientIdInput : clientSecretInput)?.focus();
+	}
+
+	function cancelEditCredentials() {
+		editingCredentials = false;
+		clientId = '';
+		clientSecret = '';
+		delete fieldErrors.clientId;
+		delete fieldErrors.clientSecret;
+	}
 
 	function addDomain() {
 		const domain = domainInput.trim().toLowerCase();
@@ -64,6 +81,8 @@
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			addDomain();
+		} else if (e.key === 'Backspace' && domainInput === '' && allowedDomains.length > 0) {
+			allowedDomains = allowedDomains.slice(0, -1);
 		}
 	}
 
@@ -107,16 +126,15 @@
 					}
 					return;
 				}
-				await call(
-					api.api.settings.auth.google.credentials.$put({ json: credParsed.output })
-				);
+				await call(api.api.settings.auth.google.credentials.$put({ json: credParsed.output }));
 			}
 			await call(
 				api.api.settings.auth.google['allowed-domains'].$put({
 					json: domainsParsed.output
 				})
 			);
-			await goto('/administration/authentication?saved=google', { invalidateAll: true });
+			toast.success('Google authentication settings saved');
+			await goto('/administration/authentication', { invalidateAll: true });
 		} catch (err) {
 			if (err instanceof ApiError) {
 				formError = err.message;
@@ -130,102 +148,176 @@
 	}
 </script>
 
-<form class="flex flex-col gap-4" onsubmit={handleSave}>
+<form class="flex flex-col gap-10" onsubmit={handleSave}>
 	{#if formError}
 		<div role="alert" class="alert alert-error text-sm">{formError}</div>
 	{/if}
 
-	<label class="input w-full" class:input-error={fieldErrors.clientId}>
-		<span class="label">Client ID</span>
-		<input
-			bind:value={clientId}
-			placeholder={isConfigured ? '••••• (leave blank to keep)' : '12345.apps.googleusercontent.com'}
-			autocomplete="off"
-		/>
-	</label>
-	{#if fieldErrors.clientId}
-		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.clientId}</p>
-	{/if}
-
-	<label class="input w-full" class:input-error={fieldErrors.clientSecret}>
-		<span class="label">Client Secret</span>
-		<input
-			bind:value={clientSecret}
-			type="password"
-			placeholder={isConfigured ? '••••• (leave blank to keep)' : 'Client secret'}
-			autocomplete="off"
-		/>
-	</label>
-	{#if fieldErrors.clientSecret}
-		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.clientSecret}</p>
-	{:else}
-		<p class="text-base-content/50 -mt-2 font-mono text-xs">{credentialsHint}</p>
-	{/if}
-
-	<div>
-		<label class="input w-full" class:input-error={fieldErrors.allowedDomains}>
-			<span class="label">Allowed domains</span>
-			<input
-				bind:value={domainInput}
-				placeholder="company.com"
-				autocomplete="off"
-				onkeydown={handleDomainKeydown}
-			/>
-			<button type="button" class="badge badge-ghost badge-sm" onclick={addDomain}>Add</button>
-		</label>
-		{#if fieldErrors.allowedDomains}
-			<p class="text-error mt-1 font-mono text-xs">{fieldErrors.allowedDomains}</p>
-		{/if}
-		{#if allowedDomains.length > 0}
-			<div class="mt-2 flex flex-wrap gap-1.5">
-				{#each allowedDomains as domain (domain)}
-					<span
-						class="hairline rounded-box flex items-center gap-1 px-2 py-0.5 font-mono text-xs"
-					>
-						{domain}
-						<button
-							type="button"
-							class="opacity-60 hover:opacity-100"
-							aria-label="Remove {domain}"
-							onclick={() => removeDomain(domain)}
-						>
-							<X size={12} />
-						</button>
-					</span>
-				{/each}
-			</div>
-		{/if}
-	</div>
-
-	<div>
-		<label class="input w-full">
-			<span class="label">Callback URL</span>
-			<input
-				value={callbackUrl}
-				readonly
-				class="font-mono text-xs"
-				aria-label="Callback URL"
-			/>
+	<section class="flex flex-col gap-3">
+		<header>
+			<p class="eyebrow">Callback URL</p>
+			<p class="text-base-content/60 mt-1 text-xs">
+				Add this as an authorized redirect URI in Google Cloud Console.
+			</p>
+		</header>
+		<div
+			class="border-base-content/10 bg-base-200/40 rounded-box flex items-center gap-3 border px-3 py-2"
+		>
+			<code class="text-base-content flex-1 truncate font-mono text-xs">{callbackUrl}</code>
 			<CopyButton
 				text={callbackUrl}
-				class="badge badge-ghost badge-sm"
+				class="badge badge-ghost badge-sm cursor-pointer"
 				ariaLabel="Copy callback URL"
 			>
-				{#snippet children({ copied })}
+				{#snippet children({ copied }: { copied: boolean })}
 					{copied ? 'Copied' : 'Copy'}
 				{/snippet}
 			</CopyButton>
-		</label>
-		<p class="text-base-content/50 mt-1 font-mono text-xs">
-			Add this URL as an authorized redirect URI in Google Cloud Console.
-		</p>
-	</div>
+		</div>
+	</section>
 
-	<div class="mt-4 flex items-center justify-between gap-2">
+	<section class="flex flex-col gap-3">
+		<header>
+			<p class="eyebrow">Credentials</p>
+			<p class="text-base-content/60 mt-1 text-xs">{credentialsHint}</p>
+		</header>
+		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+			{#if isConfigured && !editingCredentials}
+				<label class="input w-full !border-base-content/10 !bg-base-200/40">
+					<span class="label">Client ID</span>
+					<input
+						value="•••••••••••••••••"
+						disabled
+						class="text-base-content/50 disabled:!text-base-content/50"
+						aria-label="Client ID (configured)"
+					/>
+					<button
+						type="button"
+						class="badge badge-ghost badge-sm cursor-pointer"
+						aria-label="Edit Client ID"
+						onclick={() => startEditCredentials('id')}
+					>
+						<Pencil size={12} />
+					</button>
+				</label>
+				<label class="input w-full !border-base-content/10 !bg-base-200/40">
+					<span class="label">Client Secret</span>
+					<input
+						value="•••••••••••••••••"
+						disabled
+						class="text-base-content/50 disabled:!text-base-content/50"
+						aria-label="Client Secret (configured)"
+					/>
+					<button
+						type="button"
+						class="badge badge-ghost badge-sm cursor-pointer"
+						aria-label="Edit Client Secret"
+						onclick={() => startEditCredentials('secret')}
+					>
+						<Pencil size={12} />
+					</button>
+				</label>
+			{:else}
+				<div>
+					<label class="input w-full" class:input-error={fieldErrors.clientId}>
+						<span class="label">Client ID</span>
+						<input
+							bind:this={clientIdInput}
+							bind:value={clientId}
+							placeholder="12345.apps.googleusercontent.com"
+							autocomplete="off"
+						/>
+						{#if isConfigured}
+							<button
+								type="button"
+								class="badge badge-ghost badge-sm cursor-pointer"
+								aria-label="Cancel editing credentials"
+								onclick={cancelEditCredentials}
+							>
+								<X size={12} />
+							</button>
+						{/if}
+					</label>
+					{#if fieldErrors.clientId}
+						<p class="text-error mt-1 font-mono text-xs">{fieldErrors.clientId}</p>
+					{/if}
+				</div>
+				<div>
+					<label class="input w-full" class:input-error={fieldErrors.clientSecret}>
+						<span class="label">Client Secret</span>
+						<input
+							bind:this={clientSecretInput}
+							bind:value={clientSecret}
+							type="password"
+							placeholder="Client secret"
+							autocomplete="off"
+						/>
+						{#if isConfigured}
+							<button
+								type="button"
+								class="badge badge-ghost badge-sm cursor-pointer"
+								aria-label="Cancel editing credentials"
+								onclick={cancelEditCredentials}
+							>
+								<X size={12} />
+							</button>
+						{/if}
+					</label>
+					{#if fieldErrors.clientSecret}
+						<p class="text-error mt-1 font-mono text-xs">{fieldErrors.clientSecret}</p>
+					{/if}
+				</div>
+			{/if}
+		</div>
+	</section>
+
+	<section class="flex flex-col gap-3">
+		<header>
+			<p class="eyebrow">Allowed domains</p>
+			<p class="text-base-content/60 mt-1 text-xs">
+				Only users with an email from these domains can sign in.
+			</p>
+		</header>
+		<div
+			class="border-base-content/10 focus-within:border-base-content bg-base-100 rounded-box flex flex-wrap items-center gap-1.5 border px-2 py-2 transition-colors"
+			class:!border-error={fieldErrors.allowedDomains}
+		>
+			{#each allowedDomains as domain (domain)}
+				<span
+					class="bg-base-200 flex items-center gap-1 rounded px-2 py-1 font-mono text-xs"
+				>
+					{domain}
+					<button
+						type="button"
+						class="cursor-pointer opacity-50 hover:opacity-100"
+						aria-label="Remove {domain}"
+						onclick={() => removeDomain(domain)}
+					>
+						<X size={12} />
+					</button>
+				</span>
+			{/each}
+			<input
+				bind:value={domainInput}
+				placeholder={allowedDomains.length === 0
+					? 'company.com  (press Enter to add)'
+					: 'Add another…'}
+				autocomplete="off"
+				aria-label="Add domain"
+				class="placeholder:text-base-content/40 min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
+				onkeydown={handleDomainKeydown}
+			/>
+		</div>
+		{#if fieldErrors.allowedDomains}
+			<p class="text-error font-mono text-xs">{fieldErrors.allowedDomains}</p>
+		{/if}
+	</section>
+
+	<div class="flex items-center justify-between gap-2">
 		{#if isConfigured}
 			<button
 				type="button"
-				class="btn btn-ghost text-error btn-sm"
+				class="btn btn-ghost text-error hover:bg-error/10 cursor-pointer"
 				disabled={saving}
 				onclick={() => (removeOpen = true)}
 			>
@@ -235,7 +327,7 @@
 			<span></span>
 		{/if}
 		<button class="btn btn-primary" type="submit" disabled={saving}>
-			{saving ? 'Saving…' : 'Save'}
+			{saving ? 'Saving…' : 'Save changes'}
 		</button>
 	</div>
 </form>
