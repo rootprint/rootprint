@@ -82,9 +82,6 @@ authRouter.post('/setup-password', async (c) => {
 // Better-auth wildcard — must be LAST so custom routes above match first.
 authRouter.all('/*', (c) => {
   const req = c.req.raw;
-  // Preserve prior Fastify-era behavior: forge our frontend origin when the
-  // request has none or 'null' (server-side callers, file:// frontends).
-  // Better-auth uses Origin for CSRF / trustedOrigins checks.
   const origin = req.headers.get('origin');
   if (!origin || origin === 'null') {
     req.headers.set('origin', config.frontendUrl);
