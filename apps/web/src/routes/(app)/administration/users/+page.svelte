@@ -167,7 +167,9 @@
 					<div class="flex items-center gap-2">
 						<span class="truncate text-sm">{user.name}</span>
 						{#if user.role === 'admin'}
-							<span class="badge badge-outline badge-sm">Admin</span>
+							<span class="font-mono text-xs uppercase tracking-[0.08em] text-base-content/60">
+								Admin
+							</span>
 						{/if}
 					</div>
 					<div class="text-base-content/60 truncate font-mono text-xs">{user.email}</div>

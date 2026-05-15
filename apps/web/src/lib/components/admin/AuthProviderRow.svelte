@@ -25,14 +25,7 @@
 	</div>
 
 	<div class="min-w-0 flex-1">
-		<div class="flex items-center gap-2">
-			<span class="truncate text-sm">{provider.name}</span>
-			{#if provider.configured}
-				<span class="badge badge-outline badge-sm">Enabled</span>
-			{:else}
-				<span class="badge badge-outline badge-sm opacity-60">Not configured</span>
-			{/if}
-		</div>
+		<div class="truncate text-sm">{provider.name}</div>
 		<div class="text-base-content/60 truncate font-mono text-xs">
 			{provider.statusLine ?? provider.description}
 		</div>
