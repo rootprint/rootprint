@@ -198,20 +198,24 @@
 	</div>
 
 	<div>
-		<p class="label">Callback URL</p>
-		<div class="flex gap-2">
+		<label class="input w-full">
+			<span class="label">Callback URL</span>
 			<input
-				class="input flex-1 font-mono text-xs"
 				value={callbackUrl}
 				readonly
+				class="font-mono text-xs"
 				aria-label="Callback URL"
 			/>
-			<CopyButton text={callbackUrl} ariaLabel="Copy callback URL">
+			<CopyButton
+				text={callbackUrl}
+				class="badge badge-ghost badge-sm"
+				ariaLabel="Copy callback URL"
+			>
 				{#snippet children({ copied })}
 					{copied ? 'Copied' : 'Copy'}
 				{/snippet}
 			</CopyButton>
-		</div>
+		</label>
 		<p class="text-base-content/50 mt-1 font-mono text-xs">
 			Add this URL as an authorized redirect URI in Google Cloud Console.
 		</p>

@@ -91,7 +91,7 @@
 
 <div class="mx-auto max-w-5xl px-12 py-12">
 	<p class="eyebrow">Administration · Users</p>
-	<h1 class="mt-3 text-4xl tracking-tight">Users</h1>
+	<h1 class="mt-3 text-h1">Users</h1>
 	<p class="text-base-content/60 mt-3 text-sm">
 		Invite new members, manage roles, and revoke access.
 	</p>
@@ -103,10 +103,9 @@
 				<button
 					type="button"
 					role="tab"
-					class="rounded px-3 py-1 text-xs transition-colors"
-					class:bg-base-200={active}
-					class:text-base-content={active}
-					class:text-base-content-60={!active}
+					class="rounded px-3 py-1 text-xs transition-colors {active
+						? 'text-base-content bg-base-200'
+						: 'text-base-content/60'}"
 					onclick={() => (filter = opt.id as Filter)}
 				>
 					{opt.label}
@@ -195,9 +194,3 @@
 	userName={target?.name ?? ''}
 	onremoved={refresh}
 />
-
-<style>
-	.text-base-content-60 {
-		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
-	}
-</style>

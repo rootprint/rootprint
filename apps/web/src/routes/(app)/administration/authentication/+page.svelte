@@ -25,7 +25,7 @@
 
 <div class="mx-auto max-w-5xl px-12 py-12">
 	<p class="eyebrow">Administration · Authentication</p>
-	<h1 class="mt-3 text-4xl tracking-tight">Authentication</h1>
+	<h1 class="mt-3 text-h1">Authentication</h1>
 	<p class="text-base-content/60 mt-3 text-sm">
 		Configure sign-in methods available on this instance.
 	</p>
