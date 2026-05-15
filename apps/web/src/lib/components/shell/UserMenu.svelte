@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { LogOut } from 'lucide-svelte';
+	import { KeyRound, LogOut } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidate } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
+	import ChangePasswordModal from '$lib/components/shell/ChangePasswordModal.svelte';
 	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
 
 	type User = { id: string; name: string | null; email: string };
@@ -13,6 +14,7 @@
 	const color = $derived(avatarColor(user.id));
 
 	let signingOut = $state(false);
+	let changePasswordOpen = $state(false);
 
 	async function signOut() {
 		signingOut = true;
@@ -50,6 +52,14 @@
 			<button
 				type="button"
 				class="btn btn-ghost btn-sm w-full justify-start"
+				onclick={() => (changePasswordOpen = true)}
+			>
+				<KeyRound size={14} class="opacity-70" />
+				Change password
+			</button>
+			<button
+				type="button"
+				class="btn btn-ghost btn-sm w-full justify-start"
 				onclick={signOut}
 				disabled={signingOut}
 			>
@@ -59,3 +69,5 @@
 		</div>
 	</div>
 </div>
+
+<ChangePasswordModal bind:open={changePasswordOpen} />

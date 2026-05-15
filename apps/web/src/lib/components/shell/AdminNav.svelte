@@ -1,5 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { crossfade } from 'svelte/transition';
+	import { cubicInOut } from 'svelte/easing';
+
+	const [send, receive] = crossfade({
+		duration: 200,
+		easing: cubicInOut
+	});
 
 	const sections = [
 		{ href: '/administration/indexes', label: 'Indexes' },
@@ -25,7 +32,11 @@
 						: 'text-base-content/60 hover:text-base-content hover:bg-base-200/60'}"
 				>
 					{#if active}
-						<span class="bg-primary absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"></span>
+						<span
+							in:receive={{ key: 'admin-nav-indicator' }}
+							out:send={{ key: 'admin-nav-indicator' }}
+							class="bg-primary absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"
+						></span>
 					{/if}
 					{section.label}
 				</a>

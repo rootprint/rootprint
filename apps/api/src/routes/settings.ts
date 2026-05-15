@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { validator } from 'hono/validator';
 import * as v from 'valibot';
 
 import type { AppEnv } from '../env.js';
@@ -6,57 +7,39 @@ import { db } from '../lib/db.js';
 import { reloadAuth } from '../lib/auth.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import {
+  googleAllowedDomainsSchema,
+  googleCredentialsSchema,
+} from '../schemas/settings.js';
+import {
   deleteGoogleAuthCredentials,
   getGoogleAuthStatus,
   putGoogleAuthAllowedDomains,
   putGoogleAuthCredentials,
 } from '../services/settings.service.js';
 
-const domainRegex = /^[a-z0-9.-]+\.[a-z]{2,}$/;
-
-const CredentialsBody = v.object({
-  clientId: v.pipe(v.string(), v.trim(), v.minLength(1, 'Client ID is required')),
-  clientSecret: v.pipe(v.string(), v.trim(), v.minLength(1, 'Client Secret is required')),
-});
-
-const AllowedDomainsBody = v.object({
-  allowedDomains: v.pipe(
-    v.array(
-      v.pipe(
-        v.string(),
-        v.trim(),
-        v.transform((s) => s.toLowerCase()),
-        v.regex(domainRegex, 'Invalid domain format'),
-      ),
-    ),
-    v.minLength(1, 'At least one domain is required'),
-    v.transform((arr) => Array.from(new Set(arr))),
-  ),
-});
-
-export const settingsRouter = new Hono<AppEnv>();
-
-settingsRouter.use('*', requireAdmin);
-
-settingsRouter.get('/auth/google', async (c) =>
-  c.json(await getGoogleAuthStatus(db)),
-);
-
-settingsRouter.put('/auth/google/credentials', async (c) => {
-  const body = v.parse(CredentialsBody, await c.req.json());
-  await putGoogleAuthCredentials(db, body);
-  await reloadAuth();
-  return c.body(null, 204);
-});
-
-settingsRouter.delete('/auth/google/credentials', async (c) => {
-  await deleteGoogleAuthCredentials(db);
-  await reloadAuth();
-  return c.body(null, 204);
-});
-
-settingsRouter.put('/auth/google/allowed-domains', async (c) => {
-  const body = v.parse(AllowedDomainsBody, await c.req.json());
-  await putGoogleAuthAllowedDomains(db, body);
-  return c.body(null, 204);
-});
+// Routes are chained so Hono propagates request/response types for the RPC client.
+export const settingsRouter = new Hono<AppEnv>()
+  .use('*', requireAdmin)
+  .get('/auth/google', async (c) => c.json(await getGoogleAuthStatus(db)))
+  .put(
+    '/auth/google/credentials',
+    validator('json', (value) => v.parse(googleCredentialsSchema, value)),
+    async (c) => {
+      await putGoogleAuthCredentials(db, c.req.valid('json'));
+      await reloadAuth();
+      return c.body(null, 204);
+    },
+  )
+  .delete('/auth/google/credentials', async (c) => {
+    await deleteGoogleAuthCredentials(db);
+    await reloadAuth();
+    return c.body(null, 204);
+  })
+  .put(
+    '/auth/google/allowed-domains',
+    validator('json', (value) => v.parse(googleAllowedDomainsSchema, value)),
+    async (c) => {
+      await putGoogleAuthAllowedDomains(db, c.req.valid('json'));
+      return c.body(null, 204);
+    },
+  );
