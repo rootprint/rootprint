@@ -72,7 +72,7 @@
 		"@iconify-icons/logos": "^1.2.36",
 		"@iconify-icons/mdi": "^1.2.48",
 		"@iconify/svelte": "^5.2.1",
-		"better-auth": "~1.4.22",
+		"better-auth": "~1.6.11",
 		"daisyui": "^5.5.19",
 		"drizzle-orm": "^0.45.1",
 		"lucide-svelte": "^0.577.0",
