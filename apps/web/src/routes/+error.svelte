@@ -2,12 +2,13 @@
 	import { page } from '$app/state';
 </script>
 
-<div class="hero min-h-screen bg-base-200">
-	<div class="hero-content text-center">
-		<div class="max-w-md">
-			<h1 class="text-5xl font-bold">{page.status}</h1>
-			<p class="py-4">{page.error?.message ?? 'Unexpected error'}</p>
-			<a class="btn btn-primary" href="/">Go home</a>
-		</div>
+<div class="bg-base-100 text-base-content flex min-h-screen items-center justify-center px-6">
+	<div class="max-w-md text-center">
+		<p class="text-primary font-mono text-sm tracking-wider">ERROR</p>
+		<h1 class="mt-2 text-6xl tracking-tight">{page.status}</h1>
+		<p class="text-base-content/60 mt-4 text-sm">
+			{page.error?.message ?? 'Unexpected error'}
+		</p>
+		<a class="btn btn-primary mt-8" href="/">Go home</a>
 	</div>
 </div>

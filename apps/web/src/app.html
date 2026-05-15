@@ -8,6 +8,12 @@
 		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>logwiz</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap"
+		/>
 		<style>
 			#boot-loader {
 				position: fixed;
@@ -15,22 +21,22 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				background: #0b0f17;
-				color: #cbd5e1;
-				font-family:
-					ui-sans-serif,
-					system-ui,
-					sans-serif;
+				background: #ffffff;
+				color: #8d8d8d;
+				font-family: 'Roboto Mono', ui-monospace, monospace;
+				font-size: 12px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
 				z-index: 9999;
 			}
 			#boot-loader.hidden {
 				display: none;
 			}
 			#boot-loader .spinner {
-				width: 32px;
-				height: 32px;
-				border: 3px solid #1f2937;
-				border-top-color: #38bdf8;
+				width: 28px;
+				height: 28px;
+				border: 2px solid #e8e9ed;
+				border-top-color: #008060;
 				border-radius: 50%;
 				animation: boot-spin 0.8s linear infinite;
 			}

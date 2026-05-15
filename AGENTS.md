@@ -11,7 +11,7 @@ Logwiz is a Bun-workspace monorepo. Workspaces live under `apps/`. The Hono back
 | Path           | Purpose                                      | Stack                                          | AGENTS.md                            |
 | -------------- | -------------------------------------------- | ---------------------------------------------- | ------------------------------------ |
 | `apps/api`     | Backend service (ingest, search proxy, auth) | Hono, Drizzle, Better Auth, valibot, pino, buf | `apps/api/AGENTS.md`                 |
-| `apps/web`     | Log viewer UI                                | SvelteKit (Svelte 5), Tailwind v4, DaisyUI     | Not yet — workspace is mid-migration |
+| `apps/web`     | Log viewer UI                                | SvelteKit (Svelte 5), Tailwind v4, DaisyUI     | `apps/web/AGENTS.md`                 |
 | `apps/landing` | Marketing site (logwiz.io)                   | SvelteKit static, Tailwind v4, DaisyUI         | `apps/landing/AGENTS.md`             |
 | `apps/docs`    | User docs (docs.logwiz.io)                   | Mintlify                                       | `apps/docs/AGENTS.md`                |
 

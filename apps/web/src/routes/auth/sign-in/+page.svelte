@@ -41,44 +41,43 @@
 	}
 </script>
 
-<h1 class="card-title text-2xl">Sign in</h1>
+<p class="eyebrow mb-2">Sign in</p>
+<h1 class="text-3xl tracking-tight">Welcome back</h1>
 
-<form class="mt-6 space-y-4" {onsubmit}>
-	<label class="form-control w-full">
-		<span class="label-text">Email</span>
+{#if formError}
+	<div role="alert" class="alert alert-error mt-6 text-sm">{formError}</div>
+{/if}
+
+<form class="mt-6 space-y-3" {onsubmit}>
+	<label class="input w-full" class:input-error={fieldErrors.email}>
+		<span class="label">Email</span>
 		<input
-			class="input input-bordered w-full"
-			class:input-error={fieldErrors.email}
 			bind:value={email}
 			type="email"
 			autocomplete="email"
+			placeholder="you@company.com"
 			required
 		/>
-		{#if fieldErrors.email}
-			<span class="text-error text-sm mt-1">{fieldErrors.email}</span>
-		{/if}
 	</label>
+	{#if fieldErrors.email}
+		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.email}</p>
+	{/if}
 
-	<label class="form-control w-full">
-		<span class="label-text">Password</span>
+	<label class="input w-full" class:input-error={fieldErrors.password}>
+		<span class="label">Password</span>
 		<input
-			class="input input-bordered w-full"
-			class:input-error={fieldErrors.password}
 			bind:value={password}
 			type="password"
 			autocomplete="current-password"
+			placeholder="••••••••"
 			required
 		/>
-		{#if fieldErrors.password}
-			<span class="text-error text-sm mt-1">{fieldErrors.password}</span>
-		{/if}
 	</label>
-
-	{#if formError}
-		<div role="alert" class="alert alert-error">{formError}</div>
+	{#if fieldErrors.password}
+		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.password}</p>
 	{/if}
 
-	<button class="btn btn-primary w-full" type="submit" disabled={submitting}>
+	<button class="btn btn-primary mt-6 w-full" type="submit" disabled={submitting}>
 		{submitting ? 'Signing in…' : 'Sign in'}
 	</button>
 </form>

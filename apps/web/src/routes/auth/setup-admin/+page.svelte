@@ -46,62 +46,57 @@
 	}
 </script>
 
-<h1 class="card-title text-2xl">Create administrator</h1>
-<p class="text-sm opacity-70">This is the first account. It will have admin privileges.</p>
+<p class="eyebrow mb-2">First-time setup</p>
+<h1 class="text-3xl tracking-tight">Create administrator</h1>
+<p class="text-base-content/60 mt-2 text-sm">
+	This is the first account. It will have admin privileges.
+</p>
 
-<form class="mt-6 space-y-4" {onsubmit}>
-	<label class="form-control w-full">
-		<span class="label-text">Name</span>
-		<input
-			class="input input-bordered w-full"
-			class:input-error={fieldErrors.name}
-			bind:value={name}
-			autocomplete="name"
-			required
-		/>
-		{#if fieldErrors.name}
-			<span class="text-error text-sm mt-1">{fieldErrors.name}</span>
-		{/if}
+{#if formError}
+	<div role="alert" class="alert alert-error mt-6 text-sm">{formError}</div>
+{/if}
+
+<form class="mt-6 space-y-3" {onsubmit}>
+	<label class="input w-full" class:input-error={fieldErrors.name}>
+		<span class="label">Name</span>
+		<input bind:value={name} autocomplete="name" placeholder="Ada Lovelace" required />
 	</label>
+	{#if fieldErrors.name}
+		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.name}</p>
+	{/if}
 
-	<label class="form-control w-full">
-		<span class="label-text">Email</span>
+	<label class="input w-full" class:input-error={fieldErrors.email}>
+		<span class="label">Email</span>
 		<input
-			class="input input-bordered w-full"
-			class:input-error={fieldErrors.email}
 			bind:value={email}
 			type="email"
 			autocomplete="email"
+			placeholder="you@company.com"
 			required
 		/>
-		{#if fieldErrors.email}
-			<span class="text-error text-sm mt-1">{fieldErrors.email}</span>
-		{/if}
 	</label>
+	{#if fieldErrors.email}
+		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.email}</p>
+	{/if}
 
-	<label class="form-control w-full">
-		<span class="label-text">Password</span>
+	<label class="input w-full" class:input-error={fieldErrors.password}>
+		<span class="label">Password</span>
 		<input
-			class="input input-bordered w-full"
-			class:input-error={fieldErrors.password}
 			bind:value={password}
 			type="password"
 			autocomplete="new-password"
 			minlength="8"
+			placeholder="At least 8 characters"
 			required
 		/>
-		{#if fieldErrors.password}
-			<span class="text-error text-sm mt-1">{fieldErrors.password}</span>
-		{:else}
-			<span class="text-sm opacity-60 mt-1">At least 8 characters.</span>
-		{/if}
 	</label>
-
-	{#if formError}
-		<div role="alert" class="alert alert-error">{formError}</div>
+	{#if fieldErrors.password}
+		<p class="text-error -mt-2 font-mono text-xs">{fieldErrors.password}</p>
+	{:else}
+		<p class="text-base-content/50 -mt-2 font-mono text-xs">min 8 chars</p>
 	{/if}
 
-	<button class="btn btn-primary w-full" type="submit" disabled={submitting}>
+	<button class="btn btn-primary mt-6 w-full" type="submit" disabled={submitting}>
 		{submitting ? 'Creating…' : 'Create administrator'}
 	</button>
 </form>

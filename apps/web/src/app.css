@@ -1,5 +1,139 @@
 @import 'tailwindcss';
 
 @plugin "daisyui" {
-	themes: light --default, dark --prefersdark;
+	themes: logwiz --default;
+	root: ':root';
+}
+
+/* Logwiz theme */
+@plugin "daisyui/theme" {
+	name: 'logwiz';
+	default: true;
+	prefersdark: false;
+	color-scheme: 'light';
+
+	--color-base-100: #ffffff;
+	--color-base-200: #f6f7f9;
+	--color-base-300: #e8e9ed;
+	--color-base-content: #0a0a0a;
+
+	/* Brand */
+	--color-primary: #27f795;
+	--color-primary-content: #00371e;
+	--color-secondary: #00371e;
+	--color-secondary-content: #27f795;
+	--color-accent: #00c1ff;
+	--color-accent-content: #001a26;
+	--color-neutral: #151515;
+	--color-neutral-content: #f6f7f9;
+
+	/* Status — code-palette derived, tuned for legibility on white. */
+	--color-info: #00c1ff;
+	--color-info-content: #001a26;
+	--color-success: #008060;
+	--color-success-content: #ffffff;
+	--color-warning: #fc9f5b;
+	--color-warning-content: #2a1500;
+	--color-error: #d11d35;
+	--color-error-content: #ffffff;
+
+	/* Shape — flat, small radii */
+	--radius-selector: 0.25rem;
+	--radius-field: 0.25rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 0;
+	--noise: 0;
+}
+
+@theme {
+	--font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+	--text-display: 4rem;
+	--text-display--line-height: 4.5rem;
+	--text-display--letter-spacing: -0.04em;
+
+	--text-h1: 2.5rem;
+	--text-h1--line-height: 3rem;
+	--text-h1--letter-spacing: -0.025em;
+
+	--text-h2: 2rem;
+	--text-h2--line-height: 2.5rem;
+	--text-h2--letter-spacing: -0.02em;
+
+	--text-h3: 1.5rem;
+	--text-h3--line-height: 2rem;
+	--text-h3--letter-spacing: -0.015em;
+}
+
+@layer base {
+	html {
+		font-family: var(--font-sans);
+		font-feature-settings: 'cv11', 'ss01';
+	}
+
+	body {
+		font-size: 0.875rem;
+		line-height: 1.5rem;
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+
+	code,
+	kbd,
+	samp,
+	pre {
+		font-family: var(--font-mono);
+	}
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		font-weight: 400;
+		letter-spacing: -0.02em;
+	}
+
+	/* Selection uses the primary so it reads as part of the brand. */
+	::selection {
+		background-color: color-mix(in oklab, var(--color-primary) 35%, transparent);
+		color: var(--color-base-content);
+	}
+}
+
+@layer components {
+	.eyebrow {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		line-height: 1.25rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+	}
+
+	/* Subtle hairline used to frame cards and panels on the dark canvas. */
+	.hairline {
+		border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+	}
+
+	/* Flatten DaisyUI's default 2px offset focus ring on inputs:
+	   shift the 1px border to base-content instead. Same footprint, no jump. */
+	.input:focus-within,
+	.input:focus,
+	.select:focus-within,
+	.select:focus,
+	.textarea:focus-within,
+	.textarea:focus {
+		outline: none;
+		box-shadow: none;
+		border-color: var(--color-base-content);
+	}
+
+	.input.input-error:focus-within,
+	.input.input-error:focus {
+		border-color: var(--color-error);
+	}
 }
