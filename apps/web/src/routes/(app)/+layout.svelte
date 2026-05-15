@@ -1,7 +1,25 @@
 <script lang="ts">
-	let { children } = $props();
+	import QuickwitStatusBanner from '$lib/components/ui/QuickwitStatusBanner.svelte';
+	import TopBar from '$lib/components/shell/TopBar.svelte';
+
+	let { data, children } = $props();
+
+	const user = $derived(data.session!.user);
 </script>
 
-<div class="min-h-screen bg-base-100">
-	{@render children?.()}
+<div class="flex h-screen w-screen flex-col">
+	<TopBar
+		user={{
+			id: user.id,
+			name: user.name,
+			email: user.email,
+			role: (user as { role?: string }).role ?? 'user'
+		}}
+	/>
+
+	<QuickwitStatusBanner status={undefined} />
+
+	<div class="min-h-0 flex-1">
+		{@render children()}
+	</div>
 </div>

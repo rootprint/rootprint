@@ -2,8 +2,8 @@
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
 	import { api } from '$lib/api/client';
+	import { ApiError, call } from '$lib/api/call';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
-	import type { ApiErrorBody } from 'api/types';
 
 	let name = $state('');
 	let email = $state('');
@@ -28,18 +28,16 @@
 			}
 			const input: SetupAdminInput = parsed.output;
 
-			const res = await api.api.auth['setup-admin'].$post({ json: input });
-			if (!res.ok) {
-				const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-				formError = body?.error?.message ?? `Setup failed (${res.status})`;
-				for (const d of body?.error?.details ?? []) {
-					if (d.path && d.path !== '(root)') fieldErrors[d.path] = d.message;
-				}
-				return;
-			}
-
+			await call(api.api.auth['setup-admin'].$post({ json: input }));
 			await invalidate('app:session');
 			await goto('/auth/sign-in');
+		} catch (err) {
+			if (err instanceof ApiError) {
+				formError = err.message;
+				fieldErrors = err.fieldErrors;
+				return;
+			}
+			throw err;
 		} finally {
 			submitting = false;
 		}

@@ -1,0 +1,5 @@
+<div class="mx-auto max-w-5xl px-12 py-12">
+	<p class="eyebrow">Administration · Tokens</p>
+	<h1 class="mt-3 text-4xl tracking-tight">Ingest tokens</h1>
+	<p class="text-base-content/60 mt-3 font-mono text-xs">Coming in Phase 2.</p>
+</div>
