@@ -1,4 +1,5 @@
 import { generateId } from 'better-auth';
+import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import * as v from 'valibot';
 
@@ -77,6 +78,15 @@ authRouter.post('/setup-password', async (c) => {
   const body = v.parse(SetupPasswordBody, await c.req.json());
   await setupPassword(db, auth, body.token, body.password);
   return c.json({ success: true });
+});
+
+authRouter.get('/bootstrap', async (c) => {
+  const rows = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.role, 'admin'))
+    .limit(1);
+  return c.json({ needsSetupAdmin: rows.length === 0 });
 });
 
 // Better-auth wildcard — must be LAST so custom routes above match first.

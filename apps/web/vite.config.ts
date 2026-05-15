@@ -1,13 +1,21 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
-import devtoolsJson from 'vite-plugin-devtools-json';
 
-export default defineConfig(({ mode }) => ({
-	plugins: [tailwindcss(), sveltekit(), ...(mode === 'development' ? [devtoolsJson()] : [])],
+export default defineConfig({
+	plugins: [tailwindcss(), sveltekit()],
 	server: {
-		watch: {
-			ignored: ['**/.quickwit/**']
+		proxy: {
+			'/api': {
+				target: 'http://localhost:8282',
+				changeOrigin: true,
+				ws: false
+			},
+			'/v1': {
+				target: 'http://localhost:8282',
+				changeOrigin: true,
+				ws: false
+			}
 		}
 	}
-}));
+});

@@ -1,73 +1,117 @@
 <script lang="ts">
-	import { setupAdmin } from '$lib/api/auth.remote';
-	import { setupAdminSchema } from '$lib/schemas/auth';
+	import * as v from 'valibot';
+	import { goto, invalidate } from '$app/navigation';
+	import { setupAdminSchema, type SetupAdminInput } from '$lib/schemas/auth';
+	import { ROUTES } from '$lib/constants/routes';
+	import type { ApiErrorBody } from 'api/types';
+
+	let name = $state('');
+	let email = $state('');
+	let password = $state('');
+	let submitting = $state(false);
+	let formError = $state<string | null>(null);
+	let fieldErrors = $state<Record<string, string>>({});
+
+	async function onsubmit(e: SubmitEvent) {
+		e.preventDefault();
+		formError = null;
+		fieldErrors = {};
+		submitting = true;
+		try {
+			let input: SetupAdminInput;
+			try {
+				input = v.parse(setupAdminSchema, { name, email, password });
+			} catch (err) {
+				if (err instanceof v.ValiError) {
+					for (const issue of err.issues) {
+						const key = issue.path?.[0]?.key as string | undefined;
+						if (key) fieldErrors[key] = issue.message;
+					}
+					return;
+				}
+				throw err;
+			}
+
+			const res = await fetch('/api/auth/setup-admin', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				credentials: 'same-origin',
+				body: JSON.stringify(input)
+			});
+
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
+				formError = body?.error?.message ?? `Setup failed (${res.status})`;
+				for (const d of body?.error?.details ?? []) {
+					if (d.path && d.path !== '(root)') fieldErrors[d.path] = d.message;
+				}
+				return;
+			}
+
+			await invalidate('app:session');
+			await goto(ROUTES.signIn);
+		} finally {
+			submitting = false;
+		}
+	}
 </script>
 
-<div class="card w-full max-w-sm bg-base-100 shadow-sm">
-	<div class="card-body">
-		<h2 class="card-title justify-center text-2xl">Welcome to Logwiz</h2>
-		<p class="text-center text-sm text-base-content/60">
-			Create the initial admin account to get started.
-		</p>
+<h1 class="card-title text-2xl">Create administrator</h1>
+<p class="text-sm opacity-70">This is the first account. It will have admin privileges.</p>
 
-		{#each setupAdmin.fields.allIssues() as issue (issue.message)}
-			<div class="alert text-sm alert-error">{issue.message}</div>
-		{/each}
+<form class="mt-6 space-y-4" {onsubmit}>
+	<label class="form-control w-full">
+		<span class="label-text">Name</span>
+		<input
+			class="input input-bordered w-full"
+			class:input-error={fieldErrors.name}
+			bind:value={name}
+			autocomplete="name"
+			required
+		/>
+		{#if fieldErrors.name}
+			<span class="text-error text-sm mt-1">{fieldErrors.name}</span>
+		{/if}
+	</label>
 
-		<form {...setupAdmin.preflight(setupAdminSchema)} class="flex flex-col gap-4">
-			<label class="floating-label">
-				<span>Name</span>
-				<input
-					{...setupAdmin.fields.name.as('text')}
-					class="input input-md w-full"
-					placeholder="Name"
-					autocomplete="name"
-				/>
-			</label>
+	<label class="form-control w-full">
+		<span class="label-text">Email</span>
+		<input
+			class="input input-bordered w-full"
+			class:input-error={fieldErrors.email}
+			bind:value={email}
+			type="email"
+			autocomplete="email"
+			required
+		/>
+		{#if fieldErrors.email}
+			<span class="text-error text-sm mt-1">{fieldErrors.email}</span>
+		{/if}
+	</label>
 
-			<label class="floating-label">
-				<span>Username</span>
-				<input
-					{...setupAdmin.fields.username.as('text')}
-					class="input input-md w-full"
-					placeholder="Username"
-					autocomplete="username"
-				/>
-			</label>
+	<label class="form-control w-full">
+		<span class="label-text">Password</span>
+		<input
+			class="input input-bordered w-full"
+			class:input-error={fieldErrors.password}
+			bind:value={password}
+			type="password"
+			autocomplete="new-password"
+			minlength="8"
+			required
+		/>
+		{#if fieldErrors.password}
+			<span class="text-error text-sm mt-1">{fieldErrors.password}</span>
+		{:else}
+			<span class="text-sm opacity-60 mt-1">At least 8 characters.</span>
+		{/if}
+	</label>
 
-			<label class="floating-label">
-				<span>Email</span>
-				<input
-					{...setupAdmin.fields.email.as('email')}
-					class="input input-md w-full"
-					placeholder="Email"
-					autocomplete="email"
-				/>
-			</label>
+	{#if formError}
+		<div role="alert" class="alert alert-error">{formError}</div>
+	{/if}
 
-			<label class="floating-label">
-				<span>Password</span>
-				<input
-					{...setupAdmin.fields._password.as('password')}
-					class="input input-md w-full"
-					placeholder="Password"
-					autocomplete="new-password"
-				/>
-			</label>
-
-			<label class="floating-label">
-				<span>Confirm Password</span>
-				<input
-					{...setupAdmin.fields._confirmPassword.as('password')}
-					class="input input-md w-full"
-					placeholder="Confirm Password"
-					autocomplete="new-password"
-				/>
-			</label>
-
-			<button class="btn w-full btn-neutral" disabled={!!setupAdmin.pending}>
-				{setupAdmin.pending ? 'Creating admin...' : 'Create Admin'}
-			</button>
-		</form>
-	</div>
-</div>
+	<button class="btn btn-primary w-full" type="submit" disabled={submitting}>
+		{submitting ? 'Creating…' : 'Create administrator'}
+	</button>
+</form>

@@ -6,7 +6,9 @@ node_modules
 .netlify
 .wrangler
 /.svelte-kit
+.svelte-kit
 /build
+build/
 dist/
 data/
 /docs/

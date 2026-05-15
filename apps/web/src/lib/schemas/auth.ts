@@ -1,37 +1,17 @@
 import * as v from 'valibot';
 
+// Mirrors apps/api/src/routes/auth.ts SetupAdminBody so the client validates
+// the same constraints before sending. Keep in sync.
+export const setupAdminSchema = v.object({
+	name: v.pipe(v.string(), v.minLength(1), v.maxLength(128)),
+	email: v.pipe(v.string(), v.email()),
+	password: v.pipe(v.string(), v.minLength(8), v.maxLength(128))
+});
+
 export const signInSchema = v.object({
-	identifier: v.pipe(v.string(), v.minLength(1, 'Email or username is required')),
-	_password: v.pipe(v.string(), v.minLength(1, 'Password is required'))
+	email: v.pipe(v.string(), v.email()),
+	password: v.pipe(v.string(), v.minLength(1))
 });
 
-export const setupPasswordSchema = v.object({
-	token: v.pipe(v.string(), v.minLength(1, 'Invalid invite link')),
-	_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters'))
-});
-
-export const changeOwnPasswordSchema = v.pipe(
-	v.object({
-		_currentPassword: v.pipe(v.string(), v.minLength(1, 'Current password is required')),
-		_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters')),
-		_confirmPassword: v.string()
-	}),
-	v.forward(
-		v.check((data) => data._password === data._confirmPassword, 'Passwords do not match'),
-		['_confirmPassword']
-	)
-);
-
-export const setupAdminSchema = v.pipe(
-	v.object({
-		name: v.pipe(v.string(), v.minLength(1, 'Name is required')),
-		username: v.pipe(v.string(), v.minLength(1, 'Username is required')),
-		email: v.pipe(v.string(), v.email('Please enter a valid email')),
-		_password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters')),
-		_confirmPassword: v.string()
-	}),
-	v.forward(
-		v.check((data) => data._password === data._confirmPassword, 'Passwords do not match'),
-		['_confirmPassword']
-	)
-);
+export type SetupAdminInput = v.InferOutput<typeof setupAdminSchema>;
+export type SignInInput = v.InferOutput<typeof signInSchema>;

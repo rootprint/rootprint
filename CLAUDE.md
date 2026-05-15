@@ -28,15 +28,16 @@ Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quic
 
 ### Data Loading (apps/web)
 
-Data loading in `apps/web` should be handled in dedicated files alongside the page component (only if practical and not overcomplicated):
+`apps/web` is an SPA built with `@sveltejs/adapter-static`. There is no server runtime — the api (`apps/api`) is the only backend. Therefore:
 
-| File                | When to use                                             |
-| ------------------- | ------------------------------------------------------- |
-| `+page.server.ts`   | Needs secrets, auth, cookies, or private backend access |
-| `+page.ts`          | Needs browser-only APIs or client-side state            |
-| `+layout.server.ts` | Data shared across many pages                           |
+| File                                  | When to use                                            |
+| ------------------------------------- | ------------------------------------------------------ |
+| `+page.ts` / `+layout.ts`             | All data loading. Calls `hc<AppType>` or `authClient`. |
+| `+page.server.ts` / `hooks.server.ts` | **Do not use** — adapter-static has no server.         |
 
-This guidance is SvelteKit-specific and only applies inside `apps/web`.
+The Hono RPC client lives in `apps/web/src/lib/api/client.ts`. The Better Auth client lives in `apps/web/src/lib/auth-client.ts`. Cookies are same-origin in both dev (Vite proxy → api) and prod (api serves the SPA).
+
+This guidance is SvelteKit-specific and only applies inside `apps/web`. `apps/landing` may still use SSR if it wants.
 
 ### Tests
 

@@ -1,93 +1,94 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
-	import googleIcon from '@iconify-icons/logos/google-icon';
-
+	import * as v from 'valibot';
+	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { signIn } from '$lib/api/auth.remote';
 	import { authClient } from '$lib/auth-client';
-	import { signInSchema } from '$lib/schemas/auth';
+	import { signInSchema, type SignInInput } from '$lib/schemas/auth';
+	import { safeReturnTo } from '$lib/constants/routes';
 
-	let { data } = $props();
+	let email = $state('');
+	let password = $state('');
+	let submitting = $state(false);
+	let formError = $state<string | null>(null);
+	let fieldErrors = $state<Record<string, string>>({});
 
-	let googleLoading = $state(false);
-	const returnToParam = $derived(page.url.searchParams.get('returnTo'));
-	const returnTo = $derived(
-		returnToParam?.startsWith('/') && !returnToParam.startsWith('//') ? returnToParam : '/'
-	);
+	async function onsubmit(e: SubmitEvent) {
+		e.preventDefault();
+		formError = null;
+		fieldErrors = {};
+		submitting = true;
+		try {
+			let input: SignInInput;
+			try {
+				input = v.parse(signInSchema, { email, password });
+			} catch (err) {
+				if (err instanceof v.ValiError) {
+					for (const issue of err.issues) {
+						const key = issue.path?.[0]?.key as string | undefined;
+						if (key) fieldErrors[key] = issue.message;
+					}
+					return;
+				}
+				throw err;
+			}
 
-	async function handleGoogleSignIn() {
-		googleLoading = true;
-		await authClient.signIn.social({
-			provider: 'google',
-			callbackURL: returnTo,
-			errorCallbackURL: '/auth/sign-in'
-		});
+			const result = await authClient.signIn.email({
+				email: input.email,
+				password: input.password
+			});
+
+			if (result?.error) {
+				formError = result.error.message ?? 'Sign-in failed';
+				return;
+			}
+
+			await invalidate('app:session');
+			const returnTo = safeReturnTo(page.url.searchParams.get('returnTo'));
+			await goto(returnTo);
+		} finally {
+			submitting = false;
+		}
 	}
-
-	const errorParam = $derived(page.url.searchParams.get('error'));
-	const errorMessage = $derived(
-		errorParam === 'domain_not_allowed'
-			? 'Your email domain is not allowed to sign in.'
-			: errorParam === 'unable_to_create_user'
-				? 'Unable to create account. Your email domain may not be allowed.'
-				: errorParam
-					? 'Sign in failed. Please try again.'
-					: null
-	);
 </script>
 
-<div class="card w-full max-w-sm bg-base-100 shadow-sm">
-	<div class="card-body">
-		<h2 class="card-title justify-center text-2xl">Sign In</h2>
+<h1 class="card-title text-2xl">Sign in</h1>
 
-		{#if errorMessage}
-			<div class="alert text-sm alert-error">{errorMessage}</div>
+<form class="mt-6 space-y-4" {onsubmit}>
+	<label class="form-control w-full">
+		<span class="label-text">Email</span>
+		<input
+			class="input input-bordered w-full"
+			class:input-error={fieldErrors.email}
+			bind:value={email}
+			type="email"
+			autocomplete="email"
+			required
+		/>
+		{#if fieldErrors.email}
+			<span class="text-error text-sm mt-1">{fieldErrors.email}</span>
 		{/if}
+	</label>
 
-		{#each signIn.fields.allIssues() as issue (issue.message)}
-			<div class="alert text-sm alert-error">{issue.message}</div>
-		{/each}
-
-		{#if data.googleAuthEnabled}
-			<button
-				type="button"
-				class="btn w-full gap-2 btn-outline"
-				disabled={googleLoading}
-				onclick={handleGoogleSignIn}
-			>
-				{#if googleLoading}
-					<span class="loading loading-xs loading-spinner"></span>
-				{:else}
-					<Icon icon={googleIcon} class="h-4 w-4" />
-				{/if}
-				Sign in with Google
-			</button>
-
-			<div class="divider text-xs text-base-content/40">or</div>
+	<label class="form-control w-full">
+		<span class="label-text">Password</span>
+		<input
+			class="input input-bordered w-full"
+			class:input-error={fieldErrors.password}
+			bind:value={password}
+			type="password"
+			autocomplete="current-password"
+			required
+		/>
+		{#if fieldErrors.password}
+			<span class="text-error text-sm mt-1">{fieldErrors.password}</span>
 		{/if}
+	</label>
 
-		<form {...signIn.preflight(signInSchema)} class="flex flex-col gap-4">
-			<label class="floating-label">
-				<span>Email or Username</span>
-				<input
-					{...signIn.fields.identifier.as('text')}
-					class="input input-md w-full"
-					placeholder="Email or Username"
-				/>
-			</label>
+	{#if formError}
+		<div role="alert" class="alert alert-error">{formError}</div>
+	{/if}
 
-			<label class="floating-label">
-				<span>Password</span>
-				<input
-					{...signIn.fields._password.as('password')}
-					class="input input-md w-full"
-					placeholder="Password"
-				/>
-			</label>
-
-			<button class="btn w-full btn-neutral" disabled={!!signIn.pending}>
-				{signIn.pending ? 'Signing in...' : 'Sign In'}
-			</button>
-		</form>
-	</div>
-</div>
+	<button class="btn btn-primary w-full" type="submit" disabled={submitting}>
+		{submitting ? 'Signing in…' : 'Sign in'}
+	</button>
+</form>
