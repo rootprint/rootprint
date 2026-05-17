@@ -1,9 +1,9 @@
 <script lang="ts">
-	import AuthShell from '$lib/components/auth-shell/AuthShell.svelte';
-
-	let { data, children } = $props();
+	let { children } = $props();
 </script>
 
-<AuthShell system={data.system}>
-	{@render children?.()}
-</AuthShell>
+<main class="flex flex-1 items-center justify-center px-4 py-16">
+	<div class="w-full max-w-sm">
+		{@render children?.()}
+	</div>
+</main>

@@ -166,23 +166,6 @@ export type GoogleAuthSettings = {
 	allowedDomains: string[];
 };
 
-export type ComponentStatus = 'ok' | 'degraded' | 'down';
-
-export type SystemInfo = {
-	mode: 'self-hosted';
-	build: {
-		version: string;
-		commit: string;
-		builtAt: string;
-	};
-	components: {
-		api: 'ok';
-		postgres: ComponentStatus;
-		quickwit: ComponentStatus;
-	};
-	startedAt: string;
-};
-
 export type AuthProvidersInfo = {
 	google: { enabled: boolean };
 };
