@@ -1,4 +1,5 @@
 import { Hono, type Context } from 'hono';
+import type { Schema } from 'hono/types';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/bun';
@@ -6,8 +7,7 @@ import { QuickwitError } from 'quickwit-js';
 import { ValiError } from 'valibot';
 
 import { config } from './config.js';
-import type { AppEnv } from './env.js';
-import { logger } from './lib/logger.js';
+import type { AppEnv, AuthedEnv } from './env.js';
 import { requestContext } from './middleware/request-context.js';
 import { requireUser } from './middleware/require-user.js';
 import { authRouter } from './routes/auth.js';
@@ -24,7 +24,7 @@ import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 
-function withAuth<E extends AppEnv, S extends Record<string, any>>(router: Hono<E, S, ''>) {
+function withAuth<E extends AuthedEnv, S extends Schema>(router: Hono<E, S, ''>) {
 	return new Hono<AppEnv>().use('*', requireUser).route('/', router);
 }
 
@@ -39,7 +39,6 @@ app.use('*', cors({ origin: config.frontendUrl, credentials: true }));
 
 app.onError((rawErr, c) => {
 	const requestId = c.get('requestId');
-	const log = c.get('logger');
 
 	let err: Error = rawErr;
 	if (rawErr instanceof QuickwitError) {
@@ -49,17 +48,11 @@ app.onError((rawErr, c) => {
 
 	if (c.req.path.startsWith('/v1/')) {
 		if (err instanceof HttpError) return otlpErrorFromHttpError(err);
-		log.error({ err }, 'OTLP route unexpected error');
 		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
 	}
 
 	if (err instanceof HttpError) {
 		const isServerError = err.statusCode >= 500;
-		if (isServerError) {
-			log.error({ err }, 'server error');
-		} else {
-			log.debug({ err: err.message, code: err.code, statusCode: err.statusCode }, 'client error');
-		}
 		return errorJson(
 			c,
 			{
@@ -81,7 +74,6 @@ app.onError((rawErr, c) => {
 					: '(root)',
 			message: issue.message
 		}));
-		log.debug({ err: err.message }, 'validation error');
 		return errorJson(
 			c,
 			{
@@ -96,7 +88,6 @@ app.onError((rawErr, c) => {
 	}
 
 	if (err instanceof SyntaxError) {
-		log.debug({ err: err.message }, 'invalid json body');
 		return errorJson(
 			c,
 			{ code: 'INVALID_JSON', message: 'Invalid JSON body', statusCode: 400, requestId },
@@ -104,7 +95,6 @@ app.onError((rawErr, c) => {
 		);
 	}
 
-	log.error({ err }, 'unhandled error');
 	return errorJson(
 		c,
 		{ code: 'INTERNAL', message: 'Internal server error', statusCode: 500, requestId },
@@ -151,10 +141,8 @@ if (config.serveWeb) {
 	});
 }
 
-const server = Bun.serve({
+Bun.serve({
 	fetch: app.fetch,
 	hostname: config.host,
 	port: config.port
 });
-
-logger.info({ host: server.hostname, port: server.port }, 'api listening');

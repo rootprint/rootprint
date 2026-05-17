@@ -15,7 +15,6 @@ For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.m
 - ORM: Drizzle + `pg` (PostgreSQL)
 - Auth: Better Auth
 - Validation: Valibot
-- Logging: pino + pino-pretty
 - Quickwit client: `quickwit-js`
 - Protobuf codegen: buf + `@bufbuild/protoc-gen-es`
 
@@ -37,14 +36,14 @@ Root convenience: `bun run dev:api`, `bun run build:api`, `bun run start:api`.
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `src/app.ts`      | Hono app composition, middleware mount, error handler                                                                                            |
 | `src/config.ts`   | Resolved runtime config object                                                                                                                   |
-| `src/env.ts`      | `AppEnv` type (Hono context: `requestId`, `logger`, `session`, `token`)                                                                          |
+| `src/env.ts`      | `AppEnv` type (Hono context: `requestId`, `session`, `token`)                                                                                    |
 | `src/types.ts`    | Public, pure-type surface re-exported via `exports['./types']`                                                                                   |
 | `src/index.ts`    | Workspace package entry                                                                                                                          |
 | `src/routes/`     | One file per resource (`logs.ts`, `indexes.ts`, `users.ts`, `tokens.ts`, `auth.ts`, `health.ts`); `routes/ingest/` for `ndjson.ts` and `otlp.ts` |
 | `src/services/`   | `*.service.ts` — business logic called from routes                                                                                               |
 | `src/middleware/` | `request-context`, `require-user`, `require-admin`, `require-token`                                                                              |
 | `src/db/`         | Drizzle schemas (`schema.ts`, `auth.schema.ts`) and DB client (`index.ts`)                                                                       |
-| `src/lib/`        | Cross-cutting clients: `auth`, `db`, `logger`, `quickwit`                                                                                        |
+| `src/lib/`        | Cross-cutting clients: `auth`, `db`, `quickwit`                                                                                                  |
 | `src/utils/`      | Pure helpers: `http-error`, `otlp-response`, `bearer`, `ingest-token`                                                                            |
 | `src/gen/`        | Generated protobuf code — **do not edit**                                                                                                        |
 | `src/constants/`  | Domain constants (e.g. `ingest.ts`)                                                                                                              |
@@ -67,7 +66,7 @@ Sibling top-level dirs:
 
 - Each resource gets a `Hono` router and is mounted with `app.route('/path', router)` in `src/app.ts`.
 - Auth-protected routers wrap via the `withAuth()` helper, which mounts `requireUser`/`requireAdmin`/`requireToken` middleware.
-- Read context values via `c.get('requestId' | 'logger' | 'session' | 'token')`. The `AppEnv` type lives in `src/env.ts`.
+- Read context values via `c.get('requestId' | 'session' | 'token')`. The `AppEnv` type lives in `src/env.ts`.
 
 ## Error Handling
 
@@ -75,7 +74,7 @@ Sibling top-level dirs:
 - The central `app.onError` handler in `src/app.ts` translates errors:
   - Paths under `/v1/` get OTLP-style error responses (`otlpError`, `otlpErrorFromHttpError`).
   - Other paths get JSON `{ error: { code, message, statusCode, requestId } }`.
-- Log unexpected errors with `logger.error({ err }, '...')`. Never return raw 500s with internal messages or stack traces.
+- Never return raw 500s with internal messages or stack traces.
 
 ## Validation
 
@@ -108,7 +107,7 @@ Sibling top-level dirs:
 - Better Auth setup lives in `src/lib/auth.ts`. Database tables follow Better Auth's schema (`src/db/auth.schema.ts`).
 - Session-based auth (cookies) for the web app; ingest tokens for log producers (`require-token` middleware).
 - Google OAuth is configured at runtime via the admin settings UI (writes to `app_settings`). The `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` env vars are **not** read.
-- Google sign-in is gated by a domain allowlist stored in `app_settings.google_allowed_domains` (JSON-encoded `string[]`). If creds are present but the allowlist is empty or missing, all Google sign-ins are rejected and a startup warning is logged.
+- Google sign-in is gated by a domain allowlist stored in `app_settings.google_allowed_domains` (JSON-encoded `string[]`). If creds are present but the allowlist is empty or missing, all Google sign-ins are rejected.
 - Linking a Google account to a user deletes that user's credential row and any pending invite. Account linking is auto-enabled (Google is a trusted provider) — an existing user signing in with Google for the first time gets attached to their existing row instead of getting a duplicate.
 
 ## Environment Variables

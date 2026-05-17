@@ -1,10 +1,10 @@
+import { vValidator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
 import * as v from 'valibot';
 
-import type { AppEnv } from '../env.js';
+import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
-import { requireSession } from '../middleware/require-user.js';
 import {
 	createSavedQuery,
 	deleteOwnedSavedQuery,
@@ -38,38 +38,48 @@ const ItemParams = v.object({
 });
 
 // Mounted under /api/indexes/:indexId/saved-queries.
-export const savedQueriesRouter = new Hono<AppEnv>();
+export const savedQueriesRouter = new Hono<AuthedEnv>();
 
 savedQueriesRouter.use('*', requireIndexAccess);
 
-savedQueriesRouter.get('/', async (c) => {
-	const { indexId } = v.parse(IndexIdParams, c.req.param());
-	const session = requireSession(c);
+savedQueriesRouter.get('/', vValidator('param', IndexIdParams), async (c) => {
+	const { indexId } = c.req.valid('param');
+	const session = c.get('session');
 	return c.json(await listSavedQueries(db, session.user.id, indexId));
 });
 
-savedQueriesRouter.post('/', async (c) => {
-	const { indexId } = v.parse(IndexIdParams, c.req.param());
-	const body = v.parse(CreateBody, await c.req.json());
-	const session = requireSession(c);
-	const created = await createSavedQuery(db, session.user.id, {
-		indexName: indexId,
-		...body
-	});
-	return c.json(created, 201);
-});
+savedQueriesRouter.post(
+	'/',
+	vValidator('param', IndexIdParams),
+	vValidator('json', CreateBody),
+	async (c) => {
+		const { indexId } = c.req.valid('param');
+		const body = c.req.valid('json');
+		const session = c.get('session');
+		const created = await createSavedQuery(db, session.user.id, {
+			indexId,
+			...body
+		});
+		return c.json(created, 201);
+	}
+);
 
-savedQueriesRouter.patch('/:id', async (c) => {
-	const { indexId, id } = v.parse(ItemParams, c.req.param());
-	const body = v.parse(PatchBody, await c.req.json());
-	const session = requireSession(c);
-	const updated = await updateOwnedSavedQuery(db, session.user.id, id, indexId, body);
-	return c.json(updated);
-});
+savedQueriesRouter.patch(
+	'/:id',
+	vValidator('param', ItemParams),
+	vValidator('json', PatchBody),
+	async (c) => {
+		const { indexId, id } = c.req.valid('param');
+		const body = c.req.valid('json');
+		const session = c.get('session');
+		const updated = await updateOwnedSavedQuery(db, session.user.id, id, indexId, body);
+		return c.json(updated);
+	}
+);
 
-savedQueriesRouter.delete('/:id', async (c) => {
-	const { indexId, id } = v.parse(ItemParams, c.req.param());
-	const session = requireSession(c);
+savedQueriesRouter.delete('/:id', vValidator('param', ItemParams), async (c) => {
+	const { indexId, id } = c.req.valid('param');
+	const session = c.get('session');
 	await deleteOwnedSavedQuery(db, session.user.id, id, indexId);
 	return c.body(null, 204);
 });

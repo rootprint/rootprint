@@ -78,13 +78,13 @@ export async function validateInviteToken(
 
 export async function setupPassword(
 	db: Db,
-	auth: AuthInstance,
+	authInstance: AuthInstance,
 	token: string,
 	password: string
 ): Promise<string> {
 	const { userId } = await validateInviteToken(db, token);
 
-	const ctx = await auth.$context;
+	const ctx = await authInstance.$context;
 	const hashedPassword = await ctx.password.hash(password);
 
 	await db.transaction(async (tx) => {

@@ -133,7 +133,7 @@ export type IngestTokenValue = {
 
 export type SavedQuery = {
 	id: number;
-	indexName: string;
+	indexId: string;
 	name: string;
 	description: string | null;
 	query: string;
@@ -142,7 +142,7 @@ export type SavedQuery = {
 };
 
 export type ShareCreateInput = {
-	indexName: string;
+	indexId: string;
 	query: string;
 	startTime: number;
 	endTime: number;
@@ -150,7 +150,7 @@ export type ShareCreateInput = {
 };
 
 export type ShareView = {
-	indexName: string;
+	indexId: string;
 	query: string;
 	startTime: number;
 	endTime: number;

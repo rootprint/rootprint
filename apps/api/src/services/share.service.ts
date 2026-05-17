@@ -17,7 +17,7 @@ export async function createShare(
 		.values({
 			code,
 			userId,
-			indexName: input.indexName,
+			indexId: input.indexId,
 			query: input.query,
 			startTime: input.startTime,
 			endTime: input.endTime,
@@ -31,7 +31,7 @@ export async function createShare(
 export async function resolveShare(db: Db, code: string): Promise<ShareView> {
 	const [row] = await db
 		.select({
-			indexName: share.indexName,
+			indexId: share.indexId,
 			query: share.query,
 			startTime: share.startTime,
 			endTime: share.endTime,

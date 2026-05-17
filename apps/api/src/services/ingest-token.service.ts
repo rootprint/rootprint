@@ -1,13 +1,12 @@
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import type { CreateIngestTokenInput, IngestTokenSummary, IngestTokenValue } from '../types.js';
 
-import type { Logger } from '../lib/logger.js';
-
 import { LAST_USED_THROTTLE_SECONDS, TOKEN_DISPLAY_PREFIX_LENGTH } from '../constants/ingest.js';
 import type { Db } from '../db/index.js';
 import { ingestToken } from '../db/schema.js';
 import { generateIngestToken } from '../utils/ingest-token.js';
-import { conflict, internal, isUniqueViolation, notFound } from '../utils/http-error.js';
+import { internal, notFound } from '../utils/http-error.js';
+import { withUniqueViolation } from '../utils/db.js';
 
 export type VerifiedIngestToken = {
 	id: number;
@@ -36,8 +35,8 @@ export async function createIngestToken(
 	input: CreateIngestTokenInput
 ): Promise<{ summary: IngestTokenSummary; token: string }> {
 	const token = generateIngestToken();
-	try {
-		const [row] = await db
+	const [row] = await withUniqueViolation('Token name already exists', 'CONFLICT', () =>
+		db
 			.insert(ingestToken)
 			.values({
 				name: input.name,
@@ -45,26 +44,21 @@ export async function createIngestToken(
 				indexId: input.indexId,
 				createdByUserId
 			})
-			.returning();
-		if (!row) throw internal('Failed to create ingest token');
-		return {
-			summary: {
-				id: row.id,
-				name: row.name,
-				tokenPrefix: row.token.slice(0, TOKEN_DISPLAY_PREFIX_LENGTH),
-				indexId: row.indexId,
-				lastUsedAt: row.lastUsedAt,
-				createdAt: row.createdAt,
-				createdByUserId: row.createdByUserId
-			},
-			token
-		};
-	} catch (err) {
-		if (isUniqueViolation(err)) {
-			throw conflict('Token name already exists');
-		}
-		throw err;
-	}
+			.returning()
+	);
+	if (!row) throw internal('Failed to create ingest token');
+	return {
+		summary: {
+			id: row.id,
+			name: row.name,
+			tokenPrefix: row.token.slice(0, TOKEN_DISPLAY_PREFIX_LENGTH),
+			indexId: row.indexId,
+			lastUsedAt: row.lastUsedAt,
+			createdAt: row.createdAt,
+			createdByUserId: row.createdByUserId
+		},
+		token
+	};
 }
 
 export async function deleteIngestToken(db: Db, tokenId: number): Promise<void> {
@@ -89,7 +83,6 @@ export async function getIngestTokenValue(db: Db, tokenId: number): Promise<Inge
 
 export async function verifyIngestToken(
 	db: Db,
-	log: Logger,
 	token: string
 ): Promise<VerifiedIngestToken | null> {
 	const [row] = await db
@@ -102,11 +95,11 @@ export async function verifyIngestToken(
 		.where(eq(ingestToken.token, token))
 		.limit(1);
 	if (!row) return null;
-	touchLastUsed(db, log, row.id);
+	touchLastUsed(db, row.id);
 	return row;
 }
 
-function touchLastUsed(db: Db, log: Logger, tokenId: number): void {
+function touchLastUsed(db: Db, tokenId: number): void {
 	db.update(ingestToken)
 		.set({ lastUsedAt: sql`now()` })
 		.where(
@@ -118,5 +111,5 @@ function touchLastUsed(db: Db, log: Logger, tokenId: number): void {
 				)
 			)
 		)
-		.catch((err) => log.warn({ err, tokenId }, 'lastUsedAt update failed'));
+		.catch(() => {});
 }

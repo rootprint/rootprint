@@ -1,4 +1,5 @@
 import type { ClientResponse } from "hono/client";
+import type { SuccessStatusCode } from "hono/utils/http-status";
 import type { ApiErrorBody } from "api/types";
 
 export class ApiError extends Error {
@@ -13,7 +14,19 @@ export class ApiError extends Error {
   }
 }
 
-export async function call<T>(req: Promise<ClientResponse<T>>): Promise<T> {
+// Hono RPC types responses as a union (one ClientResponse per status code).
+// Extract the success branches so callers see the success payload type.
+type SuccessBody<R> = R extends ClientResponse<infer T, infer S, infer _F>
+  ? S extends SuccessStatusCode
+    ? S extends 204
+      ? undefined
+      : T
+    : never
+  : never;
+
+export async function call<R extends ClientResponse<unknown, number, string>>(
+  req: Promise<R>,
+): Promise<SuccessBody<R>> {
   const res = await req;
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
@@ -27,6 +40,6 @@ export async function call<T>(req: Promise<ClientResponse<T>>): Promise<T> {
       fieldErrors,
     );
   }
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  if (res.status === 204) return undefined as SuccessBody<R>;
+  return (await res.json()) as SuccessBody<R>;
 }

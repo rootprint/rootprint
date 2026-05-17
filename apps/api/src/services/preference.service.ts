@@ -8,12 +8,12 @@ import { internal } from '../utils/http-error.js';
 export async function getPreferences(
 	db: Db,
 	userId: string,
-	indexName: string
+	indexId: string
 ): Promise<Preferences> {
 	const [row] = await db
 		.select({ displayFields: userPreference.displayFields })
 		.from(userPreference)
-		.where(and(eq(userPreference.userId, userId), eq(userPreference.indexName, indexName)))
+		.where(and(eq(userPreference.userId, userId), eq(userPreference.indexId, indexId)))
 		.limit(1);
 	return { displayFields: row?.displayFields ?? null };
 }
@@ -21,18 +21,18 @@ export async function getPreferences(
 export async function putPreferences(
 	db: Db,
 	userId: string,
-	indexName: string,
+	indexId: string,
 	input: { displayFields: string[] | null }
 ): Promise<Preferences> {
 	const [row] = await db
 		.insert(userPreference)
 		.values({
 			userId,
-			indexName,
+			indexId,
 			displayFields: input.displayFields
 		})
 		.onConflictDoUpdate({
-			target: [userPreference.userId, userPreference.indexName],
+			target: [userPreference.userId, userPreference.indexId],
 			set: { displayFields: input.displayFields }
 		})
 		.returning({ displayFields: userPreference.displayFields });

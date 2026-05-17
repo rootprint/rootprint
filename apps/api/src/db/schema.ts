@@ -35,7 +35,7 @@ export const userPreference = pgTable(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		indexName: text('index_name').notNull(),
+		indexId: text('index_id').notNull(),
 		displayFields: jsonb('display_fields').$type<string[]>(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
@@ -44,8 +44,8 @@ export const userPreference = pgTable(
 			.$onUpdate(() => new Date())
 	},
 	(table) => [
-		uniqueIndex('user_preference_unique').on(table.userId, table.indexName),
-		index('user_preference_index_name').on(table.indexName)
+		uniqueIndex('user_preference_unique').on(table.userId, table.indexId),
+		index('user_preference_index_id').on(table.indexId)
 	]
 );
 
@@ -92,7 +92,7 @@ export const searchHistory = pgTable(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		indexName: text('index_name').notNull(),
+		indexId: text('index_id').notNull(),
 		query: text('query').notNull().default(''),
 		timeRange: jsonb('time_range')
 			.$type<{ type: string; start?: number; end?: number; preset?: string }>()
@@ -101,8 +101,8 @@ export const searchHistory = pgTable(
 	},
 	(table) => [
 		index('search_history_user_executed').on(table.userId, table.executedAt),
-		index('search_history_user_index_executed').on(table.userId, table.indexName, table.executedAt),
-		index('search_history_index_name').on(table.indexName)
+		index('search_history_user_index_executed').on(table.userId, table.indexId, table.executedAt),
+		index('search_history_index_id').on(table.indexId)
 	]
 );
 
@@ -113,7 +113,7 @@ export const savedQuery = pgTable(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		indexName: text('index_name').notNull(),
+		indexId: text('index_id').notNull(),
 		name: text('name').notNull(),
 		description: text('description'),
 		query: text('query').notNull().default(''),
@@ -124,8 +124,8 @@ export const savedQuery = pgTable(
 			.$onUpdate(() => new Date())
 	},
 	(table) => [
-		uniqueIndex('saved_query_user_index_name_unique').on(table.userId, table.indexName, table.name),
-		index('saved_query_index_name').on(table.indexName)
+		uniqueIndex('saved_query_user_index_name_unique').on(table.userId, table.indexId, table.name),
+		index('saved_query_index_id').on(table.indexId)
 	]
 );
 
@@ -136,15 +136,15 @@ export const view = pgTable(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		indexName: text('index_name').notNull(),
+		indexId: text('index_id').notNull(),
 		name: text('name').notNull(),
 		query: text('query').notNull().default(''),
 		columns: jsonb('columns').$type<string[]>().notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull()
 	},
 	(table) => [
-		index('view_user_index').on(table.userId, table.indexName),
-		index('view_index_name').on(table.indexName)
+		index('view_user_index').on(table.userId, table.indexId),
+		index('view_index_id').on(table.indexId)
 	]
 );
 
@@ -156,14 +156,14 @@ export const share = pgTable(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		indexName: text('index_name').notNull(),
+		indexId: text('index_id').notNull(),
 		query: text('query').notNull().default(''),
 		startTime: integer('start_time').notNull(),
 		endTime: integer('end_time').notNull(),
 		hit: jsonb('hit').$type<Record<string, unknown>>().notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull()
 	},
-	(table) => [index('share_index_name').on(table.indexName)]
+	(table) => [index('share_index_id').on(table.indexId)]
 );
 
 export const appSettings = pgTable('app_settings', {

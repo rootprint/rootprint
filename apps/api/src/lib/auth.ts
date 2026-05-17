@@ -15,7 +15,6 @@ import {
 	type GoogleAuthCredentials
 } from '../services/settings.service.js';
 import { db } from './db.js';
-import { logger } from './logger.js';
 
 function buildAuth(database: Db, google?: GoogleAuthCredentials) {
 	const opts: BetterAuthOptions = {
@@ -49,21 +48,14 @@ function buildAuth(database: Db, google?: GoogleAuthCredentials) {
 					},
 					after: async (acct) => {
 						if (acct.providerId !== 'google') return;
-						try {
-							await database.transaction(async (tx) => {
-								await tx
-									.delete(account)
-									.where(
-										and(eq(account.userId, acct.userId), eq(account.providerId, 'credential'))
-									);
-								await tx.delete(inviteToken).where(eq(inviteToken.userId, acct.userId));
-							});
-						} catch (err: unknown) {
-							logger.error(
-								{ err, userId: acct.userId },
-								'failed to clean up credential row after google account link'
-							);
-						}
+						await database.transaction(async (tx) => {
+							await tx
+								.delete(account)
+								.where(
+									and(eq(account.userId, acct.userId), eq(account.providerId, 'credential'))
+								);
+							await tx.delete(inviteToken).where(eq(inviteToken.userId, acct.userId));
+						});
 					}
 				}
 			}
@@ -84,31 +76,24 @@ function buildAuth(database: Db, google?: GoogleAuthCredentials) {
 }
 
 async function loadGoogle(database: Db): Promise<GoogleAuthCredentials | undefined> {
-	const google = await loadGoogleAuthForBetterAuth(database);
-	if (google && google.allowedDomains.length === 0) {
-		logger.warn(
-			'google credentials are configured but google_allowed_domains is empty or missing — all Google sign-ins will be rejected'
-		);
-	}
-	return google;
+	return loadGoogleAuthForBetterAuth(database);
 }
 
-const initialGoogle = await loadGoogle(db).catch((err: unknown) => {
-	logger.warn(
-		{ err },
-		'failed to load google settings at startup; continuing without google provider'
-	);
-	return undefined;
-});
+const initialGoogle = await loadGoogle(db).catch(() => undefined);
 
-export let auth = buildAuth(db, initialGoogle);
+type AuthInstanceInternal = ReturnType<typeof buildAuth>;
+const holder: { instance: AuthInstanceInternal } = {
+	instance: buildAuth(db, initialGoogle)
+};
+
+export const auth = (): AuthInstanceInternal => holder.instance;
 
 export async function reloadAuth(): Promise<void> {
 	const google = await loadGoogle(db);
-	auth = buildAuth(db, google);
+	holder.instance = buildAuth(db, google);
 }
 
-export type AuthInstance = typeof auth;
+export type AuthInstance = AuthInstanceInternal;
 type BaseSession = NonNullable<Awaited<ReturnType<AuthInstance['api']['getSession']>>>;
 export type Session =
 	| (Omit<BaseSession, 'user'> & {

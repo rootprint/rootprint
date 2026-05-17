@@ -19,7 +19,6 @@ import {
 	userPreference,
 	view
 } from '../db/schema.js';
-import { logger } from '../lib/logger.js';
 import { indexAccessError, internal, notFound } from '../utils/http-error.js';
 import { getIndex as qwGetIndex, listIndexes as qwListIndexes } from './quickwit-index.service.js';
 
@@ -231,20 +230,16 @@ export async function deleteSource(
 export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): Promise<void> {
 	await withNotFound(() => qw.deleteIndex(indexId), 'Index not found');
 
-	try {
-		await db.transaction(async (tx) => {
-			await tx.delete(indexSettings).where(eq(indexSettings.indexId, indexId));
-			await tx.delete(indexStatsSnapshot).where(eq(indexStatsSnapshot.indexId, indexId));
-			await tx.delete(userPreference).where(eq(userPreference.indexName, indexId));
-			await tx.delete(searchHistory).where(eq(searchHistory.indexName, indexId));
-			await tx.delete(savedQuery).where(eq(savedQuery.indexName, indexId));
-			await tx.delete(view).where(eq(view.indexName, indexId));
-			await tx.delete(share).where(eq(share.indexName, indexId));
-			await tx.delete(ingestToken).where(eq(ingestToken.indexId, indexId));
-		});
-	} catch (err) {
-		logger.warn({ err, indexId }, 'deleteIndex DB cleanup failed');
-	}
+	await db.transaction(async (tx) => {
+		await tx.delete(indexSettings).where(eq(indexSettings.indexId, indexId));
+		await tx.delete(indexStatsSnapshot).where(eq(indexStatsSnapshot.indexId, indexId));
+		await tx.delete(userPreference).where(eq(userPreference.indexId, indexId));
+		await tx.delete(searchHistory).where(eq(searchHistory.indexId, indexId));
+		await tx.delete(savedQuery).where(eq(savedQuery.indexId, indexId));
+		await tx.delete(view).where(eq(view.indexId, indexId));
+		await tx.delete(share).where(eq(share.indexId, indexId));
+		await tx.delete(ingestToken).where(eq(ingestToken.indexId, indexId));
+	});
 }
 
 export async function assertIndexAccess(

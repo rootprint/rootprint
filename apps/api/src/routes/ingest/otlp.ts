@@ -4,9 +4,14 @@ import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants/ingest.js';
 import type { AppEnv } from '../../env.js';
 import { requireToken } from '../../middleware/require-token.js';
-import { badRequest, unsupportedMediaType } from '../../utils/http-error.js';
-import { Code, otlpError, otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
-import { tapBytes } from './tap-bytes.js';
+import {
+	badRequest,
+	serviceUnavailable,
+	tooManyRequests,
+	unsupportedMediaType
+} from '../../utils/http-error.js';
+import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
+import { proxyToQuickwit } from '../../utils/quickwit-proxy.js';
 
 const UNSUPPORTED_CONTENT_TYPE_MESSAGE =
 	'Only application/x-protobuf is accepted. If you are using ' +
@@ -37,39 +42,22 @@ otlpRouter.post('/logs', requireToken, async (c) => {
 	const ce = c.req.header('content-encoding');
 	if (ce) headers['content-encoding'] = ce;
 
-	const reqBody = c.req.raw.body;
-	if (!reqBody) throw badRequest('Request body is required', 'EMPTY_BODY');
+	const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
-	const { body, sawAnyBytes } = tapBytes(reqBody);
-
-	let upstream: Response;
-	try {
-		upstream = await fetch(upstreamUrl, {
-			method: 'POST',
-			headers,
-			body,
-			duplex: 'half'
-		} as RequestInit);
-	} catch {
-		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
+	if (result.status >= 500) {
+		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
 	}
-
-	if (!sawAnyBytes()) {
-		await upstream.arrayBuffer().catch(() => {});
-		throw badRequest('Request body is required', 'EMPTY_BODY');
+	if (result.status === 429) {
+		const retryAfter = result.headers.get('retry-after') ?? undefined;
+		const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
+		throw tooManyRequests(msg, 'UPSTREAM_RATE_LIMIT', retryAfter);
 	}
-
-	if (upstream.status >= 500) {
-		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
-	}
-	if (upstream.status === 429) {
-		const retryAfter = upstream.headers.get('retry-after') ?? undefined;
-		const msg = await readUpstreamMessage(upstream, 'Upstream rate limit');
-		return otlpError(429, Code.RESOURCE_EXHAUSTED, msg, retryAfter);
-	}
-	if (upstream.status >= 400) {
-		const msg = await readUpstreamMessage(upstream, 'Upstream rejected request');
-		return otlpError(upstream.status, Code.INVALID_ARGUMENT, msg);
+	if (result.status >= 400) {
+		const msg = await readUpstreamMessage(
+			new Response(result.bodyBytes),
+			'Upstream rejected request'
+		);
+		throw badRequest(msg, 'UPSTREAM_REJECTED');
 	}
 	return otlpSuccess();
 });

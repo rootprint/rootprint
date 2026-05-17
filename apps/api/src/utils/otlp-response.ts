@@ -77,7 +77,8 @@ export function otlpErrorFromHttpError(err: HttpError): Response {
 		return unsupportedContentType(err.message);
 	}
 	const grpcCode = statusToGrpcCode(err.statusCode);
-	const retryAfter = err.statusCode === 429 ? 5 : err.statusCode >= 500 ? 5 : undefined;
+	const retryAfter =
+		err.retryAfter ?? (err.statusCode === 429 || err.statusCode >= 500 ? 5 : undefined);
 	const message = err.statusCode >= 500 ? 'Upstream unavailable' : err.message;
 	// Clamp 5xx to 503 — semantically retryable for OTLP clients.
 	const httpStatus = err.statusCode >= 500 ? 503 : err.statusCode;

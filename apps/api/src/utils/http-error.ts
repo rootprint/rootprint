@@ -5,7 +5,8 @@ export class HttpError extends Error {
 		public readonly statusCode: number,
 		public readonly code: string,
 		message: string,
-		public readonly details?: ApiErrorDetail[]
+		public readonly details?: ApiErrorDetail[],
+		public readonly retryAfter?: number | string
 	) {
 		super(message);
 		this.name = 'HttpError';
@@ -26,11 +27,17 @@ export const unprocessable = (
 	code = 'UNPROCESSABLE_ENTITY',
 	details?: ApiErrorDetail[]
 ) => new HttpError(422, code, message, details);
-export const tooManyRequests = (message: string, code = 'TOO_MANY_REQUESTS') =>
-	new HttpError(429, code, message);
+export const tooManyRequests = (
+	message: string,
+	code = 'TOO_MANY_REQUESTS',
+	retryAfter?: number | string
+) => new HttpError(429, code, message, undefined, retryAfter);
 export const internal = (message: string, code = 'INTERNAL') => new HttpError(500, code, message);
-export const serviceUnavailable = (message: string, code = 'SERVICE_UNAVAILABLE') =>
-	new HttpError(503, code, message);
+export const serviceUnavailable = (
+	message: string,
+	code = 'SERVICE_UNAVAILABLE',
+	retryAfter?: number | string
+) => new HttpError(503, code, message, undefined, retryAfter);
 
 export function indexAccessError(isAdmin: boolean, kind: 'denied' | 'missing'): HttpError {
 	if (kind === 'missing' && isAdmin) return notFound('Index not found', 'INDEX_NOT_FOUND');

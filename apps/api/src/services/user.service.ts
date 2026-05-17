@@ -6,9 +6,14 @@ import type { User, UserRole, UserStatus } from '../types.js';
 import { config } from '../config.js';
 import type { Db } from '../db/index.js';
 import { account, inviteToken, user } from '../db/schema.js';
-import type { AuthInstance } from '../lib/auth.js';
+import {
+	createAdminUser,
+	removeAdminUser,
+	revokeAdminUserSessions,
+	setAdminUserRole
+} from '../lib/auth-admin.js';
 import { createInviteToken, hasCredentialAccount } from './auth.service.js';
-import { badRequest, fromAuthApiError } from '../utils/http-error.js';
+import { badRequest } from '../utils/http-error.js';
 
 const buildInviteUrl = (token: string) => `${config.frontendUrl}/auth/setup?token=${token}`;
 
@@ -56,25 +61,15 @@ export async function listUsers(db: Db): Promise<User[]> {
 
 export async function createInvite(
 	db: Db,
-	auth: AuthInstance,
 	data: { email: string; name: string; role: UserRole }
 ): Promise<{ inviteUrl: string }> {
-	let userId: string;
-	try {
-		const result = await (auth.api as any).createUser({
-			body: {
-				email: data.email,
-				name: data.name,
-				password: randomBytes(32).toString('base64url'),
-				role: data.role
-			}
-		});
-		userId = result.user.id;
-	} catch (err) {
-		throw fromAuthApiError(err, 'Failed to create user');
-	}
-
-	const token = await createInviteToken(db, userId);
+	const result = await createAdminUser({
+		email: data.email,
+		name: data.name,
+		password: randomBytes(32).toString('base64url'),
+		role: data.role
+	});
+	const token = await createInviteToken(db, result.user.id);
 	return { inviteUrl: buildInviteUrl(token) };
 }
 
@@ -87,16 +82,11 @@ export async function resendInvite(db: Db, userId: string): Promise<{ inviteUrl:
 	return { inviteUrl: buildInviteUrl(token) };
 }
 
-export async function removeUser(auth: AuthInstance, userId: string): Promise<void> {
-	try {
-		await (auth.api as any).removeUser({ body: { userId } });
-	} catch (err) {
-		throw fromAuthApiError(err, 'Failed to remove user');
-	}
+export async function removeUser(userId: string): Promise<void> {
+	await removeAdminUser(userId);
 }
 
 export async function setUserRole(
-	auth: AuthInstance,
 	adminId: string,
 	userId: string,
 	role: UserRole,
@@ -105,16 +95,11 @@ export async function setUserRole(
 	if (userId === adminId) {
 		throw badRequest('Cannot change your own role');
 	}
-	try {
-		await (auth.api as any).setRole({ body: { userId, role }, headers });
-	} catch (err) {
-		throw fromAuthApiError(err, 'Failed to change role');
-	}
+	await setAdminUserRole(userId, role, headers);
 }
 
 export async function resetPassword(
 	db: Db,
-	auth: AuthInstance,
 	adminId: string,
 	userId: string
 ): Promise<{ inviteUrl: string }> {
@@ -126,11 +111,7 @@ export async function resetPassword(
 		throw badRequest('User has no credential account');
 	}
 
-	try {
-		await (auth.api as any).revokeUserSessions({ body: { userId } });
-	} catch (err) {
-		throw fromAuthApiError(err, 'Failed to revoke user sessions');
-	}
+	await revokeAdminUserSessions(userId);
 
 	await db
 		.update(account)

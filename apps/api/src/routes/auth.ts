@@ -1,6 +1,6 @@
+import { vValidator } from '@hono/valibot-validator';
 import { generateId } from 'better-auth';
 import { Hono } from 'hono';
-import * as v from 'valibot';
 
 import { config } from '../config.js';
 import { account, user } from '../db/schema.js';
@@ -17,23 +17,22 @@ import {
 	validateInviteToken
 } from '../services/auth.service.js';
 import { loadGoogleAuthForBetterAuth } from '../services/settings.service.js';
-
-import { conflict, isUniqueViolation } from '../utils/http-error.js';
+import { withUniqueViolation } from '../utils/db.js';
 
 // Custom endpoints come first; better-auth wildcard is last so it doesn't shadow them.
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const authRouter = new Hono<AppEnv>()
-	.post('/setup-admin', async (c) => {
-		const body = v.parse(setupAdminSchema, await c.req.json());
+	.post('/setup-admin', vValidator('json', setupAdminSchema), async (c) => {
+		const body = c.req.valid('json');
 
 		await ensureNoAdmin(db);
 
-		const ctx = await auth.$context;
+		const ctx = await auth().$context;
 		const hashedPassword = await ctx.password.hash(body.password);
 		const userId = generateId();
 
-		try {
-			await db.transaction(async (tx) => {
+		await withUniqueViolation('Email already in use', 'CONFLICT', () =>
+			db.transaction(async (tx) => {
 				await tx.insert(user).values({
 					id: userId,
 					name: body.name,
@@ -48,23 +47,20 @@ export const authRouter = new Hono<AppEnv>()
 					userId,
 					password: hashedPassword
 				});
-			});
-		} catch (err) {
-			if (isUniqueViolation(err)) throw conflict('Email already in use');
-			throw err;
-		}
+			})
+		);
 
 		markSetupCompleted();
 		return c.json({ id: userId, email: body.email, name: body.name }, 201);
 	})
-	.post('/verify-invite', async (c) => {
-		const { token } = v.parse(verifyInviteSchema, await c.req.json());
+	.post('/verify-invite', vValidator('json', verifyInviteSchema), async (c) => {
+		const { token } = c.req.valid('json');
 		const { email } = await validateInviteToken(db, token);
 		return c.json({ valid: true, email });
 	})
-	.post('/setup-password', async (c) => {
-		const body = v.parse(setupPasswordSchema, await c.req.json());
-		await setupPassword(db, auth, body.token, body.password);
+	.post('/setup-password', vValidator('json', setupPasswordSchema), async (c) => {
+		const body = c.req.valid('json');
+		await setupPassword(db, auth(), body.token, body.password);
 		return c.json({ success: true });
 	})
 	.get('/bootstrap', async (c) => {
@@ -83,5 +79,5 @@ export const authRouter = new Hono<AppEnv>()
 		if (!origin || origin === 'null') {
 			req.headers.set('origin', config.frontendUrl);
 		}
-		return auth.handler(req);
+		return auth().handler(req);
 	});
