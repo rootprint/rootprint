@@ -8,10 +8,23 @@ import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
 import { badRequest, conflict } from '../utils/http-error.js';
 
-export async function ensureNoAdmin(db: Db): Promise<void> {
-	const rows = await db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).limit(1);
+// One-way flag: once an admin exists, it cannot un-exist within a process lifetime.
+// Cache only the `true` state — `false` still hits the DB so we observe the transition.
+let setupCompleted = false;
 
-	if (rows.length > 0) {
+export async function isSetupCompleted(db: Db): Promise<boolean> {
+	if (setupCompleted) return true;
+	const rows = await db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).limit(1);
+	if (rows.length > 0) setupCompleted = true;
+	return setupCompleted;
+}
+
+export function markSetupCompleted(): void {
+	setupCompleted = true;
+}
+
+export async function ensureNoAdmin(db: Db): Promise<void> {
+	if (await isSetupCompleted(db)) {
 		throw conflict('Admin already exists');
 	}
 }

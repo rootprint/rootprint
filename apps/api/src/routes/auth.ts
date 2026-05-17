@@ -1,5 +1,4 @@
 import { generateId } from 'better-auth';
-import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import * as v from 'valibot';
 
@@ -10,7 +9,13 @@ import type { AuthProvidersInfo } from '../types.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { setupAdminSchema, setupPasswordSchema, verifyInviteSchema } from '../schemas/auth.js';
-import { ensureNoAdmin, setupPassword, validateInviteToken } from '../services/auth.service.js';
+import {
+	ensureNoAdmin,
+	isSetupCompleted,
+	markSetupCompleted,
+	setupPassword,
+	validateInviteToken
+} from '../services/auth.service.js';
 import { loadGoogleAuthForBetterAuth } from '../services/settings.service.js';
 
 import { conflict, isUniqueViolation } from '../utils/http-error.js';
@@ -49,6 +54,7 @@ export const authRouter = new Hono<AppEnv>()
 			throw err;
 		}
 
+		markSetupCompleted();
 		return c.json({ id: userId, email: body.email, name: body.name }, 201);
 	})
 	.post('/verify-invite', async (c) => {
@@ -62,8 +68,7 @@ export const authRouter = new Hono<AppEnv>()
 		return c.json({ success: true });
 	})
 	.get('/bootstrap', async (c) => {
-		const rows = await db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).limit(1);
-		return c.json({ needsSetupAdmin: rows.length === 0 });
+		return c.json({ needsSetupAdmin: !(await isSetupCompleted(db)) });
 	})
 	.get('/providers', async (c) => {
 		const credentials = await loadGoogleAuthForBetterAuth(db);
