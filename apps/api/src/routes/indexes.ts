@@ -11,6 +11,7 @@ import { quickwit } from '../lib/quickwit.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
+import { SearchQuery } from '../schemas/search.js';
 import {
 	deleteIndex,
 	deleteSource,
@@ -26,6 +27,7 @@ import { fieldValues, histogramLogs, searchLogs } from '../services/log.service.
 import { getPreferences, putPreferences } from '../services/preference.service.js';
 import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
+import { toNum } from '../utils/valibot.js';
 
 const SourceParams = v.object({
 	indexId: v.pipe(v.string(), v.minLength(1)),
@@ -39,47 +41,6 @@ const FieldParams = v.object({
 	field: v.pipe(v.string(), v.minLength(1))
 });
 
-const toNum = v.pipe(
-	v.string(),
-	v.transform((s) => {
-		const n = Number(s);
-		if (!Number.isFinite(n)) throw new Error('must be a finite number');
-		return n;
-	})
-);
-
-const SearchQuery = v.object({
-	q: v.optional(v.string()),
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > 1000) throw new Error('must be 1–1000');
-				return n;
-			})
-		)
-	),
-	offset: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 0) throw new Error('must be >= 0');
-				return n;
-			})
-		)
-	),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
-	sortOrder: v.optional(v.picklist(['asc', 'desc'])),
-	countAll: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => s === 'true')
-		)
-	)
-});
 
 const HistogramQuery = v.object({
 	q: v.optional(v.string()),

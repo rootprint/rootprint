@@ -33,7 +33,7 @@ otlpRouter.post('/logs', requireToken, async (c) => {
 		throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
 	}
 
-	const token = c.get('token')!;
+	const token = c.get('ingestToken')!;
 	const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
 	const headers: Record<string, string> = {
 		'content-type': CONTENT_TYPE_PROTOBUF,

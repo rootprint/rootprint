@@ -15,6 +15,7 @@ import {
 	ingestToken,
 	savedQuery,
 	searchHistory,
+	searchToken,
 	share,
 	userPreference,
 	view
@@ -239,6 +240,7 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 		await tx.delete(view).where(eq(view.indexId, indexId));
 		await tx.delete(share).where(eq(share.indexId, indexId));
 		await tx.delete(ingestToken).where(eq(ingestToken.indexId, indexId));
+		await tx.delete(searchToken).where(eq(searchToken.indexId, indexId));
 	});
 }
 

@@ -11,6 +11,6 @@ export const requireToken: MiddlewareHandler<AppEnv> = async (c, next) => {
 	if (!bearer) throw unauthorized('Missing bearer token', 'INGEST_MISSING_BEARER');
 	const token = await verifyIngestToken(db, bearer);
 	if (!token) throw forbidden('Invalid ingest token', 'INGEST_INVALID_TOKEN');
-	c.set('token', token);
+	c.set('ingestToken', token);
 	await next();
 };
