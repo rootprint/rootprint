@@ -14,13 +14,13 @@ import { saveIndexConfigSchema } from '../schemas/indexes.js';
 import {
 	deleteIndex,
 	deleteSource,
-	getFieldConfig,
+	getIndexConfig,
 	getIndexDetail,
 	getIndexFields,
 	listIndexes,
 	saveIndexConfig,
 	setSourceEnabled,
-	type FieldConfig
+	type IndexConfig
 } from '../services/index.service.js';
 import { fieldValues, histogramLogs, searchLogs } from '../services/log.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
@@ -114,12 +114,12 @@ const PutPreferencesBody = v.object({
 	displayFields: v.nullable(v.array(v.pipe(v.string(), v.minLength(1))))
 });
 
-type IndexesEnv = AuthedEnv & { Variables: AuthedEnv['Variables'] & { fieldConfig: FieldConfig } };
+type IndexesEnv = AuthedEnv & { Variables: AuthedEnv['Variables'] & { indexConfig: IndexConfig } };
 
-const withFieldConfig: MiddlewareHandler<IndexesEnv> = async (c, next) => {
+const withIndexConfig: MiddlewareHandler<IndexesEnv> = async (c, next) => {
 	const { indexId } = v.parse(IndexIdParams, c.req.param());
-	const config = await getFieldConfig(db, quickwit, indexId, isAdmin(c.get('session')));
-	c.set('fieldConfig', config);
+	const config = await getIndexConfig(db, quickwit, indexId, isAdmin(c.get('session')));
+	c.set('indexConfig', config);
 	await next();
 };
 
@@ -198,12 +198,12 @@ export const indexesRouter = new Hono<IndexesEnv>()
 	.get(
 		'/:indexId/logs',
 		requireIndexAccess,
-		withFieldConfig,
+		withIndexConfig,
 		vValidator('query', SearchQuery),
 		async (c) => {
 			const q = c.req.valid('query');
 			return c.json(
-				await searchLogs(quickwit, c.get('fieldConfig'), {
+				await searchLogs(quickwit, c.get('indexConfig'), {
 					query: q.q,
 					limit: q.limit,
 					offset: q.offset,
@@ -218,26 +218,26 @@ export const indexesRouter = new Hono<IndexesEnv>()
 	.get(
 		'/:indexId/logs/histogram',
 		requireIndexAccess,
-		withFieldConfig,
+		withIndexConfig,
 		vValidator('query', HistogramQuery),
 		async (c) => {
 			const { q, startTs, endTs, interval } = c.req.valid('query');
 			return c.json(
-				await histogramLogs(quickwit, c.get('fieldConfig'), { query: q, startTs, endTs, interval })
+				await histogramLogs(quickwit, c.get('indexConfig'), { query: q, startTs, endTs, interval })
 			);
 		}
 	)
 	.get(
 		'/:indexId/fields/:field/values',
 		requireIndexAccess,
-		withFieldConfig,
+		withIndexConfig,
 		vValidator('param', FieldParams),
 		vValidator('query', FieldValuesQuery),
 		async (c) => {
 			const { field } = c.req.valid('param');
 			const { q, startTs, endTs, limit } = c.req.valid('query');
 			return c.json(
-				await fieldValues(quickwit, c.get('fieldConfig'), field, { query: q, startTs, endTs, limit })
+				await fieldValues(quickwit, c.get('indexConfig'), field, { query: q, startTs, endTs, limit })
 			);
 		}
 	)

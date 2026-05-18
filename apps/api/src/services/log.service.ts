@@ -1,7 +1,7 @@
 import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 'quickwit-js';
 import { AggregationBuilder, NotFoundError, ValidationError } from 'quickwit-js';
 
-import type { FieldConfig } from './index.service.js';
+import type { IndexConfig } from './index.service.js';
 import { badRequest, notFound } from '../utils/http-error.js';
 import type { FieldValuesResponse, HistogramResponse, LogSearchResponse } from '../types.js';
 
@@ -39,7 +39,7 @@ type FieldValuesParams = {
 
 export async function searchLogs(
 	qw: QuickwitClient,
-	fieldConfig: FieldConfig,
+	indexConfig: IndexConfig,
 	params: SearchParams
 ): Promise<LogSearchResponse> {
 	const {
@@ -51,12 +51,12 @@ export async function searchLogs(
 		sortOrder = 'desc',
 		countAll
 	} = params;
-	const idx = qw.index(fieldConfig.indexId);
+	const idx = qw.index(indexConfig.indexId);
 	const builder = idx
 		.query(query)
 		.limit(limit)
 		.offset(offset)
-		.sortBy(fieldConfig.timestampField, sortOrder);
+		.sortBy(indexConfig.timestampField, sortOrder);
 	if (countAll) builder.countAll();
 	if (startTs !== undefined) builder.startTimestamp(startTs);
 	if (endTs !== undefined) builder.endTimestamp(endTs);
@@ -70,15 +70,15 @@ export async function searchLogs(
 
 export async function histogramLogs(
 	qw: QuickwitClient,
-	fieldConfig: FieldConfig,
+	indexConfig: IndexConfig,
 	params: HistogramParams
 ): Promise<HistogramResponse> {
 	const { query = '*', startTs, endTs, interval } = params;
-	const idx = qw.index(fieldConfig.indexId);
+	const idx = qw.index(indexConfig.indexId);
 	const builder = idx
 		.query(query)
 		.limit(0)
-		.agg('histogram', AggregationBuilder.dateHistogram(fieldConfig.timestampField, interval));
+		.agg('histogram', AggregationBuilder.dateHistogram(indexConfig.timestampField, interval));
 	if (startTs !== undefined) builder.startTimestamp(startTs);
 	if (endTs !== undefined) builder.endTimestamp(endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
@@ -94,12 +94,12 @@ export async function histogramLogs(
 
 export async function fieldValues(
 	qw: QuickwitClient,
-	fieldConfig: FieldConfig,
+	indexConfig: IndexConfig,
 	field: string,
 	params: FieldValuesParams
 ): Promise<FieldValuesResponse> {
 	const { query = '*', startTs, endTs, limit = 20 } = params;
-	const idx = qw.index(fieldConfig.indexId);
+	const idx = qw.index(indexConfig.indexId);
 	const builder = idx
 		.query(query)
 		.limit(0)
