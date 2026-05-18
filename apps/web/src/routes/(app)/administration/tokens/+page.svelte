@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { Eye, Plus, Search, Trash2 } from 'lucide-svelte';
-	import * as v from 'valibot';
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { ApiError, call } from '$lib/api/call';
+	import CreateTokenModal from '$lib/components/admin/CreateTokenModal.svelte';
 	import TokenSecretReveal from '$lib/components/admin/TokenSecretReveal.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { formatRelativeTime } from '$lib/utils/time';
-	import { createIngestTokenSchema, type CreateIngestTokenInput } from 'api/schemas';
 
 	let { data } = $props();
 	const tokens = $derived(data.tokens);
@@ -25,70 +24,6 @@
 
 	// Create modal state
 	let createOpen = $state(false);
-	let createPhase = $state<'form' | 'reveal'>('form');
-	let createName = $state('');
-	let createIndexId = $state('');
-	let creating = $state(false);
-	let createFormError = $state<string | null>(null);
-	let createFieldErrors = $state<Record<string, string>>({});
-	let createdToken = $state('');
-
-	function resetCreate() {
-		createPhase = 'form';
-		createName = '';
-		createIndexId = indexIds.length === 1 ? indexIds[0] : '';
-		creating = false;
-		createFormError = null;
-		createFieldErrors = {};
-		createdToken = '';
-	}
-
-	function openCreate() {
-		resetCreate();
-		createOpen = true;
-	}
-
-	function handleCreateClose() {
-		resetCreate();
-	}
-
-	async function submitCreate(e: SubmitEvent) {
-		e.preventDefault();
-		createFormError = null;
-		createFieldErrors = {};
-
-		const parsed = v.safeParse(createIngestTokenSchema, {
-			name: createName,
-			indexId: createIndexId
-		});
-		if (!parsed.success) {
-			for (const issue of parsed.issues) {
-				const key = issue.path?.[0]?.key as string | undefined;
-				if (key) createFieldErrors[key] = issue.message;
-			}
-			return;
-		}
-		const input: CreateIngestTokenInput = parsed.output;
-
-		creating = true;
-		try {
-			const result = await call(
-				api.api['ingest-tokens'].$post({ json: input })
-			);
-			createdToken = result.token;
-			createPhase = 'reveal';
-			await invalidate('app:tokens');
-		} catch (err) {
-			if (err instanceof ApiError) {
-				createFormError = err.message;
-				createFieldErrors = err.fieldErrors;
-				return;
-			}
-			throw err;
-		} finally {
-			creating = false;
-		}
-	}
 
 	// View modal state
 	let viewOpen = $state(false);
@@ -193,7 +128,7 @@
 			/>
 		</label>
 		<span class="text-base-content/60 font-mono text-xs">[{countLabel}]</span>
-		<button class="btn btn-primary btn-sm" onclick={openCreate} disabled={noIndexes}>
+		<button class="btn btn-primary btn-sm" onclick={() => (createOpen = true)} disabled={noIndexes}>
 			<Plus size={14} />
 			Create token
 		</button>
@@ -239,63 +174,7 @@
 	</div>
 </div>
 
-<!-- Create / reveal modal -->
-<Modal bind:open={createOpen} title="Create ingest token" onclose={handleCreateClose}>
-	{#if createPhase === 'form'}
-		<form class="flex flex-col gap-4" onsubmit={submitCreate}>
-			{#if createFormError}
-				<div role="alert" class="alert alert-error text-sm">{createFormError}</div>
-			{/if}
-
-			<label class="input w-full" class:input-error={createFieldErrors.name}>
-				<span class="label">Token name</span>
-				<input
-					bind:value={createName}
-					placeholder="production-shipper"
-					autocomplete="off"
-					required
-				/>
-			</label>
-			{#if createFieldErrors.name}
-				<p class="text-error -mt-2 font-mono text-xs">{createFieldErrors.name}</p>
-			{/if}
-
-			<label class="select w-full" class:select-error={createFieldErrors.indexId}>
-				<span class="label">Index</span>
-				<select bind:value={createIndexId} required>
-					<option value="" disabled>Select an index…</option>
-					{#each indexIds as id (id)}
-						<option value={id}>{id}</option>
-					{/each}
-				</select>
-			</label>
-			{#if createFieldErrors.indexId}
-				<p class="text-error -mt-2 font-mono text-xs">{createFieldErrors.indexId}</p>
-			{/if}
-
-			<div class="modal-action">
-				<button
-					type="button"
-					class="btn btn-ghost"
-					disabled={creating}
-					onclick={() => (createOpen = false)}
-				>
-					Cancel
-				</button>
-				<button type="submit" class="btn btn-primary" disabled={creating}>
-					{creating ? 'Creating…' : 'Create token'}
-				</button>
-			</div>
-		</form>
-	{:else}
-		<TokenSecretReveal value={createdToken} />
-		<div class="modal-action">
-			<button type="button" class="btn btn-primary" onclick={() => (createOpen = false)}>
-				Done
-			</button>
-		</div>
-	{/if}
-</Modal>
+<CreateTokenModal bind:open={createOpen} indexIds={indexIds} />
 
 <!-- View modal -->
 <Modal
