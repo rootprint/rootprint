@@ -31,7 +31,7 @@ export type IndexSettings = {
 	contextFields: string[] | null;
 };
 
-export type FieldConfig = {
+export type IndexConfig = {
 	indexId: string;
 	levelField: string;
 	timestampField: string;
@@ -139,12 +139,12 @@ export async function getIndexFields(
 	return { fields: index?.fields ?? [] };
 }
 
-export async function getFieldConfig(
+export async function getIndexConfig(
 	db: Db,
 	qw: QuickwitClient,
 	indexId: string,
 	isAdmin: boolean
-): Promise<FieldConfig> {
+): Promise<IndexConfig> {
 	const [settings, index] = await Promise.all([
 		getIndexSettings(db, indexId),
 		qwGetIndex(qw, indexId)
