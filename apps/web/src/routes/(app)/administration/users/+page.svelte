@@ -5,8 +5,8 @@
 	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
-	import { api } from '$lib/api/client';
-	import { call } from '$lib/api/call';
+	import { client } from '$lib/api/client';
+	import type { ApiErrorBody } from 'api/types';
 	import InviteUserModal from '$lib/components/admin/InviteUserModal.svelte';
 	import MemberActionsMenu from '$lib/components/admin/MemberActionsMenu.svelte';
 	import RemoveUserModal from '$lib/components/admin/RemoveUserModal.svelte';
@@ -64,31 +64,31 @@
 	}
 
 	async function handleRegenerate(user: UserView) {
-		try {
-			await call(api.api.invites[':userId'].resend.$post({ param: { userId: user.id } }));
-			await refresh();
-			toast.success(`Invite regenerated for ${user.name}`);
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to regenerate invite');
+		const res = await client.api.invites[':userId'].resend.$post({ param: { userId: user.id } });
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			toast.error(body.error.message);
+			return;
 		}
+		await refresh();
+		toast.success(`Invite regenerated for ${user.name}`);
 	}
 
 	async function handleToggleRole(user: UserView) {
 		const newRole = user.role === 'admin' ? 'user' : 'admin';
-		try {
-			await call(
-				api.api.users[':userId'].role.$put({
-					param: { userId: user.id },
-					json: { role: newRole }
-				})
-			);
-			await refresh();
-			toast.success(
-				`${user.name} is now ${newRole === 'admin' ? 'an admin' : 'a member'}`
-			);
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to change role');
+		const res = await client.api.users[':userId'].role.$put({
+			param: { userId: user.id },
+			json: { role: newRole }
+		});
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			toast.error(body.error.message);
+			return;
 		}
+		await refresh();
+		toast.success(
+			`${user.name} is now ${newRole === 'admin' ? 'an admin' : 'a member'}`
+		);
 	}
 
 	function openReset(user: UserView) {

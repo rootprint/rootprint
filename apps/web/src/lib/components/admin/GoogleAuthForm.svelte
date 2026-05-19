@@ -6,8 +6,9 @@
 	import { googleAllowedDomainsSchema, googleCredentialsSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
-	import { api } from '$lib/api/client';
-	import { ApiError, call } from '$lib/api/call';
+	import { client } from '$lib/api/client';
+	import { toFieldErrors } from '$lib/api/errors';
+	import type { ApiErrorBody } from 'api/types';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import RemoveGoogleAuthModal from '$lib/components/admin/RemoveGoogleAuthModal.svelte';
 	import type { GoogleAuthSettingsView } from '$lib/types';
@@ -126,22 +127,27 @@
 					}
 					return;
 				}
-				await call(api.api.settings.auth.google.credentials.$put({ json: credParsed.output }));
+				const credRes = await client.api.settings.auth.google.credentials.$put({
+					json: credParsed.output
+				});
+				if (!credRes.ok) {
+					const body = (await credRes.json()) as ApiErrorBody;
+					fieldErrors = { ...fieldErrors, ...toFieldErrors(body) };
+					toast.error(body.error.message);
+					return;
+				}
 			}
-			await call(
-				api.api.settings.auth.google['allowed-domains'].$put({
-					json: domainsParsed.output
-				})
-			);
-			toast.success('Google authentication settings saved');
-			await goto('/administration/authentication', { invalidateAll: true });
-		} catch (err) {
-			if (err instanceof ApiError) {
-				formError = err.message;
-				fieldErrors = { ...fieldErrors, ...err.fieldErrors };
+			const domainsRes = await client.api.settings.auth.google['allowed-domains'].$put({
+				json: domainsParsed.output
+			});
+			if (!domainsRes.ok) {
+				const body = (await domainsRes.json()) as ApiErrorBody;
+				fieldErrors = { ...fieldErrors, ...toFieldErrors(body) };
+				toast.error(body.error.message);
 				return;
 			}
-			throw err;
+			toast.success('Google authentication settings saved');
+			await goto('/administration/authentication', { invalidateAll: true });
 		} finally {
 			saving = false;
 		}

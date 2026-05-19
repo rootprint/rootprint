@@ -6,21 +6,37 @@ description: 'Reference for all environment variables that control Logwiz behavi
 Logwiz reads its configuration from environment variables at startup. For Docker deployments, set these under the `environment` key of the `logwiz` service in `docker-compose.yml`.
 
 <Note>
-	`LOGWIZ_QUICKWIT_URL` must point at a Quickwit `0.9` or later instance. Logwiz does not support
+	`QUICKWIT_URL` must point at a Quickwit `0.9` or later instance. Logwiz does not support
 	older Quickwit releases.
 </Note>
 
-| Variable                       | Required | Default                 | Description                                                                                                                                                                                                                                                                                     |
-| ------------------------------ | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LOGWIZ_QUICKWIT_URL`          | Yes      | —                       | Quickwit REST API endpoint (e.g. `http://quickwit:7280/api/v1`). Logwiz will refuse to start without it.                                                                                                                                                                                        |
-| `ORIGIN`                       | Yes      | `http://localhost:8282` | Canonical public URL of the Logwiz instance. Required so invite links and Better Auth callbacks resolve correctly. Set to `http://localhost:5173` for local dev (Vite), keep the default for the Docker image, or use your public URL (e.g. `https://logs.example.com`) behind a reverse proxy. |
-| `LOGWIZ_AUTH_SECRET`           | No       | Auto-generated          | Secret used to sign session tokens. Must be at least 32 characters. If not set, Logwiz generates one on first startup and persists it to a `.secret` file next to the database. Values shorter than 32 characters are ignored and the file secret is used instead.                              |
-| `LOGWIZ_DATABASE_PATH`         | No       | `./data/logwiz.db`      | Path to the SQLite database file.                                                                                                                                                                                                                                                               |
-| `LOGWIZ_INVITE_EXPIRY_HOURS`   | No       | `48`                    | How long (in hours) an invite link remains valid.                                                                                                                                                                                                                                               |
-| `LOGWIZ_RATE_LIMIT_WINDOW`     | No       | `60`                    | Duration (in seconds) of the rate-limit sliding window.                                                                                                                                                                                                                                         |
-| `LOGWIZ_RATE_LIMIT_MAX`        | No       | `100`                   | Maximum requests allowed per window per IP.                                                                                                                                                                                                                                                     |
-| `LOGWIZ_SIGNIN_RATE_LIMIT_MAX` | No       | `5`                     | Maximum sign-in attempts allowed per window per IP.                                                                                                                                                                                                                                             |
-| `LOGWIZ_QUICKWIT_TIMEOUT_MS`   | No       | `10000`                 | Per-request timeout in milliseconds for all Quickwit HTTP calls (metadata, search, ingest). Lower values fail faster when Quickwit is unreachable; higher values tolerate slow networks.                                                                                                        |
+## Required
+
+| Variable        | Description                                                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`  | PostgreSQL connection string (e.g. `postgres://logwiz:logwiz@db:5432/logwiz`). No default.                                                                                                    |
+| `ORIGIN`        | Canonical public URL of this Logwiz instance (e.g. `https://logs.example.com`). Used for Better Auth callbacks, invite links, CORS allow-list, and cookies. No default. Must be a valid URL. |
+| `QUICKWIT_URL`  | Quickwit REST endpoint (e.g. `http://quickwit:7280`). No default. Must be a valid URL.                                                                                                       |
+
+Logwiz refuses to start if any required variable is missing, empty, or (for URL variables) not parseable as an `http://` or `https://` URL.
+
+## Optional
+
+| Variable             | Default          | Description                                                                                                                                                                                                                       |
+| -------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET` | Auto-generated   | Secret used to sign session tokens. If unset, Logwiz generates 32 random bytes on first boot and persists them in the `app_settings` table; subsequent boots read the row. If set, must be ≥32 characters or startup fails.       |
+| `FRONTEND_URL`       | Same as `ORIGIN` | Additional allowed CORS origin. Only useful in split deployments where the SPA is hosted on a different origin than the API. Cookie domain, invite link host, and Better Auth `baseURL` always derive from `ORIGIN`, not this.    |
+| `PORT`               | `8282`           | HTTP listen port. Usually you remap with the compose `ports:` block instead of changing this.                                                                                                                                     |
+
+## Removed in this release
+
+These variables were honored in earlier (SQLite-era) builds and are no longer read. Setting them has no effect:
+
+- `LOGWIZ_DATABASE_PATH` — Logwiz now requires PostgreSQL.
+- `LOGWIZ_AUTH_SECRET` — renamed; use `BETTER_AUTH_SECRET`.
+- `LOGWIZ_INVITE_EXPIRY_HOURS` — hard-coded to 48 hours.
+- `LOGWIZ_RATE_LIMIT_*`, `LOGWIZ_SIGNIN_RATE_LIMIT_MAX`, `LOGWIZ_QUICKWIT_TIMEOUT_MS` — not currently implemented; will be re-exposed via the admin settings UI in a future release.
+- `HOST`, `BETTER_AUTH_URL`, `LOGWIZ_SERVE_WEB`, `LOGWIZ_WEB_ROOT` — replaced by `0.0.0.0` bind, derived from `ORIGIN`, and image-build defaults respectively.
 
 ## Docker Compose example
 
@@ -29,23 +45,9 @@ services:
   logwiz:
     image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
     environment:
-      # Required
-      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
-      # Session security
-      LOGWIZ_AUTH_SECRET: a-random-string-at-least-32-characters-long
-      # Database
-      LOGWIZ_DATABASE_PATH: /app/data/logwiz.db
-      # Public URL — required (defaults to http://localhost:8282)
+      DATABASE_URL: postgres://logwiz:logwiz@db:5432/logwiz
       ORIGIN: https://logs.example.com
-      # Invites
-      LOGWIZ_INVITE_EXPIRY_HOURS: 48
-      # Rate limiting
-      LOGWIZ_RATE_LIMIT_WINDOW: 60
-      LOGWIZ_RATE_LIMIT_MAX: 100
-      LOGWIZ_SIGNIN_RATE_LIMIT_MAX: 5
-      LOGWIZ_QUICKWIT_TIMEOUT_MS: 10000
+      QUICKWIT_URL: http://quickwit:7280
     ports:
       - '8282:8282'
-    volumes:
-      - logwiz-data:/app/data
 ```

@@ -6,21 +6,20 @@ import type { AppEnv } from '../../env.js';
 import { requireToken } from '../../middleware/require-token.js';
 import { proxyToQuickwit } from '../../utils/quickwit-proxy.js';
 
-export const ndjsonRouter = new Hono<AppEnv>();
+export const ndjsonRouter = new Hono<AppEnv>()
+	.post('/ndjson', requireToken, async (c) => {
+		const token = c.get('ingestToken')!;
+		const upstreamUrl = `${config.quickwitUrl}/api/v1/${encodeURIComponent(token.indexId)}/ingest`;
+		const contentType = c.req.header('content-type') ?? CONTENT_TYPE_JSON;
 
-ndjsonRouter.post('/ndjson', requireToken, async (c) => {
-	const token = c.get('ingestToken')!;
-	const upstreamUrl = `${config.quickwitUrl}/api/v1/${encodeURIComponent(token.indexId)}/ingest`;
-	const contentType = c.req.header('content-type') ?? CONTENT_TYPE_JSON;
+		const headers: Record<string, string> = { 'content-type': contentType };
+		const contentLength = c.req.header('content-length');
+		if (contentLength) headers['content-length'] = contentLength;
 
-	const headers: Record<string, string> = { 'content-type': contentType };
-	const contentLength = c.req.header('content-length');
-	if (contentLength) headers['content-length'] = contentLength;
+		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
-	const result = await proxyToQuickwit(c, { upstreamUrl, headers });
-
-	const respHeaders: Record<string, string> = {};
-	const upstreamCt = result.headers.get('content-type');
-	if (upstreamCt) respHeaders['content-type'] = upstreamCt;
-	return new Response(result.bodyBytes, { status: result.status, headers: respHeaders });
-});
+		const respHeaders: Record<string, string> = {};
+		const upstreamCt = result.headers.get('content-type');
+		if (upstreamCt) respHeaders['content-type'] = upstreamCt;
+		return new Response(result.bodyBytes, { status: result.status, headers: respHeaders });
+	});

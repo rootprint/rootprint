@@ -1,8 +1,9 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
-	import { api } from '$lib/api/client';
-	import { ApiError, call } from '$lib/api/call';
+	import { client } from '$lib/api/client';
+	import { toFieldErrors } from '$lib/api/errors';
+	import type { ApiErrorBody } from 'api/types';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 
 	let name = $state('');
@@ -28,16 +29,15 @@
 			}
 			const input: SetupAdminInput = parsed.output;
 
-			await call(api.api.auth['setup-admin'].$post({ json: input }));
-			await invalidate('app:session');
-			await goto('/auth/sign-in');
-		} catch (err) {
-			if (err instanceof ApiError) {
-				formError = err.message;
-				fieldErrors = err.fieldErrors;
+			const res = await client.api.auth['setup-admin'].$post({ json: input });
+			if (!res.ok) {
+				const body = (await res.json()) as ApiErrorBody;
+				fieldErrors = toFieldErrors(body);
+				formError = body.error.message;
 				return;
 			}
-			throw err;
+			await invalidate('app:session');
+			await goto('/auth/sign-in');
 		} finally {
 			submitting = false;
 		}

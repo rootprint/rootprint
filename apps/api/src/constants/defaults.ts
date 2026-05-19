@@ -1,0 +1,2 @@
+export const INVITE_EXPIRY_HOURS = 48;
+export const LAST_ACTIVE_THROTTLE_MS = 300_000;

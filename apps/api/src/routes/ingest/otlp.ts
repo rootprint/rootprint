@@ -25,39 +25,38 @@ function parseBaseMediaType(header: string | undefined): string | null {
 	return trimmed ? trimmed : null;
 }
 
-export const otlpRouter = new Hono<AppEnv>();
+export const otlpRouter = new Hono<AppEnv>()
+	.post('/logs', requireToken, async (c) => {
+		const baseType = parseBaseMediaType(c.req.header('content-type'));
+		if (baseType !== CONTENT_TYPE_PROTOBUF) {
+			throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
+		}
 
-otlpRouter.post('/logs', requireToken, async (c) => {
-	const baseType = parseBaseMediaType(c.req.header('content-type'));
-	if (baseType !== CONTENT_TYPE_PROTOBUF) {
-		throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
-	}
+		const token = c.get('ingestToken')!;
+		const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
+		const headers: Record<string, string> = {
+			'content-type': CONTENT_TYPE_PROTOBUF,
+			'qw-otel-logs-index': token.indexId
+		};
+		const ce = c.req.header('content-encoding');
+		if (ce) headers['content-encoding'] = ce;
 
-	const token = c.get('ingestToken')!;
-	const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
-	const headers: Record<string, string> = {
-		'content-type': CONTENT_TYPE_PROTOBUF,
-		'qw-otel-logs-index': token.indexId
-	};
-	const ce = c.req.header('content-encoding');
-	if (ce) headers['content-encoding'] = ce;
+		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
-	const result = await proxyToQuickwit(c, { upstreamUrl, headers });
-
-	if (result.status >= 500) {
-		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
-	}
-	if (result.status === 429) {
-		const retryAfter = result.headers.get('retry-after') ?? undefined;
-		const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
-		throw tooManyRequests(msg, 'UPSTREAM_RATE_LIMIT', retryAfter);
-	}
-	if (result.status >= 400) {
-		const msg = await readUpstreamMessage(
-			new Response(result.bodyBytes),
-			'Upstream rejected request'
-		);
-		throw badRequest(msg, 'UPSTREAM_REJECTED');
-	}
-	return otlpSuccess();
-});
+		if (result.status >= 500) {
+			throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
+		}
+		if (result.status === 429) {
+			const retryAfter = result.headers.get('retry-after') ?? undefined;
+			const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
+			throw tooManyRequests(msg, 'UPSTREAM_RATE_LIMIT', retryAfter);
+		}
+		if (result.status >= 400) {
+			const msg = await readUpstreamMessage(
+				new Response(result.bodyBytes),
+				'Upstream rejected request'
+			);
+			throw badRequest(msg, 'UPSTREAM_REJECTED');
+		}
+		return otlpSuccess();
+	});

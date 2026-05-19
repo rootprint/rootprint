@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { api } from '$lib/api/client';
-	import { call } from '$lib/api/call';
+	import type { ApiErrorBody } from 'api/types';
+
+	import { client } from '$lib/api/client';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 
 	let {
@@ -21,16 +22,17 @@
 
 	async function onConfirm() {
 		loading = true;
-		try {
-			await call(api.api.users[':userId'].$delete({ param: { userId } }));
-			toast.success(`Removed ${userName}`);
-			open = false;
-			await onremoved?.();
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to remove user');
-		} finally {
+		const res = await client.api.users[':userId'].$delete({ param: { userId } });
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			toast.error(body.error.message);
 			loading = false;
+			return;
 		}
+		toast.success(`Removed ${userName}`);
+		loading = false;
+		open = false;
+		await onremoved?.();
 	}
 </script>
 
