@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -30,8 +31,10 @@ export async function connectDb(): Promise<void> {
 
 export async function runMigrations(): Promise<void> {
 	const here = path.dirname(fileURLToPath(import.meta.url));
-	// src/lib/db.ts → ../../drizzle (next to apps/api/package.json) in dev.
-	// dist/lib/db.js → ../../drizzle if the build keeps the lib/ structure.
-	const migrationsFolder = path.resolve(here, '../../drizzle');
+	const candidates = [path.resolve(here, '../../drizzle'), path.resolve(here, '../drizzle')];
+	const migrationsFolder = candidates.find((p) => existsSync(p));
+	if (!migrationsFolder) {
+		throw new Error(`Migrations folder not found. Tried: ${candidates.join(', ')}`);
+	}
 	await migrate(db, { migrationsFolder });
 }

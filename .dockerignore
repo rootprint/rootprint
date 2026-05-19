@@ -1,0 +1,50 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (re-installed inside the builder)
+node_modules
+apps/*/node_modules
+
+# Build outputs (re-produced inside the builder)
+**/dist
+**/build
+**/.svelte-kit
+
+# Local data (compose volumes, runtime state)
+data
+.quickwit
+
+# Secrets & local env — never bake into the image
+.env
+.env.*
+!.env.example
+
+# Marketing app — keep package.json (workspace resolution), drop the rest.
+apps/landing/*
+!apps/landing/package.json
+
+# Docs app — Mintlify site, not a bun workspace (no package.json).
+# Exclude wholesale.
+apps/docs
+
+# Local tooling state
+.superpowers
+.planning
+.agents
+.claude
+.github
+.idea
+.vscode
+
+# Editor / OS detritus
+.DS_Store
+Thumbs.db
+
+# Misc dev files
+docs
+**/bruno
+apps/api/proto
+*.md
+!apps/api/README.md

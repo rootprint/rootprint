@@ -3,6 +3,9 @@ import type { Schema } from 'hono/types';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { ApplyGlobalResponse } from 'hono/client';
 import { cors } from 'hono/cors';
+import { serveStatic } from 'hono/bun';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { QuickwitError } from 'quickwit-js';
 import { ValiError } from 'valibot';
 
@@ -27,6 +30,23 @@ import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 import { getBetterAuthSecret } from './utils/secret.js';
+
+// Resolves to apps/web/build from both src/app.ts (dev) and dist/app.js (prod).
+// In both cases, path.dirname(import.meta.url) is two segments deep within
+// apps/api, so ../../web/build lands at apps/web/build.
+const webRoot = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'../../web/build'
+);
+
+function isApiPath(p: string): boolean {
+	return (
+		p === '/api' ||
+		p === '/v1' ||
+		p.startsWith('/api/') ||
+		p.startsWith('/v1/')
+	);
+}
 
 function withAuth<E extends AuthedEnv, S extends Schema>(router: Hono<E, S, ''>) {
 	return new Hono<AppEnv>().use('*', requireUser).route('/', router);
@@ -143,6 +163,35 @@ export const routes = app
 	.route('/api/settings', withAuth(settingsRouter))
 	.route('/api/ingest', ndjsonRouter)
 	.route('/v1', otlpRouter);
+
+// --- SPA static-file serving (all-in-one image) ---------------------------
+//
+// Mounted AFTER the `routes` chain so /api and /v1 keep their handlers and
+// the existing app.notFound still emits the JSON 404 contract for API
+// misses. Each handler bails on /api or /v1 paths via isApiPath().
+
+// 1. Cache-Control headers for the static responses.
+app.use('*', async (c, next) => {
+	if (isApiPath(c.req.path)) return next();
+	await next();
+	if (c.req.path.startsWith('/_app/immutable/')) {
+		c.header('Cache-Control', 'public, max-age=31536000, immutable');
+	} else {
+		c.header('Cache-Control', 'no-cache');
+	}
+});
+
+// 2. Serve any file that exists in apps/web/build/.
+app.use('*', async (c, next) => {
+	if (isApiPath(c.req.path)) return next();
+	return serveStatic({ root: webRoot })(c, next);
+});
+
+// 3. SPA fallback — anything still unmatched and not an API path gets index.html.
+app.get('*', async (c, next) => {
+	if (isApiPath(c.req.path)) return next();
+	return serveStatic({ path: 'index.html', root: webRoot })(c, next);
+});
 
 async function main(): Promise<void> {
 	await connectDb();
