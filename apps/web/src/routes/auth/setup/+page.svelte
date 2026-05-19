@@ -3,8 +3,9 @@
 	import { setupPasswordSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
-	import { api } from '$lib/api/client';
-	import { ApiError, call } from '$lib/api/call';
+	import { client } from '$lib/api/client';
+	import { toFieldErrors } from '$lib/api/errors';
+	import type { ApiErrorBody } from 'api/types';
 
 	let { data } = $props();
 
@@ -29,15 +30,14 @@
 
 		submitting = true;
 		try {
-			await call(api.api.auth['setup-password'].$post({ json: parsed.output }));
-			await goto('/auth/sign-in');
-		} catch (err) {
-			if (err instanceof ApiError) {
-				formError = err.message;
-				fieldErrors = err.fieldErrors;
+			const res = await client.api.auth['setup-password'].$post({ json: parsed.output });
+			if (!res.ok) {
+				const body = (await res.json()) as ApiErrorBody;
+				fieldErrors = toFieldErrors(body);
+				formError = body.error.message;
 				return;
 			}
-			throw err;
+			await goto('/auth/sign-in');
 		} finally {
 			submitting = false;
 		}

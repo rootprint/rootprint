@@ -1,14 +1,25 @@
+import { error } from "@sveltejs/kit";
+
 import type { PageLoad } from "./$types";
 
-import { api } from "$lib/api/client";
-import { call } from "$lib/api/call";
+import type { ApiErrorBody } from "api/types";
+import { client } from "$lib/api/client";
 
 export const load: PageLoad = async ({ depends, fetch }) => {
   depends("app:tokens");
-  const [tokens, indexes] = await Promise.all([
-    call(api.api["ingest-tokens"].$get({}, { fetch })),
-    call(api.api.indexes.$get({}, { fetch })),
+  const [tokensRes, indexesRes] = await Promise.all([
+    client.api["ingest-tokens"].$get({}, { fetch }),
+    client.api.indexes.$get({}, { fetch }),
   ]);
+  if (!tokensRes.ok) {
+    const body = (await tokensRes.json()) as ApiErrorBody;
+    error(tokensRes.status, body.error.message);
+  }
+  if (!indexesRes.ok) {
+    const body = (await indexesRes.json()) as ApiErrorBody;
+    error(indexesRes.status, body.error.message);
+  }
+  const [tokens, indexes] = await Promise.all([tokensRes.json(), indexesRes.json()]);
   return {
     tokens,
     indexIds: indexes.map((i) => i.indexId),

@@ -1,5 +1,5 @@
-import type { routes } from './app.js';
+import type { RoutesWithErrors } from './app.js';
 
-export type AppType = typeof routes;
+export type AppType = RoutesWithErrors;
 
 export * from './types.js';

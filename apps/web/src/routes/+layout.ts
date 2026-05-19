@@ -1,7 +1,8 @@
-import { redirect } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 import type { LayoutLoad } from "./$types";
-import { api } from "$lib/api/client";
+import { client } from "$lib/api/client";
 import { authClient } from "$lib/auth-client";
+import type { ApiErrorBody } from "api/types";
 
 export const ssr = false;
 export const prerender = false;
@@ -10,12 +11,13 @@ export const load: LayoutLoad = async ({ url, depends }) => {
   depends("app:session");
 
   const [bootstrapRes, sessionRes] = await Promise.all([
-    api.api.auth.bootstrap.$get(),
+    client.api.auth.bootstrap.$get(),
     authClient.getSession(),
   ]);
 
   if (!bootstrapRes.ok) {
-    throw new Error(`Failed to load bootstrap status (${bootstrapRes.status})`);
+    const body = (await bootstrapRes.json()) as ApiErrorBody;
+    error(bootstrapRes.status, body.error.message);
   }
   const bootstrap = await bootstrapRes.json();
   const session = sessionRes?.data ?? null;
