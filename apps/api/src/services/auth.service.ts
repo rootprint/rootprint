@@ -2,31 +2,32 @@ import { randomBytes } from 'node:crypto';
 import { generateId } from 'better-auth';
 import { and, eq } from 'drizzle-orm';
 
-import { config } from '../config.js';
+import { INVITE_EXPIRY_HOURS } from '../constants/defaults.js';
 import type { Db } from '../db/index.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
-import { badRequest, conflict } from '../utils/http-error.js';
+import { badRequest } from '../utils/http-error.js';
 
-// One-way flag: once an admin exists, it cannot un-exist within a process lifetime.
-// Cache only the `true` state — `false` still hits the DB so we observe the transition.
-let setupCompleted = false;
+export const FIRST_ADMIN_CLAIMED_KEY = 'first_admin_claimed';
 
 export async function isSetupCompleted(db: Db): Promise<boolean> {
-	if (setupCompleted) return true;
-	const rows = await db.select({ id: user.id }).from(user).where(eq(user.role, 'admin')).limit(1);
-	if (rows.length > 0) setupCompleted = true;
-	return setupCompleted;
+	const rows = await db
+		.select({ key: appSettings.key })
+		.from(appSettings)
+		.where(eq(appSettings.key, FIRST_ADMIN_CLAIMED_KEY))
+		.limit(1);
+	return rows.length > 0;
 }
 
-export function markSetupCompleted(): void {
-	setupCompleted = true;
-}
-
-export async function ensureNoAdmin(db: Db): Promise<void> {
-	if (await isSetupCompleted(db)) {
-		throw conflict('Admin already exists');
-	}
+export async function claimFirstAdmin(
+	tx: Parameters<Parameters<Db['transaction']>[0]>[0]
+): Promise<boolean> {
+	const inserted = await tx
+		.insert(appSettings)
+		.values({ key: FIRST_ADMIN_CLAIMED_KEY, value: 'true' })
+		.onConflictDoNothing({ target: appSettings.key })
+		.returning({ key: appSettings.key });
+	return inserted.length > 0;
 }
 
 export async function hasCredentialAccount(db: Db, userId: string): Promise<boolean> {
@@ -40,7 +41,7 @@ export async function hasCredentialAccount(db: Db, userId: string): Promise<bool
 
 export async function createInviteToken(db: Db, userId: string): Promise<string> {
 	const token = randomBytes(32).toString('hex');
-	const expiresAt = new Date(Date.now() + config.inviteExpiryHours * 60 * 60 * 1000);
+	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_HOURS * 60 * 60 * 1000);
 
 	await db.transaction(async (tx) => {
 		await tx.delete(inviteToken).where(eq(inviteToken.userId, userId));

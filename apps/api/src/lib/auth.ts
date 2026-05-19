@@ -8,7 +8,6 @@ import { and, eq } from 'drizzle-orm';
 import { config } from '../config.js';
 import * as authSchema from '../db/auth.schema.js';
 import { account, inviteToken, user } from '../db/schema.js';
-import type { Db } from '../db/index.js';
 import { getGoogleAllowedDomains } from '../services/auth.service.js';
 import {
 	loadGoogleAuthForBetterAuth,
@@ -16,13 +15,15 @@ import {
 } from '../services/settings.service.js';
 import { db } from './db.js';
 
-function buildAuth(database: Db, google?: GoogleAuthCredentials) {
+function buildAuth(secret: string, google?: GoogleAuthCredentials) {
+	const trustedOrigins = [config.origin, ...(config.frontendUrl ? [config.frontendUrl] : [])];
+
 	const opts: BetterAuthOptions = {
-		database: drizzleAdapter(database, { provider: 'pg', schema: authSchema }),
+		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
 		plugins: [admin()],
-		trustedOrigins: [config.frontendUrl],
-		secret: config.betterAuthSecret,
-		baseURL: config.betterAuthUrl,
+		trustedOrigins,
+		secret,
+		baseURL: config.origin,
 		session: { cookieCache: { enabled: true } },
 		emailAndPassword: { enabled: true, disableSignUp: true },
 		user: {
@@ -35,8 +36,8 @@ function buildAuth(database: Db, google?: GoogleAuthCredentials) {
 				create: {
 					before: async (acct) => {
 						if (acct.providerId !== 'google') return;
-						const domains = await getGoogleAllowedDomains(database);
-						const [row] = await database
+						const domains = await getGoogleAllowedDomains(db);
+						const [row] = await db
 							.select({ email: user.email })
 							.from(user)
 							.where(eq(user.id, acct.userId))
@@ -48,7 +49,7 @@ function buildAuth(database: Db, google?: GoogleAuthCredentials) {
 					},
 					after: async (acct) => {
 						if (acct.providerId !== 'google') return;
-						await database.transaction(async (tx) => {
+						await db.transaction(async (tx) => {
 							await tx
 								.delete(account)
 								.where(
@@ -75,22 +76,42 @@ function buildAuth(database: Db, google?: GoogleAuthCredentials) {
 	return betterAuth(opts);
 }
 
-async function loadGoogle(database: Db): Promise<GoogleAuthCredentials | undefined> {
-	return loadGoogleAuthForBetterAuth(database);
-}
-
-const initialGoogle = await loadGoogle(db).catch(() => undefined);
-
 type AuthInstanceInternal = ReturnType<typeof buildAuth>;
-const holder: { instance: AuthInstanceInternal } = {
-	instance: buildAuth(db, initialGoogle)
+
+const holder: {
+	instance: AuthInstanceInternal | null;
+	secret: string | null;
+} = {
+	instance: null,
+	secret: null
 };
 
-export const auth = (): AuthInstanceInternal => holder.instance;
+/**
+ * Initialize Better Auth exactly once during the boot sequence.
+ * Subsequent calls throw — re-init from runtime changes goes through reloadAuth().
+ */
+export async function initAuth(secret: string): Promise<void> {
+	if (holder.instance !== null) {
+		throw new Error('initAuth has already been called');
+	}
+	const google = await loadGoogleAuthForBetterAuth(db).catch(() => undefined);
+	holder.secret = secret;
+	holder.instance = buildAuth(secret, google);
+}
+
+export const auth = (): AuthInstanceInternal => {
+	if (holder.instance === null) {
+		throw new Error('auth() called before initAuth(); ensure boot sequence ran');
+	}
+	return holder.instance;
+};
 
 export async function reloadAuth(): Promise<void> {
-	const google = await loadGoogle(db);
-	holder.instance = buildAuth(db, google);
+	if (holder.secret === null) {
+		throw new Error('reloadAuth called before initAuth');
+	}
+	const google = await loadGoogleAuthForBetterAuth(db);
+	holder.instance = buildAuth(holder.secret, google);
 }
 
 export type AuthInstance = AuthInstanceInternal;
