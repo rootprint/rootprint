@@ -10,14 +10,14 @@ import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { setupAdminSchema, setupPasswordSchema, verifyInviteSchema } from '../schemas/auth.js';
 import {
-	ensureNoAdmin,
+	claimFirstAdmin,
 	isSetupCompleted,
-	markSetupCompleted,
 	setupPassword,
 	validateInviteToken
 } from '../services/auth.service.js';
 import { loadGoogleAuthForBetterAuth } from '../services/settings.service.js';
 import { withUniqueViolation } from '../utils/db.js';
+import { conflict } from '../utils/http-error.js';
 
 // Custom endpoints come first; better-auth wildcard is last so it doesn't shadow them.
 // Routes are chained so Hono propagates request/response types for the RPC client.
@@ -25,7 +25,9 @@ export const authRouter = new Hono<AppEnv>()
 	.post('/setup-admin', vValidator('json', setupAdminSchema), async (c) => {
 		const body = c.req.valid('json');
 
-		await ensureNoAdmin(db);
+		if (await isSetupCompleted(db)) {
+			throw conflict('Admin already exists');
+		}
 
 		const ctx = await auth().$context;
 		const hashedPassword = await ctx.password.hash(body.password);
@@ -33,6 +35,11 @@ export const authRouter = new Hono<AppEnv>()
 
 		await withUniqueViolation('Email already in use', 'CONFLICT', () =>
 			db.transaction(async (tx) => {
+				const claimed = await claimFirstAdmin(tx);
+				if (!claimed) {
+					throw conflict('Admin already exists');
+				}
+
 				await tx.insert(user).values({
 					id: userId,
 					name: body.name,
@@ -50,7 +57,6 @@ export const authRouter = new Hono<AppEnv>()
 			})
 		);
 
-		markSetupCompleted();
 		return c.json({ id: userId, email: body.email, name: body.name }, 201);
 	})
 	.post('/verify-invite', vValidator('json', verifyInviteSchema), async (c) => {
@@ -77,7 +83,7 @@ export const authRouter = new Hono<AppEnv>()
 		const req = c.req.raw;
 		const origin = req.headers.get('origin');
 		if (!origin || origin === 'null') {
-			req.headers.set('origin', config.frontendUrl);
+			req.headers.set('origin', config.origin);
 		}
 		return auth().handler(req);
 	});

@@ -15,7 +15,7 @@ import {
 import { createInviteToken, hasCredentialAccount } from './auth.service.js';
 import { badRequest } from '../utils/http-error.js';
 
-const buildInviteUrl = (token: string) => `${config.frontendUrl}/auth/setup?token=${token}`;
+const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 
 export async function listUsers(db: Db): Promise<User[]> {
 	const [users, invites, providerAccounts] = await Promise.all([

@@ -1,22 +1,19 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { config as loadEnv } from 'dotenv';
 
-loadEnv({ path: '../../.env' });
+import { intEnv, optionalUrlEnv, requireEnv, requireUrlEnv } from './utils/require-env.js';
 
-function parseBool(v: string | undefined, fallback: boolean): boolean {
-	if (v === undefined) return fallback;
-	return v === '1' || v.toLowerCase() === 'true';
-}
+const repoRootEnv = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../.env');
+loadEnv({ path: repoRootEnv });
 
 export const config = {
-	host: process.env.HOST ?? '0.0.0.0',
-	port: Number.parseInt(process.env.PORT ?? '8282', 10),
-	databaseUrl: process.env.DATABASE_URL ?? '',
-	quickwitUrl: process.env.QUICKWIT_URL ?? 'http://localhost:7280',
-	betterAuthSecret: process.env.BETTER_AUTH_SECRET ?? '',
-	betterAuthUrl: process.env.BETTER_AUTH_URL ?? 'http://localhost:8282',
-	frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
-	inviteExpiryHours: Number.parseInt(process.env.INVITE_EXPIRY_HOURS ?? '48', 10),
-	lastActiveThrottleMs: Number.parseInt(process.env.LAST_ACTIVE_THROTTLE_MS ?? '300000', 10),
-	serveWeb: parseBool(process.env.LOGWIZ_SERVE_WEB, false),
-	webRoot: process.env.LOGWIZ_WEB_ROOT ?? './web'
+	databaseUrl: requireEnv('DATABASE_URL'),
+	origin: requireUrlEnv('ORIGIN'),
+	quickwitUrl: requireUrlEnv('QUICKWIT_URL'),
+	frontendUrl: optionalUrlEnv('FRONTEND_URL'),
+	port: intEnv('PORT', 8282)
 };
+
+export type AppConfig = typeof config;

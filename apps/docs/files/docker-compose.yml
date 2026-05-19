@@ -1,37 +1,51 @@
 services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: logwiz
+      POSTGRES_PASSWORD: logwiz   # change in production
+      POSTGRES_DB: logwiz
+    volumes:
+      - logwiz-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logwiz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   quickwit:
     image: quickwit/quickwit:v0.9.0-rc
-    container_name: quickwit
-    ports:
-      - '127.0.0.1:7280:7280'
-      - '127.0.0.1:7281:7281'
+    restart: unless-stopped
     volumes:
-      - quickwit-data:/quickwit/qwdata
-    command: ['run']
+      - logwiz-quickwit:/quickwit/qwdata
+    command: ["run"]
     healthcheck:
-      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/7280"']
+      test: ["CMD-SHELL", 'bash -c "echo > /dev/tcp/localhost/7280"']
       interval: 10s
       timeout: 5s
       retries: 10
 
   logwiz:
     image: ghcr.io/oleksandr-zhyhalo/logwiz:latest
-    container_name: logwiz
+    restart: unless-stopped
     depends_on:
+      db:
+        condition: service_healthy
       quickwit:
         condition: service_healthy
     environment:
-      LOGWIZ_QUICKWIT_URL: http://quickwit:7280/api/v1
+      DATABASE_URL: postgres://logwiz:logwiz@db:5432/logwiz
+      QUICKWIT_URL: http://quickwit:7280
+      ORIGIN: http://localhost:8282   # change to your public URL
+    ports:
+      - "8282:8282"
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8282/api/health || exit 1']
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8282/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-      - '8282:8282'
-    volumes:
-      - logwiz-data:/app/data
 
 volumes:
-  quickwit-data:
-  logwiz-data:
+  logwiz-db:
+  logwiz-quickwit:

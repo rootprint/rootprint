@@ -2,12 +2,14 @@ import { Hono, type Context } from 'hono';
 import type { Schema } from 'hono/types';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { cors } from 'hono/cors';
-import { serveStatic } from 'hono/bun';
 import { QuickwitError } from 'quickwit-js';
 import { ValiError } from 'valibot';
 
 import { config } from './config.js';
 import type { AppEnv, AuthedEnv } from './env.js';
+import { initAuth } from './lib/auth.js';
+import { connectDb, db, runMigrations } from './lib/db.js';
+import { probeQuickwit } from './lib/quickwit.js';
 import { requestContext } from './middleware/request-context.js';
 import { requireUser } from './middleware/require-user.js';
 import { authRouter } from './routes/auth.js';
@@ -23,6 +25,7 @@ import { usersRouter } from './routes/users.js';
 import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
+import { getBetterAuthSecret } from './utils/secret.js';
 
 function withAuth<E extends AuthedEnv, S extends Schema>(router: Hono<E, S, ''>) {
 	return new Hono<AppEnv>().use('*', requireUser).route('/', router);
@@ -35,7 +38,17 @@ function errorJson(c: Context, body: ApiErrorBody['error'], status: ContentfulSt
 export const app = new Hono<AppEnv>();
 
 app.use('*', requestContext);
-app.use('*', cors({ origin: config.frontendUrl, credentials: true }));
+const allowedOrigins = new Set([
+	config.origin,
+	...(config.frontendUrl ? [config.frontendUrl] : [])
+]);
+app.use(
+	'*',
+	cors({
+		origin: (origin) => (allowedOrigins.has(origin) ? origin : null),
+		credentials: true
+	})
+);
 
 app.onError((rawErr, c) => {
 	const requestId = c.get('requestId');
@@ -130,19 +143,24 @@ export const routes = app
 	.route('/api/ingest', ndjsonRouter)
 	.route('/v1', otlpRouter);
 
-if (config.serveWeb) {
-	app.use('/*', serveStatic({ root: config.webRoot }));
+async function main(): Promise<void> {
+	await connectDb();
+	await runMigrations();
 
-	app.get('*', async (c) => {
-		const path = c.req.path;
-		if (path.startsWith('/api/') || path.startsWith('/v1/')) return c.notFound();
-		const html = await Bun.file(`${config.webRoot}/index.html`).text();
-		return c.html(html);
+	const secret = await getBetterAuthSecret(db);
+	await probeQuickwit();
+	await initAuth(secret);
+
+	Bun.serve({
+		fetch: app.fetch,
+		hostname: '0.0.0.0',
+		port: config.port
 	});
 }
 
-Bun.serve({
-	fetch: app.fetch,
-	hostname: config.host,
-	port: config.port
-});
+if (import.meta.main) {
+	main().catch((err) => {
+		console.error('Boot failed:', err);
+		process.exit(1);
+	});
+}
