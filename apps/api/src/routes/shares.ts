@@ -28,30 +28,28 @@ const CodeParams = v.object({
 	code: v.pipe(v.string(), v.length(10))
 });
 
-export const sharesRouter = new Hono<AuthedEnv>();
-
-sharesRouter.post(
-	'/',
-	bodyLimit({
-		maxSize: SHARE_BODY_LIMIT,
-		onError: () => {
-			throw unprocessable('Share payload exceeds 64KB', 'PAYLOAD_TOO_LARGE');
+export const sharesRouter = new Hono<AuthedEnv>()
+	.post(
+		'/',
+		bodyLimit({
+			maxSize: SHARE_BODY_LIMIT,
+			onError: () => {
+				throw unprocessable('Share payload exceeds 64KB', 'PAYLOAD_TOO_LARGE');
+			}
+		}),
+		vValidator('json', CreateBody),
+		async (c) => {
+			const body = c.req.valid('json');
+			const session = c.get('session');
+			await assertIndexAccess(db, quickwit, body.indexId, isAdmin(session));
+			const result = await createShare(db, session.user.id, body);
+			return c.json(result, 201);
 		}
-	}),
-	vValidator('json', CreateBody),
-	async (c) => {
-		const body = c.req.valid('json');
+	)
+	.get('/:code', vValidator('param', CodeParams), async (c) => {
+		const { code } = c.req.valid('param');
 		const session = c.get('session');
-		await assertIndexAccess(db, quickwit, body.indexId, isAdmin(session));
-		const result = await createShare(db, session.user.id, body);
-		return c.json(result, 201);
-	}
-);
-
-sharesRouter.get('/:code', vValidator('param', CodeParams), async (c) => {
-	const { code } = c.req.valid('param');
-	const session = c.get('session');
-	const row = await resolveShare(db, code);
-	await assertIndexAccess(db, quickwit, row.indexId, isAdmin(session));
-	return c.json(row);
-});
+		const row = await resolveShare(db, code);
+		await assertIndexAccess(db, quickwit, row.indexId, isAdmin(session));
+		return c.json(row);
+	});

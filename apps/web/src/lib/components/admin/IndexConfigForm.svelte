@@ -4,10 +4,10 @@
 	import * as v from 'valibot';
 
 	import { invalidate } from '$app/navigation';
-	import { ApiError, call } from '$lib/api/call';
-	import { api } from '$lib/api/client';
+	import { toFieldErrors } from '$lib/api/errors';
+	import { client } from '$lib/api/client';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
-	import type { IndexDetail, IndexVisibility } from 'api/types';
+	import type { ApiErrorBody, IndexDetail, IndexVisibility } from 'api/types';
 
 	let { detail }: { detail: IndexDetail } = $props();
 
@@ -85,21 +85,18 @@
 
 		saving = true;
 		try {
-			await call(
-				api.api.indexes[':indexId'].$patch({
-					param: { indexId: detail.indexId },
-					json: parsed.output
-				})
-			);
-			toast.success('Index configuration saved');
-			await invalidate(`app:index:${detail.indexId}`);
-		} catch (err) {
-			if (err instanceof ApiError) {
-				formError = err.message;
-				fieldErrors = err.fieldErrors;
+			const res = await client.api.indexes[':indexId'].$patch({
+				param: { indexId: detail.indexId },
+				json: parsed.output
+			});
+			if (!res.ok) {
+				const body = (await res.json()) as ApiErrorBody;
+				fieldErrors = toFieldErrors(body);
+				toast.error(body.error.message);
 				return;
 			}
-			throw err;
+			toast.success('Index configuration saved');
+			await invalidate(`app:index:${detail.indexId}`);
 		} finally {
 			saving = false;
 		}

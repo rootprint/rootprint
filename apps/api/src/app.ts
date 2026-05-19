@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono';
 import type { Schema } from 'hono/types';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { ApplyGlobalResponse } from 'hono/client';
 import { cors } from 'hono/cors';
 import { QuickwitError } from 'quickwit-js';
 import { ValiError } from 'valibot';
@@ -164,3 +165,20 @@ if (import.meta.main) {
 		process.exit(1);
 	});
 }
+
+export type RoutesWithErrors = ApplyGlobalResponse<
+	typeof routes,
+	{
+		400: { json: ApiErrorBody };
+		401: { json: ApiErrorBody };
+		403: { json: ApiErrorBody };
+		404: { json: ApiErrorBody };
+		409: { json: ApiErrorBody };
+		413: { json: ApiErrorBody };
+		415: { json: ApiErrorBody };
+		422: { json: ApiErrorBody };
+		429: { json: ApiErrorBody };
+		500: { json: ApiErrorBody };
+		503: { json: ApiErrorBody };
+	}
+>;
