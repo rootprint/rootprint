@@ -11,7 +11,7 @@
 	});
 </script>
 
-<div class="bg-base-100 text-base-content flex min-h-screen flex-col">
+<div class="bg-base-100 text-base-content flex h-screen flex-col">
 	<div class="flex min-h-0 flex-1 flex-col">
 		{@render children?.()}
 	</div>
