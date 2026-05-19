@@ -9,7 +9,6 @@
 	import { api } from '$lib/api/client';
 	import { ApiError, call } from '$lib/api/call';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import RemoveGoogleAuthModal from '$lib/components/admin/RemoveGoogleAuthModal.svelte';
 	import type { GoogleAuthSettingsView } from '$lib/types';
 
 	let {
@@ -27,7 +26,6 @@
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
-	let removeOpen = $state(false);
 	let editingCredentials = $state(false);
 	let clientIdInput = $state<HTMLInputElement | null>(null);
 	let clientSecretInput = $state<HTMLInputElement | null>(null);
@@ -35,10 +33,16 @@
 	const isConfigured = $derived(settings.configured);
 	const callbackUrl = $derived(`${origin}/api/auth/callback/google`);
 
-	const credentialsHint = $derived.by(() => {
-		if (!isConfigured) return 'Required to enable Google sign-in.';
+	const clientIdHint = $derived.by(() => {
+		if (!isConfigured) return 'From Google Cloud Console.';
 		if (editingCredentials) return 'Both fields are required when rotating credentials.';
-		return 'Credentials are stored. Use the edit icon to rotate them.';
+		return 'Stored — use the edit icon to rotate.';
+	});
+
+	const clientSecretHint = $derived.by(() => {
+		if (!isConfigured) return 'Server-side secret from Google Cloud Console.';
+		if (editingCredentials) return 'Both fields are required when rotating credentials.';
+		return 'Stored — use the edit icon to rotate.';
 	});
 
 	async function startEditCredentials(focus: 'id' | 'secret') {
@@ -148,18 +152,21 @@
 	}
 </script>
 
-<form class="flex flex-col gap-10" onsubmit={handleSave}>
+<form
+	onsubmit={handleSave}
+	class="hairline rounded-box bg-base-100 divide-base-content/10 flex flex-col divide-y"
+>
 	{#if formError}
-		<div role="alert" class="alert alert-error text-sm">{formError}</div>
+		<div role="alert" class="alert alert-error mx-4 mt-4 text-sm">{formError}</div>
 	{/if}
 
-	<section class="flex flex-col gap-3">
-		<header>
-			<p class="eyebrow">Callback URL</p>
-			<p class="text-base-content/60 mt-1 text-xs">
+	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+		<div>
+			<div class="text-sm">Callback URL</div>
+			<div class="text-base-content/60 mt-0.5 text-xs">
 				Add this as an authorized redirect URI in Google Cloud Console.
-			</p>
-		</header>
+			</div>
+		</div>
 		<div
 			class="border-base-content/10 bg-base-200/40 rounded-box flex items-center gap-3 border px-3 py-2"
 		>
@@ -174,17 +181,20 @@
 				{/snippet}
 			</CopyButton>
 		</div>
-	</section>
+	</div>
 
-	<section class="flex flex-col gap-3">
-		<header>
-			<p class="eyebrow">Credentials</p>
-			<p class="text-base-content/60 mt-1 text-xs">{credentialsHint}</p>
-		</header>
-		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+		<div>
 			{#if isConfigured && !editingCredentials}
-				<label class="input w-full !border-base-content/10 !bg-base-200/40">
-					<span class="label">Client ID</span>
+				<div class="text-sm">Client ID</div>
+			{:else}
+				<label for="cfg-google-client-id" class="text-sm">Client ID</label>
+			{/if}
+			<div class="text-base-content/60 mt-0.5 text-xs">{clientIdHint}</div>
+		</div>
+		<div class="flex flex-col gap-1">
+			{#if isConfigured && !editingCredentials}
+				<label class="input input-sm w-full !border-base-content/10 !bg-base-200/40">
 					<input
 						value="•••••••••••••••••"
 						disabled
@@ -200,8 +210,45 @@
 						<Pencil size={12} />
 					</button>
 				</label>
-				<label class="input w-full !border-base-content/10 !bg-base-200/40">
-					<span class="label">Client Secret</span>
+			{:else}
+				<label class="input input-sm w-full" class:input-error={fieldErrors.clientId}>
+					<input
+						id="cfg-google-client-id"
+						bind:this={clientIdInput}
+						bind:value={clientId}
+						placeholder="12345.apps.googleusercontent.com"
+						autocomplete="off"
+					/>
+					{#if isConfigured}
+						<button
+							type="button"
+							class="badge badge-ghost badge-sm cursor-pointer"
+							aria-label="Cancel editing credentials"
+							onclick={cancelEditCredentials}
+						>
+							<X size={12} />
+						</button>
+					{/if}
+				</label>
+			{/if}
+			{#if fieldErrors.clientId}
+				<p class="text-error font-mono text-xs">{fieldErrors.clientId}</p>
+			{/if}
+		</div>
+	</div>
+
+	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+		<div>
+			{#if isConfigured && !editingCredentials}
+				<div class="text-sm">Client Secret</div>
+			{:else}
+				<label for="cfg-google-client-secret" class="text-sm">Client Secret</label>
+			{/if}
+			<div class="text-base-content/60 mt-0.5 text-xs">{clientSecretHint}</div>
+		</div>
+		<div class="flex flex-col gap-1">
+			{#if isConfigured && !editingCredentials}
+				<label class="input input-sm w-full !border-base-content/10 !bg-base-200/40">
 					<input
 						value="•••••••••••••••••"
 						disabled
@@ -218,118 +265,83 @@
 					</button>
 				</label>
 			{:else}
-				<div>
-					<label class="input w-full" class:input-error={fieldErrors.clientId}>
-						<span class="label">Client ID</span>
-						<input
-							bind:this={clientIdInput}
-							bind:value={clientId}
-							placeholder="12345.apps.googleusercontent.com"
-							autocomplete="off"
-						/>
-						{#if isConfigured}
-							<button
-								type="button"
-								class="badge badge-ghost badge-sm cursor-pointer"
-								aria-label="Cancel editing credentials"
-								onclick={cancelEditCredentials}
-							>
-								<X size={12} />
-							</button>
-						{/if}
-					</label>
-					{#if fieldErrors.clientId}
-						<p class="text-error mt-1 font-mono text-xs">{fieldErrors.clientId}</p>
+				<label class="input input-sm w-full" class:input-error={fieldErrors.clientSecret}>
+					<input
+						id="cfg-google-client-secret"
+						bind:this={clientSecretInput}
+						bind:value={clientSecret}
+						type="password"
+						placeholder="Client secret"
+						autocomplete="off"
+					/>
+					{#if isConfigured}
+						<button
+							type="button"
+							class="badge badge-ghost badge-sm cursor-pointer"
+							aria-label="Cancel editing credentials"
+							onclick={cancelEditCredentials}
+						>
+							<X size={12} />
+						</button>
 					{/if}
-				</div>
-				<div>
-					<label class="input w-full" class:input-error={fieldErrors.clientSecret}>
-						<span class="label">Client Secret</span>
-						<input
-							bind:this={clientSecretInput}
-							bind:value={clientSecret}
-							type="password"
-							placeholder="Client secret"
-							autocomplete="off"
-						/>
-						{#if isConfigured}
-							<button
-								type="button"
-								class="badge badge-ghost badge-sm cursor-pointer"
-								aria-label="Cancel editing credentials"
-								onclick={cancelEditCredentials}
-							>
-								<X size={12} />
-							</button>
-						{/if}
-					</label>
-					{#if fieldErrors.clientSecret}
-						<p class="text-error mt-1 font-mono text-xs">{fieldErrors.clientSecret}</p>
-					{/if}
-				</div>
+				</label>
+			{/if}
+			{#if fieldErrors.clientSecret}
+				<p class="text-error font-mono text-xs">{fieldErrors.clientSecret}</p>
 			{/if}
 		</div>
-	</section>
+	</div>
 
-	<section class="flex flex-col gap-3">
-		<header>
-			<p class="eyebrow">Allowed domains</p>
-			<p class="text-base-content/60 mt-1 text-xs">
+	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+		<div>
+			<div class="text-sm">Allowed domains</div>
+			<div class="text-base-content/60 mt-0.5 text-xs">
 				Only users with an email from these domains can sign in.
-			</p>
-		</header>
-		<div
-			class="border-base-content/10 focus-within:border-base-content bg-base-100 rounded-box flex flex-wrap items-center gap-1.5 border px-2 py-2 transition-colors"
-			class:!border-error={fieldErrors.allowedDomains}
-		>
-			{#each allowedDomains as domain (domain)}
-				<span
-					class="bg-base-200 flex items-center gap-1 rounded px-2 py-1 font-mono text-xs"
-				>
-					{domain}
-					<button
-						type="button"
-						class="cursor-pointer opacity-50 hover:opacity-100"
-						aria-label="Remove {domain}"
-						onclick={() => removeDomain(domain)}
-					>
-						<X size={12} />
-					</button>
-				</span>
-			{/each}
-			<input
-				bind:value={domainInput}
-				placeholder={allowedDomains.length === 0
-					? 'company.com  (press Enter to add)'
-					: 'Add another…'}
-				autocomplete="off"
-				aria-label="Add domain"
-				class="placeholder:text-base-content/40 min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
-				onkeydown={handleDomainKeydown}
-			/>
+			</div>
 		</div>
-		{#if fieldErrors.allowedDomains}
-			<p class="text-error font-mono text-xs">{fieldErrors.allowedDomains}</p>
-		{/if}
-	</section>
-
-	<div class="flex items-center justify-between gap-2">
-		{#if isConfigured}
-			<button
-				type="button"
-				class="btn btn-ghost text-error hover:bg-error/10 cursor-pointer"
-				disabled={saving}
-				onclick={() => (removeOpen = true)}
+		<div class="flex flex-col gap-1">
+			<div
+				class="border-base-content/10 focus-within:border-base-content bg-base-100 rounded-box flex flex-wrap items-center gap-1.5 border px-2 py-1.5 transition-colors"
+				class:!border-error={fieldErrors.allowedDomains}
 			>
-				Remove Google auth
-			</button>
-		{:else}
-			<span></span>
-		{/if}
-		<button class="btn btn-primary" type="submit" disabled={saving}>
-			{saving ? 'Saving…' : 'Save changes'}
+				{#each allowedDomains as domain (domain)}
+					<span class="bg-base-200 flex items-center gap-1 rounded px-2 py-0.5 font-mono text-xs">
+						{domain}
+						<button
+							type="button"
+							class="cursor-pointer opacity-50 hover:opacity-100"
+							aria-label="Remove {domain}"
+							onclick={() => removeDomain(domain)}
+						>
+							<X size={12} />
+						</button>
+					</span>
+				{/each}
+				<input
+					bind:value={domainInput}
+					placeholder={allowedDomains.length === 0
+						? 'company.com  (press Enter to add)'
+						: 'Add another…'}
+					autocomplete="off"
+					aria-label="Add domain"
+					class="placeholder:text-base-content/40 min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
+					onkeydown={handleDomainKeydown}
+				/>
+			</div>
+			{#if fieldErrors.allowedDomains}
+				<p class="text-error font-mono text-xs">{fieldErrors.allowedDomains}</p>
+			{/if}
+		</div>
+	</div>
+
+	<div class="flex justify-end px-4 py-3">
+		<button type="submit" class="btn btn-primary btn-sm" disabled={saving}>
+			{#if saving}
+				<span class="loading loading-spinner loading-xs"></span>
+				Saving…
+			{:else}
+				Save
+			{/if}
 		</button>
 	</div>
 </form>
-
-<RemoveGoogleAuthModal bind:open={removeOpen} />

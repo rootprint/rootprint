@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
+	import { X } from 'lucide-svelte';
 
 	import { invalidate } from '$app/navigation';
 	import { ApiError, call } from '$lib/api/call';
@@ -57,6 +58,8 @@
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			addContextField();
+		} else if (e.key === 'Backspace' && contextFieldInput === '' && contextFieldTags.length > 0) {
+			contextFieldTags = contextFieldTags.slice(0, -1);
 		}
 	}
 
@@ -235,34 +238,35 @@
 				Fields used for log context search. Leave empty to use all fields. Supports dot-notation.
 			</div>
 		</div>
-		<div class="flex flex-col gap-2">
-			{#if contextFieldTags.length > 0}
-				<div class="flex flex-wrap gap-1.5">
-					{#each contextFieldTags as field (field)}
-						<span class="badge badge-sm badge-ghost gap-1 font-mono text-xs">
-							{field}
-							<button
-								type="button"
-								aria-label="Remove {field}"
-								class="text-error cursor-pointer"
-								onclick={() => removeContextField(field)}
-							>
-								&times;
-							</button>
-						</span>
-					{/each}
-				</div>
-			{/if}
-			<div class="flex gap-2">
+		<div class="flex flex-col gap-1">
+			<div
+				class="border-base-content/10 focus-within:border-base-content bg-base-100 rounded-box flex flex-wrap items-center gap-1.5 border px-2 py-1.5 transition-colors"
+				class:!border-error={fieldErrors.contextFields}
+			>
+				{#each contextFieldTags as field (field)}
+					<span class="bg-base-200 flex items-center gap-1 rounded px-2 py-0.5 font-mono text-xs">
+						{field}
+						<button
+							type="button"
+							class="cursor-pointer opacity-50 hover:opacity-100"
+							aria-label="Remove {field}"
+							onclick={() => removeContextField(field)}
+						>
+							<X size={12} />
+						</button>
+					</span>
+				{/each}
 				<input
 					type="text"
 					bind:value={contextFieldInput}
 					onkeydown={handleContextFieldKeydown}
-					class="input input-sm flex-1"
-					placeholder="e.g. service.name"
+					placeholder={contextFieldTags.length === 0
+						? 'service.name  (press Enter to add)'
+						: 'Add another…'}
 					autocomplete="off"
+					aria-label="Add context field"
+					class="placeholder:text-base-content/40 min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
 				/>
-				<button type="button" class="btn btn-ghost btn-sm" onclick={addContextField}>Add</button>
 			</div>
 			{#if fieldErrors.contextFields}
 				<p class="text-error font-mono text-xs">{fieldErrors.contextFields}</p>
