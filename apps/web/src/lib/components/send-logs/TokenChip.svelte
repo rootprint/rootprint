@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Plus, X, ChevronDown } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { api } from '$lib/api/client';
-	import { call } from '$lib/api/call';
+	import { client } from '$lib/api/client';
+	import type { ApiErrorBody } from 'api/types';
 	import type { IngestTokenView } from '$lib/types';
 
 	let {
@@ -33,17 +33,17 @@
 
 		let cancelled = false;
 		(async () => {
-			try {
-				const result = await call(
-					api.api['ingest-tokens'][':id'].$get({ param: { id: String(id) } })
-				);
-				if (cancelled || selectedTokenId !== id) return;
-				realTokenValue = result.token;
-			} catch (err) {
-				if (cancelled) return;
-				toast.error(err instanceof Error ? err.message : 'Failed to load ingest token');
+			const res = await client.api['ingest-tokens'][':id'].$get({ param: { id: String(id) } });
+			if (cancelled || selectedTokenId !== id) return;
+			if (!res.ok) {
+				const body = (await res.json()) as ApiErrorBody;
+				toast.error(body.error.message);
 				if (selectedTokenId === id) selectedTokenId = null;
+				return;
 			}
+			const result = await res.json();
+			if (cancelled || selectedTokenId !== id) return;
+			realTokenValue = result.token;
 		})();
 
 		return () => {

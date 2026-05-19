@@ -3,8 +3,10 @@
 	import { createInviteSchema, type CreateInviteInput } from 'api/schemas';
 	import type { UserRole } from 'api/types';
 
-	import { api } from '$lib/api/client';
-	import { ApiError, call } from '$lib/api/call';
+	import type { ApiErrorBody } from 'api/types';
+
+	import { client } from '$lib/api/client';
+	import { toFieldErrors } from '$lib/api/errors';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
@@ -56,21 +58,19 @@
 		const input: CreateInviteInput = parsed.output;
 
 		submitting = true;
-		try {
-			const result = await call(api.api.invites.$post({ json: input }));
-			inviteUrl = result.inviteUrl;
-			phase = 'reveal';
-			await oncreated?.();
-		} catch (err) {
-			if (err instanceof ApiError) {
-				formError = err.message;
-				fieldErrors = err.fieldErrors;
-				return;
-			}
-			throw err;
-		} finally {
+		const res = await client.api.invites.$post({ json: input });
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			fieldErrors = toFieldErrors(body);
+			formError = body.error.message;
 			submitting = false;
+			return;
 		}
+		const result = await res.json();
+		submitting = false;
+		inviteUrl = result.inviteUrl;
+		phase = 'reveal';
+		await oncreated?.();
 	}
 </script>
 

@@ -4,8 +4,8 @@
 
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ApiError, call } from '$lib/api/call';
-	import { api } from '$lib/api/client';
+	import { client } from '$lib/api/client';
+	import type { ApiErrorBody } from 'api/types';
 	import IndexConfigForm from '$lib/components/admin/IndexConfigForm.svelte';
 	import IndexTabs from '$lib/components/admin/IndexTabs.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
@@ -42,22 +42,21 @@
 
 	async function toggleSource(sourceId: string, next: boolean) {
 		togglingSourceId = sourceId;
-		try {
-			await call(
-				api.api.indexes[':indexId'].sources[':sourceId'].$patch({
-					param: { indexId: detail.indexId, sourceId },
-					json: { enabled: next }
-				})
-			);
-			toast.success(next ? `Source ${sourceId} enabled` : `Source ${sourceId} disabled`);
-			await invalidate(`app:index:${detail.indexId}`);
-		} catch (err) {
-			toast.error(err instanceof ApiError ? err.message : 'Failed to update source');
+		const res = await client.api.indexes[':indexId'].sources[':sourceId'].$patch({
+			param: { indexId: detail.indexId, sourceId },
+			json: { enabled: next }
+		});
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			toast.error(body.error.message);
 			// Re-fetch so the native-flipped checkbox snaps back to server state.
 			await invalidate(`app:index:${detail.indexId}`);
-		} finally {
 			togglingSourceId = null;
+			return;
 		}
+		toast.success(next ? `Source ${sourceId} enabled` : `Source ${sourceId} disabled`);
+		await invalidate(`app:index:${detail.indexId}`);
+		togglingSourceId = null;
 	}
 
 	let deleteSourceOpen = $state(false);
@@ -73,21 +72,20 @@
 		if (!deleteSourceTarget) return;
 		const sourceId = deleteSourceTarget;
 		deletingSource = true;
-		try {
-			await call(
-				api.api.indexes[':indexId'].sources[':sourceId'].$delete({
-					param: { indexId: detail.indexId, sourceId }
-				})
-			);
-			toast.success(`Source ${sourceId} deleted`);
-			deleteSourceOpen = false;
-			deleteSourceTarget = null;
-			await invalidate(`app:index:${detail.indexId}`);
-		} catch (err) {
-			toast.error(err instanceof ApiError ? err.message : 'Failed to delete source');
-		} finally {
+		const res = await client.api.indexes[':indexId'].sources[':sourceId'].$delete({
+			param: { indexId: detail.indexId, sourceId }
+		});
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			toast.error(body.error.message);
 			deletingSource = false;
+			return;
 		}
+		toast.success(`Source ${sourceId} deleted`);
+		deleteSourceOpen = false;
+		deleteSourceTarget = null;
+		await invalidate(`app:index:${detail.indexId}`);
+		deletingSource = false;
 	}
 
 	let deleteOpen = $state(false);
@@ -95,18 +93,17 @@
 
 	async function confirmDelete() {
 		deleting = true;
-		try {
-			await call(
-				api.api.indexes[':indexId'].$delete({ param: { indexId: detail.indexId } })
-			);
-			toast.success(`Index ${detail.indexId} deleted`);
-			deleteOpen = false;
-			await goto('/administration/indexes');
-		} catch (err) {
-			toast.error(err instanceof ApiError ? err.message : 'Failed to delete index');
-		} finally {
+		const res = await client.api.indexes[':indexId'].$delete({ param: { indexId: detail.indexId } });
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			toast.error(body.error.message);
 			deleting = false;
+			return;
 		}
+		toast.success(`Index ${detail.indexId} deleted`);
+		deleteOpen = false;
+		await goto('/administration/indexes');
+		deleting = false;
 	}
 </script>
 

@@ -1,11 +1,12 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { invalidate } from '$app/navigation';
-	import { api } from '$lib/api/client';
-	import { ApiError, call } from '$lib/api/call';
+	import { client } from '$lib/api/client';
+	import { toFieldErrors } from '$lib/api/errors';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import TokenSecretReveal from './TokenSecretReveal.svelte';
 	import { createIngestTokenSchema, type CreateIngestTokenInput } from 'api/schemas';
+	import type { ApiErrorBody } from 'api/types';
 	import type { IngestTokenView } from '$lib/types';
 
 	let {
@@ -62,22 +63,20 @@
 		const input: CreateIngestTokenInput = parsed.output;
 
 		busy = true;
-		try {
-			const result = await call(api.api['ingest-tokens'].$post({ json: input }));
-			revealedToken = result.token;
-			phase = 'reveal';
-			await invalidate(invalidateKey);
-			onCreated?.(result.summary, result.token);
-		} catch (err) {
-			if (err instanceof ApiError) {
-				formError = err.message;
-				fieldErrors = err.fieldErrors;
-				return;
-			}
-			throw err;
-		} finally {
+		const res = await client.api['ingest-tokens'].$post({ json: input });
+		if (!res.ok) {
+			const body = (await res.json()) as ApiErrorBody;
+			formError = body.error.message;
+			fieldErrors = toFieldErrors(body);
 			busy = false;
+			return;
 		}
+		const result = await res.json();
+		revealedToken = result.token;
+		phase = 'reveal';
+		busy = false;
+		await invalidate(invalidateKey);
+		onCreated?.(result.summary, result.token);
 	}
 </script>
 

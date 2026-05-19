@@ -1,11 +1,11 @@
 import type { InferResponseType } from "hono/client";
 
-import type { api } from "$lib/api/client";
+import type { client } from "$lib/api/client";
 
-export type UserView = InferResponseType<typeof api.api.users.$get>[number];
+export type UserView = InferResponseType<typeof client.api.users.$get, 200>[number];
 
-export type GoogleAuthSettingsView = InferResponseType<typeof api.api.settings.auth.google.$get>;
+export type GoogleAuthSettingsView = InferResponseType<typeof client.api.settings.auth.google.$get, 200>;
 
 export type IndexTabId = 'config' | 'fields' | 'sources';
 
-export type IngestTokenView = InferResponseType<typeof api.api['ingest-tokens']['$get']>[number];
+export type IngestTokenView = InferResponseType<typeof client.api['ingest-tokens']['$get'], 200>[number];

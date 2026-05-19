@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { MiddlewareHandler } from 'hono';
 
-import { config } from '../config.js';
+import { LAST_ACTIVE_THROTTLE_MS } from '../constants/defaults.js';
 import { user } from '../db/schema.js';
 import type { AppEnv } from '../env.js';
 import { auth } from '../lib/auth.js';
@@ -14,7 +14,7 @@ const lastActiveMap = new Map<string, number>();
 function bumpLastActive(userId: string) {
 	const now = Date.now();
 	const last = lastActiveMap.get(userId) ?? 0;
-	if (now - last <= config.lastActiveThrottleMs) return;
+	if (now - last <= LAST_ACTIVE_THROTTLE_MS) return;
 	lastActiveMap.set(userId, now);
 	db.update(user)
 		.set({ lastActive: new Date(now) })
