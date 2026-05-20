@@ -1,4 +1,5 @@
 import {
+	bigint,
 	index,
 	integer,
 	jsonb,
@@ -200,12 +201,12 @@ export const indexStatsSnapshot = pgTable(
 		id: serial('id').primaryKey(),
 		indexId: text('index_id').notNull(),
 		capturedAt: timestamp('captured_at').notNull(),
-		numDocs: integer('num_docs').notNull(),
-		sizeBytes: integer('size_bytes').notNull(),
-		uncompressedBytes: integer('uncompressed_bytes').notNull(),
+		numDocs: bigint('num_docs', { mode: 'number' }).notNull(),
+		sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
+		uncompressedBytes: bigint('uncompressed_bytes', { mode: 'number' }).notNull(),
 		numSplits: integer('num_splits').notNull(),
-		minTimestamp: integer('min_timestamp'),
-		maxTimestamp: integer('max_timestamp')
+		minTimestamp: bigint('min_timestamp', { mode: 'number' }),
+		maxTimestamp: bigint('max_timestamp', { mode: 'number' })
 	},
 	(table) => [index('index_stats_snapshot_index_captured').on(table.indexId, table.capturedAt)]
 );

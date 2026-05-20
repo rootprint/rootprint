@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "overlayscrollbars/overlayscrollbars.css";
 
+/* Required so layerchart's internal utilities (e.g. `contents`,
+   `grid-cols-[1fr_auto]` on Tooltip) reach the generated CSS. */
+@source "../node_modules/layerchart";
+
 @plugin "daisyui" {
   themes: logwiz --default;
   root: ":root";

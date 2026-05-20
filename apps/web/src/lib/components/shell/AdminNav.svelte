@@ -9,6 +9,7 @@
 	});
 
 	const sections = [
+		{ href: '/administration', label: 'Overview' },
 		{ href: '/administration/indexes', label: 'Indexes' },
 		{ href: '/administration/tokens', label: 'Tokens' },
 		{ href: '/administration/users', label: 'Users' },
@@ -23,7 +24,9 @@
 	<p class="eyebrow px-3 pb-3">Administration</p>
 	<ul class="flex flex-col gap-0.5">
 		{#each sections as section (section.href)}
-			{@const active = path === section.href || path.startsWith(section.href + '/')}
+			{@const active =
+				path === section.href ||
+				(section.href !== '/administration' && path.startsWith(section.href + '/'))}
 			<li>
 				<a
 					href={section.href}

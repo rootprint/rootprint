@@ -23,6 +23,7 @@ import {
 	setSourceEnabled,
 	type IndexConfig
 } from '../services/index.service.js';
+import { getStatsHistory } from '../services/index-stats.service.js';
 import { fieldValues, histogramLogs, searchLogs } from '../services/log.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
 import { notFound } from '../utils/http-error.js';
@@ -71,6 +72,21 @@ const FieldValuesQuery = v.object({
 	)
 });
 
+const StatsQuery = v.object({
+	from: v.optional(toNum),
+	to: v.optional(toNum),
+	limit: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((s) => {
+				const n = parseInt(s, 10);
+				if (!Number.isInteger(n) || n < 1 || n > 10000) throw new Error('must be 1–10000');
+				return n;
+			})
+		)
+	)
+});
+
 const PutPreferencesBody = v.object({
 	displayFields: v.nullable(v.array(v.pipe(v.string(), v.minLength(1))))
 });
@@ -106,6 +122,23 @@ export const indexesRouter = new Hono<IndexesEnv>()
 			const detail = await getIndexDetail(db, quickwit, indexId);
 			if (!detail) throw notFound('Index not found');
 			return c.json(detail);
+		}
+	)
+	.get(
+		'/:indexId/stats',
+		requireIndexAccess,
+		requireAdmin,
+		vValidator('param', IndexIdParams),
+		vValidator('query', StatsQuery),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			const { from, to, limit } = c.req.valid('query');
+			const points = await getStatsHistory(db, indexId, {
+				from,
+				to,
+				limit: limit ?? 5000
+			});
+			return c.json({ indexId, points });
 		}
 	)
 	.patch(

@@ -57,6 +57,13 @@
       "when": 1779112952763,
       "tag": "0007_majestic_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779270155732,
+      "tag": "0008_motionless_captain_midlands",
+      "breakpoints": true
     }
   ]
 }
