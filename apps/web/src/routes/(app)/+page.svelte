@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { authClient } from '$lib/auth-client';
 	import { goto, invalidate } from '$app/navigation';
+	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	let { data } = $props();
 	let signingOut = $state(false);
@@ -17,7 +19,8 @@
 	}
 </script>
 
-<div class="mx-auto max-w-5xl px-8 py-16">
+<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="h-full w-full">
+	<div class="mx-auto max-w-5xl px-8 py-16">
 	<p class="eyebrow">Dashboard</p>
 	<h1 class="mt-3 text-5xl tracking-tight">
 		Welcome, <span class="text-primary">{data.session!.user.name}</span>
@@ -43,4 +46,5 @@
 			{signingOut ? 'Signing out…' : 'Sign out'}
 		</button>
 	</div>
-</div>
+	</div>
+</OverlayScrollbarsComponent>
