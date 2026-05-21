@@ -1,14 +1,12 @@
 <script lang="ts">
-  import type { LogHit, TimezoneMode, WrapMode } from '$lib/types';
+  import type { LogHit, TimezoneMode } from '$lib/types';
 
   let {
     hit,
-    wrapMode,
     timezoneMode,
     onclick = () => {}
   }: {
     hit: LogHit;
-    wrapMode: WrapMode;
     timezoneMode: TimezoneMode;
     onclick?: () => void;
   } = $props();
@@ -45,13 +43,7 @@
 >
   <span class="text-base-content/60">{formatTimestamp(hit.timestamp)}</span>
   <span class={levelClass[hit.level] ?? 'text-base-content/60'}>{hit.level.toUpperCase()}</span>
-  <span
-    class={wrapMode === 'truncate'
-      ? 'truncate'
-      : wrapMode === 'wrap'
-        ? 'whitespace-pre-wrap break-words'
-        : 'whitespace-nowrap'}
-  >
+  <span class="whitespace-nowrap">
     {hit.message}
   </span>
 </button>

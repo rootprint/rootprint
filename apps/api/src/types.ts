@@ -70,6 +70,18 @@ export type SaveIndexConfigFields = {
 	contextFields?: string[] | null;
 };
 
+export type IndexViewConfig = {
+	indexId: string;
+	displayName: string | null;
+	levelField: string;
+	messageField: string;
+	tracebackField: string | null;
+	/** Non-null: the endpoint throws when the underlying Quickwit index has no timestamp field. */
+	timestampField: string;
+	/** True when the index ID has the `otel-` prefix used by Quickwit's OTel service. */
+	isOtel: boolean;
+};
+
 export type LogHit = Record<string, unknown>;
 
 export type LogSearchResponse = {

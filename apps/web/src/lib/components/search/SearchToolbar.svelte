@@ -1,46 +1,32 @@
 <script lang="ts">
-  import { RefreshCw, Share2, TextWrap, Clock, History as HistoryIcon } from 'lucide-svelte';
-  import type { DrawerTab, IndexOption, WrapMode } from '$lib/types';
+  import { RefreshCw, Share2, Clock, History as HistoryIcon } from 'lucide-svelte';
+  import type { SearchStore } from '$lib/stores/search.svelte';
+  import type { DrawerTab } from '$lib/types';
 
   let {
-    indexes,
-    selectedIndex,
-    query,
-    timeRangeLabel,
-    numHits,
-    wrapMode = $bindable<WrapMode>('none'),
+    store,
     drawerTab = $bindable<DrawerTab | null>(null),
-    onQueryChange = () => {},
-    onIndexChange = () => {},
-    onTimeRangeOpen = () => {},
-    onShare = () => {},
-    onRefresh = () => {}
+    timeRangeLabel,
   }: {
-    indexes: IndexOption[];
-    selectedIndex: string;
-    query: string;
-    timeRangeLabel: string;
-    numHits: number;
-    wrapMode?: WrapMode;
+    store: SearchStore;
     drawerTab?: DrawerTab | null;
-    onQueryChange?: (value: string) => void;
-    onIndexChange?: (id: string) => void;
-    onTimeRangeOpen?: () => void;
-    onShare?: () => void;
-    onRefresh?: () => void;
+    timeRangeLabel: string;
   } = $props();
 
-  // TODO(store): re-sync queryInput when query prop changes (e.g. URL nav, history restore)
-  let queryInput = $state(query);
+  // Local edit buffer: separate from store.query so the user can type freely
+  // and only commits on blur / Enter. Re-syncs from store when not focused
+  // (so URL nav, back/forward, future history-restore land correctly).
+  let queryInput = $state(store.query);
+  let focused = $state(false);
+
+  $effect(() => {
+    if (!focused) queryInput = store.query;
+  });
 
   function commitQuery() {
-    if (queryInput !== query) {
-      onQueryChange(queryInput); // TODO(store): wire to search store
+    if (queryInput !== store.query) {
+      store.runQuery(queryInput);
     }
-  }
-
-  function nextWrapMode(m: WrapMode): WrapMode {
-    return m === 'none' ? 'truncate' : m === 'truncate' ? 'wrap' : 'none';
   }
 
   function toggleHistory() {
@@ -54,10 +40,10 @@
   <!-- Index picker -->
   <select
     class="select select-sm select-bordered min-w-[8rem]"
-    value={selectedIndex}
-    onchange={(e) => onIndexChange((e.currentTarget as HTMLSelectElement).value)}
+    value={store.selectedIndex}
+    onchange={(e) => store.handleIndexChange((e.currentTarget as HTMLSelectElement).value)}
   >
-    {#each indexes as idx (idx.id)}
+    {#each store.indexes as idx (idx.id)}
       <option value={idx.id}>{idx.name}</option>
     {/each}
   </select>
@@ -68,38 +54,35 @@
     class="input input-sm input-bordered min-w-0 flex-1 font-mono"
     placeholder="Search logs…"
     bind:value={queryInput}
-    onblur={commitQuery}
+    onfocus={() => (focused = true)}
+    onblur={() => {
+      focused = false;
+      commitQuery();
+    }}
     onkeydown={(e) => {
       if (e.key === 'Enter') commitQuery();
     }}
   />
 
-  <!-- Time range -->
-  <button class="btn btn-sm btn-ghost gap-1" onclick={onTimeRangeOpen}>
+  <!-- Time range (placeholder for now — picker lands later) -->
+  <button class="btn btn-sm btn-ghost gap-1" disabled>
     <Clock class="h-3.5 w-3.5" />
     {timeRangeLabel}
   </button>
 
   <!-- Hit count micro-text -->
   <span class="font-mono text-xs text-base-content/50">
-    {numHits.toLocaleString()} hits
+    {store.numHits.toLocaleString()} hits
   </span>
 
   <div class="ml-auto flex items-center gap-1">
-    <button
-      class="btn btn-sm btn-ghost"
-      aria-label="Toggle wrap mode"
-      onclick={() => (wrapMode = nextWrapMode(wrapMode))}
-    >
-      <TextWrap class="h-3.5 w-3.5" />
-    </button>
     <button class="btn btn-sm btn-ghost" aria-label="History" onclick={toggleHistory}>
       <HistoryIcon class="h-3.5 w-3.5" />
     </button>
-    <button class="btn btn-sm btn-ghost" aria-label="Share" onclick={onShare}>
+    <button class="btn btn-sm btn-ghost" aria-label="Share" disabled>
       <Share2 class="h-3.5 w-3.5" />
     </button>
-    <button class="btn btn-sm btn-ghost" aria-label="Refresh" onclick={onRefresh}>
+    <button class="btn btn-sm btn-ghost" aria-label="Refresh" disabled>
       <RefreshCw class="h-3.5 w-3.5" />
     </button>
   </div>

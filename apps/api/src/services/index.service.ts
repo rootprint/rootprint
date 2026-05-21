@@ -3,6 +3,7 @@ import type {
 	IndexDetail,
 	IndexField,
 	IndexSummary,
+	IndexViewConfig,
 	IndexVisibility,
 	SaveIndexConfigFields
 } from '../types.js';
@@ -164,6 +165,33 @@ export async function getIndexConfig(
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
 		contextFields: settings.contextFields
+	};
+}
+
+export async function getIndexViewConfig(
+	db: Db,
+	qw: QuickwitClient,
+	indexId: string,
+	isAdmin: boolean
+): Promise<IndexViewConfig> {
+	const [settings, index] = await Promise.all([
+		getIndexSettings(db, indexId),
+		qwGetIndex(qw, indexId)
+	]);
+	if (!canAccessIndex(settings.visibility, isAdmin)) {
+		throw indexAccessError(isAdmin, 'denied');
+	}
+	if (!index) throw indexAccessError(isAdmin, 'missing');
+	if (!index.timestampField) throw internal(`Index "${indexId}" has no timestamp_field`);
+
+	return {
+		indexId,
+		displayName: settings.displayName,
+		levelField: settings.levelField,
+		messageField: settings.messageField,
+		tracebackField: settings.tracebackField,
+		timestampField: index.timestampField,
+		isOtel: indexId.startsWith('otel-')
 	};
 }
 

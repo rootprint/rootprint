@@ -10,12 +10,9 @@ export type IndexTabId = 'config' | 'fields' | 'sources';
 
 /* ===== Log viewer (frontend scaffold) ===== */
 
-export type WrapMode = 'none' | 'truncate' | 'wrap';
 export type DrawerTab = 'history' | 'saved' | 'shared';
 export type TimezoneMode = 'utc' | 'local';
 export type SortDirection = 'asc' | 'desc';
-
-export type LogListState = 'loading' | 'error' | 'empty' | 'logs';
 
 export interface LevelBucket {
   /** Level name as it appears in the index (e.g. "info", "warn", "error"). */
@@ -58,6 +55,7 @@ export interface FieldConfig {
   levelField: string;
   messageField: string;
   tracebackField: string;
+  isOtel: boolean;
 }
 
 export interface IndexOption {
@@ -71,3 +69,35 @@ export interface LogFieldValueBucket {
   /** Hit count for this value within the current result set. */
   count: number;
 }
+
+export type TimeRange =
+  | { type: 'relative'; preset: string }
+  | { type: 'absolute'; start: number; end: number };
+
+export interface ParsedQuery {
+  index: string | null;
+  query: string;
+  timeRange: TimeRange;
+  timezoneMode: TimezoneMode;
+  sortDirection: SortDirection;
+}
+
+export interface SearchInput {
+  indexId: string;
+  query: string;
+  timeRange?: string;
+  startTimestamp?: number;
+  endTimestamp?: number;
+  sortDirection: SortDirection;
+  limit: number;
+  offset: number;
+}
+
+export interface SearchResult {
+  rawHits: Record<string, unknown>[];
+  numHits: number;
+  startTimestamp?: number;
+  endTimestamp?: number;
+}
+
+export type SearchFn = (input: SearchInput) => Promise<SearchResult>;

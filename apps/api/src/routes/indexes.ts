@@ -18,6 +18,7 @@ import {
 	getIndexConfig,
 	getIndexDetail,
 	getIndexFields,
+	getIndexViewConfig,
 	listIndexes,
 	saveIndexConfig,
 	setSourceEnabled,
@@ -110,6 +111,15 @@ export const indexesRouter = new Hono<IndexesEnv>()
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			return c.json(await getIndexFields(quickwit, indexId));
+		}
+	)
+	.get(
+		'/:indexId/config',
+		requireIndexAccess,
+		vValidator('param', IndexIdParams),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			return c.json(await getIndexViewConfig(db, quickwit, indexId, isAdmin(c.get('session'))));
 		}
 	)
 	.get(

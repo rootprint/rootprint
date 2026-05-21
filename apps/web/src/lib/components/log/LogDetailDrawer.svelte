@@ -11,8 +11,8 @@
   }: {
     open?: boolean;
     hit: LogHit | null;
-    selectedIndex: string;
-    fieldConfig: FieldConfig;
+    selectedIndex: string | null;
+    fieldConfig: FieldConfig | null;
     timezoneMode: TimezoneMode;
   } = $props();
 
@@ -38,7 +38,7 @@
     >
       <div class="flex flex-col">
         <span class="font-mono text-[10px] uppercase tracking-wider text-base-content/50">
-          {selectedIndex} · {timezoneMode === 'utc' ? 'UTC' : 'local'}
+          {selectedIndex ?? ''} · {timezoneMode === 'utc' ? 'UTC' : 'local'}
         </span>
         <span class="font-mono text-xs">{hit.timestamp}</span>
       </div>
@@ -66,7 +66,9 @@
     <footer
       class="border-t border-base-content/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-base-content/40"
     >
-      fields: {fieldConfig.timestampField} · {fieldConfig.levelField} · {fieldConfig.messageField}
+      {#if fieldConfig}
+        fields: {fieldConfig.timestampField} · {fieldConfig.levelField} · {fieldConfig.messageField}
+      {/if}
     </footer>
   </aside>
 {/if}

@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import type {
   FieldConfig,
@@ -6,11 +7,9 @@ import type {
   LevelBucket,
   LogField,
   LogFieldValueBucket,
-  LogHit,
-  LogListState,
-  TimezoneMode,
-  WrapMode
 } from '$lib/types';
+import { client } from '$lib/api/client';
+import { createLogSearch } from '$lib/api/log-search';
 
 const LEVELS: LevelBucket[] = [
   { name: 'info', count: 1204 },
@@ -37,63 +36,6 @@ const HISTOGRAM: HistogramBucket[] = Array.from({ length: 30 }, (_, i) => ({
   timestamp: new Date(Date.UTC(2026, 4, 21, 10, i)).toISOString(),
   count: Math.floor(20 + 80 * Math.abs(Math.sin(i / 3)))
 }));
-
-const LOGS: LogHit[] = [
-  {
-    key: '1',
-    timestamp: '2026-05-21T10:42:18.221Z',
-    level: 'error',
-    message: 'checkout: payment provider timeout (order=8821)',
-    raw: { service: 'checkout', order_id: 8821, error: 'timeout' }
-  },
-  {
-    key: '2',
-    timestamp: '2026-05-21T10:42:18.103Z',
-    level: 'info',
-    message: 'order created order=8821 user=12',
-    raw: { service: 'orders', order_id: 8821, user_id: 12 }
-  },
-  {
-    key: '3',
-    timestamp: '2026-05-21T10:42:17.842Z',
-    level: 'warn',
-    message: 'slow query 412ms — orders.by_user',
-    raw: { service: 'db', query: 'orders.by_user', duration_ms: 412 }
-  },
-  {
-    key: '4',
-    timestamp: '2026-05-21T10:42:17.601Z',
-    level: 'info',
-    message: 'request.served path=/api/checkout status=502',
-    raw: { 'request.method': 'POST', 'request.path': '/api/checkout', 'response.status': 502 }
-  },
-  {
-    key: '5',
-    timestamp: '2026-05-21T10:42:17.499Z',
-    level: 'info',
-    message: 'cart.updated user=12 items=3',
-    raw: { service: 'cart', user_id: 12, items: 3 }
-  },
-  {
-    key: '6',
-    timestamp: '2026-05-21T10:42:17.310Z',
-    level: 'info',
-    message: 'auth.session.refresh user=12',
-    raw: { service: 'auth', user_id: 12 }
-  }
-];
-
-const INDEXES: IndexOption[] = [
-  { id: 'prod-logs', name: 'prod-logs' },
-  { id: 'staging-logs', name: 'staging-logs' }
-];
-
-const FIELD_CONFIG: FieldConfig = {
-  timestampField: 'timestamp',
-  levelField: 'level',
-  messageField: 'message',
-  tracebackField: 'traceback'
-};
 
 const FIELD_VALUES: Record<string, LogFieldValueBucket[]> = {
   service: [
@@ -197,23 +139,55 @@ const FIELD_VALUES: Record<string, LogFieldValueBucket[]> = {
   'request.id': []
 };
 
-export const load = (() => ({
-  state: 'logs' satisfies LogListState as LogListState,
-  indexes: INDEXES,
-  selectedIndex: 'prod-logs',
-  query: 'level:error AND service:checkout',
-  timeRangeLabel: 'last 15m',
-  numHits: 1300,
-  levels: LEVELS,
-  fields: FIELDS,
-  histogram: HISTOGRAM,
-  logs: LOGS,
-  fieldConfig: FIELD_CONFIG,
-  isOtelIndex: true,
-  fieldValues: FIELD_VALUES,
-  timezoneMode: 'local' satisfies TimezoneMode as TimezoneMode,
-  wrapMode: 'none' satisfies WrapMode as WrapMode,
-  history: [] as unknown[],
-  savedQueries: [] as unknown[],
-  sharedQueries: [] as unknown[]
-})) satisfies PageLoad;
+export const load = (async ({ fetch }) => {
+  const res = await client.api.indexes.$get({}, { fetch });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null;
+    throw error(res.status, body?.error?.message ?? 'Failed to load indexes');
+  }
+  const summaries = await res.json();
+
+  const indexes: IndexOption[] = summaries.map((s) => ({
+    id: s.indexId,
+    name: s.displayName ?? s.indexId,
+  }));
+
+  const searchFn = createLogSearch();
+  const loadConfig = async (indexId: string): Promise<FieldConfig> => {
+    const res = await client.api.indexes[':indexId'].config.$get(
+      { param: { indexId } },
+      { fetch }
+    );
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as
+        | { error?: { message?: string } }
+        | null;
+      throw new Error(body?.error?.message ?? `Failed to load index config (${res.status})`);
+    }
+    const json = await res.json();
+    return {
+      timestampField: json.timestampField,
+      levelField: json.levelField,
+      messageField: json.messageField,
+      tracebackField: json.tracebackField ?? 'traceback',
+      isOtel: json.isOtel,
+    };
+  };
+
+  return {
+    indexes,
+    searchFn,
+    loadConfig,
+    timeRangeLabel: 'last 15m',
+    numHits: 1300,
+    levels: LEVELS,
+    fields: FIELDS,
+    histogram: HISTOGRAM,
+    fieldValues: FIELD_VALUES,
+    history: [] as unknown[],
+    savedQueries: [] as unknown[],
+    sharedQueries: [] as unknown[],
+  };
+}) satisfies PageLoad;

@@ -8,17 +8,41 @@
   import LogHeader from '$lib/components/log/LogHeader.svelte';
   import LogRow from '$lib/components/log/LogRow.svelte';
   import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
-  import type { DrawerTab, LogHit, SortDirection, WrapMode } from '$lib/types';
+  import { SearchStore } from '$lib/stores/search.svelte';
+  import { page } from '$app/state';
+  import { deserialize } from '$lib/utils/query-params';
+  import type { DrawerTab, LogHit, SortDirection } from '$lib/types';
 
   let { data } = $props();
 
+  // Pass a reactive closure so the store always sees the live URL state.
+  // page.url is reactive in Svelte 5 — reading it inside a closure tracked
+  // by $effect (inside setupAutoSearch) re-runs whenever the URL changes.
+  const store = new SearchStore({
+    parsedQuery: () => deserialize(page.url.searchParams),
+    initialIndexes: data.indexes,
+    searchFn: data.searchFn,
+    loadConfig: data.loadConfig,
+  });
+
+  store.setupAutoSearch();
+
   // View-only state (would be store-owned in the next iteration)
-  let wrapMode = $state<WrapMode>(data.wrapMode);
   let drawerTab = $state<DrawerTab | null>(null);
   let chartCollapsed = $state(false);
   let sortDirection = $state<SortDirection>('desc');
   let selectedLog = $state<LogHit | null>(null);
   let drawerOpen = $state(false);
+
+  const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived(
+    store.configError || store.searchError
+      ? 'error'
+      : store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig
+        ? 'loading'
+        : store.logs.length === 0
+          ? 'empty'
+          : 'logs'
+  );
 
   function openRow(hit: LogHit) {
     selectedLog = hit;
@@ -28,6 +52,7 @@
   function toggleSort() {
     sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
   }
+
 </script>
 
 <div class="flex h-full w-full min-h-0">
@@ -38,7 +63,7 @@
     <FieldPanel
       levels={data.levels}
       fields={data.fields}
-      isOtelIndex={data.isOtelIndex}
+      isOtelIndex={store.fieldConfig?.isOtel ?? false}
       fieldValues={data.fieldValues}
     />
   </aside>
@@ -46,39 +71,35 @@
   <!-- Right: main column -->
   <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
     <SearchToolbar
-      indexes={data.indexes}
-      selectedIndex={data.selectedIndex}
-      query={data.query}
+      {store}
       timeRangeLabel={data.timeRangeLabel}
-      numHits={data.numHits}
-      bind:wrapMode
       bind:drawerTab
     />
 
     <LogFrequencyChart
       data={data.histogram}
-      timezoneMode={data.timezoneMode}
+      timezoneMode={store.timezoneMode}
       numHits={data.numHits}
       bind:collapsed={chartCollapsed}
     />
 
     <div class="min-h-0 flex-1 overflow-auto bg-base-200/30">
-      {#if data.state === 'loading'}
+      {#if displayState === 'loading'}
         <div class="flex h-full items-center justify-center">
           <div class="flex items-center gap-2 font-mono text-xs text-base-content/60">
             <span class="loading loading-spinner loading-sm"></span>
             Loading…
           </div>
         </div>
-      {:else if data.state === 'error'}
+      {:else if displayState === 'error'}
         <div class="flex h-full items-center justify-center">
           <div class="alert alert-error max-w-md">
             <CircleX class="h-4 w-4 shrink-0" />
-            <span class="font-mono text-xs">Something went wrong.</span>
+            <span class="font-mono text-xs">{store.configError ?? store.searchError ?? 'Something went wrong.'}</span>
             <button class="btn btn-ghost btn-sm" disabled>Retry</button>
           </div>
         </div>
-      {:else if data.state === 'empty' || data.logs.length === 0}
+      {:else if displayState === 'empty'}
         <div class="flex h-full flex-col items-center justify-center gap-1">
           <p class="font-mono text-xs text-base-content/60">No logs found</p>
           <p class="font-mono text-[10px] text-base-content/40">
@@ -87,14 +108,11 @@
         </div>
       {:else}
         <div class="w-fit min-w-full">
-          {#if wrapMode === 'none'}
-            <LogHeader {sortDirection} ontogglesort={toggleSort} />
-          {/if}
-          {#each data.logs as hit (hit.key)}
+          <LogHeader {sortDirection} ontogglesort={toggleSort} />
+          {#each store.logs as hit (hit.key)}
             <LogRow
               {hit}
-              {wrapMode}
-              timezoneMode={data.timezoneMode}
+              timezoneMode={store.timezoneMode}
               onclick={() => openRow(hit)}
             />
           {/each}
@@ -114,7 +132,7 @@
 <LogDetailDrawer
   bind:open={drawerOpen}
   hit={selectedLog}
-  selectedIndex={data.selectedIndex}
-  fieldConfig={data.fieldConfig}
-  timezoneMode={data.timezoneMode}
+  selectedIndex={store.selectedIndex}
+  fieldConfig={store.fieldConfig}
+  timezoneMode={store.timezoneMode}
 />
