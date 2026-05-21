@@ -122,13 +122,38 @@ export type IngestTokenSummary = {
 	createdByUserId: string;
 };
 
-export type CreateIngestTokenInput = {
+export type { CreateIngestTokenInput } from './schemas/tokens.js';
+
+export type IngestTokenValue = {
+	token: string;
+};
+
+export type VerifiedIngestToken = {
+	id: number;
 	name: string;
 	indexId: string;
 };
 
-export type IngestTokenValue = {
+export type SearchTokenSummary = {
+	id: number;
+	name: string;
+	tokenPrefix: string;
+	indexId: string;
+	lastUsedAt: Date | null;
+	createdAt: Date;
+	createdByUserId: string;
+};
+
+export type { CreateSearchTokenInput } from './schemas/search-tokens.js';
+
+export type SearchTokenValue = {
 	token: string;
+};
+
+export type VerifiedSearchToken = {
+	id: number;
+	name: string;
+	indexId: string;
 };
 
 export type SavedQuery = {

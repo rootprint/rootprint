@@ -1,18 +1,17 @@
-import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
-import type { CreateIngestTokenInput, IngestTokenSummary, IngestTokenValue } from '../types.js';
+import { desc, eq, sql } from 'drizzle-orm';
+import type {
+	CreateIngestTokenInput,
+	IngestTokenSummary,
+	IngestTokenValue,
+	VerifiedIngestToken
+} from '../types.js';
 
-import { LAST_USED_THROTTLE_SECONDS, TOKEN_DISPLAY_PREFIX_LENGTH } from '../constants/ingest.js';
+import { TOKEN_DISPLAY_PREFIX_LENGTH } from '../constants/tokens.js';
 import type { Db } from '../db/index.js';
 import { ingestToken } from '../db/schema.js';
 import { generateIngestToken } from '../utils/ingest-token.js';
 import { internal, notFound } from '../utils/http-error.js';
-import { withUniqueViolation } from '../utils/db.js';
-
-export type VerifiedIngestToken = {
-	id: number;
-	name: string;
-	indexId: string;
-};
+import { touchLastUsed, withUniqueViolation } from '../utils/db.js';
 
 export async function listIngestTokens(db: Db): Promise<IngestTokenSummary[]> {
 	return db
@@ -95,21 +94,6 @@ export async function verifyIngestToken(
 		.where(eq(ingestToken.token, token))
 		.limit(1);
 	if (!row) return null;
-	touchLastUsed(db, row.id);
+	touchLastUsed(db, ingestToken, row.id);
 	return row;
-}
-
-function touchLastUsed(db: Db, tokenId: number): void {
-	db.update(ingestToken)
-		.set({ lastUsedAt: sql`now()` })
-		.where(
-			and(
-				eq(ingestToken.id, tokenId),
-				or(
-					isNull(ingestToken.lastUsedAt),
-					sql`${ingestToken.lastUsedAt} < now() - make_interval(secs => ${LAST_USED_THROTTLE_SECONDS})`
-				)
-			)
-		)
-		.catch(() => {});
 }

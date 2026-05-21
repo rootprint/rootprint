@@ -85,6 +85,25 @@ export const ingestToken = pgTable(
 	]
 );
 
+export const searchToken = pgTable(
+	'search_token',
+	{
+		id: serial('id').primaryKey(),
+		name: text('name').notNull().unique(),
+		token: text('token').notNull().unique(),
+		indexId: text('index_id').notNull(),
+		lastUsedAt: timestamp('last_used_at'),
+		createdByUserId: text('created_by_user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('search_token_created_by').on(table.createdByUserId),
+		index('search_token_index_id').on(table.indexId)
+	]
+);
+
 export const searchHistory = pgTable(
 	'search_history',
 	{

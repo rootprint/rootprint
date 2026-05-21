@@ -20,10 +20,12 @@ import { authRouter } from './routes/auth.js';
 import { healthRouter } from './routes/health.js';
 import { indexesRouter } from './routes/indexes.js';
 import { ndjsonRouter } from './routes/ingest/ndjson.js';
+import { searchRouter } from './routes/search.js';
 import { otlpRouter } from './routes/ingest/otlp.js';
 import { settingsRouter } from './routes/settings.js';
 import { sharesRouter } from './routes/shares.js';
 import { ingestTokensRouter } from './routes/ingest-tokens.js';
+import { searchTokensRouter } from './routes/search-tokens.js';
 import { invitesRouter } from './routes/invites.js';
 import { usersRouter } from './routes/users.js';
 import type { ApiErrorBody, ApiErrorDetail } from './types.js';
@@ -159,9 +161,11 @@ export const routes = app
 	.route('/api/users', withAuth(usersRouter))
 	.route('/api/invites', withAuth(invitesRouter))
 	.route('/api/ingest-tokens', withAuth(ingestTokensRouter))
+	.route('/api/search-tokens', withAuth(searchTokensRouter))
 	.route('/api/shares', withAuth(sharesRouter))
 	.route('/api/settings', withAuth(settingsRouter))
 	.route('/api/ingest', ndjsonRouter)
+	.route('/api/search', searchRouter)
 	.route('/v1', otlpRouter);
 
 // --- SPA static-file serving (all-in-one image) ---------------------------

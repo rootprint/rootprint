@@ -50,6 +50,13 @@
       "when": 1779044777775,
       "tag": "0006_opposite_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779112952763,
+      "tag": "0007_majestic_centennial",
+      "breakpoints": true
     }
   ]
 }
