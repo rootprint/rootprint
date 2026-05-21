@@ -24,6 +24,7 @@
     searchFn: data.searchFn,
     histogramFn: data.histogramFn,
     loadConfig: data.loadConfig,
+    loadFields: data.loadFields,
   });
 
   store.setupAutoSearch();
@@ -62,10 +63,8 @@
     class="w-56 shrink-0 border-r border-base-content/10"
   >
     <FieldPanel
-      levels={data.levels}
-      fields={data.fields}
-      isOtelIndex={store.fieldConfig?.isOtel ?? false}
-      fieldValues={data.fieldValues}
+      {store}
+      fetchValues={data.fetchValues}
     />
   </aside>
 

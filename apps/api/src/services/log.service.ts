@@ -2,6 +2,7 @@ import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 
 import { AggregationBuilder, NotFoundError, ValidationError } from 'quickwit-js';
 
 import type { IndexConfig } from './index.service.js';
+import { FIELD_VALUES_DEFAULT } from '../constants/search.js';
 import { badRequest, notFound } from '../utils/http-error.js';
 import type { FieldValuesResponse, HistogramResponse, LogSearchResponse } from '../types.js';
 
@@ -112,7 +113,7 @@ export async function fieldValues(
 	field: string,
 	params: FieldValuesParams
 ): Promise<FieldValuesResponse> {
-	const { query = '*', startTs, endTs, limit = 20 } = params;
+	const { query = '*', startTs, endTs, limit = FIELD_VALUES_DEFAULT } = params;
 	const idx = qw.index(indexConfig.indexId);
 	const builder = idx
 		.query(query)

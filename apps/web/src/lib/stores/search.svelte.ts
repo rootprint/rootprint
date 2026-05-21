@@ -6,6 +6,9 @@ import type {
   HistogramFn,
   HistogramInput,
   IndexOption,
+  LevelBucket,
+  LoadFieldsFn,
+  LogField,
   LogHit,
   ParsedQuery,
   SearchFn,
@@ -34,6 +37,11 @@ export interface SearchStoreOptions {
    * Injected by the page load — the store has no $lib/api import.
    */
   loadConfig: (indexId: string) => Promise<FieldConfig>;
+  /**
+   * Fetches the field list for an index. Called whenever (selectedIndex, fieldConfig)
+   * change. Injected by the page load — the store has no $lib/api import.
+   */
+  loadFields: LoadFieldsFn;
 }
 
 export class SearchStore {
@@ -52,6 +60,20 @@ export class SearchStore {
   histogramLoading = $state(false);
   histogramError = $state<string | null>(null);
 
+  fields = $state<LogField[]>([]);
+  fieldsLoading = $state(false);
+  fieldsError = $state<string | null>(null);
+
+  levels: LevelBucket[] = $derived.by(() => {
+    const totals: Record<string, number> = {};
+    for (const b of this.histogramBuckets) {
+      for (const [name, count] of Object.entries(b.levels)) {
+        totals[name] = (totals[name] ?? 0) + count;
+      }
+    }
+    return Object.entries(totals).map(([name, count]) => ({ name, count }));
+  });
+
   logs: LogHit[] = $derived.by(() => {
     const fc = this.fieldConfig;
     if (!fc) return [];
@@ -66,6 +88,9 @@ export class SearchStore {
   #configFetchedFor: string | null = null;
   #histogramFn: HistogramFn;
   #histogramRequestId = 0;
+  #loadFieldsFn: LoadFieldsFn;
+  #fieldsRequestId = 0;
+  #fieldsFetchedFor: string | null = null;
 
   constructor(opts: SearchStoreOptions) {
     this.indexes = opts.initialIndexes;
@@ -73,6 +98,7 @@ export class SearchStore {
     this.#searchFn = opts.searchFn;
     this.#histogramFn = opts.histogramFn;
     this.#loadConfigFn = opts.loadConfig;
+    this.#loadFieldsFn = opts.loadFields;
   }
 
   /** URL's index if it's in the indexes list, otherwise the first available (or null). */
@@ -128,6 +154,18 @@ export class SearchStore {
 
       this.#search();
       this.#fetchHistogram();
+    });
+
+    // Separate effect: fields depend on fieldConfig + selectedIndex, not on query/time.
+    $effect(() => {
+      const active = this.selectedIndex;
+      const cfg = this.fieldConfig;
+      if (active === null || cfg === null) return;
+
+      const key = `${active}|${cfg.isOtel ? '1' : '0'}|${cfg.timestampField}|${cfg.messageField}`;
+      if (key === this.#fieldsFetchedFor) return;
+      this.#fieldsFetchedFor = key;
+      this.#loadFields(active, cfg);
     });
   }
 
@@ -188,6 +226,7 @@ export class SearchStore {
   async #loadConfig(indexId: string): Promise<void> {
     const requestId = ++this.#configRequestId;
     this.fieldConfig = null;
+    this.#fieldsFetchedFor = null;
     this.configError = null;
     try {
       const cfg = await this.#loadConfigFn(indexId);
@@ -196,6 +235,36 @@ export class SearchStore {
     } catch (e) {
       if (requestId !== this.#configRequestId) return;
       this.configError = e instanceof Error ? e.message : 'Failed to load index config';
+    }
+  }
+
+  /**
+   * Re-runs field discovery for the current index. Used by the FieldPanel "Retry"
+   * action when an earlier load failed. Resets the cache key so the fields-load
+   * effect fires again on the next reactive run.
+   */
+  reloadFields(): void {
+    const cfg = this.fieldConfig;
+    const indexId = this.selectedIndex;
+    if (!cfg || !indexId) return;
+    this.#fieldsFetchedFor = null;
+    this.#loadFields(indexId, cfg);
+  }
+
+  async #loadFields(indexId: string, fieldConfig: FieldConfig): Promise<void> {
+    const requestId = ++this.#fieldsRequestId;
+    this.fieldsLoading = true;
+    this.fieldsError = null;
+    try {
+      const fields = await this.#loadFieldsFn(indexId, fieldConfig);
+      if (requestId !== this.#fieldsRequestId) return;
+      this.fields = fields;
+    } catch (e) {
+      if (requestId !== this.#fieldsRequestId) return;
+      this.fieldsError = e instanceof Error ? e.message : 'Failed to load fields';
+      this.fields = [];
+    } finally {
+      if (requestId === this.#fieldsRequestId) this.fieldsLoading = false;
     }
   }
 }

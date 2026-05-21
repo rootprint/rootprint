@@ -1,23 +1,31 @@
 <script lang="ts">
   import { ChevronDown, ChevronRight } from 'lucide-svelte';
-  import type { LogField, LogFieldValueBucket } from '$lib/types';
+  import type { FetchFieldValuesFn, LogField, LogFieldValueBucket } from '$lib/types';
+  import type { SearchStore } from '$lib/stores/search.svelte';
+  import { FIELD_VALUES_INITIAL_SHOW, FIELD_VALUES_LIMIT } from '$lib/api/field-values';
+  import { serializeTimeRange } from '$lib/utils/fields';
 
   let {
     field,
-    values,
+    store,
+    fetchValues,
     indented = false
   }: {
     field: LogField;
-    values: LogFieldValueBucket[];
+    store: SearchStore;
+    fetchValues: FetchFieldValuesFn;
     indented?: boolean;
   } = $props();
 
-  const INITIAL_SHOW_COUNT = 10;
-  const PAGE_SIZE = 100;
-
   let open = $state(false);
   let valueSearch = $state('');
-  let showCount = $state(INITIAL_SHOW_COUNT);
+  let showCount = $state(FIELD_VALUES_INITIAL_SHOW);
+
+  let values = $state<LogFieldValueBucket[]>([]);
+  let valuesLoading = $state(false);
+  let valuesError = $state<string | null>(null);
+  let loadedKey: string | null = null;
+  let abortCtl: AbortController | null = null;
 
   let normalizedValueSearch = $derived(valueSearch.trim().toLowerCase());
 
@@ -37,20 +45,72 @@
 
   let countLabel = $derived(values.length > 0 ? `(${values.length})` : '');
 
+  let currentKey = $derived(
+    store.selectedIndex
+      ? `${store.selectedIndex}|${store.query}|${serializeTimeRange(store.timeRange)}`
+      : null
+  );
+
+  $effect(() => {
+    if (!open || !currentKey) return;
+    if (currentKey === loadedKey) return;
+
+    abortCtl?.abort();
+    const ctl = new AbortController();
+    abortCtl = ctl;
+    const requestedKey = currentKey;
+    const indexId = store.selectedIndex;
+    if (!indexId) return;
+
+    valuesLoading = true;
+    valuesError = null;
+
+    fetchValues({
+      indexId,
+      field: field.name,
+      query: store.query,
+      timeRange: store.timeRange,
+      signal: ctl.signal,
+    })
+      .then((result) => {
+        if (ctl.signal.aborted) return;
+        values = result;
+        loadedKey = requestedKey;
+        valuesLoading = false;
+      })
+      .catch((err: unknown) => {
+        if (ctl.signal.aborted) return;
+        valuesError = err instanceof Error ? err.message : 'Failed to load values';
+        values = [];
+        valuesLoading = false;
+      });
+
+    return () => {
+      if (abortCtl === ctl) abortCtl = null;
+      ctl.abort();
+    };
+  });
+
   function toggle() {
     open = !open;
     if (!open) {
       valueSearch = '';
-      showCount = INITIAL_SHOW_COUNT;
+      showCount = FIELD_VALUES_INITIAL_SHOW;
+      abortCtl?.abort();
+      abortCtl = null;
+      values = [];
+      loadedKey = null;
+      valuesLoading = false;
+      valuesError = null;
     }
   }
 
   function showMore() {
-    showCount += PAGE_SIZE;
+    showCount = FIELD_VALUES_LIMIT;
   }
 
   function showLess() {
-    showCount = INITIAL_SHOW_COUNT;
+    showCount = FIELD_VALUES_INITIAL_SHOW;
   }
 </script>
 
@@ -76,50 +136,59 @@
 
   {#if open}
     <div class="pb-3 {indented ? 'pr-3 pl-6' : 'px-3'}">
-      {#if values.length > INITIAL_SHOW_COUNT}
-        <input
-          type="text"
-          class="input input-xs mb-2 w-full"
-          placeholder="Search values…"
-          aria-label="Filter values"
-          bind:value={valueSearch}
-        />
-      {/if}
-
-      {#if visibleValues.length === 0}
-        <p class="py-1 text-xs text-base-content/50">
-          {normalizedValueSearch ? 'No matching values' : 'No values found'}
-        </p>
+      {#if valuesLoading}
+        <div class="flex items-center gap-2 py-1 font-mono text-xs text-base-content/50">
+          <span class="loading loading-spinner loading-xs"></span>
+          Loading…
+        </div>
+      {:else if valuesError}
+        <p class="py-1 font-mono text-xs text-error">{valuesError}</p>
       {:else}
-        <ul class="flex flex-col gap-0.5">
-          {#each visibleValues as bucket (bucket.value)}
-            <li class="flex items-center gap-2 px-1.5 font-mono text-xs">
-              <span class="min-w-0 flex-1 truncate">{bucket.value}</span>
-              <span
-                class="w-12 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums"
-              >
-                {bucket.count.toLocaleString()}
-              </span>
-            </li>
-          {/each}
-        </ul>
+        {#if values.length > FIELD_VALUES_INITIAL_SHOW}
+          <input
+            type="text"
+            class="input input-xs mb-2 w-full"
+            placeholder="Search values…"
+            aria-label="Filter values"
+            bind:value={valueSearch}
+          />
+        {/if}
 
-        {#if !normalizedValueSearch && remaining > 0}
-          <button
-            type="button"
-            class="mt-1 text-xs text-primary hover:underline"
-            onclick={showMore}
-          >
-            Show more ({remaining})
-          </button>
-        {:else if !normalizedValueSearch && showCount > INITIAL_SHOW_COUNT && values.length > INITIAL_SHOW_COUNT}
-          <button
-            type="button"
-            class="mt-1 text-xs text-primary hover:underline"
-            onclick={showLess}
-          >
-            Show less
-          </button>
+        {#if visibleValues.length === 0}
+          <p class="py-1 text-xs text-base-content/50">
+            {normalizedValueSearch ? 'No matching values' : 'No values found'}
+          </p>
+        {:else}
+          <ul class="flex flex-col gap-0.5">
+            {#each visibleValues as bucket (bucket.value)}
+              <li class="flex items-center gap-2 px-1.5 font-mono text-xs">
+                <span class="min-w-0 flex-1 truncate">{bucket.value}</span>
+                <span
+                  class="w-12 shrink-0 text-right text-[10px] text-base-content/50 tabular-nums"
+                >
+                  {bucket.count.toLocaleString()}
+                </span>
+              </li>
+            {/each}
+          </ul>
+
+          {#if !normalizedValueSearch && remaining > 0}
+            <button
+              type="button"
+              class="mt-1 text-xs text-primary hover:underline"
+              onclick={showMore}
+            >
+              Show more ({remaining})
+            </button>
+          {:else if !normalizedValueSearch && showCount > FIELD_VALUES_INITIAL_SHOW && values.length > FIELD_VALUES_INITIAL_SHOW}
+            <button
+              type="button"
+              class="mt-1 text-xs text-primary hover:underline"
+              onclick={showLess}
+            >
+              Show less
+            </button>
+          {/if}
         {/if}
       {/if}
     </div>

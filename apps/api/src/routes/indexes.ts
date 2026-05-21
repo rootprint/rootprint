@@ -10,6 +10,7 @@ import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
+import { FIELD_VALUES_MAX } from '../constants/search.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {
@@ -66,7 +67,9 @@ const FieldValuesQuery = v.object({
 			v.string(),
 			v.transform((s) => {
 				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > 100) throw new Error('must be 1–100');
+				if (!Number.isInteger(n) || n < 1 || n > FIELD_VALUES_MAX) {
+					throw new Error(`must be 1–${FIELD_VALUES_MAX}`);
+				}
 				return n;
 			})
 		)

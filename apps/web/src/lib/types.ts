@@ -26,8 +26,8 @@ export interface LogField {
   name: string;
   /** Display name (e.g. "http.status_code" — what the user sees). */
   displayName: string;
-  /** Distinct value count, or null if unknown. */
-  cardinality: number | null;
+  /** Quickwit field type, e.g. "text", "i64", "u64", "f64", "bool", "datetime", "ip", "json". */
+  type: string;
 }
 
 export interface LogHit {
@@ -117,3 +117,16 @@ export interface SearchResult {
 }
 
 export type SearchFn = (input: SearchInput) => Promise<SearchResult>;
+
+export type LoadFieldsFn = (indexId: string, fieldConfig: FieldConfig) => Promise<LogField[]>;
+
+export interface FetchFieldValuesInput {
+  indexId: string;
+  field: string;
+  query: string;
+  timeRange: TimeRange;
+  limit?: number;
+  signal?: AbortSignal;
+}
+
+export type FetchFieldValuesFn = (input: FetchFieldValuesInput) => Promise<LogFieldValueBucket[]>;
