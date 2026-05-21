@@ -194,3 +194,70 @@ export type GoogleAuthSettings = {
 export type AuthProvidersInfo = {
 	google: { enabled: boolean };
 };
+
+// --- Admin overview ---
+
+export type IndexStatsPoint = {
+	capturedAt: Date;
+	numDocs: number;
+	sizeBytes: number;
+	uncompressedBytes: number;
+	numSplits: number;
+	minTimestamp: number | null;
+	maxTimestamp: number | null;
+};
+
+export type ClusterHealth = {
+	healthy: boolean;
+	endpoint: string;
+};
+
+export type ClusterTotals = {
+	indexCount: number;
+	totalDocs: number;
+	totalSizeBytes: number;
+	totalSplits: number;
+	latestCapturedAt: string | null;
+};
+
+export type PerIndexOverview = {
+	indexId: string;
+	displayName: string | null;
+	visibility: IndexVisibility;
+	numDocs: number | null;
+	sizeBytes: number | null;
+	uncompressedBytes: number | null;
+	numSplits: number | null;
+	capturedAt: string | null;
+};
+
+export type ClusterOverview = {
+	health: ClusterHealth;
+	totals: ClusterTotals;
+	perIndex: PerIndexOverview[];
+};
+
+export type QuickwitBuildInfo = {
+	version: string | null;
+};
+
+export type ResourceSnapshot = {
+	memoryRssBytes: number | null;
+	fdsOpen: number | null;
+	fdsMax: number | null;
+	walDiskBytes: number | null;
+};
+
+export type SaturationSnapshot = {
+	// max(main, non_blocking) tokio worker busy ratio — Quickwit computes this
+	// over a recent window, so it's a real "right now" % rather than cumulative.
+	cpuBusyRatio: number | null;
+};
+
+export type QuickwitSnapshot = {
+	fetchedAt: string;
+	build: QuickwitBuildInfo;
+	uptimeSeconds: number | null;
+	resources: ResourceSnapshot;
+	saturation: SaturationSnapshot;
+};
