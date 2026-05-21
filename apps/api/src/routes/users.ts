@@ -14,7 +14,7 @@ export const usersRouter = new Hono<AuthedEnv>()
 	.get('/', async (c) => c.json(await userService.listUsers(db)))
 	.delete('/:userId', vValidator('param', UserIdParams), async (c) => {
 		const { userId } = c.req.valid('param');
-		await userService.removeUser(userId);
+		await userService.removeUser(userId, c.req.raw.headers);
 		return c.body(null, 204);
 	})
 	.put(
@@ -32,5 +32,5 @@ export const usersRouter = new Hono<AuthedEnv>()
 	.post('/:userId/password-resets', vValidator('param', UserIdParams), async (c) => {
 		const { userId } = c.req.valid('param');
 		const adminId = c.get('session').user.id;
-		return c.json(await userService.resetPassword(db, adminId, userId));
+		return c.json(await userService.resetPassword(db, adminId, userId, c.req.raw.headers));
 	});

@@ -82,8 +82,8 @@ export async function resendInvite(db: Db, userId: string): Promise<{ inviteUrl:
 	return { inviteUrl: buildInviteUrl(token) };
 }
 
-export async function removeUser(userId: string): Promise<void> {
-	await removeAdminUser(userId);
+export async function removeUser(userId: string, headers: Headers): Promise<void> {
+	await removeAdminUser(userId, headers);
 }
 
 export async function setUserRole(
@@ -101,7 +101,8 @@ export async function setUserRole(
 export async function resetPassword(
 	db: Db,
 	adminId: string,
-	userId: string
+	userId: string,
+	headers: Headers
 ): Promise<{ inviteUrl: string }> {
 	if (userId === adminId) {
 		throw badRequest('Cannot reset your own password');
@@ -111,7 +112,7 @@ export async function resetPassword(
 		throw badRequest('User has no credential account');
 	}
 
-	await revokeAdminUserSessions(userId);
+	await revokeAdminUserSessions(userId, headers);
 
 	await db
 		.update(account)

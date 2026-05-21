@@ -11,12 +11,12 @@ export type CreateUserInput = {
 
 type AdminApi = {
 	createUser: (args: { body: CreateUserInput }) => Promise<unknown>;
-	removeUser: (args: { body: { userId: string } }) => Promise<unknown>;
+	removeUser: (args: { body: { userId: string }; headers: Headers }) => Promise<unknown>;
 	setRole: (args: {
 		body: { userId: string; role: UserRole };
 		headers: Headers;
 	}) => Promise<unknown>;
-	revokeUserSessions: (args: { body: { userId: string } }) => Promise<unknown>;
+	revokeUserSessions: (args: { body: { userId: string }; headers: Headers }) => Promise<unknown>;
 };
 
 const api = (): AdminApi => auth().api as unknown as AdminApi;
@@ -38,9 +38,9 @@ export async function createAdminUser(input: CreateUserInput): Promise<{ user: {
 	return res as { user: { id: string } };
 }
 
-export async function removeAdminUser(userId: string): Promise<void> {
+export async function removeAdminUser(userId: string, headers: Headers): Promise<void> {
 	try {
-		await api().removeUser({ body: { userId } });
+		await api().removeUser({ body: { userId }, headers });
 	} catch (err) {
 		throw fromAuthApiError(err, 'Failed to remove user');
 	}
@@ -58,9 +58,9 @@ export async function setAdminUserRole(
 	}
 }
 
-export async function revokeAdminUserSessions(userId: string): Promise<void> {
+export async function revokeAdminUserSessions(userId: string, headers: Headers): Promise<void> {
 	try {
-		await api().revokeUserSessions({ body: { userId } });
+		await api().revokeUserSessions({ body: { userId }, headers });
 	} catch (err) {
 		throw fromAuthApiError(err, 'Failed to revoke user sessions');
 	}
