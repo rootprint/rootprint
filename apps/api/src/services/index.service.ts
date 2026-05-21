@@ -160,7 +160,9 @@ export async function getIndexConfig(
 
 	return {
 		indexId,
-		levelField: settings.levelField,
+		levelField: index.fields.some((f) => f.name === settings.levelField)
+			? settings.levelField
+			: '',
 		timestampField: index.timestampField,
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,

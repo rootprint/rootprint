@@ -2,12 +2,15 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type {
   FieldConfig,
+  HistogramBucket,
+  HistogramFn,
+  HistogramInput,
   IndexOption,
   LogHit,
   ParsedQuery,
   SearchFn,
   SearchInput,
-  TimeRange,
+  TimeRange
 } from '$lib/types';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
@@ -22,6 +25,10 @@ export interface SearchStoreOptions {
    * Runs a log search. Injected by the page load — the store has no $lib/api import.
    */
   searchFn: SearchFn;
+  /**
+   * Runs a stacked-by-level histogram fetch. Injected by the page load.
+   */
+  histogramFn: HistogramFn;
   /**
    * Fetches the field-name mappings for an index. Called once per active-index change.
    * Injected by the page load — the store has no $lib/api import.
@@ -41,6 +48,10 @@ export class SearchStore {
   fieldConfig = $state<FieldConfig | null>(null);
   configError = $state<string | null>(null);
 
+  histogramBuckets = $state<HistogramBucket[]>([]);
+  histogramLoading = $state(false);
+  histogramError = $state<string | null>(null);
+
   logs: LogHit[] = $derived.by(() => {
     const fc = this.fieldConfig;
     if (!fc) return [];
@@ -53,11 +64,14 @@ export class SearchStore {
   #searchRequestId = 0;
   #configRequestId = 0;
   #configFetchedFor: string | null = null;
+  #histogramFn: HistogramFn;
+  #histogramRequestId = 0;
 
   constructor(opts: SearchStoreOptions) {
     this.indexes = opts.initialIndexes;
     this.#parsedQuery = opts.parsedQuery;
     this.#searchFn = opts.searchFn;
+    this.#histogramFn = opts.histogramFn;
     this.#loadConfigFn = opts.loadConfig;
   }
 
@@ -113,6 +127,7 @@ export class SearchStore {
       }
 
       this.#search();
+      this.#fetchHistogram();
     });
   }
 
@@ -130,7 +145,7 @@ export class SearchStore {
         ...buildTimeParams(this.timeRange),
         sortDirection: this.sortDirection,
         limit: BATCH_SIZE,
-        offset: 0,
+        offset: 0
       });
       if (requestId !== this.#searchRequestId) return;
       this.rawHits = result.rawHits;
@@ -143,6 +158,30 @@ export class SearchStore {
       this.numHits = 0;
     } finally {
       if (requestId === this.#searchRequestId) this.loading = 'idle';
+    }
+  }
+
+  async #fetchHistogram(): Promise<void> {
+    if (this.selectedIndex === null) return;
+
+    const requestId = ++this.#histogramRequestId;
+    this.histogramLoading = true;
+    this.histogramError = null;
+
+    try {
+      const result = await this.#histogramFn({
+        indexId: this.selectedIndex,
+        query: this.query || '*',
+        ...buildTimeParams(this.timeRange)
+      } satisfies HistogramInput);
+      if (requestId !== this.#histogramRequestId) return;
+      this.histogramBuckets = result.buckets;
+    } catch (e) {
+      if (requestId !== this.#histogramRequestId) return;
+      this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
+      this.histogramBuckets = [];
+    } finally {
+      if (requestId === this.#histogramRequestId) this.histogramLoading = false;
     }
   }
 

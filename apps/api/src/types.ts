@@ -94,6 +94,7 @@ export type HistogramBucket = {
 	key: number;
 	keyAsString: string;
 	docCount: number;
+	levels: Record<string, number>;
 };
 
 export type HistogramResponse = {

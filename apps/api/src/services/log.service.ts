@@ -75,20 +75,34 @@ export async function histogramLogs(
 ): Promise<HistogramResponse> {
 	const { query = '*', startTs, endTs, interval } = params;
 	const idx = qw.index(indexConfig.indexId);
+	const histogramOptions = indexConfig.levelField
+		? { aggs: { levels: AggregationBuilder.terms(indexConfig.levelField, { size: 16 }) } }
+		: undefined;
 	const builder = idx
 		.query(query)
 		.limit(0)
-		.agg('histogram', AggregationBuilder.dateHistogram(indexConfig.timestampField, interval));
+		.agg(
+			'histogram',
+			AggregationBuilder.dateHistogram(indexConfig.timestampField, interval, histogramOptions)
+		);
 	if (startTs !== undefined) builder.startTimestamp(startTs);
 	if (endTs !== undefined) builder.endTimestamp(endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	const agg = response.aggregations?.['histogram'] as BucketAggregationResult | undefined;
 	return {
-		buckets: (agg?.buckets ?? []).map((b: AggregationBucket) => ({
-			key: Number(b.key),
-			keyAsString: b.key_as_string ?? String(b.key),
-			docCount: b.doc_count
-		}))
+		buckets: (agg?.buckets ?? []).map((b: AggregationBucket) => {
+			const levelsAgg = (b as { levels?: BucketAggregationResult }).levels;
+			const levels: Record<string, number> = {};
+			for (const lb of levelsAgg?.buckets ?? []) {
+				levels[String(lb.key)] = lb.doc_count;
+			}
+			return {
+				key: Number(b.key),
+				keyAsString: b.key_as_string ?? String(b.key),
+				docCount: b.doc_count,
+				levels
+			};
+		})
 	};
 }
 

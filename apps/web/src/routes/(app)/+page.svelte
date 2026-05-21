@@ -22,6 +22,7 @@
     parsedQuery: () => deserialize(page.url.searchParams),
     initialIndexes: data.indexes,
     searchFn: data.searchFn,
+    histogramFn: data.histogramFn,
     loadConfig: data.loadConfig,
   });
 
@@ -77,10 +78,17 @@
     />
 
     <LogFrequencyChart
-      data={data.histogram}
+      buckets={store.histogramBuckets}
+      loading={store.histogramLoading}
+      error={store.histogramError}
+      numHits={store.numHits}
       timezoneMode={store.timezoneMode}
-      numHits={data.numHits}
       bind:collapsed={chartCollapsed}
+      onbrush={(start, end) =>
+        store.navigateQuery(
+          { timeRange: { type: 'absolute', start, end } },
+          { push: true }
+        )}
     />
 
     <div class="min-h-0 flex-1 overflow-auto bg-base-200/30">

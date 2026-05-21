@@ -74,6 +74,15 @@
   --text-h3--letter-spacing: -0.015em;
 }
 
+:root {
+  --level-error: #ef4444;
+  --level-critical: #ec4899;
+  --level-warning: #f59e0b;
+  --level-info: #3b82f6;
+  --level-debug: #22d3ee;
+  --level-unknown: #8b5cf6;
+}
+
 @layer base {
   html {
     font-family: var(--font-sans);

@@ -44,11 +44,27 @@ export interface LogHit {
 }
 
 export interface HistogramBucket {
-  /** ISO 8601 timestamp string at the start of the bucket. */
-  timestamp: string;
-  /** Hit count for the bucket. */
+  /** Seconds since epoch at the start of the bucket. */
+  timestamp: number;
+  /** Per-level doc counts within this bucket, keyed by raw level value. */
+  levels: Record<string, number>;
+  /** Total hit count for the bucket (sum across levels). */
   count: number;
 }
+
+export interface HistogramInput {
+  indexId: string;
+  query: string;
+  timeRange?: string;
+  startTimestamp?: number;
+  endTimestamp?: number;
+}
+
+export interface HistogramResult {
+  buckets: HistogramBucket[];
+}
+
+export type HistogramFn = (input: HistogramInput) => Promise<HistogramResult>;
 
 export interface FieldConfig {
   timestampField: string;

@@ -2,13 +2,13 @@ import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import type {
   FieldConfig,
-  HistogramBucket,
   IndexOption,
   LevelBucket,
   LogField,
   LogFieldValueBucket,
 } from '$lib/types';
 import { client } from '$lib/api/client';
+import { createHistogramFetch } from '$lib/api/histogram';
 import { createLogSearch } from '$lib/api/log-search';
 
 const LEVELS: LevelBucket[] = [
@@ -31,11 +31,6 @@ const FIELDS: LogField[] = [
   { name: 'attributes.order_id', displayName: 'order_id', cardinality: 2843 },
   { name: 'error.code', displayName: 'error.code', cardinality: 5 }
 ];
-
-const HISTOGRAM: HistogramBucket[] = Array.from({ length: 30 }, (_, i) => ({
-  timestamp: new Date(Date.UTC(2026, 4, 21, 10, i)).toISOString(),
-  count: Math.floor(20 + 80 * Math.abs(Math.sin(i / 3)))
-}));
 
 const FIELD_VALUES: Record<string, LogFieldValueBucket[]> = {
   service: [
@@ -155,6 +150,7 @@ export const load = (async ({ fetch }) => {
   }));
 
   const searchFn = createLogSearch();
+  const histogramFn = createHistogramFetch();
   const loadConfig = async (indexId: string): Promise<FieldConfig> => {
     const res = await client.api.indexes[':indexId'].config.$get(
       { param: { indexId } },
@@ -179,12 +175,12 @@ export const load = (async ({ fetch }) => {
   return {
     indexes,
     searchFn,
+    histogramFn,
     loadConfig,
     timeRangeLabel: 'last 15m',
     numHits: 1300,
     levels: LEVELS,
     fields: FIELDS,
-    histogram: HISTOGRAM,
     fieldValues: FIELD_VALUES,
     history: [] as unknown[],
     savedQueries: [] as unknown[],
