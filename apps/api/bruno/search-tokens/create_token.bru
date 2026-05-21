@@ -1,0 +1,18 @@
+meta {
+  name: Create Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/search-tokens
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "prod-search",
+    "indexId": "{{indexId}}"
+  }
+}

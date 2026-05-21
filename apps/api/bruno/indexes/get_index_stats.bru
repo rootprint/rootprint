@@ -1,0 +1,17 @@
+meta {
+  name: Get Index Stats
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/stats
+  body: none
+  auth: none
+}
+
+params:query {
+  ~from: 1700000000000
+  ~to: 1800000000000
+  ~limit: 100
+}

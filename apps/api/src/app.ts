@@ -13,23 +13,28 @@ import { config } from './config.js';
 import type { AppEnv, AuthedEnv } from './env.js';
 import { initAuth } from './lib/auth.js';
 import { connectDb, db, runMigrations } from './lib/db.js';
-import { probeQuickwit } from './lib/quickwit.js';
+import { probeQuickwit, quickwit } from './lib/quickwit.js';
 import { requestContext } from './middleware/request-context.js';
 import { requireUser } from './middleware/require-user.js';
+import { clusterRouter } from './routes/admin/cluster.js';
+import { metricsRouter } from './routes/admin/metrics.js';
 import { authRouter } from './routes/auth.js';
 import { healthRouter } from './routes/health.js';
 import { indexesRouter } from './routes/indexes.js';
 import { ndjsonRouter } from './routes/ingest/ndjson.js';
+import { searchRouter } from './routes/search.js';
 import { otlpRouter } from './routes/ingest/otlp.js';
 import { settingsRouter } from './routes/settings.js';
 import { sharesRouter } from './routes/shares.js';
 import { ingestTokensRouter } from './routes/ingest-tokens.js';
+import { searchTokensRouter } from './routes/search-tokens.js';
 import { invitesRouter } from './routes/invites.js';
 import { usersRouter } from './routes/users.js';
 import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 import { getBetterAuthSecret } from './utils/secret.js';
+import { startStatsCollector } from './services/index-stats.service.js';
 
 // Resolves to apps/web/build from both src/app.ts (dev) and dist/app.js (prod).
 // In both cases, path.dirname(import.meta.url) is two segments deep within
@@ -73,7 +78,6 @@ app.use(
 
 app.onError((rawErr, c) => {
 	const requestId = c.get('requestId');
-
 	let err: Error = rawErr;
 	if (rawErr instanceof QuickwitError) {
 		const qwErr: QuickwitError = rawErr;
@@ -156,12 +160,16 @@ export const routes = app
 	.route('/api/health', healthRouter)
 	.route('/api/auth', authRouter)
 	.route('/api/indexes', withAuth(indexesRouter))
+	.route('/api/admin/metrics', withAuth(metricsRouter))
+	.route('/api/admin/cluster', withAuth(clusterRouter))
 	.route('/api/users', withAuth(usersRouter))
 	.route('/api/invites', withAuth(invitesRouter))
 	.route('/api/ingest-tokens', withAuth(ingestTokensRouter))
+	.route('/api/search-tokens', withAuth(searchTokensRouter))
 	.route('/api/shares', withAuth(sharesRouter))
 	.route('/api/settings', withAuth(settingsRouter))
 	.route('/api/ingest', ndjsonRouter)
+	.route('/api/search', searchRouter)
 	.route('/v1', otlpRouter);
 
 // --- SPA static-file serving (all-in-one image) ---------------------------
@@ -200,6 +208,10 @@ async function main(): Promise<void> {
 	const secret = await getBetterAuthSecret(db);
 	await probeQuickwit();
 	await initAuth(secret);
+
+	const statsCollector = startStatsCollector(db, quickwit);
+	process.on('SIGTERM', statsCollector.stop);
+	process.on('SIGINT', statsCollector.stop);
 
 	Bun.serve({
 		fetch: app.fetch,

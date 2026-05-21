@@ -1,4 +1,5 @@
 import {
+	bigint,
 	index,
 	integer,
 	jsonb,
@@ -82,6 +83,25 @@ export const ingestToken = pgTable(
 	(table) => [
 		index('ingest_token_created_by').on(table.createdByUserId),
 		index('ingest_token_index_id').on(table.indexId)
+	]
+);
+
+export const searchToken = pgTable(
+	'search_token',
+	{
+		id: serial('id').primaryKey(),
+		name: text('name').notNull().unique(),
+		token: text('token').notNull().unique(),
+		indexId: text('index_id').notNull(),
+		lastUsedAt: timestamp('last_used_at'),
+		createdByUserId: text('created_by_user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('search_token_created_by').on(table.createdByUserId),
+		index('search_token_index_id').on(table.indexId)
 	]
 );
 
@@ -181,12 +201,12 @@ export const indexStatsSnapshot = pgTable(
 		id: serial('id').primaryKey(),
 		indexId: text('index_id').notNull(),
 		capturedAt: timestamp('captured_at').notNull(),
-		numDocs: integer('num_docs').notNull(),
-		sizeBytes: integer('size_bytes').notNull(),
-		uncompressedBytes: integer('uncompressed_bytes').notNull(),
+		numDocs: bigint('num_docs', { mode: 'number' }).notNull(),
+		sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
+		uncompressedBytes: bigint('uncompressed_bytes', { mode: 'number' }).notNull(),
 		numSplits: integer('num_splits').notNull(),
-		minTimestamp: integer('min_timestamp'),
-		maxTimestamp: integer('max_timestamp')
+		minTimestamp: bigint('min_timestamp', { mode: 'number' }),
+		maxTimestamp: bigint('max_timestamp', { mode: 'number' })
 	},
 	(table) => [index('index_stats_snapshot_index_captured').on(table.indexId, table.capturedAt)]
 );
