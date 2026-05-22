@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { Bookmark, BookmarkCheck, Download, Play, Share2 } from 'lucide-svelte';
+  import { Download, Play, Share2 } from 'lucide-svelte';
   import TimeRangePicker from './TimeRangePicker.svelte';
+  import SavedQueriesDropdown from './SavedQueriesDropdown.svelte';
   import type { SearchStore } from '$lib/stores/search.svelte';
 
   let { store }: { store: SearchStore } = $props();
@@ -36,33 +37,20 @@
     {/each}
   </select>
 
-  <!-- Query input with end-of-input Save adornment -->
-  <label class="input input-sm input-bordered flex min-w-0 flex-1 items-center gap-1 font-mono">
-    <input
-      type="text"
-      class="grow"
-      placeholder="Search logs…"
-      bind:value={queryInput}
-      onfocus={() => (focused = true)}
-      onblur={() => {
-        focused = false;
-        commitQuery();
-      }}
-      onkeydown={(e) => {
-        if (e.key === 'Enter') commitQuery();
-      }}
-    />
-    <button
-      type="button"
-      class="btn btn-ghost btn-xs btn-square"
-      aria-label="Save query"
-      title="Save query"
-      disabled
-      onmousedown={(e) => e.preventDefault()}
-    >
-      <Bookmark class="h-3.5 w-3.5" />
-    </button>
-  </label>
+  <input
+    type="text"
+    class="input input-sm input-bordered min-w-0 flex-1 font-mono"
+    placeholder="Search logs…"
+    bind:value={queryInput}
+    onfocus={() => (focused = true)}
+    onblur={() => {
+      focused = false;
+      commitQuery();
+    }}
+    onkeydown={(e) => {
+      if (e.key === 'Enter') commitQuery();
+    }}
+  />
 
   <!-- Time range -->
   <TimeRangePicker
@@ -71,15 +59,7 @@
   />
 
   <div class="ml-auto flex items-center gap-1">
-    <button
-      type="button"
-      class="btn btn-sm btn-ghost"
-      aria-label="Open saved queries"
-      title="Open saved queries"
-      disabled
-    >
-      <BookmarkCheck class="h-3.5 w-3.5" />
-    </button>
+    <SavedQueriesDropdown {store} />
     <button
       type="button"
       class="btn btn-sm btn-ghost"
