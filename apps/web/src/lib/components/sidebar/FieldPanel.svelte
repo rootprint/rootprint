@@ -2,7 +2,8 @@
   import { ChevronDown, ChevronRight, Search } from 'lucide-svelte';
   import type { LevelBucket, LogField } from '$lib/types';
   import { isOtelAttr, isOtelResourceAttr } from '$lib/utils/fields';
-  import { severityDotClass, sortBySeverity } from '$lib/utils/log-helpers';
+  import { sortBySeverity } from '$lib/utils/log-helpers';
+  import { levelColor } from '$lib/constants/level-colors';
   import type { SearchStore } from '$lib/stores/search.svelte';
 
   import FieldRow from './FieldRow.svelte';
@@ -127,9 +128,8 @@
             {#each sortedLevels as level (level.name)}
               <li class="flex items-center gap-2 px-1.5 font-mono text-xs">
                 <span
-                  class="h-2 w-2 shrink-0 rounded-full {severityDotClass(
-                    level.name.toLowerCase()
-                  )}"
+                  class="h-2 w-2 shrink-0 rounded-full"
+                  style="background-color: {levelColor(level.name)};"
                 ></span>
                 <span class="min-w-0 flex-1 truncate">{level.name}</span>
                 <span class="w-12 shrink-0 text-right text-base-content/50 tabular-nums">

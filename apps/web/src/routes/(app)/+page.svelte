@@ -10,7 +10,7 @@
   import { SearchStore } from '$lib/stores/search.svelte';
   import { page } from '$app/state';
   import { deserialize } from '$lib/utils/query-params';
-  import type { LogHit, SortDirection } from '$lib/types';
+  import type { LogHit } from '$lib/types';
 
   let { data } = $props();
 
@@ -26,7 +26,6 @@
 
   // View-only state (would be store-owned in the next iteration)
   let chartCollapsed = $state(false);
-  let sortDirection = $state<SortDirection>('desc');
   let selectedLog = $state<LogHit | null>(null);
   let drawerOpen = $state(false);
 
@@ -45,9 +44,6 @@
     drawerOpen = true;
   }
 
-  function toggleSort() {
-    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
-  }
 
 </script>
 
@@ -102,7 +98,11 @@
         </div>
       {:else}
         <div class="w-fit min-w-full">
-          <LogHeader {sortDirection} ontogglesort={toggleSort} />
+          <LogHeader
+            fieldConfig={store.fieldConfig}
+            sortDirection={store.sortDirection}
+            ontogglesort={() => store.toggleSort()}
+          />
           {#each store.logs as hit (hit.key)}
             <LogRow
               {hit}

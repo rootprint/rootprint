@@ -109,6 +109,13 @@ export class SearchStore {
     this.navigateQuery({ index: indexId }, { push: true });
   }
 
+  toggleSort(): void {
+    this.navigateQuery(
+      { sortDirection: this.sortDirection === 'desc' ? 'asc' : 'desc' },
+      { push: true }
+    );
+  }
+
   /**
    * Installs the URL → search() $effect.
    * MUST be called inside component context (not from the constructor).

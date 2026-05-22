@@ -7,7 +7,8 @@
   import { slide } from 'svelte/transition';
 
   import type { HistogramBucket, TimezoneMode } from '$lib/types';
-  import { baseContentAt, getLevelColor, sortBySeverity } from '$lib/utils/log-helpers';
+  import { baseContentAt, sortBySeverity } from '$lib/utils/log-helpers';
+  import { levelColor } from '$lib/constants/level-colors';
   import {
     formatChartDate,
     formatChartTime,
@@ -75,7 +76,7 @@
 
   let levelColors = $derived.by<Record<string, string>>(() => {
     const map: Record<string, string> = {};
-    for (const level of levels) map[level] = getLevelColor(level);
+    for (const level of levels) map[level] = levelColor(level);
     return map;
   });
 

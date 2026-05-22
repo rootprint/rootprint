@@ -23,6 +23,12 @@ export function formatChartTooltip(tsSec: number, timezone: TimezoneMode): strin
   return formatTs(tsSec, timezone, 'yyyy-MM-dd HH:mm:ss');
 }
 
+/** "YYYY-MM-DD HH:MM:SS.SSS" — used in the log row timestamp column. */
+export function formatLogRowTimestamp(iso: string, timezone: TimezoneMode): string {
+  const tsSec = new Date(iso).getTime() / 1000;
+  return formatTs(tsSec, timezone, 'yyyy-MM-dd HH:mm:ss.SSS');
+}
+
 export function formatRelativeTime(date: Date): string {
   return formatDistanceToNow(date, { addSuffix: true });
 }
