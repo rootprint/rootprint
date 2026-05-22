@@ -54,7 +54,6 @@ export const load = (async ({ fetch }) => {
     loadConfig,
     loadFields,
     fetchValues,
-    timeRangeLabel: 'last 15m',
     history: [] as unknown[],
     savedQueries: [] as unknown[],
     sharedQueries: [] as unknown[],

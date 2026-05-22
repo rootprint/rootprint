@@ -72,7 +72,6 @@
   <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
     <SearchToolbar
       {store}
-      timeRangeLabel={data.timeRangeLabel}
       bind:drawerTab
     />
 

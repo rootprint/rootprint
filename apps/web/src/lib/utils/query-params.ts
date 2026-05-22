@@ -1,4 +1,5 @@
 import type { ParsedQuery, SortDirection, TimeRange, TimezoneMode } from '$lib/types';
+import { PRESET_OPTIONS } from '$lib/utils/time-range';
 
 const DEFAULTS = {
   query: '',
@@ -7,8 +8,7 @@ const DEFAULTS = {
   sortDirection: 'desc' as SortDirection,
 };
 
-// Minimal preset whitelist; the full TIME_PRESETS constant lands with the time picker.
-const KNOWN_PRESETS = new Set(['15m', '1h', '24h', '7d', '30d']);
+const KNOWN_PRESETS: ReadonlySet<string> = new Set(PRESET_OPTIONS);
 
 export function serialize(state: ParsedQuery): URLSearchParams {
   const params = new URLSearchParams();

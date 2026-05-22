@@ -1,16 +1,15 @@
 <script lang="ts">
-  import { RefreshCw, Share2, Clock, History as HistoryIcon } from 'lucide-svelte';
+  import { RefreshCw, Share2, History as HistoryIcon } from 'lucide-svelte';
+  import TimeRangePicker from './TimeRangePicker.svelte';
   import type { SearchStore } from '$lib/stores/search.svelte';
   import type { DrawerTab } from '$lib/types';
 
   let {
     store,
     drawerTab = $bindable<DrawerTab | null>(null),
-    timeRangeLabel,
   }: {
     store: SearchStore;
     drawerTab?: DrawerTab | null;
-    timeRangeLabel: string;
   } = $props();
 
   // Local edit buffer: separate from store.query so the user can type freely
@@ -64,11 +63,11 @@
     }}
   />
 
-  <!-- Time range (placeholder for now — picker lands later) -->
-  <button class="btn btn-sm btn-ghost gap-1" disabled>
-    <Clock class="h-3.5 w-3.5" />
-    {timeRangeLabel}
-  </button>
+  <!-- Time range -->
+  <TimeRangePicker
+    value={store.timeRange}
+    onChange={(next) => store.navigateQuery({ timeRange: next }, { push: true })}
+  />
 
   <!-- Hit count micro-text -->
   <span class="font-mono text-xs text-base-content/50">
