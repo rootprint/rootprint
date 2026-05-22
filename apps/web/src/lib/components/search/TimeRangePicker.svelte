@@ -2,6 +2,7 @@
   import { ChevronDown } from 'lucide-svelte';
   import {
     formatTimeRangeLabel,
+    PRESET_LABELS,
     PRESET_OPTIONS,
     presetDurationSec,
     type Preset,
@@ -101,18 +102,19 @@
   <div
     class="dropdown-content hairline rounded-box z-50 mt-1 flex bg-base-100"
   >
-    <div class="flex w-28 flex-col border-r border-base-content/10 p-3">
+    <div class="flex w-44 flex-col border-r border-base-content/10 p-3">
       <p class="eyebrow mb-2">Ranges</p>
       {#each PRESET_OPTIONS as preset (preset)}
         {@const active = value.type === 'relative' && value.preset === preset}
         <button
           type="button"
-          class="-mx-3 block px-3 py-1.5 text-left font-mono text-xs transition-colors {active
+          class="-mx-3 flex items-baseline justify-between gap-2 px-3 py-1.5 text-left font-mono text-xs transition-colors {active
             ? 'bg-base-content text-base-100'
             : 'text-base-content hover:bg-base-200'}"
           onclick={() => selectPreset(preset)}
         >
-          {preset}
+          <span>{PRESET_LABELS[preset]}</span>
+          <span class="opacity-60">{preset}</span>
         </button>
       {/each}
     </div>

@@ -27,6 +27,19 @@ const PRESET_SECONDS: Record<Preset, number> = {
   '30d': 30 * 24 * 60 * 60,
 };
 
+export const PRESET_LABELS: Record<Preset, string> = {
+  '5m': 'Last 5 minutes',
+  '15m': 'Last 15 minutes',
+  '30m': 'Last 30 minutes',
+  '1h': 'Last 1 hour',
+  '3h': 'Last 3 hours',
+  '6h': 'Last 6 hours',
+  '24h': 'Last 24 hours',
+  '3d': 'Last 3 days',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+};
+
 export function presetDurationSec(preset: string): number | null {
   return preset in PRESET_SECONDS ? PRESET_SECONDS[preset as Preset] : null;
 }
@@ -66,7 +79,8 @@ function fmtParts(d: Date): { md: string; hm: string } {
 }
 
 export function formatTimeRangeLabel(r: TimeRange): string {
-  if (r.type === 'relative') return r.preset;
+  if (r.type === 'relative')
+    return (PRESET_LABELS as Record<string, string>)[r.preset] ?? r.preset;
   const start = new Date(r.start * 1000);
   const end = new Date(r.end * 1000);
   const s = fmtParts(start);
