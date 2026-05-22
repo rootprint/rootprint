@@ -12,12 +12,15 @@
 	const onAdmin = $derived(path.startsWith('/administration'));
 </script>
 
-<header class="hairline bg-base-100 flex h-12 items-center gap-6 border-x-0 border-t-0 px-4">
-	<a href="/" class="font-mono text-sm tracking-wider lowercase hover:opacity-80">
+<header class="hairline bg-base-100 flex h-12 items-center border-x-0 border-t-0 pr-4">
+	<a
+		href="/"
+		class="flex h-full w-56 shrink-0 items-center px-4 font-mono text-sm tracking-wider lowercase hover:opacity-80"
+	>
 		<span class="text-primary">/</span>logwiz
 	</a>
 
-	<nav class="flex h-full items-center gap-1">
+	<nav class="flex h-full items-center gap-1 pl-3">
 		<a
 			href="/"
 			class="relative flex h-full items-center px-3 text-sm transition-colors {onLogs
