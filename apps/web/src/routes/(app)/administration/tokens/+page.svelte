@@ -4,9 +4,13 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
-	import { client } from '$lib/api/client';
+	import {
+		createIngestToken,
+		getIngestToken,
+		deleteIngestToken,
+		IngestTokenApiError,
+	} from '$lib/api/ingest-tokens';
 	import { toFieldErrors } from '$lib/api/errors';
-	import type { ApiErrorBody } from 'api/types';
 	import TokenSecretReveal from '$lib/components/admin/TokenSecretReveal.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
@@ -73,17 +77,17 @@
 
 		creating = true;
 		try {
-			const res = await client.api['ingest-tokens'].$post({ json: input });
-			if (!res.ok) {
-				const body = (await res.json()) as ApiErrorBody;
-				createFormError = body.error.message;
-				createFieldErrors = toFieldErrors(body);
-				return;
-			}
-			const result = await res.json();
+			const result = await createIngestToken(input);
 			createdToken = result.token;
 			createPhase = 'reveal';
 			await invalidate('app:tokens');
+		} catch (e) {
+			if (e instanceof IngestTokenApiError && e.body) {
+				createFormError = e.body.error.message;
+				createFieldErrors = toFieldErrors(e.body);
+			} else {
+				createFormError = e instanceof Error ? e.message : 'Failed to create token';
+			}
 		} finally {
 			creating = false;
 		}
@@ -115,18 +119,17 @@
 		viewTokenValue = '';
 		viewLoading = true;
 		(async () => {
-			const res = await client.api['ingest-tokens'][':id'].$get({ param: { id: String(target.id) } });
-			if (cancelled) return;
-			if (!res.ok) {
-				const body = (await res.json()) as ApiErrorBody;
-				toast.error(body.error.message);
+			try {
+				const result = await getIngestToken(target.id);
+				if (cancelled) return;
+				viewTokenValue = result.token;
+			} catch (e) {
+				if (cancelled) return;
+				toast.error(e instanceof Error ? e.message : 'Failed to load token');
 				viewOpen = false;
-				viewLoading = false;
-				return;
+			} finally {
+				if (!cancelled) viewLoading = false;
 			}
-			const result = await res.json();
-			viewTokenValue = result.token;
-			viewLoading = false;
 		})();
 		return () => {
 			cancelled = true;
@@ -147,18 +150,17 @@
 	async function confirmDelete() {
 		if (!deleteTarget) return;
 		deleting = true;
-		const res = await client.api['ingest-tokens'][':id'].$delete({ param: { id: String(deleteTarget.id) } });
-		if (!res.ok) {
-			const body = (await res.json()) as ApiErrorBody;
-			toast.error(body.error.message);
+		try {
+			await deleteIngestToken(deleteTarget.id);
+			toast.success('Ingest token deleted');
+			await invalidate('app:tokens');
+			deleteOpen = false;
+			deleteTarget = null;
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : 'Failed to delete token');
+		} finally {
 			deleting = false;
-			return;
 		}
-		toast.success('Ingest token deleted');
-		await invalidate('app:tokens');
-		deleting = false;
-		deleteOpen = false;
-		deleteTarget = null;
 	}
 
 	const noIndexes = $derived(indexIds.length === 0);

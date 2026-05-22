@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import type { ApiErrorBody } from 'api/types';
-
-	import { client } from '$lib/api/client';
+	import { resetUserPassword, UserApiError } from '$lib/api/users';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
@@ -29,18 +27,16 @@
 
 	async function handleConfirm() {
 		loading = true;
-		const res = await client.api.users[':userId']['password-resets'].$post({ param: { userId } });
-		if (!res.ok) {
-			const body = (await res.json()) as ApiErrorBody;
-			toast.error(body.error.message);
+		try {
+			const result = await resetUserPassword(userId);
+			inviteUrl = result.inviteUrl;
+			toast.success(`Password reset for ${userName}`);
+			await onreset?.();
+		} catch (e) {
+			toast.error(e instanceof UserApiError ? e.message : 'Failed to reset password');
+		} finally {
 			loading = false;
-			return;
 		}
-		const result = await res.json();
-		inviteUrl = result.inviteUrl;
-		toast.success(`Password reset for ${userName}`);
-		loading = false;
-		await onreset?.();
 	}
 </script>
 

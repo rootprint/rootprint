@@ -11,7 +11,7 @@
 		Trash2
 	} from 'lucide-svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import type { UserView } from '$lib/types';
+	import type { UserView } from '$lib/api/users';
 
 	let {
 		user,

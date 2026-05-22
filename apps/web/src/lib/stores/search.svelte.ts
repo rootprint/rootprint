@@ -3,18 +3,19 @@ import { page } from '$app/state';
 import type {
   FieldConfig,
   HistogramBucket,
-  HistogramFn,
   HistogramInput,
   IndexOption,
   LevelBucket,
-  LoadFieldsFn,
   LogField,
   LogHit,
   ParsedQuery,
-  SearchFn,
   SearchInput,
   TimeRange
 } from '$lib/types';
+import { searchLogs } from '$lib/api/log-search';
+import { fetchHistogram } from '$lib/api/histogram';
+import { loadFields } from '$lib/api/fields';
+import { getIndexConfig } from '$lib/api/indexes';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 
@@ -24,24 +25,6 @@ export interface SearchStoreOptions {
   /** Reactive accessor for the URL-derived query. Read inside $effect to subscribe. */
   parsedQuery: () => ParsedQuery;
   initialIndexes: IndexOption[];
-  /**
-   * Runs a log search. Injected by the page load — the store has no $lib/api import.
-   */
-  searchFn: SearchFn;
-  /**
-   * Runs a stacked-by-level histogram fetch. Injected by the page load.
-   */
-  histogramFn: HistogramFn;
-  /**
-   * Fetches the field-name mappings for an index. Called once per active-index change.
-   * Injected by the page load — the store has no $lib/api import.
-   */
-  loadConfig: (indexId: string) => Promise<FieldConfig>;
-  /**
-   * Fetches the field list for an index. Called whenever (selectedIndex, fieldConfig)
-   * change. Injected by the page load — the store has no $lib/api import.
-   */
-  loadFields: LoadFieldsFn;
 }
 
 export class SearchStore {
@@ -81,24 +64,16 @@ export class SearchStore {
   });
 
   #parsedQuery: () => ParsedQuery;
-  #searchFn: SearchFn;
-  #loadConfigFn: (indexId: string) => Promise<FieldConfig>;
   #searchRequestId = 0;
   #configRequestId = 0;
   #configFetchedFor: string | null = null;
-  #histogramFn: HistogramFn;
   #histogramRequestId = 0;
-  #loadFieldsFn: LoadFieldsFn;
   #fieldsRequestId = 0;
   #fieldsFetchedFor: string | null = null;
 
   constructor(opts: SearchStoreOptions) {
     this.indexes = opts.initialIndexes;
     this.#parsedQuery = opts.parsedQuery;
-    this.#searchFn = opts.searchFn;
-    this.#histogramFn = opts.histogramFn;
-    this.#loadConfigFn = opts.loadConfig;
-    this.#loadFieldsFn = opts.loadFields;
   }
 
   /** URL's index if it's in the indexes list, otherwise the first available (or null). */
@@ -177,13 +152,13 @@ export class SearchStore {
     this.searchError = null;
 
     try {
-      const result = await this.#searchFn({
+      const result = await searchLogs({
         indexId: this.selectedIndex,
         query: this.query || '*',
         ...buildTimeParams(this.timeRange),
         sortDirection: this.sortDirection,
         limit: BATCH_SIZE,
-        offset: 0
+        offset: 0,
       });
       if (requestId !== this.#searchRequestId) return;
       this.rawHits = result.rawHits;
@@ -207,10 +182,10 @@ export class SearchStore {
     this.histogramError = null;
 
     try {
-      const result = await this.#histogramFn({
+      const result = await fetchHistogram({
         indexId: this.selectedIndex,
         query: this.query || '*',
-        ...buildTimeParams(this.timeRange)
+        ...buildTimeParams(this.timeRange),
       } satisfies HistogramInput);
       if (requestId !== this.#histogramRequestId) return;
       this.histogramBuckets = result.buckets;
@@ -229,7 +204,7 @@ export class SearchStore {
     this.#fieldsFetchedFor = null;
     this.configError = null;
     try {
-      const cfg = await this.#loadConfigFn(indexId);
+      const cfg = await getIndexConfig(indexId);
       if (requestId !== this.#configRequestId) return;
       this.fieldConfig = cfg;
     } catch (e) {
@@ -256,7 +231,7 @@ export class SearchStore {
     this.fieldsLoading = true;
     this.fieldsError = null;
     try {
-      const fields = await this.#loadFieldsFn(indexId, fieldConfig);
+      const fields = await loadFields(indexId, fieldConfig);
       if (requestId !== this.#fieldsRequestId) return;
       this.fields = fields;
     } catch (e) {

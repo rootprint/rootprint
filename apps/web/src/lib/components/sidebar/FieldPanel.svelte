@@ -1,19 +1,13 @@
 <script lang="ts">
   import { ChevronDown, ChevronRight, Search } from 'lucide-svelte';
-  import type { FetchFieldValuesFn, LevelBucket, LogField } from '$lib/types';
+  import type { LevelBucket, LogField } from '$lib/types';
   import { isOtelAttr, isOtelResourceAttr } from '$lib/utils/fields';
   import { severityDotClass, sortBySeverity } from '$lib/utils/log-helpers';
   import type { SearchStore } from '$lib/stores/search.svelte';
 
   import FieldRow from './FieldRow.svelte';
 
-  let {
-    store,
-    fetchValues
-  }: {
-    store: SearchStore;
-    fetchValues: FetchFieldValuesFn;
-  } = $props();
+  let { store }: { store: SearchStore } = $props();
 
   type GroupKey = 'top' | 'attributes' | 'resource_attributes';
   type FieldGroup = { key: GroupKey; label: string; fields: LogField[] };
@@ -178,14 +172,13 @@
                   <FieldRow
                     {field}
                     {store}
-                    {fetchValues}
                     indented
                   />
                 {/each}
               {/if}
             {:else}
               {#each group.fields as field (field.name)}
-                <FieldRow {field} {store} {fetchValues} />
+                <FieldRow {field} {store} />
               {/each}
             {/if}
           {/if}

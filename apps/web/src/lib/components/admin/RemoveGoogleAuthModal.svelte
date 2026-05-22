@@ -2,9 +2,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
-	import type { ApiErrorBody } from 'api/types';
-
-	import { client } from '$lib/api/client';
+	import { removeGoogleCredentials } from '$lib/api/auth-config';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 
 	let { open = $bindable(false) }: { open: boolean } = $props();
@@ -13,17 +11,16 @@
 
 	async function onConfirm() {
 		loading = true;
-		const res = await client.api.settings.auth.google.credentials.$delete();
-		if (!res.ok) {
-			const body = (await res.json()) as ApiErrorBody;
-			toast.error(body.error.message);
+		try {
+			await removeGoogleCredentials();
+			toast.success('Google authentication removed');
+			open = false;
+			await goto('/administration/authentication?saved=google', { invalidateAll: true });
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : 'Failed to remove Google authentication');
+		} finally {
 			loading = false;
-			return;
 		}
-		toast.success('Google authentication removed');
-		loading = false;
-		open = false;
-		await goto('/administration/authentication?saved=google', { invalidateAll: true });
 	}
 </script>
 

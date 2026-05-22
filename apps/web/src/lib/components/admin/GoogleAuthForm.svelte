@@ -6,11 +6,14 @@
 	import { googleAllowedDomainsSchema, googleCredentialsSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
-	import { client } from '$lib/api/client';
+	import {
+		saveGoogleCredentials,
+		saveGoogleAllowedDomains,
+		AuthConfigApiError,
+	} from '$lib/api/auth-config';
 	import { toFieldErrors } from '$lib/api/errors';
-	import type { ApiErrorBody } from 'api/types';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import type { GoogleAuthSettingsView } from '$lib/types';
+	import type { GoogleAuthSettingsView } from '$lib/api/auth-config';
 
 	let {
 		settings,
@@ -131,23 +134,27 @@
 					}
 					return;
 				}
-				const credRes = await client.api.settings.auth.google.credentials.$put({
-					json: credParsed.output
-				});
-				if (!credRes.ok) {
-					const body = (await credRes.json()) as ApiErrorBody;
-					fieldErrors = { ...fieldErrors, ...toFieldErrors(body) };
-					toast.error(body.error.message);
+				try {
+					await saveGoogleCredentials(credParsed.output);
+				} catch (e) {
+					if (e instanceof AuthConfigApiError && e.body) {
+						fieldErrors = { ...fieldErrors, ...toFieldErrors(e.body) };
+						toast.error(e.message);
+					} else {
+						toast.error(e instanceof Error ? e.message : 'Failed to save credentials');
+					}
 					return;
 				}
 			}
-			const domainsRes = await client.api.settings.auth.google['allowed-domains'].$put({
-				json: domainsParsed.output
-			});
-			if (!domainsRes.ok) {
-				const body = (await domainsRes.json()) as ApiErrorBody;
-				fieldErrors = { ...fieldErrors, ...toFieldErrors(body) };
-				toast.error(body.error.message);
+			try {
+				await saveGoogleAllowedDomains(domainsParsed.output);
+			} catch (e) {
+				if (e instanceof AuthConfigApiError && e.body) {
+					fieldErrors = { ...fieldErrors, ...toFieldErrors(e.body) };
+					toast.error(e.message);
+				} else {
+					toast.error(e instanceof Error ? e.message : 'Failed to save allowed domains');
+				}
 				return;
 			}
 			toast.success('Google authentication settings saved');

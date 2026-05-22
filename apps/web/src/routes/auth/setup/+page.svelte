@@ -3,9 +3,8 @@
 	import { setupPasswordSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
-	import { client } from '$lib/api/client';
+	import { setupPassword, AuthApiError } from '$lib/api/auth';
 	import { toFieldErrors } from '$lib/api/errors';
-	import type { ApiErrorBody } from 'api/types';
 
 	let { data } = $props();
 
@@ -30,14 +29,16 @@
 
 		submitting = true;
 		try {
-			const res = await client.api.auth['setup-password'].$post({ json: parsed.output });
-			if (!res.ok) {
-				const body = (await res.json()) as ApiErrorBody;
-				fieldErrors = toFieldErrors(body);
-				formError = body.error.message;
-				return;
-			}
+			await setupPassword(parsed.output);
 			await goto('/auth/sign-in');
+		} catch (e) {
+			if (e instanceof AuthApiError && e.body) {
+				fieldErrors = toFieldErrors(e.body);
+				formError = e.message;
+			} else {
+				formError = e instanceof Error ? e.message : 'Failed to set password';
+			}
+			return;
 		} finally {
 			submitting = false;
 		}

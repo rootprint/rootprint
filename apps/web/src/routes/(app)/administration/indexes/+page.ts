@@ -1,17 +1,8 @@
-import { error } from '@sveltejs/kit';
-
 import type { PageLoad } from './$types';
+import { listIndexes } from '$lib/api/indexes';
 
-import type { ApiErrorBody } from 'api/types';
-import { client } from '$lib/api/client';
-
-export const load: PageLoad = async ({ depends, fetch }) => {
+export const load: PageLoad = async ({ depends }) => {
 	depends('app:indexes');
-	const res = await client.api.indexes.$get({}, { fetch });
-	if (!res.ok) {
-		const body = (await res.json()) as ApiErrorBody;
-		error(res.status, body.error.message);
-	}
-	const indexes = await res.json();
+	const indexes = await listIndexes();
 	return { indexes };
 };

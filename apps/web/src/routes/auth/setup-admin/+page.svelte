@@ -1,9 +1,8 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
-	import { client } from '$lib/api/client';
+	import { setupAdmin, AuthApiError } from '$lib/api/auth';
 	import { toFieldErrors } from '$lib/api/errors';
-	import type { ApiErrorBody } from 'api/types';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 
 	let name = $state('');
@@ -29,11 +28,15 @@
 			}
 			const input: SetupAdminInput = parsed.output;
 
-			const res = await client.api.auth['setup-admin'].$post({ json: input });
-			if (!res.ok) {
-				const body = (await res.json()) as ApiErrorBody;
-				fieldErrors = toFieldErrors(body);
-				formError = body.error.message;
+			try {
+				await setupAdmin(input);
+			} catch (e) {
+				if (e instanceof AuthApiError && e.body) {
+					fieldErrors = toFieldErrors(e.body);
+					formError = e.message;
+				} else {
+					formError = e instanceof Error ? e.message : 'Failed to create admin';
+				}
 				return;
 			}
 			await invalidate('app:session');

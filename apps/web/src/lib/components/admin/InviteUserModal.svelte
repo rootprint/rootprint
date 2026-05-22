@@ -3,9 +3,7 @@
 	import { createInviteSchema, type CreateInviteInput } from 'api/schemas';
 	import type { UserRole } from 'api/types';
 
-	import type { ApiErrorBody } from 'api/types';
-
-	import { client } from '$lib/api/client';
+	import { createInvite, InviteApiError } from '$lib/api/invites';
 	import { toFieldErrors } from '$lib/api/errors';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
@@ -58,19 +56,21 @@
 		const input: CreateInviteInput = parsed.output;
 
 		submitting = true;
-		const res = await client.api.invites.$post({ json: input });
-		if (!res.ok) {
-			const body = (await res.json()) as ApiErrorBody;
-			fieldErrors = toFieldErrors(body);
-			formError = body.error.message;
+		try {
+			const result = await createInvite(input);
+			inviteUrl = result.inviteUrl;
+			phase = 'reveal';
+			await oncreated?.();
+		} catch (e) {
+			if (e instanceof InviteApiError && e.body) {
+				fieldErrors = toFieldErrors(e.body);
+				formError = e.message;
+			} else {
+				formError = e instanceof Error ? e.message : 'Failed to create invite';
+			}
+		} finally {
 			submitting = false;
-			return;
 		}
-		const result = await res.json();
-		submitting = false;
-		inviteUrl = result.inviteUrl;
-		phase = 'reveal';
-		await oncreated?.();
 	}
 </script>
 

@@ -5,13 +5,13 @@
 	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
-	import { client } from '$lib/api/client';
-	import type { ApiErrorBody } from 'api/types';
+	import { setUserRole, UserApiError } from '$lib/api/users';
+	import { resendInvite, InviteApiError } from '$lib/api/invites';
 	import InviteUserModal from '$lib/components/admin/InviteUserModal.svelte';
 	import MemberActionsMenu from '$lib/components/admin/MemberActionsMenu.svelte';
 	import RemoveUserModal from '$lib/components/admin/RemoveUserModal.svelte';
 	import ResetPasswordModal from '$lib/components/admin/ResetPasswordModal.svelte';
-	import type { UserView } from '$lib/types';
+	import type { UserView } from '$lib/api/users';
 	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
 	import { formatRelativeTime } from '$lib/utils/time';
 
@@ -64,10 +64,10 @@
 	}
 
 	async function handleRegenerate(user: UserView) {
-		const res = await client.api.invites[':userId'].resend.$post({ param: { userId: user.id } });
-		if (!res.ok) {
-			const body = (await res.json()) as ApiErrorBody;
-			toast.error(body.error.message);
+		try {
+			await resendInvite(user.id);
+		} catch (e) {
+			toast.error(e instanceof InviteApiError ? e.message : 'Failed to regenerate invite');
 			return;
 		}
 		await refresh();
@@ -76,13 +76,10 @@
 
 	async function handleToggleRole(user: UserView) {
 		const newRole = user.role === 'admin' ? 'user' : 'admin';
-		const res = await client.api.users[':userId'].role.$put({
-			param: { userId: user.id },
-			json: { role: newRole }
-		});
-		if (!res.ok) {
-			const body = (await res.json()) as ApiErrorBody;
-			toast.error(body.error.message);
+		try {
+			await setUserRole(user.id, newRole);
+		} catch (e) {
+			toast.error(e instanceof UserApiError ? e.message : 'Failed to update role');
 			return;
 		}
 		await refresh();

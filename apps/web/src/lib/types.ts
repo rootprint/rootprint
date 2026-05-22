@@ -1,11 +1,3 @@
-import type { InferResponseType } from "hono/client";
-
-import type { client } from "$lib/api/client";
-
-export type UserView = InferResponseType<typeof client.api.users.$get, 200>[number];
-
-export type GoogleAuthSettingsView = InferResponseType<typeof client.api.settings.auth.google.$get, 200>;
-
 export type IndexTabId = 'config' | 'fields' | 'sources';
 
 /* ===== Log viewer (frontend scaffold) ===== */
@@ -63,8 +55,6 @@ export interface HistogramResult {
   buckets: HistogramBucket[];
 }
 
-export type HistogramFn = (input: HistogramInput) => Promise<HistogramResult>;
-
 export interface FieldConfig {
   timestampField: string;
   levelField: string;
@@ -114,18 +104,3 @@ export interface SearchResult {
   startTimestamp?: number;
   endTimestamp?: number;
 }
-
-export type SearchFn = (input: SearchInput) => Promise<SearchResult>;
-
-export type LoadFieldsFn = (indexId: string, fieldConfig: FieldConfig) => Promise<LogField[]>;
-
-export interface FetchFieldValuesInput {
-  indexId: string;
-  field: string;
-  query: string;
-  timeRange: TimeRange;
-  limit?: number;
-  signal?: AbortSignal;
-}
-
-export type FetchFieldValuesFn = (input: FetchFieldValuesInput) => Promise<LogFieldValueBucket[]>;

@@ -1,19 +1,21 @@
 <script lang="ts">
   import { ChevronDown, ChevronRight } from 'lucide-svelte';
-  import type { FetchFieldValuesFn, LogField, LogFieldValueBucket } from '$lib/types';
+  import type { LogField, LogFieldValueBucket } from '$lib/types';
   import type { SearchStore } from '$lib/stores/search.svelte';
-  import { FIELD_VALUES_INITIAL_SHOW, FIELD_VALUES_LIMIT } from '$lib/api/field-values';
+  import {
+    FIELD_VALUES_INITIAL_SHOW,
+    FIELD_VALUES_LIMIT,
+    fetchFieldValues,
+  } from '$lib/api/field-values';
   import { serializeTimeRange } from '$lib/utils/fields';
 
   let {
     field,
     store,
-    fetchValues,
     indented = false
   }: {
     field: LogField;
     store: SearchStore;
-    fetchValues: FetchFieldValuesFn;
     indented?: boolean;
   } = $props();
 
@@ -65,7 +67,7 @@
     valuesLoading = true;
     valuesError = null;
 
-    fetchValues({
+    fetchFieldValues({
       indexId,
       field: field.name,
       query: store.query,

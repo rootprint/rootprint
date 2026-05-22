@@ -6,9 +6,9 @@
 
 	import { invalidate } from '$app/navigation';
 	import { toFieldErrors } from '$lib/api/errors';
-	import { client } from '$lib/api/client';
+	import { saveIndexConfig, IndexApiError } from '$lib/api/indexes';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
-	import type { ApiErrorBody, IndexDetail, IndexVisibility } from 'api/types';
+	import type { IndexDetail, IndexVisibility } from 'api/types';
 
 	let { detail }: { detail: IndexDetail } = $props();
 
@@ -21,7 +21,6 @@
 	let contextFieldInput = $state('');
 
 	let saving = $state(false);
-	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 
 	$effect(() => {
@@ -37,7 +36,6 @@
 			tracebackField = detail.tracebackField ?? '';
 			contextFieldTags = detail.contextFields ?? [];
 			contextFieldInput = '';
-			formError = null;
 			fieldErrors = {};
 		});
 	});
@@ -65,7 +63,6 @@
 
 	async function submit(e: SubmitEvent) {
 		e.preventDefault();
-		formError = null;
 		fieldErrors = {};
 
 		const payload: SaveIndexConfigInput = {
@@ -88,18 +85,16 @@
 
 		saving = true;
 		try {
-			const res = await client.api.indexes[':indexId'].$patch({
-				param: { indexId: detail.indexId },
-				json: parsed.output
-			});
-			if (!res.ok) {
-				const body = (await res.json()) as ApiErrorBody;
-				fieldErrors = toFieldErrors(body);
-				toast.error(body.error.message);
-				return;
-			}
+			await saveIndexConfig(detail.indexId, parsed.output);
 			toast.success('Index configuration saved');
 			await invalidate(`app:index:${detail.indexId}`);
+		} catch (e) {
+			if (e instanceof IndexApiError && e.body) {
+				fieldErrors = toFieldErrors(e.body);
+				toast.error(e.message);
+			} else {
+				toast.error(e instanceof Error ? e.message : 'Failed to save config');
+			}
 		} finally {
 			saving = false;
 		}
@@ -110,10 +105,6 @@
 	onsubmit={submit}
 	class="hairline rounded-box bg-base-100 divide-base-content/10 flex flex-col divide-y"
 >
-	{#if formError}
-		<div role="alert" class="alert alert-error mx-4 mt-4 text-sm">{formError}</div>
-	{/if}
-
 	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
 		<div>
 			<label for="cfg-display-name" class="text-sm">Display name</label>

@@ -1,20 +1,21 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import type { InferResponseType } from 'hono/client';
 
-	import { client } from '$lib/api/client';
+	import {
+		getClusterOverview,
+		getAdminMetrics,
+		getAdminMetricsRaw,
+		type ClusterOverview,
+		type AdminMetrics,
+	} from '$lib/api/admin';
+	import { getIndexStats } from '$lib/api/indexes';
 	import ClusterIdentityStrip from '$lib/components/admin/ClusterIdentityStrip.svelte';
 	import HeadlineNumbers from '$lib/components/admin/HeadlineNumbers.svelte';
 	import { rangeToSpanMs, type Range } from '$lib/components/admin/RangePicker.svelte';
 	import StorageTrendChart from '$lib/components/admin/StorageTrendChart.svelte';
 
-	type ClusterOverview = InferResponseType<typeof client.api.admin.cluster.$get, 200>;
-	type MetricsResponse = InferResponseType<typeof client.api.admin.metrics.$get, 200>;
-	type StatsResponse = InferResponseType<
-		(typeof client.api.indexes)[':indexId']['stats']['$get'],
-		200
-	>;
-	type StatsPoint = StatsResponse['points'][number];
+	type MetricsResponse = AdminMetrics;
+	type StatsPoint = Awaited<ReturnType<typeof getIndexStats>>['points'][number];
 
 	const METRICS_POLL_MS = 5000;
 	const MAX_METRICS_FAILURES = 3;
@@ -42,12 +43,7 @@
 	async function loadCluster(): Promise<void> {
 		clusterError = null;
 		try {
-			const res = await client.api.admin.cluster.$get();
-			if (!res.ok) {
-				clusterError = `HTTP ${res.status}`;
-				return;
-			}
-			cluster = await res.json();
+			cluster = await getClusterOverview();
 		} catch (err) {
 			clusterError = err instanceof Error ? err.message : String(err);
 		}
@@ -65,15 +61,7 @@
 		await Promise.all(
 			cluster.perIndex.map(async (i) => {
 				try {
-					const res = await client.api.indexes[':indexId'].stats.$get({
-						param: { indexId: i.indexId },
-						query: { from: String(from), to: String(to), limit: '10000' }
-					});
-					if (!res.ok) {
-						newErrors[i.indexId] = `HTTP ${res.status}`;
-						return;
-					}
-					const body = await res.json();
+					const body = await getIndexStats(i.indexId, { from, to, limit: 10000 });
 					next[i.indexId] = body.points;
 				} catch (err) {
 					newErrors[i.indexId] = err instanceof Error ? err.message : String(err);
@@ -99,9 +87,7 @@
 
 	async function pollMetrics(): Promise<void> {
 		try {
-			const res = await client.api.admin.metrics.$get();
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			metrics = await res.json();
+			metrics = await getAdminMetrics();
 			lastMetricsAt = Date.now();
 			metricsFailures = 0;
 		} catch {
@@ -189,9 +175,7 @@
 		rawLoading = true;
 		rawError = null;
 		try {
-			const res = await client.api.admin.metrics.raw.$get();
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			rawText = await res.text();
+			rawText = await getAdminMetricsRaw();
 		} catch (err) {
 			rawError = err instanceof Error ? err.message : String(err);
 		} finally {

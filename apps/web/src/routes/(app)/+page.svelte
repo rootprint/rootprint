@@ -20,10 +20,6 @@
   const store = new SearchStore({
     parsedQuery: () => deserialize(page.url.searchParams),
     initialIndexes: data.indexes,
-    searchFn: data.searchFn,
-    histogramFn: data.histogramFn,
-    loadConfig: data.loadConfig,
-    loadFields: data.loadFields,
   });
 
   store.setupAutoSearch();
@@ -60,10 +56,7 @@
   <aside
     class="w-56 shrink-0 border-r border-base-content/10"
   >
-    <FieldPanel
-      {store}
-      fetchValues={data.fetchValues}
-    />
+    <FieldPanel {store} />
   </aside>
 
   <!-- Right: main column -->
