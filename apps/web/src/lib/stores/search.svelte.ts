@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import { toast } from 'svelte-sonner';
 import type {
   FieldConfig,
   HistogramBucket,
@@ -16,6 +17,7 @@ import { searchLogs } from '$lib/api/log-search';
 import { fetchHistogram } from '$lib/api/histogram';
 import { loadFields } from '$lib/api/fields';
 import { getIndexConfig } from '$lib/api/indexes';
+import { getPreferences, setPreferences } from '$lib/api/preferences';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
@@ -48,6 +50,8 @@ export class SearchStore {
   fieldsLoading = $state(false);
   fieldsError = $state<string | null>(null);
 
+  activeFields = $state<string[]>([]);
+
   levels: LevelBucket[] = $derived.by(() => {
     const totals: Record<string, number> = {};
     for (const b of this.histogramBuckets) {
@@ -71,6 +75,8 @@ export class SearchStore {
   #histogramRequestId = 0;
   #fieldsRequestId = 0;
   #fieldsFetchedFor: string | null = null;
+  #activeFieldsRequestId = 0;
+  #activeFieldsFetchedFor: string | null = null;
 
   constructor(opts: SearchStoreOptions) {
     this.indexes = opts.initialIndexes;
@@ -144,6 +150,11 @@ export class SearchStore {
       if (active !== this.#configFetchedFor) {
         this.#configFetchedFor = active;
         this.#loadConfig(active);
+      }
+
+      if (active !== this.#activeFieldsFetchedFor) {
+        this.#activeFieldsFetchedFor = active;
+        this.#loadActiveFields(active);
       }
 
       this.#search();
@@ -265,6 +276,36 @@ export class SearchStore {
     } finally {
       if (requestId === this.#fieldsRequestId) this.fieldsLoading = false;
     }
+  }
+
+  async #loadActiveFields(indexId: string): Promise<void> {
+    const requestId = ++this.#activeFieldsRequestId;
+    try {
+      const prefs = await getPreferences(indexId);
+      if (requestId !== this.#activeFieldsRequestId) return;
+      this.activeFields = prefs.displayFields ?? [];
+    } catch (e) {
+      if (requestId !== this.#activeFieldsRequestId) return;
+      // Reset cache key so the effect retries on the next reactive run.
+      this.#activeFieldsFetchedFor = null;
+      this.activeFields = [];
+      console.error('Failed to load column preferences', e);
+    }
+  }
+
+  /**
+   * Optimistically updates active fields and persists to the server.
+   * Rolls back on failure. Must be called only when `selectedIndex` is non-null.
+   */
+  setActiveFields(next: string[]): void {
+    const indexId = this.selectedIndex;
+    if (indexId === null) return;
+    const prev = this.activeFields;
+    this.activeFields = next;
+    setPreferences(indexId, next).catch((e) => {
+      this.activeFields = prev;
+      toast.error(e instanceof Error ? e.message : 'Failed to save column preferences');
+    });
   }
 }
 
