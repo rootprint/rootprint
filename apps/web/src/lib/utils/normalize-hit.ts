@@ -7,11 +7,28 @@ export function normalizeHit(
 ): LogHit {
   return {
     key: String(index),
-    timestamp: coerceIso(raw[fc.timestampField]),
-    level: String(raw[fc.levelField] ?? '').toLowerCase(),
-    message: String(raw[fc.messageField] ?? ''),
+    timestamp: coerceIso(getByPath(raw, fc.timestampField)),
+    level: String(getByPath(raw, fc.levelField) ?? '').toLowerCase(),
+    message: String(getByPath(raw, fc.messageField) ?? ''),
     raw,
   };
+}
+
+/**
+ * Resolve a possibly dotted field name against the raw hit. Tries a direct
+ * key lookup first so flat dynamic mappings like { "body.message": "x" }
+ * still work, then falls back to walking dot-separated segments through
+ * nested objects.
+ */
+function getByPath(obj: Record<string, unknown>, path: string): unknown {
+  if (path in obj) return obj[path];
+  const segments = path.split('.');
+  let cursor: unknown = obj;
+  for (const seg of segments) {
+    if (cursor === null || typeof cursor !== 'object') return undefined;
+    cursor = (cursor as Record<string, unknown>)[seg];
+  }
+  return cursor;
 }
 
 function coerceIso(value: unknown): string {

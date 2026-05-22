@@ -12,12 +12,8 @@
     ontogglesort?: () => void;
   } = $props();
 
-  function capitalize(s: string): string {
-    return s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-  }
-
-  let timestampLabel = $derived(capitalize(fieldConfig?.timestampField ?? 'timestamp'));
-  let messageLabel = $derived(capitalize(fieldConfig?.messageField ?? 'message'));
+  let timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
+  let messageLabel = $derived(fieldConfig?.messageField ?? 'message');
 </script>
 
 <div
