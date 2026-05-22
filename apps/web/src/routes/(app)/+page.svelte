@@ -1,5 +1,7 @@
 <script lang="ts">
   import { CircleX } from 'lucide-svelte';
+  import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+  import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
 
   import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
   import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
@@ -73,7 +75,11 @@
         )}
     />
 
-    <div class="min-h-0 flex-1 overflow-auto bg-base-200/30">
+    <OverlayScrollbarsComponent
+      options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
+      defer
+      class="min-h-0 flex-1 bg-base-200/30"
+    >
       {#if displayState === 'loading'}
         <div class="flex h-full items-center justify-center">
           <div class="flex items-center gap-2 font-mono text-xs text-base-content/60">
@@ -112,7 +118,7 @@
           {/each}
         </div>
       {/if}
-    </div>
+    </OverlayScrollbarsComponent>
 
   </div>
 </div>

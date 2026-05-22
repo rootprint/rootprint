@@ -6,6 +6,8 @@
   import { levelColor } from '$lib/constants/level-colors';
   import type { SearchStore } from '$lib/stores/search.svelte';
 
+  import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+  import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
   import FieldRow from './FieldRow.svelte';
 
   let { store }: { store: SearchStore } = $props();
@@ -102,8 +104,12 @@
     </label>
   </div>
 
-  <!-- Body — native scroll -->
-  <div class="min-h-0 flex-1 overflow-y-auto">
+  <!-- Body — OverlayScrollbars (vertical) -->
+  <OverlayScrollbarsComponent
+    options={OS_SCROLLBAR_OPTIONS}
+    defer
+    class="min-h-0 flex-1"
+  >
     {#if store.fieldsError}
       <div class="flex flex-col items-center gap-2 p-6 text-center">
         <p class="font-mono text-xs text-error">{store.fieldsError}</p>
@@ -185,5 +191,5 @@
         {/each}
       {/if}
     {/if}
-  </div>
+  </OverlayScrollbarsComponent>
 </div>

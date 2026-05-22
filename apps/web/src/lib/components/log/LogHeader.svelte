@@ -17,7 +17,7 @@
 </script>
 
 <div
-  class="sticky top-0 z-10 grid items-center border-b border-base-content/10 bg-base-100 font-mono text-xs tracking-wider text-base-content/60"
+  class="sticky top-0 z-10 grid items-center border-b border-base-content/10 bg-base-300 font-mono text-xs tracking-wider text-base-content/60"
   style="grid-template-columns: 3px 200px 1fr;"
 >
   <span aria-hidden="true"></span>
