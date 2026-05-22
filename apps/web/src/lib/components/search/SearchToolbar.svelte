@@ -3,6 +3,8 @@
   import TimeRangePicker from './TimeRangePicker.svelte';
   import SavedQueriesDropdown from './SavedQueriesDropdown.svelte';
   import type { SearchStore } from '$lib/stores/search.svelte';
+  import { toast } from 'svelte-sonner';
+  import { copyToClipboard } from '$lib/utils/clipboard';
 
   let { store }: { store: SearchStore } = $props();
 
@@ -20,6 +22,12 @@
     if (queryInput !== store.query) {
       store.runQuery(queryInput);
     }
+  }
+
+  async function shareLink() {
+    const ok = await copyToClipboard(window.location.href);
+    if (ok) toast.success('Link copied');
+    else toast.error('Failed to copy link');
   }
 </script>
 
@@ -65,7 +73,7 @@
       class="btn btn-sm btn-ghost"
       aria-label="Share"
       title="Share"
-      disabled
+      onclick={shareLink}
     >
       <Share2 class="h-3.5 w-3.5" />
     </button>
