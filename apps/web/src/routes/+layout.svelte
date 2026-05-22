@@ -18,4 +18,4 @@
 	<SystemFooter />
 </div>
 
-<Toaster position="bottom-right" closeButton={false} richColors={false} theme="light" />
+<Toaster position="bottom-right" closeButton={false} richColors theme="light" />
