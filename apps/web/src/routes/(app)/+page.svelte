@@ -2,7 +2,6 @@
   import { CircleX } from 'lucide-svelte';
 
   import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
-  import HistoryDrawer from '$lib/components/search/HistoryDrawer.svelte';
   import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
   import LogFrequencyChart from '$lib/components/log/LogFrequencyChart.svelte';
   import LogHeader from '$lib/components/log/LogHeader.svelte';
@@ -11,7 +10,7 @@
   import { SearchStore } from '$lib/stores/search.svelte';
   import { page } from '$app/state';
   import { deserialize } from '$lib/utils/query-params';
-  import type { DrawerTab, LogHit, SortDirection } from '$lib/types';
+  import type { LogHit, SortDirection } from '$lib/types';
 
   let { data } = $props();
 
@@ -30,7 +29,6 @@
   store.setupAutoSearch();
 
   // View-only state (would be store-owned in the next iteration)
-  let drawerTab = $state<DrawerTab | null>(null);
   let chartCollapsed = $state(false);
   let sortDirection = $state<SortDirection>('desc');
   let selectedLog = $state<LogHit | null>(null);
@@ -70,10 +68,7 @@
 
   <!-- Right: main column -->
   <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-    <SearchToolbar
-      {store}
-      bind:drawerTab
-    />
+    <SearchToolbar {store} />
 
     <LogFrequencyChart
       buckets={store.histogramBuckets}
@@ -126,12 +121,6 @@
       {/if}
     </div>
 
-    <HistoryDrawer
-      bind:drawerTab
-      history={data.history}
-      savedQueries={data.savedQueries}
-      sharedQueries={data.sharedQueries}
-    />
   </div>
 </div>
 

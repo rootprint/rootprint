@@ -1,16 +1,9 @@
 <script lang="ts">
-  import { RefreshCw, Share2, History as HistoryIcon } from 'lucide-svelte';
+  import { Bookmark, BookmarkCheck, Download, Play, Share2 } from 'lucide-svelte';
   import TimeRangePicker from './TimeRangePicker.svelte';
   import type { SearchStore } from '$lib/stores/search.svelte';
-  import type { DrawerTab } from '$lib/types';
 
-  let {
-    store,
-    drawerTab = $bindable<DrawerTab | null>(null),
-  }: {
-    store: SearchStore;
-    drawerTab?: DrawerTab | null;
-  } = $props();
+  let { store }: { store: SearchStore } = $props();
 
   // Local edit buffer: separate from store.query so the user can type freely
   // and only commits on blur / Enter. Re-syncs from store when not focused
@@ -27,10 +20,6 @@
       store.runQuery(queryInput);
     }
   }
-
-  function toggleHistory() {
-    drawerTab = drawerTab === 'history' ? null : 'history';
-  }
 </script>
 
 <div
@@ -38,7 +27,7 @@
 >
   <!-- Index picker -->
   <select
-    class="select select-sm select-bordered min-w-[8rem]"
+    class="select select-sm select-bordered w-auto min-w-0 font-mono text-xs"
     value={store.selectedIndex}
     onchange={(e) => store.handleIndexChange((e.currentTarget as HTMLSelectElement).value)}
   >
@@ -47,21 +36,33 @@
     {/each}
   </select>
 
-  <!-- Query input -->
-  <input
-    type="text"
-    class="input input-sm input-bordered min-w-0 flex-1 font-mono"
-    placeholder="Search logs…"
-    bind:value={queryInput}
-    onfocus={() => (focused = true)}
-    onblur={() => {
-      focused = false;
-      commitQuery();
-    }}
-    onkeydown={(e) => {
-      if (e.key === 'Enter') commitQuery();
-    }}
-  />
+  <!-- Query input with end-of-input Save adornment -->
+  <label class="input input-sm input-bordered flex min-w-0 flex-1 items-center gap-1 font-mono">
+    <input
+      type="text"
+      class="grow"
+      placeholder="Search logs…"
+      bind:value={queryInput}
+      onfocus={() => (focused = true)}
+      onblur={() => {
+        focused = false;
+        commitQuery();
+      }}
+      onkeydown={(e) => {
+        if (e.key === 'Enter') commitQuery();
+      }}
+    />
+    <button
+      type="button"
+      class="btn btn-ghost btn-xs btn-square"
+      aria-label="Save query"
+      title="Save query"
+      disabled
+      onmousedown={(e) => e.preventDefault()}
+    >
+      <Bookmark class="h-3.5 w-3.5" />
+    </button>
+  </label>
 
   <!-- Time range -->
   <TimeRangePicker
@@ -69,20 +70,43 @@
     onChange={(next) => store.navigateQuery({ timeRange: next }, { push: true })}
   />
 
-  <!-- Hit count micro-text -->
-  <span class="font-mono text-xs text-base-content/50">
-    {store.numHits.toLocaleString()} hits
-  </span>
-
   <div class="ml-auto flex items-center gap-1">
-    <button class="btn btn-sm btn-ghost" aria-label="History" onclick={toggleHistory}>
-      <HistoryIcon class="h-3.5 w-3.5" />
+    <button
+      type="button"
+      class="btn btn-sm btn-ghost"
+      aria-label="Open saved queries"
+      title="Open saved queries"
+      disabled
+    >
+      <BookmarkCheck class="h-3.5 w-3.5" />
     </button>
-    <button class="btn btn-sm btn-ghost" aria-label="Share" disabled>
+    <button
+      type="button"
+      class="btn btn-sm btn-ghost"
+      aria-label="Share"
+      title="Share"
+      disabled
+    >
       <Share2 class="h-3.5 w-3.5" />
     </button>
-    <button class="btn btn-sm btn-ghost" aria-label="Refresh" disabled>
-      <RefreshCw class="h-3.5 w-3.5" />
+    <button
+      type="button"
+      class="btn btn-sm btn-ghost"
+      aria-label="Export"
+      title="Export"
+      disabled
+    >
+      <Download class="h-3.5 w-3.5" />
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-primary"
+      aria-label="Run query"
+      title="Run query"
+      onclick={() => store.runQuery(queryInput)}
+    >
+      <Play class="h-3.5 w-3.5" />
+      Run
     </button>
   </div>
 </div>

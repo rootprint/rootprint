@@ -10,7 +10,6 @@ export type IndexTabId = 'config' | 'fields' | 'sources';
 
 /* ===== Log viewer (frontend scaffold) ===== */
 
-export type DrawerTab = 'history' | 'saved' | 'shared';
 export type TimezoneMode = 'utc' | 'local';
 export type SortDirection = 'asc' | 'desc';
 

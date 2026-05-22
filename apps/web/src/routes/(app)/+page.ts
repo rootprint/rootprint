@@ -54,8 +54,5 @@ export const load = (async ({ fetch }) => {
     loadConfig,
     loadFields,
     fetchValues,
-    history: [] as unknown[],
-    savedQueries: [] as unknown[],
-    sharedQueries: [] as unknown[],
   };
 }) satisfies PageLoad;
