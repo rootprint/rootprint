@@ -18,6 +18,7 @@ import { loadFields } from '$lib/api/fields';
 import { getIndexConfig } from '$lib/api/indexes';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
+import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
 
 const BATCH_SIZE = 50;
 
@@ -114,6 +115,17 @@ export class SearchStore {
    */
   setupAutoSearch(): void {
     $effect(() => {
+      // Hydration: when URL has no index, use the remembered one (if it's still valid).
+      const urlIndex = this.#parsedQuery().index;
+      if (urlIndex === null) {
+        const remembered = readLastIndex();
+        if (remembered && this.indexes.some((i) => i.id === remembered)) {
+          this.navigateQuery({ index: remembered });
+          return;
+        }
+        if (remembered) clearLastIndex();
+      }
+
       const active = this.selectedIndex;
       if (active === null) return;
 
@@ -129,6 +141,11 @@ export class SearchStore {
 
       this.#search();
       this.#fetchHistogram();
+
+      // Write-through: remember the converged selection. Runs only when URL matches `active`,
+      // so it captures user clicks, programmatic navigations, URL-shared links, and the
+      // hydration path itself (which causes the effect to re-run with the new URL).
+      writeLastIndex(active);
     });
 
     // Separate effect: fields depend on fieldConfig + selectedIndex, not on query/time.
