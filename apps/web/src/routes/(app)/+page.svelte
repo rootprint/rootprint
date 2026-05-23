@@ -14,7 +14,9 @@
   import { SearchStore } from '$lib/stores/search.svelte';
   import { buildGridTemplate, computeColumnWidths } from '$lib/utils/column-width';
   import { page } from '$app/state';
+  import { replaceState } from '$app/navigation';
   import { deserialize } from '$lib/utils/query-params';
+  import { normalizeHit } from '$lib/utils/normalize-hit';
   import type { LogHit } from '$lib/types';
 
   const SCROLL_TRIGGER_PX = 1500;
@@ -41,7 +43,6 @@
 
   let chartCollapsed = $state(false);
   let selectedLog = $state<LogHit | null>(null);
-  let drawerOpen = $state(false);
 
   const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived.by(() => {
     if (store.configError || store.searchError) return 'error';
@@ -50,9 +51,17 @@
     return 'logs';
   });
 
+  // Open the drawer on the hit embedded in page state by /s/[code].
+  // Must wait for fieldConfig to be loaded so we can normalize the hit.
+  $effect(() => {
+    const openHit = (page.state as { openHit?: Record<string, unknown> }).openHit;
+    if (!openHit || !store.fieldConfig) return;
+    selectedLog = normalizeHit(openHit, 0, store.fieldConfig);
+    replaceState('', { ...page.state, openHit: undefined });
+  });
+
   function openRow(hit: LogHit) {
     selectedLog = hit;
-    drawerOpen = true;
   }
 
   function handleOsScroll(os: OverlayScrollbars) {
@@ -163,9 +172,7 @@
 </div>
 
 <LogDetailDrawer
-  bind:open={drawerOpen}
   hit={selectedLog}
-  selectedIndex={store.selectedIndex}
-  fieldConfig={store.fieldConfig}
-  timezoneMode={store.timezoneMode}
+  onClose={() => (selectedLog = null)}
+  {store}
 />

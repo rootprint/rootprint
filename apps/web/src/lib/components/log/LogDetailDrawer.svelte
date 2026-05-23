@@ -1,74 +1,140 @@
 <script lang="ts">
-  import { X } from 'lucide-svelte';
-  import type { FieldConfig, LogHit, TimezoneMode } from '$lib/types';
+  import { toast } from 'svelte-sonner';
+
+  import DrawerHeader, { type DrawerTab } from './drawer/DrawerHeader.svelte';
+  import DrawerSearchBox from './drawer/DrawerSearchBox.svelte';
+  import JsonPane from './drawer/JsonPane.svelte';
+  import ParametersPane from './drawer/ParametersPane.svelte';
+  import { createShare } from '$lib/api/shares';
+  import { ApiError } from '$lib/api/errors';
+  import { copyWithToast } from '$lib/utils/clipboard';
+  import type { LogHit } from '$lib/types';
+  import type { SearchStore } from '$lib/stores/search.svelte';
+
+  const MAX_HIT_BYTES = 60 * 1024;
 
   let {
-    open = $bindable(false),
     hit,
-    selectedIndex,
-    fieldConfig,
-    timezoneMode
+    onClose,
+    store,
   }: {
-    open?: boolean;
     hit: LogHit | null;
-    selectedIndex: string | null;
-    fieldConfig: FieldConfig | null;
-    timezoneMode: TimezoneMode;
+    onClose: () => void;
+    store: SearchStore;
   } = $props();
 
+  let activeTab = $state<DrawerTab>('parameters');
+  let searchOpen = $state(false);
+  let searchTerm = $state('');
+  let sharing = $state(false);
+  let dialogRef: HTMLDivElement | null = $state(null);
+  let previousFocus: HTMLElement | null = null;
+
+  // Reset transient state when the drawer opens for a new hit.
+  $effect(() => {
+    if (hit) {
+      activeTab = 'parameters';
+      searchOpen = false;
+      searchTerm = '';
+      previousFocus = document.activeElement as HTMLElement | null;
+      queueMicrotask(() => dialogRef?.focus());
+    }
+  });
+
   function close() {
-    open = false;
+    onClose();
+    queueMicrotask(() => previousFocus?.focus());
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (!hit) return;
+    if (e.key === 'Escape') {
+      const target = e.target as HTMLElement | null;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
+      e.preventDefault();
+      close();
+    }
+  }
+
+  async function shareLog() {
+    if (!hit || !store.fieldConfig) return;
+    const indexId = store.selectedIndex;
+    const startTime = store.resolvedStartTs;
+    const endTime = store.resolvedEndTs;
+    if (indexId === null || startTime === undefined || endTime === undefined) {
+      toast.error('Search context not ready');
+      return;
+    }
+    const payloadSize = new TextEncoder().encode(JSON.stringify(hit.raw)).byteLength;
+    if (payloadSize > MAX_HIT_BYTES) {
+      toast.error('Log too large to share');
+      return;
+    }
+    sharing = true;
+    try {
+      const { code } = await createShare({
+        indexId,
+        query: store.query,
+        startTime,
+        endTime,
+        hit: hit.raw,
+      });
+      const url = `${window.location.origin}/s/${code}`;
+      await copyWithToast(url, 'Share link copied', 'Failed to copy share link');
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Failed to create share';
+      toast.error(msg);
+    } finally {
+      sharing = false;
+    }
   }
 </script>
 
-{#if open && hit}
+<svelte:window onkeydown={handleKeydown} />
+
+{#if hit && store.fieldConfig}
   <button
     type="button"
-    class="fixed inset-0 z-40 bg-base-content/30"
+    class="fixed inset-0 z-40 bg-base-content/40"
     aria-label="Close detail"
     onclick={close}
   ></button>
 
-  <aside
-    class="fixed right-0 top-0 z-50 flex h-full w-[480px] max-w-full flex-col border-l border-base-content/10 bg-base-100"
+  <div
+    bind:this={dialogRef}
+    tabindex={-1}
+    class="fixed right-0 top-0 z-50 flex h-full w-1/2 max-w-full flex-col border-l border-base-content/10 bg-base-100 shadow-2xl outline-none"
+    role="dialog"
+    aria-modal="true"
     aria-label="Log detail"
   >
-    <header
-      class="flex items-center justify-between border-b border-base-content/10 px-3 py-2"
-    >
-      <div class="flex flex-col">
-        <span class="font-mono text-[10px] uppercase tracking-wider text-base-content/50">
-          {selectedIndex ?? ''} · {timezoneMode === 'utc' ? 'UTC' : 'local'}
-        </span>
-        <span class="font-mono text-xs">{hit.timestamp}</span>
-      </div>
-      <button
-        type="button"
-        class="btn btn-ghost btn-sm btn-square"
-        aria-label="Close"
-        onclick={close}
-      >
-        <X class="h-4 w-4" />
-      </button>
-    </header>
+    <DrawerHeader
+      {hit}
+      timezoneMode={store.timezoneMode}
+      {activeTab}
+      {sharing}
+      onTabChange={(t) => (activeTab = t)}
+      onSearch={() => (searchOpen = !searchOpen)}
+      onShare={shareLog}
+      onClose={close}
+    />
 
-    <div class="min-h-0 flex-1 overflow-auto p-3">
-      <p class="eyebrow mb-2">Message</p>
-      <p class="mb-4 font-mono text-xs">{hit.message}</p>
+    {#if searchOpen}
+      <DrawerSearchBox
+        bind:value={searchTerm}
+        onClose={() => {
+          searchOpen = false;
+          searchTerm = '';
+        }}
+      />
+    {/if}
 
-      <p class="eyebrow mb-2">Raw</p>
-      <pre class="hairline rounded p-3 font-mono text-xs leading-relaxed"
-><code>{JSON.stringify(hit.raw, null, 2)}</code></pre>
-
-      <!-- TODO(store): traceback parsing, context view, share link -->
-    </div>
-
-    <footer
-      class="border-t border-base-content/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-base-content/40"
-    >
-      {#if fieldConfig}
-        fields: {fieldConfig.timestampField} · {fieldConfig.levelField} · {fieldConfig.messageField}
+    <div class="min-h-0 flex-1" role="tabpanel" id={`drawer-panel-${activeTab}`} aria-labelledby={`drawer-tab-${activeTab}`}>
+      {#if activeTab === 'parameters'}
+        <ParametersPane {hit} {searchTerm} {store} />
+      {:else}
+        <JsonPane raw={hit.raw} />
       {/if}
-    </footer>
-  </aside>
+    </div>
+  </div>
 {/if}

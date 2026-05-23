@@ -110,6 +110,16 @@ export class SearchStore {
     return this.#parsedQuery().sortDirection;
   }
 
+  /** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
+  get resolvedStartTs(): number | undefined {
+    return this.#snapshotStartTs;
+  }
+
+  /** Absolute end of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
+  get resolvedEndTs(): number | undefined {
+    return this.#snapshotEndTs;
+  }
+
   navigateQuery(partial: Partial<ParsedQuery>, opts?: { push?: boolean }): void {
     const url = buildQueryUrl(page.url.searchParams, partial);
     goto(url, { replaceState: !opts?.push, keepFocus: true, noScroll: true });

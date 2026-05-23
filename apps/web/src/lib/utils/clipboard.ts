@@ -1,3 +1,5 @@
+import { toast } from 'svelte-sonner';
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   if (navigator.clipboard?.writeText) {
     try {
@@ -21,4 +23,14 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   } finally {
     document.body.removeChild(ta);
   }
+}
+
+export async function copyWithToast(
+  text: string,
+  successMessage: string,
+  errorMessage = 'Failed to copy',
+): Promise<void> {
+  const ok = await copyToClipboard(text);
+  if (ok) toast.success(successMessage);
+  else toast.error(errorMessage);
 }
