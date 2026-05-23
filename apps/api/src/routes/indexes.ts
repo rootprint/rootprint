@@ -92,7 +92,9 @@ const StatsQuery = v.object({
 });
 
 const PutPreferencesBody = v.object({
-	displayFields: v.nullable(v.array(v.pipe(v.string(), v.minLength(1))))
+	displayFields: v.nullable(
+		v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100))
+	)
 });
 
 type IndexesEnv = AuthedEnv & { Variables: AuthedEnv['Variables'] & { indexConfig: IndexConfig } };

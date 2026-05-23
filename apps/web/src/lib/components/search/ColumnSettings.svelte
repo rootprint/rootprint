@@ -34,11 +34,17 @@
   // $state, not $derived. We re-sync from `activeFields` via $effect.
   let dndItems = $state<DndItem[]>([]);
 
+  // Filter pinned out of the middle DnD area so legacy displayFields that
+  // contain a pinned field name (level/timestamp/message) don't render twice.
+  const pinnedSet = $derived(new Set<string>([...pinnedStart, ...pinnedEnd]));
+
   $effect(() => {
-    dndItems = activeFields.map((name) => {
-      const field = allFields.find((f) => f.name === name);
-      return { id: name, name, label: field?.displayName ?? name };
-    });
+    dndItems = activeFields
+      .filter((name) => !pinnedSet.has(name))
+      .map((name) => {
+        const field = allFields.find((f) => f.name === name);
+        return { id: name, name, label: field?.displayName ?? name };
+      });
   });
 
   function handleDndConsider(e: CustomEvent<{ items: DndItem[] }>) {
@@ -50,12 +56,14 @@
     onchange(dndItems.map((f) => f.name));
   }
 
+  // Source updates from dndItems so legacy pinned entries in activeFields
+  // get dropped on the next save instead of being preserved indefinitely.
   function removeField(name: string) {
-    onchange(activeFields.filter((f) => f !== name));
+    onchange(dndItems.map((f) => f.name).filter((f) => f !== name));
   }
 
   function addField(name: string) {
-    onchange([...activeFields, name]);
+    onchange([...dndItems.map((f) => f.name), name]);
     mode = 'columns';
     searchTerm = '';
   }

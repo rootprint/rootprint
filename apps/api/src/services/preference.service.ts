@@ -24,16 +24,18 @@ export async function putPreferences(
 	indexId: string,
 	input: { displayFields: string[] | null }
 ): Promise<Preferences> {
+	const displayFields =
+		input.displayFields === null ? null : Array.from(new Set(input.displayFields));
 	const [row] = await db
 		.insert(userPreference)
 		.values({
 			userId,
 			indexId,
-			displayFields: input.displayFields
+			displayFields
 		})
 		.onConflictDoUpdate({
 			target: [userPreference.userId, userPreference.indexId],
-			set: { displayFields: input.displayFields }
+			set: { displayFields }
 		})
 		.returning({ displayFields: userPreference.displayFields });
 	if (!row) throw internal('Failed to save preferences');

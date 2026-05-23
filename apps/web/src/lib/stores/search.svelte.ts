@@ -289,7 +289,7 @@ export class SearchStore {
       // Reset cache key so the effect retries on the next reactive run.
       this.#activeFieldsFetchedFor = null;
       this.activeFields = [];
-      console.error('Failed to load column preferences', e);
+      toast.error(e instanceof Error ? e.message : 'Failed to load column preferences');
     }
   }
 
