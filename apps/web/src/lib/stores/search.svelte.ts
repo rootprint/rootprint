@@ -21,13 +21,16 @@ import { getPreferences, setPreferences } from '$lib/api/preferences';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
+import { resolveTimeRange } from '$lib/utils/time-range';
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 200;
 
 export interface SearchStoreOptions {
   /** Reactive accessor for the URL-derived query. Read inside $effect to subscribe. */
   parsedQuery: () => ParsedQuery;
   initialIndexes: IndexOption[];
+  /** Called after each successful fresh (non-append) search; silent prefetches do not trigger it. */
+  onFreshSearch?: () => void;
 }
 
 export class SearchStore {
@@ -35,7 +38,8 @@ export class SearchStore {
 
   rawHits = $state<Record<string, unknown>[]>([]);
   numHits = $state(0);
-  loading = $state<'idle' | 'fresh'>('idle');
+  loading = $state<'idle' | 'fresh' | 'appending'>('idle');
+  #prefetching = $state(false);
   searchError = $state<string | null>(null);
   hasSearched = $state(false);
 
@@ -69,7 +73,10 @@ export class SearchStore {
   });
 
   #parsedQuery: () => ParsedQuery;
+  #onFreshSearch?: () => void;
   #searchRequestId = 0;
+  #snapshotStartTs?: number;
+  #snapshotEndTs?: number;
   #configRequestId = 0;
   #configFetchedFor: string | null = null;
   #histogramRequestId = 0;
@@ -81,6 +88,7 @@ export class SearchStore {
   constructor(opts: SearchStoreOptions) {
     this.indexes = opts.initialIndexes;
     this.#parsedQuery = opts.parsedQuery;
+    this.#onFreshSearch = opts.onFreshSearch;
   }
 
   /** URL's index if it's in the indexes list, otherwise the first available (or null). */
@@ -157,7 +165,7 @@ export class SearchStore {
         this.#loadActiveFields(active);
       }
 
-      this.#search();
+      this.#runSearch();
       this.#fetchHistogram();
 
       // Write-through: remember the converged selection. Runs only when URL matches `active`,
@@ -179,34 +187,102 @@ export class SearchStore {
     });
   }
 
-  async #search(): Promise<void> {
+  async #runSearch(mode: 'fresh' | 'append' | 'prefetch' = 'fresh'): Promise<void> {
     if (this.selectedIndex === null) return;
 
+    const silent = mode === 'prefetch';
+    const append = mode !== 'fresh';
+
     const requestId = ++this.#searchRequestId;
-    this.loading = 'fresh';
-    this.searchError = null;
+
+    if (silent) {
+      this.#prefetching = true;
+    } else {
+      this.loading = append ? 'appending' : 'fresh';
+      this.searchError = null;
+    }
+
+    let success = false;
 
     try {
+      let startTs: number | undefined;
+      let endTs: number | undefined;
+
+      if (append) {
+        startTs = this.#snapshotStartTs;
+        endTs = this.#snapshotEndTs;
+      } else {
+        const resolved = resolveTimeRange({
+          timeRange: this.timeRange.type === 'relative' ? this.timeRange.preset : undefined,
+          startTimestamp: this.timeRange.type === 'absolute' ? this.timeRange.start : undefined,
+          endTimestamp: this.timeRange.type === 'absolute' ? this.timeRange.end : undefined,
+        });
+        startTs = resolved.startTs;
+        endTs = resolved.endTs;
+        this.#snapshotStartTs = startTs;
+        this.#snapshotEndTs = endTs;
+      }
+
       const result = await searchLogs({
         indexId: this.selectedIndex,
         query: this.query || '*',
-        ...buildTimeParams(this.timeRange),
+        startTimestamp: startTs,
+        endTimestamp: endTs,
         sortDirection: this.sortDirection,
         limit: BATCH_SIZE,
-        offset: 0,
+        offset: append ? this.rawHits.length : 0,
       });
+
       if (requestId !== this.#searchRequestId) return;
-      this.rawHits = result.rawHits;
+
+      if (append) {
+        this.rawHits = [...this.rawHits, ...result.rawHits];
+      } else {
+        this.rawHits = result.rawHits;
+        this.hasSearched = true;
+        this.#onFreshSearch?.();
+      }
       this.numHits = result.numHits;
-      this.hasSearched = true;
+      success = true;
     } catch (e) {
       if (requestId !== this.#searchRequestId) return;
+      // Prefetch errors are swallowed.
+      if (silent) return;
       this.searchError = e instanceof Error ? e.message : 'Search failed';
-      this.rawHits = [];
-      this.numHits = 0;
+      if (!append) {
+        this.rawHits = [];
+        this.numHits = 0;
+      }
     } finally {
-      if (requestId === this.#searchRequestId) this.loading = 'idle';
+      if (requestId === this.#searchRequestId) {
+        this.#prefetching = false;
+        if (!silent) this.loading = 'idle';
+      }
     }
+
+    // After a fresh search, buffer one page ahead. queueMicrotask defers the
+    // recursive call so the 'idle' state propagates before the next request.
+    if (success && mode === 'fresh') {
+      queueMicrotask(() => {
+        if (requestId !== this.#searchRequestId) return;
+        if (this.#canFetchMore()) {
+          void this.#runSearch('prefetch');
+        }
+      });
+    }
+  }
+
+  #canFetchMore(): boolean {
+    return this.loading === 'idle' && !this.#prefetching && this.rawHits.length < this.numHits;
+  }
+
+  /**
+   * Public entry point for scroll-triggered top-ups. Silent append; no-op if
+   * a fetch is already in flight, a prefetch is in flight, or all hits are loaded.
+   */
+  maybeLoadMore(): void {
+    if (!this.#canFetchMore()) return;
+    void this.#runSearch('prefetch');
   }
 
   async #fetchHistogram(): Promise<void> {

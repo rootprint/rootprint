@@ -1,6 +1,7 @@
 <script lang="ts">
   import { CircleX } from 'lucide-svelte';
   import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+  import type { OverlayScrollbars } from 'overlayscrollbars';
   import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
 
   import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
@@ -16,7 +17,10 @@
   import { deserialize } from '$lib/utils/query-params';
   import type { LogHit } from '$lib/types';
 
+  const SCROLL_TRIGGER_PX = 1500;
+
   let { data } = $props();
+  let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
 
   // Pass a reactive closure so the store always sees the live URL state.
   // page.url is reactive in Svelte 5 — reading it inside a closure tracked
@@ -24,6 +28,8 @@
   const store = new SearchStore({
     parsedQuery: () => deserialize(page.url.searchParams),
     initialIndexes: data.indexes,
+    onFreshSearch: () =>
+      osRef?.osInstance()?.elements().viewport.scrollTo(0, 0),
   });
 
   store.setupAutoSearch();
@@ -52,6 +58,12 @@
     drawerOpen = true;
   }
 
+  function handleOsScroll(os: OverlayScrollbars) {
+    const v = os.elements().viewport;
+    if (v.scrollHeight - v.scrollTop - v.clientHeight < SCROLL_TRIGGER_PX) {
+      store.maybeLoadMore();
+    }
+  }
 
 </script>
 
@@ -83,7 +95,9 @@
 
     <div class="relative min-h-0 flex-1">
       <OverlayScrollbarsComponent
+        bind:this={osRef}
         options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
+        events={{ scroll: handleOsScroll }}
         defer
         class="h-full w-full bg-base-200/30"
       >

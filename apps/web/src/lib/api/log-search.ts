@@ -1,10 +1,7 @@
 import { client } from '$lib/api/client';
 import type { SearchInput, SearchResult } from '$lib/types';
-import { resolveTimeRange } from '$lib/utils/time-range';
 
 export async function searchLogs(input: SearchInput): Promise<SearchResult> {
-  const { startTs, endTs } = resolveTimeRange(input);
-
   const res = await client.api.indexes[':indexId'].logs.$get({
     param: { indexId: input.indexId },
     query: {
@@ -13,8 +10,8 @@ export async function searchLogs(input: SearchInput): Promise<SearchResult> {
       offset: String(input.offset),
       sortOrder: input.sortDirection,
       countAll: 'true',
-      ...(startTs !== undefined && { startTs: String(startTs) }),
-      ...(endTs !== undefined && { endTs: String(endTs) }),
+      ...(input.startTimestamp !== undefined && { startTs: String(input.startTimestamp) }),
+      ...(input.endTimestamp !== undefined && { endTs: String(input.endTimestamp) }),
     },
   });
 
