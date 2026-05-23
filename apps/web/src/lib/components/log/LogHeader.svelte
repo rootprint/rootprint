@@ -1,26 +1,23 @@
 <script lang="ts">
   import { ArrowDown, ArrowUp } from 'lucide-svelte';
   import type { FieldConfig, SortDirection } from '$lib/types';
-  import { buildGridTemplate } from '$lib/utils/column-width';
 
   let {
     fieldConfig,
     columns,
-    columnWidths,
+    gridTemplate,
     sortDirection,
     ontogglesort = () => {},
   }: {
     fieldConfig: FieldConfig | null;
     columns: string[];
-    columnWidths: Record<string, number>;
+    gridTemplate: string;
     sortDirection: SortDirection;
     ontogglesort?: () => void;
   } = $props();
 
   let timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
   let messageLabel = $derived(fieldConfig?.messageField ?? 'message');
-
-  let gridTemplate = $derived(buildGridTemplate(columns, columnWidths));
 </script>
 
 <div

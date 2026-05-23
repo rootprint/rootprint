@@ -40,18 +40,21 @@ export const PRESET_LABELS: Record<Preset, string> = {
   '30d': 'Last 30 days',
 };
 
-export function presetDurationSec(preset: string): number | null {
-  return preset in PRESET_SECONDS ? PRESET_SECONDS[preset as Preset] : null;
+export function presetDurationSec(preset: Preset): number {
+  return PRESET_SECONDS[preset];
+}
+
+export function isPreset(value: string): value is Preset {
+  return (PRESET_OPTIONS as readonly string[]).includes(value);
 }
 
 export function resolveTimeRange(
   input: Pick<SearchInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>
 ): { startTs?: number; endTs?: number } {
   if (input.timeRange !== undefined) {
-    const seconds = presetDurationSec(input.timeRange);
-    if (seconds === null) return {};
+    if (!isPreset(input.timeRange)) return {};
     const endTs = Math.floor(Date.now() / 1000);
-    return { startTs: endTs - seconds, endTs };
+    return { startTs: endTs - presetDurationSec(input.timeRange), endTs };
   }
   if (input.startTimestamp !== undefined && input.endTimestamp !== undefined) {
     return { startTs: input.startTimestamp, endTs: input.endTimestamp };
@@ -59,11 +62,8 @@ export function resolveTimeRange(
   return {};
 }
 
-export function timeRangeDurationMs(r: TimeRange): number | null {
-  if (r.type === 'relative') {
-    const sec = presetDurationSec(r.preset);
-    return sec === null ? null : sec * 1000;
-  }
+export function timeRangeDurationMs(r: TimeRange): number {
+  if (r.type === 'relative') return presetDurationSec(r.preset) * 1000;
   return (r.end - r.start) * 1000;
 }
 
@@ -79,8 +79,7 @@ function fmtParts(d: Date): { md: string; hm: string } {
 }
 
 export function formatTimeRangeLabel(r: TimeRange): string {
-  if (r.type === 'relative')
-    return (PRESET_LABELS as Record<string, string>)[r.preset] ?? r.preset;
+  if (r.type === 'relative') return PRESET_LABELS[r.preset];
   const start = new Date(r.start * 1000);
   const end = new Date(r.end * 1000);
   const s = fmtParts(start);

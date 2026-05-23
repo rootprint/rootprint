@@ -1,8 +1,9 @@
 import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
+import { ApiError, readApiError } from '$lib/api/errors';
 import type { FieldConfig } from '$lib/types';
-import type { ApiErrorBody, IndexDetail, IndexSummary } from 'api/types';
+import type { IndexDetail, IndexSummary } from 'api/types';
 import type { SaveIndexConfigInput } from 'api/schemas';
 
 export type IndexStatsResponse = InferResponseType<
@@ -10,36 +11,13 @@ export type IndexStatsResponse = InferResponseType<
   200
 >;
 
-export class IndexApiError extends Error {
-  status: number;
-  body?: ApiErrorBody;
-  constructor(message: string, status: number, body?: ApiErrorBody) {
-    super(message);
-    this.name = 'IndexApiError';
-    this.status = status;
-    this.body = body;
-  }
-}
-
-async function readApiError(res: Response, fallback: string): Promise<IndexApiError> {
-  const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-  return new IndexApiError(
-    body?.error.message ?? `${fallback} (${res.status})`,
-    res.status,
-    body ?? undefined
-  );
-}
+export { ApiError as IndexApiError };
 
 export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
   const res = await client.api.indexes[':indexId'].config.$get({
     param: { indexId },
   });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
-    throw new Error(body?.error?.message ?? `Failed to load index config (${res.status})`);
-  }
+  if (!res.ok) throw await readApiError(res, 'Failed to load index config');
   const json = await res.json();
   return {
     timestampField: json.timestampField,
@@ -52,12 +30,7 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 
 export async function listIndexes(): Promise<IndexSummary[]> {
   const res = await client.api.indexes.$get({});
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
-    throw new Error(body?.error?.message ?? `Failed to load indexes (${res.status})`);
-  }
+  if (!res.ok) throw await readApiError(res, 'Failed to load indexes');
   return res.json() as Promise<IndexSummary[]>;
 }
 

@@ -12,7 +12,7 @@
   import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
   import ColumnSettings from '$lib/components/search/ColumnSettings.svelte';
   import { SearchStore } from '$lib/stores/search.svelte';
-  import { computeColumnWidths } from '$lib/utils/column-width';
+  import { buildGridTemplate, computeColumnWidths } from '$lib/utils/column-width';
   import { page } from '$app/state';
   import { deserialize } from '$lib/utils/query-params';
   import type { LogHit } from '$lib/types';
@@ -37,21 +37,18 @@
   let columnWidths = $derived(
     computeColumnWidths(store.rawHits, store.activeFields),
   );
+  let gridTemplate = $derived(buildGridTemplate(store.activeFields, columnWidths));
 
-  // View-only state (would be store-owned in the next iteration)
   let chartCollapsed = $state(false);
   let selectedLog = $state<LogHit | null>(null);
   let drawerOpen = $state(false);
 
-  const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived(
-    store.configError || store.searchError
-      ? 'error'
-      : store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig
-        ? 'loading'
-        : store.logs.length === 0
-          ? 'empty'
-          : 'logs'
-  );
+  const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived.by(() => {
+    if (store.configError || store.searchError) return 'error';
+    if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
+    if (store.logs.length === 0) return 'empty';
+    return 'logs';
+  });
 
   function openRow(hit: LogHit) {
     selectedLog = hit;
@@ -128,7 +125,7 @@
             <LogHeader
               fieldConfig={store.fieldConfig}
               columns={store.activeFields}
-              {columnWidths}
+              {gridTemplate}
               sortDirection={store.sortDirection}
               ontogglesort={() => store.toggleSort()}
             />
@@ -136,7 +133,7 @@
               <LogRow
                 {hit}
                 columns={store.activeFields}
-                {columnWidths}
+                {gridTemplate}
                 timezoneMode={store.timezoneMode}
                 onclick={() => openRow(hit)}
               />

@@ -1,4 +1,5 @@
 import { client } from '$lib/api/client';
+import { readApiError } from '$lib/api/errors';
 import type { HistogramBucket, HistogramInput, HistogramResult } from '$lib/types';
 import {
   computeHistogramIntervalSeconds,
@@ -25,12 +26,7 @@ export async function fetchHistogram(input: HistogramInput): Promise<HistogramRe
       interval,
     },
   });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
-    throw new Error(body?.error?.message ?? `Histogram fetch failed (${res.status})`);
-  }
+  if (!res.ok) throw await readApiError(res, 'Histogram fetch failed');
   const json = await res.json();
 
   // Quickwit's date_histogram returns `key` in ms; normalize to seconds.

@@ -1,9 +1,10 @@
 import { client } from '$lib/api/client';
+import { readApiError } from '$lib/api/errors';
 import type { LogFieldValueBucket, TimeRange } from '$lib/types';
 import { resolveTimeRange } from '$lib/utils/time-range';
+import { FIELD_VALUES_MAX } from 'api/constants/search';
 
-/** Max values per field — matches the backend cap in `FieldValuesQuery`. */
-export const FIELD_VALUES_LIMIT = 10000;
+export { FIELD_VALUES_MAX as FIELD_VALUES_LIMIT };
 
 /** Initial count of values shown collapsed before the user expands the row. */
 export const FIELD_VALUES_INITIAL_SHOW = 10;
@@ -26,7 +27,7 @@ function buildTimeParams(range: TimeRange) {
 export async function fetchFieldValues(
   input: FetchFieldValuesInput
 ): Promise<LogFieldValueBucket[]> {
-  const { indexId, field, query, timeRange, limit = FIELD_VALUES_LIMIT, signal } = input;
+  const { indexId, field, query, timeRange, limit = FIELD_VALUES_MAX, signal } = input;
   const { startTs, endTs } = resolveTimeRange(buildTimeParams(timeRange));
 
   const res = await client.api.indexes[':indexId'].fields[':field'].values.$get(
@@ -42,14 +43,7 @@ export async function fetchFieldValues(
     { fetch: (info: RequestInfo | URL, init?: RequestInit) => fetch(info, { ...init, signal }) }
   );
 
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
-    throw new Error(
-      body?.error?.message ?? `Failed to load values for "${field}" (${res.status})`
-    );
-  }
+  if (!res.ok) throw await readApiError(res, `Failed to load values for "${field}"`);
 
   const json = await res.json();
   return json.values;

@@ -3,23 +3,21 @@
   import { levelColor } from '$lib/constants/level-colors';
   import { formatLogRowTimestamp } from '$lib/utils/time';
   import { getByPath } from '$lib/utils/get-by-path';
-  import { buildGridTemplate, formatCell } from '$lib/utils/column-width';
+  import { formatCell } from '$lib/utils/column-width';
 
   let {
     hit,
     columns,
-    columnWidths,
+    gridTemplate,
     timezoneMode,
     onclick = () => {},
   }: {
     hit: LogHit;
     columns: string[];
-    columnWidths: Record<string, number>;
+    gridTemplate: string;
     timezoneMode: TimezoneMode;
     onclick?: () => void;
   } = $props();
-
-  let gridTemplate = $derived(buildGridTemplate(columns, columnWidths));
 </script>
 
 <button

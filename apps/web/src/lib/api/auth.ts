@@ -1,4 +1,5 @@
 import { client } from '$lib/api/client';
+import { ApiError, readApiError } from '$lib/api/errors';
 import type { ApiErrorBody, AuthProvidersInfo } from 'api/types';
 import type { SetupAdminInput, SetupPasswordInput } from 'api/schemas';
 
@@ -6,25 +7,7 @@ export type AuthBootstrap = {
   needsSetupAdmin: boolean;
 };
 
-export class AuthApiError extends Error {
-  status: number;
-  body?: ApiErrorBody;
-  constructor(message: string, status: number, body?: ApiErrorBody) {
-    super(message);
-    this.name = 'AuthApiError';
-    this.status = status;
-    this.body = body;
-  }
-}
-
-async function readApiError(res: Response, fallback: string): Promise<AuthApiError> {
-  const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-  return new AuthApiError(
-    body?.error.message ?? `${fallback} (${res.status})`,
-    res.status,
-    body ?? undefined
-  );
-}
+export { ApiError as AuthApiError };
 
 export async function getBootstrap(): Promise<AuthBootstrap> {
   const res = await client.api.auth.bootstrap.$get();

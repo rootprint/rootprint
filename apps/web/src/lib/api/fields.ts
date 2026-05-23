@@ -1,4 +1,5 @@
 import { client } from '$lib/api/client';
+import { readApiError } from '$lib/api/errors';
 import type { FieldConfig, LogField } from '$lib/types';
 import { displayNameFor } from '$lib/utils/fields';
 
@@ -16,12 +17,7 @@ export async function loadFields(
   const res = await client.api.indexes[':indexId'].fields.$get({
     param: { indexId },
   });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
-    throw new Error(body?.error?.message ?? `Failed to load fields (${res.status})`);
-  }
+  if (!res.ok) throw await readApiError(res, 'Failed to load fields');
   const json = await res.json();
 
   const hidden = new Set<string>([

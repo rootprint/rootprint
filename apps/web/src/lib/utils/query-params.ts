@@ -1,14 +1,12 @@
 import type { ParsedQuery, SortDirection, TimeRange, TimezoneMode } from '$lib/types';
-import { PRESET_OPTIONS } from '$lib/utils/time-range';
+import { isPreset, type Preset } from '$lib/utils/time-range';
 
 const DEFAULTS = {
   query: '',
-  timeRangePreset: '15m',
+  timeRangePreset: '15m' as Preset,
   timezoneMode: 'local' as TimezoneMode,
   sortDirection: 'desc' as SortDirection,
 };
-
-const KNOWN_PRESETS: ReadonlySet<string> = new Set(PRESET_OPTIONS);
 
 export function serialize(state: ParsedQuery): URLSearchParams {
   const params = new URLSearchParams();
@@ -51,7 +49,7 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 
   if (from !== null && to !== null && from !== '' && to !== '' && !Number.isNaN(Number(from)) && !Number.isNaN(Number(to))) {
     timeRange = { type: 'absolute', start: Number(from), end: Number(to) };
-  } else if (from !== null && KNOWN_PRESETS.has(from)) {
+  } else if (from !== null && isPreset(from)) {
     timeRange = { type: 'relative', preset: from };
   } else {
     timeRange = { type: 'relative', preset: DEFAULTS.timeRangePreset };

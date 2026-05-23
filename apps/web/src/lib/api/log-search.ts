@@ -1,4 +1,5 @@
 import { client } from '$lib/api/client';
+import { readApiError } from '$lib/api/errors';
 import type { SearchInput, SearchResult } from '$lib/types';
 
 export async function searchLogs(input: SearchInput): Promise<SearchResult> {
@@ -15,12 +16,7 @@ export async function searchLogs(input: SearchInput): Promise<SearchResult> {
     },
   });
 
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
-    throw new Error(body?.error?.message ?? `Search failed (${res.status})`);
-  }
+  if (!res.ok) throw await readApiError(res, 'Search failed');
 
   const json = (await res.json()) as {
     hits: Record<string, unknown>[];

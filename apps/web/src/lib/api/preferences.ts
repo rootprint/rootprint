@@ -1,12 +1,6 @@
 import { client } from '$lib/api/client';
+import { readApiError } from '$lib/api/errors';
 import type { Preferences } from 'api/types';
-
-async function readApiError(res: Response, fallback: string): Promise<Error> {
-  const body = (await res.json().catch(() => null)) as
-    | { error?: { message?: string } }
-    | null;
-  return new Error(body?.error?.message ?? `${fallback} (${res.status})`);
-}
 
 export async function getPreferences(indexId: string): Promise<Preferences> {
   const res = await client.api.indexes[':indexId'].preferences.$get({

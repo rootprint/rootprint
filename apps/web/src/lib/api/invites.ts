@@ -1,20 +1,8 @@
 import { client } from '$lib/api/client';
-import type { ApiErrorBody } from 'api/types';
+import { ApiError, readApiError } from '$lib/api/errors';
 import type { CreateInviteInput } from 'api/schemas';
 
-export class InviteApiError extends Error {
-  body?: ApiErrorBody;
-  constructor(message: string, body?: ApiErrorBody) {
-    super(message);
-    this.name = 'InviteApiError';
-    this.body = body;
-  }
-}
-
-async function readApiError(res: Response, fallback: string): Promise<InviteApiError> {
-  const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-  return new InviteApiError(body?.error.message ?? `${fallback} (${res.status})`, body ?? undefined);
-}
+export { ApiError as InviteApiError };
 
 export async function createInvite(input: CreateInviteInput): Promise<{ inviteUrl: string }> {
   const res = await client.api.invites.$post({ json: input });

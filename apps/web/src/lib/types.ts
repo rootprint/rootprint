@@ -1,3 +1,5 @@
+import type { Preset } from '$lib/utils/time-range';
+
 export type IndexTabId = 'config' | 'fields' | 'sources';
 
 /* ===== Log viewer (frontend scaffold) ===== */
@@ -76,7 +78,7 @@ export interface LogFieldValueBucket {
 }
 
 export type TimeRange =
-  | { type: 'relative'; preset: string }
+  | { type: 'relative'; preset: Preset }
   | { type: 'absolute'; start: number; end: number };
 
 export interface ParsedQuery {

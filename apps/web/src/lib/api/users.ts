@@ -1,22 +1,11 @@
 import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
-import type { ApiErrorBody, UserRole } from 'api/types';
+import { ApiError, readApiError } from '$lib/api/errors';
+import type { UserRole } from 'api/types';
 
 export type UserView = InferResponseType<typeof client.api.users.$get, 200>[number];
 
-export class UserApiError extends Error {
-  body?: ApiErrorBody;
-  constructor(message: string, body?: ApiErrorBody) {
-    super(message);
-    this.name = 'UserApiError';
-    this.body = body;
-  }
-}
-
-async function readApiError(res: Response, fallback: string): Promise<UserApiError> {
-  const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-  return new UserApiError(body?.error.message ?? `${fallback} (${res.status})`, body ?? undefined);
-}
+export { ApiError as UserApiError };
 
 export async function listUsers(): Promise<UserView[]> {
   const res = await client.api.users.$get({});

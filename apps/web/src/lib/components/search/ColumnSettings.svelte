@@ -38,13 +38,16 @@
   // contain a pinned field name (level/timestamp/message) don't render twice.
   const pinnedSet = $derived(new Set<string>([...pinnedStart, ...pinnedEnd]));
 
+  const fieldsByName = $derived(new Map(allFields.map((f) => [f.name, f])));
+
   $effect(() => {
     dndItems = activeFields
       .filter((name) => !pinnedSet.has(name))
-      .map((name) => {
-        const field = allFields.find((f) => f.name === name);
-        return { id: name, name, label: field?.displayName ?? name };
-      });
+      .map((name) => ({
+        id: name,
+        name,
+        label: fieldsByName.get(name)?.displayName ?? name,
+      }));
   });
 
   function handleDndConsider(e: CustomEvent<{ items: DndItem[] }>) {

@@ -1,7 +1,7 @@
 import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
-import type { ApiErrorBody } from 'api/types';
+import { ApiError, readApiError } from '$lib/api/errors';
 import type { CreateIngestTokenInput } from 'api/schemas';
 
 export type IngestTokenView = InferResponseType<
@@ -9,22 +9,7 @@ export type IngestTokenView = InferResponseType<
   200
 >[number];
 
-export class IngestTokenApiError extends Error {
-  body?: ApiErrorBody;
-  constructor(message: string, body?: ApiErrorBody) {
-    super(message);
-    this.name = 'IngestTokenApiError';
-    this.body = body;
-  }
-}
-
-async function readApiError(res: Response, fallback: string): Promise<IngestTokenApiError> {
-  const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-  return new IngestTokenApiError(
-    body?.error.message ?? `${fallback} (${res.status})`,
-    body ?? undefined
-  );
-}
+export { ApiError as IngestTokenApiError };
 
 export async function listIngestTokens(): Promise<IngestTokenView[]> {
   const res = await client.api['ingest-tokens'].$get({});

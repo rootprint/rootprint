@@ -58,8 +58,7 @@
   function seedDraft(v: TimeRange): Draft {
     if (v.type === 'absolute') return { start: v.start, end: v.end };
     const end = nowSec();
-    const sec = presetDurationSec(v.preset) ?? 15 * 60;
-    return { start: end - sec, end };
+    return { start: end - presetDurationSec(v.preset), end };
   }
 
   function onToggle() {
