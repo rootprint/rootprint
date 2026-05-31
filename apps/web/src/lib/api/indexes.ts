@@ -29,8 +29,10 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 	};
 }
 
-export async function listIndexes(): Promise<IndexSummary[]> {
-	const res = await client.api.indexes.$get({});
+export async function listIndexes(opts: { includeHidden?: boolean } = {}): Promise<IndexSummary[]> {
+	const res = await client.api.indexes.$get({
+		query: opts.includeHidden ? { includeHidden: 'true' } : {}
+	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load indexes');
 	return res.json() as Promise<IndexSummary[]>;
 }
