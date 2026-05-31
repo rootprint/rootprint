@@ -1,0 +1,23 @@
+meta {
+  name: Ingest OTLP Logs
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/logs
+  body: none
+  auth: none
+}
+
+headers {
+  authorization: Bearer {{ingestApiKey}}
+  content-type: application/x-protobuf
+}
+
+docs {
+  Bruno cannot easily author a protobuf body inline. To smoke-test this endpoint,
+  capture a real OTLP/protobuf payload (e.g. from an OTEL Collector pointed at this
+  endpoint) and use Bruno's "Body > Binary File" option to attach the .pb file.
+  See docs/superpowers/specs/2026-05-12-ingest-design.md §12.3 for curl recipes.
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Search Logs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/logs
+  body: none
+  auth: none
+}
+
+params:query {
+  ~q: error
+  ~limit: 50
+  ~offset: 0
+  ~startTs: 1700000000
+  ~endTs: 1800000000
+  ~sortOrder: desc
+  ~countAll: true
+}

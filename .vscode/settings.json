@@ -1,9 +1,0 @@
-{
-	"files.associations": {
-		"*.css": "tailwindcss"
-	},
-	"sonarlint.connectedMode.project": {
-		"connectionId": "Logwiz",
-		"projectKey": "oleksandr-zhyhalo_logwiz"
-	}
-}

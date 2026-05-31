@@ -8,7 +8,7 @@ bun.lockb
 # AI
 docs/
 
-
-# Miscellaneous
-/static/
-/drizzle/
+# Generated and static content
+apps/api/drizzle/
+apps/*/static/
+static/

@@ -1,1 +1,0 @@
-ALTER TABLE `indexes_meta` RENAME TO `index_settings`;

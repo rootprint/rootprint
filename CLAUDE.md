@@ -1,47 +1,51 @@
-# Logwiz
+# Rootprint
 
 ## Project Overview
 
-Logwiz is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io).
+Rootprint is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io). It is organized as a Bun-workspace monorepo under `apps/`.
 
-- **Frontend**: Svelte 5 with SvelteKit (Remote Functions for API layer)
-- **Auth**: Better Auth
-- **Quickwit API**: `quickwit-js` library
-- **Styling**: DaisyUI (via Tailwind CSS)
+- **Backend** (`apps/api`): Hono on Bun. Drizzle ORM + PostgreSQL, Better Auth, Quickwit via `quickwit-js`, Valibot, pino, buf/protobuf.
+- **Frontend** (`apps/web`): Svelte 5 + SvelteKit. Tailwind v4 + DaisyUI. Calls `apps/api` over HTTP.
 
 ## Project Configuration
 
-| Setting         | Value                                                           |
-| --------------- | --------------------------------------------------------------- |
-| Language        | TypeScript                                                      |
-| Package Manager | bun                                                             |
-| Add-ons         | prettier, tailwindcss, drizzle, better-auth, devtools-json, mcp |
+| Setting         | Value                                             |
+| --------------- | ------------------------------------------------- |
+| Language        | TypeScript (strict, extends `tsconfig.base.json`) |
+| Package Manager | bun (workspaces under `apps/*`)                   |
+| Backend stack   | hono, drizzle, better-auth, valibot, pino, buf    |
+| Frontend stack  | svelte 5, sveltekit, tailwindcss v4, daisyui      |
 
 ## Rules
 
 ### Types
 
-- All types must be defined in `src/lib/types.ts`.
+- Backend (apps/api): shared types in `apps/api/src/types.ts`; re-exported via `exports['./types']`. Cross-workspace consumers import as `import type { ... } from 'api/types'`.
+- Frontend (apps/web): app types in `apps/web/src/lib/types.ts`.
+- Pure types only — no runtime exports in `types.ts` files.
 
-### Data Loading
+### Data Loading (apps/web)
 
-Data loading should be handled in dedicated files alongside the page component(only if possible and not overcomplicated):
+`apps/web` is an SPA built with `@sveltejs/adapter-static`. There is no server runtime — the api (`apps/api`) is the only backend. Therefore:
 
-| File                | When to use                                             |
-| ------------------- | ------------------------------------------------------- |
-| `+page.server.ts`   | Needs secrets, auth, cookies, or private backend access |
-| `+page.ts`          | Needs browser-only APIs or client-side state            |
-| `+layout.server.ts` | Data shared across many pages                           |
+| File                                  | When to use                                            |
+| ------------------------------------- | ------------------------------------------------------ |
+| `+page.ts` / `+layout.ts`             | All data loading. Calls `hc<AppType>` or `authClient`. |
+| `+page.server.ts` / `hooks.server.ts` | **Do not use** — adapter-static has no server.         |
 
----
+The Hono RPC client lives in `apps/web/src/lib/api/client.ts`. The Better Auth client lives in `apps/web/src/lib/auth-client.ts`. Cookies are same-origin in both dev (Vite proxy → api) and prod (api serves the SPA).
 
-You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+This guidance is SvelteKit-specific and only applies inside `apps/web`.
 
 ### Tests
 
-Do not write tests for this project. No unit, integration, or end-to-end tests are needed — skip test authoring unless explicitly requested.
+Do not write tests for this project. No unit, integration, or end-to-end tests are needed in any workspace — skip test authoring unless explicitly requested.
 
-## Available MCP Tools:
+---
+
+You are able to use the Svelte MCP server when working in `apps/web, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+
+## Available MCP Tools (use when working in Svelte workspaces)
 
 ### 1. list-sections
 
@@ -56,7 +60,7 @@ After calling the list-sections tool, you MUST analyze the returned documentatio
 ### 3. svelte-autofixer
 
 Analyzes Svelte code and returns issues and suggestions.
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
+You MUST use this tool whenever writing Svelte code before sending the code to the user. Keep calling it until no issues or suggestions are returned.
 
 ### 4. playground-link
 
@@ -65,4 +69,4 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 ## More
 
-See [more details](./AGENTS.md)
+See [more details](./AGENTS.md).

@@ -1,0 +1,19 @@
+meta {
+  name: Search Logs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/search/logs
+  body: none
+  auth: bearer
+}
+
+params:query {
+  limit: 100
+}
+
+auth:bearer {
+  token: {{searchApiKey}}
+}

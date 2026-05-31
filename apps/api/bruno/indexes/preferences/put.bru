@@ -1,0 +1,17 @@
+meta {
+  name: Put Preferences
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/preferences
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "displayFields": ["timestamp", "severity_text", "body.message"]
+  }
+}

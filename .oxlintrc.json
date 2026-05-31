@@ -1,0 +1,19 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn",
+		"perf": "warn"
+	},
+	"ignorePatterns": [
+		"node_modules",
+		"dist",
+		"build",
+		".svelte-kit",
+		"apps/api/src/gen",
+		"apps/api/drizzle",
+		"static",
+		"*.config.js",
+		"*.config.ts"
+	]
+}

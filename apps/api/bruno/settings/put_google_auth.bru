@@ -1,0 +1,18 @@
+meta {
+  name: Put Google Auth Credentials
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/settings/auth/google/credentials
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "clientId": "your-google-client-id.apps.googleusercontent.com",
+    "clientSecret": "your-google-client-secret"
+  }
+}

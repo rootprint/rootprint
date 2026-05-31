@@ -418,16 +418,16 @@ def main():
     parser.add_argument("--batch-size", type=int, default=1000, help="Batch size for ingestion (default: 1000)")
     parser.add_argument("--live", action="store_true", help="Live mode: continuously emit logs")
     parser.add_argument("--rate", type=float, default=1, help="Logs per second in live mode (default: 1)")
-    parser.add_argument("--ingest", action="store_true", help="Send via Logwiz ingest API instead of Quickwit directly")
-    parser.add_argument("--ingest-url", default="http://localhost:5173", help="Logwiz base URL for ingest API (default: http://localhost:5173)")
-    parser.add_argument("--token", help="Bearer token for Logwiz ingest API (required with --ingest)")
+    parser.add_argument("--ingest", action="store_true", help="Send via Rootprint ingest API instead of Quickwit directly")
+    parser.add_argument("--ingest-url", default="http://localhost:5173", help="Rootprint base URL for ingest API (default: http://localhost:5173)")
+    parser.add_argument("--token", help="Bearer token for Rootprint ingest API (required with --ingest)")
     parser.add_argument("--index", default="otel-logs-v0_9", help="Index ID (default: otel-logs-v0_9)")
     args = parser.parse_args()
 
     if args.ingest:
         if not args.token:
             parser.error("--token is required when using --ingest")
-        endpoint = f"{args.ingest_url.rstrip('/')}/api/ingest/{args.index}"
+        endpoint = f"{args.ingest_url.rstrip('/')}/api/ingest/ndjson"
     else:
         endpoint = f"{args.url.rstrip('/')}/api/v1/{args.index}/ingest"
 

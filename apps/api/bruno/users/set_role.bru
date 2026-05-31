@@ -1,0 +1,21 @@
+meta {
+  name: Set Role
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/users/{{userId}}/role
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "role": "admin"
+  }
+}
+
+vars:pre-request {
+  userId: 23
+}

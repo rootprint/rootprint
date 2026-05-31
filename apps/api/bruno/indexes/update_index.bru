@@ -1,0 +1,22 @@
+meta {
+  name: Update Index
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/indexes/{{indexId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "displayName": "Application Logs",
+    "visibility": "all",
+    "levelField": "severity_text",
+    "messageField": "body.message",
+    "tracebackField": "attributes.exception.stacktrace",
+    "contextFields": ["service.name", "host.name"]
+  }
+}

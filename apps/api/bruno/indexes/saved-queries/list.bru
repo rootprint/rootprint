@@ -1,0 +1,11 @@
+meta {
+  name: List Saved Queries
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/saved-queries
+  body: none
+  auth: none
+}

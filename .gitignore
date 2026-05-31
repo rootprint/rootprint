@@ -6,9 +6,12 @@ node_modules
 .netlify
 .wrangler
 /.svelte-kit
+.svelte-kit
 /build
+build/
+dist/
 data/
-docs/
+/docs/
 
 # Quickwit
 .quickwit/
@@ -24,11 +27,9 @@ Thumbs.db
 !.env.example
 !.env.test
 
-.superpowers
-
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.superpowers/
+
 .superpowers/
 .planning/
