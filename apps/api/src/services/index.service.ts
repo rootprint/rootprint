@@ -94,10 +94,12 @@ export async function saveIndexConfig(
 export async function listIndexes(
 	db: Db,
 	qw: QuickwitClient,
-	role: string | null | undefined
+	role: string | null | undefined,
+	opts: { includeHidden?: boolean } = {}
 ): Promise<IndexSummary[]> {
 	const indexes = await qwListIndexes(qw);
 	const isAdmin = role === 'admin';
+	const includeHidden = opts.includeHidden === true && isAdmin;
 
 	const ids = indexes.map((m) => m.indexId);
 	const rows = ids.length
@@ -130,7 +132,7 @@ export async function listIndexes(
 				createTimestamp: m.createTimestamp
 			};
 		})
-		.filter((m) => canAccessIndex(m.visibility, isAdmin));
+		.filter((m) => includeHidden || canAccessIndex(m.visibility, isAdmin));
 }
 
 export async function getIndexFields(
@@ -287,6 +289,17 @@ export async function assertIndexAccess(
 	if (!canAccessIndex(settings.visibility, isAdmin)) {
 		throw indexAccessError(isAdmin, 'denied');
 	}
+	if (!index) {
+		throw indexAccessError(isAdmin, 'missing');
+	}
+}
+
+export async function assertIndexManageable(
+	qw: QuickwitClient,
+	indexId: string,
+	isAdmin: boolean
+): Promise<void> {
+	const index = await qwGetIndex(qw, indexId);
 	if (!index) {
 		throw indexAccessError(isAdmin, 'missing');
 	}

@@ -10,6 +10,7 @@ import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
+import { requireManageableIndex } from '../middleware/require-manageable-index.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
 import { FIELD_VALUES_MAX } from '../constants/search.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
@@ -149,9 +150,23 @@ const PutPreferencesBody = v.object({
 	displayFields: v.nullable(v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100)))
 });
 
+const ListIndexesQuery = v.object({
+	// Fail closed: only the literal string "true" enables it; any other value is treated as false.
+	includeHidden: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((s) => s === 'true')
+		)
+	)
+});
+
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const indexesRouter = new Hono<IndexConfigEnv>()
-	.get('/', async (c) => c.json(await listIndexes(db, quickwit, c.get('session').user.role)))
+	.get('/', vValidator('query', ListIndexesQuery), async (c) => {
+		const { includeHidden } = c.req.valid('query');
+		const session = c.get('session');
+		return c.json(await listIndexes(db, quickwit, session.user.role, { includeHidden }));
+	})
 	.get('/:indexId/fields', requireIndexAccess, vValidator('param', IndexIdParams), async (c) => {
 		const { indexId } = c.req.valid('param');
 		return c.json(await getIndexFields(quickwit, indexId));
@@ -162,8 +177,8 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	})
 	.get(
 		'/:indexId',
-		requireIndexAccess,
 		requireAdmin,
+		requireManageableIndex,
 		vValidator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -174,8 +189,8 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.get(
 		'/:indexId/stats',
-		requireIndexAccess,
 		requireAdmin,
+		requireManageableIndex,
 		vValidator('param', IndexIdParams),
 		vValidator('query', StatsQuery),
 		async (c) => {
@@ -191,8 +206,8 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.patch(
 		'/:indexId',
-		requireIndexAccess,
 		requireAdmin,
+		requireManageableIndex,
 		vValidator('param', IndexIdParams),
 		vValidator('json', saveIndexConfigSchema),
 		async (c) => {
@@ -204,8 +219,8 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.delete(
 		'/:indexId',
-		requireIndexAccess,
 		requireAdmin,
+		requireManageableIndex,
 		vValidator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -215,8 +230,8 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.patch(
 		'/:indexId/sources/:sourceId',
-		requireIndexAccess,
 		requireAdmin,
+		requireManageableIndex,
 		vValidator('param', SourceParams),
 		vValidator('json', ToggleSourceBody),
 		async (c) => {
@@ -228,8 +243,8 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.delete(
 		'/:indexId/sources/:sourceId',
-		requireIndexAccess,
 		requireAdmin,
+		requireManageableIndex,
 		vValidator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
