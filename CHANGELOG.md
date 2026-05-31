@@ -2,6 +2,25 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-31
+
+Complete architectural rewrite. Rootprint is now a Bun-workspace monorepo: a standalone **Hono API** (`apps/api`) and a separate **SvelteKit SPA** (`apps/web`) that talks to it over HTTP. The previous single SvelteKit-server deployment is gone, and the datastore has moved from SQLite to **PostgreSQL**.
+
+### ⚠️ Breaking changes
+
+- **New two-process architecture.** The monolith is split into an API server (`apps/api`) and a static web client (`apps/web`). You now deploy and run the API as its own service; the web app is served as static assets.
+- **PostgreSQL replaces SQLite.** Persistence moved from `sqlite.db` to PostgreSQL (Drizzle + `pg`). There is no in-place migration from the old SQLite database — this is a fresh schema. Provision a Postgres instance and run `bun run db:migrate` against it before starting the API.
+- **Configuration changes.** The API requires a Postgres connection and a resolvable `ORIGIN`. Review `.env.example` and update your deployment.
+
+### Upgrade notes
+
+Because the storage engine changed, **0.3.0 is not an in-place upgrade from 0.2.x.** Stand up a new deployment:
+
+1. Provision PostgreSQL and set the connection string (see `.env.example`).
+2. Deploy `apps/api` as a service and run `bun run db:migrate`.
+3. Build and serve `apps/web` (static) pointed at the API's `ORIGIN`.
+4. Recreate ingest tokens and re-add users; data is not carried over from the SQLite database.
+
 ## [0.2.2] - 2026-04-25
 
 ### Added
@@ -108,6 +127,7 @@ Major release reshaping the administration experience, adding first-class log-in
 
 See the [git history](https://github.com/rootprint/rootprint/commits/main) for releases prior to 0.2.0.
 
+[0.3.0]: https://github.com/rootprint/rootprint/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/rootprint/rootprint/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/rootprint/rootprint/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rootprint/rootprint/compare/v0.1.11...v0.2.0
