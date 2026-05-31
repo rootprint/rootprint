@@ -1,0 +1,15 @@
+meta {
+  name: Reissue Invite
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/users/{{userId}}/invites
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  userId: 2
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Toggle Source
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/sources/{{sourceId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "enabled": false
+  }
+}

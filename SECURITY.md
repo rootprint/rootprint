@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Logwiz is currently pre-1.0. Only the latest release receives security fixes until a 1.x line is cut.
+Rootprint is currently pre-1.0. Only the latest release receives security fixes until a 1.x line is cut.
 
 ## Reporting a vulnerability
 
@@ -10,7 +10,7 @@ Please do not open public GitHub issues for suspected security vulnerabilities.
 
 Use GitHub's private vulnerability reporting flow for this repository when available:
 
-- https://github.com/oleksandr-zhyhalo/logwiz/security/advisories/new
+- https://github.com/rootprint/rootprint/security/advisories/new
 
 Include as much detail as you can:
 

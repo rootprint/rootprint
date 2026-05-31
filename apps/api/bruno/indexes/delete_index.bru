@@ -1,0 +1,11 @@
+meta {
+  name: Delete Index
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/indexes/{{indexId}}
+  body: none
+  auth: none
+}

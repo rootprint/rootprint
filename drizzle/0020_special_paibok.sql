@@ -1,1 +1,0 @@
-DROP INDEX `shared_link_code`;

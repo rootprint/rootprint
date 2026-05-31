@@ -1,1 +1,0 @@
-ALTER TABLE `user` DROP COLUMN `must_change_password`;

@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement to Logwiz
+description: Suggest an improvement to Rootprint
 title: '[Feature]: '
 labels:
   - enhancement
@@ -22,7 +22,7 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: What would you like Logwiz to do?
+      description: What would you like Rootprint to do?
       placeholder: Describe the change you want to see.
     validations:
       required: true

@@ -1,0 +1,22 @@
+meta {
+  name: Patch Saved Query
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/saved-queries/{{savedQueryId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Errors last 24h (renamed)",
+    "description": null
+  }
+}
+
+vars:pre-request {
+  savedQueryId: 13
+}

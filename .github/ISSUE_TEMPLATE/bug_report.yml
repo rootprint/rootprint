@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in Logwiz
+description: Report a reproducible problem in Rootprint
 title: '[Bug]: '
 labels:
   - bug
@@ -35,7 +35,7 @@ body:
       label: Environment
       description: Share the version and deployment details.
       placeholder: |
-        - Logwiz version:
+        - Rootprint version:
         - Deployment method:
         - Quickwit version:
         - Object storage provider:

@@ -1,0 +1,15 @@
+meta {
+  name: List API Keys
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/api-keys
+  body: none
+  auth: none
+}
+
+params:query {
+  ~role: ingest
+}

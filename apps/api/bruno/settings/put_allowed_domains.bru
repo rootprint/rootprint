@@ -1,0 +1,17 @@
+meta {
+  name: Put Google Allowed Domains
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/settings/auth/google/allowed-domains
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "allowedDomains": ["example.com", "beewise.ag"]
+  }
+}
