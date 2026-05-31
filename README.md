@@ -33,7 +33,7 @@ Rootprint is under active development and has not yet reached a stable 1.0 relea
 ## Quick Start
 
 ```bash
-curl -o docker-compose.yml https://docs.rootprint.io/files/docker-compose.yaml
+curl -o docker-compose.yml https://docs.rootprint.io/files/docker-compose.full.yaml
 docker compose up -d
 ```
 
