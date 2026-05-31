@@ -17,13 +17,13 @@
 
 <div align="center">
   <picture>
-    <img alt="Rootprint Screenshot" src="apps/web/static/home-image.png" width="80%">
+    <img alt="Rootprint Screenshot" src="apps/web/static/hero-screenshot.png" width="80%">
   </picture>
 </div>
 
 - **Search on object storage** — query logs stored directly on S3 and compatible object storage with Quickwit-powered full-text search
 - **Readable investigation workflow** — use severity-aware log views, structured fields, quick filters, and histograms to move through incidents faster
-- **Open ingest and export paths** — send logs over OTLP HTTP, use the NDJSON gateway for custom schemas, or ingest from sources like SQS, Kafka, or Pulsar
+- **Open ingest and export paths** — send logs over OTLP, use the HTTP gateway for custom schemas, or ingest from sources like SQS, Kafka, or Pulsar
 - **Self-hosted team access** — run Rootprint on your own infrastructure with invite-based access control and Google Authentication
 
 ## Status
