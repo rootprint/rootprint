@@ -16,9 +16,9 @@
 			"types": "./src/schemas/index.ts",
 			"default": "./src/schemas/index.ts"
 		},
-		"./constants/search": {
-			"types": "./src/constants/search.ts",
-			"default": "./src/constants/search.ts"
+		"./constants": {
+			"types": "./src/constants.ts",
+			"default": "./src/constants.ts"
 		}
 	},
 	"scripts": {

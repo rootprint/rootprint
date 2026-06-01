@@ -1,16 +1,11 @@
 import type { Context } from 'hono';
 
+import type { ProxyResult } from '../types.js';
 import { badRequest, serviceUnavailable } from './http-error.js';
 
 type ProxyOpts = {
 	upstreamUrl: string;
 	headers: Record<string, string>;
-};
-
-export type ProxyResult = {
-	status: number;
-	headers: Headers;
-	bodyBytes: ArrayBuffer;
 };
 
 function tapBytes(input: ReadableStream<Uint8Array>): {

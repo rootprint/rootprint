@@ -11,7 +11,8 @@ import {
 	listSavedQueries,
 	updateOwnedSavedQuery
 } from '../services/saved-query.service.js';
-import { IndexIdParams, positiveInt } from '../utils/params.js';
+import { positiveInt } from '../utils/valibot.js';
+import { IndexIdParams } from '../utils/params.js';
 
 const CreateBody = v.object({
 	name: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),

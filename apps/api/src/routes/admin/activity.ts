@@ -10,8 +10,7 @@ import {
 	SlowestQuery,
 	TopActorsQuery,
 	UserIdParam,
-	WindowQuery,
-	type ActivityWindow
+	WindowQuery
 } from '../../schemas/admin-activity.js';
 import {
 	getActorLatencyBuckets,
@@ -25,28 +24,24 @@ import {
 	getUserIndexes
 } from '../../services/search-activity.service.js';
 
-function win(q: { window?: ActivityWindow }): ActivityWindow {
-	return q.window ?? '7d';
-}
-
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const adminActivityRouter = new Hono<AuthedEnv>()
 	.use('*', requireAdmin)
 	.get('/summary', vValidator('query', WindowQuery), async (c) => {
 		const q = c.req.valid('query');
-		return c.json(await getSummary(db, win(q)));
+		return c.json(await getSummary(db, q.window));
 	})
 	.get('/latency', vValidator('query', WindowQuery), async (c) => {
 		const q = c.req.valid('query');
-		return c.json(await getLatencyBuckets(db, win(q)));
+		return c.json(await getLatencyBuckets(db, q.window));
 	})
 	.get('/slowest', vValidator('query', SlowestQuery), async (c) => {
 		const q = c.req.valid('query');
-		return c.json(await getSlowestQueries(db, win(q), q.limit ?? 20));
+		return c.json(await getSlowestQueries(db, q.window, q.limit ?? 20));
 	})
 	.get('/top-actors', vValidator('query', TopActorsQuery), async (c) => {
 		const q = c.req.valid('query');
-		return c.json(await getTopActors(db, win(q), q.limit ?? 10));
+		return c.json(await getTopActors(db, q.window, q.limit ?? 10));
 	})
 	.get(
 		'/users/:userId/summary',
@@ -55,7 +50,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorSummary(db, win(q), { kind: 'user', userId }));
+			return c.json(await getActorSummary(db, q.window, { kind: 'user', userId }));
 		}
 	)
 	.get(
@@ -65,7 +60,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorVolumeBuckets(db, win(q), { kind: 'user', userId }));
+			return c.json(await getActorVolumeBuckets(db, q.window, { kind: 'user', userId }));
 		}
 	)
 	.get(
@@ -75,7 +70,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorLatencyBuckets(db, win(q), { kind: 'user', userId }));
+			return c.json(await getActorLatencyBuckets(db, q.window, { kind: 'user', userId }));
 		}
 	)
 	.get(
@@ -85,7 +80,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getUserIndexes(db, win(q), userId));
+			return c.json(await getUserIndexes(db, q.window, userId));
 		}
 	)
 	.get(
@@ -98,7 +93,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			return c.json(
 				await getActorRecent(
 					db,
-					win(q),
+					q.window,
 					{ kind: 'user', userId },
 					{ offset: q.offset ?? 0, limit: q.limit ?? 100, status: q.status ?? 'any' }
 				)
@@ -112,7 +107,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorSummary(db, win(q), { kind: 'apiKey', apiKeyId }));
+			return c.json(await getActorSummary(db, q.window, { kind: 'apiKey', apiKeyId }));
 		}
 	)
 	.get(
@@ -122,7 +117,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorVolumeBuckets(db, win(q), { kind: 'apiKey', apiKeyId }));
+			return c.json(await getActorVolumeBuckets(db, q.window, { kind: 'apiKey', apiKeyId }));
 		}
 	)
 	.get(
@@ -132,7 +127,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorLatencyBuckets(db, win(q), { kind: 'apiKey', apiKeyId }));
+			return c.json(await getActorLatencyBuckets(db, q.window, { kind: 'apiKey', apiKeyId }));
 		}
 	)
 	.get(
@@ -145,7 +140,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			return c.json(
 				await getActorRecent(
 					db,
-					win(q),
+					q.window,
 					{ kind: 'apiKey', apiKeyId },
 					{ offset: q.offset ?? 0, limit: q.limit ?? 100, status: q.status ?? 'any' }
 				)

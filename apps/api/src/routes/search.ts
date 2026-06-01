@@ -7,7 +7,7 @@ import { quickwit } from '../lib/quickwit.js';
 import { requireSearchKey } from '../middleware/require-api-key.js';
 import { SearchQuery } from '../schemas/search.js';
 import { getIndexConfig } from '../services/index.service.js';
-import { searchLogs, toSearchParams } from '../services/log.service.js';
+import { searchLogs } from '../services/log.service.js';
 import { withSearchAudit } from '../services/search-audit.service.js';
 
 export const searchRouter = new Hono<AppEnv>().get(
@@ -24,7 +24,7 @@ export const searchRouter = new Hono<AppEnv>().get(
 			{ source: 'token', apiKeyId: apiKey.id },
 			apiKey.indexId,
 			q,
-			() => searchLogs(quickwit, indexConfig, toSearchParams(q))
+			() => searchLogs(quickwit, indexConfig, q)
 		);
 		return c.json(result);
 	}

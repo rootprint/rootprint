@@ -1,14 +1,12 @@
 import type {
+	PromMetric,
+	PromSample,
 	QuickwitBuildInfo,
 	QuickwitSnapshot,
 	ResourceSnapshot,
 	SaturationSnapshot
 } from '../types.js';
-import {
-	fetchQuickwitMetrics,
-	type PromMetric,
-	type PromSample
-} from '../utils/quickwit-metrics.js';
+import { fetchQuickwitMetrics } from '../utils/quickwit-metrics.js';
 
 function findMetric(metrics: PromMetric[], name: string): PromMetric | null {
 	return metrics.find((m) => m.name === name) ?? null;

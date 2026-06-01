@@ -1,4 +1,4 @@
-import type { INDEX_VISIBILITIES } from './constants/index-visibility.js';
+import type { INDEX_VISIBILITIES } from './constants.js';
 
 export type HealthResponse = {
 	status: 'ok';
@@ -274,3 +274,162 @@ export type QuickwitSnapshot = {
 };
 
 export type ExportFormat = 'json' | 'csv' | 'text';
+
+// Index configuration (index.service.ts)
+export type IndexSettings = {
+	displayName: string | null;
+	visibility: IndexVisibility;
+	levelField: string;
+	messageField: string;
+	tracebackField: string | null;
+	contextFields: string[] | null;
+};
+
+export type IndexConfig = {
+	indexId: string;
+	levelField: string;
+	timestampField: string;
+	messageField: string;
+	tracebackField: string | null;
+	contextFields: string[] | null;
+};
+
+// API key verification (api-key.service.ts)
+export type VerifyApiKeyResult =
+	| { status: 'ok'; key: VerifiedApiKey }
+	| { status: 'wrong-role'; actualRole: ApiKeyRole }
+	| { status: 'not-found' };
+
+// User administration (lib/auth-admin.ts)
+export type CreateUserInput = {
+	email: string;
+	name: string;
+	password: string;
+	role: UserRole;
+};
+
+// Settings (settings.service.ts)
+export type GoogleAuthCredentials = {
+	clientId: string;
+	clientSecret: string;
+	allowedDomains: string[];
+};
+
+// Export streaming (export.service.ts)
+export type FormatState = {
+	csvHeader?: string[];
+	preambleEmitted: boolean;
+};
+
+export type ExportPreflightResult = {
+	total: number;
+	capped: boolean;
+	numHits: number;
+	filename: string;
+	contentType: string;
+};
+
+// Index stats (index-stats.service.ts)
+export type LatestIndexSnapshot = {
+	indexId: string;
+	capturedAt: Date;
+	numDocs: number;
+	sizeBytes: number;
+	uncompressedBytes: number;
+	numSplits: number;
+	minTimestamp: number | null;
+	maxTimestamp: number | null;
+};
+
+// Quickwit Prometheus metrics (utils/quickwit-metrics.ts)
+export type PromSample = {
+	labels: Record<string, string>;
+	value: number;
+};
+
+export type PromMetricType = 'counter' | 'gauge' | 'histogram' | 'summary' | 'untyped';
+
+export type PromMetric = {
+	name: string;
+	type: PromMetricType;
+	help?: string;
+	samples: PromSample[];
+};
+
+// Quickwit proxy (utils/quickwit-proxy.ts)
+export type ProxyResult = {
+	status: number;
+	headers: Headers;
+	bodyBytes: ArrayBuffer;
+};
+
+// Search activity (search-activity.service.ts)
+export type SummaryRow = {
+	totalSearches: number;
+	errorCount: number;
+	p50: number | null;
+	p95: number | null;
+	p99: number | null;
+};
+
+export type LatencyBucket = {
+	t: string; // ISO timestamp at bucket start
+	count: number;
+	p50: number | null;
+	p95: number | null;
+	p99: number | null;
+};
+
+export type SlowestRow = {
+	id: number;
+	executedAt: string;
+	indexId: string;
+	source: 'ui' | 'token';
+	actorId: string; // user id or token id (as string)
+	actorLabel: string | null; // resolved email / token name
+	durationMs: number;
+	numHits: number | null;
+	query: string;
+	startTs: number | null; // searched range start (seconds since epoch)
+	endTs: number | null; // searched range end (seconds since epoch)
+};
+
+export type TopActorRow = {
+	kind: 'user' | 'apiKey';
+	id: string;
+	label: string | null;
+	count: number;
+	avgDurationMs: number;
+	errorCount: number;
+	indexes: string[];
+};
+
+export type ActorSummaryRow = SummaryRow & {
+	displayName: string | null;
+	email: string | null;
+};
+
+export type VolumeBucket = { t: string; count: number };
+
+export type ActorIndexRow = {
+	indexId: string;
+	count: number;
+	avgDurationMs: number;
+	errorCount: number;
+};
+
+export type RecentRow = {
+	id: number;
+	executedAt: string;
+	indexId: string;
+	durationMs: number;
+	numHits: number | null;
+	query: string;
+	startTs: number | null;
+	endTs: number | null;
+};
+
+export type RecentResult = {
+	rows: RecentRow[];
+	total: number;
+};

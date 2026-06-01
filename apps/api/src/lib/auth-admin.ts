@@ -1,13 +1,6 @@
-import type { UserRole } from '../types.js';
+import type { CreateUserInput, UserRole } from '../types.js';
 import { auth } from './auth.js';
 import { fromAuthApiError, internal } from '../utils/http-error.js';
-
-export type CreateUserInput = {
-	email: string;
-	name: string;
-	password: string;
-	role: UserRole;
-};
 
 type AdminApi = {
 	createUser: (args: { body: CreateUserInput }) => Promise<unknown>;

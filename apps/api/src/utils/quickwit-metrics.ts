@@ -1,19 +1,6 @@
 import { config } from '../config.js';
+import type { PromMetric, PromMetricType } from '../types.js';
 import { serviceUnavailable } from './http-error.js';
-
-export type PromSample = {
-	labels: Record<string, string>;
-	value: number;
-};
-
-export type PromMetricType = 'counter' | 'gauge' | 'histogram' | 'summary' | 'untyped';
-
-export type PromMetric = {
-	name: string;
-	type: PromMetricType;
-	help?: string;
-	samples: PromSample[];
-};
 
 const KNOWN_TYPES: ReadonlySet<PromMetricType> = new Set([
 	'counter',
