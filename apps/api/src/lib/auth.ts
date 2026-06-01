@@ -9,10 +9,8 @@ import { config } from '../config.js';
 import * as authSchema from '../db/auth.schema.js';
 import { account, inviteToken, user } from '../db/schema.js';
 import { getGoogleAllowedDomains } from '../services/auth.service.js';
-import {
-	loadGoogleAuthForBetterAuth,
-	type GoogleAuthCredentials
-} from '../services/settings.service.js';
+import { loadGoogleAuthForBetterAuth } from '../services/settings.service.js';
+import type { GoogleAuthCredentials } from '../types.js';
 import { db } from './db.js';
 
 function buildAuth(secret: string, google?: GoogleAuthCredentials) {

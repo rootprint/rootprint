@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { generateId } from 'better-auth';
 import { and, eq } from 'drizzle-orm';
 
-import { INVITE_EXPIRY_HOURS } from '../constants/defaults.js';
+import { INVITE_EXPIRY_HOURS } from '../constants.js';
 import type { Db } from '../db/index.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';

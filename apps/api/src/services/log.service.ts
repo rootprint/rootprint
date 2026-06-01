@@ -1,9 +1,8 @@
 import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 'quickwit-js';
 import { AggregationBuilder } from 'quickwit-js';
 
-import type { IndexConfig } from './index.service.js';
 import type { SearchQueryInput } from '../schemas/search.js';
-import { FIELD_VALUES_DEFAULT } from '../constants/search.js';
+import { FIELD_VALUES_DEFAULT } from '../constants.js';
 import { composeQuery } from '../lib/query/compose-query.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import type {
@@ -12,8 +11,24 @@ import type {
 	FieldValuesResponse,
 	Filter,
 	HistogramResponse,
+	IndexConfig,
 	LogSearchResponse
 } from '../types.js';
+
+type TimeWindowBuilder = {
+	startTimestamp(t: number): unknown;
+	endTimestamp(t: number): unknown;
+};
+
+/** Applies optional start/end timestamps to a Quickwit search builder. */
+export function applyTimeWindow(
+	builder: TimeWindowBuilder,
+	startTs?: number,
+	endTs?: number
+): void {
+	if (startTs !== undefined) builder.startTimestamp(startTs);
+	if (endTs !== undefined) builder.endTimestamp(endTs);
+}
 
 /** Maps terms-aggregation buckets to field-value entries, dropping empty-string keys. */
 function bucketsToEntries(buckets: AggregationBucket[] | undefined): FieldValueEntry[] {
@@ -21,29 +36,6 @@ function bucketsToEntries(buckets: AggregationBucket[] | undefined): FieldValueE
 		const value = String(b.key);
 		return value === '' ? [] : [{ value, count: b.doc_count }];
 	});
-}
-
-type SearchParams = {
-	query?: string;
-	limit?: number;
-	offset?: number;
-	startTs?: number;
-	endTs?: number;
-	sortOrder?: 'asc' | 'desc';
-	countAll?: boolean;
-};
-
-/** Maps a validated SearchQuery into searchLogs params (the `q` field is renamed to `query`). */
-export function toSearchParams(q: SearchQueryInput): SearchParams {
-	return {
-		query: q.q,
-		limit: q.limit,
-		offset: q.offset,
-		startTs: q.startTs,
-		endTs: q.endTs,
-		sortOrder: q.sortOrder,
-		countAll: q.countAll
-	};
 }
 
 type HistogramParams = {
@@ -63,26 +55,16 @@ type FieldValuesParams = {
 export async function searchLogs(
 	qw: QuickwitClient,
 	indexConfig: IndexConfig,
-	params: SearchParams
+	q: SearchQueryInput
 ): Promise<LogSearchResponse> {
-	const {
-		query = '*',
-		limit = 50,
-		offset = 0,
-		startTs,
-		endTs,
-		sortOrder = 'desc',
-		countAll
-	} = params;
 	const idx = qw.index(indexConfig.indexId);
 	const builder = idx
-		.query(query)
-		.limit(limit)
-		.offset(offset)
-		.sortBy(indexConfig.timestampField, sortOrder);
-	if (countAll) builder.countAll();
-	if (startTs !== undefined) builder.startTimestamp(startTs);
-	if (endTs !== undefined) builder.endTimestamp(endTs);
+		.query(q.q ?? '*')
+		.limit(q.limit ?? 50)
+		.offset(q.offset ?? 0)
+		.sortBy(indexConfig.timestampField, q.sortOrder ?? 'desc');
+	if (q.countAll) builder.countAll();
+	applyTimeWindow(builder, q.startTs, q.endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	return {
 		hits: response.hits,
@@ -108,8 +90,7 @@ export async function histogramLogs(
 			'histogram',
 			AggregationBuilder.dateHistogram(indexConfig.timestampField, interval, histogramOptions)
 		);
-	if (startTs !== undefined) builder.startTimestamp(startTs);
-	if (endTs !== undefined) builder.endTimestamp(endTs);
+	applyTimeWindow(builder, startTs, endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	const agg = response.aggregations?.['histogram'] as BucketAggregationResult | undefined;
 	return {
@@ -141,8 +122,7 @@ export async function fieldValues(
 		.query(query)
 		.limit(0)
 		.agg('values', AggregationBuilder.terms(field, { size: limit }));
-	if (startTs !== undefined) builder.startTimestamp(startTs);
-	if (endTs !== undefined) builder.endTimestamp(endTs);
+	applyTimeWindow(builder, startTs, endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	const agg = response.aggregations?.['values'] as BucketAggregationResult | undefined;
 	return {
@@ -205,8 +185,7 @@ export async function fieldValuesBulk(
 			for (const field of group.fields) {
 				builder.agg(field, AggregationBuilder.terms(field, { size: limit }));
 			}
-			if (startTs !== undefined) builder.startTimestamp(startTs);
-			if (endTs !== undefined) builder.endTimestamp(endTs);
+			applyTimeWindow(builder, startTs, endTs);
 			const response = await idx.search(builder).catch(translateQuickwitError);
 			return { group, response };
 		})

@@ -3,7 +3,7 @@ import { QuickwitError, type QuickwitClient } from 'quickwit-js';
 
 import type { Db } from '../db/index.js';
 import { indexStatsSnapshot } from '../db/schema.js';
-import type { IndexStatsPoint } from '../types.js';
+import type { IndexStatsPoint, LatestIndexSnapshot } from '../types.js';
 
 export const INDEX_STATS_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -108,17 +108,6 @@ export async function getStatsHistory(
 		.orderBy(asc(indexStatsSnapshot.capturedAt))
 		.limit(opts.limit);
 }
-
-export type LatestIndexSnapshot = {
-	indexId: string;
-	capturedAt: Date;
-	numDocs: number;
-	sizeBytes: number;
-	uncompressedBytes: number;
-	numSplits: number;
-	minTimestamp: number | null;
-	maxTimestamp: number | null;
-};
 
 export async function getLatestSnapshotsByIndex(db: Db): Promise<LatestIndexSnapshot[]> {
 	const result = await db.execute<{

@@ -7,7 +7,7 @@ import {
 	INGEST_PREFIX,
 	LAST_USED_THROTTLE_SECONDS,
 	SEARCH_PREFIX
-} from '../constants/api-keys.js';
+} from '../constants.js';
 import type { Db } from '../db/index.js';
 import { apiKey } from '../db/schema.js';
 import type {
@@ -15,7 +15,8 @@ import type {
 	ApiKeySummary,
 	ApiKeyValue,
 	CreateApiKeyInput,
-	VerifiedApiKey
+	VerifiedApiKey,
+	VerifyApiKeyResult
 } from '../types.js';
 import { internal, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
@@ -50,6 +51,8 @@ const POSITIVE_TTL_MS = 60_000;
 const NEGATIVE_TTL_MS = 10_000;
 const MAX_CACHE_ENTRIES = 5000;
 
+// In-process only: under horizontal scaling each instance keeps its own cache, so an
+// invalidation on one instance does not reach the others (entries expire via TTL).
 const apiKeyCache = new Map<string, ApiKeyCacheEntry>();
 
 export function invalidateApiKeyCache(): void {
@@ -153,11 +156,6 @@ export async function deleteApiKey(db: Db, id: number): Promise<void> {
 	}
 	invalidateApiKeyCache();
 }
-
-export type VerifyApiKeyResult =
-	| { status: 'ok'; key: VerifiedApiKey }
-	| { status: 'wrong-role'; actualRole: ApiKeyRole }
-	| { status: 'not-found' };
 
 export async function verifyApiKey(
 	db: Db,

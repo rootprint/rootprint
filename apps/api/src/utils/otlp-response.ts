@@ -1,6 +1,6 @@
 import { create, toBinary, toJson } from '@bufbuild/protobuf';
 
-import { CONTENT_TYPE_JSON, CONTENT_TYPE_PROTOBUF } from '../constants/ingest.js';
+import { CONTENT_TYPE_JSON, CONTENT_TYPE_PROTOBUF } from '../constants.js';
 import { Code } from '../gen/google/rpc/code_pb.js';
 import { StatusSchema } from '../gen/google/rpc/status_pb.js';
 import { ExportLogsServiceResponseSchema } from '../gen/opentelemetry/proto/collector/logs/v1/logs_service_pb.js';

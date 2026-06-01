@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { INDEX_VISIBILITIES } from '../constants/index-visibility.js';
+import { INDEX_VISIBILITIES } from '../constants.js';
 
 export const saveIndexConfigSchema = v.object({
 	displayName: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(128)))),

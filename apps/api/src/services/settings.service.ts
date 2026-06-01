@@ -2,17 +2,11 @@ import { inArray } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
 import { appSettings } from '../db/schema.js';
-import type { GoogleAuthSettings } from '../types.js';
+import type { GoogleAuthCredentials, GoogleAuthSettings } from '../types.js';
 
 const GOOGLE_CLIENT_ID = 'google_client_id';
 const GOOGLE_CLIENT_SECRET = 'google_client_secret';
 export const GOOGLE_ALLOWED_DOMAINS = 'google_allowed_domains';
-
-export type GoogleAuthCredentials = {
-	clientId: string;
-	clientSecret: string;
-	allowedDomains: string[];
-};
 
 async function loadGoogleSettingsByKey(db: Db): Promise<Map<string, string>> {
 	const rows = await db

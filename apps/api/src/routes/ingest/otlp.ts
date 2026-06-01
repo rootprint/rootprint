@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { config } from '../../config.js';
-import { CONTENT_TYPE_PROTOBUF } from '../../constants/ingest.js';
+import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { AppEnv } from '../../env.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import {
