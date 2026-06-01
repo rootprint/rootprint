@@ -51,6 +51,8 @@ const POSITIVE_TTL_MS = 60_000;
 const NEGATIVE_TTL_MS = 10_000;
 const MAX_CACHE_ENTRIES = 5000;
 
+// In-process only: under horizontal scaling each instance keeps its own cache, so an
+// invalidation on one instance does not reach the others (entries expire via TTL).
 const apiKeyCache = new Map<string, ApiKeyCacheEntry>();
 
 export function invalidateApiKeyCache(): void {

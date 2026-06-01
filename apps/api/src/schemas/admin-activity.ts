@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { positiveInt } from '../utils/params.js';
+import { intParam, positiveInt } from '../utils/valibot.js';
 
 const ActivityWindowValues = ['24h', '7d', '30d'] as const;
 const WindowField = v.optional(v.picklist(ActivityWindowValues));
@@ -11,54 +11,18 @@ export const WindowQuery = v.object({
 
 export const SlowestQuery = v.object({
 	window: WindowField,
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > 100) throw new Error('must be 1–100');
-				return n;
-			})
-		)
-	)
+	limit: v.optional(intParam({ min: 1, max: 100, label: 'limit' }))
 });
 
 export const TopActorsQuery = v.object({
 	window: WindowField,
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > 50) throw new Error('must be 1–50');
-				return n;
-			})
-		)
-	)
+	limit: v.optional(intParam({ min: 1, max: 50, label: 'limit' }))
 });
 
 export const RecentQuery = v.object({
 	window: WindowField,
-	offset: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 0) throw new Error('must be >= 0');
-				return n;
-			})
-		)
-	),
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > 500) throw new Error('must be 1–500');
-				return n;
-			})
-		)
-	),
+	offset: v.optional(intParam({ min: 0, label: 'offset' })),
+	limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' })),
 	status: v.optional(v.picklist(['any', 'success', 'error']))
 });
 

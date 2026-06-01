@@ -41,7 +41,7 @@ export function resolveWindow(
 	return { key, ...WINDOWS[key] };
 }
 
-export async function getSummary(db: Db, window: ActivityWindow): Promise<SummaryRow> {
+export async function getSummary(db: Db, window: ActivityWindow | undefined): Promise<SummaryRow> {
 	const { interval } = resolveWindow(window);
 	const result = await db.execute<{
 		total: string;
@@ -70,7 +70,10 @@ export async function getSummary(db: Db, window: ActivityWindow): Promise<Summar
 	};
 }
 
-export async function getLatencyBuckets(db: Db, window: ActivityWindow): Promise<LatencyBucket[]> {
+export async function getLatencyBuckets(
+	db: Db,
+	window: ActivityWindow | undefined
+): Promise<LatencyBucket[]> {
 	const { interval, bucketSeconds } = resolveWindow(window);
 	const result = await db.execute<{
 		bucket: Date | string;
@@ -101,7 +104,7 @@ export async function getLatencyBuckets(db: Db, window: ActivityWindow): Promise
 
 export async function getSlowestQueries(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	limit: number
 ): Promise<SlowestRow[]> {
 	const { interval } = resolveWindow(window);
@@ -172,7 +175,7 @@ export async function getSlowestQueries(
 
 export async function getTopActors(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	limit: number
 ): Promise<TopActorRow[]> {
 	const { interval } = resolveWindow(window);
@@ -262,7 +265,7 @@ async function resolveActorIdentity(
 
 export async function getActorSummary(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	actor: ActorFilter
 ): Promise<ActorSummaryRow> {
 	const { interval } = resolveWindow(window);
@@ -311,7 +314,7 @@ export async function getActorSummary(
 
 export async function getActorVolumeBuckets(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	actor: ActorFilter
 ): Promise<VolumeBucket[]> {
 	const { interval, bucketSeconds } = resolveWindow(window);
@@ -330,7 +333,7 @@ export async function getActorVolumeBuckets(
 
 export async function getActorLatencyBuckets(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	actor: ActorFilter
 ): Promise<LatencyBucket[]> {
 	const { interval, bucketSeconds } = resolveWindow(window);
@@ -364,7 +367,7 @@ export async function getActorLatencyBuckets(
 
 export async function getUserIndexes(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	userId: string
 ): Promise<ActorIndexRow[]> {
 	const { interval } = resolveWindow(window);
@@ -395,7 +398,7 @@ export async function getUserIndexes(
 
 export async function getActorRecent(
 	db: Db,
-	window: ActivityWindow,
+	window: ActivityWindow | undefined,
 	actor: ActorFilter,
 	opts: { offset: number; limit: number; status: 'any' | 'success' | 'error' }
 ): Promise<RecentResult> {

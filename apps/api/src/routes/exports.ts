@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { quickwit } from '../lib/quickwit.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
 import { ExportLogsQuery } from '../schemas/export.js';
-import { preflightExport, streamExport } from '../services/export.service.js';
+import { buildExportBody, preflightExport } from '../services/export.service.js';
 import { badRequest } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
 
@@ -27,8 +27,8 @@ export const exportsRouter = new Hono<IndexConfigEnv>()
 		const { total, filename, contentType } = await preflightExport(quickwit, indexConfig, q);
 		if (total === 0) throw badRequest('No logs match in this time range');
 
-		const stream = streamExport(quickwit, indexConfig, q);
-		const gzipped = stream.pipeThrough(
+		const body = await buildExportBody(quickwit, indexConfig, q);
+		const gzipped = new Response(body as BodyInit).body!.pipeThrough(
 			new CompressionStream('gzip') as unknown as TransformStream<Uint8Array, Uint8Array>
 		);
 

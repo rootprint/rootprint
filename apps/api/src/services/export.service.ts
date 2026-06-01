@@ -5,6 +5,7 @@ import { type QuickwitClient } from 'quickwit-js';
 import { EXPORT_MAX_ROWS } from '../constants.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
+import { applyTimeWindow } from './log.service.js';
 
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();
@@ -128,61 +129,31 @@ function buildFilename(indexId: string, format: 'json' | 'csv' | 'text'): string
 	return `rootprint-${safe}-${stamp}.${pickExtension(format)}`;
 }
 
-export function streamExport(
+export async function buildExportBody(
 	qw: QuickwitClient,
 	indexConfig: IndexConfig,
 	q: ExportLogsQueryInput
-): ReadableStream<Uint8Array> {
+): Promise<Uint8Array> {
 	const idx = qw.index(indexConfig.indexId);
 	const state = createFormatState();
 
-	let cancelled = false;
-	let done = false;
+	const builder = idx
+		.query(q.q || '*')
+		.limit(EXPORT_MAX_ROWS)
+		.sortBy(indexConfig.timestampField, 'asc');
+	applyTimeWindow(builder, q.startTs, q.endTs);
 
-	function formatBatch(rows: Record<string, unknown>[]): Uint8Array {
-		switch (q.format) {
-			case 'json':
-				return formatNdjsonBatch(rows);
-			case 'csv':
-				return formatCsvBatch(rows, state);
-			case 'text':
-				return formatTextBatch(rows, indexConfig);
-		}
+	const response = await idx.search(builder).catch(translateQuickwitError);
+	const hits = (response.hits ?? []) as Record<string, unknown>[];
+
+	switch (q.format) {
+		case 'json':
+			return formatNdjsonBatch(hits);
+		case 'csv':
+			return formatCsvBatch(hits, state);
+		case 'text':
+			return formatTextBatch(hits, indexConfig);
 	}
-
-	return new ReadableStream<Uint8Array>({
-		async pull(controller) {
-			if (cancelled || done) {
-				controller.close();
-				return;
-			}
-
-			try {
-				const builder = idx
-					.query(q.q || '*')
-					.limit(EXPORT_MAX_ROWS)
-					.sortBy(indexConfig.timestampField, 'asc');
-				builder.startTimestamp(q.startTs);
-				builder.endTimestamp(q.endTs);
-
-				const response = await idx.search(builder).catch(translateQuickwitError);
-				const hits = (response.hits ?? []) as Record<string, unknown>[];
-
-				if (hits.length > 0) {
-					const bytes = formatBatch(hits);
-					if (bytes.byteLength > 0) controller.enqueue(bytes);
-				}
-				done = true;
-				controller.close();
-			} catch (e) {
-				console.error('[export] stream error:', e);
-				controller.error(e);
-			}
-		},
-		cancel() {
-			cancelled = true;
-		}
-	});
 }
 
 export async function preflightExport(
@@ -195,8 +166,7 @@ export async function preflightExport(
 		.query(q.q || '*')
 		.limit(0)
 		.countAll();
-	builder.startTimestamp(q.startTs);
-	builder.endTimestamp(q.endTs);
+	applyTimeWindow(builder, q.startTs, q.endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	const numHits = response.num_hits ?? 0;
 	const total = Math.min(numHits, EXPORT_MAX_ROWS);

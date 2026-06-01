@@ -30,14 +30,13 @@ import {
 	fieldValues,
 	fieldValuesBulk,
 	histogramLogs,
-	searchLogs,
-	toSearchParams
+	searchLogs
 } from '../services/log.service.js';
 import { withSearchAudit } from '../services/search-audit.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
 import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
-import { toNum } from '../utils/valibot.js';
+import { intParam, toNum } from '../utils/valibot.js';
 
 const SourceParams = v.object({
 	indexId: v.pipe(v.string(), v.minLength(1)),
@@ -68,18 +67,7 @@ const FieldValuesQuery = v.object({
 	q: v.optional(v.string()),
 	startTs: v.optional(toNum),
 	endTs: v.optional(toNum),
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > FIELD_VALUES_MAX) {
-					throw new Error(`must be 1–${FIELD_VALUES_MAX}`);
-				}
-				return n;
-			})
-		)
-	)
+	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
 
 const FilterSchema = v.object({
@@ -117,33 +105,13 @@ const FieldValuesBulkQuery = v.object({
 	),
 	startTs: v.optional(toNum),
 	endTs: v.optional(toNum),
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > FIELD_VALUES_MAX) {
-					throw new Error(`must be 1–${FIELD_VALUES_MAX}`);
-				}
-				return n;
-			})
-		)
-	)
+	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
 
 const StatsQuery = v.object({
 	from: v.optional(toNum),
 	to: v.optional(toNum),
-	limit: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				const n = parseInt(s, 10);
-				if (!Number.isInteger(n) || n < 1 || n > 10000) throw new Error('must be 1–10000');
-				return n;
-			})
-		)
-	)
+	limit: v.optional(intParam({ min: 1, max: 10000, label: 'limit' }))
 });
 
 const PutPreferencesBody = v.object({
@@ -263,7 +231,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			{ source: 'ui', userId: session.user.id },
 			indexConfig.indexId,
 			q,
-			() => searchLogs(quickwit, indexConfig, toSearchParams(q))
+			() => searchLogs(quickwit, indexConfig, q)
 		);
 		return c.json(result);
 	})

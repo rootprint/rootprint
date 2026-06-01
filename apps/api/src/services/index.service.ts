@@ -173,7 +173,7 @@ export async function getIndexViewConfig(
 	return {
 		indexId,
 		displayName: settings.displayName,
-		levelField: settings.levelField,
+		levelField: index.fields.some((f) => f.name === settings.levelField) ? settings.levelField : '',
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
 		contextFields: settings.contextFields,
