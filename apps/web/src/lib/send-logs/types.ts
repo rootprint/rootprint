@@ -12,6 +12,7 @@ export type Snippet = {
 	code: string;
 	lang: SnippetLang;
 	copyTitle?: string;
+	highlightValue?: string;
 };
 
 export type Callout = {

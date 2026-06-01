@@ -48,6 +48,16 @@ bun --filter web lint             # oxlint
 - Auth: `authClient` from `$lib/auth-client`.
 - API: `api` from `$lib/api/client` (typed Hono RPC).
 
+### Error handling
+
+Loaders (`+page.ts` / `+layout.ts`) follow one of three conventions, chosen by intent:
+
+- **Bubble (default):** let the error propagate to the root `+error.svelte`. Use for generic failures with no special handling.
+- **`throw error(status, msg)`:** use only to surface a _meaningful_ HTTP status/message (e.g. mapping a typed `IndexApiError` 404 to "Index not found"). See `routes/(app)/settings/(admin)/indexes/[indexId]/+page.ts`.
+- **Return a discriminated result** (e.g. `{ error: 'not_found' | 'forbidden' | 'unknown' }`): use only when the page renders its own inline error UI instead of the global error page. See `routes/(app)/s/[code]/+page.ts`.
+
+Do not add `try/catch` to a loader unless it implements one of the two non-default conventions for a deliberate reason.
+
 ## Svelte 5 Patterns
 
 - Use runes: `$props`, `$state`, `$derived`, `$effect`, `$bindable`.

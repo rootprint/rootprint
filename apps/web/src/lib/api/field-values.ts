@@ -1,7 +1,7 @@
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { Filter, LogFieldValueBucket, TimeRange } from '$lib/types';
-import { composeQuery } from '$lib/utils/compose-query';
+import { composeQuery } from 'api/query';
 import { resolveTimeRange } from '$lib/utils/time-range';
 import { FIELD_VALUES_MAX } from 'api/constants';
 

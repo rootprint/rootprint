@@ -11,7 +11,8 @@
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import type { Window, SlowestRows, TopActors } from '$lib/api/activity';
-	import { formatDurationMs, formatTimestampRange } from '$lib/utils/time';
+	import { formatDurationMs } from '$lib/utils/format';
+	import { formatTimestampRange } from '$lib/utils/time';
 
 	let { data } = $props();
 

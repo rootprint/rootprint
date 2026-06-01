@@ -5,15 +5,12 @@ import {
 	getApiKeyRecent,
 	getApiKeySummary,
 	getApiKeyVolume,
-	type Window
+	parseWindow
 } from '$lib/api/activity';
-
-function parseWindow(raw: string | null): Window {
-	return raw === '24h' || raw === '7d' || raw === '30d' ? raw : '7d';
-}
+import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ url, params, depends }) => {
-	depends('app:activity:api-key');
+	depends(DEP.activityApiKey);
 	const window = parseWindow(url.searchParams.get('window'));
 	const offset = Number(url.searchParams.get('offset') ?? '0');
 	const apiKeyId = Number(params.id);

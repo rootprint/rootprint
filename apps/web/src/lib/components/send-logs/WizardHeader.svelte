@@ -4,7 +4,7 @@
 	import ApiKeyChip from './ApiKeyChip.svelte';
 	import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
 	import { resolveBreadcrumbs } from '$lib/settings-nav';
-	import { SEND_LOGS_API_KEYS_INVALIDATE_KEY } from '$lib/send-logs/constants';
+	import { DEP } from '$lib/api/deps';
 	import type { Integration } from '$lib/send-logs/types';
 	import type { ApiKeyView } from '$lib/api/api-keys';
 
@@ -50,6 +50,6 @@
 <CreateApiKeyModal
 	bind:open={createOpen}
 	{indexId}
-	invalidateKey={SEND_LOGS_API_KEYS_INVALIDATE_KEY}
+	invalidateKey={DEP.sendLogsApiKeys}
 	onCreated={handleCreated}
 />

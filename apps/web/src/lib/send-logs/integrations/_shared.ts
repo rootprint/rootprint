@@ -1,5 +1,5 @@
 import { OTLP_LOGS_INGEST_PATH } from '../constants';
-import { apiKeySubstring } from '../snippet-utils';
+import { highlightKey } from '../snippet-utils';
 import type { IntegrationContext, Snippet } from '../types';
 
 export function otelEnvVarsSnippet({
@@ -11,14 +11,18 @@ export function otelEnvVarsSnippet({
 	serviceName: string;
 	includeProtocol?: boolean;
 }): Snippet {
-	const apiKeyFragment = apiKeySubstring(ctx.apiKey, ctx.hasRealApiKey);
 	const lines = [`export OTEL_SERVICE_NAME=${serviceName}`];
 	if (includeProtocol) lines.push('export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf');
 	lines.push(
 		`export OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=${ctx.origin}${OTLP_LOGS_INGEST_PATH}`,
-		`export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20${apiKeyFragment}`
+		`export OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20${ctx.apiKey}`
 	);
-	return { code: lines.join('\n'), lang: 'bash', copyTitle: 'Copy environment variables' };
+	return {
+		code: lines.join('\n'),
+		lang: 'bash',
+		copyTitle: 'Copy environment variables',
+		highlightValue: highlightKey(ctx)
+	};
 }
 
 export function vectorOtlpSinkSnippet({
@@ -28,7 +32,6 @@ export function vectorOtlpSinkSnippet({
 	ctx: IntegrationContext;
 	inputs: string;
 }): string {
-	const apiKeyFragment = apiKeySubstring(ctx.apiKey, ctx.hasRealApiKey);
 	return `sinks:
   rootprint:
     type: opentelemetry
@@ -42,5 +45,5 @@ export function vectorOtlpSinkSnippet({
       compression: gzip
       request:
         headers:
-          Authorization: "Bearer ${apiKeyFragment}"`;
+          Authorization: "Bearer ${ctx.apiKey}"`;
 }

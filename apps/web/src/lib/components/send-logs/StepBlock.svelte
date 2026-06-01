@@ -36,7 +36,12 @@
 		{/if}
 		{#if step.snippets}
 			{#each step.snippets as snippet (snippet.code)}
-				<CodeBlock code={snippet.code} lang={snippet.lang} copyTitle={snippet.copyTitle} />
+				<CodeBlock
+					code={snippet.code}
+					lang={snippet.lang}
+					copyTitle={snippet.copyTitle}
+					highlightValue={snippet.highlightValue}
+				/>
 			{/each}
 		{/if}
 		{#if step.callout}

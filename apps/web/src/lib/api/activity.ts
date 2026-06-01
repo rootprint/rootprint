@@ -7,6 +7,11 @@ const users = activity.users;
 const apiKeys = activity['api-keys'];
 
 export type Window = '24h' | '7d' | '30d';
+
+export function parseWindow(raw: string | null): Window {
+	return raw === '24h' || raw === '7d' || raw === '30d' ? raw : '7d';
+}
+
 export type RecentStatus = 'any' | 'success' | 'error';
 
 export type Summary = InferResponseType<typeof activity.summary.$get, 200>;

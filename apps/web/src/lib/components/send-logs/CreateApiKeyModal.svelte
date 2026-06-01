@@ -5,7 +5,7 @@
 	import { createApiKey, ApiKeyApiError, type ApiKeyView } from '$lib/api/api-keys';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import TokenSecretReveal from '$lib/components/admin/TokenSecretReveal.svelte';
+	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
 
 	let {
@@ -96,7 +96,9 @@
 			</p>
 		</form>
 	{:else}
-		<TokenSecretReveal value={revealedKey} />
+		<div class="flex flex-col gap-3">
+			<CopyableField value={revealedKey} ariaLabel="Ingest token" />
+		</div>
 	{/if}
 
 	{#snippet actions()}

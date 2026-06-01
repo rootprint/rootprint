@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidate } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
+	import { DEP } from '$lib/api/deps';
 	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
 
 	type User = { id: string; name: string | null; email: string };
@@ -18,7 +19,7 @@
 		signingOut = true;
 		try {
 			await authClient.signOut();
-			await invalidate('app:session');
+			await invalidate(DEP.session);
 			await goto('/auth/sign-in');
 		} catch {
 			toast.error('Failed to sign out');

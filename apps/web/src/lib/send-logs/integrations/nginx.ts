@@ -1,5 +1,6 @@
 import NginxIcon from '@iconify-svelte/logos/nginx';
 import { vectorOtlpSinkSnippet } from './_shared';
+import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
 const GROUP_ADD_COMMAND = 'sudo usermod -aG adm vector';
@@ -41,7 +42,14 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'nginx_logs' })}`;
 				body:
 					'Save this at /etc/vector/vector.yaml. The endpoint and API key are prefilled — ' +
 					'lines arrive in rootprint as raw log bodies; structured parsing is documented separately.',
-				snippets: [{ code: vectorConfig, lang: 'yaml', copyTitle: 'Copy vector.yaml' }],
+				snippets: [
+					{
+						code: vectorConfig,
+						lang: 'yaml',
+						copyTitle: 'Copy vector.yaml',
+						highlightValue: highlightKey(ctx)
+					}
+				],
 				callout: {
 					variant: 'info',
 					html:
