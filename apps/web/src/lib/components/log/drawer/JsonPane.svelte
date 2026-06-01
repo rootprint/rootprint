@@ -3,6 +3,7 @@
 
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { highlightCode } from '$lib/utils/code-highlight';
+	import { resolveEmbeddedJson } from '$lib/utils/resolve-embedded-json';
 
 	let {
 		raw
@@ -10,7 +11,7 @@
 		raw: Record<string, unknown>;
 	} = $props();
 
-	const pretty = $derived(JSON.stringify(raw, null, 2));
+	const pretty = $derived(JSON.stringify(resolveEmbeddedJson(raw), null, 2));
 
 	let html = $state<string | null>(null);
 
