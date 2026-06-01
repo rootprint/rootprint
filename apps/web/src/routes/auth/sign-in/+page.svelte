@@ -2,6 +2,7 @@
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
+	import { DEP } from '$lib/api/deps';
 	import { authClient } from '$lib/auth-client';
 	import { safeReturnTo } from '$lib/return-to';
 	import { signInSchema } from 'api/schemas';
@@ -45,7 +46,7 @@
 				return;
 			}
 
-			await invalidate('app:session');
+			await invalidate(DEP.session);
 			await goto(safeReturnTo(page.url.searchParams.get('returnTo')));
 		} finally {
 			submitting = false;

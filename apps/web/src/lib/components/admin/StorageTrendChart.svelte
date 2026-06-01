@@ -6,7 +6,8 @@
 
 	import { browser } from '$app/environment';
 	import { baseContentAt } from '$lib/utils/log-helpers';
-	import { formatGiB, formatTickDate, formatTooltipDate } from '$lib/utils/format';
+	import { formatGiB } from '$lib/utils/format';
+	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
 	import RangePicker, { type Range } from './RangePicker.svelte';
 

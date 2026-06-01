@@ -1,21 +1,22 @@
 <script lang="ts">
 	import { CodeXml, Check, Copy } from 'lucide-svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { highlight } from '$lib/send-logs/highlight';
-	import { KEY_OPEN, KEY_CLOSE, stripApiKeySentinels } from '$lib/send-logs/snippet-utils';
+	import { highlightCode } from '$lib/utils/code-highlight';
+	import { apiKeyDecorations } from '$lib/send-logs/snippet-utils';
 	import type { SnippetLang } from '$lib/send-logs/types';
 
 	let {
 		code,
 		lang,
-		copyTitle = 'Copy'
+		copyTitle = 'Copy',
+		highlightValue
 	}: {
 		code: string;
 		lang: SnippetLang;
 		copyTitle?: string;
+		highlightValue?: string;
 	} = $props();
 
-	const rawCode = $derived(stripApiKeySentinels(code));
 	const langLabel = $derived(lang.charAt(0).toUpperCase() + lang.slice(1));
 
 	let html = $state<string | null>(null);
@@ -25,11 +26,10 @@
 		html = null;
 		(async () => {
 			try {
-				const highlighted = await highlight(code, lang);
+				const decorations = highlightValue ? apiKeyDecorations(code, highlightValue) : undefined;
+				const highlighted = await highlightCode(code, lang, { decorations });
 				if (cancelled) return;
-				html = highlighted
-					.replaceAll(KEY_OPEN, '<span class="api-key-substituted">')
-					.replaceAll(KEY_CLOSE, '</span>');
+				html = highlighted;
 			} catch {
 				if (!cancelled) html = null;
 			}
@@ -46,7 +46,7 @@
 			<CodeXml size={14} class="shrink-0" />
 			<span>{langLabel}</span>
 		</div>
-		<CopyButton text={rawCode} class="btn btn-ghost btn-xs" ariaLabel={copyTitle}>
+		<CopyButton text={code} class="btn btn-ghost btn-xs" ariaLabel={copyTitle}>
 			{#snippet children({ copied }: { copied: boolean })}
 				{#if copied}
 					<Check size={14} />
@@ -62,11 +62,11 @@
 		class="overflow-x-auto bg-white text-sm leading-relaxed [&_pre]:px-4 [&_pre]:py-3 [&_pre]:whitespace-pre"
 	>
 		{#if html}
-			<!-- html is Shiki output with sentinel-wrapped API key spans replaced. -->
+			<!-- html is Shiki output with substituted API keys wrapped via decorations. -->
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html html}
 		{:else}
-			<pre><code>{rawCode}</code></pre>
+			<pre><code>{code}</code></pre>
 		{/if}
 	</div>
 </div>

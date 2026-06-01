@@ -6,7 +6,7 @@
 
 	import { browser } from '$app/environment';
 	import { baseContentAt, cssVarColor } from '$lib/utils/log-helpers';
-	import { formatTickDate, formatTooltipDate } from '$lib/utils/format';
+	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
 	import type { Window } from '$lib/api/activity';
 

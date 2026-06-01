@@ -5,6 +5,7 @@
 	import { X } from 'lucide-svelte';
 
 	import { invalidate } from '$app/navigation';
+	import { DEP } from '$lib/api/deps';
 	import { toFieldErrors } from '$lib/api/errors';
 	import { saveIndexConfig, IndexApiError } from '$lib/api/indexes';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
@@ -85,7 +86,7 @@
 		try {
 			await saveIndexConfig(detail.indexId, parsed.output);
 			toast.success('Index configuration saved');
-			await invalidate(`app:index:${detail.indexId}`);
+			await invalidate(DEP.index(detail.indexId));
 		} catch (e) {
 			if (e instanceof IndexApiError && e.body) {
 				fieldErrors = toFieldErrors(e.body);

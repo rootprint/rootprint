@@ -41,11 +41,15 @@ export function parseLocalDateTime(dateStr: string, timeStr: string): number | n
 	return isValid(d) ? getUnixTime(d) : null;
 }
 
-export function formatDurationMs(ms: number | null): string {
-	if (ms === null) return '—';
-	if (ms < 1) return '<1 ms';
-	if (ms < 1000) return `${Math.round(ms)} ms`;
-	return `${(ms / 1000).toFixed(2)} s`;
+export function formatTickDate(d: Date | number, spanMs: number): string {
+	const date = d instanceof Date ? d : new Date(d);
+	const oneDay = 24 * 60 * 60 * 1000;
+	return spanMs <= oneDay ? format(date, 'HH:mm') : format(date, 'MMM d');
+}
+
+export function formatTooltipDate(d: Date | number): string {
+	const date = d instanceof Date ? d : new Date(d);
+	return format(date, 'yyyy-MM-dd HH:mm');
 }
 
 export function formatTimestampRange(startTs: number | null, endTs: number | null): string {

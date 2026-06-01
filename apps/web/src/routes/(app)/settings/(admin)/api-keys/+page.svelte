@@ -4,10 +4,11 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
+	import { DEP } from '$lib/api/deps';
 	import { createApiKey, getApiKey, deleteApiKey, ApiKeyApiError } from '$lib/api/api-keys';
 	import { toFieldErrors } from '$lib/api/errors';
 	import RoleBadge from '$lib/components/admin/RoleBadge.svelte';
-	import TokenSecretReveal from '$lib/components/admin/TokenSecretReveal.svelte';
+	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
@@ -87,7 +88,7 @@
 			const result = await createApiKey(input);
 			createdToken = result.token;
 			createPhase = 'reveal';
-			await invalidate('app:api-keys');
+			await invalidate(DEP.apiKeys);
 		} catch (e) {
 			if (e instanceof ApiKeyApiError && e.body) {
 				createFormError = e.body.error.message;
@@ -158,7 +159,7 @@
 		try {
 			await deleteApiKey(deleteTarget.id);
 			toast.success('API key deleted');
-			await invalidate('app:api-keys');
+			await invalidate(DEP.apiKeys);
 			deleteOpen = false;
 			deleteTarget = null;
 		} catch (e) {
@@ -351,7 +352,9 @@
 			</fieldset>
 		</form>
 	{:else}
-		<TokenSecretReveal value={createdToken} />
+		<div class="flex flex-col gap-3">
+			<CopyableField value={createdToken} ariaLabel="Ingest token" />
+		</div>
 	{/if}
 
 	{#snippet actions()}
@@ -387,7 +390,9 @@
 			Loading…
 		</div>
 	{:else if viewTokenValue}
-		<TokenSecretReveal value={viewTokenValue} />
+		<div class="flex flex-col gap-3">
+			<CopyableField value={viewTokenValue} ariaLabel="Ingest token" />
+		</div>
 	{/if}
 	<div class="modal-action">
 		<button type="button" class="btn btn-primary" onclick={() => (viewOpen = false)}>Close</button>

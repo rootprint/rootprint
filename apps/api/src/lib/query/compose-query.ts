@@ -9,12 +9,6 @@ export function escapeFilterValue(value: string): string {
 	return value;
 }
 
-/**
- * Combines the user's typed text query with structured filters into a single Quickwit query string.
- *
- * Same-field includes are OR-joined (a single log line has one `level`, so AND would never match);
- * excludes become `NOT field:"value"`; different fields and the text query are AND-joined.
- */
 export function composeQuery(text: string, filters: Filter[]): string {
 	const trimmed = text.trim();
 	const hasText = trimmed !== '' && trimmed !== '*';

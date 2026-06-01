@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDurationMs } from '$lib/utils/time';
+	import { formatDurationMs } from '$lib/utils/format';
 
 	type Props = {
 		totalSearches: number;

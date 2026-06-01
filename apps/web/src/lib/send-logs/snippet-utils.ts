@@ -1,19 +1,25 @@
-export const KEY_OPEN = '\x00KEY\x00';
-export const KEY_CLOSE = '\x00/KEY\x00';
+import type { DecorationItem } from 'shiki/bundle/full';
+import type { IntegrationContext } from './types';
 
-/**
- * Wraps an API key value with sentinel markers when it represents a real
- * substitution, so CodeBlock can highlight it post-syntax-highlighting.
- * Returns the bare value (no markers) when no real API key is present.
- */
-export function apiKeySubstring(value: string, hasRealApiKey: boolean): string {
-	return hasRealApiKey ? `${KEY_OPEN}${value}${KEY_CLOSE}` : value;
+export function apiKeyDecorations(code: string, value: string): DecorationItem[] {
+	if (!value) return [];
+	const decorations: DecorationItem[] = [];
+	let from = 0;
+	for (;;) {
+		const start = code.indexOf(value, from);
+		if (start === -1) break;
+		decorations.push({
+			start,
+			end: start + value.length,
+			properties: { class: 'api-key-substituted' }
+		});
+		from = start + value.length;
+	}
+	return decorations;
 }
 
-/**
- * Strips API key sentinels from a string. Used to derive the clipboard-safe
- * raw code before sentinels are converted to highlight spans.
- */
-export function stripApiKeySentinels(code: string): string {
-	return code.replaceAll(KEY_OPEN, '').replaceAll(KEY_CLOSE, '');
+export function highlightKey(
+	ctx: Pick<IntegrationContext, 'apiKey' | 'hasRealApiKey'>
+): string | undefined {
+	return ctx.hasRealApiKey ? ctx.apiKey : undefined;
 }

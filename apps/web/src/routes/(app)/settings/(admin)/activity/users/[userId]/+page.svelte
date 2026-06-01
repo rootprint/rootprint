@@ -11,7 +11,8 @@
 	import VolumeChart from '$lib/components/activity/VolumeChart.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import type { Window } from '$lib/api/activity';
-	import { formatDurationMs, formatTimestampRange } from '$lib/utils/time';
+	import { formatDurationMs } from '$lib/utils/format';
+	import { formatTimestampRange } from '$lib/utils/time';
 
 	let { data } = $props();
 

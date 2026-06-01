@@ -5,7 +5,8 @@
 
 	import { browser } from '$app/environment';
 	import { baseContentAt, cssVarColor } from '$lib/utils/log-helpers';
-	import { formatCount, formatTickDate, formatTooltipDate } from '$lib/utils/format';
+	import { formatCount } from '$lib/utils/format';
+	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import type { Window } from '$lib/api/activity';
 
 	type Bucket = { t: string; count: number };

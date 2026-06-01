@@ -1,5 +1,6 @@
 import DockerIcon from '@iconify-svelte/logos/docker-icon';
 import { vectorOtlpSinkSnippet } from './_shared';
+import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
 const COMPOSE_FRAGMENT = `services:
@@ -32,7 +33,14 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'docker' })}`;
 			{
 				title: 'Write vector.yaml',
 				body: 'Save this next to your docker-compose.yaml. The endpoint and API key are prefilled.',
-				snippets: [{ code: vectorConfig, lang: 'yaml', copyTitle: 'Copy vector.yaml' }],
+				snippets: [
+					{
+						code: vectorConfig,
+						lang: 'yaml',
+						copyTitle: 'Copy vector.yaml',
+						highlightValue: highlightKey(ctx)
+					}
+				],
 				callout: {
 					variant: 'info',
 					html:
