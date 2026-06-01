@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { MiddlewareHandler } from 'hono';
 
-import { LAST_ACTIVE_THROTTLE_MS } from '../constants/defaults.js';
+import { LAST_ACTIVE_THROTTLE_MS } from '../constants.js';
 import { user } from '../db/schema.js';
 import type { AppEnv } from '../env.js';
 import { auth } from '../lib/auth.js';

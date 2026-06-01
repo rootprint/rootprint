@@ -1,9 +1,8 @@
 import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 'quickwit-js';
 import { AggregationBuilder } from 'quickwit-js';
 
-import type { IndexConfig } from './index.service.js';
 import type { SearchQueryInput } from '../schemas/search.js';
-import { FIELD_VALUES_DEFAULT } from '../constants/search.js';
+import { FIELD_VALUES_DEFAULT } from '../constants.js';
 import { composeQuery } from '../lib/query/compose-query.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import type {
@@ -12,6 +11,7 @@ import type {
 	FieldValuesResponse,
 	Filter,
 	HistogramResponse,
+	IndexConfig,
 	LogSearchResponse
 } from '../types.js';
 

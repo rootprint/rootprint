@@ -5,7 +5,8 @@ import type { AuthedEnv } from '../env.js';
 import { isAdmin } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
-import { getIndexConfig, type IndexConfig } from '../services/index.service.js';
+import { getIndexConfig } from '../services/index.service.js';
+import type { IndexConfig } from '../types.js';
 import { IndexIdParams } from '../utils/params.js';
 
 export type IndexConfigEnv = AuthedEnv & {

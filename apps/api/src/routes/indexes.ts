@@ -12,7 +12,7 @@ import { requireAdmin } from '../middleware/require-admin.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
 import { requireManageableIndex } from '../middleware/require-manageable-index.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
-import { FIELD_VALUES_MAX } from '../constants/search.js';
+import { FIELD_VALUES_MAX } from '../constants.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {

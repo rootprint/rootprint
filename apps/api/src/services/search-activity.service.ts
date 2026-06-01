@@ -4,6 +4,16 @@ import type { Db } from '../db/index.js';
 import { user } from '../db/auth.schema.js';
 import { apiKey } from '../db/schema.js';
 import type { ActivityWindow } from '../schemas/admin-activity.js';
+import type {
+	ActorIndexRow,
+	ActorSummaryRow,
+	LatencyBucket,
+	RecentResult,
+	SlowestRow,
+	SummaryRow,
+	TopActorRow,
+	VolumeBucket
+} from '../types.js';
 
 type WindowResolved = {
 	interval: string; // for INTERVAL literal in SQL
@@ -30,14 +40,6 @@ export function resolveWindow(
 	const key: ActivityWindow = w ?? '7d';
 	return { key, ...WINDOWS[key] };
 }
-
-export type SummaryRow = {
-	totalSearches: number;
-	errorCount: number;
-	p50: number | null;
-	p95: number | null;
-	p99: number | null;
-};
 
 export async function getSummary(db: Db, window: ActivityWindow): Promise<SummaryRow> {
 	const { interval } = resolveWindow(window);
@@ -68,14 +70,6 @@ export async function getSummary(db: Db, window: ActivityWindow): Promise<Summar
 	};
 }
 
-export type LatencyBucket = {
-	t: string; // ISO timestamp at bucket start
-	count: number;
-	p50: number | null;
-	p95: number | null;
-	p99: number | null;
-};
-
 export async function getLatencyBuckets(db: Db, window: ActivityWindow): Promise<LatencyBucket[]> {
 	const { interval, bucketSeconds } = resolveWindow(window);
 	const result = await db.execute<{
@@ -104,20 +98,6 @@ export async function getLatencyBuckets(db: Db, window: ActivityWindow): Promise
 		p99: r.p99 === null ? null : Number(r.p99)
 	}));
 }
-
-export type SlowestRow = {
-	id: number;
-	executedAt: string;
-	indexId: string;
-	source: 'ui' | 'token';
-	actorId: string; // user id or token id (as string)
-	actorLabel: string | null; // resolved email / token name
-	durationMs: number;
-	numHits: number | null;
-	query: string;
-	startTs: number | null; // searched range start (seconds since epoch)
-	endTs: number | null; // searched range end (seconds since epoch)
-};
 
 export async function getSlowestQueries(
 	db: Db,
@@ -190,16 +170,6 @@ export async function getSlowestQueries(
 	});
 }
 
-export type TopActorRow = {
-	kind: 'user' | 'apiKey';
-	id: string;
-	label: string | null;
-	count: number;
-	avgDurationMs: number;
-	errorCount: number;
-	indexes: string[];
-};
-
 export async function getTopActors(
 	db: Db,
 	window: ActivityWindow,
@@ -270,11 +240,6 @@ function actorPredicate(a: ActorFilter) {
 	return a.kind === 'user' ? sql`user_id = ${a.userId}` : sql`api_key_id = ${a.apiKeyId}`;
 }
 
-export type ActorSummaryRow = SummaryRow & {
-	displayName: string | null;
-	email: string | null;
-};
-
 async function resolveActorIdentity(
 	db: Db,
 	actor: ActorFilter
@@ -344,8 +309,6 @@ export async function getActorSummary(
 	};
 }
 
-export type VolumeBucket = { t: string; count: number };
-
 export async function getActorVolumeBuckets(
 	db: Db,
 	window: ActivityWindow,
@@ -399,13 +362,6 @@ export async function getActorLatencyBuckets(
 	}));
 }
 
-export type ActorIndexRow = {
-	indexId: string;
-	count: number;
-	avgDurationMs: number;
-	errorCount: number;
-};
-
 export async function getUserIndexes(
 	db: Db,
 	window: ActivityWindow,
@@ -436,22 +392,6 @@ export async function getUserIndexes(
 		errorCount: Number(r.errors)
 	}));
 }
-
-export type RecentRow = {
-	id: number;
-	executedAt: string;
-	indexId: string;
-	durationMs: number;
-	numHits: number | null;
-	query: string;
-	startTs: number | null;
-	endTs: number | null;
-};
-
-export type RecentResult = {
-	rows: RecentRow[];
-	total: number;
-};
 
 export async function getActorRecent(
 	db: Db,

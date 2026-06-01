@@ -1,18 +1,13 @@
-import type { IndexConfig } from './index.service.js';
+import type { ExportPreflightResult, FormatState, IndexConfig } from '../types.js';
 
 import { type QuickwitClient } from 'quickwit-js';
 
-import { EXPORT_MAX_ROWS } from '../constants/export.js';
+import { EXPORT_MAX_ROWS } from '../constants.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();
-
-export type FormatState = {
-	csvHeader?: string[];
-	preambleEmitted: boolean;
-};
 
 export function createFormatState(): FormatState {
 	return { preambleEmitted: false };
@@ -132,14 +127,6 @@ function buildFilename(indexId: string, format: 'json' | 'csv' | 'text'): string
 		.replace(/:/g, '-');
 	return `rootprint-${safe}-${stamp}.${pickExtension(format)}`;
 }
-
-export type ExportPreflightResult = {
-	total: number;
-	capped: boolean;
-	numHits: number;
-	filename: string;
-	contentType: string;
-};
 
 export function streamExport(
 	qw: QuickwitClient,

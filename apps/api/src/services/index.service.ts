@@ -1,7 +1,9 @@
 import { eq, inArray } from 'drizzle-orm';
 import type {
+	IndexConfig,
 	IndexDetail,
 	IndexField,
+	IndexSettings,
 	IndexSummary,
 	IndexViewConfig,
 	IndexVisibility,
@@ -23,24 +25,6 @@ import {
 import { indexAccessError, internal, notFound } from '../utils/http-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import { getIndex as qwGetIndex, listIndexes as qwListIndexes } from './quickwit-index.service.js';
-
-export type IndexSettings = {
-	displayName: string | null;
-	visibility: IndexVisibility;
-	levelField: string;
-	messageField: string;
-	tracebackField: string | null;
-	contextFields: string[] | null;
-};
-
-export type IndexConfig = {
-	indexId: string;
-	levelField: string;
-	timestampField: string;
-	messageField: string;
-	tracebackField: string | null;
-	contextFields: string[] | null;
-};
 
 const DEFAULT_SETTINGS: IndexSettings = {
 	displayName: null,

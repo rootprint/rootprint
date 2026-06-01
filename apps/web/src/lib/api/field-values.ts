@@ -3,7 +3,7 @@ import { readApiError } from '$lib/api/errors';
 import type { Filter, LogFieldValueBucket, TimeRange } from '$lib/types';
 import { composeQuery } from '$lib/utils/compose-query';
 import { resolveTimeRange } from '$lib/utils/time-range';
-import { FIELD_VALUES_MAX } from 'api/constants/search';
+import { FIELD_VALUES_MAX } from 'api/constants';
 
 export { FIELD_VALUES_MAX as FIELD_VALUES_LIMIT };
 
