@@ -176,9 +176,13 @@
 			: 'No API keys yet.'
 	);
 
-	// Shared grid tracks so the header and every data row align into columns.
-	const cols =
-		'grid grid-cols-[minmax(0,2fr)_minmax(0,0.8fr)_minmax(0,1.3fr)_minmax(0,1.5fr)_auto_auto] items-center gap-3 px-4';
+	// Column tracks shared by the whole table via subgrid (see ListCard `cols`), so
+	// the header and every data row align into the same columns. Defining them once
+	// on the card — rather than per-row — keeps the `auto` columns from sizing to
+	// each row's own content and drifting out of alignment.
+	const colTracks = 'minmax(0,2fr) minmax(0,0.8fr) minmax(0,1.3fr) minmax(0,1.5fr) auto auto';
+	// Each row/header opts into the shared tracks and adds its own spacing.
+	const row = 'col-span-full grid grid-cols-subgrid items-center px-4';
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
@@ -238,8 +242,8 @@
 
 	<div class="mt-4 overflow-x-auto">
 		<div class="min-w-[40rem]">
-			<ListCard empty={filtered.length === 0} {emptyMessage}>
-				<div class="{cols} text-base-content/50 py-2.5 text-[10px] tracking-wide uppercase">
+			<ListCard cols={colTracks} empty={filtered.length === 0} {emptyMessage}>
+				<div class="{row} text-base-content/50 py-2.5 text-[10px] tracking-wide uppercase">
 					<span>Name</span>
 					<span>Role</span>
 					<span>Token</span>
@@ -248,7 +252,7 @@
 					<span></span>
 				</div>
 				{#each filtered as key (key.id)}
-					<div class="{cols} min-h-14 py-3">
+					<div class="{row} min-h-14 py-3">
 						<div class="truncate text-sm">{key.name}</div>
 						<div><RoleBadge role={key.role} /></div>
 						<div class="text-base-content/60 font-mono text-xs">{key.tokenPrefix}…</div>

@@ -40,13 +40,13 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'nginx_logs' })}`;
 				title: 'Write /etc/vector/vector.yaml',
 				body:
 					'Save this at /etc/vector/vector.yaml. The endpoint and API key are prefilled — ' +
-					'lines arrive in Logwiz as raw log bodies; structured parsing is documented separately.',
+					'lines arrive in rootprint as raw log bodies; structured parsing is documented separately.',
 				snippets: [{ code: vectorConfig, lang: 'yaml', copyTitle: 'Copy vector.yaml' }],
 				callout: {
 					variant: 'info',
 					html:
 						'Want combined-format parsing and severity mapping? See the ' +
-						'<a href="https://docs.logwiz.io/send-logs/web-servers/nginx" target="_blank" rel="noreferrer" class="link">Nginx docs</a>.'
+						'<a href="https://docs.rootprint.io/send-logs/web-servers/nginx" target="_blank" rel="noreferrer" class="link">Nginx docs</a>.'
 				}
 			},
 			{

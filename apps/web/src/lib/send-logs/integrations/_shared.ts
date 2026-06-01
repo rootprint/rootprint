@@ -30,7 +30,7 @@ export function vectorOtlpSinkSnippet({
 }): string {
 	const apiKeyFragment = apiKeySubstring(ctx.apiKey, ctx.hasRealApiKey);
 	return `sinks:
-  logwiz:
+  rootprint:
     type: opentelemetry
     inputs: [${inputs}]
     protocol:
