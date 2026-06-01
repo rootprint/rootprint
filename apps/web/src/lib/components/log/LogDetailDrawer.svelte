@@ -10,6 +10,7 @@
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
+	import { searchHighlight } from '$lib/utils/dom-highlight';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -269,13 +270,14 @@
 		{/if}
 
 		<div
+			use:searchHighlight={searchTerm}
 			class="min-h-0 flex-1"
 			role="tabpanel"
 			id={`drawer-panel-${activeTab}`}
 			aria-labelledby={`drawer-tab-${activeTab}`}
 		>
 			{#if activeTab === 'parameters'}
-				<ParametersPane {hit} {searchTerm} {store} />
+				<ParametersPane {hit} {store} />
 			{:else if activeTab === 'context'}
 				<ContextPane {hit} {store} onCloseDrawer={close} />
 			{:else}

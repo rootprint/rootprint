@@ -12,11 +12,9 @@
 
 	let {
 		hit,
-		searchTerm,
 		store
 	}: {
 		hit: LogHit;
-		searchTerm: string;
 		store: SearchStore;
 	} = $props();
 
@@ -118,7 +116,6 @@
 									{#each group.fields as field (field.name)}
 										<DrawerFieldRow
 											{field}
-											{searchTerm}
 											onFilterFor={(f) => applyFilter(f, false)}
 											onFilterOut={(f) => applyFilter(f, true)}
 											onCopy={copyValue}
