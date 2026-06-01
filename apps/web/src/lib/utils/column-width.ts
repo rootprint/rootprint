@@ -49,10 +49,11 @@ export function computeMessageWidth(logs: { message: string }[], label = 'messag
 export function buildGridTemplate(
 	columns: string[],
 	columnWidths: Record<string, number>,
-	messageWidth: number
+	messageWidth: number,
+	lineWrap = false
 ): string {
 	const middle = columns.map((c) => `calc(${columnWidths[c] ?? c.length + 1}ch + 1rem)`).join(' ');
-	// Trailing 1fr is an empty filler that stretches rows to the viewport edge
-	// when content is narrower than the viewport.
-	return `3px calc(${TIMESTAMP_COLUMN_WIDTH}ch + 1rem)${middle ? ' ' + middle : ''} calc(${messageWidth}ch + 1rem) 1fr`;
+	const prefix = `3px calc(${TIMESTAMP_COLUMN_WIDTH}ch + 1rem)${middle ? ' ' + middle : ''}`;
+	if (lineWrap) return `${prefix} minmax(0, 1fr)`;
+	return `${prefix} calc(${messageWidth}ch + 1rem) 1fr`;
 }

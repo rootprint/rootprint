@@ -147,7 +147,9 @@ const StatsQuery = v.object({
 });
 
 const PutPreferencesBody = v.object({
-	displayFields: v.nullable(v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100)))
+	displayFields: v.nullable(v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100))),
+	lineWrap: v.boolean(),
+	displayMode: v.picklist(['table', 'inline'])
 });
 
 const ListIndexesQuery = v.object({

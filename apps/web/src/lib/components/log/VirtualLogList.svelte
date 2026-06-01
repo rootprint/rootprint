@@ -3,10 +3,12 @@
 	import { createVirtualizer } from '@tanstack/svelte-virtual';
 	import LogHeader from './LogHeader.svelte';
 	import LogRow from './LogRow.svelte';
+	import InlineLogRow from './InlineLogRow.svelte';
 	import type { FieldConfig, LogHit, SortDirection, TimezoneMode } from '$lib/types';
+	import type { DisplayMode } from 'api/types';
 
-	// Uniform row height: text-xs line (16px) + py-1 (8px) + 1px border-b.
-	const ROW_HEIGHT = 25;
+	const TABLE_ROW_ESTIMATE = 25;
+	const INLINE_ROW_ESTIMATE = 25;
 	const OVERSCAN = 8;
 
 	let {
@@ -17,6 +19,8 @@
 		fieldConfig,
 		sortDirection,
 		viewport,
+		lineWrap = false,
+		displayMode = 'table',
 		ontogglesort = () => {},
 		onRowClick = () => {}
 	}: {
@@ -27,6 +31,8 @@
 		fieldConfig: FieldConfig | null;
 		sortDirection: SortDirection;
 		viewport: HTMLElement | null;
+		lineWrap?: boolean;
+		displayMode?: DisplayMode;
 		ontogglesort?: () => void;
 		onRowClick?: (hit: LogHit) => void;
 	} = $props();
@@ -37,10 +43,14 @@
 	const virtualizer = createVirtualizer<HTMLElement, HTMLElement>({
 		count: logs.length,
 		getScrollElement: () => viewport,
-		estimateSize: () => ROW_HEIGHT,
+		estimateSize: () => TABLE_ROW_ESTIMATE,
 		overscan: OVERSCAN,
 		scrollMargin: 0
 	});
+
+	function measure(node: HTMLElement) {
+		get(virtualizer).measureElement(node);
+	}
 
 	$effect(() => {
 		scrollMargin = headerEl?.offsetHeight ?? 0;
@@ -50,35 +60,56 @@
 		const count = logs.length;
 		const margin = scrollMargin;
 		const el = viewport;
+		const estimate = displayMode === 'inline' ? INLINE_ROW_ESTIMATE : TABLE_ROW_ESTIMATE;
 		const v = get(virtualizer);
-		v.setOptions({ count, scrollMargin: margin, getScrollElement: () => el });
-		v.measure();
+		v.setOptions({
+			count,
+			scrollMargin: margin,
+			getScrollElement: () => el,
+			estimateSize: () => estimate
+		});
 	});
 </script>
 
 <div class="w-fit min-w-full">
-	<LogHeader
-		bind:el={headerEl}
-		{fieldConfig}
-		columns={activeFields}
-		{gridTemplate}
-		{sortDirection}
-		{ontogglesort}
-	/>
+	{#if displayMode === 'table'}
+		<LogHeader
+			bind:el={headerEl}
+			{fieldConfig}
+			columns={activeFields}
+			{gridTemplate}
+			{sortDirection}
+			{lineWrap}
+			{ontogglesort}
+		/>
+	{/if}
 	<div class="relative w-full" style="height: {$virtualizer.getTotalSize()}px;">
 		{#each $virtualizer.getVirtualItems() as item (logs[item.index]?.key ?? item.index)}
 			{#if logs[item.index]}
 				<div
+					use:measure
+					data-index={item.index}
 					class="absolute top-0 left-0 w-full"
-					style="height: {item.size}px; transform: translateY({item.start - scrollMargin}px);"
+					style="transform: translateY({item.start - scrollMargin}px);"
 				>
-					<LogRow
-						hit={logs[item.index]}
-						columns={activeFields}
-						{gridTemplate}
-						{timezoneMode}
-						onclick={() => onRowClick(logs[item.index])}
-					/>
+					{#if displayMode === 'inline'}
+						<InlineLogRow
+							hit={logs[item.index]}
+							columns={activeFields}
+							{timezoneMode}
+							{lineWrap}
+							onclick={() => onRowClick(logs[item.index])}
+						/>
+					{:else}
+						<LogRow
+							hit={logs[item.index]}
+							columns={activeFields}
+							{gridTemplate}
+							{timezoneMode}
+							{lineWrap}
+							onclick={() => onRowClick(logs[item.index])}
+						/>
+					{/if}
 				</div>
 			{/if}
 		{/each}
