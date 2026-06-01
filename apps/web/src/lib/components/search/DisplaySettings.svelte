@@ -5,19 +5,28 @@
 
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import type { LogField } from '$lib/types';
+	import type { DisplayMode } from 'api/types';
 
 	let {
 		activeFields,
 		allFields,
 		pinnedStart = [],
 		pinnedEnd = [],
-		onchange
+		lineWrap,
+		displayMode,
+		onchange,
+		onLineWrapChange,
+		onDisplayModeChange
 	}: {
 		activeFields: string[];
 		allFields: LogField[];
 		pinnedStart?: string[];
 		pinnedEnd?: string[];
+		lineWrap: boolean;
+		displayMode: DisplayMode;
 		onchange: (next: string[]) => void;
+		onLineWrapChange: (next: boolean) => void;
+		onDisplayModeChange: (next: DisplayMode) => void;
 	} = $props();
 
 	let open = $state(false);
@@ -123,8 +132,8 @@
 		bind:this={triggerEl}
 		type="button"
 		class="btn btn-xs btn-square btn-ghost"
-		aria-label="Column settings"
-		title="Column settings"
+		aria-label="Display settings"
+		title="Display settings"
 		onclick={toggle}
 	>
 		<Settings class="h-4 w-4" />
@@ -175,6 +184,49 @@
 					</div>
 				</OverlayScrollbarsComponent>
 			{:else}
+				<div class="border-line border-b px-3 py-2">
+					<div class="text-base-content/60 mb-1.5 text-[10px] font-medium tracking-wider uppercase">
+						Display
+					</div>
+					<label class="flex cursor-pointer items-center justify-between">
+						<span class="text-base-content text-xs">Line wrap</span>
+						<input
+							type="checkbox"
+							class="toggle toggle-sm"
+							checked={lineWrap}
+							onchange={(e) => onLineWrapChange(e.currentTarget.checked)}
+						/>
+					</label>
+				</div>
+
+				<div class="border-line border-b px-3 py-2">
+					<div class="text-base-content/60 mb-1.5 text-[10px] font-medium tracking-wider uppercase">
+						Mode
+					</div>
+					<div class="join w-full">
+						<button
+							type="button"
+							class="btn join-item btn-xs flex-1 {displayMode === 'table' ? 'btn-primary' : ''}"
+							onclick={() => onDisplayModeChange('table')}
+						>
+							Table
+						</button>
+						<button
+							type="button"
+							class="btn join-item btn-xs flex-1 {displayMode === 'inline' ? 'btn-primary' : ''}"
+							onclick={() => onDisplayModeChange('inline')}
+						>
+							Inline
+						</button>
+					</div>
+				</div>
+
+				<div
+					class="text-base-content/60 px-3 pt-2 text-[10px] font-medium tracking-wider uppercase"
+				>
+					Columns
+				</div>
+
 				{#snippet pinnedRow(field: string)}
 					<div
 						class="text-base-content/40 flex items-center gap-1 rounded px-2 py-1.5 font-mono text-xs"

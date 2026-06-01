@@ -42,7 +42,9 @@
 	let messageWidth = $derived(
 		computeMessageWidth(store.logs, store.fieldConfig?.messageField ?? 'message')
 	);
-	let gridTemplate = $derived(buildGridTemplate(store.activeFields, columnWidths, messageWidth));
+	let gridTemplate = $derived(
+		buildGridTemplate(store.activeFields, columnWidths, messageWidth, store.lineWrap)
+	);
 
 	let chartCollapsed = $state(false);
 	let selectedLog = $state<LogHit | null>(null);
@@ -142,6 +144,8 @@
 						fieldConfig={store.fieldConfig}
 						sortDirection={store.sortDirection}
 						{viewport}
+						lineWrap={store.lineWrap}
+						displayMode={store.displayMode}
 						ontogglesort={() => store.toggleSort()}
 						onRowClick={openRow}
 					/>

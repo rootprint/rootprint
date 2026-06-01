@@ -25,8 +25,12 @@ import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
 import { resolveTimeRange } from '$lib/utils/time-range';
 import { displayNameFor, extractJsonSubFields, serializeTimeRange } from '$lib/utils/fields';
+import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
+
+// Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
+const PREF_SAVE_DEBOUNCE_MS = 300;
 
 export interface SearchStoreOptions {
 	/** Reactive accessor for the URL-derived query. Read inside $effect to subscribe. */
@@ -85,6 +89,8 @@ export class SearchStore {
 	fieldsError = $state<string | null>(null);
 
 	activeFields = $state<string[]>([]);
+	lineWrap = $state(false);
+	displayMode = $state<DisplayMode>('table');
 
 	#levelsRoster = $state<LevelBucket[]>([]);
 	#levelsRosterKey: string | null = null;
@@ -113,6 +119,9 @@ export class SearchStore {
 	#fieldsFetchedFor: string | null = null;
 	#activeFieldsRequestId = 0;
 	#activeFieldsFetchedFor: string | null = null;
+	#confirmedPrefs: Preferences = { displayFields: null, lineWrap: false, displayMode: 'table' };
+	#prefSaveTimer: ReturnType<typeof setTimeout> | null = null;
+	#prefSaveSeq = 0;
 
 	constructor(opts: SearchStoreOptions) {
 		this.indexes = opts.initialIndexes;
@@ -523,29 +532,64 @@ export class SearchStore {
 		try {
 			const prefs = await getPreferences(indexId);
 			if (requestId !== this.#activeFieldsRequestId) return;
+			this.#confirmedPrefs = prefs;
 			this.activeFields = prefs.displayFields ?? [];
+			this.lineWrap = prefs.lineWrap;
+			this.displayMode = prefs.displayMode;
 		} catch (e) {
 			if (requestId !== this.#activeFieldsRequestId) return;
 			// Reset cache key so the effect retries on the next reactive run.
 			this.#activeFieldsFetchedFor = null;
+			this.#confirmedPrefs = { displayFields: null, lineWrap: false, displayMode: 'table' };
 			this.activeFields = [];
-			toast.error(e instanceof Error ? e.message : 'Failed to load column preferences');
+			this.lineWrap = false;
+			this.displayMode = 'table';
+			toast.error(e instanceof Error ? e.message : 'Failed to load display preferences');
 		}
 	}
 
-	/**
-	 * Optimistically updates active fields and persists to the server.
-	 * Rolls back on failure. Must be called only when `selectedIndex` is non-null.
-	 */
 	setActiveFields(next: string[]): void {
+		this.activeFields = next;
+		this.#savePrefs();
+	}
+
+	setLineWrap(next: boolean): void {
+		this.lineWrap = next;
+		this.#savePrefs();
+	}
+
+	setDisplayMode(next: DisplayMode): void {
+		this.displayMode = next;
+		this.#savePrefs();
+	}
+
+	#savePrefs(): void {
 		const indexId = this.selectedIndex;
 		if (indexId === null) return;
-		const prev = this.activeFields;
-		this.activeFields = next;
-		setPreferences(indexId, next).catch((e) => {
-			this.activeFields = prev;
-			toast.error(e instanceof Error ? e.message : 'Failed to save column preferences');
-		});
+		const seq = ++this.#prefSaveSeq;
+		if (this.#prefSaveTimer !== null) clearTimeout(this.#prefSaveTimer);
+		this.#prefSaveTimer = setTimeout(() => {
+			this.#prefSaveTimer = null;
+			if (this.selectedIndex !== indexId) return;
+			const snapshot: Preferences = {
+				displayFields: this.activeFields,
+				lineWrap: this.lineWrap,
+				displayMode: this.displayMode
+			};
+			setPreferences(indexId, snapshot)
+				.then((saved) => {
+					if (this.selectedIndex !== indexId || seq !== this.#prefSaveSeq) return;
+					this.#confirmedPrefs = saved;
+				})
+				.catch((e) => {
+					// Superseded by a newer change (or index switch) — let that one win.
+					if (this.selectedIndex !== indexId || seq !== this.#prefSaveSeq) return;
+					this.activeFields = this.#confirmedPrefs.displayFields ?? [];
+					this.lineWrap = this.#confirmedPrefs.lineWrap;
+					this.displayMode = this.#confirmedPrefs.displayMode;
+					toast.error(e instanceof Error ? e.message : 'Failed to save display preferences');
+				});
+		}, PREF_SAVE_DEBOUNCE_MS);
 	}
 
 	#computeLevelTotals(buckets: HistogramBucket[]): LevelBucket[] {

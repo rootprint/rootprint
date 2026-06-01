@@ -78,6 +78,13 @@
       "when": 1779996601333,
       "tag": "0010_api_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1780324732911,
+      "tag": "0011_curly_agent_zero",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Download } from 'lucide-svelte';
 	import ExportDialog from './ExportDialog.svelte';
-	import ColumnSettings from './ColumnSettings.svelte';
+	import DisplaySettings from './DisplaySettings.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { composeQuery } from '$lib/utils/compose-query';
 
@@ -47,14 +47,18 @@
 		>
 			<Download class="h-4 w-4" />
 		</button>
-		<ColumnSettings
+		<DisplaySettings
 			activeFields={store.activeFields}
 			allFields={store.fields}
 			pinnedStart={store.fieldConfig
 				? [store.fieldConfig.levelField, store.fieldConfig.timestampField]
 				: []}
 			pinnedEnd={store.fieldConfig ? [store.fieldConfig.messageField] : []}
+			lineWrap={store.lineWrap}
+			displayMode={store.displayMode}
 			onchange={(next) => store.setActiveFields(next)}
+			onLineWrapChange={(next) => store.setLineWrap(next)}
+			onDisplayModeChange={(next) => store.setDisplayMode(next)}
 		/>
 	</div>
 </div>

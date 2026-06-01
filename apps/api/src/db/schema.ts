@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
 	bigint,
 	bigserial,
+	boolean,
 	check,
 	index,
 	integer,
@@ -13,7 +14,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 
-import type { IndexVisibility } from '../types.js';
+import type { DisplayMode, IndexVisibility } from '../types.js';
 
 import { user } from './auth.schema.js';
 
@@ -41,6 +42,8 @@ export const userPreference = pgTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		indexId: text('index_id').notNull(),
 		displayFields: jsonb('display_fields').$type<string[]>(),
+		lineWrap: boolean('line_wrap').notNull().default(false),
+		displayMode: text('display_mode').$type<DisplayMode>().notNull().default('table'),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
 			.defaultNow()

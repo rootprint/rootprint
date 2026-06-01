@@ -7,6 +7,7 @@
 		columns,
 		gridTemplate,
 		sortDirection,
+		lineWrap = false,
 		ontogglesort = () => {},
 		el = $bindable(null)
 	}: {
@@ -14,17 +15,19 @@
 		columns: string[];
 		gridTemplate: string;
 		sortDirection: SortDirection;
+		lineWrap?: boolean;
 		ontogglesort?: () => void;
 		el?: HTMLElement | null;
 	} = $props();
 
 	let timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
 	let messageLabel = $derived(fieldConfig?.messageField ?? 'message');
+	const rowWidth = $derived(lineWrap ? 'w-full' : 'w-max min-w-full');
 </script>
 
 <div
 	bind:this={el}
-	class="border-line text-base-content sticky top-0 z-10 grid w-max min-w-full items-center border-b font-mono text-xs font-medium tracking-wider"
+	class="border-line text-base-content sticky top-0 z-10 grid items-center border-b font-mono text-xs font-medium tracking-wider {rowWidth}"
 	style="grid-template-columns: {gridTemplate}; background-color: color-mix(in oklab, var(--color-base-200) 30%, var(--color-base-100));"
 >
 	<span aria-hidden="true"></span>
