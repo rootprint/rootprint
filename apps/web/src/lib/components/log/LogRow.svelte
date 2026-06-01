@@ -10,19 +10,27 @@
 		columns,
 		gridTemplate,
 		timezoneMode,
+		lineWrap = false,
 		onclick = () => {}
 	}: {
 		hit: LogHit;
 		columns: string[];
 		gridTemplate: string;
 		timezoneMode: TimezoneMode;
+		lineWrap?: boolean;
 		onclick?: () => void;
 	} = $props();
+
+	const cellWrap = $derived(
+		lineWrap ? 'whitespace-pre-wrap break-words' : 'truncate whitespace-nowrap'
+	);
+	const messageWrap = $derived(lineWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-nowrap');
+	const rowWidth = $derived(lineWrap ? 'w-full' : 'w-max min-w-full');
 </script>
 
 <button
 	type="button"
-	class="border-line hover:bg-base-200/60 grid w-max min-w-full items-stretch border-b text-left font-mono text-xs"
+	class="border-line hover:bg-base-200/60 grid min-h-[25px] items-stretch border-b text-left font-mono text-xs {rowWidth}"
 	style="grid-template-columns: {gridTemplate};"
 	{onclick}
 >
@@ -35,9 +43,9 @@
 		{formatLogRowTimestamp(hit.timestamp, timezoneMode)}
 	</span>
 	{#each columns as column (column)}
-		<span class="truncate px-2 py-1 whitespace-nowrap" title={column}>
+		<span class="px-2 py-1 {cellWrap}" title={column}>
 			{formatCell(getByPath(hit.raw, column))}
 		</span>
 	{/each}
-	<span class="px-2 py-1 whitespace-nowrap">{hit.message}</span>
+	<span class="px-2 py-1 {messageWrap}">{hit.message}</span>
 </button>

@@ -191,8 +191,12 @@ export type ShareView = {
 	hit: Record<string, unknown>;
 };
 
+export type DisplayMode = 'table' | 'inline';
+
 export type Preferences = {
 	displayFields: string[] | null;
+	lineWrap: boolean;
+	displayMode: DisplayMode;
 };
 
 export type GoogleAuthSettings = {
