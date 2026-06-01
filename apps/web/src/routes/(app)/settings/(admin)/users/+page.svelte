@@ -12,7 +12,6 @@
 	import RemoveUserModal from '$lib/components/admin/RemoveUserModal.svelte';
 	import ResetPasswordModal from '$lib/components/admin/ResetPasswordModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import type { UserView } from '$lib/api/users';
@@ -145,40 +144,63 @@
 	</div>
 
 	<div class="mt-4">
-		<ListCard empty={filtered.length === 0} {emptyMessage}>
+		<ListCard
+			cols="minmax(0,2.5fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) auto"
+			empty={filtered.length === 0}
+			{emptyMessage}
+		>
+			<div
+				class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+			>
+				<span>User</span>
+				<span>Role</span>
+				<span>Status</span>
+				<span>Last active</span>
+				<span></span>
+			</div>
 			{#each filtered as user (user.id)}
-				<ListRow>
-					<div class="min-w-0 flex-1">
-						<UserIdentity id={user.id} name={user.name} email={user.email} />
+				<div class="col-span-full grid min-h-14 grid-cols-subgrid items-center px-4 py-3">
+					<div class="min-w-0">
+						<UserIdentity id={user.id} name={user.name} email={user.email} size="sm" />
 					</div>
 
-					{#if user.role === 'admin'}
-						<span class="text-base-content/60 shrink-0 text-xs tracking-[0.08em] uppercase">
-							Admin
-						</span>
-					{/if}
+					<div>
+						{#if user.role === 'admin'}
+							<span
+								class="badge badge-sm badge-soft badge-primary text-[10px] tracking-wide uppercase"
+							>
+								Admin
+							</span>
+						{:else}
+							<span class="text-base-content/50 text-xs">Member</span>
+						{/if}
+					</div>
 
-					{#if user.status === 'expired'}
-						<span class="text-error shrink-0 text-xs">Invite expired</span>
-					{:else if user.status === 'pending'}
-						<span class="text-base-content/60 shrink-0 text-xs">Invite pending</span>
-					{:else if user.lastActive}
-						<span class="text-base-content/50 shrink-0 text-xs">
-							{formatRelativeTime(user.lastActive)}
-						</span>
-					{:else}
-						<span class="text-base-content/50 shrink-0 text-xs">Never logged in</span>
-					{/if}
+					<div>
+						{#if user.status === 'expired'}
+							<span class="text-error text-xs">Invite expired</span>
+						{:else if user.status === 'pending'}
+							<span class="text-base-content/60 text-xs">Invite pending</span>
+						{:else}
+							<span class="text-base-content/70 text-xs">Active</span>
+						{/if}
+					</div>
 
-					<MemberActionsMenu
-						{user}
-						{currentUserId}
-						onRegenerate={handleRegenerate}
-						onToggleRole={handleToggleRole}
-						onResetPassword={openReset}
-						onRemove={openRemove}
-					/>
-				</ListRow>
+					<div class="text-base-content/50 text-xs">
+						{user.lastActive ? formatRelativeTime(user.lastActive) : 'Never'}
+					</div>
+
+					<div class="flex justify-end">
+						<MemberActionsMenu
+							{user}
+							{currentUserId}
+							onRegenerate={handleRegenerate}
+							onToggleRole={handleToggleRole}
+							onResetPassword={openReset}
+							onRemove={openRemove}
+						/>
+					</div>
+				</div>
 			{/each}
 		</ListCard>
 	</div>

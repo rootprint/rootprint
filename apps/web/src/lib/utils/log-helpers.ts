@@ -19,3 +19,20 @@ export function baseContentAt(alpha: number): string {
 		'#0a0a0a';
 	return `color-mix(in oklab, ${v} ${Math.round(alpha * 100)}%, transparent)`;
 }
+
+/**
+ * Resolve a CSS color value (including `var(--…)`) to a concrete, canvas-usable
+ * color string. uPlot draws to <canvas>, which cannot read CSS custom properties.
+ */
+export function cssVarColor(value: string): string {
+	if (typeof document === 'undefined') return value;
+	const probe = document.createElement('span');
+	probe.style.color = value;
+	probe.style.position = 'absolute';
+	probe.style.opacity = '0';
+	probe.style.pointerEvents = 'none';
+	document.body.appendChild(probe);
+	const resolved = getComputedStyle(probe).color;
+	probe.remove();
+	return resolved || value;
+}
