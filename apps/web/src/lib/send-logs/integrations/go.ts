@@ -2,7 +2,7 @@ import GoIcon from '@iconify-svelte/logos/go';
 import { otelEnvVarsSnippet } from './_shared';
 import type { Integration } from '../types';
 
-const INIT_COMMAND = 'go mod init example.com/logwiz-demo';
+const INIT_COMMAND = 'go mod init example.com/rootprint-demo';
 
 const GET_COMMAND = `go get go.opentelemetry.io/otel \\
     go.opentelemetry.io/otel/log \\
@@ -34,7 +34,7 @@ func main() {
 	global.SetLoggerProvider(provider)
 
 	logger := otelslog.NewLogger("hello")
-	logger.Info("Hello from Go to Logwiz")
+	logger.Info("Hello from Go to rootprint")
 }`;
 
 export const go: Integration = {

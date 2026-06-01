@@ -13,7 +13,7 @@ const provider = new LoggerProvider();
 provider.addLogRecordProcessor(new BatchLogRecordProcessor(new OTLPLogExporter()));
 logs.setGlobalLoggerProvider(provider);
 
-logs.getLogger('hello').emit({ severityText: 'INFO', body: 'Hello from Node to Logwiz' });
+logs.getLogger('hello').emit({ severityText: 'INFO', body: 'Hello from Node to rootprint' });
 await provider.forceFlush();`;
 
 const PINO_INSTALL = 'npm install pino pino-opentelemetry-transport';
@@ -25,7 +25,7 @@ const transport = pino.transport({
 });
 
 const log = pino(transport);
-log.info('Hello from Pino to Logwiz');`;
+log.info('Hello from Pino to rootprint');`;
 
 const WINSTON_INSTALL =
 	'npm install winston @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto @opentelemetry/winston-transport';
@@ -45,12 +45,12 @@ const logger = winston.createLogger({
 	transports: [new OpenTelemetryTransportV3()]
 });
 
-logger.info('Hello from Winston to Logwiz');`;
+logger.info('Hello from Winston to rootprint');`;
 
 const PROTOBUF_CALLOUT = {
 	variant: 'warning' as const,
 	html:
-		'Logwiz accepts <strong>protobuf only</strong>. Use ' +
+		'rootprint accepts <strong>protobuf only</strong>. Use ' +
 		'<code>@opentelemetry/exporter-logs-otlp-proto</code> — not the JSON-defaulting ' +
 		'<code>@opentelemetry/exporter-logs-otlp-http</code>.'
 };

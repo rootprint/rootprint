@@ -17,7 +17,7 @@ logger_provider.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter
 logging.getLogger().addHandler(LoggingHandler(logger_provider=logger_provider))
 logging.getLogger().setLevel(logging.INFO)
 
-logging.info("Hello from Python to Logwiz")`;
+logging.info("Hello from Python to rootprint")`;
 
 export const python: Integration = {
 	id: 'python',
@@ -28,7 +28,7 @@ export const python: Integration = {
 		{
 			title: 'Install and configure',
 			body:
-				'Logwiz accepts OTLP over HTTP (proto-http). Install the SDK, then set ' +
+				'rootprint accepts OTLP over HTTP (proto-http). Install the SDK, then set ' +
 				'the endpoint and API key via environment variables.',
 			snippets: [
 				{ code: INSTALL_COMMAND, lang: 'bash', copyTitle: 'Copy install command' },
