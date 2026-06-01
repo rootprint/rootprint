@@ -19,6 +19,10 @@
 		"./constants": {
 			"types": "./src/constants.ts",
 			"default": "./src/constants.ts"
+		},
+		"./query": {
+			"types": "./src/lib/query/compose-query.ts",
+			"default": "./src/lib/query/compose-query.ts"
 		}
 	},
 	"scripts": {

@@ -1,13 +1,10 @@
 import type { PageLoad } from './$types';
 
-import { getLatency, getSlowest, getSummary, getTopActors, type Window } from '$lib/api/activity';
-
-function parseWindow(raw: string | null): Window {
-	return raw === '24h' || raw === '7d' || raw === '30d' ? raw : '7d';
-}
+import { getLatency, getSlowest, getSummary, getTopActors, parseWindow } from '$lib/api/activity';
+import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ url, depends }) => {
-	depends('app:activity');
+	depends(DEP.activity);
 	const window = parseWindow(url.searchParams.get('window'));
 	// Issue all panel requests in parallel; the page consumes them with {#await}.
 	return {

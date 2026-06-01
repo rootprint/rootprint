@@ -5,6 +5,7 @@
 	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
+	import { DEP } from '$lib/api/deps';
 	import { setUserRole, UserApiError } from '$lib/api/users';
 	import { resendInvite, InviteApiError } from '$lib/api/invites';
 	import InviteUserModal from '$lib/components/admin/InviteUserModal.svelte';
@@ -60,7 +61,7 @@
 	});
 
 	async function refresh() {
-		await invalidate('app:users');
+		await invalidate(DEP.users);
 	}
 
 	async function handleRegenerate(user: UserView) {

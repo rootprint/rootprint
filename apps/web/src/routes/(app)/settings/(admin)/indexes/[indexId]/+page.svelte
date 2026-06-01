@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto, invalidate } from '$app/navigation';
+	import { DEP } from '$lib/api/deps';
 	import { page } from '$app/state';
 	import { setSourceEnabled, deleteSource, deleteIndex } from '$lib/api/indexes';
 	import IndexConfigForm from '$lib/components/admin/IndexConfigForm.svelte';
@@ -48,7 +49,7 @@
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : 'Failed to update source');
 		} finally {
-			await invalidate(`app:index:${detail.indexId}`);
+			await invalidate(DEP.index(detail.indexId));
 			togglingSourceId = null;
 		}
 	}
@@ -71,7 +72,7 @@
 			toast.success(`Source ${sourceId} deleted`);
 			deleteSourceOpen = false;
 			deleteSourceTarget = null;
-			await invalidate(`app:index:${detail.indexId}`);
+			await invalidate(DEP.index(detail.indexId));
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : 'Failed to delete source');
 		} finally {

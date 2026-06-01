@@ -1,6 +1,6 @@
 import FluentBitIcon from '@iconify-svelte/simple-icons/fluentbit';
 import { OTLP_LOGS_INGEST_PATH } from '../constants';
-import { apiKeySubstring } from '../snippet-utils';
+import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
 const RESTART_COMMAND = `sudo systemctl restart fluent-bit
@@ -19,7 +19,6 @@ export const fluentBit: Integration = {
 		const host = url.hostname;
 		const port = url.port ? Number(url.port) : url.protocol === 'https:' ? 443 : 80;
 		const tls = url.protocol === 'https:' ? 'On' : 'Off';
-		const apiKeyFragment = apiKeySubstring(ctx.apiKey, ctx.hasRealApiKey);
 
 		const config = `[SERVICE]
     Flush         1
@@ -41,7 +40,7 @@ export const fluentBit: Integration = {
     Tls                   ${tls}
     Tls.verify            On
     Logs_uri              ${OTLP_LOGS_INGEST_PATH}
-    Header                Authorization Bearer ${apiKeyFragment}
+    Header                Authorization Bearer ${ctx.apiKey}
     Logs_body_key         $log
     Log_response_payload  True`;
 
@@ -59,7 +58,14 @@ export const fluentBit: Integration = {
 			{
 				title: 'Configure /etc/fluent-bit/fluent-bit.conf',
 				body: "Replace /var/log/myapp/*.log with the glob that matches your application's logs.",
-				snippets: [{ code: config, lang: 'ini', copyTitle: 'Copy fluent-bit.conf' }]
+				snippets: [
+					{
+						code: config,
+						lang: 'ini',
+						copyTitle: 'Copy fluent-bit.conf',
+						highlightValue: highlightKey(ctx)
+					}
+				]
 			},
 			{
 				title: 'Restart Fluent Bit',

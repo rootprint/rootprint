@@ -2,12 +2,13 @@ import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
 import { getBootstrap } from '$lib/api/auth';
 import { authClient } from '$lib/auth-client';
+import { DEP } from '$lib/api/deps';
 
 export const ssr = false;
 export const prerender = false;
 
 export const load: LayoutLoad = async ({ url, depends }) => {
-	depends('app:session');
+	depends(DEP.session);
 
 	const [bootstrap, sessionRes] = await Promise.all([getBootstrap(), authClient.getSession()]);
 

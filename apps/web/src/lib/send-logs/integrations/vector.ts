@@ -1,5 +1,6 @@
 import VectorIcon from '@iconify-svelte/logos/vector-timber';
 import { vectorOtlpSinkSnippet } from './_shared';
+import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
 const RESTART_COMMAND = `sudo systemctl restart vector
@@ -39,7 +40,14 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'app_logs' })}`;
 				body:
 					'Save this at /etc/vector/vector.yaml. Replace /var/log/myapp/*.log with the glob ' +
 					"that matches your application's log files.",
-				snippets: [{ code: vectorConfig, lang: 'yaml', copyTitle: 'Copy vector.yaml' }]
+				snippets: [
+					{
+						code: vectorConfig,
+						lang: 'yaml',
+						copyTitle: 'Copy vector.yaml',
+						highlightValue: highlightKey(ctx)
+					}
+				]
 			},
 			{
 				title: 'Restart Vector',

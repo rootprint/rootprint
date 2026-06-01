@@ -3,7 +3,7 @@
 	import ExportDialog from './ExportDialog.svelte';
 	import DisplaySettings from './DisplaySettings.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
-	import { composeQuery } from '$lib/utils/compose-query';
+	import { composeQuery } from 'api/query';
 
 	let { store }: { store: SearchStore } = $props();
 

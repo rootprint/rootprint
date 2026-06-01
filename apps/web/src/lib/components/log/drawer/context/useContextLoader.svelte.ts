@@ -2,7 +2,7 @@ import { getUnixTime, parseISO } from 'date-fns';
 
 import { searchLogs } from '$lib/api/log-search';
 import { getByPath } from '$lib/utils/get-by-path';
-import { escapeFilterValue } from '$lib/utils/compose-query';
+import { escapeFilterValue } from 'api/query';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import type { ContextChip, ContextEntry, FieldConfig, LogHit } from '$lib/types';
 

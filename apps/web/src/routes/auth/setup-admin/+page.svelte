@@ -2,6 +2,7 @@
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
 	import { setupAdmin, AuthApiError } from '$lib/api/auth';
+	import { DEP } from '$lib/api/deps';
 	import { toFieldErrors } from '$lib/api/errors';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
@@ -41,7 +42,7 @@
 				}
 				return;
 			}
-			await invalidate('app:session');
+			await invalidate(DEP.session);
 			await goto('/auth/sign-in');
 		} finally {
 			submitting = false;

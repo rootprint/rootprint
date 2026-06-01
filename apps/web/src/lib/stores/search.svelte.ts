@@ -14,7 +14,7 @@ import type {
 	SearchInput,
 	TimeRange
 } from '$lib/types';
-import { composeQuery } from '$lib/utils/compose-query';
+import { composeQuery } from 'api/query';
 import { searchLogs } from '$lib/api/log-search';
 import { fetchHistogram } from '$lib/api/histogram';
 import { loadFields } from '$lib/api/fields';
@@ -25,6 +25,7 @@ import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
 import { resolveTimeRange } from '$lib/utils/time-range';
 import { displayNameFor, extractJsonSubFields, serializeTimeRange } from '$lib/utils/fields';
+import { RequestGuard } from '$lib/stores/request-guard';
 import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
@@ -108,16 +109,16 @@ export class SearchStore {
 	#parsedQuery: () => ParsedQuery;
 	#onFreshSearch?: () => void;
 	#searchAbort?: AbortController;
-	#searchRequestId = 0;
+	#searchGuard = new RequestGuard();
 	#snapshotStartTs: number | undefined = $state(undefined);
 	#snapshotEndTs: number | undefined = $state(undefined);
-	#configRequestId = 0;
+	#configGuard = new RequestGuard();
 	#configFetchedFor: string | null = null;
 	#histogramAbort?: AbortController;
-	#histogramRequestId = 0;
-	#fieldsRequestId = 0;
+	#histogramGuard = new RequestGuard();
+	#fieldsGuard = new RequestGuard();
 	#fieldsFetchedFor: string | null = null;
-	#activeFieldsRequestId = 0;
+	#activeFieldsGuard = new RequestGuard();
 	#activeFieldsFetchedFor: string | null = null;
 	#confirmedPrefs: Preferences = { displayFields: null, lineWrap: false, displayMode: 'table' };
 	#prefSaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -328,7 +329,7 @@ export class SearchStore {
 		this.#searchAbort?.abort();
 		const controller = new AbortController();
 		this.#searchAbort = controller;
-		const requestId = ++this.#searchRequestId;
+		const requestId = this.#searchGuard.next();
 
 		if (silent) {
 			this.#prefetching = true;
@@ -371,7 +372,7 @@ export class SearchStore {
 				{ countAll: mode === 'fresh', signal: controller.signal }
 			);
 
-			if (requestId !== this.#searchRequestId) return;
+			if (!this.#searchGuard.isCurrent(requestId)) return;
 
 			if (append) {
 				this.rawHits = [...this.rawHits, ...result.rawHits];
@@ -390,7 +391,7 @@ export class SearchStore {
 			success = true;
 		} catch (e) {
 			if (e instanceof DOMException && e.name === 'AbortError') return;
-			if (requestId !== this.#searchRequestId) return;
+			if (!this.#searchGuard.isCurrent(requestId)) return;
 			if (silent) return;
 			this.searchError = e instanceof Error ? e.message : 'Search failed';
 			if (mode === 'fresh') {
@@ -399,7 +400,7 @@ export class SearchStore {
 				this.elapsedTimeMicros = 0;
 			}
 		} finally {
-			if (requestId === this.#searchRequestId) {
+			if (this.#searchGuard.isCurrent(requestId)) {
 				this.#prefetching = false;
 				if (!silent) this.loading = 'idle';
 			}
@@ -407,7 +408,7 @@ export class SearchStore {
 
 		if (success && mode === 'fresh') {
 			queueMicrotask(() => {
-				if (requestId !== this.#searchRequestId) return;
+				if (!this.#searchGuard.isCurrent(requestId)) return;
 				if (this.#canFetchMore()) {
 					void this.#runSearch('prefetch');
 				}
@@ -430,7 +431,7 @@ export class SearchStore {
 		this.#histogramAbort?.abort();
 		const controller = new AbortController();
 		this.#histogramAbort = controller;
-		const requestId = ++this.#histogramRequestId;
+		const requestId = this.#histogramGuard.next();
 		this.histogramLoading = true;
 		this.histogramError = null;
 
@@ -443,7 +444,7 @@ export class SearchStore {
 				} satisfies HistogramInput,
 				controller.signal
 			);
-			if (requestId !== this.#histogramRequestId) return;
+			if (!this.#histogramGuard.isCurrent(requestId)) return;
 			this.histogramBuckets = result.buckets;
 
 			const newKey = `${this.selectedIndex}|${this.query}|${serializeTimeRange(this.timeRange)}`;
@@ -456,25 +457,25 @@ export class SearchStore {
 			}
 		} catch (e) {
 			if (e instanceof DOMException && e.name === 'AbortError') return;
-			if (requestId !== this.#histogramRequestId) return;
+			if (!this.#histogramGuard.isCurrent(requestId)) return;
 			this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
 			this.histogramBuckets = [];
 		} finally {
-			if (requestId === this.#histogramRequestId) this.histogramLoading = false;
+			if (this.#histogramGuard.isCurrent(requestId)) this.histogramLoading = false;
 		}
 	}
 
 	async #loadConfig(indexId: string): Promise<void> {
-		const requestId = ++this.#configRequestId;
+		const requestId = this.#configGuard.next();
 		this.fieldConfig = null;
 		this.#fieldsFetchedFor = null;
 		this.configError = null;
 		try {
 			const cfg = await getIndexConfig(indexId);
-			if (requestId !== this.#configRequestId) return;
+			if (!this.#configGuard.isCurrent(requestId)) return;
 			this.fieldConfig = cfg;
 		} catch (e) {
-			if (requestId !== this.#configRequestId) return;
+			if (!this.#configGuard.isCurrent(requestId)) return;
 			this.configError = e instanceof Error ? e.message : 'Failed to load index config';
 		}
 	}
@@ -509,35 +510,35 @@ export class SearchStore {
 	}
 
 	async #loadFields(indexId: string, fieldConfig: FieldConfig): Promise<void> {
-		const requestId = ++this.#fieldsRequestId;
+		const requestId = this.#fieldsGuard.next();
 		this.fieldsLoading = true;
 		this.fieldsError = null;
 		this.#discoveredPaths = new Set();
 		try {
 			const fields = await loadFields(indexId, fieldConfig);
-			if (requestId !== this.#fieldsRequestId) return;
+			if (!this.#fieldsGuard.isCurrent(requestId)) return;
 			this.#schemaFields = fields;
 			this.#discoverFields(this.rawHits, { reset: true });
 		} catch (e) {
-			if (requestId !== this.#fieldsRequestId) return;
+			if (!this.#fieldsGuard.isCurrent(requestId)) return;
 			this.fieldsError = e instanceof Error ? e.message : 'Failed to load fields';
 			this.#schemaFields = [];
 		} finally {
-			if (requestId === this.#fieldsRequestId) this.fieldsLoading = false;
+			if (this.#fieldsGuard.isCurrent(requestId)) this.fieldsLoading = false;
 		}
 	}
 
 	async #loadActiveFields(indexId: string): Promise<void> {
-		const requestId = ++this.#activeFieldsRequestId;
+		const requestId = this.#activeFieldsGuard.next();
 		try {
 			const prefs = await getPreferences(indexId);
-			if (requestId !== this.#activeFieldsRequestId) return;
+			if (!this.#activeFieldsGuard.isCurrent(requestId)) return;
 			this.#confirmedPrefs = prefs;
 			this.activeFields = prefs.displayFields ?? [];
 			this.lineWrap = prefs.lineWrap;
 			this.displayMode = prefs.displayMode;
 		} catch (e) {
-			if (requestId !== this.#activeFieldsRequestId) return;
+			if (!this.#activeFieldsGuard.isCurrent(requestId)) return;
 			// Reset cache key so the effect retries on the next reactive run.
 			this.#activeFieldsFetchedFor = null;
 			this.#confirmedPrefs = { displayFields: null, lineWrap: false, displayMode: 'table' };
