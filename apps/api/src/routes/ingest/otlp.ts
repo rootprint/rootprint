@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { AppEnv } from '../../env.js';
+import { describe } from '../../lib/openapi/describe.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import {
 	badRequest,
@@ -25,37 +26,116 @@ function parseBaseMediaType(header: string | undefined): string | null {
 	return trimmed ? trimmed : null;
 }
 
-export const otlpRouter = new Hono<AppEnv>().post('/logs', requireIngestKey, async (c) => {
-	const baseType = parseBaseMediaType(c.req.header('content-type'));
-	if (baseType !== CONTENT_TYPE_PROTOBUF) {
-		throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
+// google.rpc.Status JSON shape returned for 415 (unsupportedContentType uses JSON, not protobuf)
+const googleRpcStatusSchema = {
+	type: 'object',
+	description: 'google.rpc.Status',
+	properties: {
+		code: { type: 'integer', description: 'gRPC status code' },
+		message: { type: 'string', description: 'Human-readable error message' }
 	}
+};
 
-	const apiKey = c.get('apiKey')!;
-	const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
-	const headers: Record<string, string> = {
-		'content-type': CONTENT_TYPE_PROTOBUF,
-		'qw-otel-logs-index': apiKey.indexId
-	};
-	const ce = c.req.header('content-encoding');
-	if (ce) headers['content-encoding'] = ce;
+// google.rpc.Status binary protobuf shape returned for 429/503/400
+const protobufBinarySchema = {
+	type: 'string',
+	format: 'binary',
+	description: 'google.rpc.Status serialised as application/x-protobuf'
+};
 
-	const result = await proxyToQuickwit(c, { upstreamUrl, headers });
+export const otlpRouter = new Hono<AppEnv>().post(
+	'/logs',
+	describe({
+		tag: 'Log ingest',
+		summary: 'Ingest OTLP logs (protobuf)',
+		description:
+			'OTLP/HTTP log exporter endpoint. Accepts only application/x-protobuf ' +
+			'(ExportLogsServiceRequest). Returns an ExportLogsServiceResponse on success. ' +
+			'All error responses use the google.rpc.Status encoding: ' +
+			'415 is JSON, all other errors are binary protobuf.',
+		security: [{ ingestBearer: [] }],
+		rawResponses: {
+			'200': {
+				description: 'Logs accepted — empty ExportLogsServiceResponse',
+				content: {
+					'application/x-protobuf': {
+						schema: {
+							type: 'string',
+							format: 'binary',
+							description:
+								'Serialised opentelemetry.proto.collector.logs.v1.ExportLogsServiceResponse'
+						}
+					}
+				}
+			},
+			'400': {
+				description: 'Upstream rejected the request — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			},
+			'401': {
+				description: 'Missing or invalid ingest bearer token — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			},
+			'403': {
+				description: 'Ingest key does not have access to this index — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			},
+			'404': {
+				description: 'Route not found — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			},
+			'415': {
+				description:
+					'Unsupported content-type (only application/x-protobuf accepted) — google.rpc.Status (JSON)',
+				content: { 'application/json': { schema: googleRpcStatusSchema } }
+			},
+			'429': {
+				description: 'Upstream rate limit exceeded — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			},
+			'500': {
+				description: 'Internal server error — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			},
+			'503': {
+				description: 'Upstream service unavailable — google.rpc.Status (protobuf)',
+				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+			}
+		}
+	}),
+	requireIngestKey,
+	async (c) => {
+		const baseType = parseBaseMediaType(c.req.header('content-type'));
+		if (baseType !== CONTENT_TYPE_PROTOBUF) {
+			throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
+		}
 
-	if (result.status >= 500) {
-		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
+		const apiKey = c.get('apiKey')!;
+		const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
+		const headers: Record<string, string> = {
+			'content-type': CONTENT_TYPE_PROTOBUF,
+			'qw-otel-logs-index': apiKey.indexId
+		};
+		const ce = c.req.header('content-encoding');
+		if (ce) headers['content-encoding'] = ce;
+
+		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
+
+		if (result.status >= 500) {
+			throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
+		}
+		if (result.status === 429) {
+			const retryAfter = result.headers.get('retry-after') ?? undefined;
+			const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
+			throw tooManyRequests(msg, 'UPSTREAM_RATE_LIMIT', retryAfter);
+		}
+		if (result.status >= 400) {
+			const msg = await readUpstreamMessage(
+				new Response(result.bodyBytes),
+				'Upstream rejected request'
+			);
+			throw badRequest(msg, 'UPSTREAM_REJECTED');
+		}
+		return otlpSuccess();
 	}
-	if (result.status === 429) {
-		const retryAfter = result.headers.get('retry-after') ?? undefined;
-		const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
-		throw tooManyRequests(msg, 'UPSTREAM_RATE_LIMIT', retryAfter);
-	}
-	if (result.status >= 400) {
-		const msg = await readUpstreamMessage(
-			new Response(result.bodyBytes),
-			'Upstream rejected request'
-		);
-		throw badRequest(msg, 'UPSTREAM_REJECTED');
-	}
-	return otlpSuccess();
-});
+);

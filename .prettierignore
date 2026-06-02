@@ -10,5 +10,6 @@ docs/
 
 # Generated and static content
 apps/api/drizzle/
+apps/api/openapi.json
 apps/*/static/
 static/
