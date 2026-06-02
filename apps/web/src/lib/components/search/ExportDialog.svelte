@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Download } from 'lucide-svelte';
+	import { Download, Info } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { buildExportUrl, preflightExport } from '$lib/api/exports';
@@ -152,7 +152,7 @@
 				{#each FORMATS as opt (opt.value)}
 					<button
 						type="button"
-						class="btn join-item btn-xs flex-1 {format === opt.value ? 'btn-accent' : ''}"
+						class="btn btn-ghost join-item btn-xs flex-1 {format === opt.value ? 'btn-active' : ''}"
 						onclick={() => (format = opt.value)}
 					>
 						{opt.label}
@@ -166,16 +166,21 @@
 		</p>
 
 		{#if previewCapped}
-			<div class="alert alert-warning py-2 text-xs">Only the first 10000 logs will be exported</div>
+			<div
+				class="border-warning/60 bg-base-200/60 text-base-content/80 flex items-center gap-2 rounded-r border-l-2 px-3 py-2 text-xs"
+			>
+				<Info class="text-warning h-3.5 w-3.5 shrink-0" />
+				Only the first 10,000 logs will be exported
+			</div>
 		{/if}
 
 		{#if dialogState === 'error'}
-			<div class="alert alert-error py-2 text-xs">{errorMessage}</div>
+			<div role="alert" class="alert alert-error py-2 text-xs">{errorMessage}</div>
 		{/if}
 
 		<button
 			type="button"
-			class="btn btn-accent btn-sm w-full"
+			class="btn btn-primary btn-sm w-full"
 			disabled={!canExport}
 			onclick={startExport}
 		>
