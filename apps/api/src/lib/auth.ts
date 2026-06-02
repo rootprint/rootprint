@@ -1,7 +1,7 @@
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
-import { admin } from 'better-auth/plugins';
+import { admin, openAPI } from 'better-auth/plugins';
 import type { UserWithRole } from 'better-auth/plugins/admin';
 import { and, eq } from 'drizzle-orm';
 
@@ -119,3 +119,14 @@ export type Session =
 	| null;
 
 export const isAdmin = (session: Session | undefined): boolean => session?.user.role === 'admin';
+
+export async function authOpenAPISchema() {
+	const instance = betterAuth({
+		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
+		plugins: [admin(), openAPI()],
+		baseURL: config.origin,
+		secret: 'openapi-schema-generation',
+		emailAndPassword: { enabled: true, disableSignUp: true }
+	});
+	return instance.api.generateOpenAPISchema();
+}

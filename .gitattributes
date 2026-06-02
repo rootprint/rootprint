@@ -1,4 +1,12 @@
-# Exclude support code from GitHub language statistics
-tests/** linguist-vendored
+# Keep support code and generated files out of GitHub language statistics.
+# https://github.com/github-linguist/linguist
+
+# Tooling / support code (hand-written, not product code)
 *.config.ts linguist-vendored
 scripts/** linguist-vendored
+apps/api/scripts/** linguist-vendored
+
+# Generated code & artifacts (do not edit by hand)
+apps/api/src/gen/** linguist-generated=true
+apps/api/openapi.json linguist-generated=true
+bun.lock linguist-generated=true
