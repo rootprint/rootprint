@@ -1,18 +1,16 @@
 <script lang="ts">
-	import { format, parseISO } from 'date-fns';
-
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import ActivityTable from '$lib/components/activity/ActivityTable.svelte';
 	import KpiStrip from '$lib/components/activity/KpiStrip.svelte';
 	import LatencyChart from '$lib/components/activity/LatencyChart.svelte';
 	import TimeRangeTabs from '$lib/components/activity/TimeRangeTabs.svelte';
 	import VolumeChart from '$lib/components/activity/VolumeChart.svelte';
+	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import type { Window } from '$lib/api/activity';
 	import { formatDurationMs } from '$lib/utils/format';
-	import { formatTimestampRange } from '$lib/utils/time';
+	import { formatActivityTimestamp } from '$lib/utils/time';
 
 	let { data } = $props();
 
@@ -61,49 +59,45 @@
 			{/await}
 		</div>
 
-		<div class="border-line rounded-box border p-4">
-			<header class="pb-3">
-				<p class="eyebrow">Recent activity</p>
-			</header>
+		<div class="flex flex-col gap-2">
+			<p class="eyebrow">Recent activity</p>
 			{#await data.recent}
 				<div class="bg-base-200 rounded-box h-24 animate-pulse"></div>
 			{:then rec}
-				<ActivityTable
-					title=""
-					rows={rec.rows}
-					empty="No activity in this window."
-					columns={[
-						{
-							key: 'time',
-							label: 'Time',
-							render: (r) => format(parseISO(r.executedAt), 'yyyy-MM-dd HH:mm:ss')
-						},
-						{ key: 'index', label: 'Index', render: (r) => r.indexId },
-						{
-							key: 'duration',
-							label: 'Duration',
-							render: (r) => formatDurationMs(r.durationMs)
-						},
-						{
-							key: 'hits',
-							label: 'Hits',
-							render: (r) => (r.numHits === null ? '—' : r.numHits.toLocaleString())
-						},
-						{
-							key: 'range',
-							label: 'Range',
-							class: 'whitespace-nowrap',
-							render: (r) => formatTimestampRange(r.startTs, r.endTs)
-						},
-						{
-							key: 'query',
-							label: 'Query',
-							class: 'max-w-md truncate',
-							render: (r) => (r.query.length > 80 ? r.query.slice(0, 80) + '…' : r.query)
-						}
-					]}
-				/>
-				<div class="flex items-center justify-between pt-3 text-xs">
+				<ListCard
+					cols="auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)"
+					gap="gap-x-6"
+					empty={rec.rows.length === 0}
+					emptyMessage="No activity in this window."
+				>
+					<div
+						class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+					>
+						<span>Time</span>
+						<span class="text-center">Index</span>
+						<span class="text-right">Duration</span>
+						<span class="text-center">Hits</span>
+						<span>Query</span>
+					</div>
+					{#each rec.rows as r (r.id)}
+						<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
+							<span class="text-base-content/60 font-mono text-xs whitespace-nowrap">
+								{formatActivityTimestamp(r.executedAt, 'local')}
+							</span>
+							<span class="min-w-0 truncate text-center">{r.indexId}</span>
+							<span class="text-right whitespace-nowrap tabular-nums">
+								{formatDurationMs(r.durationMs)}
+							</span>
+							<span class="text-center tabular-nums">
+								{r.numHits === null ? '—' : r.numHits.toLocaleString()}
+							</span>
+							<span class="min-w-0 truncate">
+								{r.query.length > 80 ? r.query.slice(0, 80) + '…' : r.query}
+							</span>
+						</div>
+					{/each}
+				</ListCard>
+				<div class="flex items-center justify-between pt-1 text-xs">
 					<span class="text-base-content/60">
 						{Math.min(data.offset + rec.rows.length, rec.total).toLocaleString()} / {rec.total.toLocaleString()}
 					</span>

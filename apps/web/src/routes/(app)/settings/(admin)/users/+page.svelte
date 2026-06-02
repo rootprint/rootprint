@@ -162,7 +162,13 @@
 			{#each filtered as user (user.id)}
 				<div class="col-span-full grid min-h-14 grid-cols-subgrid items-center px-4 py-3">
 					<div class="min-w-0">
-						<UserIdentity id={user.id} name={user.name} email={user.email} size="sm" />
+						<UserIdentity
+							id={user.id}
+							name={user.name}
+							email={user.email}
+							size="sm"
+							href={`/settings/users/${user.id}`}
+						/>
 					</div>
 
 					<div>

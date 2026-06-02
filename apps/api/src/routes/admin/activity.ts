@@ -7,7 +7,6 @@ import { requireAdmin } from '../../middleware/require-admin.js';
 import {
 	ApiKeyIdParam,
 	RecentQuery,
-	SlowestQuery,
 	TopActorsQuery,
 	UserIdParam,
 	WindowQuery
@@ -18,7 +17,6 @@ import {
 	getActorSummary,
 	getActorVolumeBuckets,
 	getLatencyBuckets,
-	getSlowestQueries,
 	getSummary,
 	getTopActors,
 	getUserIndexes
@@ -34,10 +32,6 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 	.get('/latency', vValidator('query', WindowQuery), async (c) => {
 		const q = c.req.valid('query');
 		return c.json(await getLatencyBuckets(db, q.window));
-	})
-	.get('/slowest', vValidator('query', SlowestQuery), async (c) => {
-		const q = c.req.valid('query');
-		return c.json(await getSlowestQueries(db, q.window, q.limit ?? 20));
 	})
 	.get('/top-actors', vValidator('query', TopActorsQuery), async (c) => {
 		const q = c.req.valid('query');

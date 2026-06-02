@@ -133,6 +133,7 @@ export type User = {
 	email: string;
 	role: UserRole | null;
 	lastActive: Date | null;
+	createdAt: Date;
 	status: UserStatus;
 	hasCredentialAccount: boolean;
 	inviteUrl: string | null;
@@ -378,20 +379,6 @@ export type LatencyBucket = {
 	p50: number | null;
 	p95: number | null;
 	p99: number | null;
-};
-
-export type SlowestRow = {
-	id: number;
-	executedAt: string;
-	indexId: string;
-	source: 'ui' | 'token';
-	actorId: string; // user id or token id (as string)
-	actorLabel: string | null; // resolved email / token name
-	durationMs: number;
-	numHits: number | null;
-	query: string;
-	startTs: number | null; // searched range start (seconds since epoch)
-	endTs: number | null; // searched range end (seconds since epoch)
 };
 
 export type TopActorRow = {

@@ -13,6 +13,12 @@ export async function listUsers(): Promise<UserView[]> {
 	return res.json() as Promise<UserView[]>;
 }
 
+export async function getUser(userId: string): Promise<UserView> {
+	const res = await client.api.users[':userId'].$get({ param: { userId } });
+	if (!res.ok) throw await readApiError(res, 'Failed to load user');
+	return res.json() as Promise<UserView>;
+}
+
 export async function setUserRole(userId: string, role: UserRole): Promise<void> {
 	const res = await client.api.users[':userId'].role.$put({
 		param: { userId },
