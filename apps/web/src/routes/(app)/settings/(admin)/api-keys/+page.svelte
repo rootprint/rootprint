@@ -2,6 +2,8 @@
 	import { Eye, Plus, Search, Trash2 } from 'lucide-svelte';
 	import * as v from 'valibot';
 	import { toast } from 'svelte-sonner';
+	import { crossfade } from 'svelte/transition';
+	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
@@ -18,12 +20,25 @@
 	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
 	import type { ApiKeyRole } from 'api/types';
 
+	type RoleFilter = 'all' | ApiKeyRole;
+
+	const [send, receive] = crossfade({
+		duration: 200,
+		easing: cubicInOut
+	});
+
+	const filterOptions: { id: RoleFilter; label: string }[] = [
+		{ id: 'all', label: 'All' },
+		{ id: 'ingest', label: 'Ingest' },
+		{ id: 'search', label: 'Search' }
+	];
+
 	let { data } = $props();
 	const keys = $derived(data.keys);
 	const indexIds = $derived(data.indexIds);
 
 	let search = $state('');
-	let roleFilter = $state<'all' | ApiKeyRole>('all');
+	let roleFilter = $state<RoleFilter>('all');
 
 	const filtered = $derived.by(() => {
 		const q = search.trim().toLowerCase();
@@ -199,6 +214,30 @@
 	{/if}
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">
+		<div role="tablist" class="flex h-8 items-center gap-5" aria-label="Filter by role">
+			{#each filterOptions as opt (opt.id)}
+				{@const active = roleFilter === opt.id}
+				<button
+					type="button"
+					role="tab"
+					aria-selected={active}
+					class="relative flex h-full items-center text-sm transition-colors {active
+						? 'text-base-content'
+						: 'text-base-content/50 hover:text-base-content'}"
+					onclick={() => (roleFilter = opt.id)}
+				>
+					{opt.label}
+					{#if active}
+						<span
+							in:receive={{ key: 'api-keys-filter-indicator' }}
+							out:send={{ key: 'api-keys-filter-indicator' }}
+							class="bg-primary absolute right-0 -bottom-px left-0 h-px"
+						></span>
+					{/if}
+				</button>
+			{/each}
+		</div>
+
 		<label class="input input-sm flex-1">
 			<Search class="h-3.5 w-3.5 opacity-60" />
 			<input
@@ -208,33 +247,9 @@
 				bind:value={search}
 			/>
 		</label>
-		<div class="join" role="tablist" aria-label="Filter by role">
-			<button
-				type="button"
-				class="join-item btn btn-sm"
-				class:btn-active={roleFilter === 'all'}
-				onclick={() => (roleFilter = 'all')}
-			>
-				All
-			</button>
-			<button
-				type="button"
-				class="join-item btn btn-sm"
-				class:btn-active={roleFilter === 'ingest'}
-				onclick={() => (roleFilter = 'ingest')}
-			>
-				Ingest
-			</button>
-			<button
-				type="button"
-				class="join-item btn btn-sm"
-				class:btn-active={roleFilter === 'search'}
-				onclick={() => (roleFilter = 'search')}
-			>
-				Search
-			</button>
-		</div>
+
 		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
+
 		<button class="btn btn-primary btn-sm" onclick={openCreate} disabled={noIndexes}>
 			<Plus class="h-3.5 w-3.5" />
 			Create API key
