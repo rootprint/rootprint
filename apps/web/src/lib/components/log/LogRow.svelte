@@ -30,14 +30,15 @@
 
 <button
 	type="button"
-	class="border-line hover:bg-base-200/60 grid min-h-[25px] items-stretch border-b text-left font-mono text-xs {rowWidth}"
-	style="grid-template-columns: {gridTemplate};"
+	class="border-line grid min-h-[25px] items-stretch border-b text-left font-mono text-xs hover:bg-[color-mix(in_oklab,var(--level-color)_14%,transparent)] {rowWidth}"
+	style="grid-template-columns: {gridTemplate}; --level-color: {levelColor(hit.level)};"
 	{onclick}
 >
 	<span
 		aria-hidden="true"
 		title={hit.level.toUpperCase()}
-		style="background-color: {levelColor(hit.level)};"
+		class="my-[1px]"
+		style="background-color: var(--level-color);"
 	></span>
 	<span class="text-base-content/60 px-2 py-1">
 		{formatLogRowTimestamp(hit.timestamp, timezoneMode)}
