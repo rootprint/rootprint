@@ -168,7 +168,7 @@
 					<div>
 						{#if user.role === 'admin'}
 							<span
-								class="badge badge-sm badge-soft badge-primary text-[10px] tracking-wide uppercase"
+								class="badge badge-sm badge-soft badge-neutral text-[10px] tracking-wide uppercase"
 							>
 								Admin
 							</span>

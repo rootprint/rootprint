@@ -39,7 +39,7 @@
 			<div class="flex items-center gap-2">
 				<p class="truncate text-lg">{user.name ?? 'User'}</p>
 				{#if user.role === 'admin'}
-					<span class="badge badge-sm badge-soft badge-primary text-[10px] tracking-wide uppercase">
+					<span class="badge badge-sm badge-soft badge-neutral text-[10px] tracking-wide uppercase">
 						Admin
 					</span>
 				{:else}
