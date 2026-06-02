@@ -1,18 +1,12 @@
 import * as v from 'valibot';
 
-export const toNum = v.pipe(
-	v.string(),
-	v.transform((s) => {
-		const n = Number(s);
-		if (!Number.isFinite(n)) throw new Error('must be a finite number');
-		return n;
-	})
-);
+/** A string query/path param coerced to a finite number. */
+export const toNum = v.pipe(v.string(), v.decimal(), v.transform(Number), v.number());
 
 /**
  * A string query/path param coerced to an integer in `[min, max]`.
- * `max` omitted means unbounded above. Only non-negative integer strings are
- * accepted (no decimals, signs, or trailing characters).
+ * Accepts only non-negative integer strings (no decimals, signs, trailing chars).
+ * Bounds are declarative so @valibot/to-json-schema emits {type:'integer', minimum, maximum}.
  */
 export const intParam = ({
 	min,
@@ -22,20 +16,19 @@ export const intParam = ({
 	min: number;
 	max?: number;
 	label?: string;
-}) =>
-	v.pipe(
+}) => {
+	const base = v.pipe(
 		v.string(),
-		v.transform((s) => {
-			const n = Number.parseInt(s, 10);
-			const ok = /^\d+$/.test(s) && n >= min && (max === undefined || n <= max);
-			if (!ok) {
-				throw new Error(
-					max === undefined ? `${label} must be >= ${min}` : `${label} must be ${min}–${max}`
-				);
-			}
-			return n;
-		})
+		v.regex(/^\d+$/, `${label} must be a non-negative integer`),
+		v.transform(Number),
+		v.integer(),
+		v.minValue(
+			min,
+			max === undefined ? `${label} must be >= ${min}` : `${label} must be ${min}–${max}`
+		)
 	);
+	return max === undefined ? base : v.pipe(base, v.maxValue(max, `${label} must be ${min}–${max}`));
+};
 
 /** A string path/query param constrained to a positive integer, transformed to a number. */
 export const positiveInt = (label = 'value') => intParam({ min: 1, label });

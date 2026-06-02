@@ -1,4 +1,3 @@
-import { vValidator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
 import * as v from 'valibot';
 
@@ -8,12 +7,25 @@ import { savedQueriesRouter } from './saved-queries.js';
 import { isAdmin } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
+import { describe, validator } from '../lib/openapi/describe.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
 import { requireManageableIndex } from '../middleware/require-manageable-index.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
 import { FIELD_VALUES_MAX } from '../constants.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
+import {
+	FieldValuesBulkResponse,
+	FieldValuesResponse,
+	HistogramResponse,
+	IndexDetailResponse,
+	IndexFieldsResponse,
+	IndexListResponse,
+	IndexStatsResponse,
+	IndexViewConfigResponse,
+	LogSearchResponse,
+	PreferencesResponse
+} from '../schemas/responses/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {
 	deleteIndex,
@@ -132,24 +144,58 @@ const ListIndexesQuery = v.object({
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const indexesRouter = new Hono<IndexConfigEnv>()
-	.get('/', vValidator('query', ListIndexesQuery), async (c) => {
-		const { includeHidden } = c.req.valid('query');
-		const session = c.get('session');
-		return c.json(await listIndexes(db, quickwit, session.user.role, { includeHidden }));
-	})
-	.get('/:indexId/fields', requireIndexAccess, vValidator('param', IndexIdParams), async (c) => {
-		const { indexId } = c.req.valid('param');
-		return c.json(await getIndexFields(quickwit, indexId));
-	})
-	.get('/:indexId/config', requireIndexAccess, vValidator('param', IndexIdParams), async (c) => {
-		const { indexId } = c.req.valid('param');
-		return c.json(await getIndexViewConfig(db, quickwit, indexId, isAdmin(c.get('session'))));
-	})
+	.get(
+		'/',
+		describe({
+			tag: 'Index management',
+			summary: 'List indexes',
+			ok: IndexListResponse
+		}),
+		validator('query', ListIndexesQuery),
+		async (c) => {
+			const { includeHidden } = c.req.valid('query');
+			const session = c.get('session');
+			return c.json(await listIndexes(db, quickwit, session.user.role, { includeHidden }));
+		}
+	)
+	.get(
+		'/:indexId/fields',
+		describe({
+			tag: 'Index management',
+			summary: 'List index fields',
+			ok: IndexFieldsResponse
+		}),
+		requireIndexAccess,
+		validator('param', IndexIdParams),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			return c.json(await getIndexFields(quickwit, indexId));
+		}
+	)
+	.get(
+		'/:indexId/config',
+		describe({
+			tag: 'Index management',
+			summary: 'Get index view config',
+			ok: IndexViewConfigResponse
+		}),
+		requireIndexAccess,
+		validator('param', IndexIdParams),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			return c.json(await getIndexViewConfig(db, quickwit, indexId, isAdmin(c.get('session'))));
+		}
+	)
 	.get(
 		'/:indexId',
+		describe({
+			tag: 'Index management',
+			summary: 'Get index detail',
+			ok: IndexDetailResponse
+		}),
 		requireAdmin,
 		requireManageableIndex,
-		vValidator('param', IndexIdParams),
+		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const detail = await getIndexDetail(db, quickwit, indexId);
@@ -159,10 +205,15 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.get(
 		'/:indexId/stats',
+		describe({
+			tag: 'Index management',
+			summary: 'Get index stats history',
+			ok: IndexStatsResponse
+		}),
 		requireAdmin,
 		requireManageableIndex,
-		vValidator('param', IndexIdParams),
-		vValidator('query', StatsQuery),
+		validator('param', IndexIdParams),
+		validator('query', StatsQuery),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const { from, to, limit } = c.req.valid('query');
@@ -176,10 +227,16 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.patch(
 		'/:indexId',
+		describe({
+			tag: 'Index management',
+			summary: 'Update index configuration',
+			okStatus: 204,
+			errors: [409]
+		}),
 		requireAdmin,
 		requireManageableIndex,
-		vValidator('param', IndexIdParams),
-		vValidator('json', saveIndexConfigSchema),
+		validator('param', IndexIdParams),
+		validator('json', saveIndexConfigSchema),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const body = c.req.valid('json');
@@ -189,9 +246,15 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.delete(
 		'/:indexId',
+		describe({
+			tag: 'Index management',
+			summary: 'Delete index',
+			okStatus: 204,
+			errors: [409]
+		}),
 		requireAdmin,
 		requireManageableIndex,
-		vValidator('param', IndexIdParams),
+		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			await deleteIndex(db, quickwit, indexId);
@@ -200,10 +263,16 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.patch(
 		'/:indexId/sources/:sourceId',
+		describe({
+			tag: 'Index management',
+			summary: 'Toggle source enabled state',
+			okStatus: 204,
+			errors: [409]
+		}),
 		requireAdmin,
 		requireManageableIndex,
-		vValidator('param', SourceParams),
-		vValidator('json', ToggleSourceBody),
+		validator('param', SourceParams),
+		validator('json', ToggleSourceBody),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
 			const { enabled } = c.req.valid('json');
@@ -213,32 +282,53 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.delete(
 		'/:indexId/sources/:sourceId',
+		describe({
+			tag: 'Index management',
+			summary: 'Delete index source',
+			okStatus: 204,
+			errors: [409]
+		}),
 		requireAdmin,
 		requireManageableIndex,
-		vValidator('param', SourceParams),
+		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
 			await deleteSource(quickwit, indexId, sourceId);
 			return c.body(null, 204);
 		}
 	)
-	.get('/:indexId/logs', withIndexConfig, vValidator('query', SearchQuery), async (c) => {
-		const q = c.req.valid('query');
-		const indexConfig = c.get('indexConfig');
-		const session = c.get('session');
-		const result = await withSearchAudit(
-			db,
-			{ source: 'ui', userId: session.user.id },
-			indexConfig.indexId,
-			q,
-			() => searchLogs(quickwit, indexConfig, q)
-		);
-		return c.json(result);
-	})
+	.get(
+		'/:indexId/logs',
+		describe({
+			tag: 'Log explorer',
+			summary: 'Search logs',
+			ok: LogSearchResponse
+		}),
+		withIndexConfig,
+		validator('query', SearchQuery),
+		async (c) => {
+			const q = c.req.valid('query');
+			const indexConfig = c.get('indexConfig');
+			const session = c.get('session');
+			const result = await withSearchAudit(
+				db,
+				{ source: 'ui', userId: session.user.id },
+				indexConfig.indexId,
+				q,
+				() => searchLogs(quickwit, indexConfig, q)
+			);
+			return c.json(result);
+		}
+	)
 	.get(
 		'/:indexId/logs/histogram',
+		describe({
+			tag: 'Log explorer',
+			summary: 'Get log histogram',
+			ok: HistogramResponse
+		}),
 		withIndexConfig,
-		vValidator('query', HistogramQuery),
+		validator('query', HistogramQuery),
 		async (c) => {
 			const { q, startTs, endTs, interval } = c.req.valid('query');
 			return c.json(
@@ -248,8 +338,13 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.get(
 		'/:indexId/fields/values',
+		describe({
+			tag: 'Log explorer',
+			summary: 'Get bulk field values',
+			ok: FieldValuesBulkResponse
+		}),
 		withIndexConfig,
-		vValidator('query', FieldValuesBulkQuery),
+		validator('query', FieldValuesBulkQuery),
 		async (c) => {
 			const { fields, q, filters, startTs, endTs, limit } = c.req.valid('query');
 			return c.json(
@@ -266,9 +361,14 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.get(
 		'/:indexId/fields/:field/values',
+		describe({
+			tag: 'Log explorer',
+			summary: 'Get field values',
+			ok: FieldValuesResponse
+		}),
 		withIndexConfig,
-		vValidator('param', FieldParams),
-		vValidator('query', FieldValuesQuery),
+		validator('param', FieldParams),
+		validator('query', FieldValuesQuery),
 		async (c) => {
 			const { field } = c.req.valid('param');
 			const { q, startTs, endTs, limit } = c.req.valid('query');
@@ -284,8 +384,13 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.get(
 		'/:indexId/preferences',
+		describe({
+			tag: 'Index management',
+			summary: 'Get index preferences',
+			ok: PreferencesResponse
+		}),
 		requireIndexAccess,
-		vValidator('param', IndexIdParams),
+		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const session = c.get('session');
@@ -294,9 +399,14 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 	)
 	.put(
 		'/:indexId/preferences',
+		describe({
+			tag: 'Index management',
+			summary: 'Save index preferences',
+			ok: PreferencesResponse
+		}),
 		requireIndexAccess,
-		vValidator('param', IndexIdParams),
-		vValidator('json', PutPreferencesBody),
+		validator('param', IndexIdParams),
+		validator('json', PutPreferencesBody),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const body = c.req.valid('json');

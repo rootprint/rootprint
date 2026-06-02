@@ -1,4 +1,44 @@
+import type * as v from 'valibot';
 import type { INDEX_VISIBILITIES } from './constants.js';
+import type {
+	FieldValuesBulkResponse as FieldValuesBulkResponseSchema,
+	FieldValuesResponse as FieldValuesResponseSchema,
+	HistogramResponse as HistogramResponseSchema,
+	IndexDetailResponse as IndexDetailResponseSchema,
+	IndexListResponse as IndexListResponseSchema,
+	IndexViewConfigResponse as IndexViewConfigResponseSchema,
+	LogSearchResponse as LogSearchResponseSchema,
+	PreferencesResponse as PreferencesResponseSchema
+} from './schemas/responses/indexes.js';
+import type { SavedQueryResponse as SavedQueryResponseSchema } from './schemas/responses/saved-queries.js';
+import type {
+	ApiKeyResponse as ApiKeyResponseSchema,
+	ApiKeyValueResponse as ApiKeyValueResponseSchema
+} from './schemas/responses/api-keys.js';
+import type {
+	UserResponse as UserResponseSchema,
+	InviteUrlResponse as InviteUrlResponseSchema
+} from './schemas/responses/users.js';
+import type { AuthProvidersResponse as AuthProvidersResponseSchema } from './schemas/responses/auth.js';
+import type { GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema } from './schemas/responses/settings.js';
+import type {
+	ActorIndexRowResponse as ActorIndexRowResponseSchema,
+	ActorSummaryRowResponse as ActorSummaryRowResponseSchema,
+	ClusterHealthResponse as ClusterHealthResponseSchema,
+	ClusterOverviewResponse as ClusterOverviewResponseSchema,
+	ClusterTotalsResponse as ClusterTotalsResponseSchema,
+	LatencyBucketResponse as LatencyBucketResponseSchema,
+	PerIndexOverviewResponse as PerIndexOverviewResponseSchema,
+	QuickwitBuildInfoResponse as QuickwitBuildInfoResponseSchema,
+	QuickwitSnapshotResponse as QuickwitSnapshotResponseSchema,
+	RecentResultResponse as RecentResultResponseSchema,
+	RecentRowResponse as RecentRowResponseSchema,
+	ResourceSnapshotResponse as ResourceSnapshotResponseSchema,
+	SaturationSnapshotResponse as SaturationSnapshotResponseSchema,
+	SummaryRowResponse as SummaryRowResponseSchema,
+	TopActorRowResponse as TopActorRowResponseSchema,
+	VolumeBucketResponse as VolumeBucketResponseSchema
+} from './schemas/responses/admin.js';
 
 export type HealthResponse = {
 	status: 'ok';
@@ -33,33 +73,9 @@ export type IndexSource = {
 	enabled: boolean;
 };
 
-export type IndexSummary = {
-	indexId: string;
-	displayName: string | null;
-	visibility: IndexVisibility;
-	fieldCount: number;
-	sourceCount: number;
-	mode: string | null;
-	createTimestamp: number | null;
-};
+export type IndexSummary = v.InferOutput<typeof IndexListResponseSchema>[number];
 
-export type IndexDetail = {
-	indexId: string;
-	displayName: string | null;
-	visibility: IndexVisibility;
-	levelField: string;
-	messageField: string;
-	tracebackField: string | null;
-	contextFields: string[] | null;
-	indexUri: string | null;
-	timestampField: string | null;
-	mode: string | null;
-	tagFields: string[] | null;
-	defaultSearchFields: string[] | null;
-	storeSource: boolean | null;
-	fields: IndexField[];
-	sources: IndexSource[];
-};
+export type IndexDetail = v.InferOutput<typeof IndexDetailResponseSchema>;
 
 export type SaveIndexConfigFields = {
 	displayName?: string | null;
@@ -70,27 +86,11 @@ export type SaveIndexConfigFields = {
 	contextFields?: string[] | null;
 };
 
-export type IndexViewConfig = {
-	indexId: string;
-	displayName: string | null;
-	levelField: string;
-	messageField: string;
-	tracebackField: string | null;
-	/** Field names to pre-pin as chips when the log-detail Context pane opens. */
-	contextFields: string[] | null;
-	/** Non-null: the endpoint throws when the underlying Quickwit index has no timestamp field. */
-	timestampField: string;
-	/** True when the index ID has the `otel-` prefix used by Quickwit's OTel service. */
-	isOtel: boolean;
-};
+export type IndexViewConfig = v.InferOutput<typeof IndexViewConfigResponseSchema>;
 
 export type LogHit = Record<string, unknown>;
 
-export type LogSearchResponse = {
-	hits: LogHit[];
-	numHits: number;
-	elapsedTimeMicros: number;
-};
+export type LogSearchResponse = v.InferOutput<typeof LogSearchResponseSchema>;
 
 export type HistogramBucket = {
 	key: number;
@@ -99,18 +99,14 @@ export type HistogramBucket = {
 	levels: Record<string, number>;
 };
 
-export type HistogramResponse = {
-	buckets: HistogramBucket[];
-};
+export type HistogramResponse = v.InferOutput<typeof HistogramResponseSchema>;
 
 export type FieldValueEntry = {
 	value: string;
 	count: number;
 };
 
-export type FieldValuesResponse = {
-	values: FieldValueEntry[];
-};
+export type FieldValuesResponse = v.InferOutput<typeof FieldValuesResponseSchema>;
 
 export type Filter = {
 	field: string;
@@ -119,43 +115,20 @@ export type Filter = {
 	exclude: boolean;
 };
 
-export type FieldValuesBulkResponse = {
-	values: Record<string, FieldValueEntry[]>;
-	elapsedTimeMicros?: number;
-};
+export type FieldValuesBulkResponse = v.InferOutput<typeof FieldValuesBulkResponseSchema>;
 
 export type UserRole = 'admin' | 'user';
 export type UserStatus = 'active' | 'pending' | 'expired';
 
-export type User = {
-	id: string;
-	name: string;
-	email: string;
-	role: UserRole | null;
-	lastActive: Date | null;
-	createdAt: Date;
-	status: UserStatus;
-	hasCredentialAccount: boolean;
-	inviteUrl: string | null;
-	inviteExpiresAt: Date | null;
-};
+export type User = v.InferOutput<typeof UserResponseSchema>;
+
+export type InviteUrlResult = v.InferOutput<typeof InviteUrlResponseSchema>;
 
 export type ApiKeyRole = 'ingest' | 'search';
 
-export type ApiKeySummary = {
-	id: number;
-	name: string;
-	tokenPrefix: string;
-	role: ApiKeyRole;
-	indexId: string;
-	lastUsedAt: Date | null;
-	createdAt: Date;
-	createdByUserId: string;
-};
+export type ApiKeySummary = v.InferOutput<typeof ApiKeyResponseSchema>;
 
-export type ApiKeyValue = {
-	token: string;
-};
+export type ApiKeyValue = v.InferOutput<typeof ApiKeyValueResponseSchema>;
 
 export type VerifiedApiKey = {
 	id: number;
@@ -166,15 +139,7 @@ export type VerifiedApiKey = {
 
 export type { CreateApiKeyInput } from './schemas/api-keys.js';
 
-export type SavedQuery = {
-	id: number;
-	indexId: string;
-	name: string;
-	description: string | null;
-	query: string;
-	createdAt: Date;
-	updatedAt: Date;
-};
+export type SavedQuery = v.InferOutput<typeof SavedQueryResponseSchema>;
 
 export type ShareCreateInput = {
 	indexId: string;
@@ -194,20 +159,11 @@ export type ShareView = {
 
 export type DisplayMode = 'table' | 'inline';
 
-export type Preferences = {
-	displayFields: string[] | null;
-	lineWrap: boolean;
-	displayMode: DisplayMode;
-};
+export type Preferences = v.InferOutput<typeof PreferencesResponseSchema>;
 
-export type GoogleAuthSettings = {
-	configured: boolean;
-	allowedDomains: string[];
-};
+export type GoogleAuthSettings = v.InferOutput<typeof GoogleAuthSettingsResponseSchema>;
 
-export type AuthProvidersInfo = {
-	google: { enabled: boolean };
-};
+export type AuthProvidersInfo = v.InferOutput<typeof AuthProvidersResponseSchema>;
 
 export type IndexStatsPoint = {
 	capturedAt: Date;
@@ -219,60 +175,24 @@ export type IndexStatsPoint = {
 	maxTimestamp: number | null;
 };
 
-export type ClusterHealth = {
-	healthy: boolean;
-	endpoint: string;
-};
+export type ClusterHealth = v.InferOutput<typeof ClusterHealthResponseSchema>;
 
-export type ClusterTotals = {
-	indexCount: number;
-	totalDocs: number;
-	totalSizeBytes: number;
-	totalSplits: number;
-	latestCapturedAt: string | null;
-};
+export type ClusterTotals = v.InferOutput<typeof ClusterTotalsResponseSchema>;
 
-export type PerIndexOverview = {
-	indexId: string;
-	displayName: string | null;
-	visibility: IndexVisibility;
-	numDocs: number | null;
-	sizeBytes: number | null;
-	uncompressedBytes: number | null;
-	numSplits: number | null;
-	capturedAt: string | null;
-};
+export type PerIndexOverview = v.InferOutput<typeof PerIndexOverviewResponseSchema>;
 
-export type ClusterOverview = {
-	health: ClusterHealth;
-	totals: ClusterTotals;
-	perIndex: PerIndexOverview[];
-};
+export type ClusterOverview = v.InferOutput<typeof ClusterOverviewResponseSchema>;
 
-export type QuickwitBuildInfo = {
-	version: string | null;
-};
+export type QuickwitBuildInfo = v.InferOutput<typeof QuickwitBuildInfoResponseSchema>;
 
-export type ResourceSnapshot = {
-	memoryRssBytes: number | null;
-	fdsOpen: number | null;
-	fdsMax: number | null;
-	walDiskBytes: number | null;
-};
+export type ResourceSnapshot = v.InferOutput<typeof ResourceSnapshotResponseSchema>;
 
-export type SaturationSnapshot = {
-	// max(main, non_blocking) tokio worker busy ratio — Quickwit computes this
-	// over a recent window, so it's a real "right now" % rather than cumulative.
-	cpuBusyRatio: number | null;
-};
+// cpuBusyRatio is max(main, non_blocking) tokio worker busy ratio — Quickwit
+// computes this over a recent window, so it's a real "right now" % rather than
+// cumulative.
+export type SaturationSnapshot = v.InferOutput<typeof SaturationSnapshotResponseSchema>;
 
-export type QuickwitSnapshot = {
-	fetchedAt: string;
-	build: QuickwitBuildInfo;
-	uptimeSeconds: number | null;
-	resources: ResourceSnapshot;
-	saturation: SaturationSnapshot;
-};
+export type QuickwitSnapshot = v.InferOutput<typeof QuickwitSnapshotResponseSchema>;
 
 export type ExportFormat = 'json' | 'csv' | 'text';
 
@@ -365,58 +285,18 @@ export type ProxyResult = {
 };
 
 // Search activity (search-activity.service.ts)
-export type SummaryRow = {
-	totalSearches: number;
-	errorCount: number;
-	p50: number | null;
-	p95: number | null;
-	p99: number | null;
-};
+export type SummaryRow = v.InferOutput<typeof SummaryRowResponseSchema>;
 
-export type LatencyBucket = {
-	t: string; // ISO timestamp at bucket start
-	count: number;
-	p50: number | null;
-	p95: number | null;
-	p99: number | null;
-};
+export type LatencyBucket = v.InferOutput<typeof LatencyBucketResponseSchema>;
 
-export type TopActorRow = {
-	kind: 'user' | 'apiKey';
-	id: string;
-	label: string | null;
-	count: number;
-	avgDurationMs: number;
-	errorCount: number;
-	indexes: string[];
-};
+export type TopActorRow = v.InferOutput<typeof TopActorRowResponseSchema>;
 
-export type ActorSummaryRow = SummaryRow & {
-	displayName: string | null;
-	email: string | null;
-};
+export type ActorSummaryRow = v.InferOutput<typeof ActorSummaryRowResponseSchema>;
 
-export type VolumeBucket = { t: string; count: number };
+export type VolumeBucket = v.InferOutput<typeof VolumeBucketResponseSchema>;
 
-export type ActorIndexRow = {
-	indexId: string;
-	count: number;
-	avgDurationMs: number;
-	errorCount: number;
-};
+export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponseSchema>;
 
-export type RecentRow = {
-	id: number;
-	executedAt: string;
-	indexId: string;
-	durationMs: number;
-	numHits: number | null;
-	query: string;
-	startTs: number | null;
-	endTs: number | null;
-};
+export type RecentRow = v.InferOutput<typeof RecentRowResponseSchema>;
 
-export type RecentResult = {
-	rows: RecentRow[];
-	total: number;
-};
+export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;
