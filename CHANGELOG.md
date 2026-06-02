@@ -2,6 +2,26 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-06-02
+
+### Added
+
+- **Display mode and line-wrap preferences.** Two new per-user display settings: a **table / inline** display mode for results and a **line-wrap** toggle for log rows, persisted in `user_preference` (migration `0011`). The former **Column settings** panel is now **Display settings**.
+- **Hidden index support.** Indexes can be marked hidden, with a new `require-manageable-index` middleware gating index management and access accordingly.
+- **Embedded JSON resolution in the log detail drawer.** String field values whose content is itself a JSON object or array are now parsed into real nested JSON (recursively, depth-capped) before the JSON tab pretty-prints them. Scalar-looking strings are left untouched so they are not coerced to other types.
+
+### Changed
+
+- **Drawer search highlighting now uses the CSS Custom Highlight API** instead of wrapping matches in DOM nodes. The `HighlightedText` component was replaced by `dom-highlight.ts`.
+- **Charts migrated from LayerChart to uPlot.** The latency, volume, and storage-trend charts were reimplemented on uPlot, and the bespoke `ui/chart/*` wrapper components were removed.
+- **Admin users list layout refined**, alongside updated send-logs integration examples and documentation.
+- **Internal (API):** all backend constants consolidated into a single `constants.ts`; search and export parameters refactored, with shared types expanded in `types.ts`.
+- **Internal (web):** dependency-invalidation keys reworked (`api/deps.ts`, new `request-guard` store) with consolidated error handling across loaders and components.
+
+### Upgrade notes
+
+1. Migration `0011` applies on startup. It adds `line_wrap` and `display_mode` columns to `user_preference`, both with defaults — no manual action required.
+
 ## [0.3.0] - 2026-05-31
 
 Complete architectural rewrite. Rootprint is now a Bun-workspace monorepo: a standalone **Hono API** (`apps/api`) and a separate **SvelteKit SPA** (`apps/web`) that talks to it over HTTP. The previous single SvelteKit-server deployment is gone, and the datastore has moved from SQLite to **PostgreSQL**.
