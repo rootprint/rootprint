@@ -5,7 +5,8 @@
 		children,
 		empty = false,
 		emptyMessage = '',
-		cols
+		cols,
+		gap = 'gap-x-3'
 	}: {
 		children: Snippet;
 		empty?: boolean;
@@ -16,13 +17,16 @@
 		 * row aligns to the same columns instead of sizing independently.
 		 */
 		cols?: string;
+		/**
+		 * Horizontal gap utility between columns when `cols` is set. Defaults to
+		 * `gap-x-3`; dense data tables can pass a wider gap (e.g. `gap-x-6`).
+		 */
+		gap?: string;
 	} = $props();
 </script>
 
 <div
-	class="border-line rounded-box divide-line divide-y border"
-	class:grid={cols}
-	class:gap-x-3={cols}
+	class="border-line rounded-box divide-line divide-y border {cols ? `grid ${gap}` : ''}"
 	style={cols ? `grid-template-columns: ${cols}` : undefined}
 >
 	{#if empty}

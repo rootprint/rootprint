@@ -9,7 +9,6 @@ import type {
 	ActorSummaryRow,
 	LatencyBucket,
 	RecentResult,
-	SlowestRow,
 	SummaryRow,
 	TopActorRow,
 	VolumeBucket
@@ -100,77 +99,6 @@ export async function getLatencyBuckets(
 		p95: r.p95 === null ? null : Number(r.p95),
 		p99: r.p99 === null ? null : Number(r.p99)
 	}));
-}
-
-export async function getSlowestQueries(
-	db: Db,
-	window: ActivityWindow | undefined,
-	limit: number
-): Promise<SlowestRow[]> {
-	const { interval } = resolveWindow(window);
-	const result = await db.execute<{
-		id: string;
-		executed_at: Date | string;
-		index_id: string;
-		source: 'ui' | 'token';
-		user_id: string | null;
-		api_key_id: number | null;
-		duration_ms: number;
-		num_hits: string | null;
-		query: string;
-		start_ts: string | null;
-		end_ts: string | null;
-	}>(sql`
-		SELECT id::text, executed_at, index_id, source, user_id, api_key_id,
-			duration_ms, num_hits::text, query, start_ts::text, end_ts::text
-		FROM search_audit
-		WHERE executed_at >= ${sinceWindow(interval)}
-		ORDER BY duration_ms DESC
-		LIMIT ${limit}
-	`);
-
-	const userIds = [...new Set(result.rows.map((r) => r.user_id).filter((x): x is string => !!x))];
-	const apiKeyIds = [
-		...new Set(result.rows.map((r) => r.api_key_id).filter((x): x is number => x !== null))
-	];
-
-	const userLabels = new Map<string, string>();
-	if (userIds.length > 0) {
-		const rows = await db
-			.select({ id: user.id, email: user.email })
-			.from(user)
-			.where(inArray(user.id, userIds));
-		for (const r of rows) userLabels.set(r.id, r.email);
-	}
-	const apiKeyLabels = new Map<number, string>();
-	if (apiKeyIds.length > 0) {
-		const rows = await db
-			.select({ id: apiKey.id, name: apiKey.name })
-			.from(apiKey)
-			.where(inArray(apiKey.id, apiKeyIds));
-		for (const r of rows) apiKeyLabels.set(r.id, r.name);
-	}
-
-	return result.rows.map((r) => {
-		const isUi = r.source === 'ui';
-		const actorId = isUi ? (r.user_id as string) : String(r.api_key_id);
-		const actorLabel = isUi
-			? (userLabels.get(r.user_id as string) ?? null)
-			: (apiKeyLabels.get(r.api_key_id as number) ?? null);
-		return {
-			id: Number(r.id),
-			executedAt: toIso(r.executed_at),
-			indexId: r.index_id,
-			source: r.source,
-			actorId,
-			actorLabel,
-			durationMs: r.duration_ms,
-			numHits: r.num_hits === null ? null : Number(r.num_hits),
-			query: r.query,
-			startTs: r.start_ts === null ? null : Number(r.start_ts),
-			endTs: r.end_ts === null ? null : Number(r.end_ts)
-		};
-	});
 }
 
 export async function getTopActors(

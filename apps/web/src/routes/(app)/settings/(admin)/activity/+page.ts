@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 
-import { getLatency, getSlowest, getSummary, getTopActors, parseWindow } from '$lib/api/activity';
+import { getLatency, getSummary, getTopActors, parseWindow } from '$lib/api/activity';
 import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ url, depends }) => {
@@ -11,7 +11,6 @@ export const load: PageLoad = async ({ url, depends }) => {
 		window,
 		summary: getSummary(window),
 		latency: getLatency(window),
-		slowest: getSlowest(window),
 		topActors: getTopActors(window)
 	};
 };

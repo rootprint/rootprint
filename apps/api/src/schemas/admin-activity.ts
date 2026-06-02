@@ -9,11 +9,6 @@ export const WindowQuery = v.object({
 	window: WindowField
 });
 
-export const SlowestQuery = v.object({
-	window: WindowField,
-	limit: v.optional(intParam({ min: 1, max: 100, label: 'limit' }))
-});
-
 export const TopActorsQuery = v.object({
 	window: WindowField,
 	limit: v.optional(intParam({ min: 1, max: 50, label: 'limit' }))

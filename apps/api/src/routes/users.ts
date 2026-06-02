@@ -12,6 +12,10 @@ import { UserIdParams } from '../utils/params.js';
 export const usersRouter = new Hono<AuthedEnv>()
 	.use('*', requireAdmin)
 	.get('/', async (c) => c.json(await userService.listUsers(db)))
+	.get('/:userId', vValidator('param', UserIdParams), async (c) => {
+		const { userId } = c.req.valid('param');
+		return c.json(await userService.getUser(db, userId));
+	})
 	// Creating a user means inviting them: this provisions the user row and issues an invite token.
 	.post('/', vValidator('json', createInviteSchema), async (c) => {
 		const result = await userService.inviteUser(db, c.req.valid('json'));
