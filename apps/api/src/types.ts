@@ -380,20 +380,6 @@ export type LatencyBucket = {
 	p99: number | null;
 };
 
-export type SlowestRow = {
-	id: number;
-	executedAt: string;
-	indexId: string;
-	source: 'ui' | 'token';
-	actorId: string; // user id or token id (as string)
-	actorLabel: string | null; // resolved email / token name
-	durationMs: number;
-	numHits: number | null;
-	query: string;
-	startTs: number | null; // searched range start (seconds since epoch)
-	endTs: number | null; // searched range end (seconds since epoch)
-};
-
 export type TopActorRow = {
 	kind: 'user' | 'apiKey';
 	id: string;

@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { format, parseISO } from 'date-fns';
+	import { KeyRound } from 'lucide-svelte';
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import ActivityTable from '$lib/components/activity/ActivityTable.svelte';
 	import KpiStrip from '$lib/components/activity/KpiStrip.svelte';
 	import LatencyChart from '$lib/components/activity/LatencyChart.svelte';
 	import TimeRangeTabs from '$lib/components/activity/TimeRangeTabs.svelte';
+	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import type { Window, SlowestRows, TopActors } from '$lib/api/activity';
+	import type { Window } from '$lib/api/activity';
 	import { formatDurationMs } from '$lib/utils/format';
-	import { formatTimestampRange } from '$lib/utils/time';
 
 	let { data } = $props();
 
@@ -29,6 +28,18 @@
 			<TimeRangeTabs value={data.window} onChange={setWindow} />
 		{/snippet}
 	</PageHeader>
+
+	{#snippet apiKeyActor(id: string, label: string | null)}
+		<div class="flex min-w-0 items-center gap-2">
+			<span
+				class="bg-base-200 text-base-content/60 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+				aria-hidden="true"
+			>
+				<KeyRound class="h-3.5 w-3.5" />
+			</span>
+			<span class="truncate text-sm">{label ?? id}</span>
+		</div>
+	{/snippet}
 
 	<div class="mt-8 flex flex-col gap-4">
 		{#await data.summary}
@@ -47,92 +58,45 @@
 			{void console.error('[activity] latency failed', e)}
 		{/await}
 
-		{#snippet slowestActorCell(r: SlowestRows[number])}
-			{#if r.source === 'ui'}
-				<UserIdentity
-					id={r.actorId}
-					name={r.actorLabel}
-					size="sm"
-					href={`/settings/activity/users/${r.actorId}?window=${data.window}`}
-				/>
-			{:else}
-				<a
-					class="link link-hover"
-					href={`/settings/activity/api-keys/${r.actorId}?window=${data.window}`}
-				>
-					{r.actorLabel ?? r.actorId}
-				</a>
-			{/if}
-		{/snippet}
-
-		{#snippet topActorCell(r: TopActors[number])}
-			{#if r.kind === 'user'}
-				<UserIdentity
-					id={r.id}
-					name={r.label}
-					size="sm"
-					href={`/settings/activity/users/${r.id}?window=${data.window}`}
-				/>
-			{:else}
-				<a
-					class="link link-hover"
-					href={`/settings/activity/api-keys/${r.id}?window=${data.window}`}
-				>
-					{r.label ?? r.id}
-				</a>
-			{/if}
-		{/snippet}
-
-		{#await data.slowest then rows}
-			<ActivityTable
-				title="Slowest queries"
-				{rows}
-				empty="No searches in this window."
-				columns={[
-					{
-						key: 'time',
-						label: 'Time',
-						render: (r) => format(parseISO(r.executedAt), 'yyyy-MM-dd HH:mm:ss')
-					},
-					{ key: 'index', label: 'Index', render: (r) => r.indexId },
-					{ key: 'actor', label: 'Actor', cell: slowestActorCell },
-					{ key: 'duration', label: 'Duration', render: (r) => formatDurationMs(r.durationMs) },
-					{
-						key: 'hits',
-						label: 'Hits',
-						render: (r) => (r.numHits === null ? '—' : r.numHits.toLocaleString())
-					},
-					{
-						key: 'range',
-						label: 'Range',
-						class: 'whitespace-nowrap',
-						render: (r) => formatTimestampRange(r.startTs, r.endTs)
-					},
-					{
-						key: 'query',
-						label: 'Query',
-						class: 'max-w-md truncate',
-						render: (r) => (r.query.length > 80 ? r.query.slice(0, 80) + '…' : r.query)
-					}
-				]}
-			/>
-		{:catch e}
-			{void console.error('[activity] slowest failed', e)}
-		{/await}
-
 		{#await data.topActors then rows}
-			<ActivityTable
-				title="Top actors"
-				{rows}
-				empty="No actor activity in this window."
-				columns={[
-					{ key: 'actor', label: 'Actor', cell: topActorCell },
-					{ key: 'source', label: 'Source', render: (r) => r.kind },
-					{ key: 'indexes', label: 'Indexes', render: (r) => r.indexes.join(', ') },
-					{ key: 'count', label: 'Searches', render: (r) => r.count.toLocaleString() },
-					{ key: 'avg', label: 'Avg', render: (r) => formatDurationMs(r.avgDurationMs) }
-				]}
-			/>
+			<div class="flex flex-col gap-2">
+				<p class="eyebrow">Top actors</p>
+				<ListCard
+					cols="minmax(0,1fr) auto auto"
+					empty={rows.length === 0}
+					emptyMessage="No actor activity in this window."
+				>
+					<div
+						class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+					>
+						<span>Actor</span>
+						<span class="text-right">Searches</span>
+						<span class="text-right">Avg</span>
+					</div>
+					{#each rows as r (r.id)}
+						{@const href =
+							r.kind === 'user'
+								? `/settings/activity/users/${r.id}?window=${data.window}`
+								: `/settings/activity/api-keys/${r.id}?window=${data.window}`}
+						<a
+							{href}
+							class="hover:bg-base-200/40 col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm"
+						>
+							<span class="min-w-0">
+								{#if r.kind === 'user'}
+									<UserIdentity id={r.id} name={r.label} size="sm" />
+								{:else}
+									{@render apiKeyActor(r.id, r.label)}
+								{/if}
+							</span>
+							<span class="text-right tabular-nums">{r.count.toLocaleString()}</span>
+							<span class="text-right whitespace-nowrap tabular-nums">
+								{formatDurationMs(r.avgDurationMs)}
+							</span>
+						</a>
+					{/each}
+				</ListCard>
+			</div>
 		{:catch e}
 			{void console.error('[activity] top-actors failed', e)}
 		{/await}

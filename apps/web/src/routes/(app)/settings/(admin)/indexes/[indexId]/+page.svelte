@@ -9,6 +9,7 @@
 	import IndexConfigForm from '$lib/components/admin/IndexConfigForm.svelte';
 	import IndexTabs from '$lib/components/admin/IndexTabs.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
+	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import TypeToConfirmModal from '$lib/components/ui/TypeToConfirmModal.svelte';
 	import { pluralize } from '$lib/utils/format';
@@ -132,36 +133,36 @@
 				<span class="text-base-content/60 text-xs">[{fieldsCountLabel}]</span>
 			</div>
 
-			<div class="border-line rounded-box overflow-hidden border">
+			<ListCard
+				cols="minmax(0,1fr) 8rem 3rem"
+				empty={filteredFields.length === 0}
+				emptyMessage={fieldFilter.trim() !== ''
+					? 'No fields match your search.'
+					: 'No fields defined.'}
+			>
 				<div
-					class="border-line text-base-content/50 flex items-center gap-3 border-b px-4 py-2 text-xs tracking-wider uppercase"
+					class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
 				>
-					<span class="flex-1">Name</span>
-					<span class="w-32">Type</span>
-					<span class="w-12 text-center">Fast</span>
+					<span>Name</span>
+					<span>Type</span>
+					<span class="text-center">Fast</span>
 				</div>
-				<div class="divide-line divide-y">
-					{#each filteredFields as field (field.name)}
-						<div class="hover:bg-base-200/40 flex items-center gap-3 px-4 py-2">
-							<span class="min-w-0 flex-1 truncate font-mono text-sm">{field.name}</span>
-							<span class="w-32">
-								<span class="badge badge-sm badge-ghost">{field.type}</span>
-							</span>
-							<span class="w-12 text-center">
-								{#if field.fast}
-									<span class="text-success">✓</span>
-								{:else}
-									<span class="text-base-content/50">—</span>
-								{/if}
-							</span>
-						</div>
-					{:else}
-						<div class="text-base-content/60 py-10 text-center text-xs">
-							{fieldFilter.trim() !== '' ? 'No fields match your search.' : 'No fields defined.'}
-						</div>
-					{/each}
-				</div>
-			</div>
+				{#each filteredFields as field (field.name)}
+					<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-sm">
+						<span class="min-w-0 truncate font-mono">{field.name}</span>
+						<span>
+							<span class="badge badge-sm badge-ghost">{field.type}</span>
+						</span>
+						<span class="text-center">
+							{#if field.fast}
+								<span class="text-success">✓</span>
+							{:else}
+								<span class="text-base-content/50">—</span>
+							{/if}
+						</span>
+					</div>
+				{/each}
+			</ListCard>
 		</div>
 	{:else if activeTab === 'sources'}
 		<div class="flex flex-col gap-3">
@@ -178,13 +179,27 @@
 				<span class="text-base-content/60 text-xs">[{sourcesCountLabel}]</span>
 			</div>
 
-			<div class="border-line rounded-box divide-line divide-y border">
+			<ListCard
+				cols="minmax(0,1fr) auto auto auto"
+				empty={filteredSources.length === 0}
+				emptyMessage={sourceFilter.trim() !== ''
+					? 'No sources match your search.'
+					: 'No sources configured.'}
+			>
+				<div
+					class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+				>
+					<span>Source</span>
+					<span>Type</span>
+					<span>Enabled</span>
+					<span></span>
+				</div>
 				{#each filteredSources as source (source.sourceId)}
 					<div
-						class="flex min-h-14 items-center gap-3 px-4 py-3"
+						class="col-span-full grid min-h-14 grid-cols-subgrid items-center px-4 py-3 text-sm"
 						class:opacity-60={!source.enabled}
 					>
-						<div class="min-w-0 flex-1 truncate font-mono text-sm">{source.sourceId}</div>
+						<span class="min-w-0 truncate font-mono">{source.sourceId}</span>
 						<span class="badge badge-sm badge-ghost shrink-0">{source.sourceType}</span>
 						<input
 							type="checkbox"
@@ -196,21 +211,15 @@
 						/>
 						<button
 							type="button"
-							class="btn btn-square btn-ghost text-error btn-sm"
+							class="btn btn-square btn-ghost text-error btn-sm justify-self-end"
 							aria-label="Delete source {source.sourceId}"
 							onclick={() => openSourceDelete(source.sourceId)}
 						>
 							<Trash2 class="h-4 w-4" />
 						</button>
 					</div>
-				{:else}
-					<div class="text-base-content/60 py-10 text-center text-xs">
-						{sourceFilter.trim() !== ''
-							? 'No sources match your search.'
-							: 'No sources configured.'}
-					</div>
 				{/each}
-			</div>
+			</ListCard>
 		</div>
 	{/if}
 </div>

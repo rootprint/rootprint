@@ -1,7 +1,6 @@
 import { format, formatDistanceToNow, getUnixTime, isValid, parse, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
-import { formatRangeSpan } from '$lib/utils/format';
 import type { TimezoneMode } from '$lib/types';
 
 function formatTs(tsSec: number, timezone: TimezoneMode, pattern: string): string {
@@ -31,6 +30,13 @@ export function formatLogRowTimestamp(iso: string, timezone: TimezoneMode): stri
 	return timezone === 'utc' ? formatInTimeZone(d, 'UTC', pattern) : format(d, pattern);
 }
 
+/** "YYYY-MM-DD HH:MM:SS" — second precision, used in the activity tables. */
+export function formatActivityTimestamp(iso: string, timezone: TimezoneMode): string {
+	const d = parseISO(iso);
+	const pattern = 'yyyy-MM-dd HH:mm:ss';
+	return timezone === 'utc' ? formatInTimeZone(d, 'UTC', pattern) : format(d, pattern);
+}
+
 export function formatRelativeTime(input: string | Date): string {
 	const d = typeof input === 'string' ? parseISO(input) : input;
 	return formatDistanceToNow(d, { addSuffix: true });
@@ -50,10 +56,4 @@ export function formatTickDate(d: Date | number, spanMs: number): string {
 export function formatTooltipDate(d: Date | number): string {
 	const date = d instanceof Date ? d : new Date(d);
 	return format(date, 'yyyy-MM-dd HH:mm');
-}
-
-export function formatTimestampRange(startTs: number | null, endTs: number | null): string {
-	if (startTs === null && endTs === null) return 'all';
-	if (startTs !== null && endTs !== null) return formatRangeSpan(endTs - startTs);
-	return '—';
 }

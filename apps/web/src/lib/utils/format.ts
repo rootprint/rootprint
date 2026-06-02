@@ -37,19 +37,6 @@ export function formatDurationSeconds(s: number): string {
 	return `${mins}m`;
 }
 
-// Compact, single-unit duration label rounded to the coarsest fitting unit ("30d", "12h", "5m").
-export function formatRangeSpan(seconds: number): string {
-	if (!Number.isFinite(seconds) || seconds < 0) return '—';
-	if (seconds < 60) return `${Math.round(seconds)}s`;
-	if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-	if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
-	const days = Math.round(seconds / 86400);
-	if (days < 30) return `${days}d`;
-	const months = Math.round(days / 30);
-	if (months < 12) return `${months}mo`;
-	return `${Math.round(days / 365)}y`;
-}
-
 export function formatLatencyMs(seconds: number): string {
 	if (seconds < 1) return `${(seconds * 1000).toFixed(0)} ms`;
 	return `${seconds.toFixed(2)} s`;

@@ -16,7 +16,6 @@ export type RecentStatus = 'any' | 'success' | 'error';
 
 export type Summary = InferResponseType<typeof activity.summary.$get, 200>;
 export type LatencyBuckets = InferResponseType<typeof activity.latency.$get, 200>;
-export type SlowestRows = InferResponseType<typeof activity.slowest.$get, 200>;
 export type TopActors = InferResponseType<(typeof activity)['top-actors']['$get'], 200>;
 
 export type ActorSummary = InferResponseType<(typeof users)[':userId']['summary']['$get'], 200>;
@@ -34,12 +33,6 @@ export async function getLatency(window: Window): Promise<LatencyBuckets> {
 	const res = await activity.latency.$get({ query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load latency');
 	return res.json() as Promise<LatencyBuckets>;
-}
-
-export async function getSlowest(window: Window, limit = 20): Promise<SlowestRows> {
-	const res = await activity.slowest.$get({ query: { window, limit: String(limit) } });
-	if (!res.ok) throw await readApiError(res, 'Failed to load slowest queries');
-	return res.json() as Promise<SlowestRows>;
 }
 
 export async function getTopActors(window: Window, limit = 10): Promise<TopActors> {
