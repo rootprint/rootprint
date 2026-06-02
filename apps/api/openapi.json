@@ -1,0 +1,5581 @@
+{
+	"components": {
+		"responses": {
+			"BadRequest": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Request validation failed"
+			},
+			"Conflict": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Conflict with current resource state"
+			},
+			"Forbidden": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Permission denied"
+			},
+			"InternalError": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Internal server error"
+			},
+			"NotFound": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Resource not found"
+			},
+			"PayloadTooLarge": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Payload too large"
+			},
+			"ServiceUnavailable": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Upstream service unavailable"
+			},
+			"TooManyRequests": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Rate limit exceeded"
+			},
+			"Unauthorized": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Authentication required"
+			},
+			"UnprocessableEntity": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Unprocessable request"
+			},
+			"UnsupportedMediaType": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ApiErrorBody"
+						}
+					}
+				},
+				"description": "Unsupported media type"
+			}
+		},
+		"schemas": {
+			"ActorIndexRowResponse": {
+				"properties": {
+					"avgDurationMs": {
+						"type": "number"
+					},
+					"count": {
+						"type": "number"
+					},
+					"errorCount": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexId",
+					"count",
+					"avgDurationMs",
+					"errorCount"
+				],
+				"type": "object"
+			},
+			"ActorSummaryRowResponse": {
+				"properties": {
+					"displayName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"email": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"errorCount": {
+						"type": "number"
+					},
+					"p50": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p95": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p99": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"totalSearches": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"totalSearches",
+					"errorCount",
+					"p50",
+					"p95",
+					"p99",
+					"displayName",
+					"email"
+				],
+				"type": "object"
+			},
+			"ApiErrorBody": {
+				"properties": {
+					"error": {
+						"properties": {
+							"code": {
+								"type": "string"
+							},
+							"details": {
+								"items": {
+									"properties": {
+										"message": {
+											"type": "string"
+										},
+										"path": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"path",
+										"message"
+									],
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"message": {
+								"type": "string"
+							},
+							"requestId": {
+								"type": "string"
+							},
+							"statusCode": {
+								"type": "number"
+							}
+						},
+						"required": [
+							"code",
+							"message",
+							"statusCode",
+							"requestId"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"error"
+				],
+				"type": "object"
+			},
+			"ApiKeyCreatedResponse": {
+				"properties": {
+					"summary": {
+						"$ref": "#/components/schemas/ApiKeyResponse"
+					},
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"summary",
+					"token"
+				],
+				"type": "object"
+			},
+			"ApiKeyResponse": {
+				"properties": {
+					"createdAt": {},
+					"createdByUserId": {
+						"type": "string"
+					},
+					"id": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"lastUsedAt": {
+						"anyOf": [
+							{},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"name": {
+						"type": "string"
+					},
+					"role": {
+						"enum": [
+							"ingest",
+							"search"
+						],
+						"type": "string"
+					},
+					"tokenPrefix": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"tokenPrefix",
+					"role",
+					"indexId",
+					"lastUsedAt",
+					"createdAt",
+					"createdByUserId"
+				],
+				"type": "object"
+			},
+			"ApiKeyValueResponse": {
+				"properties": {
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"token"
+				],
+				"type": "object"
+			},
+			"AuthProvidersResponse": {
+				"properties": {
+					"google": {
+						"properties": {
+							"enabled": {
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"enabled"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"google"
+				],
+				"type": "object"
+			},
+			"BootstrapResponse": {
+				"properties": {
+					"needsSetupAdmin": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"needsSetupAdmin"
+				],
+				"type": "object"
+			},
+			"ClusterHealthResponse": {
+				"properties": {
+					"endpoint": {
+						"type": "string"
+					},
+					"healthy": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"healthy",
+					"endpoint"
+				],
+				"type": "object"
+			},
+			"ClusterOverviewResponse": {
+				"properties": {
+					"health": {
+						"$ref": "#/components/schemas/ClusterHealthResponse"
+					},
+					"perIndex": {
+						"items": {
+							"$ref": "#/components/schemas/PerIndexOverviewResponse"
+						},
+						"type": "array"
+					},
+					"totals": {
+						"$ref": "#/components/schemas/ClusterTotalsResponse"
+					}
+				},
+				"required": [
+					"health",
+					"totals",
+					"perIndex"
+				],
+				"type": "object"
+			},
+			"ClusterTotalsResponse": {
+				"properties": {
+					"indexCount": {
+						"type": "number"
+					},
+					"latestCapturedAt": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"totalDocs": {
+						"type": "number"
+					},
+					"totalSizeBytes": {
+						"type": "number"
+					},
+					"totalSplits": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"indexCount",
+					"totalDocs",
+					"totalSizeBytes",
+					"totalSplits",
+					"latestCapturedAt"
+				],
+				"type": "object"
+			},
+			"FieldValueEntrySchema": {
+				"properties": {
+					"count": {
+						"type": "number"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"value",
+					"count"
+				],
+				"type": "object"
+			},
+			"FieldValuesBulkResponse": {
+				"properties": {
+					"elapsedTimeMicros": {
+						"type": "number"
+					},
+					"values": {
+						"additionalProperties": {
+							"items": {
+								"$ref": "#/components/schemas/FieldValueEntrySchema"
+							},
+							"type": "array"
+						},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					}
+				},
+				"required": [
+					"values"
+				],
+				"type": "object"
+			},
+			"FieldValuesResponse": {
+				"properties": {
+					"values": {
+						"items": {
+							"$ref": "#/components/schemas/FieldValueEntrySchema"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"values"
+				],
+				"type": "object"
+			},
+			"GoogleAuthSettingsResponse": {
+				"properties": {
+					"allowedDomains": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"configured": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"configured",
+					"allowedDomains"
+				],
+				"type": "object"
+			},
+			"HistogramBucketSchema": {
+				"properties": {
+					"docCount": {
+						"type": "number"
+					},
+					"key": {
+						"type": "number"
+					},
+					"keyAsString": {
+						"type": "string"
+					},
+					"levels": {
+						"additionalProperties": {
+							"type": "number"
+						},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					}
+				},
+				"required": [
+					"key",
+					"keyAsString",
+					"docCount",
+					"levels"
+				],
+				"type": "object"
+			},
+			"HistogramResponse": {
+				"properties": {
+					"buckets": {
+						"items": {
+							"$ref": "#/components/schemas/HistogramBucketSchema"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"buckets"
+				],
+				"type": "object"
+			},
+			"IndexDetailResponse": {
+				"properties": {
+					"contextFields": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"defaultSearchFields": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"displayName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"fields": {
+						"items": {
+							"$ref": "#/components/schemas/IndexFieldSchema"
+						},
+						"type": "array"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"indexUri": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"levelField": {
+						"type": "string"
+					},
+					"messageField": {
+						"type": "string"
+					},
+					"mode": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"sources": {
+						"items": {
+							"$ref": "#/components/schemas/IndexSourceSchema"
+						},
+						"type": "array"
+					},
+					"storeSource": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"tagFields": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"timestampField": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"tracebackField": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"visibility": {
+						"enum": [
+							"hidden",
+							"admin",
+							"all"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexId",
+					"displayName",
+					"visibility",
+					"levelField",
+					"messageField",
+					"tracebackField",
+					"contextFields",
+					"indexUri",
+					"timestampField",
+					"mode",
+					"tagFields",
+					"defaultSearchFields",
+					"storeSource",
+					"fields",
+					"sources"
+				],
+				"type": "object"
+			},
+			"IndexFieldSchema": {
+				"properties": {
+					"fast": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"name": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"fast"
+				],
+				"type": "object"
+			},
+			"IndexFieldsResponse": {
+				"properties": {
+					"fields": {
+						"items": {
+							"$ref": "#/components/schemas/IndexFieldSchema"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"fields"
+				],
+				"type": "object"
+			},
+			"IndexSourceSchema": {
+				"properties": {
+					"enabled": {
+						"type": "boolean"
+					},
+					"sourceId": {
+						"type": "string"
+					},
+					"sourceType": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"sourceId",
+					"sourceType",
+					"enabled"
+				],
+				"type": "object"
+			},
+			"IndexStatsPointSchema": {
+				"properties": {
+					"capturedAt": {},
+					"maxTimestamp": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"minTimestamp": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"numDocs": {
+						"type": "number"
+					},
+					"numSplits": {
+						"type": "number"
+					},
+					"sizeBytes": {
+						"type": "number"
+					},
+					"uncompressedBytes": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"capturedAt",
+					"numDocs",
+					"sizeBytes",
+					"uncompressedBytes",
+					"numSplits",
+					"minTimestamp",
+					"maxTimestamp"
+				],
+				"type": "object"
+			},
+			"IndexStatsResponse": {
+				"properties": {
+					"indexId": {
+						"type": "string"
+					},
+					"points": {
+						"items": {
+							"$ref": "#/components/schemas/IndexStatsPointSchema"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"indexId",
+					"points"
+				],
+				"type": "object"
+			},
+			"IndexSummarySchema": {
+				"properties": {
+					"createTimestamp": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"displayName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"fieldCount": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"mode": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"sourceCount": {
+						"type": "number"
+					},
+					"visibility": {
+						"enum": [
+							"hidden",
+							"admin",
+							"all"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexId",
+					"displayName",
+					"visibility",
+					"fieldCount",
+					"sourceCount",
+					"mode",
+					"createTimestamp"
+				],
+				"type": "object"
+			},
+			"IndexViewConfigResponse": {
+				"properties": {
+					"contextFields": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"displayName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"isOtel": {
+						"type": "boolean"
+					},
+					"levelField": {
+						"type": "string"
+					},
+					"messageField": {
+						"type": "string"
+					},
+					"timestampField": {
+						"type": "string"
+					},
+					"tracebackField": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"indexId",
+					"displayName",
+					"levelField",
+					"messageField",
+					"tracebackField",
+					"contextFields",
+					"timestampField",
+					"isOtel"
+				],
+				"type": "object"
+			},
+			"InviteUrlResponse": {
+				"properties": {
+					"inviteUrl": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"inviteUrl"
+				],
+				"type": "object"
+			},
+			"LatencyBucketResponse": {
+				"properties": {
+					"count": {
+						"type": "number"
+					},
+					"p50": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p95": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p99": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"t": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"t",
+					"count",
+					"p50",
+					"p95",
+					"p99"
+				],
+				"type": "object"
+			},
+			"LogSearchResponse": {
+				"properties": {
+					"elapsedTimeMicros": {
+						"type": "number"
+					},
+					"hits": {
+						"items": {
+							"additionalProperties": {},
+							"propertyNames": {
+								"type": "string"
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"numHits": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"hits",
+					"numHits",
+					"elapsedTimeMicros"
+				],
+				"type": "object"
+			},
+			"PerIndexOverviewResponse": {
+				"properties": {
+					"capturedAt": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"displayName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"numDocs": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"numSplits": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"sizeBytes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"uncompressedBytes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"visibility": {
+						"enum": [
+							"hidden",
+							"admin",
+							"all"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexId",
+					"displayName",
+					"visibility",
+					"numDocs",
+					"sizeBytes",
+					"uncompressedBytes",
+					"numSplits",
+					"capturedAt"
+				],
+				"type": "object"
+			},
+			"PreferencesResponse": {
+				"properties": {
+					"displayFields": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"displayMode": {
+						"enum": [
+							"table",
+							"inline"
+						],
+						"type": "string"
+					},
+					"lineWrap": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"displayFields",
+					"lineWrap",
+					"displayMode"
+				],
+				"type": "object"
+			},
+			"QuickwitBuildInfoResponse": {
+				"properties": {
+					"version": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"version"
+				],
+				"type": "object"
+			},
+			"QuickwitSnapshotResponse": {
+				"properties": {
+					"build": {
+						"$ref": "#/components/schemas/QuickwitBuildInfoResponse"
+					},
+					"fetchedAt": {
+						"type": "string"
+					},
+					"resources": {
+						"$ref": "#/components/schemas/ResourceSnapshotResponse"
+					},
+					"saturation": {
+						"$ref": "#/components/schemas/SaturationSnapshotResponse"
+					},
+					"uptimeSeconds": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"fetchedAt",
+					"build",
+					"uptimeSeconds",
+					"resources",
+					"saturation"
+				],
+				"type": "object"
+			},
+			"RecentResultResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/RecentRowResponse"
+						},
+						"type": "array"
+					},
+					"total": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"total",
+					"rows"
+				],
+				"type": "object"
+			},
+			"RecentRowResponse": {
+				"properties": {
+					"durationMs": {
+						"type": "number"
+					},
+					"endTs": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"executedAt": {
+						"type": "string"
+					},
+					"id": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"numHits": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"query": {
+						"type": "string"
+					},
+					"startTs": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"id",
+					"executedAt",
+					"indexId",
+					"durationMs",
+					"numHits",
+					"query",
+					"startTs",
+					"endTs"
+				],
+				"type": "object"
+			},
+			"ResourceSnapshotResponse": {
+				"properties": {
+					"fdsMax": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"fdsOpen": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"memoryRssBytes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"walDiskBytes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"memoryRssBytes",
+					"fdsOpen",
+					"fdsMax",
+					"walDiskBytes"
+				],
+				"type": "object"
+			},
+			"SaturationSnapshotResponse": {
+				"properties": {
+					"cpuBusyRatio": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"cpuBusyRatio"
+				],
+				"type": "object"
+			},
+			"SavedQueryResponse": {
+				"properties": {
+					"createdAt": {},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"id": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"query": {
+						"type": "string"
+					},
+					"updatedAt": {}
+				},
+				"required": [
+					"id",
+					"indexId",
+					"name",
+					"description",
+					"query",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object"
+			},
+			"SetupAdminResponse": {
+				"properties": {
+					"email": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"email",
+					"name"
+				],
+				"type": "object"
+			},
+			"SetupPasswordResponse": {
+				"properties": {
+					"success": {
+						"const": true
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"ShareCreateResponse": {
+				"properties": {
+					"code": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"code"
+				],
+				"type": "object"
+			},
+			"ShareViewResponse": {
+				"properties": {
+					"endTime": {
+						"type": "number"
+					},
+					"hit": {
+						"additionalProperties": {},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"query": {
+						"type": "string"
+					},
+					"startTime": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"indexId",
+					"query",
+					"startTime",
+					"endTime",
+					"hit"
+				],
+				"type": "object"
+			},
+			"SummaryRowResponse": {
+				"properties": {
+					"errorCount": {
+						"type": "number"
+					},
+					"p50": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p95": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p99": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"totalSearches": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"totalSearches",
+					"errorCount",
+					"p50",
+					"p95",
+					"p99"
+				],
+				"type": "object"
+			},
+			"TopActorRowResponse": {
+				"properties": {
+					"avgDurationMs": {
+						"type": "number"
+					},
+					"count": {
+						"type": "number"
+					},
+					"errorCount": {
+						"type": "number"
+					},
+					"id": {
+						"type": "string"
+					},
+					"indexes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"kind": {
+						"enum": [
+							"user",
+							"apiKey"
+						],
+						"type": "string"
+					},
+					"label": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"kind",
+					"id",
+					"label",
+					"count",
+					"avgDurationMs",
+					"errorCount",
+					"indexes"
+				],
+				"type": "object"
+			},
+			"UserResponse": {
+				"properties": {
+					"createdAt": {},
+					"email": {
+						"type": "string"
+					},
+					"hasCredentialAccount": {
+						"type": "boolean"
+					},
+					"id": {
+						"type": "string"
+					},
+					"inviteExpiresAt": {
+						"anyOf": [
+							{},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"inviteUrl": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"lastActive": {
+						"anyOf": [
+							{},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"name": {
+						"type": "string"
+					},
+					"role": {
+						"anyOf": [
+							{
+								"enum": [
+									"admin",
+									"user"
+								],
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"status": {
+						"enum": [
+							"active",
+							"pending",
+							"expired"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"email",
+					"role",
+					"lastActive",
+					"createdAt",
+					"status",
+					"hasCredentialAccount",
+					"inviteUrl",
+					"inviteExpiresAt"
+				],
+				"type": "object"
+			},
+			"VerifyInviteResponse": {
+				"properties": {
+					"email": {
+						"type": "string"
+					},
+					"valid": {
+						"const": true
+					}
+				},
+				"required": [
+					"valid",
+					"email"
+				],
+				"type": "object"
+			},
+			"VolumeBucketResponse": {
+				"properties": {
+					"count": {
+						"type": "number"
+					},
+					"t": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"t",
+					"count"
+				],
+				"type": "object"
+			}
+		},
+		"securitySchemes": {
+			"cookieAuth": {
+				"in": "cookie",
+				"name": "better-auth.session_token",
+				"type": "apiKey"
+			},
+			"ingestBearer": {
+				"description": "Ingest API key",
+				"scheme": "bearer",
+				"type": "http"
+			},
+			"searchBearer": {
+				"description": "Search API key",
+				"scheme": "bearer",
+				"type": "http"
+			}
+		}
+	},
+	"info": {
+		"description": "HTTP API for the Rootprint log management platform.",
+		"title": "Rootprint API",
+		"version": "0.3.1"
+	},
+	"openapi": "3.1.0",
+	"paths": {
+		"/api/admin/activity/api-keys/{apiKeyId}/latency": {
+			"get": {
+				"operationId": "getApiAdminActivityApiKeysByApiKeyIdLatency",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "apiKeyId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/LatencyBucketResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get latency time series for an API key",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/api-keys/{apiKeyId}/recent": {
+			"get": {
+				"operationId": "getApiAdminActivityApiKeysByApiKeyIdRecent",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "apiKeyId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 500,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"schema": {
+							"enum": [
+								"any",
+								"success",
+								"error"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RecentResultResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get recent searches for an API key",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/api-keys/{apiKeyId}/summary": {
+			"get": {
+				"operationId": "getApiAdminActivityApiKeysByApiKeyIdSummary",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "apiKeyId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ActorSummaryRowResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get search activity summary for an API key",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/api-keys/{apiKeyId}/volume": {
+			"get": {
+				"operationId": "getApiAdminActivityApiKeysByApiKeyIdVolume",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "apiKeyId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/VolumeBucketResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get volume time series for an API key",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/latency": {
+			"get": {
+				"operationId": "getApiAdminActivityLatency",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/LatencyBucketResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get global latency time series",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/summary": {
+			"get": {
+				"operationId": "getApiAdminActivitySummary",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SummaryRowResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get global search activity summary",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/top-actors": {
+			"get": {
+				"operationId": "getApiAdminActivityTopActors",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 50,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/TopActorRowResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get top actors by search count",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/users/{userId}/indexes": {
+			"get": {
+				"operationId": "getApiAdminActivityUsersByUserIdIndexes",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ActorIndexRowResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get per-index usage breakdown for a user",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/users/{userId}/latency": {
+			"get": {
+				"operationId": "getApiAdminActivityUsersByUserIdLatency",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/LatencyBucketResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get latency time series for a user",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/users/{userId}/recent": {
+			"get": {
+				"operationId": "getApiAdminActivityUsersByUserIdRecent",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 500,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"schema": {
+							"enum": [
+								"any",
+								"success",
+								"error"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RecentResultResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get recent searches for a user",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/users/{userId}/summary": {
+			"get": {
+				"operationId": "getApiAdminActivityUsersByUserIdSummary",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ActorSummaryRowResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get search activity summary for a user",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/users/{userId}/volume": {
+			"get": {
+				"operationId": "getApiAdminActivityUsersByUserIdVolume",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/VolumeBucketResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get volume time series for a user",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/cluster": {
+			"get": {
+				"operationId": "getApiAdminCluster",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ClusterOverviewResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get cluster overview",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/metrics": {
+			"get": {
+				"operationId": "getApiAdminMetrics",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuickwitSnapshotResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get Quickwit metrics snapshot",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/metrics/raw": {
+			"get": {
+				"operationId": "getApiAdminMetricsRaw",
+				"responses": {
+					"200": {
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						},
+						"description": "Prometheus text format metrics"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get raw Prometheus metrics text",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/api-keys": {
+			"get": {
+				"operationId": "getApiApiKeys",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "role",
+						"schema": {
+							"enum": [
+								"ingest",
+								"search"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ApiKeyResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List API keys",
+				"tags": [
+					"API keys"
+				]
+			},
+			"post": {
+				"operationId": "postApiApiKeys",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"indexId": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"name": {
+										"maxLength": 100,
+										"minLength": 1,
+										"type": "string"
+									},
+									"role": {
+										"enum": [
+											"ingest",
+											"search"
+										],
+										"type": "string"
+									}
+								},
+								"required": [
+									"name",
+									"indexId",
+									"role"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiKeyCreatedResponse"
+								}
+							}
+						},
+						"description": "API key created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create API key",
+				"tags": [
+					"API keys"
+				]
+			}
+		},
+		"/api/api-keys/{apiKeyId}": {
+			"delete": {
+				"operationId": "deleteApiApiKeysByApiKeyId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "apiKeyId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "API key deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete API key",
+				"tags": [
+					"API keys"
+				]
+			},
+			"get": {
+				"operationId": "getApiApiKeysByApiKeyId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "apiKeyId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiKeyValueResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get API key value",
+				"tags": [
+					"API keys"
+				]
+			}
+		},
+		"/api/auth/bootstrap": {
+			"get": {
+				"description": "Returns whether the first-admin setup step still needs to be completed.",
+				"operationId": "getApiAuthBootstrap",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BootstrapResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [],
+				"summary": "Bootstrap status",
+				"tags": [
+					"Authentication"
+				]
+			}
+		},
+		"/api/auth/providers": {
+			"get": {
+				"description": "Returns which authentication providers are currently enabled.",
+				"operationId": "getApiAuthProviders",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthProvidersResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [],
+				"summary": "List auth providers",
+				"tags": [
+					"Authentication"
+				]
+			}
+		},
+		"/api/auth/setup-admin": {
+			"post": {
+				"description": "Creates the initial admin account. Fails with 409 if setup is already done.",
+				"operationId": "postApiAuthSetupAdmin",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"email": {
+										"format": "email",
+										"type": "string"
+									},
+									"name": {
+										"maxLength": 128,
+										"minLength": 1,
+										"type": "string"
+									},
+									"password": {
+										"maxLength": 128,
+										"minLength": 8,
+										"type": "string"
+									}
+								},
+								"required": [
+									"name",
+									"email",
+									"password"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetupAdminResponse"
+								}
+							}
+						},
+						"description": "Admin created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [],
+				"summary": "Set up first admin",
+				"tags": [
+					"Authentication"
+				]
+			}
+		},
+		"/api/auth/setup-password": {
+			"post": {
+				"description": "Sets or updates a credential-account password using a valid invite token.",
+				"operationId": "postApiAuthSetupPassword",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"password": {
+										"maxLength": 128,
+										"minLength": 8,
+										"type": "string"
+									},
+									"token": {
+										"maxLength": 128,
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"token",
+									"password"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetupPasswordResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [],
+				"summary": "Set password via invite token",
+				"tags": [
+					"Authentication"
+				]
+			}
+		},
+		"/api/auth/verify-invite": {
+			"post": {
+				"description": "Validates an invite token and returns the associated email address.",
+				"operationId": "postApiAuthVerifyInvite",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"token": {
+										"maxLength": 128,
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"token"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyInviteResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [],
+				"summary": "Verify invite token",
+				"tags": [
+					"Authentication"
+				]
+			}
+		},
+		"/api/indexes": {
+			"get": {
+				"operationId": "getApiIndexes",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "includeHidden",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/IndexSummarySchema"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List indexes",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}": {
+			"delete": {
+				"operationId": "deleteApiIndexesByIndexId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete index",
+				"tags": [
+					"Index management"
+				]
+			},
+			"get": {
+				"operationId": "getApiIndexesByIndexId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexDetailResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get index detail",
+				"tags": [
+					"Index management"
+				]
+			},
+			"patch": {
+				"operationId": "patchApiIndexesByIndexId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"contextFields": {
+										"anyOf": [
+											{
+												"items": {
+													"type": "string"
+												},
+												"type": "array"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"displayName": {
+										"anyOf": [
+											{
+												"maxLength": 128,
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"levelField": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"messageField": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"tracebackField": {
+										"anyOf": [
+											{
+												"minLength": 1,
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"visibility": {
+										"enum": [
+											"hidden",
+											"admin",
+											"all"
+										],
+										"type": "string"
+									}
+								},
+								"required": [],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Update index configuration",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/config": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdConfig",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexViewConfigResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get index view config",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/fields": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdFields",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexFieldsResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List index fields",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/fields/values": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdFieldsValues",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "fields",
+						"required": true,
+						"schema": {
+							"items": {
+								"minLength": 1,
+								"type": "string"
+							},
+							"type": "array"
+						}
+					},
+					{
+						"in": "query",
+						"name": "q",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "filters",
+						"schema": {
+							"items": {
+								"properties": {
+									"exclude": {
+										"type": "boolean"
+									},
+									"field": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"value": {
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"field",
+									"value",
+									"exclude"
+								],
+								"type": "object"
+							},
+							"type": "array"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 10000,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FieldValuesBulkResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get bulk field values",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/fields/{field}/values": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdFieldsByFieldValues",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "field",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "q",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 10000,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FieldValuesResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get field values",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/logs": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdLogs",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 1000,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"schema": {
+							"enum": [
+								"asc",
+								"desc"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "countAll",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LogSearchResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Search logs",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/logs/export": {
+			"get": {
+				"description": "Export matching log entries as a gzip-compressed file. When dryRun=true, returns a JSON preflight estimate instead of streaming the file.",
+				"operationId": "getApiIndexesByIndexIdLogsExport",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "q",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "format",
+						"required": true,
+						"schema": {
+							"enum": [
+								"json",
+								"csv",
+								"text"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "dryRun",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/x-ndjson": {
+								"schema": {
+									"format": "binary",
+									"type": "string"
+								}
+							},
+							"text/csv": {
+								"schema": {
+									"format": "binary",
+									"type": "string"
+								}
+							},
+							"text/plain": {
+								"schema": {
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Gzip-compressed export stream. Content-Type reflects the requested format (application/x-ndjson for JSON, text/csv for CSV, text/plain for text).",
+						"headers": {
+							"Content-Disposition": {
+								"description": "Attachment filename, e.g. attachment; filename=\"rootprint-index-....ndjson.gz\"",
+								"schema": {
+									"type": "string"
+								}
+							},
+							"Content-Encoding": {
+								"schema": {
+									"enum": [
+										"gzip"
+									],
+									"type": "string"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Export logs",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/logs/histogram": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdLogsHistogram",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "interval",
+						"required": true,
+						"schema": {
+							"pattern": "^[1-9]\\d*[smhdwMy]$",
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HistogramResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get log histogram",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/preferences": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdPreferences",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PreferencesResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get index preferences",
+				"tags": [
+					"Index management"
+				]
+			},
+			"put": {
+				"operationId": "putApiIndexesByIndexIdPreferences",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"displayFields": {
+										"anyOf": [
+											{
+												"items": {
+													"minLength": 1,
+													"type": "string"
+												},
+												"maxItems": 100,
+												"type": "array"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"displayMode": {
+										"enum": [
+											"table",
+											"inline"
+										],
+										"type": "string"
+									},
+									"lineWrap": {
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"displayFields",
+									"lineWrap",
+									"displayMode"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PreferencesResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Save index preferences",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/saved-queries": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdSavedQueries",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SavedQueryResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List saved queries",
+				"tags": [
+					"Log explorer"
+				]
+			},
+			"post": {
+				"operationId": "postApiIndexesByIndexIdSavedQueries",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"description": {
+										"type": "string"
+									},
+									"name": {
+										"maxLength": 200,
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"name",
+									"query"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SavedQueryResponse"
+								}
+							}
+						},
+						"description": "Saved query created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create saved query",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/saved-queries/{savedQueryId}": {
+			"delete": {
+				"operationId": "deleteApiIndexesByIndexIdSavedQueriesBySavedQueryId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "savedQueryId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Saved query deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete saved query",
+				"tags": [
+					"Log explorer"
+				]
+			},
+			"patch": {
+				"operationId": "patchApiIndexesByIndexIdSavedQueriesBySavedQueryId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "savedQueryId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"description": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"name": {
+										"maxLength": 200,
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									}
+								},
+								"required": [],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SavedQueryResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Update saved query",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/sources/{sourceId}": {
+			"delete": {
+				"operationId": "deleteApiIndexesByIndexIdSourcesBySourceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sourceId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete index source",
+				"tags": [
+					"Index management"
+				]
+			},
+			"patch": {
+				"operationId": "patchApiIndexesByIndexIdSourcesBySourceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sourceId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"enabled": {
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"enabled"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Toggle source enabled state",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/stats": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdStats",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "to",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 10000,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexStatsResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get index stats history",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/ingest/ndjson": {
+			"post": {
+				"description": "Proxies an NDJSON (or JSON array) log payload to Quickwit for the index associated with the ingest API key. Accepts application/x-ndjson or application/json content-type. The response body is passed through from Quickwit.",
+				"operationId": "postApiIngestNdjson",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"description": "Quickwit ingest acknowledgement",
+									"properties": {
+										"num_docs_for_processing": {
+											"type": "integer"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Documents accepted for processing"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"ingestBearer": []
+					}
+				],
+				"summary": "Ingest NDJSON log documents",
+				"tags": [
+					"Log ingest"
+				]
+			}
+		},
+		"/api/search/logs": {
+			"get": {
+				"operationId": "getApiSearchLogs",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 1000,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"schema": {
+							"enum": [
+								"asc",
+								"desc"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "countAll",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LogSearchResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"searchBearer": []
+					}
+				],
+				"summary": "Search logs",
+				"tags": [
+					"Search"
+				]
+			}
+		},
+		"/api/settings/auth/google": {
+			"get": {
+				"operationId": "getApiSettingsAuthGoogle",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GoogleAuthSettingsResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get Google auth status",
+				"tags": [
+					"Auth settings"
+				]
+			}
+		},
+		"/api/settings/auth/google/allowed-domains": {
+			"put": {
+				"operationId": "putApiSettingsAuthGoogleAllowedDomains",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"allowedDomains": {
+										"items": {
+											"pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$",
+											"type": "string"
+										},
+										"minItems": 1,
+										"type": "array"
+									}
+								},
+								"required": [
+									"allowedDomains"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"description": "Allowed domains saved"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Set Google allowed domains",
+				"tags": [
+					"Auth settings"
+				]
+			}
+		},
+		"/api/settings/auth/google/credentials": {
+			"delete": {
+				"operationId": "deleteApiSettingsAuthGoogleCredentials",
+				"responses": {
+					"204": {
+						"description": "Credentials deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete Google OAuth credentials",
+				"tags": [
+					"Auth settings"
+				]
+			},
+			"put": {
+				"operationId": "putApiSettingsAuthGoogleCredentials",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"clientId": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"clientSecret": {
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"clientId",
+									"clientSecret"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"description": "Credentials saved"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Set Google OAuth credentials",
+				"tags": [
+					"Auth settings"
+				]
+			}
+		},
+		"/api/shares": {
+			"post": {
+				"operationId": "postApiShares",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"endTime": {
+										"minimum": 0,
+										"type": "integer"
+									},
+									"hit": {
+										"additionalProperties": {},
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
+									},
+									"indexId": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									},
+									"startTime": {
+										"minimum": 0,
+										"type": "integer"
+									}
+								},
+								"required": [
+									"indexId",
+									"query",
+									"startTime",
+									"endTime",
+									"hit"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ShareCreateResponse"
+								}
+							}
+						},
+						"description": "Share created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create a share link",
+				"tags": [
+					"Shares"
+				]
+			}
+		},
+		"/api/shares/{code}": {
+			"get": {
+				"operationId": "getApiSharesByCode",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "code",
+						"required": true,
+						"schema": {
+							"maxLength": 10,
+							"minLength": 10,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ShareViewResponse"
+								}
+							}
+						},
+						"description": "Resolved share"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Resolve a share link",
+				"tags": [
+					"Shares"
+				]
+			}
+		},
+		"/api/users": {
+			"get": {
+				"operationId": "getApiUsers",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/UserResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List users",
+				"tags": [
+					"User and invite"
+				]
+			},
+			"post": {
+				"operationId": "postApiUsers",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"email": {
+										"format": "email",
+										"type": "string"
+									},
+									"name": {
+										"maxLength": 128,
+										"minLength": 1,
+										"type": "string"
+									},
+									"role": {
+										"enum": [
+											"admin",
+											"user"
+										],
+										"type": "string"
+									}
+								},
+								"required": [
+									"email",
+									"name",
+									"role"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InviteUrlResponse"
+								}
+							}
+						},
+						"description": "User invited"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Invite user",
+				"tags": [
+					"User and invite"
+				]
+			}
+		},
+		"/api/users/{userId}": {
+			"delete": {
+				"operationId": "deleteApiUsersByUserId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "User deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete user",
+				"tags": [
+					"User and invite"
+				]
+			},
+			"get": {
+				"operationId": "getApiUsersByUserId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get user",
+				"tags": [
+					"User and invite"
+				]
+			}
+		},
+		"/api/users/{userId}/invites": {
+			"post": {
+				"operationId": "postApiUsersByUserIdInvites",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InviteUrlResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Reissue invite",
+				"tags": [
+					"User and invite"
+				]
+			}
+		},
+		"/api/users/{userId}/password-resets": {
+			"post": {
+				"operationId": "postApiUsersByUserIdPasswordResets",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InviteUrlResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Reset user password",
+				"tags": [
+					"User and invite"
+				]
+			}
+		},
+		"/api/users/{userId}/role": {
+			"put": {
+				"operationId": "putApiUsersByUserIdRole",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"role": {
+										"enum": [
+											"admin",
+											"user"
+										],
+										"type": "string"
+									}
+								},
+								"required": [
+									"role"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"description": "Role updated"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Set user role",
+				"tags": [
+					"User and invite"
+				]
+			}
+		},
+		"/v1/logs": {
+			"post": {
+				"description": "OTLP/HTTP log exporter endpoint. Accepts only application/x-protobuf (ExportLogsServiceRequest). Returns an ExportLogsServiceResponse on success. All error responses use the google.rpc.Status encoding: 415 is JSON, all other errors are binary protobuf.",
+				"operationId": "postV1Logs",
+				"responses": {
+					"200": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "Serialised opentelemetry.proto.collector.logs.v1.ExportLogsServiceResponse",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Logs accepted — empty ExportLogsServiceResponse"
+					},
+					"400": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Upstream rejected the request — google.rpc.Status (protobuf)"
+					},
+					"401": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Missing or invalid ingest bearer token — google.rpc.Status (protobuf)"
+					},
+					"403": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Ingest key does not have access to this index — google.rpc.Status (protobuf)"
+					},
+					"404": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Route not found — google.rpc.Status (protobuf)"
+					},
+					"415": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"description": "google.rpc.Status",
+									"properties": {
+										"code": {
+											"description": "gRPC status code",
+											"type": "integer"
+										},
+										"message": {
+											"description": "Human-readable error message",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unsupported content-type (only application/x-protobuf accepted) — google.rpc.Status (JSON)"
+					},
+					"429": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Upstream rate limit exceeded — google.rpc.Status (protobuf)"
+					},
+					"500": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Internal server error — google.rpc.Status (protobuf)"
+					},
+					"503": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Upstream service unavailable — google.rpc.Status (protobuf)"
+					}
+				},
+				"security": [
+					{
+						"ingestBearer": []
+					}
+				],
+				"summary": "Ingest OTLP logs (protobuf)",
+				"tags": [
+					"Log ingest"
+				]
+			}
+		}
+	},
+	"security": [
+		{
+			"cookieAuth": []
+		}
+	],
+	"servers": [
+		{
+			"description": "Same-origin API",
+			"url": "/"
+		}
+	]
+}

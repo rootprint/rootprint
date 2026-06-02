@@ -1,6 +1,6 @@
-import { vValidator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
 
+import { describe, validator } from '../lib/openapi/describe.js';
 import { quickwit } from '../lib/quickwit.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
 import { ExportLogsQuery } from '../schemas/export.js';
@@ -8,9 +8,46 @@ import { buildExportBody, preflightExport } from '../services/export.service.js'
 import { badRequest } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
 
-export const exportsRouter = new Hono<IndexConfigEnv>()
-	.use('*', withIndexConfig)
-	.get('/', vValidator('param', IndexIdParams), vValidator('query', ExportLogsQuery), async (c) => {
+export const exportsRouter = new Hono<IndexConfigEnv>().use('*', withIndexConfig).get(
+	'/',
+	describe({
+		tag: 'Log explorer',
+		summary: 'Export logs',
+		description:
+			'Export matching log entries as a gzip-compressed file. ' +
+			'When dryRun=true, returns a JSON preflight estimate instead of streaming the file.',
+		rawResponses: {
+			'200': {
+				description:
+					'Gzip-compressed export stream. Content-Type reflects the requested format ' +
+					'(application/x-ndjson for JSON, text/csv for CSV, text/plain for text).',
+				content: {
+					'application/x-ndjson': {
+						schema: { type: 'string', format: 'binary' }
+					},
+					'text/csv': {
+						schema: { type: 'string', format: 'binary' }
+					},
+					'text/plain': {
+						schema: { type: 'string', format: 'binary' }
+					}
+				},
+				headers: {
+					'Content-Disposition': {
+						schema: { type: 'string' },
+						description:
+							'Attachment filename, e.g. attachment; filename="rootprint-index-....ndjson.gz"'
+					},
+					'Content-Encoding': {
+						schema: { type: 'string', enum: ['gzip'] }
+					}
+				}
+			}
+		}
+	}),
+	validator('param', IndexIdParams),
+	validator('query', ExportLogsQuery),
+	async (c) => {
 		const q = c.req.valid('query');
 		const indexConfig = c.get('indexConfig');
 
@@ -40,4 +77,5 @@ export const exportsRouter = new Hono<IndexConfigEnv>()
 				'Cache-Control': 'no-store'
 			}
 		});
-	});
+	}
+);
