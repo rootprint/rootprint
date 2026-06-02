@@ -5,7 +5,8 @@ import {
 	KeyRound,
 	Send,
 	Users,
-	ShieldCheck
+	ShieldCheck,
+	UserRound
 } from 'lucide-svelte';
 import { integrationById } from '$lib/send-logs/integrations';
 import type { BreadcrumbSegment } from '$lib/types';
@@ -15,6 +16,11 @@ export type NavGroup = { label: string; adminOnly: boolean; items: NavItem[] };
 
 /** Settings sidebar nav tree. Shared with breadcrumbs so the two cannot drift. */
 export const navGroups: NavGroup[] = [
+	{
+		label: 'Account',
+		adminOnly: false,
+		items: [{ href: '/settings/profile', label: 'Profile', icon: UserRound }]
+	},
 	{
 		label: 'Cluster',
 		adminOnly: true,
@@ -53,6 +59,7 @@ type Params = Record<string, string | undefined>;
 
 /** Breadcrumb trails keyed by clean route pattern (`(group)` segments stripped). The only place breadcrumb structure lives — add new settings pages here. */
 const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
+	'/settings/profile': () => [ROOT, { label: 'Profile' }],
 	'/settings/overview': () => [ROOT, { label: 'Overview' }],
 	'/settings/activity': () => [ROOT, { label: 'Activity' }],
 	'/settings/activity/users/[userId]': () => [ROOT, ACTIVITY, { label: 'User' }],
