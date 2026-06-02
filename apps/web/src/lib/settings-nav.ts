@@ -54,6 +54,7 @@ const ACTIVITY: BreadcrumbSegment = { label: 'Activity', href: '/settings/activi
 const INDEXES: BreadcrumbSegment = { label: 'Indexes', href: '/settings/indexes' };
 const SEND_LOGS: BreadcrumbSegment = { label: 'Send logs', href: '/settings/send-logs' };
 const AUTH: BreadcrumbSegment = { label: 'Authentication', href: '/settings/authentication' };
+const USERS: BreadcrumbSegment = { label: 'Users', href: '/settings/users' };
 
 type Params = Record<string, string | undefined>;
 
@@ -62,7 +63,6 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	'/settings/profile': () => [ROOT, { label: 'Profile' }],
 	'/settings/overview': () => [ROOT, { label: 'Overview' }],
 	'/settings/activity': () => [ROOT, { label: 'Activity' }],
-	'/settings/activity/users/[userId]': () => [ROOT, ACTIVITY, { label: 'User' }],
 	'/settings/activity/api-keys/[id]': () => [ROOT, ACTIVITY, { label: 'API key' }],
 	'/settings/indexes': () => [ROOT, { label: 'Indexes' }],
 	'/settings/indexes/[indexId]': (p) => [
@@ -78,6 +78,7 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 		{ label: integrationById.get(p.integration ?? '')?.label ?? 'Integration' }
 	],
 	'/settings/users': () => [ROOT, { label: 'Users' }],
+	'/settings/users/[userId]': () => [ROOT, USERS, { label: 'User' }],
 	'/settings/authentication': () => [ROOT, { label: 'Authentication' }],
 	'/settings/authentication/google': () => [ROOT, AUTH, { label: 'Google' }]
 };

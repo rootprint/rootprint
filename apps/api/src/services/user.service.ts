@@ -13,7 +13,7 @@ import {
 	setAdminUserRole
 } from '../lib/auth-admin.js';
 import { createInviteToken, hasCredentialAccount } from './auth.service.js';
-import { badRequest } from '../utils/http-error.js';
+import { badRequest, notFound } from '../utils/http-error.js';
 
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 
@@ -51,12 +51,51 @@ export async function listUsers(db: Db): Promise<User[]> {
 			email: u.email,
 			role: (u.role as UserRole | null) ?? null,
 			lastActive: u.lastActive,
+			createdAt: u.createdAt,
 			status,
 			hasCredentialAccount: credentialUserIds.has(u.id),
 			inviteUrl: invite?.url ?? null,
 			inviteExpiresAt: invite?.expiresAt ?? null
 		};
 	});
+}
+
+export async function getUser(db: Db, userId: string): Promise<User> {
+	const [u] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+	if (!u) throw notFound('User not found');
+
+	const [invites, providerAccounts] = await Promise.all([
+		db.select().from(inviteToken).where(eq(inviteToken.userId, userId)),
+		db
+			.select({ providerId: account.providerId })
+			.from(account)
+			.where(and(eq(account.userId, userId), inArray(account.providerId, ['google', 'credential'])))
+	]);
+
+	const invite = invites[0]
+		? { url: buildInviteUrl(invites[0].token), expiresAt: invites[0].expiresAt }
+		: undefined;
+	const isGoogle = providerAccounts.some((a) => a.providerId === 'google');
+	const hasCred = providerAccounts.some((a) => a.providerId === 'credential');
+	const status: UserStatus =
+		isGoogle || !invite
+			? 'active'
+			: invite.expiresAt.getTime() < Date.now()
+				? 'expired'
+				: 'pending';
+
+	return {
+		id: u.id,
+		name: u.name,
+		email: u.email,
+		role: (u.role as UserRole | null) ?? null,
+		lastActive: u.lastActive,
+		createdAt: u.createdAt,
+		status,
+		hasCredentialAccount: hasCred,
+		inviteUrl: invite?.url ?? null,
+		inviteExpiresAt: invite?.expiresAt ?? null
+	};
 }
 
 export async function inviteUser(

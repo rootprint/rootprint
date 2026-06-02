@@ -133,6 +133,7 @@ export type User = {
 	email: string;
 	role: UserRole | null;
 	lastActive: Date | null;
+	createdAt: Date;
 	status: UserStatus;
 	hasCredentialAccount: boolean;
 	inviteUrl: string | null;

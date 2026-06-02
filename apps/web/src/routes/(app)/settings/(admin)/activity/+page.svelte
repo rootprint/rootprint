@@ -63,6 +63,7 @@
 				<p class="eyebrow">Top actors</p>
 				<ListCard
 					cols="minmax(0,1fr) auto auto"
+					gap="gap-x-8"
 					empty={rows.length === 0}
 					emptyMessage="No actor activity in this window."
 				>
@@ -76,7 +77,7 @@
 					{#each rows as r (r.id)}
 						{@const href =
 							r.kind === 'user'
-								? `/settings/activity/users/${r.id}?window=${data.window}`
+								? `/settings/users/${r.id}?window=${data.window}`
 								: `/settings/activity/api-keys/${r.id}?window=${data.window}`}
 						<a
 							{href}
