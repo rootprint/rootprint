@@ -113,6 +113,62 @@
 			}
 		},
 		"schemas": {
+			"Account": {
+				"properties": {
+					"accessToken": {
+						"type": "string"
+					},
+					"accessTokenExpiresAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"accountId": {
+						"type": "string"
+					},
+					"createdAt": {
+						"default": "Generated at runtime",
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"idToken": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string"
+					},
+					"providerId": {
+						"type": "string"
+					},
+					"refreshToken": {
+						"type": "string"
+					},
+					"refreshTokenExpiresAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"scope": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"accountId",
+					"providerId",
+					"userId",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object"
+			},
 			"ActorIndexRowResponse": {
 				"properties": {
 					"avgDurationMs": {
@@ -495,6 +551,17 @@
 				"required": [
 					"configured",
 					"allowedDomains"
+				],
+				"type": "object"
+			},
+			"HealthResponse": {
+				"properties": {
+					"status": {
+						"const": "ok"
+					}
+				},
+				"required": [
+					"status"
 				],
 				"type": "object"
 			},
@@ -1380,6 +1447,49 @@
 				],
 				"type": "object"
 			},
+			"Session": {
+				"properties": {
+					"createdAt": {
+						"default": "Generated at runtime",
+						"format": "date-time",
+						"type": "string"
+					},
+					"expiresAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"impersonatedBy": {
+						"type": "string"
+					},
+					"ipAddress": {
+						"type": "string"
+					},
+					"token": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"userAgent": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"expiresAt",
+					"token",
+					"createdAt",
+					"updatedAt",
+					"userId"
+				],
+				"type": "object"
+			},
 			"SetupAdminResponse": {
 				"properties": {
 					"email": {
@@ -1549,6 +1659,62 @@
 				],
 				"type": "object"
 			},
+			"User": {
+				"properties": {
+					"banExpires": {
+						"format": "date-time",
+						"readOnly": true,
+						"type": "string"
+					},
+					"banReason": {
+						"readOnly": true,
+						"type": "string"
+					},
+					"banned": {
+						"default": false,
+						"readOnly": true,
+						"type": "boolean"
+					},
+					"createdAt": {
+						"default": "Generated at runtime",
+						"format": "date-time",
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"emailVerified": {
+						"default": false,
+						"readOnly": true,
+						"type": "boolean"
+					},
+					"id": {
+						"type": "string"
+					},
+					"image": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"role": {
+						"readOnly": true,
+						"type": "string"
+					},
+					"updatedAt": {
+						"default": "Generated at runtime",
+						"format": "date-time",
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"email",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object"
+			},
 			"UserResponse": {
 				"properties": {
 					"createdAt": {},
@@ -1627,6 +1793,41 @@
 				],
 				"type": "object"
 			},
+			"Verification": {
+				"properties": {
+					"createdAt": {
+						"default": "Generated at runtime",
+						"format": "date-time",
+						"type": "string"
+					},
+					"expiresAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"identifier": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"default": "Generated at runtime",
+						"format": "date-time",
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"identifier",
+					"value",
+					"expiresAt",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object"
+			},
 			"VerifyInviteResponse": {
 				"properties": {
 					"email": {
@@ -1659,6 +1860,17 @@
 			}
 		},
 		"securitySchemes": {
+			"apiKeyCookie": {
+				"description": "API Key authentication via cookie",
+				"in": "cookie",
+				"name": "apiKeyCookie",
+				"type": "apiKey"
+			},
+			"bearerAuth": {
+				"description": "Bearer token authentication",
+				"scheme": "bearer",
+				"type": "http"
+			},
 			"cookieAuth": {
 				"in": "cookie",
 				"name": "better-auth.session_token",
@@ -2835,6 +3047,2489 @@
 				]
 			}
 		},
+		"/api/auth/account-info": {
+			"get": {
+				"description": "Get the account info provided by the provider",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": false,
+									"properties": {
+										"data": {
+											"additionalProperties": true,
+											"properties": {},
+											"type": "object"
+										},
+										"user": {
+											"properties": {
+												"email": {
+													"type": "string"
+												},
+												"emailVerified": {
+													"type": "boolean"
+												},
+												"id": {
+													"type": "string"
+												},
+												"image": {
+													"type": "string"
+												},
+												"name": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"id",
+												"emailVerified"
+											],
+											"type": "object"
+										}
+									},
+									"required": [
+										"user",
+										"data"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/admin/ban-user": {
+			"post": {
+				"description": "Ban a user",
+				"operationId": "banUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"banExpiresIn": {
+										"description": "The number of seconds until the ban expires",
+										"type": [
+											"number",
+											"null"
+										]
+									},
+									"banReason": {
+										"description": "The reason for the ban",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User banned"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/create-user": {
+			"post": {
+				"description": "Create a new user",
+				"operationId": "createUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"data": {
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"email": {
+										"description": "The email of the user",
+										"type": "string"
+									},
+									"name": {
+										"description": "The name of the user",
+										"type": "string"
+									},
+									"password": {
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"role": {
+										"type": [
+											"string",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"email",
+									"name"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User created"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/get-user": {
+			"get": {
+				"description": "Get an existing user",
+				"operationId": "getUser",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "id",
+						"schema": {
+							"description": "The id of the User",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/has-permission": {
+			"post": {
+				"description": "Check if the user has permission",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"permissions": {
+										"description": "The permission to check",
+										"type": "object"
+									}
+								},
+								"required": [
+									"permissions"
+								],
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"error": {
+											"type": "string"
+										},
+										"success": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"success"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/impersonate-user": {
+			"post": {
+				"description": "Impersonate a user",
+				"operationId": "impersonateUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"session": {
+											"$ref": "#/components/schemas/Session"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Impersonation session created"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/list-user-sessions": {
+			"post": {
+				"description": "List user sessions",
+				"operationId": "adminListUserSessions",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"sessions": {
+											"items": {
+												"$ref": "#/components/schemas/Session"
+											},
+											"type": "array"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "List of user sessions"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/list-users": {
+			"get": {
+				"description": "List users",
+				"operationId": "listUsers",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "searchValue",
+						"schema": {
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "searchField",
+						"schema": {
+							"description": "The field to search in, defaults to email. Can be `email` or `name`. Eg: \"name\"",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "searchOperator",
+						"schema": {
+							"description": "The operator to use for the search. Can be `contains`, `starts_with` or `ends_with`. Eg: \"contains\"",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"schema": {
+							"description": "The field to sort by",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortDirection",
+						"schema": {
+							"description": "The direction to sort by",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "filterField",
+						"schema": {
+							"description": "The field to filter by",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "filterValue",
+						"schema": {
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "filterOperator",
+						"schema": {
+							"description": "The operator to use for the filter",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"limit": {
+											"type": "number"
+										},
+										"offset": {
+											"type": "number"
+										},
+										"total": {
+											"type": "number"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"users",
+										"total"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "List of users"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/remove-user": {
+			"post": {
+				"description": "Delete a user and all their sessions and accounts. Cannot be undone.",
+				"operationId": "removeUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"success": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User removed"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/revoke-user-session": {
+			"post": {
+				"description": "Revoke a user session",
+				"operationId": "revokeUserSession",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"sessionToken": {
+										"description": "The session token",
+										"type": "string"
+									}
+								},
+								"required": [
+									"sessionToken"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"success": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Session revoked"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/revoke-user-sessions": {
+			"post": {
+				"description": "Revoke all user sessions",
+				"operationId": "revokeUserSessions",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"success": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Sessions revoked"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/set-role": {
+			"post": {
+				"description": "Set the role of a user",
+				"operationId": "setUserRole",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"role": {
+										"description": "The role to set, this can be a string or an array of strings. Eg: `admin` or `[admin, user]`",
+										"type": "string"
+									},
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId",
+									"role"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User role updated"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/set-user-password": {
+			"post": {
+				"description": "Set a user's password",
+				"operationId": "setUserPassword",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"newPassword": {
+										"description": "The new password",
+										"type": "string"
+									},
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"newPassword",
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Password set"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/stop-impersonating": {
+			"post": {
+				"parameters": [],
+				"responses": {
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/unban-user": {
+			"post": {
+				"description": "Unban a user",
+				"operationId": "unbanUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User unbanned"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
+		"/api/auth/admin/update-user": {
+			"post": {
+				"description": "Update a user's details",
+				"operationId": "adminUpdateUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"data": {
+										"description": "The user data to update",
+										"type": "string"
+									},
+									"userId": {
+										"description": "The user id",
+										"type": "string"
+									}
+								},
+								"required": [
+									"userId",
+									"data"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "User updated"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Admin"
+				]
+			}
+		},
 		"/api/auth/bootstrap": {
 			"get": {
 				"description": "Returns whether the first-admin setup step still needs to be completed.",
@@ -2876,6 +5571,2156 @@
 				]
 			}
 		},
+		"/api/auth/callback/{id}": {
+			"get": {
+				"parameters": [],
+				"responses": {
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			},
+			"post": {
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/change-email": {
+			"post": {
+				"operationId": "changeEmail",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"callbackURL": {
+										"description": "The URL to redirect to after email verification",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"newEmail": {
+										"description": "The new email address to set must be a valid email address",
+										"type": "string"
+									}
+								},
+								"required": [
+									"newEmail"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"description": "Status message of the email change process",
+											"enum": [
+												"Email updated",
+												"Verification email sent"
+											],
+											"nullable": true,
+											"type": "string"
+										},
+										"status": {
+											"description": "Indicates if the request was successful",
+											"type": "boolean"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User",
+											"type": "object"
+										}
+									},
+									"required": [
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Email change request processed successfully"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/change-password": {
+			"post": {
+				"description": "Change the password of the user",
+				"operationId": "changePassword",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"currentPassword": {
+										"description": "The current password is required",
+										"type": "string"
+									},
+									"newPassword": {
+										"description": "The new password to set",
+										"type": "string"
+									},
+									"revokeOtherSessions": {
+										"description": "Must be a boolean value",
+										"type": [
+											"boolean",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"newPassword",
+									"currentPassword"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"token": {
+											"description": "New session token if other sessions were revoked",
+											"nullable": true,
+											"type": "string"
+										},
+										"user": {
+											"properties": {
+												"createdAt": {
+													"description": "When the user was created",
+													"format": "date-time",
+													"type": "string"
+												},
+												"email": {
+													"description": "The email address of the user",
+													"format": "email",
+													"type": "string"
+												},
+												"emailVerified": {
+													"description": "Whether the email has been verified",
+													"type": "boolean"
+												},
+												"id": {
+													"description": "The unique identifier of the user",
+													"type": "string"
+												},
+												"image": {
+													"description": "The profile image URL of the user",
+													"format": "uri",
+													"nullable": true,
+													"type": "string"
+												},
+												"name": {
+													"description": "The name of the user",
+													"type": "string"
+												},
+												"updatedAt": {
+													"description": "When the user was last updated",
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"required": [
+												"id",
+												"email",
+												"name",
+												"emailVerified",
+												"createdAt",
+												"updatedAt"
+											],
+											"type": "object"
+										}
+									},
+									"required": [
+										"user"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Password successfully changed"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/delete-user": {
+			"post": {
+				"description": "Delete the user",
+				"operationId": "deleteUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"callbackURL": {
+										"description": "The callback URL to redirect to after the user is deleted",
+										"type": "string"
+									},
+									"password": {
+										"description": "The user's password. Required if session is not fresh",
+										"type": "string"
+									},
+									"token": {
+										"description": "The deletion verification token",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"description": "Status message of the deletion process",
+											"enum": [
+												"User deleted",
+												"Verification email sent"
+											],
+											"type": "string"
+										},
+										"success": {
+											"description": "Indicates if the operation was successful",
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"success",
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "User deletion processed successfully"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/delete-user/callback": {
+			"get": {
+				"description": "Callback to complete user deletion with verification token",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "token",
+						"schema": {
+							"description": "The token to verify the deletion request",
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "callbackURL",
+						"schema": {
+							"description": "The URL to redirect to after deletion",
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"description": "Confirmation message",
+											"enum": [
+												"User deleted"
+											],
+											"type": "string"
+										},
+										"success": {
+											"description": "Indicates if the deletion was successful",
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"success",
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "User successfully deleted"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/error": {
+			"get": {
+				"description": "Displays an error page",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"text/html": {
+								"schema": {
+									"description": "The HTML content of the error page",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/get-access-token": {
+			"post": {
+				"description": "Get a valid access token, doing a refresh if needed",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"accountId": {
+										"description": "The account ID associated with the refresh token",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"providerId": {
+										"description": "The provider ID for the OAuth provider",
+										"type": "string"
+									},
+									"userId": {
+										"description": "The user ID associated with the account",
+										"type": [
+											"string",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"providerId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"accessToken": {
+											"type": "string"
+										},
+										"accessTokenExpiresAt": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"idToken": {
+											"type": "string"
+										},
+										"tokenType": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "A Valid access token"
+					},
+					"400": {
+						"description": "Invalid refresh token or provider configuration"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/get-session": {
+			"get": {
+				"description": "Get the current session",
+				"operationId": "getSession",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"session": {
+											"$ref": "#/components/schemas/Session"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"required": [
+										"session",
+										"user"
+									],
+									"type": [
+										"object",
+										"null"
+									]
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			},
+			"post": {
+				"description": "Get the current session",
+				"operationId": "getSession",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"session": {
+											"$ref": "#/components/schemas/Session"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User"
+										}
+									},
+									"required": [
+										"session",
+										"user"
+									],
+									"type": [
+										"object",
+										"null"
+									]
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/link-social": {
+			"post": {
+				"description": "Link a social account to the user",
+				"operationId": "linkSocialAccount",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"additionalData": {
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"callbackURL": {
+										"description": "The URL to redirect to after the user has signed in",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"disableRedirect": {
+										"description": "Disable automatic redirection to the provider. Useful for handling the redirection yourself",
+										"type": [
+											"boolean",
+											"null"
+										]
+									},
+									"errorCallbackURL": {
+										"description": "The URL to redirect to if there is an error during the link process",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"idToken": {
+										"properties": {
+											"accessToken": {
+												"type": [
+													"string",
+													"null"
+												]
+											},
+											"nonce": {
+												"type": [
+													"string",
+													"null"
+												]
+											},
+											"refreshToken": {
+												"type": [
+													"string",
+													"null"
+												]
+											},
+											"scopes": {
+												"type": [
+													"array",
+													"null"
+												]
+											},
+											"token": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"token"
+										],
+										"type": [
+											"object",
+											"null"
+										]
+									},
+									"provider": {
+										"type": "string"
+									},
+									"requestSignUp": {
+										"type": [
+											"boolean",
+											"null"
+										]
+									},
+									"scopes": {
+										"description": "Additional scopes to request from the provider",
+										"type": [
+											"array",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"provider"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"redirect": {
+											"description": "Indicates if the user should be redirected to the authorization URL",
+											"type": "boolean"
+										},
+										"status": {
+											"type": "boolean"
+										},
+										"url": {
+											"description": "The authorization URL to redirect the user to",
+											"type": "string"
+										}
+									},
+									"required": [
+										"redirect"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/list-accounts": {
+			"get": {
+				"description": "List all accounts linked to the user",
+				"operationId": "listUserAccounts",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"properties": {
+											"accountId": {
+												"type": "string"
+											},
+											"createdAt": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											},
+											"providerId": {
+												"type": "string"
+											},
+											"scopes": {
+												"items": {
+													"type": "string"
+												},
+												"type": "array"
+											},
+											"updatedAt": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"userId": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"id",
+											"providerId",
+											"createdAt",
+											"updatedAt",
+											"accountId",
+											"userId",
+											"scopes"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/list-sessions": {
+			"get": {
+				"description": "List all active sessions for the user",
+				"operationId": "listUserSessions",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Session"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/ok": {
+			"get": {
+				"description": "Check if the API is working",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"ok": {
+											"description": "Indicates if the API is working",
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"ok"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "API is working"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
 		"/api/auth/providers": {
 			"get": {
 				"description": "Returns which authentication providers are currently enabled.",
@@ -2914,6 +7759,1211 @@
 				"summary": "List auth providers",
 				"tags": [
 					"Authentication"
+				]
+			}
+		},
+		"/api/auth/refresh-token": {
+			"post": {
+				"description": "Refresh the access token using a refresh token",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"accountId": {
+										"description": "The account ID associated with the refresh token",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"providerId": {
+										"description": "The provider ID for the OAuth provider",
+										"type": "string"
+									},
+									"userId": {
+										"description": "The user ID associated with the account",
+										"type": [
+											"string",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"providerId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"accessToken": {
+											"type": "string"
+										},
+										"accessTokenExpiresAt": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"idToken": {
+											"type": "string"
+										},
+										"refreshToken": {
+											"type": "string"
+										},
+										"refreshTokenExpiresAt": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"tokenType": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Access token refreshed successfully"
+					},
+					"400": {
+						"description": "Invalid refresh token or provider configuration"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/request-password-reset": {
+			"post": {
+				"description": "Send a password reset email to the user",
+				"operationId": "requestPasswordReset",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"email": {
+										"description": "The email address of the user to send a password reset email to",
+										"type": "string"
+									},
+									"redirectTo": {
+										"description": "The URL to redirect the user to reset their password. If the token isn't valid or expired, it'll be redirected with a query parameter `?error=INVALID_TOKEN`. If the token is valid, it'll be redirected with a query parameter `?token=VALID_TOKEN",
+										"type": [
+											"string",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"email"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										},
+										"status": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/reset-password": {
+			"post": {
+				"description": "Reset the password for a user",
+				"operationId": "resetPassword",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"newPassword": {
+										"description": "The new password to set",
+										"type": "string"
+									},
+									"token": {
+										"description": "The token to reset the password",
+										"type": [
+											"string",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"newPassword"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/reset-password/{token}": {
+			"get": {
+				"description": "Redirects the user to the callback URL with the token",
+				"operationId": "resetPasswordCallback",
+				"parameters": [
+					{
+						"description": "The token to reset the password",
+						"in": "path",
+						"name": "token",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The URL to redirect the user to reset their password",
+						"in": "query",
+						"name": "callbackURL",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"token": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/revoke-other-sessions": {
+			"post": {
+				"description": "Revoke all other sessions for the user except the current one",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"description": "Indicates if all other sessions were revoked successfully",
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/revoke-session": {
+			"post": {
+				"description": "Revoke a single session",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"token": {
+										"description": "The token to revoke",
+										"type": "string"
+									}
+								},
+								"required": [
+									"token"
+								],
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"description": "Indicates if the session was revoked successfully",
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/revoke-sessions": {
+			"post": {
+				"description": "Revoke all sessions for the user",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"description": "Indicates if all sessions were revoked successfully",
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/send-verification-email": {
+			"post": {
+				"description": "Send a verification email to the user",
+				"operationId": "sendVerificationEmail",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"callbackURL": {
+										"description": "The URL to use for email verification callback",
+										"example": "https://example.com/callback",
+										"nullable": true,
+										"type": "string"
+									},
+									"email": {
+										"description": "The email to send the verification email to",
+										"example": "user@example.com",
+										"type": "string"
+									}
+								},
+								"required": [
+									"email"
+								],
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"description": "Indicates if the email was sent successfully",
+											"example": true,
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"description": "Error message",
+											"example": "Verification email isn't enabled",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
 				]
 			}
 		},
@@ -3059,6 +9109,1452 @@
 				]
 			}
 		},
+		"/api/auth/sign-in/email": {
+			"post": {
+				"description": "Sign in with email and password",
+				"operationId": "signInEmail",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"callbackURL": {
+										"description": "Callback URL to use as a redirect for email verification",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"email": {
+										"description": "Email of the user",
+										"type": "string"
+									},
+									"password": {
+										"description": "Password of the user",
+										"type": "string"
+									},
+									"rememberMe": {
+										"default": true,
+										"description": "If this is false, the session will not be remembered. Default is `true`.",
+										"type": [
+											"boolean",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"email",
+									"password"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"description": "Session response when idToken is provided",
+									"properties": {
+										"redirect": {
+											"enum": [
+												false
+											],
+											"type": "boolean"
+										},
+										"token": {
+											"description": "Session token",
+											"type": "string"
+										},
+										"url": {
+											"nullable": true,
+											"type": "string"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User",
+											"type": "object"
+										}
+									},
+									"required": [
+										"redirect",
+										"token",
+										"user"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success - Returns either session details or redirect URL"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/sign-in/social": {
+			"post": {
+				"description": "Sign in with a social provider",
+				"operationId": "socialSignIn",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"additionalData": {
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"callbackURL": {
+										"description": "Callback URL to redirect to after the user has signed in",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"disableRedirect": {
+										"description": "Disable automatic redirection to the provider. Useful for handling the redirection yourself",
+										"type": [
+											"boolean",
+											"null"
+										]
+									},
+									"errorCallbackURL": {
+										"description": "Callback URL to redirect to if an error happens",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"idToken": {
+										"properties": {
+											"accessToken": {
+												"description": "Access token from the provider",
+												"type": [
+													"string",
+													"null"
+												]
+											},
+											"expiresAt": {
+												"description": "Expiry date of the token",
+												"type": [
+													"number",
+													"null"
+												]
+											},
+											"nonce": {
+												"description": "Nonce used to generate the token",
+												"type": [
+													"string",
+													"null"
+												]
+											},
+											"refreshToken": {
+												"description": "Refresh token from the provider",
+												"type": [
+													"string",
+													"null"
+												]
+											},
+											"token": {
+												"description": "ID token from the provider",
+												"type": "string"
+											},
+											"user": {
+												"description": "The user object from the provider. Only available for some providers like Apple.",
+												"properties": {
+													"email": {
+														"type": [
+															"string",
+															"null"
+														]
+													},
+													"name": {
+														"properties": {
+															"firstName": {
+																"type": [
+																	"string",
+																	"null"
+																]
+															},
+															"lastName": {
+																"type": [
+																	"string",
+																	"null"
+																]
+															}
+														},
+														"type": [
+															"object",
+															"null"
+														]
+													}
+												},
+												"type": [
+													"object",
+													"null"
+												]
+											}
+										},
+										"required": [
+											"token"
+										],
+										"type": [
+											"object",
+											"null"
+										]
+									},
+									"loginHint": {
+										"description": "The login hint to use for the authorization code request",
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"newUserCallbackURL": {
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"provider": {
+										"type": "string"
+									},
+									"requestSignUp": {
+										"description": "Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider",
+										"type": [
+											"boolean",
+											"null"
+										]
+									},
+									"scopes": {
+										"description": "Array of scopes to request from the provider. This will override the default scopes passed.",
+										"type": [
+											"array",
+											"null"
+										]
+									}
+								},
+								"required": [
+									"provider"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"description": "Returns session details when idToken is provided, or an authorize URL otherwise",
+									"properties": {
+										"redirect": {
+											"type": "boolean"
+										},
+										"token": {
+											"type": "string"
+										},
+										"url": {
+											"type": "string"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User",
+											"type": "object"
+										}
+									},
+									"required": [
+										"redirect"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success - Returns session details (idToken branch) or an authorize URL (redirect branch)"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/sign-out": {
+			"post": {
+				"description": "Sign out the current user",
+				"operationId": "signOut",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"success": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/sign-up/email": {
+			"post": {
+				"description": "Sign up a user using email and password",
+				"operationId": "signUpWithEmailAndPassword",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"callbackURL": {
+										"description": "The URL to use for email verification callback",
+										"type": "string"
+									},
+									"email": {
+										"description": "The email of the user",
+										"type": "string"
+									},
+									"image": {
+										"description": "The profile image URL of the user",
+										"type": "string"
+									},
+									"name": {
+										"description": "The name of the user",
+										"type": "string"
+									},
+									"password": {
+										"description": "The password of the user",
+										"type": "string"
+									},
+									"rememberMe": {
+										"description": "If this is false, the session will not be remembered. Default is `true`.",
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"name",
+									"email",
+									"password"
+								],
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"token": {
+											"description": "Authentication token for the session",
+											"nullable": true,
+											"type": "string"
+										},
+										"user": {
+											"properties": {
+												"createdAt": {
+													"description": "When the user was created",
+													"format": "date-time",
+													"type": "string"
+												},
+												"email": {
+													"description": "The email address of the user",
+													"format": "email",
+													"type": "string"
+												},
+												"emailVerified": {
+													"description": "Whether the email has been verified",
+													"type": "boolean"
+												},
+												"id": {
+													"description": "The unique identifier of the user",
+													"type": "string"
+												},
+												"image": {
+													"description": "The profile image URL of the user",
+													"format": "uri",
+													"nullable": true,
+													"type": "string"
+												},
+												"name": {
+													"description": "The name of the user",
+													"type": "string"
+												},
+												"updatedAt": {
+													"description": "When the user was last updated",
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"required": [
+												"id",
+												"email",
+												"name",
+												"emailVerified",
+												"createdAt",
+												"updatedAt"
+											],
+											"type": "object"
+										}
+									},
+									"required": [
+										"user"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Successfully created user"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"422": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unprocessable Entity. User already exists or failed to create user."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/unlink-account": {
+			"post": {
+				"description": "Unlink an account",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"accountId": {
+										"type": [
+											"string",
+											"null"
+										]
+									},
+									"providerId": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"providerId"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/update-session": {
+			"post": {
+				"description": "Update the current session",
+				"operationId": "updateSession",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"session": {
+											"$ref": "#/components/schemas/Session",
+											"type": "object"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/update-user": {
+			"post": {
+				"description": "Update the current user",
+				"operationId": "updateUser",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"image": {
+										"description": "The image of the user",
+										"nullable": true,
+										"type": "string"
+									},
+									"name": {
+										"description": "The name of the user",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/User",
+											"type": "object"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/auth/verify-email": {
+			"get": {
+				"description": "Verify the email of the user",
+				"parameters": [
+					{
+						"description": "The token to verify the email",
+						"in": "query",
+						"name": "token",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The URL to redirect to after email verification",
+						"in": "query",
+						"name": "callbackURL",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"description": "Indicates if the email was verified successfully",
+											"type": "boolean"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User",
+											"type": "object"
+										}
+									},
+									"required": [
+										"user",
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
 		"/api/auth/verify-invite": {
 			"post": {
 				"description": "Validates an invite token and returns the associated email address.",
@@ -3117,6 +10613,192 @@
 				"summary": "Verify invite token",
 				"tags": [
 					"Authentication"
+				]
+			}
+		},
+		"/api/auth/verify-password": {
+			"post": {
+				"description": "Verify the current user's password",
+				"operationId": "verifyPassword",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"password": {
+										"description": "The password to verify",
+										"type": "string"
+									}
+								},
+								"required": [
+									"password"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Success"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Bad Request. Usually due to missing parameters, or invalid parameters."
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unauthorized. Due to missing or invalid authentication."
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Forbidden. You do not have permission to access this resource or to perform this action."
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Not Found. The requested resource was not found."
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Too Many Requests. You have exceeded the rate limit. Try again later."
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Internal Server Error. This is a problem with the server that you cannot fix."
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"tags": [
+					"Default"
+				]
+			}
+		},
+		"/api/health": {
+			"get": {
+				"operationId": "getApiHealth",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HealthResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Health check",
+				"tags": [
+					"System monitoring"
 				]
 			}
 		},
