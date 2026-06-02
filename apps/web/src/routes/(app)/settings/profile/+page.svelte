@@ -27,7 +27,7 @@
 	});
 </script>
 
-<div class="mx-auto max-w-3xl px-12 py-12">
+<div class="mx-auto max-w-7xl px-12 py-12">
 	<PageHeader title="Profile" description="Your account details." />
 
 	<div class="mt-8 flex flex-col gap-4">
