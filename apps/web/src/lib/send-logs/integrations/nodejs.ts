@@ -3,18 +3,29 @@ import { otelEnvVarsSnippet } from './_shared';
 import type { Integration, IntegrationContext, Step } from '../types';
 
 const OTEL_INSTALL =
-	'npm install @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto';
+	'npm install @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto @opentelemetry/resources';
 
 const OTEL_EXAMPLE = `import { logs } from '@opentelemetry/api-logs';
 import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-proto';
+import { defaultResource, detectResources, envDetector } from '@opentelemetry/resources';
 
-const provider = new LoggerProvider();
-provider.addLogRecordProcessor(new BatchLogRecordProcessor(new OTLPLogExporter()));
+// Pick up service.name (and anything in OTEL_RESOURCE_ATTRIBUTES) from the environment
+const resource = defaultResource().merge(
+  detectResources({ detectors: [envDetector] })
+);
+
+const provider = new LoggerProvider({
+  resource,
+  processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+});
+
 logs.setGlobalLoggerProvider(provider);
 
 logs.getLogger('hello').emit({ severityText: 'INFO', body: 'Hello from Node to rootprint' });
-await provider.forceFlush();`;
+
+await provider.forceFlush();
+await provider.shutdown();`;
 
 const PINO_INSTALL = 'npm install pino pino-opentelemetry-transport';
 
@@ -28,24 +39,34 @@ const log = pino(transport);
 log.info('Hello from Pino to rootprint');`;
 
 const WINSTON_INSTALL =
-	'npm install winston @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto @opentelemetry/winston-transport';
+	'npm install winston @opentelemetry/api-logs @opentelemetry/sdk-logs @opentelemetry/exporter-logs-otlp-proto @opentelemetry/winston-transport @opentelemetry/resources';
 
 const WINSTON_EXAMPLE = `import { logs } from '@opentelemetry/api-logs';
 import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-proto';
+import { defaultResource, detectResources, envDetector } from '@opentelemetry/resources';
 import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport';
 import winston from 'winston';
 
-const provider = new LoggerProvider();
-provider.addLogRecordProcessor(new BatchLogRecordProcessor(new OTLPLogExporter()));
+const resource = defaultResource().merge(
+  detectResources({ detectors: [envDetector] })
+);
+
+const provider = new LoggerProvider({
+  resource,
+  processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+});
+
 logs.setGlobalLoggerProvider(provider);
 
 const logger = winston.createLogger({
-	level: 'info',
-	transports: [new OpenTelemetryTransportV3()]
+  level: 'info',
+  transports: [new OpenTelemetryTransportV3()]
 });
 
-logger.info('Hello from Winston to rootprint');`;
+logger.info('Hello from Winston to rootprint');
+
+await provider.shutdown();`;
 
 const PROTOBUF_CALLOUT = {
 	variant: 'warning' as const,
