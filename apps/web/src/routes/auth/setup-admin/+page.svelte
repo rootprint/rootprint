@@ -3,7 +3,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { setupAdmin, AuthApiError } from '$lib/api/auth';
 	import { DEP } from '$lib/api/deps';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
@@ -23,22 +23,19 @@
 		try {
 			const parsed = v.safeParse(setupAdminSchema, { name, email, password });
 			if (!parsed.success) {
-				for (const issue of parsed.issues) {
-					const key = issue.path?.[0]?.key as string | undefined;
-					if (key) fieldErrors[key] = issue.message;
-				}
+				fieldErrors = issuesToFieldErrors(parsed.issues);
 				return;
 			}
 			const input: SetupAdminInput = parsed.output;
 
 			try {
 				await setupAdmin(input);
-			} catch (e) {
-				if (e instanceof AuthApiError && e.body) {
-					fieldErrors = toFieldErrors(e.body);
-					formError = e.message;
+			} catch (err) {
+				if (err instanceof AuthApiError && err.body) {
+					fieldErrors = toFieldErrors(err.body);
+					formError = err.message;
 				} else {
-					formError = e instanceof Error ? e.message : 'Failed to create admin';
+					formError = err instanceof Error ? err.message : 'Failed to create admin';
 				}
 				return;
 			}

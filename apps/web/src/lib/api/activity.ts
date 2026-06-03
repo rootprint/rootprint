@@ -1,6 +1,7 @@
 import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
+import { presetDurationSec } from '$lib/utils/time-range';
 
 const activity = client.api.admin.activity;
 const users = activity.users;
@@ -12,7 +13,10 @@ export function parseWindow(raw: string | null): Window {
 	return raw === '24h' || raw === '7d' || raw === '30d' ? raw : '7d';
 }
 
-export type RecentStatus = 'any' | 'success' | 'error';
+/** Span of a window in milliseconds (each window value is also a time-range preset). */
+export function windowToSpanMs(window: Window): number {
+	return presetDurationSec(window) * 1000;
+}
 
 export type Summary = InferResponseType<typeof activity.summary.$get, 200>;
 export type LatencyBuckets = InferResponseType<typeof activity.latency.$get, 200>;
@@ -68,12 +72,11 @@ export async function getUserIndexes(userId: string, window: Window): Promise<Ac
 export async function getUserRecent(
 	userId: string,
 	window: Window,
-	opts: { offset?: number; limit?: number; status?: RecentStatus } = {}
+	opts: { offset?: number; limit?: number } = {}
 ): Promise<RecentResult> {
 	const query: Record<string, string> = { window };
 	if (opts.offset !== undefined) query.offset = String(opts.offset);
 	if (opts.limit !== undefined) query.limit = String(opts.limit);
-	if (opts.status) query.status = opts.status;
 	const res = await users[':userId'].recent.$get({ param: { userId }, query });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user activity');
 	return res.json() as Promise<RecentResult>;
@@ -109,12 +112,11 @@ export async function getApiKeyLatency(id: number, window: Window): Promise<Late
 export async function getApiKeyRecent(
 	id: number,
 	window: Window,
-	opts: { offset?: number; limit?: number; status?: RecentStatus } = {}
+	opts: { offset?: number; limit?: number } = {}
 ): Promise<RecentResult> {
 	const query: Record<string, string> = { window };
 	if (opts.offset !== undefined) query.offset = String(opts.offset);
 	if (opts.limit !== undefined) query.limit = String(opts.limit);
-	if (opts.status) query.status = opts.status;
 	const res = await apiKeys[':apiKeyId'].recent.$get({
 		param: { apiKeyId: String(id) },
 		query

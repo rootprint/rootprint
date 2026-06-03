@@ -4,7 +4,7 @@
 	import type { UserRole } from 'api/types';
 
 	import { createInvite, InviteApiError } from '$lib/api/invites';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
@@ -48,10 +48,7 @@
 
 		const parsed = v.safeParse(createInviteSchema, { name, email, role });
 		if (!parsed.success) {
-			for (const issue of parsed.issues) {
-				const key = issue.path?.[0]?.key as string | undefined;
-				if (key) fieldErrors[key] = issue.message;
-			}
+			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
 		const input: CreateInviteInput = parsed.output;
@@ -62,12 +59,12 @@
 			inviteUrl = result.inviteUrl;
 			phase = 'reveal';
 			await oncreated?.();
-		} catch (e) {
-			if (e instanceof InviteApiError && e.body) {
-				fieldErrors = toFieldErrors(e.body);
-				formError = e.message;
+		} catch (err) {
+			if (err instanceof InviteApiError && err.body) {
+				fieldErrors = toFieldErrors(err.body);
+				formError = err.message;
 			} else {
-				formError = e instanceof Error ? e.message : 'Failed to create invite';
+				formError = err instanceof Error ? err.message : 'Failed to create invite';
 			}
 		} finally {
 			submitting = false;

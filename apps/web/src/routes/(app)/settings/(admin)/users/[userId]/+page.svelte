@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto, invalidate } from '$app/navigation';
-	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 
 	import AccountDetails from '$lib/components/account/AccountDetails.svelte';
@@ -12,6 +11,7 @@
 	import { DEP } from '$lib/api/deps';
 	import { setUserRole, UserApiError, type UserView } from '$lib/api/users';
 	import { resendInvite, InviteApiError } from '$lib/api/invites';
+	import { setSearchParam } from '$lib/utils/search-params';
 
 	let { data } = $props();
 	const user = $derived(data.user);
@@ -19,13 +19,6 @@
 
 	let resetOpen = $state(false);
 	let removeOpen = $state(false);
-
-	function setParam(key: string, val: string) {
-		const url = new URL(page.url);
-		url.searchParams.set(key, val);
-		if (key !== 'offset') url.searchParams.set('offset', '0');
-		goto(url, { replaceState: false, keepFocus: true, noScroll: true });
-	}
 
 	async function refresh() {
 		await invalidate(DEP.users);
@@ -97,7 +90,7 @@
 			latency={data.latency}
 			indexes={data.indexes}
 			recent={data.recent}
-			onSetParam={setParam}
+			onSetParam={setSearchParam}
 		/>
 	</div>
 </div>

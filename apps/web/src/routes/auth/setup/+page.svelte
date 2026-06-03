@@ -4,7 +4,7 @@
 
 	import { goto } from '$app/navigation';
 	import { setupPassword, AuthApiError } from '$lib/api/auth';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 
@@ -22,10 +22,7 @@
 
 		const parsed = v.safeParse(setupPasswordSchema, { token: data.token, password });
 		if (!parsed.success) {
-			for (const issue of parsed.issues) {
-				const key = issue.path?.[0]?.key as string | undefined;
-				if (key) fieldErrors[key] = issue.message;
-			}
+			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
 
@@ -33,12 +30,12 @@
 		try {
 			await setupPassword(parsed.output);
 			await goto('/auth/sign-in');
-		} catch (e) {
-			if (e instanceof AuthApiError && e.body) {
-				fieldErrors = toFieldErrors(e.body);
-				formError = e.message;
+		} catch (err) {
+			if (err instanceof AuthApiError && err.body) {
+				fieldErrors = toFieldErrors(err.body);
+				formError = err.message;
 			} else {
-				formError = e instanceof Error ? e.message : 'Failed to set password';
+				formError = err instanceof Error ? err.message : 'Failed to set password';
 			}
 			return;
 		} finally {

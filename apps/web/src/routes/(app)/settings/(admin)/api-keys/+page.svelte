@@ -8,7 +8,7 @@
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
 	import { createApiKey, getApiKey, deleteApiKey, ApiKeyApiError } from '$lib/api/api-keys';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import RoleBadge from '$lib/components/admin/RoleBadge.svelte';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
@@ -90,10 +90,7 @@
 			role: createRole
 		});
 		if (!parsed.success) {
-			for (const issue of parsed.issues) {
-				const key = issue.path?.[0]?.key as string | undefined;
-				if (key) createFieldErrors[key] = issue.message;
-			}
+			createFieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
 		const input: CreateApiKeyInput = parsed.output;
@@ -104,12 +101,12 @@
 			createdToken = result.token;
 			createPhase = 'reveal';
 			await invalidate(DEP.apiKeys);
-		} catch (e) {
-			if (e instanceof ApiKeyApiError && e.body) {
-				createFormError = e.body.error.message;
-				createFieldErrors = toFieldErrors(e.body);
+		} catch (err) {
+			if (err instanceof ApiKeyApiError && err.body) {
+				createFormError = err.body.error.message;
+				createFieldErrors = toFieldErrors(err.body);
 			} else {
-				createFormError = e instanceof Error ? e.message : 'Failed to create API key';
+				createFormError = err instanceof Error ? err.message : 'Failed to create API key';
 			}
 		} finally {
 			creating = false;

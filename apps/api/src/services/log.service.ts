@@ -180,7 +180,7 @@ export async function fieldValuesBulk(
 
 	const groupResults = await Promise.all(
 		groups.map(async (group) => {
-			const composed = composeQuery(query, group.effectiveFilters) || '*';
+			const composed = composeQuery(query, group.effectiveFilters);
 			const builder = idx.query(composed).limit(0);
 			for (const field of group.fields) {
 				builder.agg(field, AggregationBuilder.terms(field, { size: limit }));

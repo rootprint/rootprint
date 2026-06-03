@@ -2,6 +2,7 @@ import type { FieldConfig } from '$lib/types';
 import { formatCell } from './column-width';
 import { getByPath } from './get-by-path';
 import { OTEL_ATTR_PREFIX, OTEL_RESOURCE_ATTR_PREFIX } from './fields';
+import { isPlainObject } from './object';
 
 export interface DrawerField {
 	/** Raw dotted path, e.g. "attributes.http.status_code". Used for filtering. */
@@ -42,10 +43,6 @@ function leafField(name: string, displayName: string, rawValue: unknown): Drawer
 	};
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
 /**
  * Walks object-typed values (Quickwit `json` fields) and emits one row per leaf,
  * with the path joined by dots (e.g. `resource_attributes.telemetry.sdk.language`).
@@ -75,7 +72,7 @@ function expandValue(
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 function sortByDisplayName(fields: DrawerField[]): DrawerField[] {
-	return fields.sort((a, b) => nameCollator.compare(a.displayName, b.displayName));
+	return fields.toSorted((a, b) => nameCollator.compare(a.displayName, b.displayName));
 }
 
 function identity(name: string): string {
@@ -96,15 +93,15 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 	const message = formatCell(messageRaw);
 
 	if (!fieldConfig.isOtel) {
-		const fields: DrawerField[] = [];
+		const collected: DrawerField[] = [];
 		for (const [key, value] of Object.entries(raw)) {
 			if (isPlainObject(value)) {
-				expandValue(key, value, fields, identity);
+				expandValue(key, value, collected, identity);
 			} else {
-				fields.push(leafField(key, key, value));
+				collected.push(leafField(key, key, value));
 			}
 		}
-		sortByDisplayName(fields);
+		const fields = sortByDisplayName(collected);
 		return {
 			message,
 			messageLabel: messageField,
@@ -112,25 +109,25 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 		};
 	}
 
-	const attributes: DrawerField[] = [];
-	const resourceAttributes: DrawerField[] = [];
-	const other: DrawerField[] = [];
+	const rawAttributes: DrawerField[] = [];
+	const rawResourceAttributes: DrawerField[] = [];
+	const rawOther: DrawerField[] = [];
 
 	for (const [key, value] of Object.entries(raw)) {
 		if (key === 'attributes' && isPlainObject(value)) {
-			expandValue(key, value, attributes, stripAttrPrefix);
+			expandValue(key, value, rawAttributes, stripAttrPrefix);
 		} else if (key === 'resource_attributes' && isPlainObject(value)) {
-			expandValue(key, value, resourceAttributes, stripResourceAttrPrefix);
+			expandValue(key, value, rawResourceAttributes, stripResourceAttrPrefix);
 		} else if (isPlainObject(value)) {
-			expandValue(key, value, other, identity);
+			expandValue(key, value, rawOther, identity);
 		} else {
-			other.push(leafField(key, key, value));
+			rawOther.push(leafField(key, key, value));
 		}
 	}
 
-	sortByDisplayName(attributes);
-	sortByDisplayName(resourceAttributes);
-	sortByDisplayName(other);
+	const attributes = sortByDisplayName(rawAttributes);
+	const resourceAttributes = sortByDisplayName(rawResourceAttributes);
+	const other = sortByDisplayName(rawOther);
 
 	const groups: FieldGroup[] = [];
 	if (attributes.length > 0)

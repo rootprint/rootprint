@@ -37,11 +37,6 @@ export function formatDurationSeconds(s: number): string {
 	return `${mins}m`;
 }
 
-export function formatLatencyMs(seconds: number): string {
-	if (seconds < 1) return `${(seconds * 1000).toFixed(0)} ms`;
-	return `${seconds.toFixed(2)} s`;
-}
-
 export function formatDurationMs(ms: number | null): string {
 	if (ms === null) return '—';
 	if (ms < 1) return '<1 ms';
@@ -62,13 +57,4 @@ export function formatPercent(ratio: number): string {
 	if (pct > 0 && pct < 0.1) return '<0.1%';
 	if (pct < 10) return `${pct.toFixed(1)}%`;
 	return `${pct.toFixed(0)}%`;
-}
-
-export function formatRatePerSecond(dv: number, dtMs: number): string {
-	if (dtMs <= 0) return '—';
-	const rate = (dv * 1000) / dtMs;
-	if (rate < 0) return '0/s';
-	if (rate >= 1000) return `${(rate / 1000).toFixed(1)}k/s`;
-	if (rate >= 1) return `${rate.toFixed(0)}/s`;
-	return `${rate.toFixed(2)}/s`;
 }

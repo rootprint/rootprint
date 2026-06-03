@@ -1,4 +1,5 @@
 import type { TimeRange } from '$lib/types';
+import { isPlainObject } from './object';
 
 export const OTEL_ATTR_PREFIX = 'attributes.';
 export const OTEL_RESOURCE_ATTR_PREFIX = 'resource_attributes.';
@@ -39,10 +40,10 @@ export function extractJsonSubFields(
 
 	function walk(obj: unknown, prefix: string, depth: number): void {
 		if (depth > JSON_SUBFIELD_MAX_DEPTH) return;
-		if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) return;
-		for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+		if (!isPlainObject(obj)) return;
+		for (const [key, value] of Object.entries(obj)) {
 			const fullPath = `${prefix}.${key}`;
-			if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+			if (isPlainObject(value)) {
 				walk(value, fullPath, depth + 1);
 			} else {
 				discovered.add(fullPath);
@@ -53,7 +54,7 @@ export function extractJsonSubFields(
 	for (const hit of hits) {
 		for (const name of jsonFieldNames) {
 			const value = hit[name];
-			if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+			if (isPlainObject(value)) {
 				walk(value, name, 0);
 			}
 		}

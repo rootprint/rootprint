@@ -9,10 +9,11 @@ export function escapeFilterValue(value: string): string {
 	return value;
 }
 
+/** Composes free text + filters into a runnable Quickwit query; empty input yields `*` (match-all). */
 export function composeQuery(text: string, filters: Filter[]): string {
 	const trimmed = text.trim();
 	const hasText = trimmed !== '' && trimmed !== '*';
-	if (filters.length === 0) return hasText ? text : '';
+	if (filters.length === 0) return hasText ? text : '*';
 
 	const byField = new Map<string, { includes: string[]; excludes: string[] }>();
 	for (const f of filters) {

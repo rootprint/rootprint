@@ -1,3 +1,5 @@
+import type * as v from 'valibot';
+
 import type { ApiErrorBody } from 'api/types';
 
 export class ApiError extends Error {
@@ -26,6 +28,18 @@ export function toFieldErrors(body: ApiErrorBody): Record<string, string> {
 	const out: Record<string, string> = {};
 	for (const d of body.error.details ?? []) {
 		if (d.path && d.path !== '(root)') out[d.path] = d.message;
+	}
+	return out;
+}
+
+/** Maps Valibot `safeParse` issues to a `{ field: message }` record keyed by top-level path. */
+export function issuesToFieldErrors(
+	issues: readonly v.BaseIssue<unknown>[]
+): Record<string, string> {
+	const out: Record<string, string> = {};
+	for (const issue of issues) {
+		const key = issue.path?.[0]?.key as string | undefined;
+		if (key) out[key] = issue.message;
 	}
 	return out;
 }

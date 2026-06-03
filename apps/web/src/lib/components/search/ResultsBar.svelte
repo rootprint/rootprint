@@ -3,13 +3,11 @@
 	import ExportDialog from './ExportDialog.svelte';
 	import DisplaySettings from './DisplaySettings.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
-	import { composeQuery } from 'api/query';
 
 	let { store }: { store: SearchStore } = $props();
 
 	let exportOpen = $state(false);
 
-	const composedQuery = $derived(composeQuery(store.query, store.filters) || '*');
 	const durationMs = $derived(Math.round(store.elapsedTimeMicros / 1000));
 	const exportDisabled = $derived(
 		store.loading !== 'idle' ||
@@ -65,7 +63,7 @@
 
 <ExportDialog
 	indexId={store.selectedIndex}
-	{composedQuery}
+	composedQuery={store.composedQuery}
 	startTs={store.resolvedStartTs}
 	endTs={store.resolvedEndTs}
 	numHits={store.numHits}

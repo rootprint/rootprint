@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { copyToClipboard } from '$lib/utils/clipboard';
 
 	let {
 		text,
@@ -21,12 +22,11 @@
 	});
 
 	async function copy() {
-		try {
-			await navigator.clipboard.writeText(text);
+		if (await copyToClipboard(text)) {
 			copied = true;
 			clearTimeout(resetTimer);
 			resetTimer = setTimeout(() => (copied = false), 1500);
-		} catch {
+		} else {
 			copied = false;
 		}
 	}
