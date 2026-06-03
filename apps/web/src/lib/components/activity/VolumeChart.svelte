@@ -7,30 +7,25 @@
 	import { baseContentAt, cssVarColor } from '$lib/utils/log-helpers';
 	import { formatCount } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
-	import type { Window } from '$lib/api/activity';
+	import { windowToSpanMs, type Window } from '$lib/api/activity';
 
 	type Bucket = { t: string; count: number };
-	type Props = { buckets: Bucket[]; title?: string; window?: Window };
-	let { buckets, title = 'Volume over time', window = '7d' }: Props = $props();
+	type Props = { buckets: Bucket[]; window?: Window };
+	let { buckets, window = '7d' }: Props = $props();
 
-	const WINDOW_MS: Record<Window, number> = {
-		'24h': 24 * 60 * 60 * 1000,
-		'7d': 7 * 24 * 60 * 60 * 1000,
-		'30d': 30 * 24 * 60 * 60 * 1000
-	};
 	const BAR_BUCKET_MS: Record<Window, number> = {
 		'24h': 60 * 60 * 1000,
 		'7d': 24 * 60 * 60 * 1000,
 		'30d': 24 * 60 * 60 * 1000
 	};
 
-	const dataSpanMs = $derived(WINDOW_MS[window]);
+	const dataSpanMs = $derived(windowToSpanMs(window));
 
 	// columnar data for uPlot: [x in seconds, count]
 	const columnar = $derived.by<[number[], number[]] | null>(() => {
 		const bucketMs = BAR_BUCKET_MS[window];
 		const end = Date.now();
-		const start = end - WINDOW_MS[window];
+		const start = end - windowToSpanMs(window);
 		const firstBucket = Math.floor(start / bucketMs) * bucketMs;
 		const lastBucket = Math.floor(end / bucketMs) * bucketMs;
 		const counts = new Map<number, number>();
@@ -198,7 +193,7 @@
 
 <div class="border-line rounded-box border p-4">
 	<header class="pb-3">
-		<p class="eyebrow">{title}</p>
+		<p class="eyebrow">Volume over time</p>
 	</header>
 	{#if !hasData}
 		<div class="text-base-content/40 flex h-72 items-center justify-center text-xs">

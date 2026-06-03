@@ -64,11 +64,6 @@ export function resolveTimeRange(
 	return {};
 }
 
-export function timeRangeDurationMs(r: TimeRange): number {
-	if (r.type === 'relative') return presetDurationSec(r.preset) * 1000;
-	return (r.end - r.start) * 1000;
-}
-
 export function formatTimeRangeLabel(r: TimeRange): string {
 	if (r.type === 'relative') return PRESET_LABELS[r.preset];
 	const start = fromUnixTime(r.start);

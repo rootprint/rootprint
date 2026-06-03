@@ -3,6 +3,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { DEP } from '$lib/api/deps';
+	import { issuesToFieldErrors } from '$lib/api/errors';
 	import { authClient } from '$lib/auth-client';
 	import { safeReturnTo } from '$lib/return-to';
 	import { signInSchema } from 'api/schemas';
@@ -33,10 +34,7 @@
 		try {
 			const parsed = v.safeParse(signInSchema, { email, password });
 			if (!parsed.success) {
-				for (const issue of parsed.issues) {
-					const key = issue.path?.[0]?.key as string | undefined;
-					if (key) fieldErrors[key] = issue.message;
-				}
+				fieldErrors = issuesToFieldErrors(parsed.issues);
 				return;
 			}
 

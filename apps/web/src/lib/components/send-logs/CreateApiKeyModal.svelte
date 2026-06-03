@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { invalidate } from '$app/navigation';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import { createApiKey, ApiKeyApiError, type ApiKeyView } from '$lib/api/api-keys';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
@@ -47,10 +47,7 @@
 
 		const parsed = v.safeParse(createApiKeySchema, { name, indexId, role: 'ingest' });
 		if (!parsed.success) {
-			for (const issue of parsed.issues) {
-				const key = issue.path?.[0]?.key as string | undefined;
-				if (key) fieldErrors[key] = issue.message;
-			}
+			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
 		const input: CreateApiKeyInput = parsed.output;

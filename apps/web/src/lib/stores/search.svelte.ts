@@ -153,6 +153,11 @@ export class SearchStore {
 		return this.#parsedQuery().filters;
 	}
 
+	/** The active query string composed with filters. */
+	get composedQuery(): string {
+		return composeQuery(this.query, this.filters);
+	}
+
 	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
 		return this.#snapshotStartTs;
@@ -362,7 +367,7 @@ export class SearchStore {
 			const result = await searchLogs(
 				{
 					indexId: this.selectedIndex,
-					query: composeQuery(this.query, this.filters) || '*',
+					query: this.composedQuery,
 					startTimestamp: startTs,
 					endTimestamp: endTs,
 					sortDirection: this.sortDirection,
@@ -439,7 +444,7 @@ export class SearchStore {
 			const result = await fetchHistogram(
 				{
 					indexId: this.selectedIndex,
-					query: composeQuery(this.query, this.filters) || '*',
+					query: this.composedQuery,
 					...buildTimeParams(this.timeRange)
 				} satisfies HistogramInput,
 				controller.signal

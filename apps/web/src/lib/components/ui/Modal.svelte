@@ -1,7 +1,3 @@
-<script module lang="ts">
-	let modalIdCounter = 0;
-</script>
-
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
@@ -21,7 +17,8 @@
 		oncancel?: (e: Event) => void;
 	} = $props();
 
-	const titleId = `modal-title-${++modalIdCounter}`;
+	const uid = $props.id();
+	const titleId = `modal-title-${uid}`;
 
 	let dialog: HTMLDialogElement | undefined = $state();
 

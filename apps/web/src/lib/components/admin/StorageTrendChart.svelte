@@ -9,7 +9,8 @@
 	import { formatGiB } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
-	import RangePicker, { type Range } from './RangePicker.svelte';
+	import type { Window } from '$lib/api/activity';
+	import RangePicker from './RangePicker.svelte';
 
 	type IndexInfo = { indexId: string; displayName: string | null; sizeBytes: number | null };
 	type SeriesDef = { key: string; label: string; color: string };
@@ -17,8 +18,8 @@
 	type Props = {
 		indexes: IndexInfo[];
 		histories: Record<string, { capturedAt: string; sizeBytes: number }[]>;
-		range: Range;
-		onRangeChange: (next: Range) => void;
+		range: Window;
+		onRangeChange: (next: Window) => void;
 		loading: boolean;
 	};
 	let { indexes, histories, range, onRangeChange, loading }: Props = $props();

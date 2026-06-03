@@ -193,7 +193,7 @@ export class ContextLoader {
 			if (thisSeq !== this.#fetchSeq) return;
 			const fresh = this.#dedupe(result.rawHits);
 			// 'asc' returns oldest-first; reverse so newest-first, then prepend to the list.
-			this.entries = [...this.#toEntries(fresh.slice().reverse()), ...this.entries];
+			this.entries = [...this.#toEntries(fresh.toReversed()), ...this.entries];
 			this.#advanceAfter(result.rawHits.length);
 		} catch (e) {
 			if ((e as { name?: string })?.name === 'AbortError') return;
@@ -262,7 +262,7 @@ export class ContextLoader {
 
 			// Final order: newest first. 'asc' results reversed → newest; anchor in middle; 'desc' results → older.
 			const merged: ContextEntry[] = [
-				...this.#toEntries(afterFresh.slice().reverse()),
+				...this.#toEntries(afterFresh.toReversed()),
 				this.#toEntry(this.anchor.raw, true),
 				...this.#toEntries(beforeFresh)
 			];

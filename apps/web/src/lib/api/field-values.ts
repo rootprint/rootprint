@@ -5,8 +5,6 @@ import { composeQuery } from 'api/query';
 import { resolveTimeRange } from '$lib/utils/time-range';
 import { FIELD_VALUES_MAX } from 'api/constants';
 
-export { FIELD_VALUES_MAX as FIELD_VALUES_LIMIT };
-
 /** Initial count of values shown collapsed before the user expands the row. */
 export const FIELD_VALUES_INITIAL_SHOW = 10;
 
@@ -34,7 +32,7 @@ export async function fetchFieldValues(
 ): Promise<LogFieldValueBucket[]> {
 	const { indexId, field, query, filters, timeRange, limit = FIELD_VALUES_MAX, signal } = input;
 	const { startTs, endTs } = resolveTimeRange(buildTimeParams(timeRange));
-	const composed = composeQuery(query, filters) || '*';
+	const composed = composeQuery(query, filters);
 
 	const res = await client.api.indexes[':indexId'].fields[':field'].values.$get(
 		{

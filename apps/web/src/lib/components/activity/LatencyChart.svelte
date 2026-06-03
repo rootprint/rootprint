@@ -8,7 +8,7 @@
 	import { baseContentAt, cssVarColor } from '$lib/utils/log-helpers';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
-	import type { Window } from '$lib/api/activity';
+	import { windowToSpanMs, type Window } from '$lib/api/activity';
 
 	type Bucket = {
 		t: string;
@@ -20,12 +20,7 @@
 	type Props = { buckets: Bucket[]; window?: Window };
 	let { buckets, window = '7d' }: Props = $props();
 
-	const WINDOW_MS: Record<Window, number> = {
-		'24h': 24 * 60 * 60 * 1000,
-		'7d': 7 * 24 * 60 * 60 * 1000,
-		'30d': 30 * 24 * 60 * 60 * 1000
-	};
-	const dataSpanMs = $derived(WINDOW_MS[window]);
+	const dataSpanMs = $derived(windowToSpanMs(window));
 
 	const SERIES = [
 		{ key: 'p50', label: 'p50', cssVar: 'var(--chart-3)' },
@@ -57,7 +52,7 @@
 	// force the full-window x-range; otherwise the chart auto-zooms onto the only hour with activity
 	const xRange = $derived.by<[number, number]>(() => {
 		const end = Math.floor(Date.now() / 1000);
-		return [end - Math.floor(WINDOW_MS[window] / 1000), end];
+		return [end - Math.floor(windowToSpanMs(window) / 1000), end];
 	});
 
 	let visible = $state<boolean[]>([true, true, true]);

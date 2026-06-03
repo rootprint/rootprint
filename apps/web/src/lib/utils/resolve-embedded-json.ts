@@ -1,8 +1,6 @@
-const MAX_DEPTH = 8;
+import { isPlainObject } from './object';
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+const MAX_DEPTH = 8;
 
 /**
  * Recursively rewrites `value`, replacing any string whose trimmed content is a

@@ -7,8 +7,7 @@
 	import type { FieldConfig, LogHit, SortDirection, TimezoneMode } from '$lib/types';
 	import type { DisplayMode } from 'api/types';
 
-	const TABLE_ROW_ESTIMATE = 25;
-	const INLINE_ROW_ESTIMATE = 25;
+	const ROW_ESTIMATE = 25;
 	const OVERSCAN = 8;
 
 	let {
@@ -43,7 +42,7 @@
 	const virtualizer = createVirtualizer<HTMLElement, HTMLElement>({
 		count: logs.length,
 		getScrollElement: () => viewport,
-		estimateSize: () => TABLE_ROW_ESTIMATE,
+		estimateSize: () => ROW_ESTIMATE,
 		overscan: OVERSCAN,
 		scrollMargin: 0
 	});
@@ -60,13 +59,12 @@
 		const count = logs.length;
 		const margin = scrollMargin;
 		const el = viewport;
-		const estimate = displayMode === 'inline' ? INLINE_ROW_ESTIMATE : TABLE_ROW_ESTIMATE;
 		const v = get(virtualizer);
 		v.setOptions({
 			count,
 			scrollMargin: margin,
 			getScrollElement: () => el,
-			estimateSize: () => estimate
+			estimateSize: () => ROW_ESTIMATE
 		});
 	});
 </script>

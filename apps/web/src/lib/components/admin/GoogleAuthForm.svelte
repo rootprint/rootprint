@@ -11,7 +11,7 @@
 		saveGoogleAllowedDomains,
 		AuthConfigApiError
 	} from '$lib/api/auth-config';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import DisplayField from '$lib/components/ui/DisplayField.svelte';
 	import type { GoogleAuthSettingsView } from '$lib/api/auth-config';
@@ -115,9 +115,7 @@
 
 		const domainsParsed = v.safeParse(googleAllowedDomainsSchema, { allowedDomains });
 		if (!domainsParsed.success) {
-			for (const issue of domainsParsed.issues) {
-				fieldErrors.allowedDomains = issue.message;
-			}
+			fieldErrors = issuesToFieldErrors(domainsParsed.issues);
 			return;
 		}
 
@@ -129,32 +127,29 @@
 					clientSecret: secret
 				});
 				if (!credParsed.success) {
-					for (const issue of credParsed.issues) {
-						const key = issue.path?.[0]?.key as string | undefined;
-						if (key) fieldErrors[key] = issue.message;
-					}
+					fieldErrors = issuesToFieldErrors(credParsed.issues);
 					return;
 				}
 				try {
 					await saveGoogleCredentials(credParsed.output);
-				} catch (e) {
-					if (e instanceof AuthConfigApiError && e.body) {
-						fieldErrors = { ...fieldErrors, ...toFieldErrors(e.body) };
-						toast.error(e.message);
+				} catch (err) {
+					if (err instanceof AuthConfigApiError && err.body) {
+						fieldErrors = { ...fieldErrors, ...toFieldErrors(err.body) };
+						toast.error(err.message);
 					} else {
-						toast.error(e instanceof Error ? e.message : 'Failed to save credentials');
+						toast.error(err instanceof Error ? err.message : 'Failed to save credentials');
 					}
 					return;
 				}
 			}
 			try {
 				await saveGoogleAllowedDomains(domainsParsed.output);
-			} catch (e) {
-				if (e instanceof AuthConfigApiError && e.body) {
-					fieldErrors = { ...fieldErrors, ...toFieldErrors(e.body) };
-					toast.error(e.message);
+			} catch (err) {
+				if (err instanceof AuthConfigApiError && err.body) {
+					fieldErrors = { ...fieldErrors, ...toFieldErrors(err.body) };
+					toast.error(err.message);
 				} else {
-					toast.error(e instanceof Error ? e.message : 'Failed to save allowed domains');
+					toast.error(err instanceof Error ? err.message : 'Failed to save allowed domains');
 				}
 				return;
 			}

@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-
 	import KpiStrip from '$lib/components/activity/KpiStrip.svelte';
 	import LatencyChart from '$lib/components/activity/LatencyChart.svelte';
 	import TimeRangeTabs from '$lib/components/activity/TimeRangeTabs.svelte';
@@ -11,21 +8,15 @@
 	import type { Window } from '$lib/api/activity';
 	import { formatDurationMs } from '$lib/utils/format';
 	import { formatActivityTimestamp } from '$lib/utils/time';
+	import { setSearchParam } from '$lib/utils/search-params';
 
 	let { data } = $props();
-
-	function setParam(key: string, val: string) {
-		const url = new URL(page.url);
-		url.searchParams.set(key, val);
-		if (key !== 'offset') url.searchParams.set('offset', '0');
-		goto(url, { replaceState: false, keepFocus: true, noScroll: true });
-	}
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
 	<PageHeader>
 		{#snippet actions()}
-			<TimeRangeTabs value={data.window} onChange={(w: Window) => setParam('window', w)} />
+			<TimeRangeTabs value={data.window} onChange={(w: Window) => setSearchParam('window', w)} />
 		{/snippet}
 		{#await data.summary}
 			<h1 class="text-h1 text-base-content/40 mt-3">Loading…</h1>
@@ -105,14 +96,14 @@
 						<button
 							class="btn btn-xs"
 							disabled={data.offset === 0}
-							onclick={() => setParam('offset', String(Math.max(0, data.offset - 50)))}
+							onclick={() => setSearchParam('offset', String(Math.max(0, data.offset - 50)))}
 						>
 							Prev
 						</button>
 						<button
 							class="btn btn-xs"
 							disabled={data.offset + rec.rows.length >= rec.total}
-							onclick={() => setParam('offset', String(data.offset + 50))}
+							onclick={() => setSearchParam('offset', String(data.offset + 50))}
 						>
 							Next
 						</button>

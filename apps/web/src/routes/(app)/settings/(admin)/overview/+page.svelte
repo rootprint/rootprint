@@ -1,27 +1,19 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 
-	import {
-		getClusterOverview,
-		getAdminMetrics,
-		getAdminMetricsRaw,
-		type ClusterOverview,
-		type AdminMetrics
-	} from '$lib/api/admin';
+	import { getClusterOverview, getAdminMetricsRaw, type ClusterOverview } from '$lib/api/admin';
+	import { windowToSpanMs, type Window } from '$lib/api/activity';
 	import { getIndexStats } from '$lib/api/indexes';
 	import ClusterIdentityStrip from '$lib/components/admin/ClusterIdentityStrip.svelte';
 	import HeadlineNumbers from '$lib/components/admin/HeadlineNumbers.svelte';
-	import { rangeToSpanMs, type Range } from '$lib/components/admin/RangePicker.svelte';
 	import StorageTrendChart from '$lib/components/admin/StorageTrendChart.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { MetricsPoller } from './MetricsPoller.svelte';
 
-	type MetricsResponse = AdminMetrics;
 	type StatsPoint = Awaited<ReturnType<typeof getIndexStats>>['points'][number];
 
-	const METRICS_POLL_MS = 5000;
-	const MAX_METRICS_FAILURES = 3;
-
-	let range = $state<Range>('7d');
+	let range = $state<Window>('7d');
 
 	let cluster = $state<ClusterOverview | null>(null);
 	let clusterError = $state<string | null>(null);
@@ -30,12 +22,8 @@
 	let loadingHistories = $state(false);
 	let historiesToken = 0;
 
-	let metrics = $state<MetricsResponse | null>(null);
-	let metricsFailures = $state(0);
-	let lastMetricsAt = $state<number | null>(null);
-	let now = $state(Date.now());
+	const poller = new MetricsPoller();
 
-	let metricsTimer: ReturnType<typeof setTimeout> | null = null;
 	let rawFilter = $state('');
 	let rawText = $state<string | null>(null);
 	let rawLoading = $state(false);
@@ -55,7 +43,7 @@
 		const token = ++historiesToken;
 		loadingHistories = true;
 		const newErrors: Record<string, string> = {};
-		const span = rangeToSpanMs(range);
+		const span = windowToSpanMs(range);
 		const to = Date.now();
 		const from = to - span;
 		const next: Record<string, StatsPoint[]> = {};
@@ -81,78 +69,24 @@
 		await loadHistories();
 	}
 
-	function onRangeChange(next: Range): void {
+	function onRangeChange(next: Window): void {
 		range = next;
 		void loadHistories();
 	}
 
-	async function pollMetrics(): Promise<void> {
-		try {
-			metrics = await getAdminMetrics();
-			lastMetricsAt = Date.now();
-			metricsFailures = 0;
-		} catch {
-			metricsFailures += 1;
-		}
-	}
-
-	function scheduleMetrics(): void {
-		stopMetrics();
-		metricsTimer = setTimeout(async () => {
-			await pollMetrics();
-			now = Date.now();
-			scheduleMetrics();
-		}, METRICS_POLL_MS);
-	}
-
-	function stopMetrics(): void {
-		if (metricsTimer !== null) {
-			clearTimeout(metricsTimer);
-			metricsTimer = null;
-		}
-	}
-
-	function onVisibility(): void {
-		if (document.visibilityState === 'hidden') {
-			stopMetrics();
-		} else {
-			void pollMetrics();
-			scheduleMetrics();
-		}
-	}
-
 	onMount(() => {
 		void refresh();
-		void pollMetrics();
-		scheduleMetrics();
-		document.addEventListener('visibilitychange', onVisibility);
+		poller.start();
 	});
 
 	onDestroy(() => {
-		stopMetrics();
-		document.removeEventListener('visibilitychange', onVisibility);
+		poller.stop();
 	});
 
 	const healthState = $derived.by<'healthy' | 'unhealthy' | 'unreachable' | 'loading'>(() => {
 		if (clusterError !== null) return 'unreachable';
 		if (cluster === null) return 'loading';
 		return cluster.health.healthy ? 'healthy' : 'unhealthy';
-	});
-
-	const liveSummary = $derived.by(() => {
-		if (!metrics) return null;
-		return {
-			cpuBusyRatio: metrics.saturation.cpuBusyRatio,
-			memoryRssBytes: metrics.resources.memoryRssBytes,
-			fdsOpen: metrics.resources.fdsOpen,
-			fdsMax: metrics.resources.fdsMax,
-			walDiskBytes: metrics.resources.walDiskBytes
-		};
-	});
-
-	const staleSeconds = $derived.by(() => {
-		if (lastMetricsAt === null) return null;
-		return Math.max(0, Math.floor((now - lastMetricsAt) / 1000));
 	});
 
 	function filteredRaw(text: string, query: string): string {
@@ -165,11 +99,7 @@
 	}
 
 	async function copyRaw(text: string): Promise<void> {
-		try {
-			await navigator.clipboard.writeText(text);
-		} catch {
-			// ignore
-		}
+		await copyToClipboard(text);
 	}
 
 	async function loadRaw(): Promise<void> {
@@ -203,20 +133,20 @@
 		<ClusterIdentityStrip
 			state={healthState}
 			endpoint={cluster?.health.endpoint ?? null}
-			version={metrics?.build.version ?? null}
-			uptimeSeconds={metrics?.uptimeSeconds ?? null}
+			version={poller.metrics?.build.version ?? null}
+			uptimeSeconds={poller.metrics?.uptimeSeconds ?? null}
 		/>
 
-		<HeadlineNumbers totals={cluster?.totals ?? null} live={liveSummary} />
+		<HeadlineNumbers totals={cluster?.totals ?? null} live={poller.liveSummary} />
 
-		{#if metricsFailures >= MAX_METRICS_FAILURES}
+		{#if poller.unavailable}
 			<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-2 text-xs">
-				Quickwit metrics unavailable ({metricsFailures} consecutive failures).
-				<button class="ml-2 underline" onclick={pollMetrics}>Retry now</button>
+				Quickwit metrics unavailable ({poller.failures} consecutive failures).
+				<button class="ml-2 underline" onclick={() => poller.poll()}>Retry now</button>
 			</div>
-		{:else if staleSeconds !== null && staleSeconds > METRICS_POLL_MS / 1000 + 2}
+		{:else if poller.stale}
 			<div class="text-base-content/60 text-xs">
-				Live metrics stale — last update {staleSeconds}s ago.
+				Live metrics stale — last update {poller.staleSeconds}s ago.
 			</div>
 		{/if}
 

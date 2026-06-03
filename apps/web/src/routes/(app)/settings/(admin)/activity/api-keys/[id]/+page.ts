@@ -12,7 +12,10 @@ import { DEP } from '$lib/api/deps';
 export const load: PageLoad = async ({ url, params, depends }) => {
 	depends(DEP.activityApiKey);
 	const window = parseWindow(url.searchParams.get('window'));
-	const offset = Number(url.searchParams.get('offset') ?? '0');
+	// Guard against a malformed ?offset= (hand-edited or stale link): a NaN offset
+	// would 400 the recent request and break the pager math.
+	const offsetParam = Number(url.searchParams.get('offset'));
+	const offset = Number.isInteger(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
 	const apiKeyId = Number(params.id);
 	return {
 		window,

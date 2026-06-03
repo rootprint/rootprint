@@ -9,7 +9,6 @@
 		message,
 		confirmLabel,
 		confirmingLabel,
-		destructive = true,
 		loading = $bindable(false),
 		onConfirm
 	}: {
@@ -18,7 +17,6 @@
 		message: Snippet;
 		confirmLabel: string;
 		confirmingLabel: string;
-		destructive?: boolean;
 		loading?: boolean;
 		onConfirm: () => void | Promise<void>;
 	} = $props();
@@ -39,12 +37,7 @@
 		<button type="button" class="btn btn-ghost" disabled={loading} onclick={() => (open = false)}>
 			Cancel
 		</button>
-		<button
-			type="button"
-			class="btn {destructive ? 'btn-error' : 'btn-primary'}"
-			disabled={loading}
-			onclick={onConfirm}
-		>
+		<button type="button" class="btn btn-error" disabled={loading} onclick={onConfirm}>
 			{loading ? confirmingLabel : confirmLabel}
 		</button>
 	{/snippet}

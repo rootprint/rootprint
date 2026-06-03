@@ -6,7 +6,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import { saveIndexConfig, IndexApiError } from '$lib/api/indexes';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
 	import type { IndexDetail, IndexVisibility } from 'api/types';
@@ -75,10 +75,7 @@
 
 		const parsed = v.safeParse(saveIndexConfigSchema, payload);
 		if (!parsed.success) {
-			for (const issue of parsed.issues) {
-				const key = issue.path?.[0]?.key as string | undefined;
-				if (key) fieldErrors[key] = issue.message;
-			}
+			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
 
@@ -87,12 +84,12 @@
 			await saveIndexConfig(detail.indexId, parsed.output);
 			toast.success('Index configuration saved');
 			await invalidate(DEP.index(detail.indexId));
-		} catch (e) {
-			if (e instanceof IndexApiError && e.body) {
-				fieldErrors = toFieldErrors(e.body);
-				toast.error(e.message);
+		} catch (err) {
+			if (err instanceof IndexApiError && err.body) {
+				fieldErrors = toFieldErrors(err.body);
+				toast.error(err.message);
 			} else {
-				toast.error(e instanceof Error ? e.message : 'Failed to save config');
+				toast.error(err instanceof Error ? err.message : 'Failed to save config');
 			}
 		} finally {
 			saving = false;
