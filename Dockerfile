@@ -27,6 +27,11 @@ COPY --from=builder --chown=bun:bun /app/apps/api/dist    ./apps/api/dist
 COPY --from=builder --chown=bun:bun /app/apps/api/drizzle ./apps/api/drizzle
 COPY --from=builder --chown=bun:bun /app/apps/web/build   ./apps/web/build
 
+# The bundled dist/app.js reads the workspace-root package.json for its version.
+# In the bundle the relative lookup resolves to the filesystem root, so the file
+# must live at /package.json (not /app/package.json).
+COPY --from=builder --chown=bun:bun /app/package.json     /package.json
+
 ENV NODE_ENV=production
 ENV PORT=8282
 EXPOSE 8282
