@@ -2,6 +2,30 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-06-02
+
+### Added
+
+- **Profile settings page.** A new **Account → Profile** section lets every user view their identity (name, email, ID) and change the password they sign in with, via a dedicated change-password modal. The password controls are hidden for users who only sign in through Google.
+- **Admin user profile page.** Administrators can open an individual user from **Security → Users** to see their full profile details on a dedicated page.
+- **Role filter tabs on the API keys page.** The API keys list can now be filtered by role with a tab strip.
+- **OpenAPI documentation for the API.** The Hono API now generates an `openapi.json` spec at build time (`bun run openapi:generate`) using `hono-openapi` and `@valibot/to-json-schema`. Route descriptions, standardized response schemas, and consistent error shapes were added across the API, and the Better Auth routes are folded into the same spec.
+
+### Changed
+
+- **Export dialog and log-row polish.** The export dialog styling was refined, and log rows now tint their hover state with the entry's level color.
+- **Admin role badges** restyled to a neutral appearance.
+- **Profile settings layout widened** for more comfortable reading.
+- **Activity view reworked.** The admin activity screen was rebuilt around a new `ActivityPanel`, replacing the previous `ActivityTable`.
+
+### Removed
+
+- **Slowest-query activity views.** The "slowest queries" panels and their backing `search-activity` service were removed, along with the standalone per-user activity detail page (user details now live on the admin user profile page).
+
+### Fixed
+
+- **Container crashed on startup** (`ENOENT: open '/package.json'`). The OpenAPI spec reads the workspace-root `package.json` for its version, but that file was not present in the runtime image. The Docker image now ships it so the API boots. _(Re-released; the initial 0.3.2 image was affected.)_
+
 ## [0.3.1] - 2026-06-02
 
 ### Added
