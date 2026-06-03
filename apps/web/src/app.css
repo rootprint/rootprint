@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
 @import 'overlayscrollbars/overlayscrollbars.css';
 
 @font-face {
@@ -193,8 +192,8 @@
 	}
 }
 
-@custom-variant dark (&:is(.dark *));
-
+/* Chart colour ramp — referenced directly via var(--chart-N) by the uPlot charts.
+   Semantic ordering: brand → accent → status (success/warning/error). */
 :root {
 	--chart-1: var(--color-primary);
 	--chart-2: var(--color-accent);
@@ -209,18 +208,6 @@
 }
 
 @theme inline {
-	--color-chart-1: var(--chart-1);
-	--color-chart-2: var(--chart-2);
-	--color-chart-3: var(--chart-3);
-	--color-chart-4: var(--chart-4);
-	--color-chart-5: var(--chart-5);
-
-	--color-background: var(--color-base-100);
-	--color-foreground: var(--color-base-content);
-	--color-muted: var(--color-base-200);
-	--color-muted-foreground: color-mix(in oklab, var(--color-base-content) 60%, transparent);
-	--color-border: var(--color-base-300);
-
 	/* Canonical hairline: 1px line at 10% base-content. Generates border-line,
 	   border-b-line, divide-line, etc. — the single source for all hairlines. */
 	--color-line: color-mix(in oklab, var(--color-base-content) 10%, transparent);

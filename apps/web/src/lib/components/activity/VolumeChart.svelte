@@ -217,7 +217,7 @@
 			<div bind:this={chartEl}></div>
 			{#if tooltipVisible && tooltipIdx != null && columnar}
 				<div
-					class="border-border/50 bg-background pointer-events-none absolute z-20 grid min-w-[9rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
+					class="border-base-300/50 bg-base-100 pointer-events-none absolute z-20 grid min-w-[9rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
 					style="left: {tooltipLeft}px; top: {tooltipTop}px;"
 				>
 					<div class="font-medium">{formatTooltipDate(columnar[0][tooltipIdx] * 1000)}</div>
@@ -227,8 +227,8 @@
 							style="background-color: {barColor};"
 						></div>
 						<div class="flex flex-1 items-center justify-between gap-4">
-							<span class="text-muted-foreground">Searches</span>
-							<span class="text-foreground font-mono font-medium tabular-nums">
+							<span class="text-base-content/60">Searches</span>
+							<span class="text-base-content font-mono font-medium tabular-nums">
 								{columnar[1][tooltipIdx].toLocaleString()}
 							</span>
 						</div>

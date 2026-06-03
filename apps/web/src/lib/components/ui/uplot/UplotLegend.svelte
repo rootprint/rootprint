@@ -14,7 +14,7 @@
 			onclick={() => onToggle(i)}
 		>
 			<span class="size-2.5 shrink-0 rounded-[2px]" style="background-color: {item.color};"></span>
-			<span class="text-muted-foreground">{item.label}</span>
+			<span class="text-base-content/60">{item.label}</span>
 		</button>
 	{/each}
 </div>

@@ -285,10 +285,10 @@
 				<div bind:this={chartEl}></div>
 				{#if tooltipVisible && tooltipIdx != null && columnar}
 					<div
-						class="border-border/50 bg-background pointer-events-none absolute z-20 grid min-w-[14rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
+						class="border-base-300/50 bg-base-100 pointer-events-none absolute z-20 grid min-w-[14rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
 						style="left: {tooltipLeft}px; top: {tooltipTop}px;"
 					>
-						<div class="text-foreground border-border/50 mb-1.5 border-b pb-1.5 font-medium">
+						<div class="text-base-content border-base-300/50 mb-1.5 border-b pb-1.5 font-medium">
 							{formatTooltipDate(columnar[0][tooltipIdx] * 1000)}
 						</div>
 						<div class="grid gap-1.5">
@@ -299,19 +299,19 @@
 										style="background-color: {row.color};"
 									></div>
 									<div class="flex flex-1 items-center justify-between gap-4">
-										<span class="text-muted-foreground truncate">{row.label}</span>
-										<span class="text-foreground font-mono font-medium tabular-nums">
+										<span class="text-base-content/60 truncate">{row.label}</span>
+										<span class="text-base-content font-mono font-medium tabular-nums">
 											{formatGiB(row.value, 2)}
 										</span>
 									</div>
 								</div>
 							{/each}
-							<div class="border-border/50 my-0.5 border-t"></div>
+							<div class="border-base-300/50 my-0.5 border-t"></div>
 							<div class="flex w-full items-center gap-2 leading-none">
 								<div class="h-2.5 w-2.5 shrink-0"></div>
 								<div class="flex flex-1 items-center justify-between gap-4">
-									<span class="text-foreground font-medium">Total</span>
-									<span class="text-foreground font-mono font-medium tabular-nums">
+									<span class="text-base-content font-medium">Total</span>
+									<span class="text-base-content font-mono font-medium tabular-nums">
 										{formatGiB(tooltipTotal, 2)}
 									</span>
 								</div>
