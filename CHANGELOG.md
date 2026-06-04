@@ -2,6 +2,21 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-06-04
+
+### Added
+
+- **Compressed NDJSON ingest.** The NDJSON ingest route now forwards the incoming `content-encoding` header to Quickwit, so gzip-compressed NDJSON bodies are ingested correctly instead of being mis-parsed.
+
+### Changed
+
+- **Node.js log-shipping examples modernized.** The Node.js OpenTelemetry and Winston "send logs" snippets now attach a detected resource (picking up `service.name` and `OTEL_RESOURCE_ATTRIBUTES` from the environment via `@opentelemetry/resources`), use the current `LoggerProvider({ resource, processors })` constructor form, and shut the provider down cleanly on exit.
+- **Internal (web):** query and UI helpers consolidated (#24). Admin-overview metrics polling was extracted into a dedicated `MetricsPoller` class; a shared `windowToSpanMs` helper replaces the duplicated window-to-milliseconds maps; admin API calls now surface server error messages through `readApiError`; and shared `isPlainObject` / `setSearchParam` / `copyWithToast` helpers were introduced. `composeQuery` now returns `*` (match-all) for empty input directly, so callers no longer carry a `|| '*'` fallback. Dead helpers (`formatLatencyMs`, `formatRatePerSecond`, `timeRangeDurationMs`, and the `cn` class-merge util) were removed.
+
+### Removed
+
+- **Unused shadcn-svelte scaffolding (web).** Removed `components.json`, the `clsx`, `tailwind-merge`, `tailwind-variants`, and `tw-animate-css` dependencies, and their leftover CSS (the `tw-animate-css` import plus the `@custom-variant dark` and unused `@theme inline` color aliases).
+
 ## [0.3.2] - 2026-06-02
 
 ### Added

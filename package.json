@@ -1,6 +1,6 @@
 {
 	"name": "rootprint",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
 	"type": "module",
 	"private": true,
