@@ -44,6 +44,8 @@ export const ndjsonRouter = new Hono<AppEnv>().post(
 		const headers: Record<string, string> = { 'content-type': contentType };
 		const contentLength = c.req.header('content-length');
 		if (contentLength) headers['content-length'] = contentLength;
+		const contentEncoding = c.req.header('content-encoding');
+		if (contentEncoding) headers['content-encoding'] = contentEncoding;
 
 		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
