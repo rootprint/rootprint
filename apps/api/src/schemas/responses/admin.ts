@@ -92,7 +92,11 @@ export const RecentResultResponse = named(
 
 export const QuickwitBuildInfoResponse = named(
 	'QuickwitBuildInfoResponse',
-	v.object({ version: v.nullable(v.string()) })
+	v.object({
+		version: v.nullable(v.string()),
+		commitHash: v.nullable(v.string()),
+		buildDate: v.nullable(v.string())
+	})
 );
 
 export const ResourceSnapshotResponse = named(

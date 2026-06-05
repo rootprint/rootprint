@@ -28,7 +28,11 @@ function gaugeValue(m: PromMetric | null): number | null {
 
 function buildInfo(metrics: PromMetric[]): QuickwitBuildInfo {
 	const labels = findMetric(metrics, 'quickwit_build_info')?.samples[0]?.labels ?? {};
-	return { version: labels.version ?? null };
+	return {
+		version: labels.version ?? null,
+		commitHash: labels.commit_hash ?? null,
+		buildDate: labels.build_date ?? null
+	};
 }
 
 function resources(metrics: PromMetric[]): ResourceSnapshot {

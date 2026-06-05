@@ -7,6 +7,7 @@ export type IndexTabId = 'config' | 'fields' | 'sources';
 
 export type TimezoneMode = 'utc' | 'local';
 export type SortDirection = 'asc' | 'desc';
+export type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
 export interface LevelBucket {
 	name: string;
