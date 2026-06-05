@@ -9,6 +9,7 @@
 	import StorageTrendChart from '$lib/components/admin/StorageTrendChart.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { copyToClipboard } from '$lib/utils/clipboard';
+	import type { ConnectionState } from '$lib/types';
 	import { MetricsPoller } from './MetricsPoller.svelte';
 
 	type StatsPoint = Awaited<ReturnType<typeof getIndexStats>>['points'][number];
@@ -83,10 +84,14 @@
 		poller.stop();
 	});
 
-	const healthState = $derived.by<'healthy' | 'unhealthy' | 'unreachable' | 'loading'>(() => {
-		if (clusterError !== null) return 'unreachable';
-		if (cluster === null) return 'loading';
-		return cluster.health.healthy ? 'healthy' : 'unhealthy';
+	const connectionState = $derived.by<ConnectionState>(() => {
+		// Disconnected wins: explicit cluster-fetch error, or the poller has hit its
+		// consecutive-failure threshold. A single transient poll miss stays "connected" —
+		// the separate stale banner covers that in-between.
+		if (clusterError !== null || poller.unavailable) return 'disconnected';
+		// Before the first cluster response lands, or during a retry, endpoint/version are unknown.
+		if (cluster === null) return 'connecting';
+		return 'connected';
 	});
 
 	function filteredRaw(text: string, query: string): string {
@@ -131,9 +136,11 @@
 
 	<div class="mt-8 flex flex-col gap-4">
 		<ClusterIdentityStrip
-			state={healthState}
+			state={connectionState}
 			endpoint={cluster?.health.endpoint ?? null}
 			version={poller.metrics?.build.version ?? null}
+			commitHash={poller.metrics?.build.commitHash ?? null}
+			buildDate={poller.metrics?.build.buildDate ?? null}
 			uptimeSeconds={poller.metrics?.uptimeSeconds ?? null}
 		/>
 
