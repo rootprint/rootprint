@@ -2,6 +2,18 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-06-06
+
+### Added
+
+- **GitHub OAuth sign-in.** GitHub joins Google as a configurable authentication provider, managed from **Security → Authentication**. Admins enter a GitHub OAuth app's client ID and secret and can restrict sign-in to members of one or more allowed GitHub organizations (org membership is checked against the GitHub API at login). A dedicated provider page handles setup, and a confirmation modal handles removal.
+- **Quickwit ingest source management.** Indexes can now have their ingest sources created and edited from the admin UI (**Settings → Indexes → _index_ → Sources**). Both **Kinesis** and **file** (SQS/S3-notification) source types are supported, with per-source controls for input format (JSON, plain text, and the OTLP logs/traces JSON and protobuf variants), pipeline count, and an optional VRL transform script. A source summary view surfaces the current configuration at a glance.
+- **Build information in API responses.** Quickwit build/version details are now included in the relevant admin API responses and shown on the admin overview's cluster identity strip.
+
+### Changed
+
+- **Cluster connection-state handling reworked.** The `ClusterIdentityStrip` and admin overview were updated to handle and present the Quickwit connection state more clearly.
+
 ## [0.3.3] - 2026-06-04
 
 ### Added
