@@ -10,6 +10,7 @@ type QuickwitSource = {
 	inputFormat: string | null;
 	numPipelines: number | null;
 	params: unknown | null;
+	vrlScript: string | null;
 };
 
 type QuickwitIndexMetadata = {
@@ -57,7 +58,8 @@ function normalize(meta: IndexMetadata): QuickwitIndexMetadata {
 		enabled: s.enabled ?? true,
 		inputFormat: s.input_format ?? null,
 		numPipelines: s.num_pipelines ?? null,
-		params: s.params ?? null
+		params: s.params ?? null,
+		vrlScript: s.transform?.script ?? null
 	}));
 
 	return {

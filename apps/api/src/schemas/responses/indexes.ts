@@ -21,6 +21,24 @@ export const IndexSourceSchema = named(
 	})
 );
 
+export const SourceDetailSchema = named(
+	'SourceDetailSchema',
+	v.object({
+		sourceId: v.string(),
+		sourceType: v.string(),
+		enabled: v.boolean(),
+		inputFormat: v.nullable(v.string()),
+		numPipelines: v.nullable(v.number()),
+		streamName: v.nullable(v.string()),
+		region: v.nullable(v.string()),
+		endpoint: v.nullable(v.string()),
+		queueUrl: v.nullable(v.string()),
+		messageType: v.nullable(v.string()),
+		vrlScript: v.nullable(v.string()),
+		hasUnsupportedConfig: v.boolean()
+	})
+);
+
 export const PreferencesResponse = named(
 	'PreferencesResponse',
 	v.object({

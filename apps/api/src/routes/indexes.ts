@@ -14,6 +14,7 @@ import { requireManageableIndex } from '../middleware/require-manageable-index.j
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
 import { FIELD_VALUES_MAX } from '../constants.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
+import { createSourceSchema, updateSourceSchema } from '../schemas/sources.js';
 import {
 	FieldValuesBulkResponse,
 	FieldValuesResponse,
@@ -21,21 +22,27 @@ import {
 	IndexDetailResponse,
 	IndexFieldsResponse,
 	IndexListResponse,
+	IndexSourceSchema,
 	IndexStatsResponse,
 	IndexViewConfigResponse,
 	LogSearchResponse,
-	PreferencesResponse
+	PreferencesResponse,
+	SourceDetailSchema
 } from '../schemas/responses/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {
+	createSource,
 	deleteIndex,
 	deleteSource,
 	getIndexDetail,
 	getIndexFields,
 	getIndexViewConfig,
+	getSource,
 	listIndexes,
+	resetSourceCheckpoint,
 	saveIndexConfig,
-	setSourceEnabled
+	setSourceEnabled,
+	updateSource
 } from '../services/index.service.js';
 import { getStatsHistory } from '../services/index-stats.service.js';
 import {
@@ -258,6 +265,79 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			await deleteIndex(db, quickwit, indexId);
+			return c.body(null, 204);
+		}
+	)
+	.post(
+		'/:indexId/sources',
+		describe({
+			tag: 'Index management',
+			summary: 'Create index source',
+			ok: IndexSourceSchema,
+			okStatus: 201,
+			errors: [400, 409]
+		}),
+		requireAdmin,
+		requireManageableIndex,
+		validator('param', IndexIdParams),
+		validator('json', createSourceSchema),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			const input = c.req.valid('json');
+			const created = await createSource(quickwit, indexId, input);
+			return c.json(created, 201);
+		}
+	)
+	.get(
+		'/:indexId/sources/:sourceId',
+		describe({
+			tag: 'Index management',
+			summary: 'Get index source',
+			ok: SourceDetailSchema,
+			errors: [404]
+		}),
+		requireAdmin,
+		requireManageableIndex,
+		validator('param', SourceParams),
+		async (c) => {
+			const { indexId, sourceId } = c.req.valid('param');
+			const source = await getSource(quickwit, indexId, sourceId);
+			return c.json(source);
+		}
+	)
+	.put(
+		'/:indexId/sources/:sourceId',
+		describe({
+			tag: 'Index management',
+			summary: 'Update index source',
+			ok: SourceDetailSchema,
+			errors: [400, 404]
+		}),
+		requireAdmin,
+		requireManageableIndex,
+		validator('param', SourceParams),
+		validator('json', updateSourceSchema),
+		async (c) => {
+			const { indexId, sourceId } = c.req.valid('param');
+			const input = c.req.valid('json');
+			const updated = await updateSource(quickwit, indexId, sourceId, input);
+			return c.json(updated);
+		}
+	)
+	.post(
+		'/:indexId/sources/:sourceId/reset-checkpoint',
+		describe({
+			tag: 'Index management',
+			summary: 'Reset source checkpoint',
+			okStatus: 204,
+			errors: [404]
+		}),
+		requireAdmin,
+		requireManageableIndex,
+		validator('param', SourceParams),
+		async (c) => {
+			const { indexId, sourceId } = c.req.valid('param');
+			await resetSourceCheckpoint(quickwit, indexId, sourceId);
 			return c.body(null, 204);
 		}
 	)

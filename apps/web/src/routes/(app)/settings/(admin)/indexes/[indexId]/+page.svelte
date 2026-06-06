@@ -1,15 +1,14 @@
 <script lang="ts">
-	import { Search, Trash2 } from 'lucide-svelte';
+	import { ChevronRight, Plus, Search, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
-	import { goto, invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { setSourceEnabled, deleteSource, deleteIndex } from '$lib/api/indexes';
+	import { deleteIndex } from '$lib/api/indexes';
 	import IndexConfigForm from '$lib/components/admin/IndexConfigForm.svelte';
 	import IndexTabs from '$lib/components/admin/IndexTabs.svelte';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
+	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import TypeToConfirmModal from '$lib/components/ui/TypeToConfirmModal.svelte';
 	import { pluralize } from '$lib/utils/format';
@@ -39,47 +38,6 @@
 		return detail.sources.filter((s) => s.sourceId.toLowerCase().includes(q));
 	});
 	const sourcesCountLabel = $derived(pluralize(filteredSources.length, 'source'));
-
-	let togglingSourceId = $state<string | null>(null);
-
-	async function toggleSource(sourceId: string, next: boolean) {
-		togglingSourceId = sourceId;
-		try {
-			await setSourceEnabled(detail.indexId, sourceId, next);
-			toast.success(next ? `Source ${sourceId} enabled` : `Source ${sourceId} disabled`);
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Failed to update source');
-		} finally {
-			await invalidate(DEP.index(detail.indexId));
-			togglingSourceId = null;
-		}
-	}
-
-	let deleteSourceOpen = $state(false);
-	let deleteSourceTarget = $state<string | null>(null);
-	let deletingSource = $state(false);
-
-	function openSourceDelete(sourceId: string) {
-		deleteSourceTarget = sourceId;
-		deleteSourceOpen = true;
-	}
-
-	async function confirmSourceDelete() {
-		if (!deleteSourceTarget) return;
-		const sourceId = deleteSourceTarget;
-		deletingSource = true;
-		try {
-			await deleteSource(detail.indexId, sourceId);
-			toast.success(`Source ${sourceId} deleted`);
-			deleteSourceOpen = false;
-			deleteSourceTarget = null;
-			await invalidate(DEP.index(detail.indexId));
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Failed to delete source');
-		} finally {
-			deletingSource = false;
-		}
-	}
 
 	let deleteOpen = $state(false);
 	let deleting = $state(false);
@@ -177,47 +135,28 @@
 					/>
 				</label>
 				<span class="text-base-content/60 text-xs">[{sourcesCountLabel}]</span>
+				<a href="/settings/indexes/{detail.indexId}/sources/new" class="btn btn-primary btn-sm">
+					<Plus class="h-3.5 w-3.5" />
+					Create source
+				</a>
 			</div>
 
 			<ListCard
-				cols="minmax(0,1fr) auto auto auto"
 				empty={filteredSources.length === 0}
 				emptyMessage={sourceFilter.trim() !== ''
 					? 'No sources match your search.'
 					: 'No sources configured.'}
 			>
-				<div
-					class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
-				>
-					<span>Source</span>
-					<span>Type</span>
-					<span>Enabled</span>
-					<span></span>
-				</div>
 				{#each filteredSources as source (source.sourceId)}
-					<div
-						class="col-span-full grid min-h-14 grid-cols-subgrid items-center px-4 py-3 text-sm"
-						class:opacity-60={!source.enabled}
-					>
-						<span class="min-w-0 truncate font-mono">{source.sourceId}</span>
-						<span class="badge badge-sm badge-ghost shrink-0">{source.sourceType}</span>
-						<input
-							type="checkbox"
-							class="toggle toggle-sm"
-							aria-label="Enable source {source.sourceId}"
-							checked={source.enabled}
-							disabled={togglingSourceId === source.sourceId}
-							onchange={(e) => toggleSource(source.sourceId, e.currentTarget.checked)}
-						/>
-						<button
-							type="button"
-							class="btn btn-square btn-ghost text-error btn-sm justify-self-end"
-							aria-label="Delete source {source.sourceId}"
-							onclick={() => openSourceDelete(source.sourceId)}
-						>
-							<Trash2 class="h-4 w-4" />
-						</button>
-					</div>
+					<ListRow href="/settings/indexes/{detail.indexId}/sources/{source.sourceId}">
+						<div class="min-w-0 flex-1">
+							<div class="truncate font-mono text-sm">{source.sourceId}</div>
+							<div class="text-base-content/60 truncate text-xs">
+								{source.sourceType} · {source.enabled ? 'enabled' : 'disabled'}
+							</div>
+						</div>
+						<ChevronRight class="h-4 w-4 opacity-50" />
+					</ListRow>
 				{/each}
 			</ListCard>
 		</div>
@@ -236,17 +175,3 @@
 		and all of its data. This cannot be undone.
 	{/snippet}
 </TypeToConfirmModal>
-
-<ConfirmModal
-	bind:open={deleteSourceOpen}
-	bind:loading={deletingSource}
-	title="Delete source"
-	confirmLabel="Delete"
-	confirmingLabel="Deleting…"
-	onConfirm={confirmSourceDelete}
->
-	{#snippet message()}
-		Delete source <strong class="font-mono">{deleteSourceTarget ?? ''}</strong>? Quickwit will stop
-		ingesting from it. You can re-create it by re-ingesting.
-	{/snippet}
-</ConfirmModal>

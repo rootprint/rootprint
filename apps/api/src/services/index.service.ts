@@ -4,12 +4,14 @@ import type {
 	IndexDetail,
 	IndexField,
 	IndexSettings,
+	IndexSource,
 	IndexSummary,
 	IndexViewConfig,
 	IndexVisibility,
-	SaveIndexConfigFields
+	SaveIndexConfigFields,
+	SourceDetail
 } from '../types.js';
-import { NotFoundError, type QuickwitClient } from 'quickwit-js';
+import { NotFoundError, QuickwitError, type QuickwitClient, type SourceConfig } from 'quickwit-js';
 
 import type { Db } from '../db/index.js';
 import {
@@ -22,8 +24,10 @@ import {
 	userPreference,
 	view
 } from '../db/schema.js';
-import { indexAccessError, internal, notFound } from '../utils/http-error.js';
+import { conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
+import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
+import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
 import { getIndex as qwGetIndex, listIndexes as qwListIndexes } from './quickwit-index.service.js';
 
 const DEFAULT_SETTINGS: IndexSettings = {
@@ -287,4 +291,182 @@ export async function assertIndexManageable(
 	if (!index) {
 		throw indexAccessError(isAdmin, 'missing');
 	}
+}
+
+// Quickwit deserializes source create/update request bodies as a
+// `VersionedSourceConfig`, which REQUIRES a `version` field (enum "0.9" | "0.7"
+// on Quickwit 0.9). Omitting it fails with "invalid config: missing version".
+// Bump this to match the Quickwit server's source-config format version.
+const QUICKWIT_SOURCE_CONFIG_VERSION = '0.9';
+
+function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfig {
+	const base = {
+		version: QUICKWIT_SOURCE_CONFIG_VERSION,
+		source_id: sourceId,
+		source_type: input.sourceType,
+		...(input.inputFormat ? { input_format: input.inputFormat } : {}),
+		...(input.numPipelines ? { num_pipelines: input.numPipelines } : {}),
+		...(input.vrlScript ? { transform: { script: input.vrlScript } } : {})
+	};
+
+	if (input.sourceType === 'kinesis') {
+		return {
+			...base,
+			params: {
+				stream_name: input.streamName,
+				...(input.region ? { region: input.region } : {}),
+				...(input.endpoint ? { endpoint: input.endpoint } : {})
+			}
+		} as SourceConfig;
+	}
+
+	return {
+		...base,
+		params: {
+			notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
+		}
+	} as SourceConfig;
+}
+
+export async function createSource(
+	qw: QuickwitClient,
+	indexId: string,
+	input: CreateSourceInput
+): Promise<IndexSource> {
+	let created: SourceConfig;
+	try {
+		created = await qw.index(indexId).createSource(toSourceConfig(input.sourceId, input));
+	} catch (err) {
+		if (err instanceof NotFoundError) throw notFound('Index not found');
+		if (err instanceof QuickwitError) {
+			const e = err as QuickwitError;
+			if (e.status === 409 || /already (exists|used)/i.test(e.message)) {
+				throw conflict('A source with this ID already exists.', 'SOURCE_EXISTS', [
+					{ path: 'sourceId', message: 'A source with this ID already exists.' }
+				]);
+			}
+		}
+		translateQuickwitError(err);
+	}
+
+	return {
+		sourceId: created.source_id,
+		sourceType: created.source_type,
+		enabled: created.enabled ?? true
+	};
+}
+
+export async function getSource(
+	qw: QuickwitClient,
+	indexId: string,
+	sourceId: string
+): Promise<SourceDetail> {
+	const index = await qwGetIndex(qw, indexId);
+	if (!index) throw notFound('Index not found');
+
+	const source = index.sources.find((s) => s.sourceId === sourceId);
+	if (!source) throw notFound('Source not found');
+
+	const params = (source.params ?? {}) as Record<string, unknown>;
+	const notifications = (params.notifications as Array<Record<string, unknown>> | undefined) ?? [];
+	const firstNotification = notifications[0] ?? {};
+	const hasUnsupportedConfig =
+		notifications.length > 1 || notifications.some((n) => n.type !== 'sqs');
+
+	return {
+		sourceId: source.sourceId,
+		sourceType: source.sourceType,
+		enabled: source.enabled,
+		inputFormat: source.inputFormat,
+		numPipelines: source.numPipelines,
+		streamName: typeof params.stream_name === 'string' ? params.stream_name : null,
+		region: typeof params.region === 'string' ? params.region : null,
+		endpoint: typeof params.endpoint === 'string' ? params.endpoint : null,
+		queueUrl: typeof firstNotification.queue_url === 'string' ? firstNotification.queue_url : null,
+		messageType:
+			typeof firstNotification.message_type === 'string' ? firstNotification.message_type : null,
+		vrlScript: source.vrlScript,
+		hasUnsupportedConfig
+	};
+}
+
+async function getRawSourceConfig(
+	qw: QuickwitClient,
+	indexId: string,
+	sourceId: string
+): Promise<SourceConfig> {
+	const meta = await qw.getIndex(indexId).catch((err: unknown) => {
+		if (err instanceof NotFoundError) throw notFound('Index not found');
+		throw err;
+	});
+	const source = (meta.sources ?? []).find((s: SourceConfig) => s.source_id === sourceId);
+	if (!source) throw notFound('Source not found');
+	return source;
+}
+
+function mergeSourceConfig(
+	current: SourceConfig,
+	sourceId: string,
+	input: UpdateSourceInput
+): SourceConfig {
+	const merged: SourceConfig = {
+		...current,
+		version: QUICKWIT_SOURCE_CONFIG_VERSION,
+		source_id: sourceId,
+		source_type: input.sourceType,
+		enabled: current.enabled ?? true
+	};
+
+	if (input.inputFormat) merged.input_format = input.inputFormat;
+	else delete merged.input_format;
+
+	if (input.numPipelines) merged.num_pipelines = input.numPipelines;
+	else delete merged.num_pipelines;
+
+	if (input.vrlScript) {
+		merged.transform = { ...current.transform, script: input.vrlScript };
+	} else {
+		delete merged.transform;
+	}
+
+	const currentParams = (current.params ?? {}) as Record<string, unknown>;
+	if (input.sourceType === 'kinesis') {
+		merged.params = {
+			...currentParams,
+			stream_name: input.streamName,
+			...(input.region ? { region: input.region } : {}),
+			...(input.endpoint ? { endpoint: input.endpoint } : {})
+		};
+	} else {
+		merged.params = {
+			...currentParams,
+			notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
+		};
+	}
+
+	return merged;
+}
+
+export async function updateSource(
+	qw: QuickwitClient,
+	indexId: string,
+	sourceId: string,
+	input: UpdateSourceInput
+): Promise<SourceDetail> {
+	const current = await getRawSourceConfig(qw, indexId, sourceId);
+	try {
+		await qw.index(indexId).updateSource(sourceId, mergeSourceConfig(current, sourceId, input));
+	} catch (err) {
+		if (err instanceof NotFoundError) throw notFound('Source not found');
+		translateQuickwitError(err);
+	}
+	return getSource(qw, indexId, sourceId);
+}
+
+export async function resetSourceCheckpoint(
+	qw: QuickwitClient,
+	indexId: string,
+	sourceId: string
+): Promise<void> {
+	await withNotFound(() => qw.index(indexId).resetSourceCheckpoint(sourceId), 'Source not found');
 }

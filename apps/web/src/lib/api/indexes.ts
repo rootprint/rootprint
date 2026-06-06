@@ -3,8 +3,8 @@ import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
 import { ApiError, readApiError } from '$lib/api/errors';
 import type { FieldConfig } from '$lib/types';
-import type { IndexDetail, IndexSummary } from 'api/types';
-import type { SaveIndexConfigInput } from 'api/schemas';
+import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
+import type { CreateSourceInput, SaveIndexConfigInput, UpdateSourceInput } from 'api/schemas';
 
 export type IndexStatsResponse = InferResponseType<
 	(typeof client.api.indexes)[':indexId']['stats']['$get'],
@@ -73,6 +73,46 @@ export async function deleteSource(indexId: string, sourceId: string): Promise<v
 		param: { indexId, sourceId }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to delete source');
+}
+
+export async function createSource(
+	indexId: string,
+	input: CreateSourceInput
+): Promise<IndexSource> {
+	const res = await client.api.indexes[':indexId'].sources.$post({
+		param: { indexId },
+		json: input
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to create source');
+	return res.json() as Promise<IndexSource>;
+}
+
+export async function getSource(indexId: string, sourceId: string): Promise<SourceDetail> {
+	const res = await client.api.indexes[':indexId'].sources[':sourceId'].$get({
+		param: { indexId, sourceId }
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to load source');
+	return res.json() as Promise<SourceDetail>;
+}
+
+export async function updateSource(
+	indexId: string,
+	sourceId: string,
+	input: UpdateSourceInput
+): Promise<SourceDetail> {
+	const res = await client.api.indexes[':indexId'].sources[':sourceId'].$put({
+		param: { indexId, sourceId },
+		json: input
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to update source');
+	return res.json() as Promise<SourceDetail>;
+}
+
+export async function resetSourceCheckpoint(indexId: string, sourceId: string): Promise<void> {
+	const res = await client.api.indexes[':indexId'].sources[':sourceId']['reset-checkpoint'].$post({
+		param: { indexId, sourceId }
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to reset checkpoint');
 }
 
 export async function getIndexStats(
