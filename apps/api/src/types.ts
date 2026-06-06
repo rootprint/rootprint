@@ -8,7 +8,8 @@ import type {
 	IndexListResponse as IndexListResponseSchema,
 	IndexViewConfigResponse as IndexViewConfigResponseSchema,
 	LogSearchResponse as LogSearchResponseSchema,
-	PreferencesResponse as PreferencesResponseSchema
+	PreferencesResponse as PreferencesResponseSchema,
+	SourceDetailSchema as SourceDetailResponseSchema
 } from './schemas/responses/indexes.js';
 import type { SavedQueryResponse as SavedQueryResponseSchema } from './schemas/responses/saved-queries.js';
 import type {
@@ -75,6 +76,8 @@ export type IndexSource = {
 	sourceType: string;
 	enabled: boolean;
 };
+
+export type SourceDetail = v.InferOutput<typeof SourceDetailResponseSchema>;
 
 export type IndexSummary = v.InferOutput<typeof IndexListResponseSchema>[number];
 

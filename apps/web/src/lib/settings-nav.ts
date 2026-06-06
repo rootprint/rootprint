@@ -70,6 +70,18 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 		INDEXES,
 		{ label: p.indexId ?? 'Index', mono: true }
 	],
+	'/settings/indexes/[indexId]/sources/new': (p) => [
+		ROOT,
+		INDEXES,
+		{ label: p.indexId ?? 'Index', href: `/settings/indexes/${p.indexId}?tab=sources`, mono: true },
+		{ label: 'New source' }
+	],
+	'/settings/indexes/[indexId]/sources/[sourceId]': (p) => [
+		ROOT,
+		INDEXES,
+		{ label: p.indexId ?? 'Index', href: `/settings/indexes/${p.indexId}?tab=sources`, mono: true },
+		{ label: p.sourceId ?? 'Source', mono: true }
+	],
 	'/settings/api-keys': () => [ROOT, { label: 'API keys' }],
 	'/settings/send-logs': () => [ROOT, { label: 'Send logs' }],
 	'/settings/send-logs/[integration]': (p) => [

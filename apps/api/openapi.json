@@ -1614,6 +1614,117 @@
 				],
 				"type": "object"
 			},
+			"SourceDetailSchema": {
+				"properties": {
+					"enabled": {
+						"type": "boolean"
+					},
+					"endpoint": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"hasUnsupportedConfig": {
+						"type": "boolean"
+					},
+					"inputFormat": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"messageType": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"numPipelines": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"queueUrl": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"region": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"sourceId": {
+						"type": "string"
+					},
+					"sourceType": {
+						"type": "string"
+					},
+					"streamName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"vrlScript": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"sourceId",
+					"sourceType",
+					"enabled",
+					"inputFormat",
+					"numPipelines",
+					"streamName",
+					"region",
+					"endpoint",
+					"queueUrl",
+					"messageType",
+					"vrlScript",
+					"hasUnsupportedConfig"
+				],
+				"type": "object"
+			},
 			"SummaryRowResponse": {
 				"properties": {
 					"errorCount": {
@@ -12138,6 +12249,164 @@
 				]
 			}
 		},
+		"/api/indexes/{indexId}/sources": {
+			"post": {
+				"operationId": "postApiIndexesByIndexIdSources",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"oneOf": [
+									{
+										"properties": {
+											"endpoint": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"region": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"sourceId": {
+												"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{2,254}$",
+												"type": "string"
+											},
+											"sourceType": {
+												"const": "kinesis"
+											},
+											"streamName": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceId",
+											"sourceType",
+											"streamName"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"messageType": {
+												"default": "s3_notification",
+												"enum": [
+													"s3_notification",
+													"raw_uri"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"queueUrl": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"sourceId": {
+												"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{2,254}$",
+												"type": "string"
+											},
+											"sourceType": {
+												"const": "file"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceId",
+											"sourceType",
+											"queueUrl"
+										],
+										"type": "object"
+									}
+								]
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexSourceSchema"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create index source",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
 		"/api/indexes/{indexId}/sources/{sourceId}": {
 			"delete": {
 				"operationId": "deleteApiIndexesByIndexIdSourcesBySourceId",
@@ -12185,6 +12454,63 @@
 					}
 				},
 				"summary": "Delete index source",
+				"tags": [
+					"Index management"
+				]
+			},
+			"get": {
+				"operationId": "getApiIndexesByIndexIdSourcesBySourceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sourceId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SourceDetailSchema"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get index source",
 				"tags": [
 					"Index management"
 				]
@@ -12253,6 +12579,207 @@
 					}
 				},
 				"summary": "Toggle source enabled state",
+				"tags": [
+					"Index management"
+				]
+			},
+			"put": {
+				"operationId": "putApiIndexesByIndexIdSourcesBySourceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sourceId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"oneOf": [
+									{
+										"properties": {
+											"endpoint": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"region": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"sourceType": {
+												"const": "kinesis"
+											},
+											"streamName": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceType",
+											"streamName"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"messageType": {
+												"default": "s3_notification",
+												"enum": [
+													"s3_notification",
+													"raw_uri"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"queueUrl": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"sourceType": {
+												"const": "file"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceType",
+											"queueUrl"
+										],
+										"type": "object"
+									}
+								]
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SourceDetailSchema"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Update index source",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/sources/{sourceId}/reset-checkpoint": {
+			"post": {
+				"operationId": "postApiIndexesByIndexIdSourcesBySourceIdResetCheckpoint",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sourceId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Reset source checkpoint",
 				"tags": [
 					"Index management"
 				]

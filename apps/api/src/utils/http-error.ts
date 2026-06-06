@@ -19,7 +19,8 @@ export const unauthorized = (message: string, code = 'UNAUTHORIZED') =>
 	new HttpError(401, code, message);
 export const forbidden = (message: string, code = 'FORBIDDEN') => new HttpError(403, code, message);
 export const notFound = (message: string, code = 'NOT_FOUND') => new HttpError(404, code, message);
-export const conflict = (message: string, code = 'CONFLICT') => new HttpError(409, code, message);
+export const conflict = (message: string, code = 'CONFLICT', details?: ApiErrorDetail[]) =>
+	new HttpError(409, code, message, details);
 export const unsupportedMediaType = (message: string, code = 'UNSUPPORTED_MEDIA_TYPE') =>
 	new HttpError(415, code, message);
 export const unprocessable = (
