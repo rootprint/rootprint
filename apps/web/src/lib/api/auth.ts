@@ -43,11 +43,15 @@ export async function setupAdmin(input: SetupAdminInput): Promise<void> {
 }
 
 export async function listAuthProviders(): Promise<AuthProvidersInfo> {
+	const fallback: AuthProvidersInfo = {
+		google: { enabled: false },
+		github: { enabled: false }
+	};
 	try {
 		const res = await client.api.auth.providers.$get();
-		if (!res.ok) return { google: { enabled: false } };
+		if (!res.ok) return fallback;
 		return (await res.json()) as AuthProvidersInfo;
 	} catch {
-		return { google: { enabled: false } };
+		return fallback;
 	}
 }

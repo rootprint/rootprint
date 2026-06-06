@@ -22,7 +22,10 @@ import {
 	setupPassword,
 	validateInviteToken
 } from '../services/auth.service.js';
-import { loadGoogleAuthForBetterAuth } from '../services/settings.service.js';
+import {
+	loadGitHubAuthForBetterAuth,
+	loadGoogleAuthForBetterAuth
+} from '../services/settings.service.js';
 import { withUniqueViolation } from '../utils/db.js';
 import { conflict } from '../utils/http-error.js';
 
@@ -135,9 +138,13 @@ export const authRouter = new Hono<AppEnv>()
 			security: []
 		}),
 		async (c) => {
-			const credentials = await loadGoogleAuthForBetterAuth(db);
+			const [google, github] = await Promise.all([
+				loadGoogleAuthForBetterAuth(db),
+				loadGitHubAuthForBetterAuth(db)
+			]);
 			const body: AuthProvidersInfo = {
-				google: { enabled: !!credentials }
+				google: { enabled: !!google },
+				github: { enabled: !!github }
 			};
 			return c.json(body);
 		}

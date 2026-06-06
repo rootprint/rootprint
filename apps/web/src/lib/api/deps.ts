@@ -3,6 +3,7 @@ export const DEP = {
 	apiKeys: 'app:api-keys',
 	authentication: 'app:authentication',
 	authenticationGoogle: 'app:authentication-google',
+	authenticationGithub: 'app:authentication-github',
 	indexes: 'app:indexes',
 	index: (id: string): `app:index:${string}` => `app:index:${id}`,
 	users: 'app:users',

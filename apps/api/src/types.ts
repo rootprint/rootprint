@@ -20,7 +20,10 @@ import type {
 	InviteUrlResponse as InviteUrlResponseSchema
 } from './schemas/responses/users.js';
 import type { AuthProvidersResponse as AuthProvidersResponseSchema } from './schemas/responses/auth.js';
-import type { GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema } from './schemas/responses/settings.js';
+import type {
+	GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema,
+	GitHubAuthSettingsResponse as GitHubAuthSettingsResponseSchema
+} from './schemas/responses/settings.js';
 import type {
 	ActorIndexRowResponse as ActorIndexRowResponseSchema,
 	ActorSummaryRowResponse as ActorSummaryRowResponseSchema,
@@ -163,6 +166,8 @@ export type Preferences = v.InferOutput<typeof PreferencesResponseSchema>;
 
 export type GoogleAuthSettings = v.InferOutput<typeof GoogleAuthSettingsResponseSchema>;
 
+export type GitHubAuthSettings = v.InferOutput<typeof GitHubAuthSettingsResponseSchema>;
+
 export type AuthProvidersInfo = v.InferOutput<typeof AuthProvidersResponseSchema>;
 
 export type IndexStatsPoint = {
@@ -234,6 +239,11 @@ export type GoogleAuthCredentials = {
 	clientId: string;
 	clientSecret: string;
 	allowedDomains: string[];
+};
+
+export type GitHubAuthCredentials = {
+	clientId: string;
+	clientSecret: string;
 };
 
 // Export streaming (export.service.ts)
