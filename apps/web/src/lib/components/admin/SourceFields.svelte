@@ -14,12 +14,9 @@
 	type Tab = 'connection' | 'transform';
 	let activeTab = $state<Tab>('connection');
 
-	// The Transform tab owns only `vrlScript`; every other error key is a
-	// Connection-tab field.
 	const transformHasError = $derived(Boolean(fieldErrors.vrlScript));
 	const connectionHasError = $derived(Object.keys(fieldErrors).some((key) => key !== 'vrlScript'));
 
-	// Never hide a validation error behind an inactive tab.
 	$effect(() => {
 		if (connectionHasError) activeTab = 'connection';
 		else if (transformHasError) activeTab = 'transform';

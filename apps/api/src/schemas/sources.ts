@@ -34,7 +34,6 @@ const vrlScript = v.optional(
 	)
 );
 
-// Shared, type-specific param fields (reused by create + update).
 const kinesisFields = {
 	inputFormat,
 	numPipelines,
@@ -52,7 +51,6 @@ const fileFields = {
 	messageType: v.optional(v.picklist(FILE_MESSAGE_TYPES), 's3_notification')
 };
 
-// --- Create (includes sourceId) ---
 const kinesisSource = v.pipe(
 	v.object({ sourceId, sourceType: v.literal('kinesis'), ...kinesisFields }),
 	v.forward(
@@ -70,7 +68,6 @@ export const createSourceSchema = v.variant('sourceType', [kinesisSource, fileSo
 
 export type CreateSourceInput = v.InferOutput<typeof createSourceSchema>;
 
-// --- Update (no sourceId — it is the immutable path identifier) ---
 const kinesisUpdate = v.pipe(
 	v.object({ sourceType: v.literal('kinesis'), ...kinesisFields }),
 	v.forward(

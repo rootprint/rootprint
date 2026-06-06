@@ -390,8 +390,6 @@ export async function getSource(
 	};
 }
 
-// updateSource needs the RAW SourceConfig (with transform.timezone and raw
-// params), which `qwGetIndex` normalizes away — so fetch via the client directly.
 async function getRawSourceConfig(
 	qw: QuickwitClient,
 	indexId: string,
@@ -406,10 +404,6 @@ async function getRawSourceConfig(
 	return source;
 }
 
-// Quickwit's update-source endpoint is a full-replace PUT, so start from the
-// current raw config and overlay only the fields the form models — preserving
-// `enabled` (#2), `transform.timezone` (#5), an un-edited region/endpoint (#6),
-// and any params Rootprint doesn't model.
 function mergeSourceConfig(
 	current: SourceConfig,
 	sourceId: string,
@@ -423,17 +417,12 @@ function mergeSourceConfig(
 		enabled: current.enabled ?? true
 	};
 
-	// input_format / num_pipelines are form-controlled: set when present, removed
-	// when the form clears them.
 	if (input.inputFormat) merged.input_format = input.inputFormat;
 	else delete merged.input_format;
 
 	if (input.numPipelines) merged.num_pipelines = input.numPipelines;
 	else delete merged.num_pipelines;
 
-	// The form owns transform.script; preserve other transform keys (timezone).
-	// A transform without a script is invalid in Quickwit, so clearing the script
-	// drops the whole transform.
 	if (input.vrlScript) {
 		merged.transform = { ...current.transform, script: input.vrlScript };
 	} else {
@@ -442,9 +431,6 @@ function mergeSourceConfig(
 
 	const currentParams = (current.params ?? {}) as Record<string, unknown>;
 	if (input.sourceType === 'kinesis') {
-		// Spread preserves an existing endpoint/region the form didn't change, plus
-		// any unmodeled param keys. The form can add/overwrite a target but won't
-		// remove the other one (documented tradeoff for out-of-band sources).
 		merged.params = {
 			...currentParams,
 			stream_name: input.streamName,
@@ -452,9 +438,6 @@ function mergeSourceConfig(
 			...(input.endpoint ? { endpoint: input.endpoint } : {})
 		};
 	} else {
-		// The form models exactly one sqs notification and replaces notifications
-		// wholesale; multiple/non-sqs notifications are surfaced by the edit form's
-		// `hasUnsupportedConfig` warning before the user saves.
 		merged.params = {
 			...currentParams,
 			notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]

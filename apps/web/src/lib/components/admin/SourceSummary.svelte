@@ -6,8 +6,6 @@
 
 	const managed = $derived(isManagedSource(source));
 
-	// ingest-api never supports VRL; for other read-only types show the script if
-	// one happens to be configured.
 	const showVrl = $derived(source.sourceType !== 'ingest-api' && Boolean(source.vrlScript));
 
 	type Row = { label: string; value: string };

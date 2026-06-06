@@ -6,9 +6,6 @@ export type SourceType = 'kinesis' | 'file';
 export type InputFormat = (typeof SOURCE_INPUT_FORMATS)[number];
 export type MessageType = (typeof FILE_MESSAGE_TYPES)[number];
 
-// Only these two source types have a real create/edit form in the UI. Any other
-// type that already exists on an index (kafka, pulsar, ingest-api, ingest-cli,
-// or unknown) is shown read-only.
 export const EDITABLE_SOURCE_TYPES = ['kinesis', 'file'] as const;
 
 export function isEditableSourceType(type: string): type is SourceType {
@@ -32,12 +29,10 @@ export type SourceFormState = {
 	inputFormat: '' | InputFormat;
 	numPipelines: string;
 	vrlScript: string;
-	// kinesis
 	streamName: string;
 	awsTarget: 'region' | 'endpoint';
 	region: string;
 	endpoint: string;
-	// file
 	queueUrl: string;
 	messageType: MessageType;
 };

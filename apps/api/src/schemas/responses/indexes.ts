@@ -29,17 +29,12 @@ export const SourceDetailSchema = named(
 		enabled: v.boolean(),
 		inputFormat: v.nullable(v.string()),
 		numPipelines: v.nullable(v.number()),
-		// kinesis
 		streamName: v.nullable(v.string()),
 		region: v.nullable(v.string()),
 		endpoint: v.nullable(v.string()),
-		// file
 		queueUrl: v.nullable(v.string()),
 		messageType: v.nullable(v.string()),
-		// transform (VRL)
 		vrlScript: v.nullable(v.string()),
-		// True when the raw Quickwit config has settings the edit form can't
-		// represent (e.g. multiple notifications). Saving will replace them.
 		hasUnsupportedConfig: v.boolean()
 	})
 );
