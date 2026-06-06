@@ -1,7 +1,8 @@
 <script lang="ts">
 	import GoogleIcon from '@iconify-svelte/logos/google-icon';
+	import GitHubIcon from '@iconify-svelte/logos/github-icon';
 	type ProviderRow = {
-		id: 'google';
+		id: 'google' | 'github';
 		name: string;
 		description: string;
 		statusLine: string | null;
@@ -19,6 +20,8 @@
 	>
 		{#if provider.id === 'google'}
 			<GoogleIcon class="h-5 w-5" />
+		{:else if provider.id === 'github'}
+			<GitHubIcon class="h-5 w-5" />
 		{:else}
 			<span class="text-xs">{provider.name.charAt(0)}</span>
 		{/if}

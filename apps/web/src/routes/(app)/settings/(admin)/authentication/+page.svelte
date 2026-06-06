@@ -6,11 +6,18 @@
 	let { data } = $props();
 
 	const google = $derived(data.google);
+	const github = $derived(data.github);
 
 	const googleStatus = $derived.by(() => {
 		if (!google.configured) return null;
 		const n = google.allowedDomains.length;
 		return `Allowed ${n} domain${n === 1 ? '' : 's'}: ${google.allowedDomains.join(', ')}`;
+	});
+
+	const githubStatus = $derived.by(() => {
+		if (!github.configured) return null;
+		const n = github.allowedOrgs.length;
+		return `Allowed ${n} organization${n === 1 ? '' : 's'}: ${github.allowedOrgs.join(', ')}`;
 	});
 
 	const providers = $derived([
@@ -21,6 +28,14 @@
 			configured: google.configured,
 			statusLine: googleStatus,
 			editHref: '/settings/authentication/google'
+		},
+		{
+			id: 'github' as const,
+			name: 'GitHub',
+			description: 'Sign in with a GitHub account from an allowed organization.',
+			configured: github.configured,
+			statusLine: githubStatus,
+			editHref: '/settings/authentication/github'
 		}
 	]);
 </script>

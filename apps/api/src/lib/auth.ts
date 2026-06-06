@@ -8,12 +8,19 @@ import { and, eq } from 'drizzle-orm';
 import { config } from '../config.js';
 import * as authSchema from '../db/auth.schema.js';
 import { account, inviteToken, user } from '../db/schema.js';
-import { getGoogleAllowedDomains } from '../services/auth.service.js';
-import { loadGoogleAuthForBetterAuth } from '../services/settings.service.js';
-import type { GoogleAuthCredentials } from '../types.js';
+import {
+	githubTokenIsAllowed,
+	googleEmailIsAllowed,
+	userRetainsOAuthAccess
+} from '../services/auth.service.js';
+import {
+	loadGitHubAuthForBetterAuth,
+	loadGoogleAuthForBetterAuth
+} from '../services/settings.service.js';
+import type { GitHubAuthCredentials, GoogleAuthCredentials } from '../types.js';
 import { db } from './db.js';
 
-function buildAuth(secret: string, google?: GoogleAuthCredentials) {
+function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitHubAuthCredentials) {
 	const trustedOrigins = [config.origin, ...(config.frontendUrl ? [config.frontendUrl] : [])];
 
 	const opts: BetterAuthOptions = {
@@ -33,20 +40,26 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials) {
 			account: {
 				create: {
 					before: async (acct) => {
-						if (acct.providerId !== 'google') return;
-						const domains = await getGoogleAllowedDomains(db);
-						const [row] = await db
-							.select({ email: user.email })
-							.from(user)
-							.where(eq(user.id, acct.userId))
-							.limit(1);
-						const domain = row?.email.split('@')[1]?.toLowerCase();
-						if (!domain || !domains.includes(domain)) {
-							throw new APIError('FORBIDDEN', { message: 'domain_not_allowed' });
+						if (acct.providerId === 'google') {
+							const [row] = await db
+								.select({ email: user.email })
+								.from(user)
+								.where(eq(user.id, acct.userId))
+								.limit(1);
+							if (!row?.email || !(await googleEmailIsAllowed(db, row.email))) {
+								throw new APIError('FORBIDDEN', { message: 'domain_not_allowed' });
+							}
+							return;
+						}
+						if (acct.providerId === 'github') {
+							if (!(await githubTokenIsAllowed(db, acct.accessToken))) {
+								throw new APIError('FORBIDDEN', { message: 'org_not_allowed' });
+							}
+							return;
 						}
 					},
 					after: async (acct) => {
-						if (acct.providerId !== 'google') return;
+						if (acct.providerId !== 'google' && acct.providerId !== 'github') return;
 						await db.transaction(async (tx) => {
 							await tx
 								.delete(account)
@@ -55,18 +68,40 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials) {
 						});
 					}
 				}
+			},
+			session: {
+				create: {
+					before: async (session) => {
+						if (await userRetainsOAuthAccess(db, session.userId)) return;
+						console.warn(
+							'[oauth_access] blocking session: user no longer satisfies provider membership',
+							session.userId
+						);
+						return false;
+					}
+				}
 			}
 		}
 	};
+	const socialProviders: NonNullable<BetterAuthOptions['socialProviders']> = {};
+	const trustedProviders: string[] = [];
 	if (google) {
-		opts.socialProviders = {
-			google: { clientId: google.clientId, clientSecret: google.clientSecret }
+		socialProviders.google = { clientId: google.clientId, clientSecret: google.clientSecret };
+		trustedProviders.push('google');
+	}
+	if (github) {
+		socialProviders.github = {
+			clientId: github.clientId,
+			clientSecret: github.clientSecret,
+			// read:org resolves private org memberships; user:email is required by GitHub.
+			scope: ['read:org', 'user:email']
 		};
+		trustedProviders.push('github');
+	}
+	if (trustedProviders.length > 0) {
+		opts.socialProviders = socialProviders;
 		opts.account = {
-			accountLinking: {
-				enabled: true,
-				trustedProviders: ['google']
-			}
+			accountLinking: { enabled: true, trustedProviders }
 		};
 	}
 	return betterAuth(opts);
@@ -91,8 +126,9 @@ export async function initAuth(secret: string): Promise<void> {
 		throw new Error('initAuth has already been called');
 	}
 	const google = await loadGoogleAuthForBetterAuth(db).catch(() => undefined);
+	const github = await loadGitHubAuthForBetterAuth(db).catch(() => undefined);
 	holder.secret = secret;
-	holder.instance = buildAuth(secret, google);
+	holder.instance = buildAuth(secret, google, github);
 }
 
 export const auth = (): AuthInstanceInternal => {
@@ -107,7 +143,8 @@ export async function reloadAuth(): Promise<void> {
 		throw new Error('reloadAuth called before initAuth');
 	}
 	const google = await loadGoogleAuthForBetterAuth(db);
-	holder.instance = buildAuth(holder.secret, google);
+	const github = await loadGitHubAuthForBetterAuth(db);
+	holder.instance = buildAuth(holder.secret, google, github);
 }
 
 export type AuthInstance = AuthInstanceInternal;

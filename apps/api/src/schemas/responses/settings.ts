@@ -10,3 +10,12 @@ export const GoogleAuthSettingsResponse = named(
 		allowedDomains: v.array(v.string())
 	})
 );
+
+// Redacted GitHub auth status: whether credentials are configured (no secret).
+export const GitHubAuthSettingsResponse = named(
+	'GitHubAuthSettingsResponse',
+	v.object({
+		configured: v.boolean(),
+		allowedOrgs: v.array(v.string())
+	})
+);

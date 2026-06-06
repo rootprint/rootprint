@@ -8,6 +8,7 @@
 	import { safeReturnTo } from '$lib/return-to';
 	import { signInSchema } from 'api/schemas';
 	import GoogleIcon from '@iconify-svelte/logos/google-icon';
+	import GitHubIcon from '@iconify-svelte/logos/github-icon';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 
@@ -22,6 +23,13 @@
 	async function signInWithGoogle() {
 		await authClient.signIn.social({
 			provider: 'google',
+			callbackURL: safeReturnTo(page.url.searchParams.get('returnTo'))
+		});
+	}
+
+	async function signInWithGitHub() {
+		await authClient.signIn.social({
+			provider: 'github',
 			callbackURL: safeReturnTo(page.url.searchParams.get('returnTo'))
 		});
 	}
@@ -63,7 +71,16 @@
 		<GoogleIcon class="h-4 w-4" />
 		Continue with Google
 	</button>
+{/if}
 
+{#if data.providers.github.enabled}
+	<button type="button" class="btn btn-outline mt-4 w-full gap-2" onclick={signInWithGitHub}>
+		<GitHubIcon class="h-4 w-4" />
+		Continue with GitHub
+	</button>
+{/if}
+
+{#if data.providers.google.enabled || data.providers.github.enabled}
 	<div class="divider my-3 text-xs opacity-60">or</div>
 {/if}
 <form class="mt-4 space-y-3" {onsubmit}>

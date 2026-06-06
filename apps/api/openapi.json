@@ -385,6 +385,17 @@
 			},
 			"AuthProvidersResponse": {
 				"properties": {
+					"github": {
+						"properties": {
+							"enabled": {
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"enabled"
+						],
+						"type": "object"
+					},
 					"google": {
 						"properties": {
 							"enabled": {
@@ -398,7 +409,8 @@
 					}
 				},
 				"required": [
-					"google"
+					"google",
+					"github"
 				],
 				"type": "object"
 			},
@@ -533,6 +545,24 @@
 				},
 				"required": [
 					"values"
+				],
+				"type": "object"
+			},
+			"GitHubAuthSettingsResponse": {
+				"properties": {
+					"allowedOrgs": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"configured": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"configured",
+					"allowedOrgs"
 				],
 				"type": "object"
 			},
@@ -12454,6 +12484,186 @@
 				"summary": "Search logs",
 				"tags": [
 					"Search"
+				]
+			}
+		},
+		"/api/settings/auth/github": {
+			"get": {
+				"operationId": "getApiSettingsAuthGithub",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GitHubAuthSettingsResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get GitHub auth status",
+				"tags": [
+					"Auth settings"
+				]
+			}
+		},
+		"/api/settings/auth/github/allowed-orgs": {
+			"put": {
+				"operationId": "putApiSettingsAuthGithubAllowedOrgs",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"allowedOrgs": {
+										"items": {
+											"pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$",
+											"type": "string"
+										},
+										"minItems": 1,
+										"type": "array"
+									}
+								},
+								"required": [
+									"allowedOrgs"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"description": "Allowed orgs saved"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Set GitHub allowed organizations",
+				"tags": [
+					"Auth settings"
+				]
+			}
+		},
+		"/api/settings/auth/github/credentials": {
+			"delete": {
+				"operationId": "deleteApiSettingsAuthGithubCredentials",
+				"responses": {
+					"204": {
+						"description": "Credentials deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete GitHub OAuth credentials",
+				"tags": [
+					"Auth settings"
+				]
+			},
+			"put": {
+				"operationId": "putApiSettingsAuthGithubCredentials",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"clientId": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"clientSecret": {
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"clientId",
+									"clientSecret"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"description": "Credentials saved"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Set GitHub OAuth credentials",
+				"tags": [
+					"Auth settings"
 				]
 			}
 		},
