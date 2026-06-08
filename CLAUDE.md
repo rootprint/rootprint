@@ -43,7 +43,7 @@ Do not write tests for this project. No unit, integration, or end-to-end tests a
 
 ---
 
-You are able to use the Svelte MCP server when working in `apps/web, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+You can use the Svelte MCP server when working in `apps/web`, where you have access to Svelte 5 and SvelteKit documentation.
 
 ## Available MCP Tools (use when working in Svelte workspaces)
 

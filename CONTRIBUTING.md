@@ -47,7 +47,7 @@ Notes:
 
 ## Development guidelines
 
-- Use TypeScript with strict typing. Avoid `any` unless genuinely unavoidable.
+- Use TypeScript with strict typing. Avoid `any` unless unavoidable.
 - Backend types: `apps/api/src/types.ts`. Frontend types: `apps/web/src/lib/types.ts`.
 - Backend routes follow the Hono pattern in `apps/api/src/routes/*.ts`. Service logic in `apps/api/src/services/*.service.ts`.
 - This project does not use automated tests in any workspace. Verify changes manually.
@@ -109,7 +109,7 @@ bun --filter api build
 Please include:
 
 - what you expected to happen
-- what actually happened
+- what happened instead
 - exact reproduction steps
 - environment details when relevant
 

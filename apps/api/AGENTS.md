@@ -54,7 +54,7 @@ Sibling top-level dirs:
 - `drizzle/` — generated SQL migrations.
 - `bruno/` — Bruno API request collections for manual testing.
 - `buf.yaml`, `buf.gen.yaml` — buf configuration.
-- `drizzle.config.ts`, `vitest.config.ts` — config files (note: `vitest.config.ts` is currently dead; see follow-ups).
+- `drizzle.config.ts`, `vitest.config.ts` — config files (note: `vitest.config.ts` is dead; see follow-ups).
 
 ## Types Contract
 
@@ -132,7 +132,7 @@ Defaults and examples live in the root `.env.example`.
 
 ## Tests
 
-No tests. This workspace currently has a stale `vitest.config.ts` left over from a prior experiment — it has no `vitest` dependency and no `test` script. Don't author tests; see follow-ups.
+No tests. This workspace has a stale `vitest.config.ts` left over from a prior experiment; it has no `vitest` dependency and no `test` script. Don't author tests; see follow-ups.
 
 ## Conventions
 

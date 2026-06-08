@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Rootprint is currently pre-1.0. Only the latest release receives security fixes until a 1.x line is cut.
+Rootprint is pre-1.0. Only the latest release receives security fixes until a 1.x line is cut.
 
 ## Reporting a vulnerability
 

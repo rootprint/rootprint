@@ -2,7 +2,7 @@
 
 ## About
 
-Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static` — fully prerendered SPA, no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
+Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static`, a fully prerendered SPA with no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
 
 For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see the root `CLAUDE.md`.
 
@@ -70,11 +70,11 @@ Do not add `try/catch` to a loader unless it implements one of the two non-defau
 
 A single DaisyUI 5 custom theme named `rootprint` is the source of truth. It is declared in `src/app.css` via `@plugin "daisyui/theme"` and applied through `data-theme="rootprint"` in `src/app.html`. The theme is light, flat, and uses a single brand-green accent.
 
-Do not introduce a second theme or add a `data-theme` override elsewhere. If you need a dark surface, use `base-content` or `neutral` — don't fork the theme.
+Do not introduce a second theme or add a `data-theme` override elsewhere. If you need a dark surface, use `base-content` or `neutral`; don't fork the theme.
 
 ### Color Roles
 
-Use semantic DaisyUI classes (`bg-base-100`, `text-base-content`, `btn-primary`, …) — never the raw hex values. The current mapping:
+Use semantic DaisyUI classes (`bg-base-100`, `text-base-content`, `btn-primary`, …); never the raw hex values. The current mapping:
 
 | Role           | Use for                                                |
 | -------------- | ------------------------------------------------------ |
@@ -91,13 +91,13 @@ Use semantic DaisyUI classes (`bg-base-100`, `text-base-content`, `btn-primary`,
 | `warning`      | Caution                                                |
 | `error`        | Field/form errors                                      |
 
-The brand-green is the visual signature. Use it for one primary CTA per surface — not for decoration.
+The brand-green is the visual signature. Use it for one primary CTA per surface, not for decoration.
 
 ### Typography
 
 - Sans: **Roboto**. Mono: **Roboto Mono**. Loaded via `<link>` in `app.html`.
-- Body is `0.875rem / 1.5rem` (14px / 24px) — small and data-dense by default.
-- Headings are **regular weight (400)** with **tight tracking** at large sizes. Do not use `font-bold` on headings — the size carries the hierarchy, not the weight. The base layer in `app.css` already sets `font-weight: 400` and `letter-spacing: -0.02em` on `h1–h4`; let it do its job.
+- Body is `0.875rem / 1.5rem` (14px / 24px), small and data-dense by default.
+- Headings are **regular weight (400)** with **tight tracking** at large sizes. Do not use `font-bold` on headings. The size carries the hierarchy, not the weight. The base layer in `app.css` already sets `font-weight: 400` and `letter-spacing: -0.02em` on `h1–h4`; don't override it.
 - Tokens `text-display`, `text-h1`, `text-h2`, `text-h3` are available via Tailwind v4's `@theme` for arbitrary headings outside the HTML hierarchy.
 - Mono text is for: code, IDs, timestamps, small metadata labels, eyebrows. Not for body prose.
 
@@ -142,8 +142,8 @@ Recurring patterns to reach for before inventing new ones:
 
 ## Error Handling
 
-- SvelteKit `+error.svelte` at the root catches uncaught route errors. It already uses the eyebrow/heading pattern — match it if you add nested error boundaries.
-- API errors: parse `ApiErrorBody` from `api/types` and surface `error.message` (and `details[].path` for field-level mapping) — see `routes/auth/setup-admin/+page.svelte` for the canonical flow.
+- SvelteKit `+error.svelte` at the root catches uncaught route errors. It already uses the eyebrow/heading pattern; match it if you add nested error boundaries.
+- API errors: parse `ApiErrorBody` from `api/types` and surface `error.message` (and `details[].path` for field-level mapping). See `routes/auth/setup-admin/+page.svelte` for the canonical flow.
 - Validate inputs with the Valibot schemas re-exported from `api/schemas` so client and server agree on shape.
 
 ## Tests

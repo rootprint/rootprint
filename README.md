@@ -3,7 +3,7 @@
 		<img alt="Rootprint logo" src="apps/web/src/lib/assets/logo.png" width="40" align="center">
     Rootprint
   </h1>
-  <p>Open-source, self-hosted log management platform that allows you to run search directly on cloud storage.</p>
+  <p>Open-source, self-hosted log management platform that runs search directly on cloud storage.</p>
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-%233178C6.svg?logo=typescript&logoColor=white)](#)
 [![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](#)

@@ -9,4 +9,4 @@
 - [ ] Verified locally — `bun run check` passes and the changed paths were exercised in a running app
 - [ ] Docs updated for any user-facing behavior, setup, or configuration change
 - [ ] Screenshots or recordings included for UI changes when helpful
-- [ ] Breaking changes called out clearly
+- [ ] Breaking changes called out
