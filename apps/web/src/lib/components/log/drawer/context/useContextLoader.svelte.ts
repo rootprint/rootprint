@@ -1,4 +1,4 @@
-import { getUnixTime, parseISO } from 'date-fns';
+import { getUnixTime, isValid, parseISO } from 'date-fns';
 
 import { searchLogs } from '$lib/api/log-search';
 import { getByPath } from '$lib/utils/get-by-path';
@@ -68,7 +68,9 @@ export class ContextLoader {
 		this.indexId = indexId;
 		this.fieldConfig = fieldConfig;
 		// anchor.timestamp is ISO; convert to seconds for Quickwit time bounds.
-		this.anchorTs = getUnixTime(parseISO(anchor.timestamp));
+		// NaN when the timestamp is missing/unparseable — #fetchInitial bails out then.
+		const parsed = parseISO(anchor.timestamp);
+		this.anchorTs = isValid(parsed) ? getUnixTime(parsed) : NaN;
 		this.#beforeWindowEnd = this.anchorTs;
 		this.#afterWindowStart = this.anchorTs;
 		this.#anchorKey = hitKey(anchor.raw);
@@ -208,6 +210,14 @@ export class ContextLoader {
 	}
 
 	async #fetchInitial(): Promise<void> {
+		if (!Number.isFinite(this.anchorTs)) {
+			this.error = 'This log has an invalid timestamp; surrounding context cannot be loaded.';
+			this.entries = [this.#toEntry(this.anchor.raw, true)];
+			this.noMoreBefore = true;
+			this.noMoreAfter = true;
+			this.initEpoch++;
+			return;
+		}
 		this.#abort?.abort();
 		this.#abort = new AbortController();
 		const thisSeq = ++this.#fetchSeq;

@@ -1,7 +1,7 @@
 import type { FieldConfig } from '$lib/types';
 import { formatCell } from './column-width';
 import { getByPath } from './get-by-path';
-import { OTEL_ATTR_PREFIX, OTEL_RESOURCE_ATTR_PREFIX } from './fields';
+import { stripOtelPrefix } from './fields';
 import { isPlainObject } from './object';
 
 export interface DrawerField {
@@ -79,14 +79,6 @@ function identity(name: string): string {
 	return name;
 }
 
-function stripAttrPrefix(name: string): string {
-	return name.slice(OTEL_ATTR_PREFIX.length);
-}
-
-function stripResourceAttrPrefix(name: string): string {
-	return name.slice(OTEL_RESOURCE_ATTR_PREFIX.length);
-}
-
 export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldConfig): GroupedHit {
 	const messageField = fieldConfig.messageField;
 	const messageRaw = getByPath(raw, messageField);
@@ -115,9 +107,9 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 
 	for (const [key, value] of Object.entries(raw)) {
 		if (key === 'attributes' && isPlainObject(value)) {
-			expandValue(key, value, rawAttributes, stripAttrPrefix);
+			expandValue(key, value, rawAttributes, stripOtelPrefix);
 		} else if (key === 'resource_attributes' && isPlainObject(value)) {
-			expandValue(key, value, rawResourceAttributes, stripResourceAttrPrefix);
+			expandValue(key, value, rawResourceAttributes, stripOtelPrefix);
 		} else if (isPlainObject(value)) {
 			expandValue(key, value, rawOther, identity);
 		} else {
