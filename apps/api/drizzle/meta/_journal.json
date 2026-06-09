@@ -85,6 +85,13 @@
       "when": 1780324732911,
       "tag": "0011_curly_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781031721613,
+      "tag": "0012_thankful_bishop",
+      "breakpoints": true
     }
   ]
 }

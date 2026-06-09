@@ -11,7 +11,7 @@ import type {
 	PreferencesResponse as PreferencesResponseSchema,
 	SourceDetailSchema as SourceDetailResponseSchema
 } from './schemas/responses/indexes.js';
-import type { SavedQueryResponse as SavedQueryResponseSchema } from './schemas/responses/saved-queries.js';
+import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,
 	ApiKeyValueResponse as ApiKeyValueResponseSchema
@@ -145,7 +145,7 @@ export type VerifiedApiKey = {
 
 export type { CreateApiKeyInput } from './schemas/api-keys.js';
 
-export type SavedQuery = v.InferOutput<typeof SavedQueryResponseSchema>;
+export type SavedView = v.InferOutput<typeof SavedViewResponseSchema>;
 
 export type ShareCreateInput = {
 	indexId: string;

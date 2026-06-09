@@ -1,0 +1,24 @@
+meta {
+  name: Create Saved View
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/views
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Errors last 24h",
+    "description": "Quick triage filter",
+    "query": "level:error",
+    "filters": [
+      { "field": "service", "value": "api", "exclude": false }
+    ],
+    "sortDirection": "desc",
+    "columns": ["timestamp", "message"]
+  }
+}

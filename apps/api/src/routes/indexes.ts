@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import * as v from 'valibot';
 
 import { exportsRouter } from './exports.js';
-import { savedQueriesRouter } from './saved-queries.js';
+import { viewsRouter } from './views.js';
 
 import { isAdmin } from '../lib/auth.js';
 import { db } from '../lib/db.js';
@@ -495,4 +495,4 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 		}
 	)
 	.route('/:indexId/logs/export', exportsRouter)
-	.route('/:indexId/saved-queries', savedQueriesRouter);
+	.route('/:indexId/views', viewsRouter);

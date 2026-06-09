@@ -14,7 +14,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 
-import type { DisplayMode, IndexVisibility } from '../types.js';
+import type { DisplayMode, Filter, IndexVisibility } from '../types.js';
 
 import { user } from './auth.schema.js';
 
@@ -95,29 +95,6 @@ export const apiKey = pgTable(
 	]
 );
 
-export const savedQuery = pgTable(
-	'saved_query',
-	{
-		id: serial('id').primaryKey(),
-		userId: text('user_id')
-			.notNull()
-			.references(() => user.id, { onDelete: 'cascade' }),
-		indexId: text('index_id').notNull(),
-		name: text('name').notNull(),
-		description: text('description'),
-		query: text('query').notNull().default(''),
-		createdAt: timestamp('created_at').defaultNow().notNull(),
-		updatedAt: timestamp('updated_at')
-			.defaultNow()
-			.notNull()
-			.$onUpdate(() => new Date())
-	},
-	(table) => [
-		uniqueIndex('saved_query_user_index_name_unique').on(table.userId, table.indexId, table.name),
-		index('saved_query_index_id').on(table.indexId)
-	]
-);
-
 export const view = pgTable(
 	'view',
 	{
@@ -127,12 +104,19 @@ export const view = pgTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		indexId: text('index_id').notNull(),
 		name: text('name').notNull(),
+		description: text('description'),
 		query: text('query').notNull().default(''),
-		columns: jsonb('columns').$type<string[]>().notNull(),
-		createdAt: timestamp('created_at').defaultNow().notNull()
+		filters: jsonb('filters').$type<Filter[]>().notNull().default([]),
+		sortDirection: text('sort_direction').$type<'asc' | 'desc'>().notNull().default('desc'),
+		columns: jsonb('columns').$type<string[]>(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.notNull()
+			.$onUpdate(() => new Date())
 	},
 	(table) => [
-		index('view_user_index').on(table.userId, table.indexId),
+		uniqueIndex('view_user_index_name_unique').on(table.userId, table.indexId, table.name),
 		index('view_index_id').on(table.indexId)
 	]
 );
