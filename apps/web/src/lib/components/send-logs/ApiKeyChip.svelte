@@ -76,6 +76,8 @@
 			>
 				<span>{selectedApiKey.name}</span>
 				<span class="text-base-content/50 text-xs">·</span>
+				<span class="text-base-content/60 font-mono text-xs">{selectedApiKey.indexId}</span>
+				<span class="text-base-content/50 text-xs">·</span>
 				<span class="text-base-content/60 font-mono text-xs">{selectedApiKey.tokenPrefix}…</span>
 				<ChevronDown size={14} class="opacity-60" />
 			</button>
@@ -109,7 +111,9 @@
 						onclick={() => selectApiKey(apiKey)}
 					>
 						<span class="text-sm">{apiKey.name}</span>
-						<span class="text-base-content/60 font-mono text-xs">{apiKey.tokenPrefix}…</span>
+						<span class="text-base-content/60 font-mono text-xs">
+							{apiKey.indexId} · {apiKey.tokenPrefix}…
+						</span>
 					</button>
 				</li>
 			{:else}

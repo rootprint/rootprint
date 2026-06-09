@@ -14,7 +14,7 @@ export const nginx: Integration = {
 	id: 'nginx',
 	label: 'Nginx',
 	icon: NginxIcon,
-	category: 'Web Servers',
+	origin: 'Host',
 	buildSteps: (ctx) => {
 		const vectorConfig = `sources:
   nginx_logs:

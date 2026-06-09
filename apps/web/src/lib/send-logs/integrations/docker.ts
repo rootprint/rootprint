@@ -20,7 +20,7 @@ export const docker: Integration = {
 	id: 'docker',
 	label: 'Docker',
 	icon: DockerIcon,
-	category: 'Platforms',
+	origin: 'Containers',
 	buildSteps: (ctx) => {
 		const vectorConfig = `sources:
   docker:

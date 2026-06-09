@@ -3,6 +3,7 @@
 	import { invalidate } from '$app/navigation';
 	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import { createApiKey, ApiKeyApiError, type ApiKeyView } from '$lib/api/api-keys';
+	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-logs/constants';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
@@ -10,18 +11,23 @@
 
 	let {
 		open = $bindable(false),
-		indexId,
+		indexIds,
 		invalidateKey,
 		onCreated
 	}: {
 		open?: boolean;
-		indexId: string;
+		indexIds: string[];
 		invalidateKey?: string;
 		onCreated?: (summary: ApiKeyView, secret: string) => void;
 	} = $props();
 
+	function defaultIndexId() {
+		return indexIds.includes(DEFAULT_OTEL_LOGS_INDEX_ID) ? DEFAULT_OTEL_LOGS_INDEX_ID : '';
+	}
+
 	let phase = $state<'form' | 'reveal'>('form');
 	let name = $state('');
+	let indexId = $state('');
 	let busy = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -30,6 +36,7 @@
 	function reset() {
 		phase = 'form';
 		name = '';
+		indexId = defaultIndexId();
 		busy = false;
 		formError = null;
 		fieldErrors = {};
@@ -88,9 +95,24 @@
 				required
 			/>
 
-			<p class="text-base-content/60 text-xs">
-				Ingest key for <span class="text-base-content">{indexId}</span>.
-			</p>
+			<Field label="Index" error={fieldErrors.indexId}>
+				{#snippet control({ id, invalid, describedBy })}
+					<select
+						{id}
+						bind:value={indexId}
+						aria-invalid={invalid ? 'true' : undefined}
+						aria-describedby={describedBy}
+						class="select w-full"
+						class:select-error={invalid}
+						required
+					>
+						<option value="" disabled>Select an index…</option>
+						{#each indexIds as option (option)}
+							<option value={option}>{option}</option>
+						{/each}
+					</select>
+				{/snippet}
+			</Field>
 		</form>
 	{:else}
 		<div class="flex flex-col gap-3">

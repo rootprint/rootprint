@@ -164,7 +164,7 @@ export const nodejs: Integration = {
 	id: 'nodejs',
 	label: 'Node.js',
 	icon: NodejsIcon,
-	category: 'Languages',
+	origin: 'Application',
 	flavors: [
 		{ id: 'otel', label: 'OpenTelemetry' },
 		{ id: 'pino', label: 'Pino' },
