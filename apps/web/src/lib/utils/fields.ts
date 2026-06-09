@@ -12,13 +12,17 @@ export function isOtelResourceAttr(name: string): boolean {
 	return name.startsWith(OTEL_RESOURCE_ATTR_PREFIX);
 }
 
-/** For OTel indexes, strip the `attributes.` / `resource_attributes.` prefix; otherwise return the raw name. */
-export function displayNameFor(name: string, isOtelIndex: boolean): string {
-	if (!isOtelIndex) return name;
+/** Strip the leading `attributes.` / `resource_attributes.` prefix when present. */
+export function stripOtelPrefix(name: string): string {
 	if (name.startsWith(OTEL_ATTR_PREFIX)) return name.slice(OTEL_ATTR_PREFIX.length);
 	if (name.startsWith(OTEL_RESOURCE_ATTR_PREFIX))
 		return name.slice(OTEL_RESOURCE_ATTR_PREFIX.length);
 	return name;
+}
+
+/** For OTel indexes, strip the `attributes.` / `resource_attributes.` prefix; otherwise return the raw name. */
+export function displayNameFor(name: string, isOtelIndex: boolean): string {
+	return isOtelIndex ? stripOtelPrefix(name) : name;
 }
 
 /**

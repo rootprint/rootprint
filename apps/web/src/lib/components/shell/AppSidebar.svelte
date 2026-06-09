@@ -5,6 +5,7 @@
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
+	import { readString, writeString } from '$lib/utils/safe-storage';
 
 	type User = { id: string; name: string | null; email: string; role: string };
 
@@ -12,10 +13,10 @@
 
 	const STORAGE_KEY = 'rootprint:sidebar-collapsed';
 
-	let collapsed = $state(browser && localStorage.getItem(STORAGE_KEY) === '1');
+	let collapsed = $state(browser && readString(STORAGE_KEY) === '1');
 
 	$effect(() => {
-		if (browser) localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0');
+		if (browser) writeString(STORAGE_KEY, collapsed ? '1' : '0');
 	});
 
 	const path = $derived(page.url.pathname);

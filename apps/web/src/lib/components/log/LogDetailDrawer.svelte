@@ -11,6 +11,7 @@
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { searchHighlight } from '$lib/utils/dom-highlight';
+	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -32,22 +33,14 @@
 	}
 
 	function readStoredWidth(): number | null {
-		try {
-			const raw = localStorage.getItem(DRAWER_WIDTH_KEY);
-			if (raw === null) return null;
-			const parsed = Number(raw);
-			return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-		} catch {
-			return null;
-		}
+		const raw = readString(DRAWER_WIDTH_KEY);
+		if (raw === null) return null;
+		const parsed = Number(raw);
+		return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 	}
 
 	function persistWidth(px: number): void {
-		try {
-			localStorage.setItem(DRAWER_WIDTH_KEY, String(px));
-		} catch {
-			// ignore quota / privacy-mode failures
-		}
+		writeString(DRAWER_WIDTH_KEY, String(px));
 	}
 
 	let {
@@ -197,11 +190,7 @@
 	}
 
 	function resetWidth(): void {
-		try {
-			localStorage.removeItem(DRAWER_WIDTH_KEY);
-		} catch {
-			// ignore
-		}
+		removeKey(DRAWER_WIDTH_KEY);
 		widthPx = clampWidth(viewportWidth * DEFAULT_DRAWER_FRACTION, viewportWidth);
 	}
 </script>

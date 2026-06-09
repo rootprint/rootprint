@@ -26,6 +26,7 @@ export function formatChartTooltip(tsSec: number, timezone: TimezoneMode): strin
 /** "YYYY-MM-DD HH:MM:SS.SSS" — used in the log row timestamp column. */
 export function formatLogRowTimestamp(iso: string, timezone: TimezoneMode): string {
 	const d = parseISO(iso);
+	if (!isValid(d)) return '—';
 	const pattern = 'yyyy-MM-dd HH:mm:ss.SSS';
 	return timezone === 'utc' ? formatInTimeZone(d, 'UTC', pattern) : format(d, pattern);
 }
@@ -33,12 +34,14 @@ export function formatLogRowTimestamp(iso: string, timezone: TimezoneMode): stri
 /** "YYYY-MM-DD HH:MM:SS" — second precision, used in the activity tables. */
 export function formatActivityTimestamp(iso: string, timezone: TimezoneMode): string {
 	const d = parseISO(iso);
+	if (!isValid(d)) return '—';
 	const pattern = 'yyyy-MM-dd HH:mm:ss';
 	return timezone === 'utc' ? formatInTimeZone(d, 'UTC', pattern) : format(d, pattern);
 }
 
 export function formatRelativeTime(input: string | Date): string {
 	const d = typeof input === 'string' ? parseISO(input) : input;
+	if (!isValid(d)) return '—';
 	return formatDistanceToNow(d, { addSuffix: true });
 }
 

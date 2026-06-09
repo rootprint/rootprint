@@ -49,6 +49,13 @@
 	let chartCollapsed = $state(false);
 	let selectedLog = $state<LogHit | null>(null);
 
+	let prevIndexId: string | null | undefined = undefined;
+	$effect(() => {
+		const idx = store.selectedIndex;
+		if (prevIndexId !== undefined && idx !== prevIndexId) selectedLog = null;
+		prevIndexId = idx;
+	});
+
 	const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived.by(() => {
 		if (store.configError || store.searchError) return 'error';
 		if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
