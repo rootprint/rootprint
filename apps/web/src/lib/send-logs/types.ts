@@ -1,12 +1,18 @@
 import type { Component, ComponentType } from 'svelte';
 
-// `@iconify-svelte/logos` exports legacy class components, while Svelte 5's
-// `Component` is the function-component type. Accept either.
-type IconComponent = Component<Record<string, unknown>> | ComponentType;
+// `@iconify-svelte/logos` and `lucide-svelte` export legacy class components,
+// while Svelte 5's `Component` is the function-component type. Accept either.
+export type IconComponent = Component<Record<string, unknown>> | ComponentType;
 
 export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
 
-export type IntegrationCategory = 'Languages' | 'Platforms' | 'Web Servers' | 'Log Agents';
+export type IntegrationOrigin =
+	| 'OpenTelemetry'
+	| 'Kubernetes'
+	| 'Host'
+	| 'Containers'
+	| 'Application'
+	| 'Cloud';
 
 export type Snippet = {
 	code: string;
@@ -53,7 +59,7 @@ export type Integration = {
 	id: string;
 	label: string;
 	icon: IconComponent;
-	category: IntegrationCategory;
+	origin: IntegrationOrigin;
 	flavors?: Flavor[];
 	defaultFlavor?: string;
 	buildSteps: (ctx: IntegrationContext) => Step[];

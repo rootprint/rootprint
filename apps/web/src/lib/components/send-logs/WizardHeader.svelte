@@ -12,12 +12,14 @@
 		integration,
 		indexId,
 		apiKeys,
+		indexIds,
 		selectedApiKeyId = $bindable<number | null>(null),
 		realApiKeyValue = $bindable<string | null>(null)
 	}: {
 		integration: Integration;
 		indexId: string;
 		apiKeys: ApiKeyView[];
+		indexIds: string[];
 		selectedApiKeyId?: number | null;
 		realApiKeyValue?: string | null;
 	} = $props();
@@ -49,7 +51,7 @@
 
 <CreateApiKeyModal
 	bind:open={createOpen}
-	{indexId}
+	{indexIds}
 	invalidateKey={DEP.sendLogsApiKeys}
 	onCreated={handleCreated}
 />

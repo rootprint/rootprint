@@ -41,7 +41,7 @@ export const go: Integration = {
 	id: 'go',
 	label: 'Go',
 	icon: GoIcon,
-	category: 'Languages',
+	origin: 'Application',
 	buildSteps: (ctx) => [
 		{
 			title: 'Install the OpenTelemetry SDK',

@@ -23,7 +23,7 @@ export const python: Integration = {
 	id: 'python',
 	label: 'Python',
 	icon: PythonIcon,
-	category: 'Languages',
+	origin: 'Application',
 	buildSteps: (ctx) => [
 		{
 			title: 'Install and configure',

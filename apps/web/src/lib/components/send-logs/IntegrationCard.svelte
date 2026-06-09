@@ -7,8 +7,8 @@
 
 <a
 	href="/settings/send-logs/{integration.id}"
-	class="border-line rounded-box hover:bg-base-200/60 group flex items-center gap-3 border p-5 transition-colors"
+	class="border-line rounded-box hover:bg-base-200/60 flex w-40 flex-col items-center gap-3 border p-5 text-center transition-colors"
 >
-	<Icon class="size-6 shrink-0" />
-	<span>{integration.label}</span>
+	<Icon class="size-8 shrink-0" />
+	<span class="text-sm font-medium">{integration.label}</span>
 </a>

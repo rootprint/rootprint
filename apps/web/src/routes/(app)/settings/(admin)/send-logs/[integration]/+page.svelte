@@ -17,14 +17,23 @@
 		return integration.defaultFlavor;
 	});
 
-	let selectedApiKeyId = $state<number | null>(untrack(() => data.apiKeys[0]?.id ?? null));
+	let selectedApiKeyId = $state<number | null>(
+		untrack(() => {
+			const otelKey = data.apiKeys.find((k) => k.indexId === DEFAULT_OTEL_LOGS_INDEX_ID);
+			return otelKey?.id ?? data.apiKeys[0]?.id ?? null;
+		})
+	);
 	let realApiKeyValue = $state<string | null>(null);
+
+	const selectedIndexId = $derived(
+		data.apiKeys.find((k) => k.id === selectedApiKeyId)?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID
+	);
 
 	const ctx = $derived({
 		origin: page.url.origin,
 		apiKey: realApiKeyValue ?? '<your-ingest-api-key>',
 		hasRealApiKey: realApiKeyValue !== null,
-		indexId: DEFAULT_OTEL_LOGS_INDEX_ID,
+		indexId: selectedIndexId,
 		flavor
 	});
 
@@ -34,8 +43,9 @@
 <div class="mx-auto flex max-w-7xl flex-col gap-2 px-12 py-12">
 	<WizardHeader
 		{integration}
-		indexId={DEFAULT_OTEL_LOGS_INDEX_ID}
+		indexId={selectedIndexId}
 		apiKeys={data.apiKeys}
+		indexIds={data.indexIds}
 		bind:selectedApiKeyId
 		bind:realApiKeyValue
 	/>
