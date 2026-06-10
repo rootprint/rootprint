@@ -80,6 +80,7 @@ function parseSampleLine(
 		rest = line.slice(braceEnd + 1).trim();
 	}
 
+	const valueRaw = rest.split(/\s+/)[0] ?? '';
 	if (!name || !valueRaw) return null;
 	return { name, labels, value: parseValue(valueRaw) };
 }

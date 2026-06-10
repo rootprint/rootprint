@@ -6,7 +6,7 @@ import { db } from '../lib/db.js';
 import { isAdmin } from '../lib/auth.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { quickwit } from '../lib/quickwit.js';
-import { assertIndexAccess } from '../services/index.service.js';
+import { getIndexMeta } from '../services/index.service.js';
 import { createShare, resolveShare } from '../services/share.service.js';
 import { ShareCreateResponse, ShareViewResponse } from '../schemas/responses/shares.js';
 import { shareCodeParamsSchema, shareCreateSchema } from '../schemas/shares.js';
@@ -34,7 +34,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const body = c.req.valid('json');
 			const session = c.get('session');
-			await assertIndexAccess(db, quickwit, body.indexId, isAdmin(session));
+			await getIndexMeta(db, quickwit, body.indexId, isAdmin(session), 'access');
 			const result = await createShare(db, session.user.id, body);
 			return c.json(result, 201);
 		}
@@ -52,7 +52,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 			const { code } = c.req.valid('param');
 			const session = c.get('session');
 			const row = await resolveShare(db, code);
-			await assertIndexAccess(db, quickwit, row.indexId, isAdmin(session));
+			await getIndexMeta(db, quickwit, row.indexId, isAdmin(session), 'access');
 			return c.json(row);
 		}
 	);

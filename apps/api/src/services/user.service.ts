@@ -17,6 +17,33 @@ import { badRequest, notFound } from '../utils/http-error.js';
 
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 
+type InviteInfo = { url: string; expiresAt: Date };
+
+function toUser(
+	u: typeof user.$inferSelect,
+	invite: InviteInfo | undefined,
+	hasCredential: boolean
+): User {
+	const status: UserStatus = !invite
+		? 'active'
+		: invite.expiresAt.getTime() < Date.now()
+			? 'expired'
+			: 'pending';
+
+	return {
+		id: u.id,
+		name: u.name,
+		email: u.email,
+		role: (u.role as UserRole | null) ?? null,
+		lastActive: u.lastActive?.toISOString() ?? null,
+		createdAt: u.createdAt.toISOString(),
+		status,
+		hasCredentialAccount: hasCredential,
+		inviteUrl: invite?.url ?? null,
+		inviteExpiresAt: invite?.expiresAt.toISOString() ?? null
+	};
+}
+
 export async function listUsers(db: Db): Promise<User[]> {
 	const [users, invites, credentialAccounts] = await Promise.all([
 		db.select().from(user).orderBy(user.createdAt),
@@ -30,30 +57,7 @@ export async function listUsers(db: Db): Promise<User[]> {
 
 	const credentialUserIds = new Set(credentialAccounts.map((a) => a.userId));
 
-	const now = Date.now();
-
-	return users.map((u) => {
-		const invite = inviteMap.get(u.id);
-
-		const status: UserStatus = !invite
-			? 'active'
-			: invite.expiresAt.getTime() < now
-				? 'expired'
-				: 'pending';
-
-		return {
-			id: u.id,
-			name: u.name,
-			email: u.email,
-			role: (u.role as UserRole | null) ?? null,
-			lastActive: u.lastActive?.toISOString() ?? null,
-			createdAt: u.createdAt.toISOString(),
-			status,
-			hasCredentialAccount: credentialUserIds.has(u.id),
-			inviteUrl: invite?.url ?? null,
-			inviteExpiresAt: invite?.expiresAt.toISOString() ?? null
-		};
-	});
+	return users.map((u) => toUser(u, inviteMap.get(u.id), credentialUserIds.has(u.id)));
 }
 
 export async function getUser(db: Db, userId: string): Promise<User> {
@@ -69,24 +73,7 @@ export async function getUser(db: Db, userId: string): Promise<User> {
 		? { url: buildInviteUrl(invites[0].token), expiresAt: invites[0].expiresAt }
 		: undefined;
 
-	const status: UserStatus = !invite
-		? 'active'
-		: invite.expiresAt.getTime() < Date.now()
-			? 'expired'
-			: 'pending';
-
-	return {
-		id: u.id,
-		name: u.name,
-		email: u.email,
-		role: (u.role as UserRole | null) ?? null,
-		lastActive: u.lastActive?.toISOString() ?? null,
-		createdAt: u.createdAt.toISOString(),
-		status,
-		hasCredentialAccount: hasCred,
-		inviteUrl: invite?.url ?? null,
-		inviteExpiresAt: invite?.expiresAt.toISOString() ?? null
-	};
+	return toUser(u, invite, hasCred);
 }
 
 export async function inviteUser(

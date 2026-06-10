@@ -69,5 +69,8 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 	}
 
 	const bodyBytes = await upstream.arrayBuffer();
+	if (upstream.status >= 500) {
+		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
+	}
 	return { status: upstream.status, headers: upstream.headers, bodyBytes };
 }

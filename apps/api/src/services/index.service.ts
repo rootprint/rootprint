@@ -123,21 +123,31 @@ export async function listIndexes(
 		.filter((m) => includeHidden || canAccessIndex(m.visibility, isAdmin));
 }
 
+export async function getIndexMeta(
+	db: Db,
+	qw: QuickwitClient,
+	indexId: string,
+	isAdmin: boolean,
+	level: 'access' | 'manage'
+): Promise<IndexMeta> {
+	const [settings, index] = await Promise.all([
+		getIndexSettings(db, indexId),
+		qwGetIndex(qw, indexId)
+	]);
+	if (level === 'access' && !canAccessIndex(settings.visibility, isAdmin)) {
+		throw indexAccessError(isAdmin, 'denied');
+	}
+	if (!index) throw indexAccessError(isAdmin, 'missing');
+	return { settings, index };
+}
+
 export async function getIndexConfig(
 	db: Db,
 	qw: QuickwitClient,
 	indexId: string,
 	isAdmin: boolean
 ): Promise<IndexConfig> {
-	const [settings, index] = await Promise.all([
-		getIndexSettings(db, indexId),
-		qwGetIndex(qw, indexId)
-	]);
-
-	if (!canAccessIndex(settings.visibility, isAdmin)) {
-		throw indexAccessError(isAdmin, 'denied');
-	}
-	if (!index) throw indexAccessError(isAdmin, 'missing');
+	const { settings, index } = await getIndexMeta(db, qw, indexId, isAdmin, 'access');
 	if (!index.timestampField) throw internal(`Index "${indexId}" has no timestamp_field`);
 
 	return {
@@ -231,35 +241,6 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 	});
 
 	invalidateApiKeyCache();
-}
-
-export async function assertIndexAccess(
-	db: Db,
-	qw: QuickwitClient,
-	indexId: string,
-	isAdmin: boolean
-): Promise<void> {
-	const [settings, index] = await Promise.all([
-		getIndexSettings(db, indexId),
-		qwGetIndex(qw, indexId)
-	]);
-	if (!canAccessIndex(settings.visibility, isAdmin)) {
-		throw indexAccessError(isAdmin, 'denied');
-	}
-	if (!index) {
-		throw indexAccessError(isAdmin, 'missing');
-	}
-}
-
-export async function assertIndexManageable(
-	qw: QuickwitClient,
-	indexId: string,
-	isAdmin: boolean
-): Promise<void> {
-	const index = await qwGetIndex(qw, indexId);
-	if (!index) {
-		throw indexAccessError(isAdmin, 'missing');
-	}
 }
 
 // Quickwit deserializes source create/update request bodies as a

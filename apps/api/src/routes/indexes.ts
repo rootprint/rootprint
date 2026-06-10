@@ -6,11 +6,10 @@ import { viewsRouter } from './views.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
+import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';
-import { requireIndexVisibility } from '../middleware/require-index-visibility.js';
-import { requireManageableIndex } from '../middleware/require-manageable-index.js';
-import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
-import { withIndexMeta, type IndexMetaEnv } from '../middleware/with-index-meta.js';
+import { withIndexConfig } from '../middleware/with-index-config.js';
+import { withIndexMeta } from '../middleware/with-index-meta.js';
 import {
 	FieldParams,
 	FieldValuesBulkQuery,
@@ -64,7 +63,7 @@ import { getPreferences, putPreferences } from '../services/preference.service.j
 import { IndexIdParams } from '../utils/params.js';
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
-export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
+export const indexesRouter = new Hono<AuthedEnv>()
 	.get(
 		'/',
 		describe({
@@ -127,7 +126,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			ok: IndexStatsResponse
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		validator('query', StatsQuery),
 		async (c) => {
@@ -150,7 +149,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		validator('json', saveIndexConfigSchema),
 		async (c) => {
@@ -169,7 +168,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -187,7 +186,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [400, 409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		validator('json', createSourceSchema),
 		async (c) => {
@@ -222,7 +221,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [400, 404]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		validator('json', updateSourceSchema),
 		async (c) => {
@@ -241,7 +240,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [404]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
@@ -258,7 +257,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		validator('json', ToggleSourceBody),
 		async (c) => {
@@ -277,7 +276,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
@@ -377,7 +376,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			summary: 'Get index preferences',
 			ok: PreferencesResponse
 		}),
-		requireIndexVisibility,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -392,7 +391,7 @@ export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 			summary: 'Save index preferences',
 			ok: PreferencesResponse
 		}),
-		requireIndexVisibility,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		validator('json', PutPreferencesBody),
 		async (c) => {

@@ -108,15 +108,7 @@ export async function getStatsHistory(
 		.where(and(...conditions))
 		.orderBy(asc(indexStatsSnapshot.capturedAt))
 		.limit(opts.limit);
-	return rows.map((r) => ({
-		capturedAt: r.capturedAt.toISOString(),
-		numDocs: r.numDocs,
-		sizeBytes: r.sizeBytes,
-		uncompressedBytes: r.uncompressedBytes,
-		numSplits: r.numSplits,
-		minTimestamp: r.minTimestamp,
-		maxTimestamp: r.maxTimestamp
-	}));
+	return rows.map((r) => ({ ...r, capturedAt: r.capturedAt.toISOString() }));
 }
 
 export async function getLatestSnapshotsByIndex(db: Db): Promise<LatestIndexSnapshot[]> {

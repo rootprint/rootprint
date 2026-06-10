@@ -3,7 +3,6 @@ import { eq, inArray, sql } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
 import { user } from '../db/auth.schema.js';
 import { apiKey } from '../db/schema.js';
-import { notFound } from '../utils/http-error.js';
 import type { ActivityWindow } from '../schemas/admin-activity.js';
 import type {
 	ActorIndexRow,
@@ -218,29 +217,16 @@ export async function getActorSummary(
 			  AND ${actorPredicate(actor)}
 		`)
 	]);
-	if (!identity) {
-		throw notFound(actor.kind === 'user' ? 'User not found' : 'API key not found');
-	}
+	const id = identity ?? { displayName: null, email: null };
 	const r = result.rows[0];
-	if (!r) {
-		return {
-			totalSearches: 0,
-			errorCount: 0,
-			p50: null,
-			p95: null,
-			p99: null,
-			displayName: identity.displayName,
-			email: identity.email
-		};
-	}
 	return {
-		totalSearches: Number(r.total),
-		errorCount: Number(r.errors),
-		p50: r.p50 === null ? null : Number(r.p50),
-		p95: r.p95 === null ? null : Number(r.p95),
-		p99: r.p99 === null ? null : Number(r.p99),
-		displayName: identity.displayName,
-		email: identity.email
+		totalSearches: r ? Number(r.total) : 0,
+		errorCount: r ? Number(r.errors) : 0,
+		p50: r?.p50 != null ? Number(r.p50) : null,
+		p95: r?.p95 != null ? Number(r.p95) : null,
+		p99: r?.p99 != null ? Number(r.p99) : null,
+		displayName: id.displayName,
+		email: id.email
 	};
 }
 

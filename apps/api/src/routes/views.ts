@@ -1,9 +1,8 @@
 import { Hono } from 'hono';
 
-import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
-import { requireIndexVisibility } from '../middleware/require-index-visibility.js';
+import { withIndexMeta, type IndexMetaEnv } from '../middleware/with-index-meta.js';
 import { SavedViewListResponse, SavedViewResponse } from '../schemas/responses/views.js';
 import { createViewSchema, patchViewSchema, viewItemParamsSchema } from '../schemas/views.js';
 import {
@@ -14,9 +13,8 @@ import {
 } from '../services/view.service.js';
 import { IndexIdParams } from '../utils/params.js';
 
-// Mounted under /api/indexes/:indexId/views.
-export const viewsRouter = new Hono<AuthedEnv>()
-	.use('*', requireIndexVisibility)
+export const viewsRouter = new Hono<IndexMetaEnv>()
+	.use('*', withIndexMeta('access'))
 	.get(
 		'/',
 		describe({

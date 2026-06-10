@@ -6,7 +6,6 @@ import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
 import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import { serviceUnavailable } from '../../utils/http-error.js';
 
 export const ndjsonRouter = new Hono<KeyedEnv>().post(
 	'/ndjson',
@@ -49,10 +48,6 @@ export const ndjsonRouter = new Hono<KeyedEnv>().post(
 		if (contentEncoding) headers['content-encoding'] = contentEncoding;
 
 		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
-
-		if (result.status >= 500) {
-			throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
-		}
 
 		const respHeaders: Record<string, string> = {};
 		const upstreamCt = result.headers.get('content-type');

@@ -5,12 +5,7 @@ import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import {
-	badRequest,
-	serviceUnavailable,
-	tooManyRequests,
-	unsupportedMediaType
-} from '../../utils/http-error.js';
+import { badRequest, tooManyRequests, unsupportedMediaType } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
 import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 
@@ -121,9 +116,6 @@ export const otlpRouter = new Hono<KeyedEnv>().post(
 
 		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
-		if (result.status >= 500) {
-			throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
-		}
 		if (result.status === 429) {
 			const retryAfter = result.headers.get('retry-after') ?? undefined;
 			const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
