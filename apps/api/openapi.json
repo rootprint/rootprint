@@ -1461,9 +1461,25 @@
 				],
 				"type": "object"
 			},
-			"SavedQueryResponse": {
+			"SavedViewResponse": {
 				"properties": {
-					"createdAt": {},
+					"columns": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
 					"description": {
 						"anyOf": [
 							{
@@ -1473,6 +1489,30 @@
 								"type": "null"
 							}
 						]
+					},
+					"filters": {
+						"items": {
+							"properties": {
+								"exclude": {
+									"type": "boolean"
+								},
+								"field": {
+									"minLength": 1,
+									"type": "string"
+								},
+								"value": {
+									"minLength": 1,
+									"type": "string"
+								}
+							},
+							"required": [
+								"field",
+								"value",
+								"exclude"
+							],
+							"type": "object"
+						},
+						"type": "array"
 					},
 					"id": {
 						"type": "number"
@@ -1486,7 +1526,17 @@
 					"query": {
 						"type": "string"
 					},
-					"updatedAt": {}
+					"sortDirection": {
+						"enum": [
+							"asc",
+							"desc"
+						],
+						"type": "string"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string"
+					}
 				},
 				"required": [
 					"id",
@@ -1494,6 +1544,9 @@
 					"name",
 					"description",
 					"query",
+					"filters",
+					"sortDirection",
+					"columns",
 					"createdAt",
 					"updatedAt"
 				],
@@ -2054,7 +2107,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.3.3"
+		"version": "0.3.4"
 	},
 	"openapi": "3.1.0",
 	"paths": {
@@ -11973,282 +12026,6 @@
 				]
 			}
 		},
-		"/api/indexes/{indexId}/saved-queries": {
-			"get": {
-				"operationId": "getApiIndexesByIndexIdSavedQueries",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/SavedQueryResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "List saved queries",
-				"tags": [
-					"Log explorer"
-				]
-			},
-			"post": {
-				"operationId": "postApiIndexesByIndexIdSavedQueries",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"properties": {
-									"description": {
-										"type": "string"
-									},
-									"name": {
-										"maxLength": 200,
-										"minLength": 1,
-										"type": "string"
-									},
-									"query": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"name",
-									"query"
-								],
-								"type": "object"
-							}
-						}
-					},
-					"required": true
-				},
-				"responses": {
-					"201": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SavedQueryResponse"
-								}
-							}
-						},
-						"description": "Saved query created"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"409": {
-						"$ref": "#/components/responses/Conflict"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Create saved query",
-				"tags": [
-					"Log explorer"
-				]
-			}
-		},
-		"/api/indexes/{indexId}/saved-queries/{savedQueryId}": {
-			"delete": {
-				"operationId": "deleteApiIndexesByIndexIdSavedQueriesBySavedQueryId",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "savedQueryId",
-						"required": true,
-						"schema": {
-							"minimum": 1,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					}
-				],
-				"responses": {
-					"204": {
-						"description": "Saved query deleted"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Delete saved query",
-				"tags": [
-					"Log explorer"
-				]
-			},
-			"patch": {
-				"operationId": "patchApiIndexesByIndexIdSavedQueriesBySavedQueryId",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "savedQueryId",
-						"required": true,
-						"schema": {
-							"minimum": 1,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"properties": {
-									"description": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"name": {
-										"maxLength": 200,
-										"minLength": 1,
-										"type": "string"
-									},
-									"query": {
-										"type": "string"
-									}
-								},
-								"required": [],
-								"type": "object"
-							}
-						}
-					},
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SavedQueryResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"409": {
-						"$ref": "#/components/responses/Conflict"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Update saved query",
-				"tags": [
-					"Log explorer"
-				]
-			}
-		},
 		"/api/indexes/{indexId}/sources": {
 			"post": {
 				"operationId": "postApiIndexesByIndexIdSources",
@@ -12856,6 +12633,370 @@
 				"summary": "Get index stats history",
 				"tags": [
 					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/views": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdViews",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SavedViewResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List saved views",
+				"tags": [
+					"Log explorer"
+				]
+			},
+			"post": {
+				"operationId": "postApiIndexesByIndexIdViews",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"columns": {
+										"anyOf": [
+											{
+												"items": {
+													"type": "string"
+												},
+												"type": "array"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"description": {
+										"type": "string"
+									},
+									"filters": {
+										"items": {
+											"properties": {
+												"exclude": {
+													"type": "boolean"
+												},
+												"field": {
+													"minLength": 1,
+													"type": "string"
+												},
+												"value": {
+													"minLength": 1,
+													"type": "string"
+												}
+											},
+											"required": [
+												"field",
+												"value",
+												"exclude"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"name": {
+										"maxLength": 200,
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									},
+									"sortDirection": {
+										"enum": [
+											"asc",
+											"desc"
+										],
+										"type": "string"
+									}
+								},
+								"required": [
+									"name",
+									"query"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SavedViewResponse"
+								}
+							}
+						},
+						"description": "Saved view created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create saved view",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/views/{viewId}": {
+			"delete": {
+				"operationId": "deleteApiIndexesByIndexIdViewsByViewId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "viewId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Saved view deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete saved view",
+				"tags": [
+					"Log explorer"
+				]
+			},
+			"patch": {
+				"operationId": "patchApiIndexesByIndexIdViewsByViewId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "viewId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"columns": {
+										"anyOf": [
+											{
+												"items": {
+													"type": "string"
+												},
+												"type": "array"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"description": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"filters": {
+										"items": {
+											"properties": {
+												"exclude": {
+													"type": "boolean"
+												},
+												"field": {
+													"minLength": 1,
+													"type": "string"
+												},
+												"value": {
+													"minLength": 1,
+													"type": "string"
+												}
+											},
+											"required": [
+												"field",
+												"value",
+												"exclude"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"name": {
+										"maxLength": 200,
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									},
+									"sortDirection": {
+										"enum": [
+											"asc",
+											"desc"
+										],
+										"type": "string"
+									}
+								},
+								"required": [],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SavedViewResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Update saved view",
+				"tags": [
+					"Log explorer"
 				]
 			}
 		},

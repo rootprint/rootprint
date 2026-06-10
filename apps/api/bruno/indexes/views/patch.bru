@@ -1,11 +1,11 @@
 meta {
-  name: Patch Saved Query
+  name: Patch Saved View
   type: http
   seq: 3
 }
 
 patch {
-  url: {{baseUrl}}/api/indexes/{{indexId}}/saved-queries/{{savedQueryId}}
+  url: {{baseUrl}}/api/indexes/{{indexId}}/views/{{viewId}}
   body: json
   auth: none
 }
@@ -13,10 +13,11 @@ patch {
 body:json {
   {
     "name": "Errors last 24h (renamed)",
-    "description": null
+    "description": null,
+    "columns": null
   }
 }
 
 vars:pre-request {
-  savedQueryId: 13
+  viewId: 1
 }

@@ -535,10 +535,17 @@ export class SearchStore {
 
 	async #loadActiveFields(indexId: string): Promise<void> {
 		const requestId = this.#activeFieldsGuard.next();
+		const saveSeqAtStart = this.#prefSaveSeq;
+		// Display settings edited while the fetch was in flight (e.g. a saved
+		// view applying its columns) must win over the fetched prefs — the
+		// scheduled save persists them. #confirmedPrefs still takes the server
+		// value so a failed save rolls back to the truth.
+		const editedMeanwhile = () => this.#prefSaveSeq !== saveSeqAtStart;
 		try {
 			const prefs = await getPreferences(indexId);
 			if (!this.#activeFieldsGuard.isCurrent(requestId)) return;
 			this.#confirmedPrefs = prefs;
+			if (editedMeanwhile()) return;
 			this.activeFields = prefs.displayFields ?? [];
 			this.lineWrap = prefs.lineWrap;
 			this.displayMode = prefs.displayMode;
@@ -547,9 +554,11 @@ export class SearchStore {
 			// Reset cache key so the effect retries on the next reactive run.
 			this.#activeFieldsFetchedFor = null;
 			this.#confirmedPrefs = { displayFields: null, lineWrap: false, displayMode: 'table' };
-			this.activeFields = [];
-			this.lineWrap = false;
-			this.displayMode = 'table';
+			if (!editedMeanwhile()) {
+				this.activeFields = [];
+				this.lineWrap = false;
+				this.displayMode = 'table';
+			}
 			toast.error(e instanceof Error ? e.message : 'Failed to load display preferences');
 		}
 	}

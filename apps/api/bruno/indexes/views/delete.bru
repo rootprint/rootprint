@@ -1,0 +1,15 @@
+meta {
+  name: Delete Saved View
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/views/{{viewId}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  viewId: 1
+}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Play, Share2 } from 'lucide-svelte';
 	import TimeRangePicker from './TimeRangePicker.svelte';
-	import SavedQueriesDropdown from './SavedQueriesDropdown.svelte';
+	import ViewsDropdown from './ViewsDropdown.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { copyWithToast } from '$lib/utils/clipboard';
 
@@ -26,6 +26,8 @@
 </script>
 
 <div class="border-line bg-base-100 flex h-12 items-center gap-2 border-b px-3">
+	<ViewsDropdown {store} />
+
 	<select
 		class="select select-sm w-auto min-w-0 font-mono text-xs"
 		value={store.selectedIndex}
@@ -57,7 +59,6 @@
 	/>
 
 	<div class="ml-auto flex items-center gap-1">
-		<SavedQueriesDropdown {store} />
 		<button
 			type="button"
 			class="btn btn-sm btn-ghost"
