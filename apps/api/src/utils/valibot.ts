@@ -32,3 +32,5 @@ export const intParam = ({
 
 /** A string path/query param constrained to a positive integer, transformed to a number. */
 export const positiveInt = (label = 'value') => intParam({ min: 1, label });
+
+export const isoTimestampString = v.pipe(v.string(), v.isoTimestamp());

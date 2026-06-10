@@ -12,3 +12,7 @@ export type AppEnv = {
 export type AuthedEnv = {
 	Variables: AppEnv['Variables'] & { session: NonNullable<Session> };
 };
+
+export type KeyedEnv = {
+	Variables: AppEnv['Variables'] & { apiKey: VerifiedApiKey };
+};

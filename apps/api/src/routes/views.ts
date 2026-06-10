@@ -1,46 +1,18 @@
 import { Hono } from 'hono';
-import * as v from 'valibot';
 
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireIndexVisibility } from '../middleware/require-index-visibility.js';
-import { FilterSchema, SortDirectionSchema } from '../schemas/filters.js';
 import { SavedViewListResponse, SavedViewResponse } from '../schemas/responses/views.js';
+import { createViewSchema, patchViewSchema, viewItemParamsSchema } from '../schemas/views.js';
 import {
 	createView,
 	deleteOwnedView,
 	listViews,
 	updateOwnedView
 } from '../services/view.service.js';
-import { positiveInt } from '../utils/valibot.js';
 import { IndexIdParams } from '../utils/params.js';
-
-const CreateBody = v.object({
-	name: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
-	description: v.optional(v.string()),
-	query: v.string(),
-	filters: v.optional(v.array(FilterSchema)),
-	sortDirection: v.optional(SortDirectionSchema),
-	columns: v.optional(v.nullable(v.array(v.string())))
-});
-
-const PatchBody = v.pipe(
-	v.object({
-		name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200))),
-		description: v.optional(v.nullable(v.string())),
-		query: v.optional(v.string()),
-		filters: v.optional(v.array(FilterSchema)),
-		sortDirection: v.optional(SortDirectionSchema),
-		columns: v.optional(v.nullable(v.array(v.string())))
-	}),
-	v.check((b) => Object.keys(b).length > 0, 'at least one field is required')
-);
-
-const ItemParams = v.object({
-	...IndexIdParams.entries,
-	viewId: positiveInt('viewId')
-});
 
 // Mounted under /api/indexes/:indexId/views.
 export const viewsRouter = new Hono<AuthedEnv>()
@@ -70,7 +42,7 @@ export const viewsRouter = new Hono<AuthedEnv>()
 			errors: [409]
 		}),
 		validator('param', IndexIdParams),
-		validator('json', CreateBody),
+		validator('json', createViewSchema),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const body = c.req.valid('json');
@@ -90,8 +62,8 @@ export const viewsRouter = new Hono<AuthedEnv>()
 			ok: SavedViewResponse,
 			errors: [404, 409]
 		}),
-		validator('param', ItemParams),
-		validator('json', PatchBody),
+		validator('param', viewItemParamsSchema),
+		validator('json', patchViewSchema),
 		async (c) => {
 			const { indexId, viewId } = c.req.valid('param');
 			const body = c.req.valid('json');
@@ -110,7 +82,7 @@ export const viewsRouter = new Hono<AuthedEnv>()
 				'204': { description: 'Saved view deleted' }
 			}
 		}),
-		validator('param', ItemParams),
+		validator('param', viewItemParamsSchema),
 		async (c) => {
 			const { indexId, viewId } = c.req.valid('param');
 			const session = c.get('session');

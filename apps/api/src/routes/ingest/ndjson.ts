@@ -2,12 +2,12 @@ import { Hono } from 'hono';
 
 import { config } from '../../config.js';
 import { CONTENT_TYPE_JSON } from '../../constants.js';
-import type { AppEnv } from '../../env.js';
+import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import { proxyToQuickwit } from '../../utils/quickwit-proxy.js';
 
-export const ndjsonRouter = new Hono<AppEnv>().post(
+export const ndjsonRouter = new Hono<KeyedEnv>().post(
 	'/ndjson',
 	describe({
 		tag: 'Log ingest',
@@ -37,7 +37,7 @@ export const ndjsonRouter = new Hono<AppEnv>().post(
 	}),
 	requireIngestKey,
 	async (c) => {
-		const apiKey = c.get('apiKey')!;
+		const apiKey = c.get('apiKey');
 		const upstreamUrl = `${config.quickwitUrl}/api/v1/${encodeURIComponent(apiKey.indexId)}/ingest`;
 		const contentType = c.req.header('content-type') ?? CONTENT_TYPE_JSON;
 

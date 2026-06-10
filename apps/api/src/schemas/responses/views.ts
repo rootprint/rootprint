@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 
 import { named } from '../../lib/openapi/describe.js';
+import { isoTimestampString } from '../../utils/valibot.js';
 import { FilterSchema, SortDirectionSchema } from '../filters.js';
 
 export const SavedViewResponse = named(
@@ -14,8 +15,8 @@ export const SavedViewResponse = named(
 		filters: v.array(FilterSchema),
 		sortDirection: SortDirectionSchema,
 		columns: v.nullable(v.array(v.string())),
-		createdAt: v.pipe(v.string(), v.isoTimestamp()),
-		updatedAt: v.pipe(v.string(), v.isoTimestamp())
+		createdAt: isoTimestampString,
+		updatedAt: isoTimestampString
 	})
 );
 

@@ -328,7 +328,10 @@
 			},
 			"ApiKeyResponse": {
 				"properties": {
-					"createdAt": {},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
 					"createdByUserId": {
 						"type": "string"
 					},
@@ -340,7 +343,10 @@
 					},
 					"lastUsedAt": {
 						"anyOf": [
-							{},
+							{
+								"format": "date-time",
+								"type": "string"
+							},
 							{
 								"type": "null"
 							}
@@ -849,7 +855,10 @@
 			},
 			"IndexStatsPointSchema": {
 				"properties": {
-					"capturedAt": {},
+					"capturedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
 					"maxTimestamp": {
 						"anyOf": [
 							{
@@ -1126,6 +1135,7 @@
 					"capturedAt": {
 						"anyOf": [
 							{
+								"format": "date-time",
 								"type": "string"
 							},
 							{
@@ -1933,7 +1943,10 @@
 			},
 			"UserResponse": {
 				"properties": {
-					"createdAt": {},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
 					"email": {
 						"type": "string"
 					},
@@ -1945,7 +1958,10 @@
 					},
 					"inviteExpiresAt": {
 						"anyOf": [
-							{},
+							{
+								"format": "date-time",
+								"type": "string"
+							},
 							{
 								"type": "null"
 							}
@@ -1963,7 +1979,10 @@
 					},
 					"lastActive": {
 						"anyOf": [
-							{},
+							{
+								"format": "date-time",
+								"type": "string"
+							},
 							{
 								"type": "null"
 							}

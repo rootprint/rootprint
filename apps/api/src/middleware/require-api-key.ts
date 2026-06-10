@@ -1,13 +1,13 @@
 import type { MiddlewareHandler } from 'hono';
 
-import type { AppEnv } from '../env.js';
+import type { KeyedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { verifyApiKey } from '../services/api-key.service.js';
 import type { ApiKeyRole } from '../types.js';
 import { extractBearerToken } from '../utils/bearer.js';
 import { forbidden, unauthorized } from '../utils/http-error.js';
 
-function requireApiKey(role: ApiKeyRole): MiddlewareHandler<AppEnv> {
+function requireApiKey(role: ApiKeyRole): MiddlewareHandler<KeyedEnv> {
 	const missingCode = role === 'ingest' ? 'INGEST_MISSING_BEARER' : 'SEARCH_MISSING_BEARER';
 	const invalidCode = role === 'ingest' ? 'INGEST_INVALID_TOKEN' : 'SEARCH_INVALID_TOKEN';
 	const wrongRoleCode = role === 'ingest' ? 'INGEST_WRONG_ROLE_KEY' : 'SEARCH_WRONG_ROLE_KEY';

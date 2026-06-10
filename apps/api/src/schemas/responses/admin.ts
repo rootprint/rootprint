@@ -2,6 +2,7 @@ import * as v from 'valibot';
 
 import { INDEX_VISIBILITIES } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
+import { isoTimestampString } from '../../utils/valibot.js';
 
 // ---- Activity ----
 
@@ -153,7 +154,7 @@ export const PerIndexOverviewResponse = named(
 		sizeBytes: v.nullable(v.number()),
 		uncompressedBytes: v.nullable(v.number()),
 		numSplits: v.nullable(v.number()),
-		capturedAt: v.nullable(v.string())
+		capturedAt: v.nullable(isoTimestampString)
 	})
 );
 

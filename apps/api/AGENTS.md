@@ -80,6 +80,7 @@ Sibling top-level dirs:
 
 - Use Valibot for all external input (request bodies, query params, headers). The `app.onError` handler maps `ValiError` to a 400 with a structured detail list.
 - Infer TS types from Valibot schemas where possible (`v.InferOutput<typeof Schema>`).
+- Request schemas live in `src/schemas/<resource>.ts` (shared path-param schemas in `src/utils/params.ts`); response schemas in `src/schemas/responses/<resource>.ts`. Route files never define schemas inline — they import them.
 
 ## Database
 

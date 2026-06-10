@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import * as v from 'valibot';
 
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
@@ -10,24 +9,10 @@ import { quickwit } from '../lib/quickwit.js';
 import { assertIndexAccess } from '../services/index.service.js';
 import { createShare, resolveShare } from '../services/share.service.js';
 import { ShareCreateResponse, ShareViewResponse } from '../schemas/responses/shares.js';
+import { shareCodeParamsSchema, shareCreateSchema } from '../schemas/shares.js';
 import { unprocessable } from '../utils/http-error.js';
 
 const SHARE_BODY_LIMIT = 64 * 1024;
-
-const CreateBody = v.pipe(
-	v.object({
-		indexId: v.pipe(v.string(), v.minLength(1)),
-		query: v.string(),
-		startTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
-		endTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
-		hit: v.record(v.string(), v.unknown())
-	}),
-	v.check((b) => b.endTime >= b.startTime, 'endTime must be >= startTime')
-);
-
-const CodeParams = v.object({
-	code: v.pipe(v.string(), v.length(10))
-});
 
 export const sharesRouter = new Hono<AuthedEnv>()
 	.post(
@@ -45,7 +30,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 				throw unprocessable('Share payload exceeds 64KB', 'PAYLOAD_TOO_LARGE');
 			}
 		}),
-		validator('json', CreateBody),
+		validator('json', shareCreateSchema),
 		async (c) => {
 			const body = c.req.valid('json');
 			const session = c.get('session');
@@ -62,7 +47,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 			ok: ShareViewResponse,
 			okDescription: 'Resolved share'
 		}),
-		validator('param', CodeParams),
+		validator('param', shareCodeParamsSchema),
 		async (c) => {
 			const { code } = c.req.valid('param');
 			const session = c.get('session');

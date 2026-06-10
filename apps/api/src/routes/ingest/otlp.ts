@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 
 import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
-import type { AppEnv } from '../../env.js';
+import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import {
@@ -43,7 +43,7 @@ const protobufBinarySchema = {
 	description: 'google.rpc.Status serialised as application/x-protobuf'
 };
 
-export const otlpRouter = new Hono<AppEnv>().post(
+export const otlpRouter = new Hono<KeyedEnv>().post(
 	'/logs',
 	describe({
 		tag: 'Log ingest',
@@ -110,7 +110,7 @@ export const otlpRouter = new Hono<AppEnv>().post(
 			throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
 		}
 
-		const apiKey = c.get('apiKey')!;
+		const apiKey = c.get('apiKey');
 		const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
 		const headers: Record<string, string> = {
 			'content-type': CONTENT_TYPE_PROTOBUF,

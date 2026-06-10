@@ -2,6 +2,7 @@ import * as v from 'valibot';
 
 import { INDEX_VISIBILITIES } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
+import { isoTimestampString } from '../../utils/valibot.js';
 
 export const IndexFieldSchema = named(
 	'IndexFieldSchema',
@@ -106,7 +107,7 @@ export const IndexFieldsResponse = named(
 export const IndexStatsPointSchema = named(
 	'IndexStatsPointSchema',
 	v.object({
-		capturedAt: v.date(),
+		capturedAt: isoTimestampString,
 		numDocs: v.number(),
 		sizeBytes: v.number(),
 		uncompressedBytes: v.number(),
