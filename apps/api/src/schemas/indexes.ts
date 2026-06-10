@@ -2,6 +2,7 @@ import * as v from 'valibot';
 
 import { FIELD_VALUES_MAX, INDEX_VISIBILITIES } from '../constants.js';
 import { FilterSchema } from './filters.js';
+import { IndexIdParams } from '../utils/params.js';
 import { intParam, toNum } from '../utils/valibot.js';
 
 export const saveIndexConfigSchema = v.object({
@@ -16,14 +17,14 @@ export const saveIndexConfigSchema = v.object({
 export type SaveIndexConfigInput = v.InferOutput<typeof saveIndexConfigSchema>;
 
 export const SourceParams = v.object({
-	indexId: v.pipe(v.string(), v.minLength(1)),
+	...IndexIdParams.entries,
 	sourceId: v.pipe(v.string(), v.minLength(1))
 });
 
 export const ToggleSourceBody = v.object({ enabled: v.boolean() });
 
 export const FieldParams = v.object({
-	indexId: v.pipe(v.string(), v.minLength(1)),
+	...IndexIdParams.entries,
 	field: v.pipe(v.string(), v.minLength(1))
 });
 

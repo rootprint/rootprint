@@ -26,7 +26,8 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
 	let session;
 	try {
 		session = await auth().api.getSession({ headers: c.req.raw.headers });
-	} catch {
+	} catch (err) {
+		console.error(`[require_user] requestId=${c.get('requestId')} getSession failed`, err);
 		throw internal('Session validation failed');
 	}
 	if (!session) throw unauthorized('Unauthorized');

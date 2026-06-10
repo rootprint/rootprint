@@ -4,7 +4,7 @@
 
 Rootprint is an open-source logging UI tool built on top of [Quickwit](https://quickwit.io). It is organized as a Bun-workspace monorepo under `apps/`.
 
-- **Backend** (`apps/api`): Hono on Bun. Drizzle ORM + PostgreSQL, Better Auth, Quickwit via `quickwit-js`, Valibot, pino, buf/protobuf.
+- **Backend** (`apps/api`): Hono on Bun. Drizzle ORM + PostgreSQL, Better Auth, Quickwit via `quickwit-js`, Valibot, buf/protobuf.
 - **Frontend** (`apps/web`): Svelte 5 + SvelteKit. Tailwind v4 + DaisyUI. Calls `apps/api` over HTTP.
 
 ## Project Configuration
@@ -13,7 +13,7 @@ Rootprint is an open-source logging UI tool built on top of [Quickwit](https://q
 | --------------- | ------------------------------------------------- |
 | Language        | TypeScript (strict, extends `tsconfig.base.json`) |
 | Package Manager | bun (workspaces under `apps/*`)                   |
-| Backend stack   | hono, drizzle, better-auth, valibot, pino, buf    |
+| Backend stack   | hono, drizzle, better-auth, valibot, buf          |
 | Frontend stack  | svelte 5, sveltekit, tailwindcss v4, daisyui      |
 
 ## Rules

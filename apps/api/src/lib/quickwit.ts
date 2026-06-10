@@ -4,6 +4,10 @@ import { config } from '../config.js';
 
 export const quickwit = new QuickwitClient({ endpoint: config.quickwitUrl });
 
+export function quickwitUrl(path: string): string {
+	return config.quickwitUrl.replace(/\/+$/, '') + path;
+}
+
 const PROBE_PATH = '/api/v1/version';
 const PROBE_RETRY = 6;
 const PROBE_DELAY_MS = 2000;
@@ -17,7 +21,7 @@ class PermanentProbeError extends Error {
 }
 
 export async function probeQuickwit(): Promise<void> {
-	const url = new URL(PROBE_PATH, config.quickwitUrl).toString();
+	const url = quickwitUrl(PROBE_PATH);
 	let lastError: unknown;
 	for (let attempt = 1; attempt <= PROBE_RETRY; attempt++) {
 		try {

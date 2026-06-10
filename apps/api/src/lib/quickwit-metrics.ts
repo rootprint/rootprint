@@ -1,6 +1,6 @@
-import { config } from '../config.js';
 import type { PromMetric, PromMetricType } from '../types.js';
-import { serviceUnavailable } from './http-error.js';
+import { serviceUnavailable } from '../utils/http-error.js';
+import { quickwitUrl } from './quickwit.js';
 
 const KNOWN_TYPES: ReadonlySet<PromMetricType> = new Set([
 	'counter',
@@ -19,9 +19,6 @@ function parseValue(raw: string): number {
 	return Number.isFinite(n) ? n : Number.NaN;
 }
 
-// Parse a labels block: `key="value",key2="v\"alue"`
-// Returns an empty record for the no-labels case. Caller passes the inside
-// of the braces (the braces themselves are already stripped).
 function parseLabels(inside: string): Record<string, string> {
 	const out: Record<string, string> = {};
 	let i = 0;
@@ -61,8 +58,6 @@ function parseLabels(inside: string): Record<string, string> {
 	return out;
 }
 
-// Split `<name>{labels} <value>` (labels optional) into parts. Returns null
-// when the line cannot be parsed.
 function parseSampleLine(
 	line: string
 ): { name: string; labels: Record<string, string>; value: number } | null {
@@ -79,17 +74,12 @@ function parseSampleLine(
 		rest = line.slice(space + 1);
 	} else {
 		name = line.slice(0, braceStart).trim();
-		// Assumes label values do not contain an unescaped '}'. True for all
-		// known Quickwit metric output; a full quote-aware scan would be
-		// needed if a future scrape target violated that.
 		const braceEnd = line.lastIndexOf('}');
 		if (braceEnd === -1 || braceEnd < braceStart) return null;
 		labels = parseLabels(line.slice(braceStart + 1, braceEnd));
 		rest = line.slice(braceEnd + 1).trim();
 	}
 
-	// `rest` is `<value> [<timestamp>]` — we ignore the timestamp.
-	const valueRaw = rest.split(/\s+/)[0] ?? '';
 	if (!name || !valueRaw) return null;
 	return { name, labels, value: parseValue(valueRaw) };
 }
@@ -135,9 +125,6 @@ export function parsePromText(text: string): PromMetric[] {
 
 		const parsed = parseSampleLine(line);
 		if (!parsed) continue;
-		// Histogram/summary sub-series share a base name with `_bucket`, `_sum`,
-		// `_count` suffixes. We keep them under their literal series name, which
-		// is what the projection layer expects.
 		ensure(parsed.name).samples.push({ labels: parsed.labels, value: parsed.value });
 	}
 
@@ -148,7 +135,7 @@ const METRICS_PATH = '/metrics';
 const FETCH_TIMEOUT_MS = 5000;
 
 export async function fetchQuickwitMetrics(): Promise<{ raw: string; metrics: PromMetric[] }> {
-	const url = new URL(METRICS_PATH, config.quickwitUrl).toString();
+	const url = quickwitUrl(METRICS_PATH);
 	let res: Response;
 	try {
 		res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });

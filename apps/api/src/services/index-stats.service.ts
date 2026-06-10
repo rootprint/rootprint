@@ -4,6 +4,7 @@ import { QuickwitError, type QuickwitClient } from 'quickwit-js';
 import type { Db } from '../db/index.js';
 import { indexStatsSnapshot } from '../db/schema.js';
 import type { IndexStatsPoint, LatestIndexSnapshot } from '../types.js';
+import { listIndexes } from './quickwit-index.service.js';
 
 export const INDEX_STATS_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -14,7 +15,7 @@ export async function captureSnapshots(
 	qw: QuickwitClient,
 	now: Date = new Date()
 ): Promise<{ captured: number; failed: number }> {
-	const indexes = await qw.listIndexes();
+	const indexes = await listIndexes(qw);
 	if (indexes.length === 0) {
 		return { captured: 0, failed: 0 };
 	}
@@ -23,7 +24,7 @@ export async function captureSnapshots(
 	let failed = 0;
 
 	for (const meta of indexes) {
-		const indexId = meta.index_config.index_id;
+		const indexId = meta.indexId;
 		try {
 			const stats = await qw.describeIndex(indexId);
 			rows.push({

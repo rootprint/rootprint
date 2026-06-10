@@ -1,7 +1,9 @@
 import type { Context } from 'hono';
 
 import type { ProxyResult } from '../types.js';
-import { badRequest, serviceUnavailable } from './http-error.js';
+import { badRequest, serviceUnavailable } from '../utils/http-error.js';
+
+const PROXY_TIMEOUT_MS = 30_000;
 
 type ProxyOpts = {
 	upstreamUrl: string;
@@ -54,7 +56,8 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 			method: 'POST',
 			headers: opts.headers,
 			body,
-			duplex: 'half'
+			duplex: 'half',
+			signal: AbortSignal.timeout(PROXY_TIMEOUT_MS)
 		} as RequestInit);
 	} catch {
 		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');

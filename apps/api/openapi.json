@@ -13021,7 +13021,7 @@
 		},
 		"/api/ingest/ndjson": {
 			"post": {
-				"description": "Proxies an NDJSON (or JSON array) log payload to Quickwit for the index associated with the ingest API key. Accepts application/x-ndjson or application/json content-type. The response body is passed through from Quickwit.",
+				"description": "Proxies an NDJSON (or JSON array) log payload to Quickwit for the index associated with the ingest API key. Accepts application/x-ndjson or application/json content-type. Success and 4xx responses are passed through from Quickwit (400 bodies carry per-document parse errors); upstream 5xx responses are mapped to the standard 503 error contract.",
 				"operationId": "postApiIngestNdjson",
 				"responses": {
 					"200": {

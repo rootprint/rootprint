@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 
-import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
+import { quickwitUrl } from '../../lib/quickwit.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import {
 	badRequest,
@@ -12,7 +12,7 @@ import {
 	unsupportedMediaType
 } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
-import { proxyToQuickwit } from '../../utils/quickwit-proxy.js';
+import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 
 const UNSUPPORTED_CONTENT_TYPE_MESSAGE =
 	'Only application/x-protobuf is accepted. If you are using ' +
@@ -111,7 +111,7 @@ export const otlpRouter = new Hono<KeyedEnv>().post(
 		}
 
 		const apiKey = c.get('apiKey');
-		const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
+		const upstreamUrl = quickwitUrl('/api/v1/otlp/v1/logs');
 		const headers: Record<string, string> = {
 			'content-type': CONTENT_TYPE_PROTOBUF,
 			'qw-otel-logs-index': apiKey.indexId

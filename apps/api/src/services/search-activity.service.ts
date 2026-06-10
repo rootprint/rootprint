@@ -1,8 +1,9 @@
-import { inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
 import { user } from '../db/auth.schema.js';
 import { apiKey } from '../db/schema.js';
+import { notFound } from '../utils/http-error.js';
 import type { ActivityWindow } from '../schemas/admin-activity.js';
 import type {
 	ActorIndexRow,
@@ -174,21 +175,21 @@ function actorPredicate(a: ActorFilter) {
 async function resolveActorIdentity(
 	db: Db,
 	actor: ActorFilter
-): Promise<{ displayName: string | null; email: string | null }> {
+): Promise<{ displayName: string | null; email: string | null } | null> {
 	if (actor.kind === 'user') {
 		const rows = await db
 			.select({ id: user.id, name: user.name, email: user.email })
 			.from(user)
-			.where(inArray(user.id, [actor.userId]));
+			.where(eq(user.id, actor.userId));
 		const u = rows[0];
-		return { displayName: u?.name ?? null, email: u?.email ?? null };
+		return u ? { displayName: u.name ?? null, email: u.email ?? null } : null;
 	}
 	const rows = await db
 		.select({ id: apiKey.id, name: apiKey.name })
 		.from(apiKey)
-		.where(inArray(apiKey.id, [actor.apiKeyId]));
+		.where(eq(apiKey.id, actor.apiKeyId));
 	const t = rows[0];
-	return { displayName: t?.name ?? null, email: null };
+	return t ? { displayName: t.name ?? null, email: null } : null;
 }
 
 export async function getActorSummary(
@@ -217,6 +218,9 @@ export async function getActorSummary(
 			  AND ${actorPredicate(actor)}
 		`)
 	]);
+	if (!identity) {
+		throw notFound(actor.kind === 'user' ? 'User not found' : 'API key not found');
+	}
 	const r = result.rows[0];
 	if (!r) {
 		return {
@@ -333,34 +337,35 @@ export async function getActorRecent(
 	const { interval } = resolveWindow(window);
 	const statusPred = opts.status === 'any' ? sql`TRUE` : sql`status = ${opts.status}`;
 
-	const totalResult = await db.execute<{ total: string }>(sql`
-		SELECT COUNT(*)::text AS total
-		FROM search_audit
-		WHERE executed_at >= ${sinceWindow(interval)}
-		  AND ${actorPredicate(actor)}
-		  AND ${statusPred}
-	`);
+	const [totalResult, rowsResult] = await Promise.all([
+		db.execute<{ total: string }>(sql`
+			SELECT COUNT(*)::text AS total
+			FROM search_audit
+			WHERE executed_at >= ${sinceWindow(interval)}
+			  AND ${actorPredicate(actor)}
+			  AND ${statusPred}
+		`),
+		db.execute<{
+			id: string;
+			executed_at: Date | string;
+			index_id: string;
+			duration_ms: number;
+			num_hits: string | null;
+			query: string;
+			start_ts: string | null;
+			end_ts: string | null;
+		}>(sql`
+			SELECT id::text, executed_at, index_id, duration_ms, num_hits::text, query,
+				start_ts::text, end_ts::text
+			FROM search_audit
+			WHERE executed_at >= ${sinceWindow(interval)}
+			  AND ${actorPredicate(actor)}
+			  AND ${statusPred}
+			ORDER BY executed_at DESC
+			LIMIT ${opts.limit} OFFSET ${opts.offset}
+		`)
+	]);
 	const total = Number(totalResult.rows[0]?.total ?? 0);
-
-	const rowsResult = await db.execute<{
-		id: string;
-		executed_at: Date | string;
-		index_id: string;
-		duration_ms: number;
-		num_hits: string | null;
-		query: string;
-		start_ts: string | null;
-		end_ts: string | null;
-	}>(sql`
-		SELECT id::text, executed_at, index_id, duration_ms, num_hits::text, query,
-			start_ts::text, end_ts::text
-		FROM search_audit
-		WHERE executed_at >= ${sinceWindow(interval)}
-		  AND ${actorPredicate(actor)}
-		  AND ${statusPred}
-		ORDER BY executed_at DESC
-		LIMIT ${opts.limit} OFFSET ${opts.offset}
-	`);
 
 	return {
 		total,
