@@ -4,14 +4,14 @@ import * as v from 'valibot';
 import { exportsRouter } from './exports.js';
 import { viewsRouter } from './views.js';
 
-import { isAdmin } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireAdmin } from '../middleware/require-admin.js';
-import { requireIndexAccess } from '../middleware/require-index-access.js';
+import { requireIndexVisibility } from '../middleware/require-index-visibility.js';
 import { requireManageableIndex } from '../middleware/require-manageable-index.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
+import { withIndexMeta, type IndexMetaEnv } from '../middleware/with-index-meta.js';
 import { FIELD_VALUES_MAX } from '../constants.js';
 import { FilterSchema } from '../schemas/filters.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
@@ -36,10 +36,9 @@ import {
 	deleteIndex,
 	deleteSource,
 	getIndexDetail,
-	getIndexFields,
 	getIndexViewConfig,
-	getSource,
 	listIndexes,
+	projectSource,
 	resetSourceCheckpoint,
 	saveIndexConfig,
 	setSourceEnabled,
@@ -54,7 +53,6 @@ import {
 } from '../services/log.service.js';
 import { withSearchAudit } from '../services/search-audit.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
-import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, toNum } from '../utils/valibot.js';
 
@@ -133,7 +131,7 @@ const ListIndexesQuery = v.object({
 });
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
-export const indexesRouter = new Hono<IndexConfigEnv>()
+export const indexesRouter = new Hono<IndexConfigEnv & IndexMetaEnv>()
 	.get(
 		'/',
 		describe({
@@ -155,11 +153,10 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'List index fields',
 			ok: IndexFieldsResponse
 		}),
-		requireIndexAccess,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const { indexId } = c.req.valid('param');
-			return c.json(await getIndexFields(quickwit, indexId));
+			return c.json({ fields: c.get('indexMeta').index.fields });
 		}
 	)
 	.get(
@@ -169,11 +166,10 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'Get index view config',
 			ok: IndexViewConfigResponse
 		}),
-		requireIndexAccess,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const { indexId } = c.req.valid('param');
-			return c.json(await getIndexViewConfig(db, quickwit, indexId, isAdmin(c.get('session'))));
+			return c.json(getIndexViewConfig(c.get('indexMeta')));
 		}
 	)
 	.get(
@@ -184,13 +180,10 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			ok: IndexDetailResponse
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const { indexId } = c.req.valid('param');
-			const detail = await getIndexDetail(db, quickwit, indexId);
-			if (!detail) throw notFound('Index not found');
-			return c.json(detail);
+			return c.json(getIndexDetail(c.get('indexMeta')));
 		}
 	)
 	.get(
@@ -280,12 +273,11 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [404]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		async (c) => {
-			const { indexId, sourceId } = c.req.valid('param');
-			const source = await getSource(quickwit, indexId, sourceId);
-			return c.json(source);
+			const { sourceId } = c.req.valid('param');
+			return c.json(projectSource(c.get('indexMeta').index, sourceId));
 		}
 	)
 	.put(
@@ -452,7 +444,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'Get index preferences',
 			ok: PreferencesResponse
 		}),
-		requireIndexAccess,
+		requireIndexVisibility,
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -467,7 +459,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'Save index preferences',
 			ok: PreferencesResponse
 		}),
-		requireIndexAccess,
+		requireIndexVisibility,
 		validator('param', IndexIdParams),
 		validator('json', PutPreferencesBody),
 		async (c) => {

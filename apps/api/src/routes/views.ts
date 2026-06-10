@@ -4,7 +4,7 @@ import * as v from 'valibot';
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
-import { requireIndexAccess } from '../middleware/require-index-access.js';
+import { requireIndexVisibility } from '../middleware/require-index-visibility.js';
 import { FilterSchema, SortDirectionSchema } from '../schemas/filters.js';
 import { SavedViewListResponse, SavedViewResponse } from '../schemas/responses/views.js';
 import {
@@ -44,7 +44,7 @@ const ItemParams = v.object({
 
 // Mounted under /api/indexes/:indexId/views.
 export const viewsRouter = new Hono<AuthedEnv>()
-	.use('*', requireIndexAccess)
+	.use('*', requireIndexVisibility)
 	.get(
 		'/',
 		describe({

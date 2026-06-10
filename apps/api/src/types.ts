@@ -225,7 +225,39 @@ export type IndexConfig = {
 	contextFields: string[] | null;
 };
 
-// API key verification (api-key.service.ts)
+export type QuickwitSource = {
+	sourceId: string;
+	sourceType: string;
+	enabled: boolean;
+	inputFormat: string | null;
+	numPipelines: number | null;
+	params: unknown | null;
+	vrlScript: string | null;
+};
+
+export type QuickwitIndexMetadata = {
+	indexId: string;
+	indexUid: string | null;
+	indexUri: string | null;
+	version: string | null;
+	createTimestamp: number | null;
+	mode: string | null;
+	timestampField: string | null;
+	indexFieldPresence: boolean | null;
+	storeSource: boolean | null;
+	storeDocumentSize: boolean | null;
+	tagFields: string[] | null;
+	defaultSearchFields: string[] | null;
+	retention: unknown | null;
+	fields: IndexField[];
+	sources: QuickwitSource[];
+};
+
+export type IndexMeta = {
+	settings: IndexSettings;
+	index: QuickwitIndexMetadata;
+};
+
 export type VerifyApiKeyResult =
 	| { status: 'ok'; key: VerifiedApiKey }
 	| { status: 'wrong-role'; actualRole: ApiKeyRole }

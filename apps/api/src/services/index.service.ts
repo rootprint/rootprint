@@ -2,12 +2,13 @@ import { eq, inArray } from 'drizzle-orm';
 import type {
 	IndexConfig,
 	IndexDetail,
-	IndexField,
+	IndexMeta,
 	IndexSettings,
 	IndexSource,
 	IndexSummary,
 	IndexViewConfig,
 	IndexVisibility,
+	QuickwitIndexMetadata,
 	SaveIndexConfigFields,
 	SourceDetail
 } from '../types.js';
@@ -122,14 +123,6 @@ export async function listIndexes(
 		.filter((m) => includeHidden || canAccessIndex(m.visibility, isAdmin));
 }
 
-export async function getIndexFields(
-	qw: QuickwitClient,
-	indexId: string
-): Promise<{ fields: IndexField[] }> {
-	const index = await qwGetIndex(qw, indexId);
-	return { fields: index?.fields ?? [] };
-}
-
 export async function getIndexConfig(
 	db: Db,
 	qw: QuickwitClient,
@@ -157,46 +150,24 @@ export async function getIndexConfig(
 	};
 }
 
-export async function getIndexViewConfig(
-	db: Db,
-	qw: QuickwitClient,
-	indexId: string,
-	isAdmin: boolean
-): Promise<IndexViewConfig> {
-	const [settings, index] = await Promise.all([
-		getIndexSettings(db, indexId),
-		qwGetIndex(qw, indexId)
-	]);
-	if (!canAccessIndex(settings.visibility, isAdmin)) {
-		throw indexAccessError(isAdmin, 'denied');
-	}
-	if (!index) throw indexAccessError(isAdmin, 'missing');
-	if (!index.timestampField) throw internal(`Index "${indexId}" has no timestamp_field`);
+export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
+	const { settings, index } = meta;
+	if (!index.timestampField) throw internal(`Index "${index.indexId}" has no timestamp_field`);
 
 	return {
-		indexId,
+		indexId: index.indexId,
 		displayName: settings.displayName,
 		levelField: index.fields.some((f) => f.name === settings.levelField) ? settings.levelField : '',
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
 		contextFields: settings.contextFields,
 		timestampField: index.timestampField,
-		isOtel: indexId.startsWith('otel-')
+		isOtel: index.indexId.startsWith('otel-')
 	};
 }
 
-export async function getIndexDetail(
-	db: Db,
-	qw: QuickwitClient,
-	indexId: string
-): Promise<IndexDetail | null> {
-	const [settings, index] = await Promise.all([
-		getIndexSettings(db, indexId),
-		qwGetIndex(qw, indexId)
-	]);
-
-	if (!index) return null;
-
+export function getIndexDetail(meta: IndexMeta): IndexDetail {
+	const { settings, index } = meta;
 	return {
 		indexId: index.indexId,
 		displayName: settings.displayName,
@@ -354,14 +325,7 @@ export async function createSource(
 	};
 }
 
-export async function getSource(
-	qw: QuickwitClient,
-	indexId: string,
-	sourceId: string
-): Promise<SourceDetail> {
-	const index = await qwGetIndex(qw, indexId);
-	if (!index) throw notFound('Index not found');
-
+export function projectSource(index: QuickwitIndexMetadata, sourceId: string): SourceDetail {
 	const source = index.sources.find((s) => s.sourceId === sourceId);
 	if (!source) throw notFound('Source not found');
 
@@ -458,7 +422,9 @@ export async function updateSource(
 		if (err instanceof NotFoundError) throw notFound('Source not found');
 		translateQuickwitError(err);
 	}
-	return getSource(qw, indexId, sourceId);
+	const index = await qwGetIndex(qw, indexId);
+	if (!index) throw notFound('Index not found');
+	return projectSource(index, sourceId);
 }
 
 export async function resetSourceCheckpoint(
