@@ -104,19 +104,7 @@ const FieldValuesBulkQuery = v.object({
 		v.check((arr: string[]) => arr.length > 0, 'fields must include at least one field name')
 	),
 	q: v.optional(v.string()),
-	filters: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				try {
-					return JSON.parse(s);
-				} catch {
-					throw new Error('filters must be URL-encoded JSON');
-				}
-			}),
-			v.array(FilterSchema)
-		)
-	),
+	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
 	startTs: v.optional(toNum),
 	endTs: v.optional(toNum),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))

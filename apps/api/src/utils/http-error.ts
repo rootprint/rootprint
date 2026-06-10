@@ -1,3 +1,4 @@
+import { isAPIError } from 'better-auth/api';
 import type { ApiErrorDetail } from '../types.js';
 
 export class HttpError extends Error {
@@ -55,8 +56,8 @@ export function isUniqueViolation(err: unknown): boolean {
 }
 
 export function fromAuthApiError(err: unknown, fallback: string): HttpError {
-	const e = err as { status?: number; body?: { message?: string }; message?: string };
-	const message = e?.body?.message ?? e?.message ?? fallback;
-	const status = typeof e?.status === 'number' ? e.status : 400;
-	return new HttpError(status, 'AUTH_API_ERROR', message);
+	if (isAPIError(err)) {
+		return new HttpError(err.statusCode, 'AUTH_API_ERROR', err.body?.message || fallback);
+	}
+	throw err;
 }

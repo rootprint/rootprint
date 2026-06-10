@@ -76,7 +76,22 @@ app.onError((rawErr, c) => {
 	}
 
 	if (c.req.path.startsWith('/v1/')) {
-		if (err instanceof HttpError) return otlpErrorFromHttpError(err);
+		if (err instanceof HttpError) {
+			if (err.retryAfter != null) {
+				console.warn(
+					`[onError] requestId=${requestId} path=${c.req.path} status=${err.statusCode} code=${err.code} message=${err.message}`
+				);
+			} else if (err.statusCode >= 500) {
+				console.error(
+					`[onError] requestId=${requestId} path=${c.req.path} status=${err.statusCode} code=${err.code} message=${err.message}`
+				);
+			}
+			return otlpErrorFromHttpError(err);
+		}
+		const otlpErrAny = err as { code?: unknown };
+		console.error(
+			`[onError] requestId=${requestId} path=${c.req.path} name=${err.name} code=${String(otlpErrAny.code)} message=${err.message}`
+		);
 		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
 	}
 
