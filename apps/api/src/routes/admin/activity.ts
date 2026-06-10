@@ -78,8 +78,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get search activity summary for a user',
-			ok: ActorSummaryRowResponse,
-			errors: [404]
+			ok: ActorSummaryRowResponse
 		}),
 		validator('param', UserIdParam),
 		validator('query', WindowQuery),
@@ -94,8 +93,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get volume time series for a user',
-			ok: VolumeBucketsResponse,
-			errors: [404]
+			ok: VolumeBucketsResponse
 		}),
 		validator('param', UserIdParam),
 		validator('query', WindowQuery),
@@ -110,8 +108,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get latency time series for a user',
-			ok: LatencyBucketsResponse,
-			errors: [404]
+			ok: LatencyBucketsResponse
 		}),
 		validator('param', UserIdParam),
 		validator('query', WindowQuery),
@@ -126,8 +123,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get per-index usage breakdown for a user',
-			ok: ActorIndexesResponse,
-			errors: [404]
+			ok: ActorIndexesResponse
 		}),
 		validator('param', UserIdParam),
 		validator('query', WindowQuery),
@@ -142,8 +138,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get recent searches for a user',
-			ok: RecentResultResponse,
-			errors: [404]
+			ok: RecentResultResponse
 		}),
 		validator('param', UserIdParam),
 		validator('query', RecentQuery),
@@ -165,8 +160,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get search activity summary for an API key',
-			ok: ActorSummaryRowResponse,
-			errors: [404]
+			ok: ActorSummaryRowResponse
 		}),
 		validator('param', ApiKeyIdParam),
 		validator('query', WindowQuery),
@@ -181,8 +175,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get volume time series for an API key',
-			ok: VolumeBucketsResponse,
-			errors: [404]
+			ok: VolumeBucketsResponse
 		}),
 		validator('param', ApiKeyIdParam),
 		validator('query', WindowQuery),
@@ -197,8 +190,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get latency time series for an API key',
-			ok: LatencyBucketsResponse,
-			errors: [404]
+			ok: LatencyBucketsResponse
 		}),
 		validator('param', ApiKeyIdParam),
 		validator('query', WindowQuery),
@@ -213,8 +205,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get recent searches for an API key',
-			ok: RecentResultResponse,
-			errors: [404]
+			ok: RecentResultResponse
 		}),
 		validator('param', ApiKeyIdParam),
 		validator('query', RecentQuery),

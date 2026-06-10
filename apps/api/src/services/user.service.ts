@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import type { User, UserRole, UserStatus } from '../types.js';
 
@@ -17,85 +17,63 @@ import { badRequest, notFound } from '../utils/http-error.js';
 
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 
-export async function listUsers(db: Db): Promise<User[]> {
-	const [users, invites, providerAccounts] = await Promise.all([
-		db.select().from(user).orderBy(user.createdAt),
-		db.select().from(inviteToken),
-		db
-			.select({ userId: account.userId, providerId: account.providerId })
-			.from(account)
-			.where(inArray(account.providerId, ['google', 'credential']))
-	]);
+type InviteInfo = { url: string; expiresAt: Date };
 
-	const inviteMap = new Map(
-		invites.map((inv) => [inv.userId, { url: buildInviteUrl(inv.token), expiresAt: inv.expiresAt }])
-	);
-
-	const googleUserIds = new Set<string>();
-	const credentialUserIds = new Set<string>();
-	for (const a of providerAccounts) {
-		(a.providerId === 'google' ? googleUserIds : credentialUserIds).add(a.userId);
-	}
-
-	const now = Date.now();
-
-	return users.map((u) => {
-		const invite = inviteMap.get(u.id);
-		const isGoogle = googleUserIds.has(u.id);
-		const status: UserStatus =
-			isGoogle || !invite ? 'active' : invite.expiresAt.getTime() < now ? 'expired' : 'pending';
-
-		return {
-			id: u.id,
-			name: u.name,
-			email: u.email,
-			role: (u.role as UserRole | null) ?? null,
-			lastActive: u.lastActive,
-			createdAt: u.createdAt,
-			status,
-			hasCredentialAccount: credentialUserIds.has(u.id),
-			inviteUrl: invite?.url ?? null,
-			inviteExpiresAt: invite?.expiresAt ?? null
-		};
-	});
-}
-
-export async function getUser(db: Db, userId: string): Promise<User> {
-	const [u] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
-	if (!u) throw notFound('User not found');
-
-	const [invites, providerAccounts] = await Promise.all([
-		db.select().from(inviteToken).where(eq(inviteToken.userId, userId)),
-		db
-			.select({ providerId: account.providerId })
-			.from(account)
-			.where(and(eq(account.userId, userId), inArray(account.providerId, ['google', 'credential'])))
-	]);
-
-	const invite = invites[0]
-		? { url: buildInviteUrl(invites[0].token), expiresAt: invites[0].expiresAt }
-		: undefined;
-	const isGoogle = providerAccounts.some((a) => a.providerId === 'google');
-	const hasCred = providerAccounts.some((a) => a.providerId === 'credential');
-	const status: UserStatus =
-		isGoogle || !invite
-			? 'active'
-			: invite.expiresAt.getTime() < Date.now()
-				? 'expired'
-				: 'pending';
+function toUser(
+	u: typeof user.$inferSelect,
+	invite: InviteInfo | undefined,
+	hasCredential: boolean
+): User {
+	const status: UserStatus = !invite
+		? 'active'
+		: invite.expiresAt.getTime() < Date.now()
+			? 'expired'
+			: 'pending';
 
 	return {
 		id: u.id,
 		name: u.name,
 		email: u.email,
 		role: (u.role as UserRole | null) ?? null,
-		lastActive: u.lastActive,
-		createdAt: u.createdAt,
+		lastActive: u.lastActive?.toISOString() ?? null,
+		createdAt: u.createdAt.toISOString(),
 		status,
-		hasCredentialAccount: hasCred,
+		hasCredentialAccount: hasCredential,
 		inviteUrl: invite?.url ?? null,
-		inviteExpiresAt: invite?.expiresAt ?? null
+		inviteExpiresAt: invite?.expiresAt.toISOString() ?? null
 	};
+}
+
+export async function listUsers(db: Db): Promise<User[]> {
+	const [users, invites, credentialAccounts] = await Promise.all([
+		db.select().from(user).orderBy(user.createdAt),
+		db.select().from(inviteToken),
+		db.select({ userId: account.userId }).from(account).where(eq(account.providerId, 'credential'))
+	]);
+
+	const inviteMap = new Map(
+		invites.map((inv) => [inv.userId, { url: buildInviteUrl(inv.token), expiresAt: inv.expiresAt }])
+	);
+
+	const credentialUserIds = new Set(credentialAccounts.map((a) => a.userId));
+
+	return users.map((u) => toUser(u, inviteMap.get(u.id), credentialUserIds.has(u.id)));
+}
+
+export async function getUser(db: Db, userId: string): Promise<User> {
+	const [u] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+	if (!u) throw notFound('User not found');
+
+	const [invites, hasCred] = await Promise.all([
+		db.select().from(inviteToken).where(eq(inviteToken.userId, userId)),
+		hasCredentialAccount(db, userId)
+	]);
+
+	const invite = invites[0]
+		? { url: buildInviteUrl(invites[0].token), expiresAt: invites[0].expiresAt }
+		: undefined;
+
+	return toUser(u, invite, hasCred);
 }
 
 export async function inviteUser(

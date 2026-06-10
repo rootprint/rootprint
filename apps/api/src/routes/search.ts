@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import type { AppEnv } from '../env.js';
+import type { KeyedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
@@ -11,7 +11,7 @@ import { getIndexConfig } from '../services/index.service.js';
 import { searchLogs } from '../services/log.service.js';
 import { withSearchAudit } from '../services/search-audit.service.js';
 
-export const searchRouter = new Hono<AppEnv>().get(
+export const searchRouter = new Hono<KeyedEnv>().get(
 	'/logs',
 	describe({
 		tag: 'Search',
@@ -23,7 +23,7 @@ export const searchRouter = new Hono<AppEnv>().get(
 	requireSearchKey,
 	validator('query', SearchQuery),
 	async (c) => {
-		const apiKey = c.get('apiKey')!;
+		const apiKey = c.get('apiKey');
 		const q = c.req.valid('query');
 		// isAdmin=true bypasses per-user visibility filtering — the key's indexId is itself the access grant.
 		const indexConfig = await getIndexConfig(db, quickwit, apiKey.indexId, true);

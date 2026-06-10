@@ -1,18 +1,13 @@
 import { Hono } from 'hono';
 
-import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
-import type { AppEnv } from '../../env.js';
+import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
+import { quickwitUrl } from '../../lib/quickwit.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import {
-	badRequest,
-	serviceUnavailable,
-	tooManyRequests,
-	unsupportedMediaType
-} from '../../utils/http-error.js';
+import { badRequest, tooManyRequests, unsupportedMediaType } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
-import { proxyToQuickwit } from '../../utils/quickwit-proxy.js';
+import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 
 const UNSUPPORTED_CONTENT_TYPE_MESSAGE =
 	'Only application/x-protobuf is accepted. If you are using ' +
@@ -43,7 +38,7 @@ const protobufBinarySchema = {
 	description: 'google.rpc.Status serialised as application/x-protobuf'
 };
 
-export const otlpRouter = new Hono<AppEnv>().post(
+export const otlpRouter = new Hono<KeyedEnv>().post(
 	'/logs',
 	describe({
 		tag: 'Log ingest',
@@ -110,8 +105,8 @@ export const otlpRouter = new Hono<AppEnv>().post(
 			throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
 		}
 
-		const apiKey = c.get('apiKey')!;
-		const upstreamUrl = `${config.quickwitUrl}/api/v1/otlp/v1/logs`;
+		const apiKey = c.get('apiKey');
+		const upstreamUrl = quickwitUrl('/api/v1/otlp/v1/logs');
 		const headers: Record<string, string> = {
 			'content-type': CONTENT_TYPE_PROTOBUF,
 			'qw-otel-logs-index': apiKey.indexId
@@ -121,9 +116,6 @@ export const otlpRouter = new Hono<AppEnv>().post(
 
 		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
-		if (result.status >= 500) {
-			throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
-		}
 		if (result.status === 429) {
 			const retryAfter = result.headers.get('retry-after') ?? undefined;
 			const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');

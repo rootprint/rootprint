@@ -125,8 +125,8 @@ export async function initAuth(secret: string): Promise<void> {
 	if (holder.instance !== null) {
 		throw new Error('initAuth has already been called');
 	}
-	const google = await loadGoogleAuthForBetterAuth(db).catch(() => undefined);
-	const github = await loadGitHubAuthForBetterAuth(db).catch(() => undefined);
+	const google = await loadGoogleAuthForBetterAuth(db);
+	const github = await loadGitHubAuthForBetterAuth(db);
 	holder.secret = secret;
 	holder.instance = buildAuth(secret, google, github);
 }

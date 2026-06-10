@@ -1,35 +1,7 @@
 import type { FieldMapping, FastFieldConfig, IndexMetadata, SourceConfig } from 'quickwit-js';
 import { NotFoundError } from 'quickwit-js';
 import type { QuickwitClient } from 'quickwit-js';
-import type { IndexField } from '../types.js';
-
-type QuickwitSource = {
-	sourceId: string;
-	sourceType: string;
-	enabled: boolean;
-	inputFormat: string | null;
-	numPipelines: number | null;
-	params: unknown | null;
-	vrlScript: string | null;
-};
-
-type QuickwitIndexMetadata = {
-	indexId: string;
-	indexUid: string | null;
-	indexUri: string | null;
-	version: string | null;
-	createTimestamp: number | null;
-	mode: string | null;
-	timestampField: string | null;
-	indexFieldPresence: boolean | null;
-	storeSource: boolean | null;
-	storeDocumentSize: boolean | null;
-	tagFields: string[] | null;
-	defaultSearchFields: string[] | null;
-	retention: unknown | null;
-	fields: IndexField[];
-	sources: QuickwitSource[];
-};
+import type { IndexField, QuickwitIndexMetadata, QuickwitSource } from '../types.js';
 
 function normalizeFast(value: FastFieldConfig | undefined): boolean | null {
 	if (value === undefined) return null;

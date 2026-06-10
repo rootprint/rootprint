@@ -1,20 +1,27 @@
 import { Hono } from 'hono';
-import * as v from 'valibot';
 
 import { exportsRouter } from './exports.js';
 import { viewsRouter } from './views.js';
 
-import { isAdmin } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
+import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';
-import { requireIndexAccess } from '../middleware/require-index-access.js';
-import { requireManageableIndex } from '../middleware/require-manageable-index.js';
-import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
-import { FIELD_VALUES_MAX } from '../constants.js';
-import { FilterSchema } from '../schemas/filters.js';
-import { saveIndexConfigSchema } from '../schemas/indexes.js';
+import { withIndexConfig } from '../middleware/with-index-config.js';
+import { withIndexMeta } from '../middleware/with-index-meta.js';
+import {
+	FieldParams,
+	FieldValuesBulkQuery,
+	FieldValuesQuery,
+	HistogramQuery,
+	ListIndexesQuery,
+	PutPreferencesBody,
+	saveIndexConfigSchema,
+	SourceParams,
+	StatsQuery,
+	ToggleSourceBody
+} from '../schemas/indexes.js';
 import { createSourceSchema, updateSourceSchema } from '../schemas/sources.js';
 import {
 	FieldValuesBulkResponse,
@@ -36,10 +43,9 @@ import {
 	deleteIndex,
 	deleteSource,
 	getIndexDetail,
-	getIndexFields,
 	getIndexViewConfig,
-	getSource,
 	listIndexes,
+	projectSource,
 	resetSourceCheckpoint,
 	saveIndexConfig,
 	setSourceEnabled,
@@ -54,98 +60,10 @@ import {
 } from '../services/log.service.js';
 import { withSearchAudit } from '../services/search-audit.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
-import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
-import { intParam, toNum } from '../utils/valibot.js';
-
-const SourceParams = v.object({
-	indexId: v.pipe(v.string(), v.minLength(1)),
-	sourceId: v.pipe(v.string(), v.minLength(1))
-});
-
-const ToggleSourceBody = v.object({ enabled: v.boolean() });
-
-const FieldParams = v.object({
-	indexId: v.pipe(v.string(), v.minLength(1)),
-	field: v.pipe(v.string(), v.minLength(1))
-});
-
-const HistogramQuery = v.object({
-	q: v.optional(v.string()),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
-	interval: v.pipe(
-		v.string(),
-		v.regex(
-			/^[1-9]\d*[smhdwMy]$/,
-			'interval must be a positive integer followed by s, m, h, d, w, M, or y'
-		)
-	)
-});
-
-const FieldValuesQuery = v.object({
-	q: v.optional(v.string()),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
-	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
-});
-
-const FieldValuesBulkQuery = v.object({
-	fields: v.pipe(
-		v.string(),
-		v.minLength(1),
-		v.transform((s) =>
-			s
-				.split(',')
-				.map((x) => x.trim())
-				.filter(Boolean)
-		),
-		v.array(v.pipe(v.string(), v.minLength(1))),
-		v.check((arr: string[]) => arr.length > 0, 'fields must include at least one field name')
-	),
-	q: v.optional(v.string()),
-	filters: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => {
-				try {
-					return JSON.parse(s);
-				} catch {
-					throw new Error('filters must be URL-encoded JSON');
-				}
-			}),
-			v.array(FilterSchema)
-		)
-	),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
-	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
-});
-
-const StatsQuery = v.object({
-	from: v.optional(toNum),
-	to: v.optional(toNum),
-	limit: v.optional(intParam({ min: 1, max: 10000, label: 'limit' }))
-});
-
-const PutPreferencesBody = v.object({
-	displayFields: v.nullable(v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100))),
-	lineWrap: v.boolean(),
-	displayMode: v.picklist(['table', 'inline'])
-});
-
-const ListIndexesQuery = v.object({
-	// Fail closed: only the literal string "true" enables it; any other value is treated as false.
-	includeHidden: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => s === 'true')
-		)
-	)
-});
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
-export const indexesRouter = new Hono<IndexConfigEnv>()
+export const indexesRouter = new Hono<AuthedEnv>()
 	.get(
 		'/',
 		describe({
@@ -167,11 +85,10 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'List index fields',
 			ok: IndexFieldsResponse
 		}),
-		requireIndexAccess,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const { indexId } = c.req.valid('param');
-			return c.json(await getIndexFields(quickwit, indexId));
+			return c.json({ fields: c.get('indexMeta').index.fields });
 		}
 	)
 	.get(
@@ -181,11 +98,10 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'Get index view config',
 			ok: IndexViewConfigResponse
 		}),
-		requireIndexAccess,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const { indexId } = c.req.valid('param');
-			return c.json(await getIndexViewConfig(db, quickwit, indexId, isAdmin(c.get('session'))));
+			return c.json(getIndexViewConfig(c.get('indexMeta')));
 		}
 	)
 	.get(
@@ -196,13 +112,10 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			ok: IndexDetailResponse
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const { indexId } = c.req.valid('param');
-			const detail = await getIndexDetail(db, quickwit, indexId);
-			if (!detail) throw notFound('Index not found');
-			return c.json(detail);
+			return c.json(getIndexDetail(c.get('indexMeta')));
 		}
 	)
 	.get(
@@ -213,7 +126,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			ok: IndexStatsResponse
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		validator('query', StatsQuery),
 		async (c) => {
@@ -236,7 +149,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		validator('json', saveIndexConfigSchema),
 		async (c) => {
@@ -255,7 +168,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -273,7 +186,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [400, 409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
 		validator('json', createSourceSchema),
 		async (c) => {
@@ -292,12 +205,11 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [404]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		async (c) => {
-			const { indexId, sourceId } = c.req.valid('param');
-			const source = await getSource(quickwit, indexId, sourceId);
-			return c.json(source);
+			const { sourceId } = c.req.valid('param');
+			return c.json(projectSource(c.get('indexMeta').index, sourceId));
 		}
 	)
 	.put(
@@ -309,7 +221,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [400, 404]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		validator('json', updateSourceSchema),
 		async (c) => {
@@ -328,7 +240,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [404]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
@@ -345,7 +257,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		validator('json', ToggleSourceBody),
 		async (c) => {
@@ -364,7 +276,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			errors: [409]
 		}),
 		requireAdmin,
-		requireManageableIndex,
+		withIndexMeta('manage'),
 		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
@@ -464,7 +376,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'Get index preferences',
 			ok: PreferencesResponse
 		}),
-		requireIndexAccess,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -479,7 +391,7 @@ export const indexesRouter = new Hono<IndexConfigEnv>()
 			summary: 'Save index preferences',
 			ok: PreferencesResponse
 		}),
-		requireIndexAccess,
+		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		validator('json', PutPreferencesBody),
 		async (c) => {

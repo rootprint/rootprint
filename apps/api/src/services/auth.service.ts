@@ -6,7 +6,8 @@ import { INVITE_EXPIRY_HOURS } from '../constants.js';
 import type { Db } from '../db/index.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
-import { badRequest } from '../utils/http-error.js';
+import { badRequest, conflict } from '../utils/http-error.js';
+import { withUniqueViolation } from '../utils/db.js';
 import { GITHUB_ALLOWED_ORGS, GOOGLE_ALLOWED_DOMAINS, parseDomains } from './settings.service.js';
 import { userIsInAllowedOrg } from './github.service.js';
 
@@ -30,6 +31,42 @@ export async function claimFirstAdmin(
 		.onConflictDoNothing({ target: appSettings.key })
 		.returning({ key: appSettings.key });
 	return inserted.length > 0;
+}
+
+export async function createFirstAdmin(
+	db: Db,
+	authInstance: AuthInstance,
+	input: { name: string; email: string; password: string }
+): Promise<{ id: string; email: string; name: string }> {
+	const ctx = await authInstance.$context;
+	const hashedPassword = await ctx.password.hash(input.password);
+	const userId = generateId();
+
+	await withUniqueViolation('Email already in use', 'CONFLICT', () =>
+		db.transaction(async (tx) => {
+			const claimed = await claimFirstAdmin(tx);
+			if (!claimed) {
+				throw conflict('Admin already exists');
+			}
+
+			await tx.insert(user).values({
+				id: userId,
+				name: input.name,
+				email: input.email,
+				emailVerified: true,
+				role: 'admin'
+			});
+			await tx.insert(account).values({
+				id: generateId(),
+				accountId: userId,
+				providerId: 'credential',
+				userId,
+				password: hashedPassword
+			});
+		})
+	);
+
+	return { id: userId, email: input.email, name: input.name };
 }
 
 export async function hasCredentialAccount(db: Db, userId: string): Promise<boolean> {

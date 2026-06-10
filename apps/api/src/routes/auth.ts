@@ -1,8 +1,6 @@
-import { generateId } from 'better-auth';
 import { Hono } from 'hono';
 
 import { config } from '../config.js';
-import { account, user } from '../db/schema.js';
 import type { AppEnv } from '../env.js';
 import type { AuthProvidersInfo } from '../types.js';
 import { auth } from '../lib/auth.js';
@@ -17,7 +15,7 @@ import {
 	VerifyInviteResponse
 } from '../schemas/responses/auth.js';
 import {
-	claimFirstAdmin,
+	createFirstAdmin,
 	isSetupCompleted,
 	setupPassword,
 	validateInviteToken
@@ -26,7 +24,6 @@ import {
 	loadGitHubAuthForBetterAuth,
 	loadGoogleAuthForBetterAuth
 } from '../services/settings.service.js';
-import { withUniqueViolation } from '../utils/db.js';
 import { conflict } from '../utils/http-error.js';
 
 // Custom endpoints come first; better-auth wildcard is last so it doesn't shadow them.
@@ -52,35 +49,8 @@ export const authRouter = new Hono<AppEnv>()
 				throw conflict('Admin already exists');
 			}
 
-			const ctx = await auth().$context;
-			const hashedPassword = await ctx.password.hash(body.password);
-			const userId = generateId();
-
-			await withUniqueViolation('Email already in use', 'CONFLICT', () =>
-				db.transaction(async (tx) => {
-					const claimed = await claimFirstAdmin(tx);
-					if (!claimed) {
-						throw conflict('Admin already exists');
-					}
-
-					await tx.insert(user).values({
-						id: userId,
-						name: body.name,
-						email: body.email,
-						emailVerified: true,
-						role: 'admin'
-					});
-					await tx.insert(account).values({
-						id: generateId(),
-						accountId: userId,
-						providerId: 'credential',
-						userId,
-						password: hashedPassword
-					});
-				})
-			);
-
-			return c.json({ id: userId, email: body.email, name: body.name }, 201);
+			const result = await createFirstAdmin(db, auth(), body);
+			return c.json(result, 201);
 		}
 	)
 	.post(

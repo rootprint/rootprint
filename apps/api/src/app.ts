@@ -75,8 +75,21 @@ app.onError((rawErr, c) => {
 		err = quickwitErrorToHttp(rawErr);
 	}
 
+	const logLine =
+		err instanceof HttpError
+			? `[onError] requestId=${requestId} path=${c.req.path} status=${err.statusCode} code=${err.code} message=${err.message}`
+			: `[onError] requestId=${requestId} path=${c.req.path} name=${err.name} code=${String((err as { code?: unknown }).code)} message=${err.message}`;
+
 	if (c.req.path.startsWith('/v1/')) {
-		if (err instanceof HttpError) return otlpErrorFromHttpError(err);
+		if (err instanceof HttpError) {
+			if (err.retryAfter != null) {
+				console.warn(logLine);
+			} else if (err.statusCode >= 500) {
+				console.error(logLine);
+			}
+			return otlpErrorFromHttpError(err);
+		}
+		console.error(logLine);
 		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
 	}
 
@@ -85,13 +98,9 @@ app.onError((rawErr, c) => {
 		// retryAfter marks a client-safe transient error: keep its message, warn-log, advertise Retry-After. Genuine faults stay masked + error-logged.
 		const isTransient = err.retryAfter != null;
 		if (isTransient) {
-			console.warn(
-				`[onError] requestId=${requestId} path=${c.req.path} status=${err.statusCode} code=${err.code} message=${err.message}`
-			);
+			console.warn(logLine);
 		} else if (isServerError) {
-			console.error(
-				`[onError] requestId=${requestId} path=${c.req.path} status=${err.statusCode} code=${err.code} message=${err.message}`
-			);
+			console.error(logLine);
 		}
 		if (isTransient) {
 			c.header('Retry-After', String(err.retryAfter));
@@ -139,10 +148,7 @@ app.onError((rawErr, c) => {
 		);
 	}
 
-	const errAny = err as { code?: unknown; message?: unknown };
-	console.error(
-		`[onError] requestId=${requestId} path=${c.req.path} name=${err.name} code=${String(errAny.code)} message=${String(errAny.message)}`
-	);
+	console.error(logLine);
 	return errorJson(
 		c,
 		{ code: 'INTERNAL', message: 'Internal server error', statusCode: 500, requestId },

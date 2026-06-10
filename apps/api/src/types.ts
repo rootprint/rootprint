@@ -1,11 +1,15 @@
 import type * as v from 'valibot';
 import type { INDEX_VISIBILITIES } from './constants.js';
 import type {
+	FieldValueEntrySchema,
 	FieldValuesBulkResponse as FieldValuesBulkResponseSchema,
 	FieldValuesResponse as FieldValuesResponseSchema,
+	HistogramBucketSchema,
 	HistogramResponse as HistogramResponseSchema,
 	IndexDetailResponse as IndexDetailResponseSchema,
+	IndexFieldSchema,
 	IndexListResponse as IndexListResponseSchema,
+	IndexStatsPointSchema,
 	IndexViewConfigResponse as IndexViewConfigResponseSchema,
 	LogSearchResponse as LogSearchResponseSchema,
 	PreferencesResponse as PreferencesResponseSchema,
@@ -21,6 +25,8 @@ import type {
 	InviteUrlResponse as InviteUrlResponseSchema
 } from './schemas/responses/users.js';
 import type { AuthProvidersResponse as AuthProvidersResponseSchema } from './schemas/responses/auth.js';
+import type { HealthResponse as HealthResponseSchema } from './schemas/responses/health.js';
+import type { ShareViewResponse as ShareViewResponseSchema } from './schemas/responses/shares.js';
 import type {
 	GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema,
 	GitHubAuthSettingsResponse as GitHubAuthSettingsResponseSchema
@@ -44,9 +50,7 @@ import type {
 	VolumeBucketResponse as VolumeBucketResponseSchema
 } from './schemas/responses/admin.js';
 
-export type HealthResponse = {
-	status: 'ok';
-};
+export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
 
 export type ApiErrorDetail = {
 	path: string;
@@ -65,11 +69,7 @@ export type ApiErrorBody = {
 
 export type IndexVisibility = (typeof INDEX_VISIBILITIES)[number];
 
-export type IndexField = {
-	name: string;
-	type: string;
-	fast: boolean | null;
-};
+export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
 
 export type IndexSource = {
 	sourceId: string;
@@ -98,19 +98,11 @@ export type LogHit = Record<string, unknown>;
 
 export type LogSearchResponse = v.InferOutput<typeof LogSearchResponseSchema>;
 
-export type HistogramBucket = {
-	key: number;
-	keyAsString: string;
-	docCount: number;
-	levels: Record<string, number>;
-};
+export type HistogramBucket = v.InferOutput<typeof HistogramBucketSchema>;
 
 export type HistogramResponse = v.InferOutput<typeof HistogramResponseSchema>;
 
-export type FieldValueEntry = {
-	value: string;
-	count: number;
-};
+export type FieldValueEntry = v.InferOutput<typeof FieldValueEntrySchema>;
 
 export type FieldValuesResponse = v.InferOutput<typeof FieldValuesResponseSchema>;
 
@@ -146,24 +138,11 @@ export type VerifiedApiKey = {
 };
 
 export type { CreateApiKeyInput } from './schemas/api-keys.js';
+export type { ShareCreateInput } from './schemas/shares.js';
 
 export type SavedView = v.InferOutput<typeof SavedViewResponseSchema>;
 
-export type ShareCreateInput = {
-	indexId: string;
-	query: string;
-	startTime: number;
-	endTime: number;
-	hit: Record<string, unknown>;
-};
-
-export type ShareView = {
-	indexId: string;
-	query: string;
-	startTime: number;
-	endTime: number;
-	hit: Record<string, unknown>;
-};
+export type ShareView = v.InferOutput<typeof ShareViewResponseSchema>;
 
 export type DisplayMode = 'table' | 'inline';
 
@@ -175,15 +154,7 @@ export type GitHubAuthSettings = v.InferOutput<typeof GitHubAuthSettingsResponse
 
 export type AuthProvidersInfo = v.InferOutput<typeof AuthProvidersResponseSchema>;
 
-export type IndexStatsPoint = {
-	capturedAt: Date;
-	numDocs: number;
-	sizeBytes: number;
-	uncompressedBytes: number;
-	numSplits: number;
-	minTimestamp: number | null;
-	maxTimestamp: number | null;
-};
+export type IndexStatsPoint = v.InferOutput<typeof IndexStatsPointSchema>;
 
 export type ClusterHealth = v.InferOutput<typeof ClusterHealthResponseSchema>;
 
@@ -225,7 +196,39 @@ export type IndexConfig = {
 	contextFields: string[] | null;
 };
 
-// API key verification (api-key.service.ts)
+export type QuickwitSource = {
+	sourceId: string;
+	sourceType: string;
+	enabled: boolean;
+	inputFormat: string | null;
+	numPipelines: number | null;
+	params: unknown | null;
+	vrlScript: string | null;
+};
+
+export type QuickwitIndexMetadata = {
+	indexId: string;
+	indexUid: string | null;
+	indexUri: string | null;
+	version: string | null;
+	createTimestamp: number | null;
+	mode: string | null;
+	timestampField: string | null;
+	indexFieldPresence: boolean | null;
+	storeSource: boolean | null;
+	storeDocumentSize: boolean | null;
+	tagFields: string[] | null;
+	defaultSearchFields: string[] | null;
+	retention: unknown | null;
+	fields: IndexField[];
+	sources: QuickwitSource[];
+};
+
+export type IndexMeta = {
+	settings: IndexSettings;
+	index: QuickwitIndexMetadata;
+};
+
 export type VerifyApiKeyResult =
 	| { status: 'ok'; key: VerifiedApiKey }
 	| { status: 'wrong-role'; actualRole: ApiKeyRole }

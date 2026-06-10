@@ -84,6 +84,22 @@ function resolveHit(
 	return { status: 'ok', key: entry.row };
 }
 
+function toApiKeySummary(
+	row: Omit<typeof apiKey.$inferSelect, 'token'>,
+	tokenPrefix: string
+): ApiKeySummary {
+	return {
+		id: row.id,
+		name: row.name,
+		tokenPrefix,
+		role: row.role,
+		indexId: row.indexId,
+		lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
+		createdAt: row.createdAt.toISOString(),
+		createdByUserId: row.createdByUserId
+	};
+}
+
 export async function listApiKeys(
 	db: Db,
 	opts: { role?: ApiKeyRole } = {}
@@ -101,7 +117,8 @@ export async function listApiKeys(
 		})
 		.from(apiKey);
 	const filtered = opts.role ? base.where(eq(apiKey.role, opts.role)) : base;
-	return filtered.orderBy(desc(apiKey.createdAt));
+	const rows = await filtered.orderBy(desc(apiKey.createdAt));
+	return rows.map((row) => toApiKeySummary(row, row.tokenPrefix));
 }
 
 export async function createApiKey(
@@ -125,16 +142,7 @@ export async function createApiKey(
 	if (!row) throw internal('Failed to create API key');
 	invalidateApiKeyCache();
 	return {
-		summary: {
-			id: row.id,
-			name: row.name,
-			tokenPrefix: row.token.slice(0, API_KEY_DISPLAY_PREFIX_LENGTH),
-			role: row.role,
-			indexId: row.indexId,
-			lastUsedAt: row.lastUsedAt,
-			createdAt: row.createdAt,
-			createdByUserId: row.createdByUserId
-		},
+		summary: toApiKeySummary(row, row.token.slice(0, API_KEY_DISPLAY_PREFIX_LENGTH)),
 		token
 	};
 }

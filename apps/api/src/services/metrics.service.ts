@@ -6,7 +6,7 @@ import type {
 	ResourceSnapshot,
 	SaturationSnapshot
 } from '../types.js';
-import { fetchQuickwitMetrics } from '../utils/quickwit-metrics.js';
+import { fetchQuickwitMetrics } from '../lib/quickwit-metrics.js';
 
 function findMetric(metrics: PromMetric[], name: string): PromMetric | null {
 	return metrics.find((m) => m.name === name) ?? null;

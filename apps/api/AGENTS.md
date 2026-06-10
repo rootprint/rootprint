@@ -2,7 +2,7 @@
 
 ## About
 
-Hono backend on Bun. Responsibilities: log ingest (NDJSON + OTLP), search proxy to Quickwit, user/auth, admin operations, ingest tokens.
+Hono backend on Bun. Responsibilities: log ingest (NDJSON + OTLP), search proxy to Quickwit, user/auth, admin operations, ingest API keys.
 
 The frontend in `apps/web` calls this API over HTTP.
 
@@ -32,21 +32,22 @@ Root convenience: `bun run dev:api`, `bun run build:api`, `bun run start:api`.
 
 ## Source Layout
 
-| Path              | Purpose                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/app.ts`      | Hono app composition, middleware mount, error handler                                                                                            |
-| `src/config.ts`   | Resolved runtime config object                                                                                                                   |
-| `src/env.ts`      | `AppEnv` type (Hono context: `requestId`, `session`, `token`)                                                                                    |
-| `src/types.ts`    | Public, pure-type surface re-exported via `exports['./types']`                                                                                   |
-| `src/index.ts`    | Workspace package entry                                                                                                                          |
-| `src/routes/`     | One file per resource (`logs.ts`, `indexes.ts`, `users.ts`, `tokens.ts`, `auth.ts`, `health.ts`); `routes/ingest/` for `ndjson.ts` and `otlp.ts` |
-| `src/services/`   | `*.service.ts` — business logic called from routes                                                                                               |
-| `src/middleware/` | `request-context`, `require-user`, `require-admin`, `require-token`                                                                              |
-| `src/db/`         | Drizzle schemas (`schema.ts`, `auth.schema.ts`) and DB client (`index.ts`)                                                                       |
-| `src/lib/`        | Cross-cutting clients: `auth`, `db`, `quickwit`                                                                                                  |
-| `src/utils/`      | Pure helpers: `http-error`, `otlp-response`, `bearer`, `ingest-token`                                                                            |
-| `src/gen/`        | Generated protobuf code — **do not edit**                                                                                                        |
-| `src/constants/`  | Domain constants (e.g. `ingest.ts`)                                                                                                              |
+| Path               | Purpose                                                                                                                                                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app.ts`       | Hono app composition, middleware mount, error handler, SPA static serving, boot (`main()`)                                                                                                                            |
+| `src/config.ts`    | Resolved runtime config object                                                                                                                                                                                        |
+| `src/env.ts`       | Hono context types: `AppEnv` (`requestId`, `session?`, `apiKey?`), `AuthedEnv`, `KeyedEnv`                                                                                                                            |
+| `src/types.ts`     | Public, pure-type surface re-exported via `exports['./types']`                                                                                                                                                        |
+| `src/index.ts`     | Workspace package entry                                                                                                                                                                                               |
+| `src/routes/`      | One file per resource (`api-keys`, `auth`, `exports`, `health`, `indexes`, `search`, `settings`, `shares`, `users`, `views`); `routes/admin/` (`activity`, `cluster`, `metrics`); `routes/ingest/` (`ndjson`, `otlp`) |
+| `src/services/`    | `*.service.ts` — business logic called from routes                                                                                                                                                                    |
+| `src/middleware/`  | `request-context`, `require-user`, `require-admin`, `require-api-key`, `require-index-visibility`, `require-manageable-index`, `with-index-config`, `with-index-meta`                                                 |
+| `src/schemas/`     | Valibot request schemas per resource; response schemas under `schemas/responses/`                                                                                                                                     |
+| `src/db/`          | Drizzle schemas (`schema.ts`, `auth.schema.ts`) and DB client (`index.ts`)                                                                                                                                            |
+| `src/lib/`         | Cross-cutting clients and IO: `auth`, `auth-admin`, `db`, `quickwit`, `quickwit-proxy`, `quickwit-metrics`, `secret`, `openapi/`, `query/`                                                                            |
+| `src/utils/`       | Pure helpers: `http-error`, `quickwit-error`, `otlp-response`, `bearer`, `params`, `valibot`, `require-env`, `db`                                                                                                     |
+| `src/gen/`         | Generated protobuf code — **do not edit**                                                                                                                                                                             |
+| `src/constants.ts` | Domain constants                                                                                                                                                                                                      |
 
 Sibling top-level dirs:
 
@@ -54,7 +55,7 @@ Sibling top-level dirs:
 - `drizzle/` — generated SQL migrations.
 - `bruno/` — Bruno API request collections for manual testing.
 - `buf.yaml`, `buf.gen.yaml` — buf configuration.
-- `drizzle.config.ts`, `vitest.config.ts` — config files (note: `vitest.config.ts` is dead; see follow-ups).
+- `drizzle.config.ts` — Drizzle Kit configuration.
 
 ## Types Contract
 
@@ -65,8 +66,8 @@ Sibling top-level dirs:
 ## Routing & Request Handling
 
 - Each resource gets a `Hono` router and is mounted with `app.route('/path', router)` in `src/app.ts`.
-- Auth-protected routers wrap via the `withAuth()` helper, which mounts `requireUser`/`requireAdmin`/`requireToken` middleware.
-- Read context values via `c.get('requestId' | 'session' | 'token')`. The `AppEnv` type lives in `src/env.ts`.
+- Session-protected routers wrap via the `withAuth()` helper, which mounts `requireUser`; admin routers additionally mount `requireAdmin` themselves. Ingest routes use `requireIngestKey` from `require-api-key`.
+- Read context values via `c.get('requestId' | 'session' | 'apiKey')`. The env types (`AppEnv`, `AuthedEnv`, `KeyedEnv`) live in `src/env.ts`.
 
 ## Error Handling
 
@@ -80,6 +81,7 @@ Sibling top-level dirs:
 
 - Use Valibot for all external input (request bodies, query params, headers). The `app.onError` handler maps `ValiError` to a 400 with a structured detail list.
 - Infer TS types from Valibot schemas where possible (`v.InferOutput<typeof Schema>`).
+- Request schemas live in `src/schemas/<resource>.ts` (shared path-param schemas in `src/utils/params.ts`); response schemas in `src/schemas/responses/<resource>.ts`. Route files never define schemas inline — they import them.
 
 ## Database
 
@@ -105,10 +107,10 @@ Sibling top-level dirs:
 ## Authentication
 
 - Better Auth setup lives in `src/lib/auth.ts`. Database tables follow Better Auth's schema (`src/db/auth.schema.ts`).
-- Session-based auth (cookies) for the web app; ingest tokens for log producers (`require-token` middleware).
-- Google OAuth is configured at runtime via the admin settings UI (writes to `app_settings`). The `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` env vars are **not** read.
-- Google sign-in is gated by a domain allowlist stored in `app_settings.google_allowed_domains` (JSON-encoded `string[]`). If creds are present but the allowlist is empty or missing, all Google sign-ins are rejected.
-- Linking a Google account to a user deletes that user's credential row and any pending invite. Account linking is auto-enabled (Google is a trusted provider) — an existing user signing in with Google for the first time gets attached to their existing row instead of getting a duplicate.
+- Session-based auth (cookies) for the web app; ingest API keys for log producers (`requireIngestKey` in `src/middleware/require-api-key.ts`).
+- Google and GitHub OAuth are configured at runtime via the admin settings UI (writes to `app_settings`). Provider env vars (`GOOGLE_CLIENT_ID` etc.) are **not** read.
+- Google sign-in is gated by a domain allowlist; GitHub sign-in by an org allowlist. Both live in `app_settings`. If creds are present but the allowlist is empty or missing, all sign-ins for that provider are rejected.
+- Linking an OAuth account to a user deletes that user's credential row and any pending invite. Account linking is auto-enabled for configured providers — an existing user signing in via OAuth for the first time gets attached to their existing row instead of getting a duplicate.
 
 ## Environment Variables
 
@@ -132,7 +134,7 @@ Defaults and examples live in the root `.env.example`.
 
 ## Tests
 
-No tests. This workspace has a stale `vitest.config.ts` left over from a prior experiment; it has no `vitest` dependency and no `test` script. Don't author tests; see follow-ups.
+No tests. Don't author unit, integration, or e2e tests unless explicitly requested.
 
 ## Conventions
 

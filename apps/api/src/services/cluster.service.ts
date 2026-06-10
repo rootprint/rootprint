@@ -3,18 +3,12 @@ import type { QuickwitClient } from 'quickwit-js';
 import { config } from '../config.js';
 import type { Db } from '../db/index.js';
 import type { ClusterOverview, PerIndexOverview } from '../types.js';
-import { HttpError } from '../utils/http-error.js';
+import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { getLatestSnapshotsByIndex } from './index-stats.service.js';
 import { listIndexes } from './index.service.js';
 
 export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<ClusterOverview> {
-	let healthRaw;
-	try {
-		healthRaw = await qw.health();
-	} catch (err) {
-		const message = err instanceof Error ? err.message : String(err);
-		throw new HttpError(503, 'QUICKWIT_UNAVAILABLE', message);
-	}
+	const healthRaw = await qw.health().catch(translateQuickwitError);
 
 	const [indexes, snapshots] = await Promise.all([
 		listIndexes(db, qw, 'admin'),

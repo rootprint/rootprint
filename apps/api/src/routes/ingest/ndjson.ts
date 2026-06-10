@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 
-import { config } from '../../config.js';
 import { CONTENT_TYPE_JSON } from '../../constants.js';
-import type { AppEnv } from '../../env.js';
+import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
+import { quickwitUrl } from '../../lib/quickwit.js';
+import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import { proxyToQuickwit } from '../../utils/quickwit-proxy.js';
 
-export const ndjsonRouter = new Hono<AppEnv>().post(
+export const ndjsonRouter = new Hono<KeyedEnv>().post(
 	'/ndjson',
 	describe({
 		tag: 'Log ingest',
@@ -15,7 +15,8 @@ export const ndjsonRouter = new Hono<AppEnv>().post(
 		description:
 			'Proxies an NDJSON (or JSON array) log payload to Quickwit for the index associated with the ingest API key. ' +
 			'Accepts application/x-ndjson or application/json content-type. ' +
-			'The response body is passed through from Quickwit.',
+			'Success and 4xx responses are passed through from Quickwit (400 bodies carry per-document parse errors); ' +
+			'upstream 5xx responses are mapped to the standard 503 error contract.',
 		security: [{ ingestBearer: [] }],
 		rawResponses: {
 			'200': {
@@ -32,13 +33,12 @@ export const ndjsonRouter = new Hono<AppEnv>().post(
 					}
 				}
 			}
-		},
-		errors: [400]
+		}
 	}),
 	requireIngestKey,
 	async (c) => {
-		const apiKey = c.get('apiKey')!;
-		const upstreamUrl = `${config.quickwitUrl}/api/v1/${encodeURIComponent(apiKey.indexId)}/ingest`;
+		const apiKey = c.get('apiKey');
+		const upstreamUrl = quickwitUrl(`/api/v1/${encodeURIComponent(apiKey.indexId)}/ingest`);
 		const contentType = c.req.header('content-type') ?? CONTENT_TYPE_JSON;
 
 		const headers: Record<string, string> = { 'content-type': contentType };
