@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 
 import { named } from '../../lib/openapi/describe.js';
+import { FilterSchema, SortDirectionSchema } from '../filters.js';
 
-// Mirrors the SavedView public shape from toPublic() in view.service.ts.
 export const SavedViewResponse = named(
 	'SavedViewResponse',
 	v.object({
@@ -11,17 +11,11 @@ export const SavedViewResponse = named(
 		name: v.string(),
 		description: v.nullable(v.string()),
 		query: v.string(),
-		filters: v.array(
-			v.object({
-				field: v.string(),
-				value: v.string(),
-				exclude: v.boolean()
-			})
-		),
-		sortDirection: v.picklist(['asc', 'desc']),
+		filters: v.array(FilterSchema),
+		sortDirection: SortDirectionSchema,
 		columns: v.nullable(v.array(v.string())),
-		createdAt: v.date(),
-		updatedAt: v.date()
+		createdAt: v.pipe(v.string(), v.isoTimestamp()),
+		updatedAt: v.pipe(v.string(), v.isoTimestamp())
 	})
 );
 

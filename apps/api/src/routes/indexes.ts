@@ -13,6 +13,7 @@ import { requireIndexAccess } from '../middleware/require-index-access.js';
 import { requireManageableIndex } from '../middleware/require-manageable-index.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
 import { FIELD_VALUES_MAX } from '../constants.js';
+import { FilterSchema } from '../schemas/filters.js';
 import { saveIndexConfigSchema } from '../schemas/indexes.js';
 import { createSourceSchema, updateSourceSchema } from '../schemas/sources.js';
 import {
@@ -87,12 +88,6 @@ const FieldValuesQuery = v.object({
 	startTs: v.optional(toNum),
 	endTs: v.optional(toNum),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
-});
-
-const FilterSchema = v.object({
-	field: v.pipe(v.string(), v.minLength(1)),
-	value: v.pipe(v.string(), v.minLength(1)),
-	exclude: v.boolean()
 });
 
 const FieldValuesBulkQuery = v.object({

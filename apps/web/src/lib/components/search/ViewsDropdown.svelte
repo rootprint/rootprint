@@ -1,38 +1,57 @@
 <script lang="ts">
-	import { BookmarkCheck, Bookmark, Search, Plus, Pencil, Trash2, ArrowLeft } from 'lucide-svelte';
 	import {
-		listSavedQueries,
-		createSavedQuery,
-		updateSavedQuery,
-		deleteSavedQuery,
-		SavedQueryError
-	} from '$lib/api/saved-queries';
+		ArrowLeft,
+		ChevronDown,
+		Eye,
+		Layers,
+		Pencil,
+		Plus,
+		RefreshCw,
+		Search,
+		Trash2
+	} from 'lucide-svelte';
+	import { listViews, createView, updateView, deleteView, ViewError } from '$lib/api/views';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
-	import type { SavedQuery } from 'api/types';
+	import type { SavedView } from 'api/types';
 
 	let { store }: { store: SearchStore } = $props();
 
-	let items = $state<SavedQuery[]>([]);
+	let items = $state<SavedView[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
 	let details = $state<HTMLDetailsElement | null>(null);
 	let filterText = $state('');
-	let toDelete = $state<SavedQuery | null>(null);
+
+	let toDelete = $state<SavedView | null>(null);
 	let deleteModalOpen = $state(false);
 	let deleting = $state(false);
 
-	type View = 'list' | 'form';
+	let toOverwrite = $state<SavedView | null>(null);
+	let overwriteModalOpen = $state(false);
+	let overwriting = $state(false);
 
-	let view = $state<View>('list');
-	let editing = $state<SavedQuery | null>(null);
+	type Panel = 'list' | 'form';
+
+	let panel = $state<Panel>('list');
+	let editing = $state<SavedView | null>(null);
 	let formName = $state('');
 	let formDescription = $state('');
-	let formQuery = $state('');
 	let formError = $state<string | null>(null);
 	let formNameError = $state<string | null>(null);
 	let formSubmitting = $state(false);
+
+	// Empty activeFields means "server defaults" — store null so applying the
+	// view never freezes an empty column list into the user's preferences.
+	function currentSnapshot() {
+		return {
+			query: store.query,
+			filters: store.filters,
+			sortDirection: store.sortDirection,
+			columns: store.activeFields.length > 0 ? store.activeFields : null
+		};
+	}
 
 	async function refresh() {
 		const indexId = store.selectedIndex;
@@ -44,37 +63,44 @@
 		loading = true;
 		error = null;
 		try {
-			items = await listSavedQueries(indexId);
+			items = await listViews(indexId);
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load saved queries';
+			error = e instanceof Error ? e.message : 'Failed to load views';
 			items = [];
 		} finally {
 			loading = false;
 		}
 	}
 
+	function applyView(item: SavedView) {
+		store.navigateQuery(
+			{ query: item.query, filters: item.filters, sortDirection: item.sortDirection },
+			{ push: true }
+		);
+		if (item.columns !== null) store.setActiveFields([...item.columns]);
+		close();
+	}
+
 	function openNewForm(prefillName = '') {
 		editing = null;
 		formName = prefillName;
 		formDescription = '';
-		formQuery = store.query;
 		formError = null;
 		formNameError = null;
-		view = 'form';
+		panel = 'form';
 	}
 
-	function openEditForm(item: SavedQuery) {
+	function openEditForm(item: SavedView) {
 		editing = item;
 		formName = item.name;
 		formDescription = item.description ?? '';
-		formQuery = item.query;
 		formError = null;
 		formNameError = null;
-		view = 'form';
+		panel = 'form';
 	}
 
 	function backToList() {
-		view = 'list';
+		panel = 'list';
 		editing = null;
 		formError = null;
 		formNameError = null;
@@ -86,8 +112,7 @@
 		if (!editing) return true;
 		const nameChanged = formName !== editing.name;
 		const descChanged = formDescription !== (editing.description ?? '');
-		const queryChanged = formQuery !== editing.query;
-		return nameChanged || descChanged || queryChanged;
+		return nameChanged || descChanged;
 	});
 
 	async function submitForm() {
@@ -102,27 +127,26 @@
 		formNameError = null;
 		try {
 			if (editing) {
-				const patch: { name?: string; description?: string | null; query?: string } = {};
+				const patch: { name?: string; description?: string | null } = {};
 				if (formName !== editing.name) patch.name = formName;
 				if (formDescription !== (editing.description ?? '')) {
 					patch.description = formDescription === '' ? null : formDescription;
 				}
-				if (formQuery !== editing.query) patch.query = formQuery;
-				const row = await updateSavedQuery(indexId, editing.id, patch);
+				const row = await updateView(indexId, editing.id, patch);
 				items = items.map((it) => (it.id === row.id ? row : it));
 			} else {
-				const row = await createSavedQuery(indexId, {
+				const row = await createView(indexId, {
 					name: formName,
 					description: formDescription === '' ? undefined : formDescription,
-					query: formQuery
+					...currentSnapshot()
 				});
 				items = [row, ...items];
 			}
 			backToList();
 		} catch (e) {
-			const message = e instanceof Error ? e.message : 'Failed to save query';
-			const code = e instanceof SavedQueryError ? e.code : undefined;
-			if (code === 'SAVED_QUERY_NAME_TAKEN') {
+			const message = e instanceof Error ? e.message : 'Failed to save view';
+			const code = e instanceof ViewError ? e.code : undefined;
+			if (code === 'VIEW_NAME_TAKEN') {
 				formNameError = message;
 			} else {
 				formError = message;
@@ -132,7 +156,36 @@
 		}
 	}
 
-	function openDeleteModal(item: SavedQuery) {
+	function openOverwriteModal(item: SavedView) {
+		toOverwrite = item;
+		overwriteModalOpen = true;
+	}
+
+	async function confirmOverwrite() {
+		const item = toOverwrite;
+		if (!item) return;
+		const indexId = store.selectedIndex;
+		if (indexId === null) {
+			error = 'No index selected';
+			overwriteModalOpen = false;
+			return;
+		}
+		overwriting = true;
+		error = null;
+		try {
+			const row = await updateView(indexId, item.id, currentSnapshot());
+			items = items.map((it) => (it.id === row.id ? row : it));
+			overwriteModalOpen = false;
+			toOverwrite = null;
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to update view';
+			overwriteModalOpen = false;
+		} finally {
+			overwriting = false;
+		}
+	}
+
+	function openDeleteModal(item: SavedView) {
 		toDelete = item;
 		deleteModalOpen = true;
 	}
@@ -147,13 +200,14 @@
 			return;
 		}
 		deleting = true;
+		error = null;
 		try {
-			await deleteSavedQuery(indexId, item.id);
+			await deleteView(indexId, item.id);
 			items = items.filter((it) => it.id !== item.id);
 			deleteModalOpen = false;
 			toDelete = null;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to delete saved query';
+			error = e instanceof Error ? e.message : 'Failed to delete view';
 			deleteModalOpen = false;
 		} finally {
 			deleting = false;
@@ -169,7 +223,7 @@
 			refresh();
 		} else {
 			filterText = '';
-			view = 'list';
+			panel = 'list';
 			editing = null;
 		}
 	}
@@ -182,7 +236,7 @@
 		if (!details?.open) return;
 		// `composedPath()` captures the event path at dispatch time, so it still
 		// resolves correctly when the click originated on an element that Svelte
-		// re-rendered out of the DOM (e.g. the footer button flipping `view` to
+		// re-rendered out of the DOM (e.g. the footer button flipping `panel` to
 		// `'form'` removes the button before the window listener runs).
 		if (details && e.composedPath().includes(details)) return;
 		close();
@@ -198,46 +252,48 @@
 		});
 	});
 
-	function applyItem(query: string) {
-		store.runQuery(query);
-		close();
-	}
+	let lastIndex: string | null | undefined;
+	$effect(() => {
+		const current = store.selectedIndex;
+		if (lastIndex !== undefined && current !== lastIndex) close();
+		lastIndex = current;
+	});
 </script>
 
 <svelte:window onkeydown={onKeydown} onclick={onWindowClick} />
 
-<details bind:this={details} ontoggle={onToggle} class="dropdown dropdown-end">
-	<summary aria-label="Saved queries" title="Saved queries" class="btn btn-sm btn-ghost list-none">
-		<BookmarkCheck class="h-3.5 w-3.5" />
+<details bind:this={details} ontoggle={onToggle} class="dropdown">
+	<summary title="Views" class="btn btn-sm btn-ghost list-none">
+		<Layers class="h-3.5 w-3.5" />
+		Views
+		<ChevronDown class="h-3 w-3 opacity-60" />
 	</summary>
 
 	<div
 		class="dropdown-content border-line rounded-box bg-base-100 z-50 mt-1 flex w-80 flex-col border"
 	>
-		{#if view === 'list'}
+		{#if panel === 'list'}
 			<div class="border-line border-b px-3 pt-3 pb-2">
-				<p class="eyebrow">Saved queries</p>
+				<p class="eyebrow">Views</p>
 			</div>
 
 			<div class="border-line border-b px-3 py-2">
 				<label class="input input-sm flex items-center gap-2">
 					<Search class="h-3.5 w-3.5 opacity-60" />
-					<input
-						type="text"
-						class="grow"
-						placeholder="Search saved queries…"
-						bind:value={filterText}
-					/>
+					<input type="text" class="grow" placeholder="Search views…" bind:value={filterText} />
 				</label>
 			</div>
 
 			<div class="max-h-72 min-h-[6rem] flex-1 overflow-y-auto">
+				{#if error && items.length > 0}
+					<p class="text-error border-line border-b px-3 py-2 text-xs">{error}</p>
+				{/if}
 				{#if loading && items.length === 0}
 					<div class="text-base-content/60 flex h-24 items-center justify-center gap-2 text-xs">
 						<span class="loading loading-spinner loading-xs"></span>
 						Loading…
 					</div>
-				{:else if error}
+				{:else if error && items.length === 0}
 					<div class="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
 						<p class="text-error text-xs">{error}</p>
 						<button type="button" class="btn btn-ghost btn-xs" onclick={() => refresh()}>
@@ -246,7 +302,7 @@
 					</div>
 				{:else if items.length === 0}
 					<div class="flex h-full items-center justify-center p-3">
-						<p class="text-base-content/60 text-xs">No saved queries yet</p>
+						<p class="text-base-content/60 text-xs">No views yet</p>
 					</div>
 				{:else if filtered.length === 0}
 					<div class="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
@@ -267,12 +323,19 @@
 								<div class="group hover:bg-base-200 flex items-center">
 									<button
 										type="button"
-										class="flex flex-1 items-center gap-2 px-3 py-1.5 text-left"
-										onclick={() => applyItem(item.query)}
-										title={item.query}
+										class="flex min-w-0 flex-1 items-center gap-2 px-3 py-1.5 text-left"
+										onclick={() => applyView(item)}
+										title={item.description ?? item.query}
 									>
-										<Bookmark class="h-3.5 w-3.5 shrink-0 opacity-60" />
-										<span class="truncate text-xs">{item.name}</span>
+										<Eye class="h-3.5 w-3.5 shrink-0 opacity-60" />
+										<span class="flex min-w-0 flex-col">
+											<span class="truncate text-xs">{item.name}</span>
+											{#if item.description}
+												<span class="text-base-content/60 truncate text-[10px]">
+													{item.description}
+												</span>
+											{/if}
+										</span>
 									</button>
 									<div
 										class="flex shrink-0 items-center gap-0.5 pr-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100"
@@ -280,8 +343,17 @@
 										<button
 											type="button"
 											class="btn btn-ghost btn-xs btn-square"
-											aria-label="Edit"
-											title="Edit"
+											aria-label="Update with current search"
+											title="Update with current search"
+											onclick={() => openOverwriteModal(item)}
+										>
+											<RefreshCw class="h-3.5 w-3.5" />
+										</button>
+										<button
+											type="button"
+											class="btn btn-ghost btn-xs btn-square"
+											aria-label="Rename"
+											title="Rename"
 											onclick={() => openEditForm(item)}
 										>
 											<Pencil class="h-3.5 w-3.5" />
@@ -310,7 +382,7 @@
 					onclick={() => openNewForm()}
 				>
 					<Plus class="h-3.5 w-3.5" />
-					New saved query
+					Save current search as view
 				</button>
 			</div>
 		{:else}
@@ -324,7 +396,7 @@
 					<ArrowLeft class="h-3.5 w-3.5" />
 				</button>
 				<p class="eyebrow truncate">
-					{editing ? `Edit "${editing.name}"` : 'New saved query'}
+					{editing ? `Edit "${editing.name}"` : 'New view'}
 				</p>
 			</div>
 
@@ -334,7 +406,7 @@
 					<input
 						type="text"
 						class="input input-sm"
-						placeholder="My saved query"
+						placeholder="My view"
 						bind:value={formName}
 						onkeydown={(e) => {
 							if (e.key === 'Enter') submitForm();
@@ -350,16 +422,16 @@
 					<input
 						type="text"
 						class="input input-sm"
-						placeholder="What does this query find?"
+						placeholder="What does this view show?"
 						bind:value={formDescription}
 					/>
 				</div>
 
-				<div class="flex flex-col gap-1">
-					<p class="eyebrow">Query</p>
-					<textarea class="textarea textarea-sm font-mono" rows="3" bind:value={formQuery}
-					></textarea>
-				</div>
+				{#if !editing}
+					<p class="text-base-content/60 text-xs">
+						Saves the current query, filters, sort direction, and columns.
+					</p>
+				{/if}
 
 				{#if formError}
 					<p class="text-error text-xs">{formError}</p>
@@ -374,7 +446,7 @@
 					disabled={!formCanSave}
 					onclick={submitForm}
 				>
-					{editing ? 'Save' : 'Save query'}
+					{editing ? 'Save' : 'Save view'}
 				</button>
 			</div>
 		{/if}
@@ -383,7 +455,7 @@
 
 <ConfirmModal
 	bind:open={deleteModalOpen}
-	title="Delete saved query"
+	title="Delete view"
 	confirmLabel="Delete"
 	confirmingLabel="Deleting…"
 	bind:loading={deleting}
@@ -391,5 +463,19 @@
 >
 	{#snippet message()}
 		Delete <span class="font-semibold">{toDelete?.name}</span>? This can't be undone.
+	{/snippet}
+</ConfirmModal>
+
+<ConfirmModal
+	bind:open={overwriteModalOpen}
+	title="Update view"
+	confirmLabel="Update"
+	confirmingLabel="Updating…"
+	bind:loading={overwriting}
+	onConfirm={confirmOverwrite}
+>
+	{#snippet message()}
+		Overwrite <span class="font-semibold">{toOverwrite?.name}</span> with the current search? Its saved
+		query, filters, sort direction, and columns will be replaced.
 	{/snippet}
 </ConfirmModal>

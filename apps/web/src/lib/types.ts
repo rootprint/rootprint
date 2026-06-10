@@ -6,7 +6,6 @@ export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean }
 export type IndexTabId = 'config' | 'fields' | 'sources';
 
 export type TimezoneMode = 'utc' | 'local';
-export type SortDirection = 'asc' | 'desc';
 export type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
 export interface LevelBucket {
@@ -76,8 +75,8 @@ export type TimeRange =
 	| { type: 'relative'; preset: Preset }
 	| { type: 'absolute'; start: number; end: number };
 
-import type { Filter } from 'api/types';
-export type { Filter };
+import type { Filter, SortDirection } from 'api/types';
+export type { Filter, SortDirection };
 
 export interface ParsedQuery {
 	index: string | null;

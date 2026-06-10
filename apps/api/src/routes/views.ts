@@ -5,6 +5,7 @@ import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireIndexAccess } from '../middleware/require-index-access.js';
+import { FilterSchema, SortDirectionSchema } from '../schemas/filters.js';
 import { SavedViewListResponse, SavedViewResponse } from '../schemas/responses/views.js';
 import {
 	createView,
@@ -14,14 +15,6 @@ import {
 } from '../services/view.service.js';
 import { positiveInt } from '../utils/valibot.js';
 import { IndexIdParams } from '../utils/params.js';
-
-const FilterSchema = v.object({
-	field: v.pipe(v.string(), v.minLength(1)),
-	value: v.string(),
-	exclude: v.boolean()
-});
-
-const SortDirectionSchema = v.picklist(['asc', 'desc']);
 
 const CreateBody = v.object({
 	name: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
@@ -45,7 +38,7 @@ const PatchBody = v.pipe(
 );
 
 const ItemParams = v.object({
-	indexId: v.pipe(v.string(), v.minLength(1)),
+	...IndexIdParams.entries,
 	viewId: positiveInt('viewId')
 });
 

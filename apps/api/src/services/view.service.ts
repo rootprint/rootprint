@@ -2,8 +2,8 @@ import { and, desc, eq } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
 import { view } from '../db/schema.js';
-import type { Filter, SavedView } from '../types.js';
-import { forbidden, internal, notFound } from '../utils/http-error.js';
+import type { Filter, SavedView, SortDirection } from '../types.js';
+import { internal, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 
 type ViewRow = typeof view.$inferSelect;
@@ -21,8 +21,8 @@ function toPublic(row: ViewRow): SavedView {
 		filters: row.filters,
 		sortDirection: row.sortDirection,
 		columns: row.columns,
-		createdAt: row.createdAt,
-		updatedAt: row.updatedAt
+		createdAt: row.createdAt.toISOString(),
+		updatedAt: row.updatedAt.toISOString()
 	};
 }
 
@@ -44,23 +44,15 @@ export async function createView(
 		description?: string;
 		query: string;
 		filters?: Filter[];
-		sortDirection?: 'asc' | 'desc';
+		sortDirection?: SortDirection;
 		columns?: string[] | null;
 	}
 ): Promise<SavedView> {
+	// Omitted optional fields fall back to the column defaults in db/schema.ts.
 	const [row] = await withUniqueViolation(NAME_TAKEN_MSG, NAME_TAKEN_CODE, () =>
 		db
 			.insert(view)
-			.values({
-				userId,
-				indexId: input.indexId,
-				name: input.name,
-				description: input.description,
-				query: input.query,
-				filters: input.filters ?? [],
-				sortDirection: input.sortDirection ?? 'desc',
-				columns: input.columns ?? null
-			})
+			.values({ userId, ...input })
 			.returning()
 	);
 	if (!row) throw internal('Failed to create view');
@@ -77,27 +69,20 @@ export async function updateOwnedView(
 		description?: string | null;
 		query?: string;
 		filters?: Filter[];
-		sortDirection?: 'asc' | 'desc';
+		sortDirection?: SortDirection;
 		columns?: string[] | null;
 	}
 ): Promise<SavedView> {
-	const updates: Partial<typeof patch> = {};
-	if (patch.name !== undefined) updates.name = patch.name;
-	if (patch.description !== undefined) updates.description = patch.description;
-	if (patch.query !== undefined) updates.query = patch.query;
-	if (patch.filters !== undefined) updates.filters = patch.filters;
-	if (patch.sortDirection !== undefined) updates.sortDirection = patch.sortDirection;
-	if (patch.columns !== undefined) updates.columns = patch.columns;
-
+	// Callers guarantee at least one field; drizzle's .set() drops undefined keys.
 	const [row] = await withUniqueViolation(NAME_TAKEN_MSG, NAME_TAKEN_CODE, () =>
 		db
 			.update(view)
-			.set(updates)
+			.set(patch)
 			.where(and(eq(view.id, id), eq(view.userId, userId), eq(view.indexId, indexId)))
 			.returning()
 	);
-	if (row) return toPublic(row);
-	throw await missOrForbidden(db, id, 'View');
+	if (!row) throw notFound('View not found');
+	return toPublic(row);
 }
 
 export async function deleteOwnedView(
@@ -110,12 +95,5 @@ export async function deleteOwnedView(
 		.delete(view)
 		.where(and(eq(view.id, id), eq(view.userId, userId), eq(view.indexId, indexId)))
 		.returning({ id: view.id });
-	if (row) return;
-	throw await missOrForbidden(db, id, 'View');
-}
-
-async function missOrForbidden(db: Db, id: number, label: string): Promise<Error> {
-	const [row] = await db.select({ id: view.id }).from(view).where(eq(view.id, id)).limit(1);
-	if (!row) return notFound(`${label} not found`);
-	return forbidden(`Not the owner of this ${label.toLowerCase()}`);
+	if (!row) throw notFound('View not found');
 }

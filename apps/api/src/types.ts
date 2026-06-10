@@ -121,6 +121,8 @@ export type Filter = {
 	exclude: boolean;
 };
 
+export type SortDirection = 'asc' | 'desc';
+
 export type FieldValuesBulkResponse = v.InferOutput<typeof FieldValuesBulkResponseSchema>;
 
 export type UserRole = 'admin' | 'user';
