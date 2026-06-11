@@ -1,0 +1,16 @@
+meta {
+  name: List My Personal Keys
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/auth/api-key/list
+  body: none
+  auth: none
+}
+
+docs {
+  Self-service: lists the signed-in user's own personal keys (never the raw key
+  value). Admins see all users' keys via api-keys/List Personal Keys instead.
+}

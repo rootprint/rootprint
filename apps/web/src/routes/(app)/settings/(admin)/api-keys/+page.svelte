@@ -1,14 +1,11 @@
 <script lang="ts">
 	import { Eye, Plus, Search, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { crossfade } from 'svelte/transition';
-	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
 	import { getApiKey, deleteApiKey } from '$lib/api/api-keys';
 	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
-	import RoleBadge from '$lib/components/admin/api-keys/RoleBadge.svelte';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
@@ -16,35 +13,17 @@
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { pluralize } from '$lib/utils/format';
 	import { formatRelativeTime } from '$lib/utils/time';
-	import type { ApiKeyRole } from 'api/types';
-
-	type RoleFilter = 'all' | ApiKeyRole;
-
-	const [send, receive] = crossfade({
-		duration: 200,
-		easing: cubicInOut
-	});
-
-	const filterOptions: { id: RoleFilter; label: string }[] = [
-		{ id: 'all', label: 'All' },
-		{ id: 'ingest', label: 'Ingest' },
-		{ id: 'search', label: 'Search' }
-	];
 
 	let { data } = $props();
 	const keys = $derived(data.keys);
 	const indexIds = $derived(data.indexIds);
 
 	let search = $state('');
-	let roleFilter = $state<RoleFilter>('all');
 
 	const filtered = $derived.by(() => {
 		const q = search.trim().toLowerCase();
-		return keys.filter((k) => {
-			if (roleFilter !== 'all' && k.role !== roleFilter) return false;
-			if (!q) return true;
-			return k.name.toLowerCase().includes(q);
-		});
+		if (!q) return keys;
+		return keys.filter((k) => k.name.toLowerCase().includes(q));
 	});
 
 	let createOpen = $state(false);
@@ -120,25 +99,19 @@
 	const noIndexes = $derived(indexIds.length === 0);
 	const countLabel = $derived(pluralize(filtered.length, 'key'));
 	const emptyMessage = $derived(
-		search.trim() !== '' || roleFilter !== 'all'
-			? 'No API keys match your filter.'
-			: 'No API keys yet.'
+		search.trim() !== '' ? 'No API keys match your search.' : 'No API keys yet.'
 	);
 
 	// Column tracks shared by the whole table via subgrid (see ListCard `cols`), so
 	// the header and every data row align into the same columns. Defining them once
 	// on the card — rather than per-row — keeps the `auto` columns from sizing to
 	// each row's own content and drifting out of alignment.
-	const colTracks = 'minmax(0,2fr) minmax(0,0.8fr) minmax(0,1.3fr) minmax(0,1.5fr) auto auto';
-	// Each row/header opts into the shared tracks and adds its own spacing.
+	const colTracks = 'minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.5fr) auto auto';
 	const row = 'col-span-full grid grid-cols-subgrid items-center px-4';
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
-	<PageHeader
-		title="API keys"
-		description="Create and manage keys that grant access to ingest or search."
-	/>
+	<PageHeader title="Ingest keys" description="Keys that let shippers send logs into an index." />
 
 	{#if noIndexes}
 		<p class="text-base-content/60 mt-6 text-sm">
@@ -147,30 +120,6 @@
 	{/if}
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">
-		<div role="tablist" class="flex h-8 items-center gap-5" aria-label="Filter by role">
-			{#each filterOptions as opt (opt.id)}
-				{@const active = roleFilter === opt.id}
-				<button
-					type="button"
-					role="tab"
-					aria-selected={active}
-					class="relative flex h-full items-center text-sm transition-colors {active
-						? 'text-base-content'
-						: 'text-base-content/50 hover:text-base-content'}"
-					onclick={() => (roleFilter = opt.id)}
-				>
-					{opt.label}
-					{#if active}
-						<span
-							in:receive={{ key: 'api-keys-filter-indicator' }}
-							out:send={{ key: 'api-keys-filter-indicator' }}
-							class="bg-primary absolute right-0 -bottom-px left-0 h-px"
-						></span>
-					{/if}
-				</button>
-			{/each}
-		</div>
-
 		<label class="input input-sm flex-1">
 			<Search class="h-3.5 w-3.5 opacity-60" />
 			<input
@@ -185,7 +134,7 @@
 
 		<button class="btn btn-primary btn-sm" onclick={() => (createOpen = true)} disabled={noIndexes}>
 			<Plus class="h-3.5 w-3.5" />
-			Create API key
+			Create ingest key
 		</button>
 	</div>
 
@@ -194,7 +143,6 @@
 			<ListCard cols={colTracks} empty={filtered.length === 0} {emptyMessage}>
 				<div class="{row} text-base-content/50 py-2.5 text-[10px] tracking-wide uppercase">
 					<span>Name</span>
-					<span>Role</span>
 					<span>Token</span>
 					<span>Index</span>
 					<span>Last used</span>
@@ -203,7 +151,6 @@
 				{#each filtered as key (key.id)}
 					<div class="{row} min-h-14 py-3">
 						<div class="truncate text-sm">{key.name}</div>
-						<div><RoleBadge role={key.role} /></div>
 						<div class="text-base-content/60 font-mono text-xs">{key.tokenPrefix}…</div>
 						<div class="text-base-content/70 truncate font-mono text-xs">{key.indexId}</div>
 						<div class="text-base-content/50 text-xs">

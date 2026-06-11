@@ -53,7 +53,6 @@
 <CreateApiKeyModal
 	bind:open={createOpen}
 	{indexIds}
-	role="ingest"
 	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
 	invalidateKey={DEP.sendLogsApiKeys}
 	onCreated={handleCreated}

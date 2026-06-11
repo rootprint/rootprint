@@ -1,0 +1,18 @@
+meta {
+  name: List Personal Keys (admin)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/api-keys/personal
+  body: none
+  auth: none
+}
+
+docs {
+  Admin oversight: lists every user's personal API key (no secret material —
+  name, owner, start fragment, lastRequest, createdAt). Requires an admin
+  session cookie (sign in as admin first). Self-service CRUD for personal keys
+  lives in the personal-keys folder.
+}

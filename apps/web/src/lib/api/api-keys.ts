@@ -2,15 +2,14 @@ import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
-import type { ApiKeyRole, CreateApiKeyInput } from 'api/types';
+import type { CreateApiKeyInput } from 'api/types';
 
 const apiKeys = client.api['api-keys'];
 
 export type ApiKeyView = InferResponseType<typeof apiKeys.$get, 200>[number];
 
-export async function listApiKeys(opts: { role?: ApiKeyRole } = {}): Promise<ApiKeyView[]> {
-	const query = opts.role ? { role: opts.role } : {};
-	const res = await apiKeys.$get({ query });
+export async function listApiKeys(): Promise<ApiKeyView[]> {
+	const res = await apiKeys.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load API keys');
 	return res.json() as Promise<ApiKeyView[]>;
 }

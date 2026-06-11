@@ -6,6 +6,7 @@ export type AppEnv = {
 		requestId: string;
 		session?: Session;
 		apiKey?: VerifiedApiKey;
+		apiKeyActor?: { keyId: string };
 	};
 };
 

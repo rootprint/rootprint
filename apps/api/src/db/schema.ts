@@ -79,7 +79,7 @@ export const apiKey = pgTable(
 		id: serial('id').primaryKey(),
 		name: text('name').notNull().unique(),
 		token: text('token').notNull().unique(),
-		role: text('role').$type<'ingest' | 'search'>().notNull(),
+		role: text('role').$type<'ingest'>().notNull(),
 		indexId: text('index_id').notNull(),
 		lastUsedAt: timestamp('last_used_at'),
 		createdByUserId: text('created_by_user_id')
@@ -91,7 +91,7 @@ export const apiKey = pgTable(
 		index('api_key_created_by').on(table.createdByUserId),
 		index('api_key_index_id').on(table.indexId),
 		index('api_key_role').on(table.role),
-		check('api_key_role_check', sql`${table.role} in ('ingest','search')`)
+		check('api_key_role_check', sql`${table.role} in ('ingest')`)
 	]
 );
 
@@ -171,7 +171,7 @@ export const searchAudit = pgTable(
 		executedAt: timestamp('executed_at', { withTimezone: true }).defaultNow().notNull(),
 		source: text('source').$type<'ui' | 'token'>().notNull(),
 		userId: text('user_id'),
-		apiKeyId: integer('api_key_id'),
+		apiKeyId: text('api_key_id'),
 		indexId: text('index_id').notNull(),
 		query: text('query').notNull().default(''),
 		startTs: bigint('start_ts', { mode: 'number' }),

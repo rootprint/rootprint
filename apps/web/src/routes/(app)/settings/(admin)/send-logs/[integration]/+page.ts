@@ -14,7 +14,7 @@ export const load: PageLoad = async ({ params, depends }) => {
 	}
 
 	try {
-		const [apiKeys, indexes] = await Promise.all([listApiKeys({ role: 'ingest' }), listIndexes()]);
+		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
 		return {
 			integrationId: params.integration,
 			apiKeys,

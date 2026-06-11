@@ -19,7 +19,7 @@ function extractAuditError(err: unknown): { code: string; message: string } {
 // Discriminated by who issued the search — the search_audit check constraint
 // enforces the matching (source, userId/apiKeyId) shape, so the two are tied
 // together here rather than passed as loose fields.
-type AuditActor = { source: 'ui'; userId: string } | { source: 'token'; apiKeyId: number };
+type AuditActor = { source: 'ui'; userId: string } | { source: 'token'; apiKeyId: string };
 
 /**
  * Runs a log search, timing it and recording a success/error row in search_audit.

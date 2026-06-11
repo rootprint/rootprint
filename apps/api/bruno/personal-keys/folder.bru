@@ -1,0 +1,16 @@
+meta {
+  name: personal-keys
+  seq: 11
+}
+
+docs {
+  Personal API keys (Better Auth `apiKey` plugin). Self-service CRUD lives at
+  /api/auth/api-key/* and is authenticated by a session cookie — sign in first
+  (auth/Sign In), then create a key. The raw key (rpk_...) is shown once on
+  create; paste it into the `personalApiKey` environment var to exercise the
+  bearer-authenticated log-explorer request here.
+
+  Keys are stamped { logs: ['read'] } server-side and can call only the
+  read-only log-explorer + index-discovery endpoints (the same routes the web
+  UI uses). Admin oversight (list-all / revoke) lives in the api-keys folder.
+}

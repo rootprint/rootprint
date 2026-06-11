@@ -8,6 +8,8 @@ import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';
+import { requireUser } from '../middleware/require-user.js';
+import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { withIndexConfig } from '../middleware/with-index-config.js';
 import { withIndexMeta } from '../middleware/with-index-meta.js';
 import {
@@ -58,19 +60,23 @@ import {
 	histogramLogs,
 	searchLogs
 } from '../services/log.service.js';
-import { withSearchAudit } from '../services/search-audit.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
+import { withSearchAudit } from '../services/search-audit.service.js';
+import type { Scope } from '../types.js';
 import { IndexIdParams } from '../utils/params.js';
 
-// Routes are chained so Hono propagates request/response types for the RPC client.
+const LOGS_READ: Scope = { logs: ['read'] };
+
 export const indexesRouter = new Hono<AuthedEnv>()
 	.get(
 		'/',
 		describe({
 			tag: 'Index management',
 			summary: 'List indexes',
-			ok: IndexListResponse
+			ok: IndexListResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		validator('query', ListIndexesQuery),
 		async (c) => {
 			const { includeHidden } = c.req.valid('query');
@@ -83,8 +89,10 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Index management',
 			summary: 'List index fields',
-			ok: IndexFieldsResponse
+			ok: IndexFieldsResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
@@ -96,8 +104,10 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Index management',
 			summary: 'Get index view config',
-			ok: IndexViewConfigResponse
+			ok: IndexViewConfigResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
@@ -111,6 +121,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			summary: 'Get index detail',
 			ok: IndexDetailResponse
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
@@ -125,6 +136,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			summary: 'Get index stats history',
 			ok: IndexStatsResponse
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
@@ -148,6 +160,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			okStatus: 204,
 			errors: [409]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
@@ -167,6 +180,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			okStatus: 204,
 			errors: [409]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
@@ -185,6 +199,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			okStatus: 201,
 			errors: [400, 409]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', IndexIdParams),
@@ -204,6 +219,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			ok: SourceDetailSchema,
 			errors: [404]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', SourceParams),
@@ -220,6 +236,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			ok: SourceDetailSchema,
 			errors: [400, 404]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', SourceParams),
@@ -239,6 +256,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			okStatus: 204,
 			errors: [404]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', SourceParams),
@@ -256,6 +274,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			okStatus: 204,
 			errors: [409]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', SourceParams),
@@ -275,6 +294,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			okStatus: 204,
 			errors: [409]
 		}),
+		requireUser,
 		requireAdmin,
 		withIndexMeta('manage'),
 		validator('param', SourceParams),
@@ -289,20 +309,22 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Log explorer',
 			summary: 'Search logs',
-			ok: LogSearchResponse
+			ok: LogSearchResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
 		validator('query', SearchQuery),
 		async (c) => {
 			const q = c.req.valid('query');
 			const indexConfig = c.get('indexConfig');
 			const session = c.get('session');
-			const result = await withSearchAudit(
-				db,
-				{ source: 'ui', userId: session.user.id },
-				indexConfig.indexId,
-				q,
-				() => searchLogs(quickwit, indexConfig, q)
+			const keyActor = c.get('apiKeyActor');
+			const actor = keyActor
+				? ({ source: 'token', apiKeyId: keyActor.keyId } as const)
+				: ({ source: 'ui', userId: session.user.id } as const);
+			const result = await withSearchAudit(db, actor, indexConfig.indexId, q, () =>
+				searchLogs(quickwit, indexConfig, q)
 			);
 			return c.json(result);
 		}
@@ -312,8 +334,10 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Log explorer',
 			summary: 'Get log histogram',
-			ok: HistogramResponse
+			ok: HistogramResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
 		validator('query', HistogramQuery),
 		async (c) => {
@@ -328,8 +352,10 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Log explorer',
 			summary: 'Get bulk field values',
-			ok: FieldValuesBulkResponse
+			ok: FieldValuesBulkResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
 		validator('query', FieldValuesBulkQuery),
 		async (c) => {
@@ -351,8 +377,10 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Log explorer',
 			summary: 'Get field values',
-			ok: FieldValuesResponse
+			ok: FieldValuesResponse,
+			security: [{ cookieAuth: [] }, { personalBearer: [] }]
 		}),
+		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
 		validator('param', FieldParams),
 		validator('query', FieldValuesQuery),
@@ -376,6 +404,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			summary: 'Get index preferences',
 			ok: PreferencesResponse
 		}),
+		requireUser,
 		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		async (c) => {
@@ -391,6 +420,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			summary: 'Save index preferences',
 			ok: PreferencesResponse
 		}),
+		requireUser,
 		withIndexMeta('access'),
 		validator('param', IndexIdParams),
 		validator('json', PutPreferencesBody),

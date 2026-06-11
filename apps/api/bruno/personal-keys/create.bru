@@ -1,0 +1,24 @@
+meta {
+  name: Create Personal Key
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/api-key/create
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "my-agent-key"
+  }
+}
+
+docs {
+  Self-service: creates a personal key owned by the signed-in user (session
+  cookie). Permissions are stamped server-side ({ logs: ['read'] }) — the client
+  cannot set them. The response includes `key` (rpk_...) exactly once; copy it
+  into the `personalApiKey` environment var and the `id` into `personalKeyId`.
+}

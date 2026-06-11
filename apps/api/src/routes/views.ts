@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
+import { requireUser } from '../middleware/require-user.js';
 import { withIndexMeta, type IndexMetaEnv } from '../middleware/with-index-meta.js';
 import { SavedViewListResponse, SavedViewResponse } from '../schemas/responses/views.js';
 import { createViewSchema, patchViewSchema, viewItemParamsSchema } from '../schemas/views.js';
@@ -14,6 +15,7 @@ import {
 import { IndexIdParams } from '../utils/params.js';
 
 export const viewsRouter = new Hono<IndexMetaEnv>()
+	.use('*', requireUser)
 	.use('*', withIndexMeta('access'))
 	.get(
 		'/',

@@ -1,0 +1,23 @@
+meta {
+  name: Delete My Personal Key
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/auth/api-key/delete
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "keyId": "{{personalKeyId}}"
+  }
+}
+
+docs {
+  Self-service: the signed-in user revokes one of their own keys. Better Auth's
+  delete endpoint is owner-scoped (a user can only delete their own keys);
+  cross-user revocation is the admin endpoint in the api-keys folder.
+}

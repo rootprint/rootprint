@@ -25,7 +25,7 @@ export const documentation: GenerateSpecOptions['documentation'] = {
 		securitySchemes: {
 			cookieAuth: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token' },
 			ingestBearer: { type: 'http', scheme: 'bearer', description: 'Ingest API key' },
-			searchBearer: { type: 'http', scheme: 'bearer', description: 'Search API key' }
+			personalBearer: { type: 'http', scheme: 'bearer', description: 'Personal API key' }
 		},
 		responses: errorResponseComponents
 	},

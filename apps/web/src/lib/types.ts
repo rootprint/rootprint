@@ -6,6 +6,14 @@ export type { Filter, SortDirection };
 /** One crumb in a breadcrumb trail. Ancestors set `href`; the current page omits it. */
 export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean };
 
+export interface PersonalApiKey {
+	id: string;
+	name: string | null;
+	start: string | null;
+	createdAt: string | Date;
+	lastRequest: string | Date | null;
+}
+
 export type IndexTabId = 'config' | 'fields' | 'sources';
 
 export type TimezoneMode = 'utc' | 'local';
