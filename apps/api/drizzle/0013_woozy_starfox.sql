@@ -29,4 +29,5 @@ ALTER TABLE "apikey" ADD CONSTRAINT "apikey_reference_id_user_id_fk" FOREIGN KEY
 CREATE INDEX "apikey_reference_id_idx" ON "apikey" USING btree ("reference_id");--> statement-breakpoint
 CREATE INDEX "apikey_key_idx" ON "apikey" USING btree ("key");--> statement-breakpoint
 DELETE FROM "api_key" WHERE "role" = 'search';--> statement-breakpoint
+DELETE FROM "search_audit" WHERE "source" = 'token';--> statement-breakpoint
 ALTER TABLE "api_key" ADD CONSTRAINT "api_key_role_check" CHECK ("api_key"."role" in ('ingest'));
