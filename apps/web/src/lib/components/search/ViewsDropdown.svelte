@@ -10,9 +10,12 @@
 		Search,
 		Trash2
 	} from 'lucide-svelte';
-	import { listViews, createView, updateView, deleteView, ViewError } from '$lib/api/views';
+	import * as v from 'valibot';
+	import { ApiError, issuesToFieldErrors } from '$lib/api/errors';
+	import { listViews, createView, updateView, deleteView } from '$lib/api/views';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
+	import { createViewSchema, patchViewSchema } from 'api/schemas';
 	import type { SavedView } from 'api/types';
 
 	let { store }: { store: SearchStore } = $props();
@@ -39,7 +42,7 @@
 	let formName = $state('');
 	let formDescription = $state('');
 	let formError = $state<string | null>(null);
-	let formNameError = $state<string | null>(null);
+	let fieldErrors = $state<Record<string, string>>({});
 	let formSubmitting = $state(false);
 
 	// Empty activeFields means "server defaults" — store null so applying the
@@ -86,7 +89,7 @@
 		formName = prefillName;
 		formDescription = '';
 		formError = null;
-		formNameError = null;
+		fieldErrors = {};
 		panel = 'form';
 	}
 
@@ -95,7 +98,7 @@
 		formName = item.name;
 		formDescription = item.description ?? '';
 		formError = null;
-		formNameError = null;
+		fieldErrors = {};
 		panel = 'form';
 	}
 
@@ -103,7 +106,7 @@
 		panel = 'list';
 		editing = null;
 		formError = null;
-		formNameError = null;
+		fieldErrors = {};
 	}
 
 	const formCanSave = $derived.by(() => {
@@ -115,39 +118,60 @@
 		return nameChanged || descChanged;
 	});
 
-	async function submitForm() {
+	async function onsubmit(e: SubmitEvent) {
+		e.preventDefault();
 		if (!formCanSave) return;
+		formError = null;
+		fieldErrors = {};
 		const indexId = store.selectedIndex;
 		if (indexId === null) {
 			formError = 'No index selected';
 			return;
 		}
-		formSubmitting = true;
-		formError = null;
-		formNameError = null;
-		try {
-			if (editing) {
-				const patch: { name?: string; description?: string | null } = {};
-				if (formName !== editing.name) patch.name = formName;
-				if (formDescription !== (editing.description ?? '')) {
-					patch.description = formDescription === '' ? null : formDescription;
-				}
-				const row = await updateView(indexId, editing.id, patch);
-				items = items.map((it) => (it.id === row.id ? row : it));
-			} else {
-				const row = await createView(indexId, {
-					name: formName,
-					description: formDescription === '' ? undefined : formDescription,
-					...currentSnapshot()
-				});
-				items = [row, ...items];
+
+		let save: () => Promise<void>;
+		if (editing) {
+			const editingView = editing;
+			const patch: { name?: string; description?: string | null } = {};
+			if (formName !== editingView.name) patch.name = formName;
+			if (formDescription !== (editingView.description ?? '')) {
+				patch.description = formDescription === '' ? null : formDescription;
 			}
+			const parsed = v.safeParse(patchViewSchema, patch);
+			if (!parsed.success) {
+				fieldErrors = issuesToFieldErrors(parsed.issues);
+				return;
+			}
+			save = async () => {
+				const row = await updateView(indexId, editingView.id, patch);
+				items = items.map((it) => (it.id === row.id ? row : it));
+			};
+		} else {
+			const input = {
+				name: formName,
+				description: formDescription === '' ? undefined : formDescription,
+				...currentSnapshot()
+			};
+			const parsed = v.safeParse(createViewSchema, input);
+			if (!parsed.success) {
+				fieldErrors = issuesToFieldErrors(parsed.issues);
+				return;
+			}
+			save = async () => {
+				const row = await createView(indexId, input);
+				items = [row, ...items];
+			};
+		}
+
+		formSubmitting = true;
+		try {
+			await save();
 			backToList();
-		} catch (e) {
-			const message = e instanceof Error ? e.message : 'Failed to save view';
-			const code = e instanceof ViewError ? e.code : undefined;
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to save view';
+			const code = err instanceof ApiError ? err.code : undefined;
 			if (code === 'VIEW_NAME_TAKEN') {
-				formNameError = message;
+				fieldErrors = { name: message };
 			} else {
 				formError = message;
 			}
@@ -400,20 +424,20 @@
 				</p>
 			</div>
 
-			<div class="flex flex-col gap-3 p-3">
+			<form id="view-form" class="flex flex-col gap-3 p-3" {onsubmit}>
 				<div class="flex flex-col gap-1">
 					<p class="eyebrow">Name</p>
 					<input
 						type="text"
 						class="input input-sm"
+						class:input-error={fieldErrors.name}
 						placeholder="My view"
 						bind:value={formName}
-						onkeydown={(e) => {
-							if (e.key === 'Enter') submitForm();
-						}}
+						aria-invalid={fieldErrors.name ? 'true' : undefined}
+						aria-describedby={fieldErrors.name ? 'view-form-name-msg' : undefined}
 					/>
-					{#if formNameError}
-						<p class="text-error text-xs">{formNameError}</p>
+					{#if fieldErrors.name}
+						<p id="view-form-name-msg" class="text-error text-xs">{fieldErrors.name}</p>
 					{/if}
 				</div>
 
@@ -436,15 +460,15 @@
 				{#if formError}
 					<p class="text-error text-xs">{formError}</p>
 				{/if}
-			</div>
+			</form>
 
 			<div class="border-line flex justify-end gap-2 border-t px-3 py-2">
 				<button type="button" class="btn btn-ghost btn-sm" onclick={backToList}>Cancel</button>
 				<button
-					type="button"
+					type="submit"
+					form="view-form"
 					class="btn btn-primary btn-sm"
 					disabled={!formCanSave}
-					onclick={submitForm}
 				>
 					{editing ? 'Save' : 'Save view'}
 				</button>

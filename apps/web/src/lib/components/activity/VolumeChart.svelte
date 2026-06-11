@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { parseISO } from 'date-fns';
+	import { untrack } from 'svelte';
 	import type uPlotLib from 'uplot';
 	import 'uplot/dist/uPlot.min.css';
 
 	import { browser } from '$app/environment';
-	import { baseContentAt, cssVarColor } from '$lib/utils/log-helpers';
+	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '$lib/utils/chart-colors';
 	import { formatCount } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
-	import { windowToSpanMs, type Window } from '$lib/api/activity';
+	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
 
 	type Bucket = { t: string; count: number };
 	type Props = { buckets: Bucket[]; window?: Window };
@@ -40,7 +41,7 @@
 	});
 
 	const hasData = $derived(columnar !== null);
-	const barColor = $derived(browser ? cssVarColor('var(--chart-3)') : '#000');
+	const barColor = $derived(browser ? cssVarColor('var(--chart-3)') : CANVAS_FALLBACK_COLOR);
 
 	let containerEl = $state<HTMLDivElement | null>(null);
 	let chartEl = $state<HTMLDivElement | null>(null);
@@ -90,16 +91,20 @@
 	async function buildChart() {
 		if (!browser || !chartEl || !columnar) return;
 		const buildId = ++chartBuildId;
-		if (containerEl) {
-			const w = containerEl.clientWidth;
-			if (w > 0) chartWidth = w;
-		}
 		destroyChart();
 		if (!uPlotCtor) {
 			const mod = await import('uplot');
 			uPlotCtor = mod.default;
 		}
 		if (!chartEl || !columnar || buildId !== chartBuildId) return;
+
+		const width = untrack(() => {
+			if (containerEl) {
+				const w = containerEl.clientWidth;
+				if (w > 0) chartWidth = w;
+			}
+			return chartWidth;
+		});
 
 		const UPlot = uPlotCtor;
 		const barPaths = UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? undefined;
@@ -110,7 +115,7 @@
 		const gridStroke = baseContentAt(0.1);
 
 		const opts: uPlotLib.Options = {
-			width: chartWidth,
+			width,
 			height: HEIGHT,
 			padding: [12, 8, 0, 0],
 			cursor: { drag: { x: false, y: false }, points: { show: false } },

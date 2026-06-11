@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import ContextFieldRow from './ContextFieldRow.svelte';
+	import DrawerFieldRow from '../DrawerFieldRow.svelte';
 	import { levelColor } from '$lib/constants/level-colors';
 	import { groupHitFields } from '$lib/utils/hit-fields';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
@@ -62,7 +62,7 @@
 			<table class="w-full table-fixed border-collapse">
 				<tbody>
 					{#each allFields as field (field.name)}
-						<ContextFieldRow {field} />
+						<DrawerFieldRow {field} />
 					{/each}
 				</tbody>
 			</table>

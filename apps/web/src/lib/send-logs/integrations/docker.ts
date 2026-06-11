@@ -1,5 +1,5 @@
 import DockerIcon from '@iconify-svelte/logos/docker-icon';
-import { vectorOtlpSinkSnippet } from './_shared';
+import { searchVerifyLink, vectorOtlpSinkSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -64,10 +64,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'docker' })}`;
 				title: 'Send a test log',
 				body: 'Run any short-lived container — Vector picks up its stdout and forwards it to rootprint.',
 				snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-				verify: {
-					label: 'Open Search',
-					href: `/?index=${encodeURIComponent(ctx.indexId)}`
-				}
+				verify: searchVerifyLink(ctx.indexId)
 			}
 		];
 	}

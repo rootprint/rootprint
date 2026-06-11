@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { Trash2 } from 'lucide-svelte';
 
-	import GitHubAuthForm from '$lib/components/admin/GitHubAuthForm.svelte';
+	import { githubProvider } from '$lib/components/admin/authentication/oauth-providers';
+	import OAuthProviderAuthForm from '$lib/components/admin/authentication/OAuthProviderAuthForm.svelte';
+	import RemoveProviderAuthModal from '$lib/components/admin/authentication/RemoveProviderAuthModal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import RemoveGitHubAuthModal from '$lib/components/admin/RemoveGitHubAuthModal.svelte';
 
 	let { data } = $props();
 	let removeOpen = $state(false);
@@ -28,7 +29,12 @@
 		</header>
 	</PageHeader>
 
-	<GitHubAuthForm settings={data.settings} origin={data.origin} />
+	<OAuthProviderAuthForm
+		provider={githubProvider}
+		configured={data.settings.configured}
+		initialItems={data.settings.allowedOrgs}
+		origin={data.origin}
+	/>
 </div>
 
-<RemoveGitHubAuthModal bind:open={removeOpen} />
+<RemoveProviderAuthModal bind:open={removeOpen} provider={githubProvider} />

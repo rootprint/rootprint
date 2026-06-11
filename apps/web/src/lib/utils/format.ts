@@ -37,8 +37,9 @@ export function formatDurationSeconds(s: number): string {
 	return `${mins}m`;
 }
 
-export function formatDurationMs(ms: number | null): string {
-	if (ms === null) return '—';
+export function formatDurationMs(ms: number | null | undefined): string {
+	if (ms === null || ms === undefined || !Number.isFinite(ms)) return '—';
+	if (ms === 0) return '0 ms';
 	if (ms < 1) return '<1 ms';
 	if (ms < 1000) return `${Math.round(ms)} ms`;
 	return `${(ms / 1000).toFixed(2)} s`;

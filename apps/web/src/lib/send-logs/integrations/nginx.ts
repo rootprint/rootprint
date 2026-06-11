@@ -1,5 +1,5 @@
 import NginxIcon from '@iconify-svelte/logos/nginx';
-import { vectorOtlpSinkSnippet } from './_shared';
+import { searchVerifyLink, vectorOtlpSinkSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -69,10 +69,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'nginx_logs' })}`;
 				title: 'Send a test request',
 				body: 'A single curl is enough — Nginx writes the access line, Vector picks it up.',
 				snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-				verify: {
-					label: 'Open Search',
-					href: `/?index=${encodeURIComponent(ctx.indexId)}`
-				}
+				verify: searchVerifyLink(ctx.indexId)
 			}
 		];
 	}

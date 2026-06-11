@@ -1,13 +1,11 @@
 import { client } from '$lib/api/client';
-import { ApiError, readApiError } from '$lib/api/errors';
-import type { ApiErrorBody, AuthProvidersInfo } from 'api/types';
+import { readApiError } from '$lib/api/errors';
+import type { AuthProvidersInfo } from 'api/types';
 import type { SetupAdminInput, SetupPasswordInput } from 'api/schemas';
 
 export type AuthBootstrap = {
 	needsSetupAdmin: boolean;
 };
-
-export { ApiError as AuthApiError };
 
 export async function getBootstrap(): Promise<AuthBootstrap> {
 	const res = await client.api.auth.bootstrap.$get();
@@ -20,13 +18,13 @@ export type VerifyInviteResult =
 	| { status: 'invalid' }
 	| { status: 'expired' };
 
-/** Returns a discriminated union — never throws for known invalid/expired states. */
 export async function verifyInvite(token: string): Promise<VerifyInviteResult> {
 	const res = await client.api.auth['verify-invite'].$post({ json: { token } });
 	if (!res.ok) {
-		const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-		const message = body?.error.message?.toLowerCase() ?? '';
-		return { status: message.includes('expire') ? 'expired' : 'invalid' };
+		const err = await readApiError(res, 'Failed to verify invite');
+		if (err.code === 'INVITE_EXPIRED') return { status: 'expired' };
+		if (err.code === 'INVITE_INVALID') return { status: 'invalid' };
+		throw err;
 	}
 	const { email } = (await res.json()) as { email: string };
 	return { status: 'valid', email };
@@ -51,7 +49,8 @@ export async function listAuthProviders(): Promise<AuthProvidersInfo> {
 		const res = await client.api.auth.providers.$get();
 		if (!res.ok) return fallback;
 		return (await res.json()) as AuthProvidersInfo;
-	} catch {
+	} catch (e) {
+		console.warn('[auth] providers fetch failed; assuming no SSO', e);
 		return fallback;
 	}
 }

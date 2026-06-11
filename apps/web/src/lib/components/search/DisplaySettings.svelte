@@ -14,7 +14,7 @@
 		pinnedEnd = [],
 		lineWrap,
 		displayMode,
-		onchange,
+		onColumnsChange,
 		onLineWrapChange,
 		onDisplayModeChange
 	}: {
@@ -24,7 +24,7 @@
 		pinnedEnd?: string[];
 		lineWrap: boolean;
 		displayMode: DisplayMode;
-		onchange: (next: string[]) => void;
+		onColumnsChange: (next: string[]) => void;
 		onLineWrapChange: (next: boolean) => void;
 		onDisplayModeChange: (next: DisplayMode) => void;
 	} = $props();
@@ -63,17 +63,17 @@
 
 	function handleDndFinalize(e: CustomEvent<{ items: DndItem[] }>) {
 		dndItems = e.detail.items;
-		onchange(dndItems.map((f) => f.name));
+		onColumnsChange(dndItems.map((f) => f.name));
 	}
 
 	// Source updates from dndItems so legacy pinned entries in activeFields
 	// get dropped on the next save instead of being preserved indefinitely.
 	function removeField(name: string) {
-		onchange(dndItems.map((f) => f.name).filter((f) => f !== name));
+		onColumnsChange(dndItems.map((f) => f.name).filter((f) => f !== name));
 	}
 
 	function addField(name: string) {
-		onchange([...dndItems.map((f) => f.name), name]);
+		onColumnsChange([...dndItems.map((f) => f.name), name]);
 		mode = 'columns';
 		searchTerm = '';
 	}

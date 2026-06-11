@@ -43,3 +43,7 @@ export function issuesToFieldErrors(
 	}
 	return out;
 }
+
+export function isAbortError(e: unknown): boolean {
+	return (e instanceof DOMException || e instanceof Error) && e.name === 'AbortError';
+}

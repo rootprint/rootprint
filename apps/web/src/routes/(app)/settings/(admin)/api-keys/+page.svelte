@@ -1,23 +1,21 @@
 <script lang="ts">
 	import { Eye, Plus, Search, Trash2 } from 'lucide-svelte';
-	import * as v from 'valibot';
 	import { toast } from 'svelte-sonner';
 	import { crossfade } from 'svelte/transition';
 	import { cubicInOut } from 'svelte/easing';
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { createApiKey, getApiKey, deleteApiKey, ApiKeyApiError } from '$lib/api/api-keys';
-	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
-	import RoleBadge from '$lib/components/admin/RoleBadge.svelte';
+	import { getApiKey, deleteApiKey } from '$lib/api/api-keys';
+	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
+	import RoleBadge from '$lib/components/admin/api-keys/RoleBadge.svelte';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import Field from '$lib/components/ui/Field.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import { pluralize } from '$lib/utils/format';
 	import { formatRelativeTime } from '$lib/utils/time';
-	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
 	import type { ApiKeyRole } from 'api/types';
 
 	type RoleFilter = 'all' | ApiKeyRole;
@@ -50,68 +48,6 @@
 	});
 
 	let createOpen = $state(false);
-	let createPhase = $state<'form' | 'reveal'>('form');
-	let createName = $state('');
-	let createIndexId = $state('');
-	let createRole = $state<ApiKeyRole | ''>('');
-	let creating = $state(false);
-	let createFormError = $state<string | null>(null);
-	let createFieldErrors = $state<Record<string, string>>({});
-	let createdToken = $state('');
-
-	function resetCreate() {
-		createPhase = 'form';
-		createName = '';
-		createIndexId = indexIds.length === 1 ? indexIds[0] : '';
-		createRole = '';
-		creating = false;
-		createFormError = null;
-		createFieldErrors = {};
-		createdToken = '';
-	}
-
-	function openCreate() {
-		resetCreate();
-		createOpen = true;
-	}
-
-	function handleCreateClose() {
-		resetCreate();
-	}
-
-	async function submitCreate(e: SubmitEvent) {
-		e.preventDefault();
-		createFormError = null;
-		createFieldErrors = {};
-
-		const parsed = v.safeParse(createApiKeySchema, {
-			name: createName,
-			indexId: createIndexId,
-			role: createRole
-		});
-		if (!parsed.success) {
-			createFieldErrors = issuesToFieldErrors(parsed.issues);
-			return;
-		}
-		const input: CreateApiKeyInput = parsed.output;
-
-		creating = true;
-		try {
-			const result = await createApiKey(input);
-			createdToken = result.token;
-			createPhase = 'reveal';
-			await invalidate(DEP.apiKeys);
-		} catch (err) {
-			if (err instanceof ApiKeyApiError && err.body) {
-				createFormError = err.body.error.message;
-				createFieldErrors = toFieldErrors(err.body);
-			} else {
-				createFormError = err instanceof Error ? err.message : 'Failed to create API key';
-			}
-		} finally {
-			creating = false;
-		}
-	}
 
 	let viewOpen = $state(false);
 	let viewTarget = $state<(typeof keys)[number] | null>(null);
@@ -182,7 +118,7 @@
 	}
 
 	const noIndexes = $derived(indexIds.length === 0);
-	const countLabel = $derived(`${filtered.length} key${filtered.length === 1 ? '' : 's'}`);
+	const countLabel = $derived(pluralize(filtered.length, 'key'));
 	const emptyMessage = $derived(
 		search.trim() !== '' || roleFilter !== 'all'
 			? 'No API keys match your filter.'
@@ -247,7 +183,7 @@
 
 		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
 
-		<button class="btn btn-primary btn-sm" onclick={openCreate} disabled={noIndexes}>
+		<button class="btn btn-primary btn-sm" onclick={() => (createOpen = true)} disabled={noIndexes}>
 			<Plus class="h-3.5 w-3.5" />
 			Create API key
 		</button>
@@ -298,102 +234,7 @@
 	</div>
 </div>
 
-<Modal bind:open={createOpen} title="Create API key" onclose={handleCreateClose}>
-	{#if createPhase === 'form'}
-		<form id="create-api-key-page-form" class="space-y-3" onsubmit={submitCreate}>
-			{#if createFormError}
-				<div role="alert" class="alert alert-error text-sm">{createFormError}</div>
-			{/if}
-
-			<Field
-				label="Name"
-				placeholder="production-shipper"
-				autocomplete="off"
-				bind:value={createName}
-				error={createFieldErrors.name}
-				required
-			/>
-
-			<Field label="Index" error={createFieldErrors.indexId}>
-				{#snippet control({ id, invalid, describedBy })}
-					<select
-						{id}
-						bind:value={createIndexId}
-						aria-invalid={invalid ? 'true' : undefined}
-						aria-describedby={describedBy}
-						class="select w-full"
-						class:select-error={invalid}
-						required
-					>
-						<option value="" disabled>Select an index…</option>
-						{#each indexIds as option (option)}
-							<option value={option}>{option}</option>
-						{/each}
-					</select>
-				{/snippet}
-			</Field>
-
-			<fieldset class="space-y-1.5">
-				<legend class="field-label">Role</legend>
-				<div class="flex gap-4">
-					<label class="label cursor-pointer gap-2">
-						<input
-							type="radio"
-							name="role"
-							class="radio radio-sm"
-							value="ingest"
-							bind:group={createRole}
-							required
-						/>
-						<span>Ingest</span>
-					</label>
-					<label class="label cursor-pointer gap-2">
-						<input
-							type="radio"
-							name="role"
-							class="radio radio-sm"
-							value="search"
-							bind:group={createRole}
-						/>
-						<span>Search</span>
-					</label>
-				</div>
-				{#if createFieldErrors.role}
-					<p class="text-error text-xs">{createFieldErrors.role}</p>
-				{/if}
-			</fieldset>
-		</form>
-	{:else}
-		<div class="flex flex-col gap-3">
-			<CopyableField value={createdToken} ariaLabel="Ingest token" />
-		</div>
-	{/if}
-
-	{#snippet actions()}
-		{#if createPhase === 'form'}
-			<button
-				type="button"
-				class="btn btn-ghost"
-				disabled={creating}
-				onclick={() => (createOpen = false)}
-			>
-				Cancel
-			</button>
-			<button
-				form="create-api-key-page-form"
-				type="submit"
-				class="btn btn-primary"
-				disabled={creating}
-			>
-				{creating ? 'Creating…' : 'Create API key'}
-			</button>
-		{:else}
-			<button type="button" class="btn btn-primary" onclick={() => (createOpen = false)}>
-				Done
-			</button>
-		{/if}
-	{/snippet}
-</Modal>
+<CreateApiKeyModal bind:open={createOpen} {indexIds} invalidateKey={DEP.apiKeys} />
 
 <Modal bind:open={viewOpen} title="API key: {viewTarget?.name ?? ''}" onclose={handleViewClose}>
 	{#if viewLoading}
@@ -406,9 +247,9 @@
 			<CopyableField value={viewTokenValue} ariaLabel="Ingest token" />
 		</div>
 	{/if}
-	<div class="modal-action">
+	{#snippet actions()}
 		<button type="button" class="btn btn-primary" onclick={() => (viewOpen = false)}>Close</button>
-	</div>
+	{/snippet}
 </Modal>
 
 <ConfirmModal

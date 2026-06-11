@@ -8,7 +8,7 @@
 		gridTemplate,
 		sortDirection,
 		lineWrap = false,
-		ontogglesort = () => {},
+		onToggleSort = () => {},
 		el = $bindable(null)
 	}: {
 		fieldConfig: FieldConfig | null;
@@ -16,12 +16,12 @@
 		gridTemplate: string;
 		sortDirection: SortDirection;
 		lineWrap?: boolean;
-		ontogglesort?: () => void;
+		onToggleSort?: () => void;
 		el?: HTMLElement | null;
 	} = $props();
 
-	let timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
-	let messageLabel = $derived(fieldConfig?.messageField ?? 'message');
+	const timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
+	const messageLabel = $derived(fieldConfig?.messageField ?? 'message');
 	const rowWidth = $derived(lineWrap ? 'w-full' : 'w-max min-w-full');
 </script>
 
@@ -34,7 +34,7 @@
 	<button
 		type="button"
 		class="hover:text-base-content flex items-center gap-1 px-2 py-1.5 text-left font-sans text-[13px]"
-		onclick={ontogglesort}
+		onclick={onToggleSort}
 	>
 		{timestampLabel}
 		{#if sortDirection === 'desc'}

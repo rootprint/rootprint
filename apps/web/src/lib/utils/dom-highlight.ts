@@ -23,7 +23,7 @@ function locate(
 	return null;
 }
 
-export function collectHighlightRanges(root: Node, term: string): Range[] {
+function collectHighlightRanges(root: Node, term: string): Range[] {
 	if (!term) return [];
 	const doc = root.ownerDocument ?? document;
 	const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);

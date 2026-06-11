@@ -5,10 +5,11 @@
 	import 'uplot/dist/uPlot.min.css';
 
 	import { browser } from '$app/environment';
-	import { baseContentAt, cssVarColor } from '$lib/utils/log-helpers';
+	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '$lib/utils/chart-colors';
+	import { formatDurationMs } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
-	import { windowToSpanMs, type Window } from '$lib/api/activity';
+	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
 
 	type Bucket = {
 		t: string;
@@ -29,7 +30,7 @@
 	] as const;
 
 	const colors = $derived(
-		browser ? SERIES.map((s) => cssVarColor(s.cssVar)) : SERIES.map(() => '#000')
+		browser ? SERIES.map((s) => cssVarColor(s.cssVar)) : SERIES.map(() => CANVAS_FALLBACK_COLOR)
 	);
 
 	// columnar data for uPlot: [x in seconds, p50, p95, p99]
@@ -76,13 +77,6 @@
 		SERIES.map((s, i) => ({ key: s.key, label: s.label, color: colors[i], visible: visible[i] }))
 	);
 
-	function fmtMs(v: unknown): string {
-		const n = Number(v);
-		if (!Number.isFinite(n)) return '—';
-		if (n < 1000) return `${Math.round(n)} ms`;
-		return `${(n / 1000).toFixed(2)} s`;
-	}
-
 	function destroyChart() {
 		if (chart) {
 			chart.destroy();
@@ -121,16 +115,21 @@
 	async function buildChart() {
 		if (!browser || !chartEl || !columnar) return;
 		const buildId = ++chartBuildId;
-		if (containerEl) {
-			const w = containerEl.clientWidth;
-			if (w > 0) chartWidth = w;
-		}
 		destroyChart();
 		if (!uPlotCtor) {
 			const mod = await import('uplot');
 			uPlotCtor = mod.default;
 		}
 		if (!chartEl || !columnar || buildId !== chartBuildId) return;
+
+		// Measured after the await so a resize during the uplot chunk fetch can't build a stale width.
+		const width = untrack(() => {
+			if (containerEl) {
+				const w = containerEl.clientWidth;
+				if (w > 0) chartWidth = w;
+			}
+			return chartWidth;
+		});
 
 		const UPlot = uPlotCtor;
 		const splinePaths = UPlot.paths.spline?.();
@@ -152,7 +151,7 @@
 		});
 
 		const opts: uPlotLib.Options = {
-			width: chartWidth,
+			width,
 			height: HEIGHT,
 			padding: [12, 8, 0, 0],
 			cursor: { drag: { x: false, y: false }, points: { show: false } },
@@ -179,7 +178,7 @@
 					grid: { show: true, stroke: gridStroke, width: 0.8 },
 					ticks: { show: false },
 					size: 56,
-					values: (_u, splits) => splits.map((v) => fmtMs(v))
+					values: (_u, splits) => splits.map((v) => formatDurationMs(v))
 				}
 			]
 		};
@@ -260,7 +259,7 @@
 									<div class="flex flex-1 items-center justify-between gap-4">
 										<span class="text-base-content/60">{s.label}</span>
 										<span class="text-base-content font-mono font-medium tabular-nums">
-											{fmtMs(columnar[i + 1][tooltipIdx])}
+											{formatDurationMs(columnar[i + 1][tooltipIdx])}
 										</span>
 									</div>
 								</div>

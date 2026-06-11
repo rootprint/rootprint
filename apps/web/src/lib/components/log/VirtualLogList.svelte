@@ -20,7 +20,7 @@
 		viewport,
 		lineWrap = false,
 		displayMode = 'table',
-		ontogglesort = () => {},
+		onToggleSort = () => {},
 		onRowClick = () => {}
 	}: {
 		logs: LogHit[];
@@ -32,7 +32,7 @@
 		viewport: HTMLElement | null;
 		lineWrap?: boolean;
 		displayMode?: DisplayMode;
-		ontogglesort?: () => void;
+		onToggleSort?: () => void;
 		onRowClick?: (hit: LogHit) => void;
 	} = $props();
 
@@ -78,7 +78,7 @@
 			{gridTemplate}
 			{sortDirection}
 			{lineWrap}
-			{ontogglesort}
+			{onToggleSort}
 		/>
 	{/if}
 	<div class="relative w-full" style="height: {$virtualizer.getTotalSize()}px;">

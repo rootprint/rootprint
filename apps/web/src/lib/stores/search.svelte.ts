@@ -10,9 +10,7 @@ import type {
 	LevelBucket,
 	LogField,
 	LogHit,
-	ParsedQuery,
-	SearchInput,
-	TimeRange
+	ParsedQuery
 } from '$lib/types';
 import { composeQuery } from 'api/query';
 import { searchLogs } from '$lib/api/log-search';
@@ -23,9 +21,10 @@ import { getPreferences, setPreferences } from '$lib/api/preferences';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
-import { resolveTimeRange } from '$lib/utils/time-range';
+import { buildTimeParams, resolveTimeRange } from '$lib/utils/time-range';
 import { displayNameFor, extractJsonSubFields, serializeTimeRange } from '$lib/utils/fields';
 import { RequestGuard } from '$lib/stores/request-guard';
+import { isAbortError } from '$lib/api/errors';
 import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
@@ -36,15 +35,13 @@ const PREF_SAVE_DEBOUNCE_MS = 300;
 export interface SearchStoreOptions {
 	/** Reactive accessor for the URL-derived query. Read inside $effect to subscribe. */
 	parsedQuery: () => ParsedQuery;
-	initialIndexes: IndexOption[];
+	indexes: () => IndexOption[];
 	/** Called after each successful fresh (non-append) search; silent prefetches do not trigger it. */
 	onFreshSearch?: () => void;
 }
 
 export class SearchStore {
-	readonly indexes: IndexOption[];
-
-	rawHits = $state<Record<string, unknown>[]>([]);
+	rawHits = $state.raw<Record<string, unknown>[]>([]);
 	numHits = $state(0);
 	elapsedTimeMicros = $state(0);
 	loading = $state<'idle' | 'fresh' | 'appending'>('idle');
@@ -55,11 +52,11 @@ export class SearchStore {
 	fieldConfig = $state<FieldConfig | null>(null);
 	configError = $state<string | null>(null);
 
-	histogramBuckets = $state<HistogramBucket[]>([]);
+	histogramBuckets = $state.raw<HistogramBucket[]>([]);
 	histogramLoading = $state(false);
 	histogramError = $state<string | null>(null);
 
-	#schemaFields = $state<LogField[]>([]);
+	#schemaFields = $state.raw<LogField[]>([]);
 	#discoveredPaths = $state<Set<string>>(new Set());
 
 	fields = $derived.by<LogField[]>(() => {
@@ -100,14 +97,30 @@ export class SearchStore {
 		return this.#levelsRoster;
 	}
 
+	#normalized = new WeakMap<Record<string, unknown>, LogHit>();
+	#normalizedFor: FieldConfig | null = null;
+
 	logs: LogHit[] = $derived.by(() => {
 		const fc = this.fieldConfig;
 		if (!fc) return [];
-		return this.rawHits.map((raw, i) => normalizeHit(raw, i, fc));
+		if (fc !== this.#normalizedFor) {
+			this.#normalizedFor = fc;
+			this.#normalized = new WeakMap();
+		}
+		return this.rawHits.map((raw, i) => {
+			let hit = this.#normalized.get(raw);
+			if (hit === undefined) {
+				hit = normalizeHit(raw, i, fc);
+				this.#normalized.set(raw, hit);
+			}
+			return hit;
+		});
 	});
 
 	#parsedQuery: () => ParsedQuery;
+	#indexes: () => IndexOption[];
 	#onFreshSearch?: () => void;
+	#disposed = false;
 	#searchAbort?: AbortController;
 	#searchGuard = new RequestGuard();
 	#snapshotStartTs: number | undefined = $state(undefined);
@@ -116,18 +129,23 @@ export class SearchStore {
 	#configFetchedFor: string | null = null;
 	#histogramAbort?: AbortController;
 	#histogramGuard = new RequestGuard();
+	#histogramFetchedFor: string | null = null;
 	#fieldsGuard = new RequestGuard();
 	#fieldsFetchedFor: string | null = null;
 	#activeFieldsGuard = new RequestGuard();
 	#activeFieldsFetchedFor: string | null = null;
 	#confirmedPrefs: Preferences = { displayFields: null, lineWrap: false, displayMode: 'table' };
-	#prefSaveTimer: ReturnType<typeof setTimeout> | null = null;
+	#prefSave: { timer: ReturnType<typeof setTimeout>; commit: () => void } | null = null;
 	#prefSaveSeq = 0;
 
 	constructor(opts: SearchStoreOptions) {
-		this.indexes = opts.initialIndexes;
+		this.#indexes = opts.indexes;
 		this.#parsedQuery = opts.parsedQuery;
 		this.#onFreshSearch = opts.onFreshSearch;
+	}
+
+	get indexes(): IndexOption[] {
+		return this.#indexes();
 	}
 
 	/** URL's index if it's in the indexes list, otherwise the first available (or null). */
@@ -277,7 +295,10 @@ export class SearchStore {
 	 */
 	setupAutoSearch(): void {
 		$effect(() => {
-			// Hydration: when URL has no index, use the remembered one (if it's still valid).
+			return () => this.dispose();
+		});
+
+		$effect(() => {
 			const urlIndex = this.#parsedQuery().index;
 			if (urlIndex === null) {
 				const remembered = readLastIndex();
@@ -306,8 +327,9 @@ export class SearchStore {
 				this.#loadActiveFields(active);
 			}
 
-			this.#runSearch();
-			this.#fetchHistogram();
+			const timeWindow = resolveTimeRange(buildTimeParams(this.timeRange));
+			this.#runSearch('fresh', timeWindow);
+			this.#fetchHistogram(timeWindow);
 
 			writeLastIndex(active);
 		});
@@ -325,7 +347,11 @@ export class SearchStore {
 		});
 	}
 
-	async #runSearch(mode: 'fresh' | 'append' | 'prefetch' = 'fresh'): Promise<void> {
+	async #runSearch(
+		mode: 'fresh' | 'append' | 'prefetch' = 'fresh',
+		timeWindow?: { startTs?: number; endTs?: number }
+	): Promise<void> {
+		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
 
 		const silent = mode === 'prefetch';
@@ -353,11 +379,7 @@ export class SearchStore {
 				startTs = this.#snapshotStartTs;
 				endTs = this.#snapshotEndTs;
 			} else {
-				const resolved = resolveTimeRange({
-					timeRange: this.timeRange.type === 'relative' ? this.timeRange.preset : undefined,
-					startTimestamp: this.timeRange.type === 'absolute' ? this.timeRange.start : undefined,
-					endTimestamp: this.timeRange.type === 'absolute' ? this.timeRange.end : undefined
-				});
+				const resolved = timeWindow ?? resolveTimeRange(buildTimeParams(this.timeRange));
 				startTs = resolved.startTs;
 				endTs = resolved.endTs;
 				this.#snapshotStartTs = startTs;
@@ -395,7 +417,7 @@ export class SearchStore {
 
 			success = true;
 		} catch (e) {
-			if (e instanceof DOMException && e.name === 'AbortError') return;
+			if (isAbortError(e)) return;
 			if (!this.#searchGuard.isCurrent(requestId)) return;
 			if (silent) return;
 			this.searchError = e instanceof Error ? e.message : 'Search failed';
@@ -430,8 +452,15 @@ export class SearchStore {
 		void this.#runSearch('prefetch');
 	}
 
-	async #fetchHistogram(): Promise<void> {
+	async #fetchHistogram(timeWindow: { startTs?: number; endTs?: number }): Promise<void> {
+		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
+
+		const fetchKey = `${this.selectedIndex}|${this.composedQuery}|${timeWindow.startTs}-${timeWindow.endTs}`;
+		if (fetchKey === this.#histogramFetchedFor) {
+			this.#histogramAbort?.abort();
+			return;
+		}
 
 		this.#histogramAbort?.abort();
 		const controller = new AbortController();
@@ -445,12 +474,14 @@ export class SearchStore {
 				{
 					indexId: this.selectedIndex,
 					query: this.composedQuery,
-					...buildTimeParams(this.timeRange)
+					startTimestamp: timeWindow.startTs,
+					endTimestamp: timeWindow.endTs
 				} satisfies HistogramInput,
 				controller.signal
 			);
 			if (!this.#histogramGuard.isCurrent(requestId)) return;
 			this.histogramBuckets = result.buckets;
+			this.#histogramFetchedFor = fetchKey;
 
 			const newKey = `${this.selectedIndex}|${this.query}|${serializeTimeRange(this.timeRange)}`;
 			const fresh = this.#computeLevelTotals(result.buckets);
@@ -461,8 +492,9 @@ export class SearchStore {
 				this.#levelsRoster = this.#mergeLevels(this.#levelsRoster, fresh);
 			}
 		} catch (e) {
-			if (e instanceof DOMException && e.name === 'AbortError') return;
+			if (isAbortError(e)) return;
 			if (!this.#histogramGuard.isCurrent(requestId)) return;
+			this.#histogramFetchedFor = null;
 			this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
 			this.histogramBuckets = [];
 		} finally {
@@ -582,15 +614,13 @@ export class SearchStore {
 		const indexId = this.selectedIndex;
 		if (indexId === null) return;
 		const seq = ++this.#prefSaveSeq;
-		if (this.#prefSaveTimer !== null) clearTimeout(this.#prefSaveTimer);
-		this.#prefSaveTimer = setTimeout(() => {
-			this.#prefSaveTimer = null;
-			if (this.selectedIndex !== indexId) return;
-			const snapshot: Preferences = {
-				displayFields: this.activeFields,
-				lineWrap: this.lineWrap,
-				displayMode: this.displayMode
-			};
+		const snapshot: Preferences = {
+			displayFields: this.activeFields,
+			lineWrap: this.lineWrap,
+			displayMode: this.displayMode
+		};
+		const commit = () => {
+			this.#prefSave = null;
 			setPreferences(indexId, snapshot)
 				.then((saved) => {
 					if (this.selectedIndex !== indexId || seq !== this.#prefSaveSeq) return;
@@ -604,7 +634,23 @@ export class SearchStore {
 					this.displayMode = this.#confirmedPrefs.displayMode;
 					toast.error(e instanceof Error ? e.message : 'Failed to save display preferences');
 				});
-		}, PREF_SAVE_DEBOUNCE_MS);
+		};
+		if (this.#prefSave !== null) clearTimeout(this.#prefSave.timer);
+		this.#prefSave = { timer: setTimeout(commit, PREF_SAVE_DEBOUNCE_MS), commit };
+	}
+
+	/** Aborts in-flight work and flushes any pending preference save. Installed as the
+	 *  destroy cleanup by setupAutoSearch; idempotent. */
+	dispose(): void {
+		if (this.#disposed) return;
+		this.#disposed = true;
+		this.#searchAbort?.abort();
+		this.#histogramAbort?.abort();
+		const pending = this.#prefSave;
+		if (pending !== null) {
+			clearTimeout(pending.timer);
+			pending.commit();
+		}
 	}
 
 	#computeLevelTotals(buckets: HistogramBucket[]): LevelBucket[] {
@@ -632,12 +678,4 @@ export class SearchStore {
 		}
 		return merged;
 	}
-}
-
-function buildTimeParams(
-	range: TimeRange
-): Pick<SearchInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'> {
-	return range.type === 'relative'
-		? { timeRange: range.preset }
-		: { startTimestamp: range.start, endTimestamp: range.end };
 }

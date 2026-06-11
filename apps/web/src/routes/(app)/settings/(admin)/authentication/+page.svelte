@@ -1,7 +1,8 @@
 <script lang="ts">
-	import AuthProviderRow from '$lib/components/admin/AuthProviderRow.svelte';
+	import AuthProviderRow from '$lib/components/admin/authentication/AuthProviderRow.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import { pluralize } from '$lib/utils/format';
 
 	let { data } = $props();
 
@@ -11,13 +12,13 @@
 	const googleStatus = $derived.by(() => {
 		if (!google.configured) return null;
 		const n = google.allowedDomains.length;
-		return `Allowed ${n} domain${n === 1 ? '' : 's'}: ${google.allowedDomains.join(', ')}`;
+		return `Allowed ${pluralize(n, 'domain')}: ${google.allowedDomains.join(', ')}`;
 	});
 
 	const githubStatus = $derived.by(() => {
 		if (!github.configured) return null;
 		const n = github.allowedOrgs.length;
-		return `Allowed ${n} organization${n === 1 ? '' : 's'}: ${github.allowedOrgs.join(', ')}`;
+		return `Allowed ${pluralize(n, 'organization')}: ${github.allowedOrgs.join(', ')}`;
 	});
 
 	const providers = $derived([

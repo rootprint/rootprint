@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { listApiKeys, ApiKeyApiError } from '$lib/api/api-keys';
+import { listApiKeys } from '$lib/api/api-keys';
+import { ApiError } from '$lib/api/errors';
 import { listIndexes } from '$lib/api/indexes';
 import { integrationById } from '$lib/send-logs/integrations';
 import { DEP } from '$lib/api/deps';
@@ -20,7 +21,7 @@ export const load: PageLoad = async ({ params, depends }) => {
 			indexIds: indexes.map((i) => i.indexId)
 		};
 	} catch (e) {
-		if (e instanceof ApiKeyApiError) error(e.status, e.message);
+		if (e instanceof ApiError) error(e.status, e.message);
 		throw e;
 	}
 };

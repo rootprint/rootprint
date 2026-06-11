@@ -50,6 +50,24 @@ export function isPreset(value: string): value is Preset {
 	return (PRESET_OPTIONS as readonly string[]).includes(value);
 }
 
+export type Window = Extract<Preset, '24h' | '7d' | '30d'>;
+
+export function parseWindow(raw: string | null): Window {
+	return raw === '24h' || raw === '7d' || raw === '30d' ? raw : '7d';
+}
+
+export function windowToSpanMs(window: Window): number {
+	return presetDurationSec(window) * 1000;
+}
+
+export function buildTimeParams(
+	range: TimeRange
+): Pick<SearchInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'> {
+	return range.type === 'relative'
+		? { timeRange: range.preset }
+		: { startTimestamp: range.start, endTimestamp: range.end };
+}
+
 export function resolveTimeRange(
 	input: Pick<SearchInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>
 ): { startTs?: number; endTs?: number } {

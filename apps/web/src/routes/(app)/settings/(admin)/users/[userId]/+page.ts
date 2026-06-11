@@ -2,23 +2,23 @@ import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
 import {
+	ACTIVITY_PAGE_SIZE,
 	getUserIndexes,
 	getUserLatency,
 	getUserRecent,
 	getUserSummary,
-	getUserVolume,
-	parseWindow
+	getUserVolume
 } from '$lib/api/activity';
+import { parseWindow } from '$lib/utils/time-range';
 import { DEP } from '$lib/api/deps';
-import { getUser, UserApiError } from '$lib/api/users';
+import { ApiError } from '$lib/api/errors';
+import { getUser } from '$lib/api/users';
+import { parseOffset } from '$lib/utils/search-params';
 
 export const load: PageLoad = async ({ url, params, depends, parent }) => {
 	depends(DEP.users, DEP.activityUser);
 	const window = parseWindow(url.searchParams.get('window'));
-	// Guard against a malformed ?offset= (hand-edited or stale link): a NaN offset
-	// would 400 the recent request and break the pager math.
-	const offsetParam = Number(url.searchParams.get('offset'));
-	const offset = Number.isInteger(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
+	const offset = parseOffset(url);
 	const userId = params.userId;
 
 	// Kick the activity requests off before awaiting anything else so they stream in
@@ -27,7 +27,7 @@ export const load: PageLoad = async ({ url, params, depends, parent }) => {
 	const volume = getUserVolume(userId, window);
 	const latency = getUserLatency(userId, window);
 	const indexes = getUserIndexes(userId, window);
-	const recent = getUserRecent(userId, window, { offset, limit: 50 });
+	const recent = getUserRecent(userId, window, { offset, limit: ACTIVITY_PAGE_SIZE });
 
 	const { session } = await parent();
 	try {
@@ -49,8 +49,8 @@ export const load: PageLoad = async ({ url, params, depends, parent }) => {
 		// This path won't return the streamed promises; attach no-op catch handlers so
 		// their eventual rejection doesn't surface as an unhandled promise rejection.
 		for (const p of [summary, volume, latency, indexes, recent]) p.catch(() => {});
-		if (e instanceof UserApiError && e.status === 404) throw error(404, 'User not found');
-		if (e instanceof UserApiError) throw error(e.status, e.message);
+		if (e instanceof ApiError && e.status === 404) throw error(404, 'User not found');
+		if (e instanceof ApiError) throw error(e.status, e.message);
 		throw e;
 	}
 };

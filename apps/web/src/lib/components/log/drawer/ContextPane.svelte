@@ -4,7 +4,7 @@
 
 	import ContextChipBar from './context/ContextChipBar.svelte';
 	import ContextRow from './context/ContextRow.svelte';
-	import { ContextLoader } from './context/useContextLoader.svelte';
+	import { ContextLoader } from './context/context-loader.svelte';
 	import type { ContextEntry, LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 

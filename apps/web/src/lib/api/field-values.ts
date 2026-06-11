@@ -2,14 +2,8 @@ import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { Filter, LogFieldValueBucket, TimeRange } from '$lib/types';
 import { composeQuery } from 'api/query';
-import { resolveTimeRange } from '$lib/utils/time-range';
+import { buildTimeParams, resolveTimeRange } from '$lib/utils/time-range';
 import { FIELD_VALUES_MAX } from 'api/constants';
-
-/** Initial count of values shown collapsed before the user expands the row. */
-export const FIELD_VALUES_INITIAL_SHOW = 10;
-
-/** Rows revealed per "Show more" click after the initial collapsed view. */
-export const FIELD_VALUES_SHOW_MORE_STEP = 50;
 
 export type FetchFieldValuesInput = {
 	indexId: string;
@@ -20,12 +14,6 @@ export type FetchFieldValuesInput = {
 	limit?: number;
 	signal?: AbortSignal;
 };
-
-function buildTimeParams(range: TimeRange) {
-	return range.type === 'relative'
-		? { timeRange: range.preset }
-		: { startTimestamp: range.start, endTimestamp: range.end };
-}
 
 export async function fetchFieldValues(
 	input: FetchFieldValuesInput

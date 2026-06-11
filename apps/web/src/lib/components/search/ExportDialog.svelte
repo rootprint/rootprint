@@ -4,7 +4,9 @@
 	import { toast } from 'svelte-sonner';
 
 	import { buildExportUrl, preflightExport } from '$lib/api/exports';
+	import { isAbortError } from '$lib/api/errors';
 	import Modal from '$lib/components/ui/Modal.svelte';
+	import { EXPORT_MAX_ROWS } from 'api/constants';
 	import type { ExportFormat } from 'api/types';
 
 	type Props = {
@@ -13,17 +15,23 @@
 		startTs: number | undefined;
 		endTs: number | undefined;
 		numHits: number;
-		open: boolean;
-		onClose: () => void;
+		open?: boolean;
 	};
 
-	let { indexId, composedQuery, startTs, endTs, numHits, open, onClose }: Props = $props();
+	let {
+		indexId,
+		composedQuery,
+		startTs,
+		endTs,
+		numHits,
+		open = $bindable(false)
+	}: Props = $props();
 
 	type DialogState = 'idle' | 'preflighting' | 'error';
 
 	let format = $state<ExportFormat>('json');
 	let dialogState = $state<DialogState>('idle');
-	let errorMessage = $state('');
+	let formError = $state<string | null>(null);
 	let preflightTotal = $state<number | null>(null);
 	let preflightCapped = $state(false);
 	let preflightController: AbortController | null = null;
@@ -52,7 +60,7 @@
 				lockedNumHits = numHits;
 			});
 			dialogState = 'idle';
-			errorMessage = '';
+			formError = null;
 			preflightTotal = null;
 			preflightCapped = false;
 		} else {
@@ -69,10 +77,8 @@
 			dialogState !== 'preflighting'
 	);
 
-	const previewTotal = $derived(preflightTotal ?? Math.min(lockedNumHits, 10_000));
-	// Pre-preflight: lockedNumHits is the snapshot (no longer stale vs. export).
-	// Post-preflight: preflightCapped is authoritative; the OR is consistent.
-	const previewCapped = $derived(preflightCapped || lockedNumHits > 10_000);
+	const previewTotal = $derived(preflightTotal ?? Math.min(lockedNumHits, EXPORT_MAX_ROWS));
+	const previewCapped = $derived(preflightCapped || lockedNumHits > EXPORT_MAX_ROWS);
 
 	function exportLabel(f: ExportFormat): string {
 		const upper = f === 'json' ? 'JSON' : f === 'csv' ? 'CSV' : 'Text';
@@ -99,14 +105,14 @@
 		preflightController?.abort();
 		preflightController = new AbortController();
 		dialogState = 'preflighting';
-		errorMessage = '';
+		formError = null;
 
 		try {
 			const result = await preflightExport(exportInput, preflightController.signal);
 
 			if (result.total === 0) {
 				dialogState = 'error';
-				errorMessage = 'No logs match in this time range.';
+				formError = 'No logs match in this time range.';
 				return;
 			}
 
@@ -122,27 +128,16 @@
 			a.remove();
 
 			toast.success('Export started — check your downloads');
-			onClose();
+			open = false;
 		} catch (e) {
-			if ((e as { name?: string }).name === 'AbortError') return;
+			if (isAbortError(e)) return;
 			dialogState = 'error';
-			errorMessage = e instanceof Error ? e.message : 'Export failed';
+			formError = e instanceof Error ? e.message : 'Export failed';
 		}
 	}
-
-	function handleClose() {
-		preflightController?.abort();
-		onClose();
-	}
-
-	// Modal.svelte needs a bindable state; we bridge from the prop via effect.
-	let openBindable = $state(false);
-	$effect(() => {
-		openBindable = open;
-	});
 </script>
 
-<Modal bind:open={openBindable} title="Export Logs" onclose={handleClose}>
+<Modal bind:open title="Export Logs">
 	<div class="flex flex-col gap-3">
 		<div>
 			<div class="text-base-content/50 mb-1 text-xs font-semibold tracking-wider uppercase">
@@ -170,12 +165,12 @@
 				class="border-warning/60 bg-base-200/60 text-base-content/80 flex items-center gap-2 rounded-r border-l-2 px-3 py-2 text-xs"
 			>
 				<Info class="text-warning h-3.5 w-3.5 shrink-0" />
-				Only the first 10,000 logs will be exported
+				Only the first {EXPORT_MAX_ROWS.toLocaleString()} logs will be exported
 			</div>
 		{/if}
 
 		{#if dialogState === 'error'}
-			<div role="alert" class="alert alert-error py-2 text-xs">{errorMessage}</div>
+			<div role="alert" class="alert alert-error py-2 text-xs">{formError}</div>
 		{/if}
 
 		<button

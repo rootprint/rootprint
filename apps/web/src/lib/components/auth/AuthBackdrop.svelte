@@ -7,7 +7,7 @@
 <div class="auth-grid pointer-events-none fixed inset-0 z-0" aria-hidden="true"></div>
 
 <div
-	class="border-base-300 relative z-10 m-auto flex min-h-[480px] w-[480px] shrink-0 flex-col justify-center border bg-[#eef0f3] p-7 [&_.alert]:rounded-none [&_.btn]:rounded-none [&_.input]:rounded-none [&_.select]:rounded-none"
+	class="border-base-300 bg-auth-card relative z-10 m-auto flex min-h-[480px] w-[480px] shrink-0 flex-col justify-center border p-7 [&_.alert]:rounded-none [&_.btn]:rounded-none [&_.input]:rounded-none [&_.select]:rounded-none"
 >
 	<a
 		href="/"

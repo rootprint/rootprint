@@ -1,9 +1,9 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
-	import { setupAdmin, AuthApiError } from '$lib/api/auth';
+	import { setupAdmin } from '$lib/api/auth';
 	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
@@ -31,7 +31,7 @@
 			try {
 				await setupAdmin(input);
 			} catch (err) {
-				if (err instanceof AuthApiError && err.body) {
+				if (err instanceof ApiError && err.body) {
 					fieldErrors = toFieldErrors(err.body);
 					formError = err.message;
 				} else {

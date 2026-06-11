@@ -5,8 +5,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { deleteIndex } from '$lib/api/indexes';
-	import IndexConfigForm from '$lib/components/admin/IndexConfigForm.svelte';
-	import IndexTabs from '$lib/components/admin/IndexTabs.svelte';
+	import IndexConfigForm from '$lib/components/admin/indexes/IndexConfigForm.svelte';
+	import IndexTabs from '$lib/components/admin/indexes/IndexTabs.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
@@ -75,7 +75,9 @@
 	<IndexTabs {activeTab} fieldCount={detail.fields.length} sourceCount={detail.sources.length} />
 
 	{#if activeTab === 'config'}
-		<IndexConfigForm {detail} />
+		{#key detail.indexId}
+			<IndexConfigForm {detail} />
+		{/key}
 	{:else if activeTab === 'fields'}
 		<div class="flex flex-col gap-3">
 			<div class="flex flex-wrap items-center gap-4">

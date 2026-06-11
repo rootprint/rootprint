@@ -1,21 +1,20 @@
 import type { PageLoad } from './$types';
 
 import {
+	ACTIVITY_PAGE_SIZE,
 	getApiKeyLatency,
 	getApiKeyRecent,
 	getApiKeySummary,
-	getApiKeyVolume,
-	parseWindow
+	getApiKeyVolume
 } from '$lib/api/activity';
+import { parseWindow } from '$lib/utils/time-range';
 import { DEP } from '$lib/api/deps';
+import { parseOffset } from '$lib/utils/search-params';
 
 export const load: PageLoad = async ({ url, params, depends }) => {
 	depends(DEP.activityApiKey);
 	const window = parseWindow(url.searchParams.get('window'));
-	// Guard against a malformed ?offset= (hand-edited or stale link): a NaN offset
-	// would 400 the recent request and break the pager math.
-	const offsetParam = Number(url.searchParams.get('offset'));
-	const offset = Number.isInteger(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
+	const offset = parseOffset(url);
 	const apiKeyId = Number(params.id);
 	return {
 		window,
@@ -24,6 +23,6 @@ export const load: PageLoad = async ({ url, params, depends }) => {
 		summary: getApiKeySummary(apiKeyId, window),
 		volume: getApiKeyVolume(apiKeyId, window),
 		latency: getApiKeyLatency(apiKeyId, window),
-		recent: getApiKeyRecent(apiKeyId, window, { offset, limit: 50 })
+		recent: getApiKeyRecent(apiKeyId, window, { offset, limit: ACTIVITY_PAGE_SIZE })
 	};
 };

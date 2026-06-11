@@ -1,24 +1,21 @@
 <script lang="ts">
 	import { KeyRound } from 'lucide-svelte';
 
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-
 	import KpiStrip from '$lib/components/activity/KpiStrip.svelte';
 	import LatencyChart from '$lib/components/activity/LatencyChart.svelte';
 	import TimeRangeTabs from '$lib/components/activity/TimeRangeTabs.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import type { Window } from '$lib/api/activity';
+	import PanelError from '$lib/components/ui/PanelError.svelte';
+	import type { Window } from '$lib/utils/time-range';
 	import { formatDurationMs } from '$lib/utils/format';
+	import { setSearchParam } from '$lib/utils/search-params';
 
 	let { data } = $props();
 
 	function setWindow(next: Window) {
-		const url = new URL(page.url);
-		url.searchParams.set('window', next);
-		goto(url, { replaceState: false, keepFocus: true, noScroll: true });
+		setSearchParam('window', next, { resetOffset: false });
 	}
 </script>
 
@@ -47,7 +44,7 @@
 		{:then s}
 			<KpiStrip totalSearches={s.totalSearches} p50={s.p50} p95={s.p95} p99={s.p99} />
 		{:catch e}
-			{void console.error('[activity] summary failed', e)}
+			<PanelError message="Couldn't load the summary" error={e} />
 		{/await}
 
 		{#await data.latency}
@@ -55,7 +52,7 @@
 		{:then buckets}
 			<LatencyChart {buckets} window={data.window} />
 		{:catch e}
-			{void console.error('[activity] latency failed', e)}
+			<PanelError message="Couldn't load latency" error={e} />
 		{/await}
 
 		{#await data.topActors then rows}
@@ -99,7 +96,7 @@
 				</ListCard>
 			</div>
 		{:catch e}
-			{void console.error('[activity] top-actors failed', e)}
+			<PanelError message="Couldn't load top actors" error={e} />
 		{/await}
 	</div>
 </div>

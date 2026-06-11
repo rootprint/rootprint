@@ -8,6 +8,13 @@
 			"port": 5173
 		},
 		{
+			"name": "web-preview",
+			"runtimeExecutable": "sh",
+			"runtimeArgs": ["-c", "cd apps/web && bun x vite dev --port \"$PORT\" --strictPort"],
+			"port": 5173,
+			"autoPort": true
+		},
+		{
 			"name": "api",
 			"runtimeExecutable": "bun",
 			"runtimeArgs": ["run", "dev:api"],

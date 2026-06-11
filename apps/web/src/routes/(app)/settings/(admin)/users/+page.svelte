@@ -1,21 +1,18 @@
 <script lang="ts">
 	import { Search, UserPlus } from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
 	import { crossfade } from 'svelte/transition';
 	import { cubicInOut } from 'svelte/easing';
 
-	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { setUserRole, UserApiError } from '$lib/api/users';
-	import { resendInvite, InviteApiError } from '$lib/api/invites';
-	import InviteUserModal from '$lib/components/admin/InviteUserModal.svelte';
-	import MemberActionsMenu from '$lib/components/admin/MemberActionsMenu.svelte';
-	import RemoveUserModal from '$lib/components/admin/RemoveUserModal.svelte';
-	import ResetPasswordModal from '$lib/components/admin/ResetPasswordModal.svelte';
+	import { refreshUsers, regenerateInvite, toggleUserRole } from './user-actions';
+	import InviteUserModal from '$lib/components/admin/users/InviteUserModal.svelte';
+	import MemberActionsMenu from '$lib/components/admin/users/MemberActionsMenu.svelte';
+	import RemoveUserModal from '$lib/components/admin/users/RemoveUserModal.svelte';
+	import ResetPasswordModal from '$lib/components/admin/users/ResetPasswordModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import type { UserView } from '$lib/api/users';
+	import { pluralize } from '$lib/utils/format';
 	import { formatRelativeTime } from '$lib/utils/time';
 
 	type Filter = 'all' | 'admin' | 'pending';
@@ -52,40 +49,13 @@
 		});
 	});
 
-	const countLabel = $derived(`${filtered.length} member${filtered.length === 1 ? '' : 's'}`);
+	const countLabel = $derived(pluralize(filtered.length, 'member'));
 	const emptyMessage = $derived.by(() => {
 		if (search.trim() !== '') return 'No members match your search.';
 		if (filter === 'admin') return 'No admins yet.';
 		if (filter === 'pending') return 'No pending invites.';
 		return 'No members.';
 	});
-
-	async function refresh() {
-		await invalidate(DEP.users);
-	}
-
-	async function handleRegenerate(user: UserView) {
-		try {
-			await resendInvite(user.id);
-		} catch (e) {
-			toast.error(e instanceof InviteApiError ? e.message : 'Failed to regenerate invite');
-			return;
-		}
-		await refresh();
-		toast.success(`Invite regenerated for ${user.name}`);
-	}
-
-	async function handleToggleRole(user: UserView) {
-		const newRole = user.role === 'admin' ? 'user' : 'admin';
-		try {
-			await setUserRole(user.id, newRole);
-		} catch (e) {
-			toast.error(e instanceof UserApiError ? e.message : 'Failed to update role');
-			return;
-		}
-		await refresh();
-		toast.success(`${user.name} is now ${newRole === 'admin' ? 'an admin' : 'a member'}`);
-	}
 
 	function openReset(user: UserView) {
 		target = { id: user.id, name: user.name };
@@ -201,8 +171,8 @@
 						<MemberActionsMenu
 							{user}
 							{currentUserId}
-							onRegenerate={handleRegenerate}
-							onToggleRole={handleToggleRole}
+							onRegenerate={regenerateInvite}
+							onToggleRole={toggleUserRole}
 							onResetPassword={openReset}
 							onRemove={openRemove}
 						/>
@@ -213,16 +183,16 @@
 	</div>
 </div>
 
-<InviteUserModal bind:open={inviteOpen} oncreated={refresh} />
+<InviteUserModal bind:open={inviteOpen} onCreated={refreshUsers} />
 <ResetPasswordModal
 	bind:open={resetOpen}
 	userId={target?.id ?? ''}
 	userName={target?.name ?? ''}
-	onreset={refresh}
+	onReset={refreshUsers}
 />
 <RemoveUserModal
 	bind:open={removeOpen}
 	userId={target?.id ?? ''}
 	userName={target?.name ?? ''}
-	onremoved={refresh}
+	onRemoved={refreshUsers}
 />

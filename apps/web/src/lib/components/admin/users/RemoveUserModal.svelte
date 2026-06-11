@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { removeUser, UserApiError } from '$lib/api/users';
+	import { ApiError } from '$lib/api/errors';
+	import { removeUser } from '$lib/api/users';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 
 	let {
 		open = $bindable(false),
 		userId,
 		userName,
-		onremoved
+		onRemoved
 	}: {
 		open: boolean;
 		userId: string;
 		userName: string;
-		onremoved?: () => void | Promise<void>;
+		onRemoved?: () => void | Promise<void>;
 	} = $props();
 
 	let loading = $state(false);
@@ -24,9 +25,9 @@
 			await removeUser(userId);
 			toast.success(`Removed ${userName}`);
 			open = false;
-			await onremoved?.();
+			await onRemoved?.();
 		} catch (e) {
-			toast.error(e instanceof UserApiError ? e.message : 'Failed to remove user');
+			toast.error(e instanceof ApiError ? e.message : 'Failed to remove user');
 		} finally {
 			loading = false;
 		}

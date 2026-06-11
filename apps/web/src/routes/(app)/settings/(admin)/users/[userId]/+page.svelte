@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { goto, invalidate } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
 
 	import AccountDetails from '$lib/components/account/AccountDetails.svelte';
 	import ActivityPanel from '$lib/components/activity/ActivityPanel.svelte';
-	import MemberActionsMenu from '$lib/components/admin/MemberActionsMenu.svelte';
-	import RemoveUserModal from '$lib/components/admin/RemoveUserModal.svelte';
-	import ResetPasswordModal from '$lib/components/admin/ResetPasswordModal.svelte';
+	import MemberActionsMenu from '$lib/components/admin/users/MemberActionsMenu.svelte';
+	import RemoveUserModal from '$lib/components/admin/users/RemoveUserModal.svelte';
+	import ResetPasswordModal from '$lib/components/admin/users/ResetPasswordModal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { DEP } from '$lib/api/deps';
-	import { setUserRole, UserApiError, type UserView } from '$lib/api/users';
-	import { resendInvite, InviteApiError } from '$lib/api/invites';
+	import { refreshUsers, regenerateInvite, toggleUserRole } from '../user-actions';
+	import type { UserView } from '$lib/api/users';
 	import { setSearchParam } from '$lib/utils/search-params';
 
 	let { data } = $props();
@@ -19,33 +17,6 @@
 
 	let resetOpen = $state(false);
 	let removeOpen = $state(false);
-
-	async function refresh() {
-		await invalidate(DEP.users);
-	}
-
-	async function handleRegenerate(u: UserView) {
-		try {
-			await resendInvite(u.id);
-		} catch (e) {
-			toast.error(e instanceof InviteApiError ? e.message : 'Failed to regenerate invite');
-			return;
-		}
-		await refresh();
-		toast.success(`Invite regenerated for ${u.name}`);
-	}
-
-	async function handleToggleRole(u: UserView) {
-		const newRole = u.role === 'admin' ? 'user' : 'admin';
-		try {
-			await setUserRole(u.id, newRole);
-		} catch (e) {
-			toast.error(e instanceof UserApiError ? e.message : 'Failed to update role');
-			return;
-		}
-		await refresh();
-		toast.success(`${u.name} is now ${newRole === 'admin' ? 'an admin' : 'a member'}`);
-	}
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
@@ -54,8 +25,8 @@
 			<MemberActionsMenu
 				{user}
 				{currentUserId}
-				onRegenerate={handleRegenerate}
-				onToggleRole={handleToggleRole}
+				onRegenerate={regenerateInvite}
+				onToggleRole={toggleUserRole}
 				onResetPassword={(_u: UserView) => (resetOpen = true)}
 				onRemove={(_u: UserView) => (removeOpen = true)}
 			/>
@@ -95,10 +66,15 @@
 	</div>
 </div>
 
-<ResetPasswordModal bind:open={resetOpen} userId={user.id} userName={user.name} onreset={refresh} />
+<ResetPasswordModal
+	bind:open={resetOpen}
+	userId={user.id}
+	userName={user.name}
+	onReset={refreshUsers}
+/>
 <RemoveUserModal
 	bind:open={removeOpen}
 	userId={user.id}
 	userName={user.name}
-	onremoved={() => goto('/settings/users')}
+	onRemoved={() => goto('/settings/users')}
 />

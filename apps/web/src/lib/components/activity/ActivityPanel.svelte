@@ -4,16 +4,18 @@
 	import TimeRangeTabs from '$lib/components/activity/TimeRangeTabs.svelte';
 	import VolumeChart from '$lib/components/activity/VolumeChart.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
+	import { ACTIVITY_PAGE_SIZE } from '$lib/api/activity';
 	import type {
 		ActorIndexes,
 		ActorSummary,
 		LatencyBuckets,
 		RecentResult,
-		VolumeBuckets,
-		Window
+		VolumeBuckets
 	} from '$lib/api/activity';
+	import type { Window } from '$lib/utils/time-range';
 	import { formatDurationMs } from '$lib/utils/format';
 	import { formatActivityTimestamp } from '$lib/utils/time';
+	import PanelError from '$lib/components/ui/PanelError.svelte';
 
 	type Props = {
 		window: Window;
@@ -21,7 +23,7 @@
 		summary: Promise<ActorSummary>;
 		volume: Promise<VolumeBuckets>;
 		latency: Promise<LatencyBuckets>;
-		indexes: Promise<ActorIndexes>;
+		indexes?: Promise<ActorIndexes>;
 		recent: Promise<RecentResult>;
 		onSetParam: (key: string, val: string) => void;
 	};
@@ -40,52 +42,54 @@
 	{:then s}
 		<KpiStrip totalSearches={s.totalSearches} p50={s.p50} p95={s.p95} p99={s.p99} />
 	{:catch e}
-		{void console.error('[activity] user summary failed', e)}
+		<PanelError message="Couldn't load the summary" error={e} />
 	{/await}
 
 	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 		{#await volume then buckets}
 			<VolumeChart {buckets} {window} />
 		{:catch e}
-			{void console.error('[activity] user volume failed', e)}
+			<PanelError message="Couldn't load search volume" error={e} />
 		{/await}
 
 		{#await latency then buckets}
 			<LatencyChart {buckets} {window} />
 		{:catch e}
-			{void console.error('[activity] user latency failed', e)}
+			<PanelError message="Couldn't load latency" error={e} />
 		{/await}
 	</div>
 
-	{#await indexes then rows}
-		<div class="flex flex-col gap-2">
-			<p class="eyebrow">Indexes hit</p>
-			<ListCard
-				cols="minmax(0,1fr) auto auto"
-				empty={rows.length === 0}
-				emptyMessage="No index activity in this window."
-			>
-				<div
-					class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+	{#if indexes}
+		{#await indexes then rows}
+			<div class="flex flex-col gap-2">
+				<p class="eyebrow">Indexes hit</p>
+				<ListCard
+					cols="minmax(0,1fr) auto auto"
+					empty={rows.length === 0}
+					emptyMessage="No index activity in this window."
 				>
-					<span>Index</span>
-					<span class="text-right">Searches</span>
-					<span class="text-right">Avg duration</span>
-				</div>
-				{#each rows as r (r.indexId)}
-					<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
-						<span class="min-w-0 truncate">{r.indexId}</span>
-						<span class="text-right tabular-nums">{r.count.toLocaleString()}</span>
-						<span class="text-right whitespace-nowrap tabular-nums">
-							{formatDurationMs(r.avgDurationMs)}
-						</span>
+					<div
+						class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+					>
+						<span>Index</span>
+						<span class="text-right">Searches</span>
+						<span class="text-right">Avg duration</span>
 					</div>
-				{/each}
-			</ListCard>
-		</div>
-	{:catch e}
-		{void console.error('[activity] user indexes failed', e)}
-	{/await}
+					{#each rows as r (r.indexId)}
+						<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
+							<span class="min-w-0 truncate">{r.indexId}</span>
+							<span class="text-right tabular-nums">{r.count.toLocaleString()}</span>
+							<span class="text-right whitespace-nowrap tabular-nums">
+								{formatDurationMs(r.avgDurationMs)}
+							</span>
+						</div>
+					{/each}
+				</ListCard>
+			</div>
+		{:catch e}
+			<PanelError message="Couldn't load index activity" error={e} />
+		{/await}
+	{/if}
 
 	<div class="flex flex-col gap-2">
 		<p class="eyebrow">Recent activity</p>
@@ -134,21 +138,21 @@
 					<button
 						class="btn btn-xs"
 						disabled={offset === 0}
-						onclick={() => onSetParam('offset', String(Math.max(0, offset - 50)))}
+						onclick={() => onSetParam('offset', String(Math.max(0, offset - ACTIVITY_PAGE_SIZE)))}
 					>
 						Prev
 					</button>
 					<button
 						class="btn btn-xs"
 						disabled={offset + rec.rows.length >= rec.total}
-						onclick={() => onSetParam('offset', String(offset + 50))}
+						onclick={() => onSetParam('offset', String(offset + ACTIVITY_PAGE_SIZE))}
 					>
 						Next
 					</button>
 				</div>
 			</div>
 		{:catch e}
-			{void console.error('[activity] user recent failed', e)}
+			<PanelError message="Couldn't load recent activity" error={e} />
 		{/await}
 	</div>
 </div>

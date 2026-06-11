@@ -3,18 +3,18 @@
 	import { createInviteSchema, type CreateInviteInput } from 'api/schemas';
 	import type { UserRole } from 'api/types';
 
-	import { createInvite, InviteApiError } from '$lib/api/invites';
-	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { createInvite } from '$lib/api/invites';
+	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
 	let {
 		open = $bindable(false),
-		oncreated
+		onCreated
 	}: {
 		open: boolean;
-		oncreated?: () => void | Promise<void>;
+		onCreated?: () => void | Promise<void>;
 	} = $props();
 
 	let phase = $state<'form' | 'reveal'>('form');
@@ -58,9 +58,9 @@
 			const result = await createInvite(input);
 			inviteUrl = result.inviteUrl;
 			phase = 'reveal';
-			await oncreated?.();
+			await onCreated?.();
 		} catch (err) {
-			if (err instanceof InviteApiError && err.body) {
+			if (err instanceof ApiError && err.body) {
 				fieldErrors = toFieldErrors(err.body);
 				formError = err.message;
 			} else {

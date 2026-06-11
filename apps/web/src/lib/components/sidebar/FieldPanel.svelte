@@ -2,7 +2,7 @@
 	import { ChevronDown, ChevronRight, Search } from 'lucide-svelte';
 	import type { LevelBucket, LogField, LogFieldValueBucket, Filter } from '$lib/types';
 	import { isOtelAttr, isOtelResourceAttr, serializeTimeRange } from '$lib/utils/fields';
-	import { sortBySeverity } from '$lib/utils/log-helpers';
+	import { sortBySeverity } from '$lib/utils/severity';
 	import { levelColor } from '$lib/constants/level-colors';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { fetchFieldValues, fetchFieldValuesBulk } from '$lib/api/field-values';
@@ -61,7 +61,7 @@
 	}
 
 	// Trigger includes all filters so any change re-runs; per-field cache decides which rows fetch.
-	let triggerKey = $derived.by(() => {
+	const triggerKey = $derived.by(() => {
 		const id = store.selectedIndex;
 		if (!id) return null;
 		const filtersKey = store.filters.map(filterKey).join(',');
@@ -181,17 +181,17 @@
 		};
 	});
 
-	let normalized = $derived(searchTerm.trim().toLowerCase());
+	const normalized = $derived(searchTerm.trim().toLowerCase());
 
-	let isOtelIndex = $derived(store.fieldConfig?.isOtel ?? false);
-	let levels = $derived(store.levels);
-	let fields = $derived(store.fields);
+	const isOtelIndex = $derived(store.fieldConfig?.isOtel ?? false);
+	const levels = $derived(store.levels);
+	const fields = $derived(store.fields);
 
-	let filteredLevels = $derived(
+	const filteredLevels = $derived(
 		normalized ? levels.filter((l) => l.name.toLowerCase().includes(normalized)) : levels
 	);
 
-	let sortedLevels = $derived.by(() => {
+	const sortedLevels = $derived.by(() => {
 		const order = sortBySeverity(filteredLevels.map((l) => l.name));
 		const byName = new Map(filteredLevels.map((l) => [l.name, l]));
 		const result: LevelBucket[] = [];
@@ -202,7 +202,7 @@
 		return result;
 	});
 
-	let groups = $derived.by<FieldGroup[]>(() => {
+	const groups = $derived.by<FieldGroup[]>(() => {
 		const matching = normalized
 			? fields.filter((f) => f.displayName.toLowerCase().includes(normalized))
 			: fields;
@@ -226,9 +226,9 @@
 		];
 	});
 
-	let totalFieldMatches = $derived(groups.reduce((sum, g) => sum + g.fields.length, 0));
-	let matchCount = $derived(filteredLevels.length + totalFieldMatches);
-	let isAllEmpty = $derived(normalized.length > 0 && matchCount === 0);
+	const totalFieldMatches = $derived(groups.reduce((sum, g) => sum + g.fields.length, 0));
+	const matchCount = $derived(filteredLevels.length + totalFieldMatches);
+	const isAllEmpty = $derived(normalized.length > 0 && matchCount === 0);
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {

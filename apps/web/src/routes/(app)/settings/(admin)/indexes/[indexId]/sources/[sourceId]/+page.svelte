@@ -5,9 +5,9 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
 	import { setSourceEnabled, resetSourceCheckpoint, deleteSource } from '$lib/api/indexes';
-	import EditSourceForm from '$lib/components/admin/EditSourceForm.svelte';
-	import SourceSummary from '$lib/components/admin/SourceSummary.svelte';
-	import { isEditableSourceType, isManagedSource } from '$lib/components/admin/source-form';
+	import EditSourceForm from '$lib/components/admin/indexes/EditSourceForm.svelte';
+	import SourceSummary from '$lib/components/admin/indexes/SourceSummary.svelte';
+	import { isEditableSourceType, isManagedSource } from '$lib/components/admin/indexes/source-form';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 

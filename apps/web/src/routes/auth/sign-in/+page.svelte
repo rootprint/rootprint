@@ -20,17 +20,19 @@
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 
+	const returnTo = $derived(safeReturnTo(page.url.searchParams.get('returnTo')));
+
 	async function signInWithGoogle() {
 		await authClient.signIn.social({
 			provider: 'google',
-			callbackURL: safeReturnTo(page.url.searchParams.get('returnTo'))
+			callbackURL: returnTo
 		});
 	}
 
 	async function signInWithGitHub() {
 		await authClient.signIn.social({
 			provider: 'github',
-			callbackURL: safeReturnTo(page.url.searchParams.get('returnTo'))
+			callbackURL: returnTo
 		});
 	}
 
@@ -53,7 +55,9 @@
 			}
 
 			await invalidate(DEP.session);
-			await goto(safeReturnTo(page.url.searchParams.get('returnTo')));
+			await goto(returnTo);
+		} catch (err) {
+			formError = err instanceof Error ? err.message : 'Sign-in failed';
 		} finally {
 			submitting = false;
 		}

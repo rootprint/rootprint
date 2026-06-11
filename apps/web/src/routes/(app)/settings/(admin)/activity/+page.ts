@@ -1,6 +1,7 @@
 import type { PageLoad } from './$types';
 
-import { getLatency, getSummary, getTopActors, parseWindow } from '$lib/api/activity';
+import { getLatency, getSummary, getTopActors } from '$lib/api/activity';
+import { parseWindow } from '$lib/utils/time-range';
 import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ url, depends }) => {

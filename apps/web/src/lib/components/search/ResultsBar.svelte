@@ -54,7 +54,7 @@
 			pinnedEnd={store.fieldConfig ? [store.fieldConfig.messageField] : []}
 			lineWrap={store.lineWrap}
 			displayMode={store.displayMode}
-			onchange={(next) => store.setActiveFields(next)}
+			onColumnsChange={(next) => store.setActiveFields(next)}
 			onLineWrapChange={(next) => store.setLineWrap(next)}
 			onDisplayModeChange={(next) => store.setDisplayMode(next)}
 		/>
@@ -67,6 +67,5 @@
 	startTs={store.resolvedStartTs}
 	endTs={store.resolvedEndTs}
 	numHits={store.numHits}
-	open={exportOpen}
-	onClose={() => (exportOpen = false)}
+	bind:open={exportOpen}
 />

@@ -2,25 +2,27 @@
 	import { onDestroy, onMount } from 'svelte';
 
 	import { getClusterOverview, getAdminMetricsRaw, type ClusterOverview } from '$lib/api/admin';
-	import { windowToSpanMs, type Window } from '$lib/api/activity';
+	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
 	import { getIndexStats } from '$lib/api/indexes';
-	import ClusterIdentityStrip from '$lib/components/admin/ClusterIdentityStrip.svelte';
-	import HeadlineNumbers from '$lib/components/admin/HeadlineNumbers.svelte';
-	import StorageTrendChart from '$lib/components/admin/StorageTrendChart.svelte';
+	import ClusterIdentityStrip from '$lib/components/admin/overview/ClusterIdentityStrip.svelte';
+	import HeadlineNumbers from '$lib/components/admin/overview/HeadlineNumbers.svelte';
+	import StorageTrendChart from '$lib/components/admin/overview/StorageTrendChart.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { copyWithToast } from '$lib/utils/clipboard';
 	import type { ConnectionState } from '$lib/types';
-	import { MetricsPoller } from './MetricsPoller.svelte';
+	import { MetricsPoller } from './metrics-poller.svelte';
 
 	type StatsPoint = Awaited<ReturnType<typeof getIndexStats>>['points'][number];
 
+	let { data } = $props();
+
 	let range = $state<Window>('7d');
 
-	let cluster = $state<ClusterOverview | null>(null);
-	let clusterError = $state<string | null>(null);
+	let cluster = $state<ClusterOverview | null>(data.cluster);
+	let clusterError = $state<string | null>(data.clusterError);
 	let histories = $state<Record<string, StatsPoint[]>>({});
 	let historyErrors = $state<Record<string, string>>({});
-	let loadingHistories = $state(false);
+	let historiesLoading = $state(false);
 	let historiesToken = 0;
 
 	const poller = new MetricsPoller();
@@ -42,7 +44,7 @@
 	async function loadHistories(): Promise<void> {
 		if (!cluster) return;
 		const token = ++historiesToken;
-		loadingHistories = true;
+		historiesLoading = true;
 		const newErrors: Record<string, string> = {};
 		const span = windowToSpanMs(range);
 		const to = Date.now();
@@ -62,7 +64,7 @@
 		if (token !== historiesToken) return;
 		histories = next;
 		historyErrors = newErrors;
-		loadingHistories = false;
+		historiesLoading = false;
 	}
 
 	async function refresh(): Promise<void> {
@@ -76,7 +78,7 @@
 	}
 
 	onMount(() => {
-		void refresh();
+		void loadHistories();
 		poller.start();
 	});
 
@@ -104,7 +106,7 @@
 	}
 
 	async function copyRaw(text: string): Promise<void> {
-		await copyToClipboard(text);
+		await copyWithToast(text, 'Raw metrics copied');
 	}
 
 	async function loadRaw(): Promise<void> {
@@ -172,7 +174,7 @@
 				{histories}
 				{range}
 				{onRangeChange}
-				loading={loadingHistories}
+				loading={historiesLoading}
 			/>
 			{#if Object.keys(historyErrors).length > 0}
 				<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-2 text-xs">

@@ -45,6 +45,20 @@ export function formatRelativeTime(input: string | Date): string {
 	return formatDistanceToNow(d, { addSuffix: true });
 }
 
+/** "June 10, 2026" — locale-aware, date only. */
+export function formatDate(input: string | Date): string {
+	const d = typeof input === 'string' ? parseISO(input) : input;
+	if (!isValid(d)) return '—';
+	return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+/** "Jun 10, 2026, 3:45 PM" — locale-aware date + time. */
+export function formatDateTime(input: string | Date): string {
+	const d = typeof input === 'string' ? parseISO(input) : input;
+	if (!isValid(d)) return '—';
+	return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 export function parseLocalDateTime(dateStr: string, timeStr: string): number | null {
 	const d = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd HH:mm', new Date());
 	return isValid(d) ? getUnixTime(d) : null;

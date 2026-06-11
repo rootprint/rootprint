@@ -1,5 +1,5 @@
 import NodejsIcon from '@iconify-svelte/logos/nodejs-icon';
-import { otelEnvVarsSnippet } from './_shared';
+import { otelEnvVarsSnippet, searchVerifyLink } from './_shared';
 import type { Integration, IntegrationContext, Step } from '../types';
 
 const OTEL_INSTALL =
@@ -101,10 +101,7 @@ function otelSteps(ctx: IntegrationContext): Step[] {
 			body: 'Save this to a file and run it with Node 18+ (ESM).',
 			snippets: [{ code: OTEL_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
 			callout: PROTOBUF_CALLOUT,
-			verify: {
-				label: 'Open Search',
-				href: `/?index=${encodeURIComponent(ctx.indexId)}`
-			}
+			verify: searchVerifyLink(ctx.indexId)
 		}
 	];
 }
@@ -126,10 +123,7 @@ function pinoSteps(ctx: IntegrationContext): Step[] {
 			title: 'Send your first log',
 			body: 'Wire the transport into a Pino logger and emit a record.',
 			snippets: [{ code: PINO_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
-			verify: {
-				label: 'Open Search',
-				href: `/?index=${encodeURIComponent(ctx.indexId)}`
-			}
+			verify: searchVerifyLink(ctx.indexId)
 		}
 	];
 }
@@ -152,10 +146,7 @@ function winstonSteps(ctx: IntegrationContext): Step[] {
 			body: 'Wire the OTel transport into a Winston logger and emit a record.',
 			snippets: [{ code: WINSTON_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
 			callout: PROTOBUF_CALLOUT,
-			verify: {
-				label: 'Open Search',
-				href: `/?index=${encodeURIComponent(ctx.indexId)}`
-			}
+			verify: searchVerifyLink(ctx.indexId)
 		}
 	];
 }

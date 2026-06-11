@@ -3,7 +3,7 @@
 	import { Toaster } from 'svelte-sonner';
 	import { page } from '$app/state';
 	import { resolveTitle } from '$lib/page-title';
-	import MobileGate from '$lib/components/MobileGate.svelte';
+	import MobileGate from '$lib/components/shell/MobileGate.svelte';
 	import '../app.css';
 
 	let { children } = $props();

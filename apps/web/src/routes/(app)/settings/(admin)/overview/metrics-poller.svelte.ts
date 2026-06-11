@@ -14,6 +14,8 @@ export class MetricsPoller {
 	now = $state(Date.now());
 
 	#timer: ReturnType<typeof setTimeout> | null = null;
+	#stopped = true;
+	#pollSeq = 0;
 
 	/** Seconds since the last successful poll; `null` before the first. */
 	get staleSeconds(): number | null {
@@ -42,30 +44,39 @@ export class MetricsPoller {
 	}
 
 	async poll(): Promise<void> {
+		const seq = ++this.#pollSeq;
 		try {
-			this.metrics = await getAdminMetrics();
+			const metrics = await getAdminMetrics();
+			if (seq !== this.#pollSeq) return;
+			this.metrics = metrics;
 			this.lastMetricsAt = Date.now();
 			this.failures = 0;
 		} catch {
+			if (seq !== this.#pollSeq) return;
 			this.failures += 1;
 		}
 	}
 
 	start(): void {
+		this.#stopped = false;
 		void this.poll();
 		this.#schedule();
 		document.addEventListener('visibilitychange', this.#onVisibility);
 	}
 
 	stop(): void {
+		this.#stopped = true;
+		this.#pollSeq++;
 		this.#stopTimer();
 		document.removeEventListener('visibilitychange', this.#onVisibility);
 	}
 
 	#schedule(): void {
+		if (this.#stopped) return;
 		this.#stopTimer();
 		this.#timer = setTimeout(async () => {
 			await this.poll();
+			if (this.#stopped) return;
 			this.now = Date.now();
 			this.#schedule();
 		}, POLL_INTERVAL_MS);

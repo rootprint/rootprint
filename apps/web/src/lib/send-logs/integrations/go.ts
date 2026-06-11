@@ -1,5 +1,5 @@
 import GoIcon from '@iconify-svelte/logos/go';
-import { otelEnvVarsSnippet } from './_shared';
+import { otelEnvVarsSnippet, searchVerifyLink } from './_shared';
 import type { Integration } from '../types';
 
 const INIT_COMMAND = 'go mod init example.com/rootprint-demo';
@@ -68,10 +68,7 @@ export const go: Integration = {
 			title: 'Send your first log',
 			body: 'Save this to main.go and run `go run .`',
 			snippets: [{ code: EXAMPLE_CODE, lang: 'go', copyTitle: 'Copy example' }],
-			verify: {
-				label: 'Open Search',
-				href: `/?index=${encodeURIComponent(ctx.indexId)}`
-			}
+			verify: searchVerifyLink(ctx.indexId)
 		}
 	]
 };

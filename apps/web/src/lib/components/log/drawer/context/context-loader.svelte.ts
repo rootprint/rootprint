@@ -1,6 +1,7 @@
 import { getUnixTime, isValid, parseISO } from 'date-fns';
 
 import { searchLogs } from '$lib/api/log-search';
+import { isAbortError } from '$lib/api/errors';
 import { getByPath } from '$lib/utils/get-by-path';
 import { escapeFilterValue } from 'api/query';
 import { normalizeHit } from '$lib/utils/normalize-hit';
@@ -39,7 +40,7 @@ export class ContextLoader {
 	readonly fieldConfig: FieldConfig;
 
 	chips = $state<ContextChip[]>([]);
-	entries = $state<ContextEntry[]>([]);
+	entries = $state.raw<ContextEntry[]>([]);
 
 	loadingInitial = $state(false);
 	loadingMoreBefore = $state(false);
@@ -166,10 +167,8 @@ export class ContextLoader {
 			this.entries = [...this.entries, ...this.#toEntries(fresh)];
 			this.#advanceBefore(result.rawHits.length);
 		} catch (e) {
-			if ((e as { name?: string })?.name === 'AbortError') return;
-			// Silent: sentinel stays visible, user re-scrolls to retry.
+			if (isAbortError(e)) return;
 		} finally {
-			// Always clear: a stale-leftover `true` would freeze the trigger after a chip change.
 			this.loadingMoreBefore = false;
 		}
 	}
@@ -198,7 +197,7 @@ export class ContextLoader {
 			this.entries = [...this.#toEntries(fresh.toReversed()), ...this.entries];
 			this.#advanceAfter(result.rawHits.length);
 		} catch (e) {
-			if ((e as { name?: string })?.name === 'AbortError') return;
+			if (isAbortError(e)) return;
 		} finally {
 			this.loadingMoreAfter = false;
 		}
@@ -282,7 +281,7 @@ export class ContextLoader {
 			this.#advanceAfter(afterRes.rawHits.length);
 			this.#advanceBefore(beforeRes.rawHits.length);
 		} catch (e) {
-			if ((e as { name?: string })?.name === 'AbortError') return;
+			if (isAbortError(e)) return;
 			if (thisSeq !== this.#fetchSeq) return;
 			this.error = 'Failed to fetch log context. Check your connection and try again.';
 			this.entries = [this.#toEntry(this.anchor.raw, true)];

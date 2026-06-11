@@ -95,15 +95,15 @@ The brand-green is the visual signature. Use it for one primary CTA per surface,
 
 ### Typography
 
-- Sans: **Roboto**. Mono: **Roboto Mono**. Loaded via `<link>` in `app.html`.
+- Sans: **Geist**. Mono: **Geist Mono**. Self-hosted variable woff2 under `static/fonts/`, loaded via `@font-face` in `app.css`.
 - Body is `0.875rem / 1.5rem` (14px / 24px), small and data-dense by default.
 - Headings are **regular weight (400)** with **tight tracking** at large sizes. Do not use `font-bold` on headings. The size carries the hierarchy, not the weight. The base layer in `app.css` already sets `font-weight: 400` and `letter-spacing: -0.02em` on `h1–h4`; don't override it.
 - Tokens `text-display`, `text-h1`, `text-h2`, `text-h3` are available via Tailwind v4's `@theme` for arbitrary headings outside the HTML hierarchy.
-- Mono text is for: code, IDs, timestamps, small metadata labels, eyebrows. Not for body prose.
+- Mono text is for: code, IDs, timestamps, small metadata labels. Not for body prose.
 
 ### Material — Flat
 
-- No shadows. Do not add `shadow-*` utilities. Elevation is implied by `base-200` surfaces and the `.hairline` border, not by drop shadow.
+- No shadows on in-page surfaces (cards, panels, tables, forms). Elevation is implied by `base-200` surfaces and `border-line` hairlines, not by drop shadow. One exception: floating overlays **without a backdrop dim** (chart tooltips, popovers, the log drawer) may carry a shadow to separate from the content beneath. Modals get a dimmed backdrop and must stay `shadow-none` (see `ui/Modal`).
 - Small radii: `rounded` (4px) for fields and controls, `rounded-box` (8px) for cards. Avoid `rounded-xl`/`rounded-2xl`/`rounded-full` except for genuine pill/avatar shapes.
 - `--depth: 0` and `--noise: 0` are set on the theme. Don't override them.
 
@@ -111,15 +111,14 @@ The brand-green is the visual signature. Use it for one primary CTA per surface,
 
 Defined in `src/app.css` under `@layer components`:
 
-- `.eyebrow` — uppercase mono micro-label used **above** a heading. Use it instead of `<small>` or a second `<p>` to introduce the page/section.
-- `.hairline` — 1px border at 10% of `base-content`. Use to frame cards, panels, dividers on the light canvas. Replaces `shadow-*` for elevation.
+- `.eyebrow` — uppercase sans micro-label used **above** a heading (also the title style for chart panels). Use it instead of `<small>` or a second `<p>` to introduce the page/section.
 
-Compose them with Tailwind utilities, e.g. `class="hairline rounded-box p-8"`.
+Hairlines are not a class but a color token: `--color-line` (1px-intent line at 10% of `base-content`, defined in `app.css` under `@theme inline`). It generates `border-line`, `border-b-line`, `divide-line`, etc. Use it to frame cards, panels, dividers on the light canvas — it replaces `shadow-*` for elevation. Compose with Tailwind utilities, e.g. `class="border-line rounded-box border p-8"`.
 
 ### Forms
 
 - For inputs with adornments use DaisyUI 5's `<label class="input">` floating-label pattern (`label` span + bare `<input>` child). Do not use ad-hoc button-on-input layouts that produce separate floating hover shapes.
-- Field-level errors render as **mono micro-text** under the input (`class="text-error font-mono text-xs"`), not inside an alert chip.
+- Field-level errors render as **micro-text** under the input (`class="text-error text-xs"`, no mono — `ui/Field` is the contract), not inside an alert chip.
 - Form-level errors render as a top-of-card `alert alert-error` chip.
 - The default 2px DaisyUI focus ring on `.input`/`.select`/`.textarea` is overridden in `app.css` to a 1px `base-content` border-color shift. Same footprint, no visual jump — keep it that way and don't add `focus:ring-*` utilities on form controls.
 
@@ -128,17 +127,17 @@ Compose them with Tailwind utilities, e.g. `class="hairline rounded-box p-8"`.
 Recurring patterns to reach for before inventing new ones:
 
 - **Eyebrow + Heading + Body** — `<p class="eyebrow">…</p>` then `<h1 class="text-3xl tracking-tight">…</h1>` then body. This is the default page-header shape.
-- **Hairline panel** — `<div class="hairline rounded-box p-8">…</div>` on `base-200` for any framed content. The auth card and the home session panel both use this.
+- **Hairline panel** — `<div class="border-line rounded-box border p-8">…</div>` on `base-200` for any framed content. The auth card and the home session panel both use this.
 - **Mono metadata grid** — when listing key/value metadata (emails, IDs, timestamps), use a `grid` of `<dt class="text-base-content/50 text-xs uppercase tracking-wider">` + `<dd class="font-mono text-sm">`. See `routes/(app)/+page.svelte`.
 
 ### What Not to Do
 
-- Don't add `shadow-xl` (or any shadow) to cards.
+- Don't add `shadow-xl` (or any shadow) to cards or other in-page surfaces — shadows are reserved for undimmed floating overlays (see Material).
 - Don't use `font-bold` on headings — the regular weight at large size is intentional.
 - Don't hard-code hex values in Svelte files; use DaisyUI semantic classes.
 - Don't add `focus:ring-*` to form controls — the global `.input` focus state is already defined.
 - Don't introduce a new theme or a per-component `data-theme` override.
-- Don't reintroduce DaisyUI's `card`/`card-body` for shells — they pull a different radius and padding scale. Use the `hairline + rounded-box + p-8` recipe.
+- Don't reintroduce DaisyUI's `card`/`card-body` for shells — they pull a different radius and padding scale. Use the `border-line + rounded-box + border + p-8` recipe.
 
 ## Error Handling
 
@@ -157,3 +156,5 @@ No tests. Manual visual review via `bun --filter web dev` or `bun --filter web p
 - `prettier-plugin-svelte` + `prettier-plugin-tailwindcss` normalize Svelte files and class-attribute order — let them.
 - Use SvelteKit aliases (`$lib`, `$app`, `$env`) over deep relative paths.
 - Cross-workspace types: `import type { ... } from 'api/types'`. Schemas: `import { ... } from 'api/schemas'`.
+- Component callback props are camelCase (`onSave`, `onToggleSort`); lowercase only when the prop mirrors a native DOM event on an element the component wraps (`Modal`'s `onclose`/`oncancel`).
+- `.svelte.ts` modules are kebab-case (`metrics-poller.svelte.ts`), like all other `.ts` files.

@@ -106,11 +106,11 @@ export async function validateInviteToken(
 		.limit(1);
 
 	if (!rows.length) {
-		throw badRequest('Invalid invite token');
+		throw badRequest('Invalid invite token', 'INVITE_INVALID');
 	}
 
 	if (rows[0]!.expiresAt < new Date()) {
-		throw badRequest('Invite token expired');
+		throw badRequest('Invite token expired', 'INVITE_EXPIRED');
 	}
 
 	return { userId: rows[0]!.userId, email: rows[0]!.email };

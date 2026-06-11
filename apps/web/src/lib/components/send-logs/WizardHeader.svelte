@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import CreateApiKeyModal from './CreateApiKeyModal.svelte';
+	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
 	import ApiKeyChip from './ApiKeyChip.svelte';
 	import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
 	import { resolveBreadcrumbs } from '$lib/settings-nav';
 	import { DEP } from '$lib/api/deps';
+	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-logs/constants';
 	import type { Integration } from '$lib/send-logs/types';
 	import type { ApiKeyView } from '$lib/api/api-keys';
 
@@ -52,6 +53,8 @@
 <CreateApiKeyModal
 	bind:open={createOpen}
 	{indexIds}
+	role="ingest"
+	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
 	invalidateKey={DEP.sendLogsApiKeys}
 	onCreated={handleCreated}
 />

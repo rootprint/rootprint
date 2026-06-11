@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { Trash2 } from 'lucide-svelte';
 
-	import GoogleAuthForm from '$lib/components/admin/GoogleAuthForm.svelte';
+	import { googleProvider } from '$lib/components/admin/authentication/oauth-providers';
+	import OAuthProviderAuthForm from '$lib/components/admin/authentication/OAuthProviderAuthForm.svelte';
+	import RemoveProviderAuthModal from '$lib/components/admin/authentication/RemoveProviderAuthModal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import RemoveGoogleAuthModal from '$lib/components/admin/RemoveGoogleAuthModal.svelte';
 
 	let { data } = $props();
 	let removeOpen = $state(false);
@@ -26,7 +27,12 @@
 		</header>
 	</PageHeader>
 
-	<GoogleAuthForm settings={data.settings} origin={data.origin} />
+	<OAuthProviderAuthForm
+		provider={googleProvider}
+		configured={data.settings.configured}
+		initialItems={data.settings.allowedDomains}
+		origin={data.origin}
+	/>
 </div>
 
-<RemoveGoogleAuthModal bind:open={removeOpen} />
+<RemoveProviderAuthModal bind:open={removeOpen} provider={googleProvider} />

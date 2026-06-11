@@ -25,10 +25,6 @@
 
 	let typed = $state('');
 
-	$effect(() => {
-		if (!open) typed = '';
-	});
-
 	const canConfirm = $derived(typed === confirmValue);
 	const inputId = $props.id();
 </script>
@@ -36,6 +32,7 @@
 <Modal
 	bind:open
 	{title}
+	onclose={() => (typed = '')}
 	oncancel={(e) => {
 		if (loading) e.preventDefault();
 	}}

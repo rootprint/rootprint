@@ -1,11 +1,9 @@
 import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
-import { ApiError, readApiError } from '$lib/api/errors';
+import { readApiError } from '$lib/api/errors';
 import type { UserRole } from 'api/types';
 
 export type UserView = InferResponseType<typeof client.api.users.$get, 200>[number];
-
-export { ApiError as UserApiError };
 
 export async function listUsers(): Promise<UserView[]> {
 	const res = await client.api.users.$get({});

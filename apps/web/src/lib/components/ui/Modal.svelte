@@ -9,7 +9,7 @@
 		onclose,
 		oncancel
 	}: {
-		open: boolean;
+		open?: boolean;
 		title: string;
 		actions?: Snippet;
 		children: Snippet;

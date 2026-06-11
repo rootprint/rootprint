@@ -14,9 +14,9 @@
 	let { label, value = $bindable(''), error, hint, id, control, ...rest }: Props = $props();
 
 	const uid = $props.id();
-	let inputId = $derived(id ?? uid);
-	let msgId = $derived(`${inputId}-msg`);
-	let describedBy = $derived(error || hint ? msgId : undefined);
+	const inputId = $derived(id ?? uid);
+	const msgId = $derived(`${inputId}-msg`);
+	const describedBy = $derived(error || hint ? msgId : undefined);
 </script>
 
 <div class="space-y-1.5">

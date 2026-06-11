@@ -5,11 +5,11 @@
 	import 'uplot/dist/uPlot.min.css';
 
 	import { browser } from '$app/environment';
-	import { baseContentAt } from '$lib/utils/log-helpers';
+	import { baseContentAt } from '$lib/utils/chart-colors';
 	import { formatGiB } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
-	import type { Window } from '$lib/api/activity';
+	import type { Window } from '$lib/utils/time-range';
 	import RangePicker from './RangePicker.svelte';
 
 	type IndexInfo = { indexId: string; displayName: string | null; sizeBytes: number | null };
@@ -153,16 +153,20 @@
 	async function buildChart() {
 		if (!browser || !chartEl || !columnar) return;
 		const buildId = ++chartBuildId;
-		if (containerEl) {
-			const w = containerEl.clientWidth;
-			if (w > 0) chartWidth = w;
-		}
 		destroyChart();
 		if (!uPlotCtor) {
 			const mod = await import('uplot');
 			uPlotCtor = mod.default;
 		}
 		if (!chartEl || !columnar || buildId !== chartBuildId) return;
+
+		const width = untrack(() => {
+			if (containerEl) {
+				const w = containerEl.clientWidth;
+				if (w > 0) chartWidth = w;
+			}
+			return chartWidth;
+		});
 
 		const UPlot = uPlotCtor;
 		const splinePaths = UPlot.paths.spline?.();
@@ -184,7 +188,7 @@
 		});
 
 		const opts: uPlotLib.Options = {
-			width: chartWidth,
+			width,
 			height: HEIGHT,
 			padding: [12, 8, 0, 0],
 			cursor: { drag: { x: false, y: false }, points: { show: false } },
@@ -257,7 +261,7 @@
 
 <div class="border-line bg-base-100 rounded-box flex w-full flex-col border">
 	<header class="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-3">
-		<h3 class="text-base font-medium">Storage by index</h3>
+		<p class="eyebrow">Storage by index</p>
 		<RangePicker value={range} onChange={onRangeChange} />
 	</header>
 

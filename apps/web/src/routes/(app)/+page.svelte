@@ -32,17 +32,17 @@
 	// Reactive closure so the store sees live URL state: page.url is reactive in Svelte 5, so reading it inside the $effect-tracked closure re-runs on URL change.
 	const store = new SearchStore({
 		parsedQuery: () => deserialize(page.url.searchParams),
-		initialIndexes: data.indexes,
+		indexes: () => data.indexes,
 		onFreshSearch: () => osRef?.osInstance()?.elements().viewport.scrollTo(0, 0)
 	});
 
 	store.setupAutoSearch();
 
-	let columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
-	let messageWidth = $derived(
+	const columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
+	const messageWidth = $derived(
 		computeMessageWidth(store.logs, store.fieldConfig?.messageField ?? 'message')
 	);
-	let gridTemplate = $derived(
+	const gridTemplate = $derived(
 		buildGridTemplate(store.activeFields, columnWidths, messageWidth, store.lineWrap)
 	);
 
@@ -99,7 +99,7 @@
 			error={store.histogramError}
 			timezoneMode={store.timezoneMode}
 			bind:collapsed={chartCollapsed}
-			onbrush={(start, end) =>
+			onBrush={(start, end) =>
 				store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
 		/>
 
@@ -132,7 +132,6 @@
 							<span class="text-xs"
 								>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
 							>
-							<button class="btn btn-ghost btn-sm" disabled>Retry</button>
 						</div>
 					</div>
 				{:else if displayState === 'empty'}
@@ -153,7 +152,7 @@
 						{viewport}
 						lineWrap={store.lineWrap}
 						displayMode={store.displayMode}
-						ontogglesort={() => store.toggleSort()}
+						onToggleSort={() => store.toggleSort()}
 						onRowClick={openRow}
 					/>
 				{/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Window } from '$lib/api/activity';
+	import type { Window } from '$lib/utils/time-range';
 
 	type Props = {
 		value: Window;

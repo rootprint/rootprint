@@ -32,13 +32,17 @@
 			/>
 		</div>
 
-		{#if data.hasPassword}
+		{#if data.hasPassword === true}
 			<div class="border-line rounded-box flex items-center justify-between border p-6">
 				<div>
 					<p class="text-sm">Password</p>
 					<p class="text-base-content/60 text-xs">Change the password you use to sign in.</p>
 				</div>
 				<button class="btn btn-sm" onclick={() => (passwordOpen = true)}>Change password</button>
+			</div>
+		{:else if data.hasPassword === 'unknown'}
+			<div class="border-line text-base-content/60 rounded-box border px-6 py-4 text-sm">
+				Couldn't determine how you sign in. Reload the page to try again.
 			</div>
 		{:else}
 			<div class="border-line text-base-content/60 rounded-box border px-6 py-4 text-sm">

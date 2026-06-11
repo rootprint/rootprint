@@ -1,66 +1,29 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
-	import { X } from 'lucide-svelte';
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
-	import { saveIndexConfig, IndexApiError } from '$lib/api/indexes';
+	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { saveIndexConfig } from '$lib/api/indexes';
+	import TagInput from '$lib/components/ui/TagInput.svelte';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
 	import type { IndexDetail, IndexVisibility } from 'api/types';
 
 	let { detail }: { detail: IndexDetail } = $props();
 
-	let displayName = $state('');
-	let visibility = $state<IndexVisibility>('all');
-	let levelField = $state('');
-	let messageField = $state('');
-	let tracebackField = $state('');
-	let contextFieldTags = $state<string[]>([]);
-	let contextFieldInput = $state('');
+	const initial = detail;
+	let displayName = $state(initial.displayName ?? '');
+	let visibility = $state<IndexVisibility>(initial.visibility);
+	let levelField = $state(initial.levelField);
+	let messageField = $state(initial.messageField);
+	let tracebackField = $state(initial.tracebackField ?? '');
+	let contextFieldTags = $state<string[]>([...(initial.contextFields ?? [])]);
 
-	let saving = $state(false);
+	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
 
-	$effect(() => {
-		// reset only on index change — tracking the primitive id alone keeps saves/invalidations from wiping the form
-		void detail.indexId;
-		untrack(() => {
-			displayName = detail.displayName ?? '';
-			visibility = detail.visibility;
-			levelField = detail.levelField;
-			messageField = detail.messageField;
-			tracebackField = detail.tracebackField ?? '';
-			contextFieldTags = detail.contextFields ?? [];
-			contextFieldInput = '';
-			fieldErrors = {};
-		});
-	});
-
-	function addContextField() {
-		const value = contextFieldInput.trim();
-		if (value && !contextFieldTags.includes(value)) {
-			contextFieldTags = [...contextFieldTags, value];
-		}
-		contextFieldInput = '';
-	}
-
-	function removeContextField(field: string) {
-		contextFieldTags = contextFieldTags.filter((f) => f !== field);
-	}
-
-	function handleContextFieldKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter') {
-			e.preventDefault();
-			addContextField();
-		} else if (e.key === 'Backspace' && contextFieldInput === '' && contextFieldTags.length > 0) {
-			contextFieldTags = contextFieldTags.slice(0, -1);
-		}
-	}
-
-	async function submit(e: SubmitEvent) {
+	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
 
@@ -79,26 +42,26 @@
 			return;
 		}
 
-		saving = true;
+		submitting = true;
 		try {
 			await saveIndexConfig(detail.indexId, parsed.output);
 			toast.success('Index configuration saved');
 			await invalidate(DEP.index(detail.indexId));
 		} catch (err) {
-			if (err instanceof IndexApiError && err.body) {
+			if (err instanceof ApiError && err.body) {
 				fieldErrors = toFieldErrors(err.body);
 				toast.error(err.message);
 			} else {
 				toast.error(err instanceof Error ? err.message : 'Failed to save config');
 			}
 		} finally {
-			saving = false;
+			submitting = false;
 		}
 	}
 </script>
 
 <form
-	onsubmit={submit}
+	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
 	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
@@ -115,9 +78,11 @@
 				class:input-error={fieldErrors.displayName}
 				placeholder="e.g. Production Traces"
 				autocomplete="off"
+				aria-invalid={fieldErrors.displayName ? 'true' : undefined}
+				aria-describedby={fieldErrors.displayName ? 'cfg-display-name-msg' : undefined}
 			/>
 			{#if fieldErrors.displayName}
-				<p class="text-error text-xs">{fieldErrors.displayName}</p>
+				<p id="cfg-display-name-msg" class="text-error text-xs">{fieldErrors.displayName}</p>
 			{/if}
 		</div>
 	</div>
@@ -135,13 +100,15 @@
 				bind:value={visibility}
 				class="select select-sm w-full"
 				class:select-error={fieldErrors.visibility}
+				aria-invalid={fieldErrors.visibility ? 'true' : undefined}
+				aria-describedby={fieldErrors.visibility ? 'cfg-visibility-msg' : undefined}
 			>
 				<option value="all">Public — everyone</option>
 				<option value="admin">Admins only</option>
 				<option value="hidden">Hidden</option>
 			</select>
 			{#if fieldErrors.visibility}
-				<p class="text-error text-xs">{fieldErrors.visibility}</p>
+				<p id="cfg-visibility-msg" class="text-error text-xs">{fieldErrors.visibility}</p>
 			{/if}
 		</div>
 	</div>
@@ -160,9 +127,11 @@
 				class:input-error={fieldErrors.levelField}
 				placeholder="level"
 				autocomplete="off"
+				aria-invalid={fieldErrors.levelField ? 'true' : undefined}
+				aria-describedby={fieldErrors.levelField ? 'cfg-level-field-msg' : undefined}
 			/>
 			{#if fieldErrors.levelField}
-				<p class="text-error text-xs">{fieldErrors.levelField}</p>
+				<p id="cfg-level-field-msg" class="text-error text-xs">{fieldErrors.levelField}</p>
 			{/if}
 		</div>
 	</div>
@@ -183,9 +152,11 @@
 				class:input-error={fieldErrors.messageField}
 				placeholder="message"
 				autocomplete="off"
+				aria-invalid={fieldErrors.messageField ? 'true' : undefined}
+				aria-describedby={fieldErrors.messageField ? 'cfg-message-field-msg' : undefined}
 			/>
 			{#if fieldErrors.messageField}
-				<p class="text-error text-xs">{fieldErrors.messageField}</p>
+				<p id="cfg-message-field-msg" class="text-error text-xs">{fieldErrors.messageField}</p>
 			{/if}
 		</div>
 	</div>
@@ -206,9 +177,11 @@
 				class:input-error={fieldErrors.tracebackField}
 				placeholder="e.g. message.traceback"
 				autocomplete="off"
+				aria-invalid={fieldErrors.tracebackField ? 'true' : undefined}
+				aria-describedby={fieldErrors.tracebackField ? 'cfg-traceback-field-msg' : undefined}
 			/>
 			{#if fieldErrors.tracebackField}
-				<p class="text-error text-xs">{fieldErrors.tracebackField}</p>
+				<p id="cfg-traceback-field-msg" class="text-error text-xs">{fieldErrors.tracebackField}</p>
 			{/if}
 		</div>
 	</div>
@@ -221,35 +194,12 @@
 			</div>
 		</div>
 		<div class="flex flex-col gap-1">
-			<div
-				class="border-line focus-within:border-base-content bg-base-100 rounded-box flex flex-wrap items-center gap-1.5 border px-2 py-1.5 transition-colors"
-				class:!border-error={fieldErrors.contextFields}
-			>
-				{#each contextFieldTags as field (field)}
-					<span class="bg-base-200 flex items-center gap-1 rounded px-2 py-0.5 font-mono text-xs">
-						{field}
-						<button
-							type="button"
-							class="cursor-pointer opacity-50 hover:opacity-100"
-							aria-label="Remove {field}"
-							onclick={() => removeContextField(field)}
-						>
-							<X size={12} />
-						</button>
-					</span>
-				{/each}
-				<input
-					type="text"
-					bind:value={contextFieldInput}
-					onkeydown={handleContextFieldKeydown}
-					placeholder={contextFieldTags.length === 0
-						? 'service.name  (press Enter to add)'
-						: 'Add another…'}
-					autocomplete="off"
-					aria-label="Add context field"
-					class="placeholder:text-base-content/40 min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
-				/>
-			</div>
+			<TagInput
+				bind:tags={contextFieldTags}
+				placeholderEmpty="service.name  (press Enter to add)"
+				addLabel="Add context field"
+				error={Boolean(fieldErrors.contextFields)}
+			/>
 			{#if fieldErrors.contextFields}
 				<p class="text-error text-xs">{fieldErrors.contextFields}</p>
 			{/if}
@@ -257,8 +207,8 @@
 	</div>
 
 	<div class="flex justify-end px-4 py-3">
-		<button type="submit" class="btn btn-primary btn-sm" disabled={saving}>
-			{#if saving}
+		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>
+			{#if submitting}
 				<span class="loading loading-spinner loading-xs"></span>
 				Saving…
 			{:else}

@@ -5,11 +5,14 @@
 	import { browser } from '$app/environment';
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import { slide } from 'svelte/transition';
+	import { untrack } from 'svelte';
 
 	import type { HistogramBucket, TimezoneMode } from '$lib/types';
-	import { baseContentAt, sortBySeverity } from '$lib/utils/log-helpers';
+	import { baseContentAt } from '$lib/utils/chart-colors';
+	import { sortBySeverity } from '$lib/utils/severity';
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
+	import { formatInterval } from '$lib/utils/histogram';
 
 	type Props = {
 		buckets: HistogramBucket[];
@@ -17,7 +20,7 @@
 		error: string | null;
 		timezoneMode: TimezoneMode;
 		collapsed: boolean;
-		onbrush: (startTs: number, endTs: number) => void;
+		onBrush: (startTs: number, endTs: number) => void;
 	};
 
 	let {
@@ -26,7 +29,7 @@
 		error,
 		timezoneMode,
 		collapsed = $bindable(false),
-		onbrush
+		onBrush
 	}: Props = $props();
 
 	const SECONDS_PER_DAY = 86400;
@@ -48,16 +51,12 @@
 	const TOOLTIP_GAP_LEFT = 8;
 	const TOOLTIP_VERTICAL_NUDGE = 10;
 
-	let bucketWidthLabel = $derived.by<string | null>(() => {
+	const bucketWidthLabel = $derived.by<string | null>(() => {
 		if (buckets.length < 2) return null;
-		const secs = buckets[1].timestamp - buckets[0].timestamp;
-		if (secs < 60) return `${secs}s`;
-		if (secs < 3600) return `${Math.round(secs / 60)}m`;
-		if (secs < SECONDS_PER_DAY) return `${Math.round(secs / 3600)}h`;
-		return `${Math.round(secs / SECONDS_PER_DAY)}d`;
+		return formatInterval(buckets[1].timestamp - buckets[0].timestamp);
 	});
 
-	let levels = $derived.by<string[]>(() => {
+	const levels = $derived.by<string[]>(() => {
 		const seen = new Set<string>();
 		for (const b of buckets) {
 			for (const k of Object.keys(b.levels)) {
@@ -68,13 +67,13 @@
 		return sortBySeverity([...seen]);
 	});
 
-	let levelColors = $derived.by<Record<string, string>>(() => {
+	const levelColors = $derived.by<Record<string, string>>(() => {
 		const map: Record<string, string> = {};
 		for (const level of levels) map[level] = levelColor(level);
 		return map;
 	});
 
-	let columnarData = $derived.by(() => {
+	const columnarData = $derived.by(() => {
 		if (buckets.length === 0) return null;
 
 		const timestamps: number[] = buckets.map((b) => b.timestamp);
@@ -117,11 +116,6 @@
 		if (!browser || !chartEl || collapsed || !columnarData) return;
 		const buildId = ++chartBuildId;
 
-		if (containerEl) {
-			const actualWidth = containerEl.clientWidth;
-			if (actualWidth > 0) chartWidth = actualWidth;
-		}
-
 		destroyChart();
 
 		if (!uPlotCtor) {
@@ -129,6 +123,14 @@
 			uPlotCtor = mod.default;
 		}
 		if (!chartEl || collapsed || !columnarData || buildId !== chartBuildId) return;
+
+		const width = untrack(() => {
+			if (containerEl) {
+				const actualWidth = containerEl.clientWidth;
+				if (actualWidth > 0) chartWidth = actualWidth;
+			}
+			return chartWidth;
+		});
 
 		const UPlot = uPlotCtor;
 		const barPaths = UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? undefined;
@@ -164,7 +166,7 @@
 		const gridStroke = baseContentAt(0.1);
 
 		const opts: uPlotLib.Options = {
-			width: chartWidth,
+			width,
 			height: 150,
 			series,
 			bands,
@@ -176,11 +178,11 @@
 				setSelect: [
 					(u: uPlotLib) => {
 						const left = u.select.left;
-						const width = u.select.width;
-						if (width > 2) {
+						const selWidth = u.select.width;
+						if (selWidth > 2) {
 							const startTs = Math.floor(u.posToVal(left, 'x'));
-							const endTs = Math.ceil(u.posToVal(left + width, 'x'));
-							onbrush(startTs, endTs);
+							const endTs = Math.ceil(u.posToVal(left + selWidth, 'x'));
+							onBrush(startTs, endTs);
 						}
 						u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
 					}

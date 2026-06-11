@@ -1,6 +1,6 @@
 <script lang="ts">
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
-	import { formatRelativeTime } from '$lib/utils/time';
+	import { formatDate, formatDateTime, formatRelativeTime } from '$lib/utils/time';
 	import type { UserStatus } from 'api/types';
 
 	type Props = {
@@ -21,25 +21,10 @@
 		inviteExpiresAt = null
 	}: Props = $props();
 
-	const joined = $derived(
-		createdAt
-			? new Date(createdAt).toLocaleDateString(undefined, {
-					year: 'numeric',
-					month: 'long',
-					day: 'numeric'
-				})
-			: 'Unknown'
-	);
+	const joined = $derived(createdAt ? formatDate(createdAt) : 'Unknown');
 	const lastActiveLabel = $derived(lastActive ? formatRelativeTime(lastActive) : 'Never');
 	const authMethod = $derived(hasCredentialAccount ? 'Password' : 'Google');
-	const expiresLabel = $derived(
-		inviteExpiresAt
-			? new Date(inviteExpiresAt).toLocaleString(undefined, {
-					dateStyle: 'medium',
-					timeStyle: 'short'
-				})
-			: null
-	);
+	const expiresLabel = $derived(inviteExpiresAt ? formatDateTime(inviteExpiresAt) : null);
 	const showInvite = $derived(!!inviteUrl && (status === 'pending' || status === 'expired'));
 
 	const statusUi = $derived(

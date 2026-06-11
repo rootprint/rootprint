@@ -1,6 +1,7 @@
 import OtelCollectorIcon from '@iconify-svelte/logos/opentelemetry-icon';
 import { OTLP_LOGS_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
+import { searchVerifyLink } from './_shared';
 import type { Integration } from '../types';
 
 const RESTART_COMMAND = `sudo systemctl restart otelcol-contrib
@@ -71,10 +72,7 @@ service:
 				title: 'Append a test line',
 				body: 'Append a line to the watched log path and wait a second.',
 				snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-				verify: {
-					label: 'Open Search',
-					href: `/?index=${encodeURIComponent(ctx.indexId)}`
-				}
+				verify: searchVerifyLink(ctx.indexId)
 			}
 		];
 	}

@@ -1,22 +1,13 @@
 import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
-import { presetDurationSec } from '$lib/utils/time-range';
+import type { Window } from '$lib/utils/time-range';
 
 const activity = client.api.admin.activity;
 const users = activity.users;
 const apiKeys = activity['api-keys'];
 
-export type Window = '24h' | '7d' | '30d';
-
-export function parseWindow(raw: string | null): Window {
-	return raw === '24h' || raw === '7d' || raw === '30d' ? raw : '7d';
-}
-
-/** Span of a window in milliseconds (each window value is also a time-range preset). */
-export function windowToSpanMs(window: Window): number {
-	return presetDurationSec(window) * 1000;
-}
+export const ACTIVITY_PAGE_SIZE = 50;
 
 export type Summary = InferResponseType<typeof activity.summary.$get, 200>;
 export type LatencyBuckets = InferResponseType<typeof activity.latency.$get, 200>;

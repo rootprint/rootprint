@@ -1,6 +1,11 @@
 import { OTLP_LOGS_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
-import type { IntegrationContext, Snippet } from '../types';
+import type { IntegrationContext, Snippet, Verify } from '../types';
+
+/** The standard "did my logs arrive?" verify step: a link into Search scoped to the index. */
+export function searchVerifyLink(indexId: string): Verify {
+	return { label: 'Open Search', href: `/?index=${encodeURIComponent(indexId)}` };
+}
 
 export function otelEnvVarsSnippet({
 	ctx,

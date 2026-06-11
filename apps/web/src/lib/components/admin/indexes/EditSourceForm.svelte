@@ -5,8 +5,8 @@
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
-	import { updateSource, IndexApiError } from '$lib/api/indexes';
+	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { updateSource } from '$lib/api/indexes';
 	import { updateSourceSchema } from 'api/schemas';
 	import type { SourceDetail } from 'api/types';
 	import SourceFields from './SourceFields.svelte';
@@ -19,10 +19,10 @@
 	// intentionally only seed from the initial prop value here.
 	// svelte-ignore state_referenced_locally
 	let form = $state(sourceDetailToForm(source));
-	let saving = $state(false);
+	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
 
-	async function submit(e: SubmitEvent) {
+	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
 
@@ -32,26 +32,26 @@
 			return;
 		}
 
-		saving = true;
+		submitting = true;
 		try {
 			await updateSource(indexId, source.sourceId, parsed.output);
 			toast.success('Source updated');
 			await invalidate(DEP.index(indexId));
 		} catch (err) {
-			if (err instanceof IndexApiError && err.body) {
+			if (err instanceof ApiError && err.body) {
 				fieldErrors = toFieldErrors(err.body);
 				toast.error(err.message);
 			} else {
 				toast.error(err instanceof Error ? err.message : 'Failed to update source');
 			}
 		} finally {
-			saving = false;
+			submitting = false;
 		}
 	}
 </script>
 
 <form
-	onsubmit={submit}
+	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
 	{#if source.hasUnsupportedConfig}
@@ -70,8 +70,8 @@
 			<Info class="h-3.5 w-3.5 shrink-0" />
 			Changing connection settings may reset this source's ingestion checkpoint.
 		</p>
-		<button type="submit" class="btn btn-primary btn-sm" disabled={saving}>
-			{#if saving}
+		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>
+			{#if submitting}
 				<span class="loading loading-spinner loading-xs"></span>
 				Saving…
 			{:else}

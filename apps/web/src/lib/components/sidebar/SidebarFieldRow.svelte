@@ -2,7 +2,11 @@
 	import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-svelte';
 	import type { LogField, LogFieldValueBucket } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
-	import { FIELD_VALUES_INITIAL_SHOW, FIELD_VALUES_SHOW_MORE_STEP } from '$lib/api/field-values';
+	/** Initial count of values shown collapsed before the user expands the row. */
+	const FIELD_VALUES_INITIAL_SHOW = 10;
+
+	/** Rows revealed per "Show more" click after the initial collapsed view. */
+	const FIELD_VALUES_SHOW_MORE_STEP = 50;
 
 	let {
 		field,
@@ -27,22 +31,22 @@
 	let valueSearch = $state('');
 	let showCount = $state(FIELD_VALUES_INITIAL_SHOW);
 
-	let resolvedValues = $derived(values ?? []);
+	const resolvedValues = $derived(values ?? []);
 
-	let normalizedValueSearch = $derived(valueSearch.trim().toLowerCase());
+	const normalizedValueSearch = $derived(valueSearch.trim().toLowerCase());
 
-	let filteredValues = $derived(
+	const filteredValues = $derived(
 		normalizedValueSearch
 			? resolvedValues.filter((b) => b.value.toLowerCase().includes(normalizedValueSearch))
 			: resolvedValues
 	);
 
-	let fieldFilters = $derived(store.filters.filter((f) => f.field === field.name));
+	const fieldFilters = $derived(store.filters.filter((f) => f.field === field.name));
 
-	let includedSet = $derived(new Set(fieldFilters.filter((f) => !f.exclude).map((f) => f.value)));
-	let excludedSet = $derived(new Set(fieldFilters.filter((f) => f.exclude).map((f) => f.value)));
+	const includedSet = $derived(new Set(fieldFilters.filter((f) => !f.exclude).map((f) => f.value)));
+	const excludedSet = $derived(new Set(fieldFilters.filter((f) => f.exclude).map((f) => f.value)));
 
-	let ghostValues = $derived.by<LogFieldValueBucket[]>(() => {
+	const ghostValues = $derived.by<LogFieldValueBucket[]>(() => {
 		if (fieldFilters.length === 0) return [];
 		const seen = new Set(resolvedValues.map((b) => b.value));
 		const ghosts: LogFieldValueBucket[] = [];
@@ -55,10 +59,10 @@
 		return ghosts;
 	});
 
-	let ghostSet = $derived(new Set(ghostValues.map((g) => g.value)));
+	const ghostSet = $derived(new Set(ghostValues.map((g) => g.value)));
 
 	// Pinned = ghosts plus user-filtered in-result values; always fully shown (only the unpinned list truncates).
-	let pinnedVisible = $derived.by<LogFieldValueBucket[]>(() => {
+	const pinnedVisible = $derived.by<LogFieldValueBucket[]>(() => {
 		const ghosts = normalizedValueSearch
 			? ghostValues.filter((g) => g.value.toLowerCase().includes(normalizedValueSearch))
 			: ghostValues;
@@ -68,19 +72,19 @@
 		return [...ghosts, ...fromResult];
 	});
 
-	let unpinnedFiltered = $derived(
+	const unpinnedFiltered = $derived(
 		filteredValues.filter((b) => !includedSet.has(b.value) && !excludedSet.has(b.value))
 	);
 
-	let unpinnedVisible = $derived(
+	const unpinnedVisible = $derived(
 		normalizedValueSearch ? unpinnedFiltered : unpinnedFiltered.slice(0, showCount)
 	);
 
-	let remaining = $derived(
+	const remaining = $derived(
 		normalizedValueSearch ? 0 : Math.max(0, unpinnedFiltered.length - showCount)
 	);
 
-	let countLabel = $derived(resolvedValues.length > 0 ? `(${resolvedValues.length})` : '');
+	const countLabel = $derived(resolvedValues.length > 0 ? `(${resolvedValues.length})` : '');
 
 	function showMore() {
 		showCount = Math.min(showCount + FIELD_VALUES_SHOW_MORE_STEP, filteredValues.length);

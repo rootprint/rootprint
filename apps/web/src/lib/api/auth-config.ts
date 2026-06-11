@@ -1,6 +1,6 @@
 import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
-import { ApiError, readApiError } from '$lib/api/errors';
+import { readApiError } from '$lib/api/errors';
 import type {
 	GoogleAllowedDomainsInput,
 	GoogleCredentialsInput,
@@ -12,8 +12,6 @@ export type GoogleAuthSettingsView = InferResponseType<
 	typeof client.api.settings.auth.google.$get,
 	200
 >;
-
-export { ApiError as AuthConfigApiError };
 
 export async function getGoogleAuth(): Promise<GoogleAuthSettingsView> {
 	const res = await client.api.settings.auth.google.$get();

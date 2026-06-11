@@ -107,9 +107,11 @@
 					class:input-error={fieldErrors.sourceId}
 					placeholder="e.g. my-kinesis-source"
 					autocomplete="off"
+					aria-invalid={fieldErrors.sourceId ? 'true' : undefined}
+					aria-describedby={fieldErrors.sourceId ? 'src-id-msg' : undefined}
 				/>
 				{#if fieldErrors.sourceId}
-					<p class="text-error text-xs">{fieldErrors.sourceId}</p>
+					<p id="src-id-msg" class="text-error text-xs">{fieldErrors.sourceId}</p>
 				{/if}
 			{/if}
 		</div>
@@ -154,9 +156,11 @@
 					class:input-error={fieldErrors.streamName}
 					placeholder="my-stream"
 					autocomplete="off"
+					aria-invalid={fieldErrors.streamName ? 'true' : undefined}
+					aria-describedby={fieldErrors.streamName ? 'src-stream-msg' : undefined}
 				/>
 				{#if fieldErrors.streamName}
-					<p class="text-error text-xs">{fieldErrors.streamName}</p>
+					<p id="src-stream-msg" class="text-error text-xs">{fieldErrors.streamName}</p>
 				{/if}
 			</div>
 		</div>
@@ -186,6 +190,7 @@
 				</div>
 				{#if form.awsTarget === 'region'}
 					<input
+						id="src-region"
 						type="text"
 						bind:value={form.region}
 						class="input input-sm w-full"
@@ -193,12 +198,15 @@
 						placeholder="us-east-1"
 						autocomplete="off"
 						aria-label="AWS region"
+						aria-invalid={fieldErrors.region ? 'true' : undefined}
+						aria-describedby={fieldErrors.region ? 'src-region-msg' : undefined}
 					/>
 					{#if fieldErrors.region}
-						<p class="text-error text-xs">{fieldErrors.region}</p>
+						<p id="src-region-msg" class="text-error text-xs">{fieldErrors.region}</p>
 					{/if}
 				{:else}
 					<input
+						id="src-endpoint"
 						type="text"
 						bind:value={form.endpoint}
 						class="input input-sm w-full"
@@ -206,9 +214,11 @@
 						placeholder="http://localhost:4566"
 						autocomplete="off"
 						aria-label="Custom endpoint"
+						aria-invalid={fieldErrors.endpoint ? 'true' : undefined}
+						aria-describedby={fieldErrors.endpoint ? 'src-endpoint-msg' : undefined}
 					/>
 					{#if fieldErrors.endpoint}
-						<p class="text-error text-xs">{fieldErrors.endpoint}</p>
+						<p id="src-endpoint-msg" class="text-error text-xs">{fieldErrors.endpoint}</p>
 					{/if}
 				{/if}
 			</div>
@@ -230,9 +240,11 @@
 					class:input-error={fieldErrors.queueUrl}
 					placeholder="https://sqs.us-east-1.amazonaws.com/123456789/my-queue"
 					autocomplete="off"
+					aria-invalid={fieldErrors.queueUrl ? 'true' : undefined}
+					aria-describedby={fieldErrors.queueUrl ? 'src-queue-msg' : undefined}
 				/>
 				{#if fieldErrors.queueUrl}
-					<p class="text-error text-xs">{fieldErrors.queueUrl}</p>
+					<p id="src-queue-msg" class="text-error text-xs">{fieldErrors.queueUrl}</p>
 				{/if}
 			</div>
 		</div>
@@ -288,9 +300,11 @@
 				class:input-error={fieldErrors.numPipelines}
 				placeholder="1"
 				autocomplete="off"
+				aria-invalid={fieldErrors.numPipelines ? 'true' : undefined}
+				aria-describedby={fieldErrors.numPipelines ? 'src-pipelines-msg' : undefined}
 			/>
 			{#if fieldErrors.numPipelines}
-				<p class="text-error text-xs">{fieldErrors.numPipelines}</p>
+				<p id="src-pipelines-msg" class="text-error text-xs">{fieldErrors.numPipelines}</p>
 			{/if}
 		</div>
 	</div>
@@ -320,9 +334,11 @@
 			placeholder={'.message = downcase(string!(.message))\ndel(.username)'}
 			autocomplete="off"
 			spellcheck="false"
+			aria-invalid={fieldErrors.vrlScript ? 'true' : undefined}
+			aria-describedby={fieldErrors.vrlScript ? 'src-vrl-msg' : undefined}
 		></textarea>
 		{#if fieldErrors.vrlScript}
-			<p class="text-error text-xs">{fieldErrors.vrlScript}</p>
+			<p id="src-vrl-msg" class="text-error text-xs">{fieldErrors.vrlScript}</p>
 		{/if}
 	</div>
 </div>

@@ -3,8 +3,8 @@
 	import { setupPasswordSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
-	import { setupPassword, AuthApiError } from '$lib/api/auth';
-	import { issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { setupPassword } from '$lib/api/auth';
+	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 
@@ -31,7 +31,7 @@
 			await setupPassword(parsed.output);
 			await goto('/auth/sign-in');
 		} catch (err) {
-			if (err instanceof AuthApiError && err.body) {
+			if (err instanceof ApiError && err.body) {
 				fieldErrors = toFieldErrors(err.body);
 				formError = err.message;
 			} else {

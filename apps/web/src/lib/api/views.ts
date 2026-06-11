@@ -1,5 +1,5 @@
 import { client } from '$lib/api/client';
-import { ApiError, readApiError } from '$lib/api/errors';
+import { readApiError } from '$lib/api/errors';
 import type { SavedView } from 'api/types';
 import type { Filter, SortDirection } from '$lib/types';
 
@@ -20,8 +20,6 @@ export type ViewPatch = {
 	sortDirection?: SortDirection;
 	columns?: string[] | null;
 };
-
-export { ApiError as ViewError };
 
 export async function listViews(indexId: string): Promise<SavedView[]> {
 	const res = await client.api.indexes[':indexId'].views.$get({

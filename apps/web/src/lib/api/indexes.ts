@@ -1,7 +1,7 @@
 import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
-import { ApiError, readApiError } from '$lib/api/errors';
+import { readApiError } from '$lib/api/errors';
 import type { FieldConfig } from '$lib/types';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
 import type { CreateSourceInput, SaveIndexConfigInput, UpdateSourceInput } from 'api/schemas';
@@ -10,8 +10,6 @@ export type IndexStatsResponse = InferResponseType<
 	(typeof client.api.indexes)[':indexId']['stats']['$get'],
 	200
 >;
-
-export { ApiError as IndexApiError };
 
 export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 	const res = await client.api.indexes[':indexId'].config.$get({

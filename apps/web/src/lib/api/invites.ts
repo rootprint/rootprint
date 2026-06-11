@@ -1,8 +1,6 @@
 import { client } from '$lib/api/client';
-import { ApiError, readApiError } from '$lib/api/errors';
+import { readApiError } from '$lib/api/errors';
 import type { CreateInviteInput } from 'api/schemas';
-
-export { ApiError as InviteApiError };
 
 export async function createInvite(input: CreateInviteInput): Promise<{ inviteUrl: string }> {
 	const res = await client.api.users.$post({ json: input });

@@ -82,27 +82,9 @@ function commonFields(form: SourceFormState) {
 	};
 }
 
+// A create input is an update input plus the (immutable) sourceId.
 export function formToCreateInput(form: SourceFormState): CreateSourceInput {
-	const common = { sourceId: form.sourceId.trim(), ...commonFields(form) };
-	if (form.sourceType === 'kinesis') {
-		return {
-			...common,
-			sourceType: 'kinesis',
-			streamName: form.streamName.trim(),
-			region:
-				form.awsTarget === 'region' && form.region.trim() !== '' ? form.region.trim() : undefined,
-			endpoint:
-				form.awsTarget === 'endpoint' && form.endpoint.trim() !== ''
-					? form.endpoint.trim()
-					: undefined
-		};
-	}
-	return {
-		...common,
-		sourceType: 'file',
-		queueUrl: form.queueUrl.trim(),
-		messageType: form.messageType
-	};
+	return { sourceId: form.sourceId.trim(), ...formToUpdateInput(form) };
 }
 
 export function formToUpdateInput(form: SourceFormState): UpdateSourceInput {

@@ -1,5 +1,5 @@
 import VectorIcon from '@iconify-svelte/logos/vector-timber';
-import { vectorOtlpSinkSnippet } from './_shared';
+import { searchVerifyLink, vectorOtlpSinkSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -57,10 +57,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'app_logs' })}`;
 				title: 'Append a test line',
 				body: 'Append a line to the watched log path and wait a second.',
 				snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-				verify: {
-					label: 'Open Search',
-					href: `/?index=${encodeURIComponent(ctx.indexId)}`
-				}
+				verify: searchVerifyLink(ctx.indexId)
 			}
 		];
 	}

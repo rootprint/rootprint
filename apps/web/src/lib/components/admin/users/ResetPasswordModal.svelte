@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { resetUserPassword, UserApiError } from '$lib/api/users';
+	import { ApiError } from '$lib/api/errors';
+	import { resetUserPassword } from '$lib/api/users';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
@@ -9,12 +10,12 @@
 		open = $bindable(false),
 		userId,
 		userName,
-		onreset
+		onReset
 	}: {
 		open: boolean;
 		userId: string;
 		userName: string;
-		onreset?: () => void | Promise<void>;
+		onReset?: () => void | Promise<void>;
 	} = $props();
 
 	let loading = $state(false);
@@ -31,9 +32,9 @@
 			const result = await resetUserPassword(userId);
 			inviteUrl = result.inviteUrl;
 			toast.success(`Password reset for ${userName}`);
-			await onreset?.();
+			await onReset?.();
 		} catch (e) {
-			toast.error(e instanceof UserApiError ? e.message : 'Failed to reset password');
+			toast.error(e instanceof ApiError ? e.message : 'Failed to reset password');
 		} finally {
 			loading = false;
 		}

@@ -5,7 +5,7 @@
 
 	let { store }: { store: SearchStore } = $props();
 
-	let filters = $derived(store.filters);
+	const filters = $derived(store.filters);
 </script>
 
 {#if filters.length > 0}

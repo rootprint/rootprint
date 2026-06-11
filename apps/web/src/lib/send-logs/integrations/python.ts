@@ -1,5 +1,5 @@
 import PythonIcon from '@iconify-svelte/logos/python';
-import { otelEnvVarsSnippet } from './_shared';
+import { otelEnvVarsSnippet, searchVerifyLink } from './_shared';
 import type { Integration } from '../types';
 
 const INSTALL_COMMAND = 'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http';
@@ -45,10 +45,7 @@ export const python: Integration = {
 			title: 'Send your first log',
 			body: 'Paste this into a fresh file to verify end-to-end delivery.',
 			snippets: [{ code: EXAMPLE_CODE, lang: 'python', copyTitle: 'Copy example' }],
-			verify: {
-				label: 'Open Search',
-				href: `/?index=${encodeURIComponent(ctx.indexId)}`
-			}
+			verify: searchVerifyLink(ctx.indexId)
 		}
 	]
 };

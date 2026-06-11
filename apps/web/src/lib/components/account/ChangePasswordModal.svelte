@@ -1,10 +1,30 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
+	import * as v from 'valibot';
+	import { issuesToFieldErrors } from '$lib/api/errors';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { authClient } from '$lib/auth-client';
 
-	const MIN_PASSWORD_LENGTH = 8;
+	const changePasswordSchema = v.pipe(
+		v.object({
+			currentPassword: v.pipe(v.string(), v.minLength(1, 'Current password is required.')),
+			newPassword: v.pipe(
+				v.string(),
+				v.minLength(8, 'New password must be at least 8 characters.'),
+				v.maxLength(128, 'New password must be at most 128 characters.')
+			),
+			confirmPassword: v.string()
+		}),
+		v.forward(
+			v.partialCheck(
+				[['newPassword'], ['confirmPassword']],
+				(input) => input.newPassword === input.confirmPassword,
+				'New passwords do not match.'
+			),
+			['confirmPassword']
+		)
+	);
 
 	let { open = $bindable(false) }: { open: boolean } = $props();
 
@@ -13,6 +33,7 @@
 	let confirmPassword = $state('');
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
+	let fieldErrors = $state<Record<string, string>>({});
 
 	function reset() {
 		currentPassword = '';
@@ -20,23 +41,29 @@
 		confirmPassword = '';
 		submitting = false;
 		formError = null;
+		fieldErrors = {};
 	}
 
-	async function handleSubmit() {
+	async function onsubmit(e: SubmitEvent) {
+		e.preventDefault();
 		formError = null;
-		if (newPassword !== confirmPassword) {
-			formError = 'New passwords do not match.';
+		fieldErrors = {};
+
+		const parsed = v.safeParse(changePasswordSchema, {
+			currentPassword,
+			newPassword,
+			confirmPassword
+		});
+		if (!parsed.success) {
+			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
-		if (newPassword.length < MIN_PASSWORD_LENGTH) {
-			formError = `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-			return;
-		}
+
 		submitting = true;
 		try {
 			const result = await authClient.changePassword({
-				currentPassword,
-				newPassword,
+				currentPassword: parsed.output.currentPassword,
+				newPassword: parsed.output.newPassword,
 				revokeOtherSessions: true
 			});
 			if (result?.error) {
@@ -45,6 +72,8 @@
 			}
 			toast.success('Password changed');
 			open = false;
+		} catch (err) {
+			formError = err instanceof Error ? err.message : 'Failed to change password.';
 		} finally {
 			submitting = false;
 		}
@@ -52,13 +81,7 @@
 </script>
 
 <Modal bind:open title="Change password" onclose={reset}>
-	<form
-		class="flex flex-col gap-3"
-		onsubmit={(e) => {
-			e.preventDefault();
-			handleSubmit();
-		}}
-	>
+	<form id="change-password-form" class="flex flex-col gap-3" {onsubmit}>
 		{#if formError}
 			<div role="alert" class="alert alert-error text-sm">{formError}</div>
 		{/if}
@@ -67,6 +90,7 @@
 			type="password"
 			autocomplete="current-password"
 			bind:value={currentPassword}
+			error={fieldErrors.currentPassword}
 			required
 		/>
 		<Field
@@ -74,6 +98,7 @@
 			type="password"
 			autocomplete="new-password"
 			bind:value={newPassword}
+			error={fieldErrors.newPassword}
 			required
 		/>
 		<Field
@@ -81,10 +106,9 @@
 			type="password"
 			autocomplete="new-password"
 			bind:value={confirmPassword}
+			error={fieldErrors.confirmPassword}
 			required
 		/>
-		<!-- Hidden submit so Enter in any field submits (the visible button lives in the modal actions slot, outside this form). -->
-		<button type="submit" class="hidden" aria-hidden="true" tabindex="-1">Change password</button>
 	</form>
 
 	{#snippet actions()}
@@ -96,7 +120,7 @@
 		>
 			Cancel
 		</button>
-		<button type="button" class="btn btn-primary" disabled={submitting} onclick={handleSubmit}>
+		<button type="submit" form="change-password-form" class="btn btn-primary" disabled={submitting}>
 			{submitting ? 'Saving…' : 'Change password'}
 		</button>
 	{/snippet}
