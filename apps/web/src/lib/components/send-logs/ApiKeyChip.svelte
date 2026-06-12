@@ -102,30 +102,36 @@
 	</div>
 
 	{#if dropdownOpen}
-		<ul class="dropdown-content menu border-line rounded-box bg-base-100 z-10 mt-2 w-72 border p-2">
-			{#each apiKeys as apiKey (apiKey.id)}
-				<li>
-					<button
-						type="button"
-						class="flex flex-col items-start"
-						onclick={() => selectApiKey(apiKey)}
-					>
-						<span class="text-sm">{apiKey.name}</span>
-						<span class="text-base-content/60 font-mono text-xs">
-							{apiKey.indexId} · {apiKey.tokenPrefix}…
-						</span>
-					</button>
-				</li>
-			{:else}
-				<li class="text-base-content/60 px-2 py-2 text-sm">No API keys yet.</li>
-			{/each}
-			<li class="border-line mt-1 border-t pt-1">
-				<button type="button" class="text-primary gap-2" onclick={handleCreate}>
-					<Plus size={14} />
+		<div class="dropdown-content border-line rounded-box bg-base-100 z-10 mt-2 w-72 border">
+			<ul class="menu w-full p-2">
+				{#each apiKeys as apiKey (apiKey.id)}
+					<li>
+						<button
+							type="button"
+							class="flex flex-col items-start"
+							onclick={() => selectApiKey(apiKey)}
+						>
+							<span class="text-sm">{apiKey.name}</span>
+							<span class="text-base-content/60 font-mono text-xs">
+								{apiKey.indexId} · {apiKey.tokenPrefix}…
+							</span>
+						</button>
+					</li>
+				{:else}
+					<li class="text-base-content/60 px-2 py-2 text-sm">No API keys yet.</li>
+				{/each}
+			</ul>
+			<div class="border-line border-t px-3 py-2">
+				<button
+					type="button"
+					class="btn btn-ghost btn-xs w-full justify-start"
+					onclick={handleCreate}
+				>
+					<Plus class="h-3.5 w-3.5" />
 					Create a new API key
 				</button>
-			</li>
-		</ul>
+			</div>
+		</div>
 	{/if}
 </div>
 
