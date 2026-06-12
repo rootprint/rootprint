@@ -46,7 +46,7 @@
 </script>
 
 <div class="border-line rounded-box bg-base-100 border p-6">
-	<div class="flex items-start justify-between gap-4">
+	<div class="border-line flex items-start justify-between gap-4 border-b pb-4">
 		<div>
 			<p class="text-sm">API keys</p>
 			<p class="text-base-content/60 text-xs">
