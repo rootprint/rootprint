@@ -7,20 +7,16 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
-	import type { ApiKeyRole } from 'api/types';
 
 	let {
 		open = $bindable(false),
 		indexIds,
-		role,
 		defaultIndexId,
 		invalidateKey,
 		onCreated
 	}: {
 		open?: boolean;
 		indexIds: string[];
-		/** Fixed role for the new key; omit to let the user pick one in the form. */
-		role?: ApiKeyRole;
 		/** Preselected index; ignored when not present in `indexIds`. */
 		defaultIndexId?: string;
 		invalidateKey?: string;
@@ -35,7 +31,6 @@
 	let phase = $state<'form' | 'reveal'>('form');
 	let name = $state('');
 	let indexId = $state(initialIndexId());
-	let selectedRole = $state<ApiKeyRole | ''>('');
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -45,7 +40,6 @@
 		phase = 'form';
 		name = '';
 		indexId = initialIndexId();
-		selectedRole = '';
 		submitting = false;
 		formError = null;
 		fieldErrors = {};
@@ -57,11 +51,7 @@
 		formError = null;
 		fieldErrors = {};
 
-		const parsed = v.safeParse(createApiKeySchema, {
-			name,
-			indexId,
-			role: role ?? selectedRole
-		});
+		const parsed = v.safeParse(createApiKeySchema, { name, indexId });
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
@@ -71,10 +61,11 @@
 		submitting = true;
 		try {
 			const result = await createApiKey(input);
-			revealedKey = result.token;
-			phase = 'reveal';
 			if (invalidateKey) await invalidate(invalidateKey);
 			onCreated?.(result.summary, result.token);
+			if (!open) return;
+			revealedKey = result.token;
+			phase = 'reveal';
 		} catch (err) {
 			if (err instanceof ApiError && err.body) {
 				formError = err.body.error.message;
@@ -86,14 +77,16 @@
 			submitting = false;
 		}
 	}
-
-	const title = $derived(role === undefined ? 'Create API key' : `Create ${role} API key`);
-	const tokenLabel = $derived(
-		(role ?? selectedRole) === 'search' ? 'Search token' : 'Ingest token'
-	);
 </script>
 
-<Modal bind:open {title} onclose={reset}>
+<Modal
+	bind:open
+	title="Create ingest key"
+	onclose={reset}
+	oncancel={(e) => {
+		if (submitting) e.preventDefault();
+	}}
+>
 	{#if phase === 'form'}
 		<form id="create-api-key-form" class="space-y-3" {onsubmit}>
 			{#if formError}
@@ -127,42 +120,10 @@
 					</select>
 				{/snippet}
 			</Field>
-
-			{#if role === undefined}
-				<fieldset class="space-y-1.5">
-					<legend class="field-label">Role</legend>
-					<div class="flex gap-4">
-						<label class="label cursor-pointer gap-2">
-							<input
-								type="radio"
-								name="role"
-								class="radio radio-sm"
-								value="ingest"
-								bind:group={selectedRole}
-								required
-							/>
-							<span>Ingest</span>
-						</label>
-						<label class="label cursor-pointer gap-2">
-							<input
-								type="radio"
-								name="role"
-								class="radio radio-sm"
-								value="search"
-								bind:group={selectedRole}
-							/>
-							<span>Search</span>
-						</label>
-					</div>
-					{#if fieldErrors.role}
-						<p class="text-error text-xs">{fieldErrors.role}</p>
-					{/if}
-				</fieldset>
-			{/if}
 		</form>
 	{:else}
 		<div class="flex flex-col gap-3">
-			<CopyableField value={revealedKey} ariaLabel={tokenLabel} />
+			<CopyableField value={revealedKey} ariaLabel="Ingest token" />
 		</div>
 	{/if}
 
@@ -182,7 +143,7 @@
 				class="btn btn-primary"
 				disabled={submitting}
 			>
-				{submitting ? 'Creating…' : 'Create API key'}
+				{submitting ? 'Creating…' : 'Create ingest key'}
 			</button>
 		{:else}
 			<button type="button" class="btn btn-primary" onclick={() => (open = false)}>Done</button>

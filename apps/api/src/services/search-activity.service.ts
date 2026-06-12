@@ -2,7 +2,7 @@ import { eq, inArray, sql } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
 import { user } from '../db/auth.schema.js';
-import { apiKey } from '../db/schema.js';
+import { apikey } from '../db/schema.js';
 import type { ActivityWindow } from '../schemas/admin-activity.js';
 import type {
 	ActorIndexRow,
@@ -117,7 +117,7 @@ export async function getTopActors(
 	}>(sql`
 		SELECT
 			source AS kind,
-			CASE WHEN source = 'ui' THEN user_id ELSE api_key_id::text END AS actor_id,
+			CASE WHEN source = 'ui' THEN user_id ELSE api_key_id END AS actor_id,
 			COUNT(*)::text                                  AS count,
 			AVG(duration_ms)::text                          AS avg_duration,
 			COUNT(*) FILTER (WHERE status = 'error')::text  AS errors,
@@ -140,9 +140,9 @@ export async function getTopActors(
 	}));
 
 	const userIds = rows.filter((r) => r.kind === 'user').map((r) => r.id);
-	const apiKeyIds = rows.filter((r) => r.kind === 'apiKey').map((r) => Number(r.id));
+	const apiKeyIds = rows.filter((r) => r.kind === 'apiKey').map((r) => r.id);
 	const userLabels = new Map<string, string>();
-	const apiKeyLabels = new Map<number, string>();
+	const apiKeyLabels = new Map<string, string>();
 	if (userIds.length > 0) {
 		const rs = await db
 			.select({ id: user.id, email: user.email })
@@ -152,20 +152,19 @@ export async function getTopActors(
 	}
 	if (apiKeyIds.length > 0) {
 		const rs = await db
-			.select({ id: apiKey.id, name: apiKey.name })
-			.from(apiKey)
-			.where(inArray(apiKey.id, apiKeyIds));
-		for (const r of rs) apiKeyLabels.set(r.id, r.name);
+			.select({ id: apikey.id, name: apikey.name })
+			.from(apikey)
+			.where(inArray(apikey.id, apiKeyIds));
+		for (const r of rs) if (r.name) apiKeyLabels.set(r.id, r.name);
 	}
 
 	return rows.map((r) => ({
 		...r,
-		label:
-			r.kind === 'user' ? (userLabels.get(r.id) ?? null) : (apiKeyLabels.get(Number(r.id)) ?? null)
+		label: r.kind === 'user' ? (userLabels.get(r.id) ?? null) : (apiKeyLabels.get(r.id) ?? null)
 	}));
 }
 
-type ActorFilter = { kind: 'user'; userId: string } | { kind: 'apiKey'; apiKeyId: number };
+type ActorFilter = { kind: 'user'; userId: string } | { kind: 'apiKey'; apiKeyId: string };
 
 function actorPredicate(a: ActorFilter) {
 	return a.kind === 'user' ? sql`user_id = ${a.userId}` : sql`api_key_id = ${a.apiKeyId}`;
@@ -184,9 +183,9 @@ async function resolveActorIdentity(
 		return u ? { displayName: u.name ?? null, email: u.email ?? null } : null;
 	}
 	const rows = await db
-		.select({ id: apiKey.id, name: apiKey.name })
-		.from(apiKey)
-		.where(eq(apiKey.id, actor.apiKeyId));
+		.select({ id: apikey.id, name: apikey.name })
+		.from(apikey)
+		.where(eq(apikey.id, actor.apiKeyId));
 	const t = rows[0];
 	return t ? { displayName: t.name ?? null, email: null } : null;
 }

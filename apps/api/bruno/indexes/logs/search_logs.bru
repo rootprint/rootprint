@@ -7,7 +7,7 @@ meta {
 get {
   url: {{baseUrl}}/api/indexes/{{indexId}}/logs
   body: none
-  auth: none
+  auth: bearer
 }
 
 params:query {
@@ -18,4 +18,8 @@ params:query {
   ~endTs: 1800000000
   ~sortOrder: desc
   ~countAll: true
+}
+
+auth:bearer {
+  token: 
 }

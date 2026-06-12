@@ -1,0 +1,32 @@
+meta {
+  name: Search Logs with Personal Key
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/logs
+  body: none
+  auth: bearer
+}
+
+params:query {
+  ~q: error
+  ~limit: 50
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}
+
+docs {
+  The AI-agent use case: call the real log-explorer endpoint with a personal key
+  as a bearer token (no session cookie). The same key works on all seven
+  read-only routes — GET /api/indexes, /:indexId/fields, /:indexId/config,
+  /:indexId/logs, /:indexId/logs/histogram, /:indexId/fields/values, and
+  /:indexId/fields/:field/values. The key sees exactly what its owner can see.
+  Set `personalApiKey` from the Create Personal Key response first.
+
+  Management routes (PATCH/DELETE index, sources, preferences) and the auth/
+  key-management surface reject this token with 401 — keys are read-only.
+}

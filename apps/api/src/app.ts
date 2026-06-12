@@ -23,7 +23,6 @@ import { authRouter } from './routes/auth.js';
 import { healthRouter } from './routes/health.js';
 import { indexesRouter } from './routes/indexes.js';
 import { ndjsonRouter } from './routes/ingest/ndjson.js';
-import { searchRouter } from './routes/search.js';
 import { otlpRouter } from './routes/ingest/otlp.js';
 import { settingsRouter } from './routes/settings.js';
 import { sharesRouter } from './routes/shares.js';
@@ -175,7 +174,7 @@ app.notFound((c) => {
 export const routes = app
 	.route('/api/health', healthRouter)
 	.route('/api/auth', authRouter)
-	.route('/api/indexes', withAuth(indexesRouter))
+	.route('/api/indexes', indexesRouter)
 	.route('/api/admin/metrics', withAuth(metricsRouter))
 	.route('/api/admin/cluster', withAuth(clusterRouter))
 	.route('/api/admin/activity', withAuth(adminActivityRouter))
@@ -184,7 +183,6 @@ export const routes = app
 	.route('/api/shares', withAuth(sharesRouter))
 	.route('/api/settings', withAuth(settingsRouter))
 	.route('/api/ingest', ndjsonRouter)
-	.route('/api/search', searchRouter)
 	.route('/v1', otlpRouter);
 
 app.get('/api/openapi.json', openAPIRouteHandler(app, specOptions));

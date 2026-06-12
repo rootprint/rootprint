@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { intParam, positiveInt } from '../utils/valibot.js';
+import { intParam } from '../utils/valibot.js';
 
 const ActivityWindowValues = ['24h', '7d', '30d'] as const;
 const WindowField = v.optional(v.picklist(ActivityWindowValues));
@@ -22,6 +22,6 @@ export const RecentQuery = v.object({
 });
 
 export const UserIdParam = v.object({ userId: v.pipe(v.string(), v.minLength(1)) });
-export const ApiKeyIdParam = v.object({ apiKeyId: positiveInt('apiKeyId') });
+export const ApiKeyIdParam = v.object({ apiKeyId: v.pipe(v.string(), v.minLength(1)) });
 
 export type ActivityWindow = (typeof ActivityWindowValues)[number];

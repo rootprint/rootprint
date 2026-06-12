@@ -18,7 +18,8 @@ import type {
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,
-	ApiKeyValueResponse as ApiKeyValueResponseSchema
+	ApiKeyValueResponse as ApiKeyValueResponseSchema,
+	PersonalApiKeyResponse as PersonalApiKeyResponseSchema
 } from './schemas/responses/api-keys.js';
 import type {
 	UserResponse as UserResponseSchema,
@@ -124,9 +125,11 @@ export type User = v.InferOutput<typeof UserResponseSchema>;
 
 export type InviteUrlResult = v.InferOutput<typeof InviteUrlResponseSchema>;
 
-export type ApiKeyRole = 'ingest' | 'search';
+export type ApiKeyRole = 'ingest';
 
 export type ApiKeySummary = v.InferOutput<typeof ApiKeyResponseSchema>;
+
+export type PersonalApiKeySummary = v.InferOutput<typeof PersonalApiKeyResponseSchema>;
 
 export type ApiKeyValue = v.InferOutput<typeof ApiKeyValueResponseSchema>;
 
@@ -136,6 +139,8 @@ export type VerifiedApiKey = {
 	indexId: string;
 	role: ApiKeyRole;
 };
+
+export type Scope = Record<string, string[]>;
 
 export type { CreateApiKeyInput } from './schemas/api-keys.js';
 export type { ShareCreateInput } from './schemas/shares.js';
@@ -229,10 +234,7 @@ export type IndexMeta = {
 	index: QuickwitIndexMetadata;
 };
 
-export type VerifyApiKeyResult =
-	| { status: 'ok'; key: VerifiedApiKey }
-	| { status: 'wrong-role'; actualRole: ApiKeyRole }
-	| { status: 'not-found' };
+export type VerifyApiKeyResult = { status: 'ok'; key: VerifiedApiKey } | { status: 'not-found' };
 
 // User administration (lib/auth-admin.ts)
 export type CreateUserInput = {

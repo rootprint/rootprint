@@ -1,5 +1,5 @@
 meta {
-  name: Create API Key
+  name: Create Ingest Key
   type: http
   seq: 2
 }
@@ -13,7 +13,6 @@ post {
 body:json {
   {
     "name": "prod-shipper",
-    "indexId": "{{indexId}}",
-    "role": "ingest"
+    "indexId": "{{indexId}}"
   }
 }

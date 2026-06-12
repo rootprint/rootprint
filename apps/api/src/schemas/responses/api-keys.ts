@@ -28,3 +28,18 @@ export const ApiKeyCreatedResponse = named(
 );
 
 export const ApiKeyValueResponse = named('ApiKeyValueResponse', v.object({ token: v.string() }));
+
+export const PersonalApiKeyResponse = named(
+	'PersonalApiKeyResponse',
+	v.object({
+		id: v.string(),
+		name: v.nullable(v.string()),
+		start: v.nullable(v.string()),
+		userId: v.string(),
+		userEmail: v.nullable(v.string()),
+		lastRequest: v.nullable(isoTimestampString),
+		createdAt: isoTimestampString
+	})
+);
+
+export const PersonalApiKeyListResponse = v.array(PersonalApiKeyResponse);

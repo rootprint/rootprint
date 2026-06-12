@@ -2,6 +2,7 @@ import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { admin, openAPI } from 'better-auth/plugins';
+import { apiKey } from '@better-auth/api-key';
 import type { UserWithRole } from 'better-auth/plugins/admin';
 import { and, eq } from 'drizzle-orm';
 
@@ -20,12 +21,22 @@ import {
 import type { GitHubAuthCredentials, GoogleAuthCredentials } from '../types.js';
 import { db } from './db.js';
 
+export const apiKeyPluginConfig = {
+	defaultPrefix: 'rpk_',
+	requireName: true,
+	maximumNameLength: 100,
+	startingCharactersConfig: { shouldStore: true, charactersLength: 10 },
+	keyExpiration: { disableCustomExpiresTime: true },
+	rateLimit: { enabled: false },
+	permissions: { defaultPermissions: { logs: ['read'] } }
+} satisfies Parameters<typeof apiKey>[0];
+
 function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitHubAuthCredentials) {
 	const trustedOrigins = [config.origin, ...(config.frontendUrl ? [config.frontendUrl] : [])];
 
 	const opts: BetterAuthOptions = {
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-		plugins: [admin()],
+		plugins: [admin(), apiKey(apiKeyPluginConfig)],
 		trustedOrigins,
 		secret,
 		baseURL: config.origin,
@@ -160,7 +171,7 @@ export const isAdmin = (session: Session | undefined): boolean => session?.user.
 export async function authOpenAPISchema() {
 	const instance = betterAuth({
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-		plugins: [admin(), openAPI()],
+		plugins: [admin(), apiKey(apiKeyPluginConfig), openAPI()],
 		baseURL: config.origin,
 		secret: 'openapi-schema-generation',
 		emailAndPassword: { enabled: true, disableSignUp: true }

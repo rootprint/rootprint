@@ -4,17 +4,20 @@ import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireAdmin } from '../middleware/require-admin.js';
-import { createApiKeySchema, listApiKeysQuerySchema } from '../schemas/api-keys.js';
+import { createApiKeySchema, personalKeyIdParams } from '../schemas/api-keys.js';
 import {
 	ApiKeyCreatedResponse,
 	ApiKeyListResponse,
-	ApiKeyValueResponse
+	ApiKeyValueResponse,
+	PersonalApiKeyListResponse
 } from '../schemas/responses/api-keys.js';
 import {
 	createApiKey,
 	deleteApiKey,
+	deletePersonalKey,
 	getApiKeyValue,
-	listApiKeys
+	listApiKeys,
+	listPersonalKeys
 } from '../services/api-key.service.js';
 import { ApiKeyIdParams } from '../utils/params.js';
 
@@ -28,10 +31,8 @@ export const apiKeysRouter = new Hono<AuthedEnv>()
 			summary: 'List API keys',
 			ok: ApiKeyListResponse
 		}),
-		validator('query', listApiKeysQuerySchema),
 		async (c) => {
-			const { role } = c.req.valid('query');
-			return c.json(await listApiKeys(db, { role }));
+			return c.json(await listApiKeys(db));
 		}
 	)
 	.post(
@@ -50,6 +51,34 @@ export const apiKeysRouter = new Hono<AuthedEnv>()
 			const userId = c.get('session').user.id;
 			const result = await createApiKey(db, userId, body);
 			return c.json(result, 201);
+		}
+	)
+	.get(
+		'/personal',
+		describe({
+			tag: 'API keys',
+			summary: 'List personal API keys (all users)',
+			ok: PersonalApiKeyListResponse
+		}),
+		async (c) => {
+			return c.json(await listPersonalKeys(db));
+		}
+	)
+	.delete(
+		'/personal/:id',
+		describe({
+			tag: 'API keys',
+			summary: 'Revoke a personal API key',
+			errors: [404],
+			rawResponses: {
+				'204': { description: 'Personal API key revoked' }
+			}
+		}),
+		validator('param', personalKeyIdParams),
+		async (c) => {
+			const { id } = c.req.valid('param');
+			await deletePersonalKey(db, id);
+			return c.body(null, 204);
 		}
 	)
 	.get(

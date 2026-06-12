@@ -1,0 +1,17 @@
+meta {
+  name: Revoke Personal Key (admin)
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/api-keys/personal/{{personalKeyId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Admin oversight: revoke any user's personal API key by its plugin id (string,
+  set personalKeyId in the environment). Requires an admin session cookie.
+  Returns 204 on success, 404 if the key id does not exist.
+}

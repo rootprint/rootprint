@@ -5,25 +5,24 @@ import {
 	API_KEY_DISPLAY_PREFIX_LENGTH,
 	API_KEY_RANDOM_BYTES,
 	INGEST_PREFIX,
-	LAST_USED_THROTTLE_SECONDS,
-	SEARCH_PREFIX
+	LAST_USED_THROTTLE_SECONDS
 } from '../constants.js';
 import type { Db } from '../db/index.js';
-import { apiKey } from '../db/schema.js';
+// apiKey = custom ingest-key table; personalApiKey = Better Auth plugin table.
+import { apiKey, apikey as personalApiKey, user } from '../db/schema.js';
 import type {
-	ApiKeyRole,
 	ApiKeySummary,
 	ApiKeyValue,
 	CreateApiKeyInput,
+	PersonalApiKeySummary,
 	VerifiedApiKey,
 	VerifyApiKeyResult
 } from '../types.js';
 import { internal, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 
-function generateApiKey(role: ApiKeyRole): string {
-	const prefix = role === 'ingest' ? INGEST_PREFIX : SEARCH_PREFIX;
-	return `${prefix}${randomBytes(API_KEY_RANDOM_BYTES).toString('hex')}`;
+function generateApiKey(): string {
+	return `${INGEST_PREFIX}${randomBytes(API_KEY_RANDOM_BYTES).toString('hex')}`;
 }
 
 // Fire-and-forget refresh of the API key's lastUsedAt, throttled so a busy key
@@ -71,12 +70,8 @@ function setCacheEntry(token: string, entry: ApiKeyCacheEntry): void {
 function resolveHit(
 	db: Db,
 	entry: Extract<ApiKeyCacheEntry, { kind: 'hit' }>,
-	expectedRole: ApiKeyRole,
 	now: number
 ): VerifyApiKeyResult {
-	if (entry.row.role !== expectedRole) {
-		return { status: 'wrong-role', actualRole: entry.row.role };
-	}
 	if (now - entry.lastTouchAt > LAST_USED_THROTTLE_SECONDS * 1000) {
 		entry.lastTouchAt = now;
 		touchLastUsed(db, entry.row.id);
@@ -100,10 +95,7 @@ function toApiKeySummary(
 	};
 }
 
-export async function listApiKeys(
-	db: Db,
-	opts: { role?: ApiKeyRole } = {}
-): Promise<ApiKeySummary[]> {
+export async function listApiKeys(db: Db): Promise<ApiKeySummary[]> {
 	const base = db
 		.select({
 			id: apiKey.id,
@@ -116,8 +108,7 @@ export async function listApiKeys(
 			createdByUserId: apiKey.createdByUserId
 		})
 		.from(apiKey);
-	const filtered = opts.role ? base.where(eq(apiKey.role, opts.role)) : base;
-	const rows = await filtered.orderBy(desc(apiKey.createdAt));
+	const rows = await base.orderBy(desc(apiKey.createdAt));
 	return rows.map((row) => toApiKeySummary(row, row.tokenPrefix));
 }
 
@@ -126,14 +117,14 @@ export async function createApiKey(
 	createdByUserId: string,
 	input: CreateApiKeyInput
 ): Promise<{ summary: ApiKeySummary; token: string }> {
-	const token = generateApiKey(input.role);
+	const token = generateApiKey();
 	const [row] = await withUniqueViolation('API key name already exists', 'CONFLICT', () =>
 		db
 			.insert(apiKey)
 			.values({
 				name: input.name,
 				token,
-				role: input.role,
+				role: 'ingest',
 				indexId: input.indexId,
 				createdByUserId
 			})
@@ -165,17 +156,48 @@ export async function deleteApiKey(db: Db, id: number): Promise<void> {
 	invalidateApiKeyCache();
 }
 
-export async function verifyApiKey(
-	db: Db,
-	bearer: string,
-	expectedRole: ApiKeyRole
-): Promise<VerifyApiKeyResult> {
+export async function listPersonalKeys(db: Db): Promise<PersonalApiKeySummary[]> {
+	const rows = await db
+		.select({
+			id: personalApiKey.id,
+			name: personalApiKey.name,
+			start: personalApiKey.start,
+			userId: personalApiKey.referenceId,
+			userEmail: user.email,
+			lastRequest: personalApiKey.lastRequest,
+			createdAt: personalApiKey.createdAt
+		})
+		.from(personalApiKey)
+		.leftJoin(user, eq(personalApiKey.referenceId, user.id))
+		.orderBy(desc(personalApiKey.createdAt));
+	return rows.map((r) => ({
+		id: r.id,
+		name: r.name,
+		start: r.start,
+		userId: r.userId,
+		userEmail: r.userEmail,
+		lastRequest: r.lastRequest?.toISOString() ?? null,
+		createdAt: r.createdAt.toISOString()
+	}));
+}
+
+export async function deletePersonalKey(db: Db, id: string): Promise<void> {
+	const result = await db
+		.delete(personalApiKey)
+		.where(eq(personalApiKey.id, id))
+		.returning({ id: personalApiKey.id });
+	if (result.length === 0) {
+		throw notFound('Personal API key not found');
+	}
+}
+
+export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKeyResult> {
 	const now = Date.now();
 
 	const cached = apiKeyCache.get(bearer);
 	if (cached && now < cached.expiresAt) {
 		if (cached.kind === 'miss') return { status: 'not-found' };
-		return resolveHit(db, cached, expectedRole, now);
+		return resolveHit(db, cached, now);
 	}
 
 	const [row] = await db
@@ -202,5 +224,5 @@ export async function verifyApiKey(
 		expiresAt: now + POSITIVE_TTL_MS
 	};
 	setCacheEntry(bearer, entry);
-	return resolveHit(db, entry, expectedRole, now);
+	return resolveHit(db, entry, now);
 }

@@ -1,0 +1,20 @@
+meta {
+  name: Get My Personal Key
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/auth/api-key/get?id={{personalKeyId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  id: {{personalKeyId}}
+}
+
+docs {
+  Self-service: fetch metadata for one of the signed-in user's keys by id
+  (string). Does not return the raw key value.
+}

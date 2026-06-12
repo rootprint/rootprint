@@ -3,6 +3,7 @@
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import ChangePasswordModal from '$lib/components/account/ChangePasswordModal.svelte';
+	import PersonalApiKeysSection from '$lib/components/account/PersonalApiKeysSection.svelte';
 
 	let { data } = $props();
 
@@ -31,6 +32,8 @@
 				size="lg"
 			/>
 		</div>
+
+		<PersonalApiKeysSection keys={data.personalKeys} />
 
 		{#if data.hasPassword === true}
 			<div class="border-line rounded-box flex items-center justify-between border p-6">
