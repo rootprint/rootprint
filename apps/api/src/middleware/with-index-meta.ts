@@ -1,22 +1,24 @@
 import type { MiddlewareHandler } from 'hono';
-import * as v from 'valibot';
 
 import type { AuthedEnv } from '../env.js';
-import { isAdmin } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { getIndexMeta } from '../services/index.service.js';
-import type { IndexMeta } from '../types.js';
-import { IndexIdParams } from '../utils/params.js';
+import type { IndexMeta, IndexView } from '../types.js';
+import { notFound } from '../utils/http-error.js';
 
 export type IndexMetaEnv = AuthedEnv & {
 	Variables: AuthedEnv['Variables'] & { indexMeta: IndexMeta };
 };
 
-export const withIndexMeta = (level: 'access' | 'manage'): MiddlewareHandler<IndexMetaEnv> => {
+export const withIndexMeta = (view: IndexView): MiddlewareHandler<IndexMetaEnv> => {
 	return async (c, next) => {
-		const { indexId } = v.parse(IndexIdParams, c.req.param());
-		const meta = await getIndexMeta(db, quickwit, indexId, isAdmin(c.get('session')), level);
+		// The `/:indexId` route pattern guarantees a non-empty segment, so this
+		// guard is defensive; it intentionally answers 404 (not a 400 validation
+		// error) for the should-never-happen missing-id case.
+		const indexId = c.req.param('indexId');
+		if (!indexId) throw notFound('Index not found');
+		const meta = await getIndexMeta(db, quickwit, indexId, c.get('session').user.role, view);
 		c.set('indexMeta', meta);
 		await next();
 	};

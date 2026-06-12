@@ -6,6 +6,7 @@ import type {
 	IndexSettings,
 	IndexSource,
 	IndexSummary,
+	IndexView,
 	IndexViewConfig,
 	IndexVisibility,
 	QuickwitIndexMetadata,
@@ -22,7 +23,7 @@ import {
 	searchAudit,
 	share,
 	userPreference,
-	view
+	view as viewTable
 } from '../db/schema.js';
 import { conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
@@ -39,6 +40,17 @@ const DEFAULT_SETTINGS: IndexSettings = {
 	contextFields: null
 };
 
+function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings {
+	return {
+		displayName: row.displayName,
+		visibility: row.visibility,
+		levelField: row.levelField,
+		messageField: row.messageField,
+		tracebackField: row.tracebackField,
+		contextFields: row.contextFields
+	};
+}
+
 export async function getIndexSettings(db: Db, indexId: string): Promise<IndexSettings> {
 	const [row] = await db
 		.select()
@@ -48,14 +60,7 @@ export async function getIndexSettings(db: Db, indexId: string): Promise<IndexSe
 
 	if (!row) return DEFAULT_SETTINGS;
 
-	return {
-		displayName: row.displayName,
-		visibility: row.visibility,
-		levelField: row.levelField,
-		messageField: row.messageField,
-		tracebackField: row.tracebackField,
-		contextFields: row.contextFields
-	};
+	return toIndexSettings(row);
 }
 
 export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): boolean {
@@ -79,62 +84,57 @@ export async function saveIndexConfig(
 		});
 }
 
-export async function listIndexes(
-	db: Db,
-	qw: QuickwitClient,
-	role: string | null | undefined,
-	view: 'search' | 'admin' = 'search'
-): Promise<IndexSummary[]> {
+export async function listAllIndexes(db: Db, qw: QuickwitClient): Promise<IndexSummary[]> {
 	const indexes = await qwListIndexes(qw);
-	const isAdmin = role === 'admin';
-	const adminView = view === 'admin' && isAdmin;
 
 	const ids = indexes.map((m) => m.indexId);
 	const rows = ids.length
 		? await db.select().from(indexSettings).where(inArray(indexSettings.indexId, ids))
 		: [];
 	const settingsMap = new Map<string, IndexSettings>(
-		rows.map((r) => [
-			r.indexId,
-			{
-				displayName: r.displayName,
-				visibility: r.visibility,
-				levelField: r.levelField,
-				messageField: r.messageField,
-				tracebackField: r.tracebackField,
-				contextFields: r.contextFields
-			}
-		])
+		rows.map((r) => [r.indexId, toIndexSettings(r)])
 	);
 
-	return indexes
-		.map((m) => {
-			const s = settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS;
-			return {
-				indexId: m.indexId,
-				displayName: s.displayName,
-				visibility: s.visibility,
-				fieldCount: m.fields.length,
-				sourceCount: m.sources.length,
-				mode: m.mode,
-				createTimestamp: m.createTimestamp
-			};
-		})
-		.filter((m) => adminView || canAccessIndex(m.visibility, isAdmin));
+	return indexes.map((m) => {
+		const s = settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS;
+		return {
+			indexId: m.indexId,
+			displayName: s.displayName,
+			visibility: s.visibility,
+			fieldCount: m.fields.length,
+			sourceCount: m.sources.length,
+			mode: m.mode,
+			createTimestamp: m.createTimestamp
+		};
+	});
+}
+
+export async function listIndexes(
+	db: Db,
+	qw: QuickwitClient,
+	role: string | null | undefined,
+	view: IndexView = 'search'
+): Promise<IndexSummary[]> {
+	const all = await listAllIndexes(db, qw);
+	const isAdmin = role === 'admin';
+	const adminView = view === 'admin' && isAdmin;
+	return all.filter((m) => adminView || canAccessIndex(m.visibility, isAdmin));
 }
 
 export async function getIndexMeta(
 	db: Db,
 	qw: QuickwitClient,
 	indexId: string,
-	isAdmin: boolean,
-	level: 'access' | 'manage'
+	role: string | null | undefined,
+	view: IndexView
 ): Promise<IndexMeta> {
 	const [settings, index] = await Promise.all([
 		getIndexSettings(db, indexId),
 		qwGetIndex(qw, indexId)
 	]);
-	if (level === 'access' && !canAccessIndex(settings.visibility, isAdmin)) {
+	const isAdmin = role === 'admin';
+	const adminView = view === 'admin' && isAdmin;
+	if (!adminView && !canAccessIndex(settings.visibility, isAdmin)) {
 		throw indexAccessError(isAdmin, 'denied');
 	}
 	if (!index) throw indexAccessError(isAdmin, 'missing');
@@ -145,9 +145,9 @@ export async function getIndexConfig(
 	db: Db,
 	qw: QuickwitClient,
 	indexId: string,
-	isAdmin: boolean
+	role: string | null | undefined
 ): Promise<IndexConfig> {
-	const { settings, index } = await getIndexMeta(db, qw, indexId, isAdmin, 'access');
+	const { settings, index } = await getIndexMeta(db, qw, indexId, role, 'search');
 	if (!index.timestampField) throw internal(`Index "${indexId}" has no timestamp_field`);
 
 	return {
@@ -234,7 +234,7 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 		await tx.delete(indexSettings).where(eq(indexSettings.indexId, indexId));
 		await tx.delete(indexStatsSnapshot).where(eq(indexStatsSnapshot.indexId, indexId));
 		await tx.delete(userPreference).where(eq(userPreference.indexId, indexId));
-		await tx.delete(view).where(eq(view.indexId, indexId));
+		await tx.delete(viewTable).where(eq(viewTable.indexId, indexId));
 		await tx.delete(share).where(eq(share.indexId, indexId));
 		await tx.delete(apiKey).where(eq(apiKey.indexId, indexId));
 		await tx.delete(searchAudit).where(eq(searchAudit.indexId, indexId));

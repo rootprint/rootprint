@@ -3,7 +3,6 @@ import { bodyLimit } from 'hono/body-limit';
 
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
-import { isAdmin } from '../lib/auth.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { quickwit } from '../lib/quickwit.js';
 import { getIndexMeta } from '../services/index.service.js';
@@ -34,7 +33,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const body = c.req.valid('json');
 			const session = c.get('session');
-			await getIndexMeta(db, quickwit, body.indexId, isAdmin(session), 'access');
+			await getIndexMeta(db, quickwit, body.indexId, session.user.role, 'search');
 			const result = await createShare(db, session.user.id, body);
 			return c.json(result, 201);
 		}
@@ -52,7 +51,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 			const { code } = c.req.valid('param');
 			const session = c.get('session');
 			const row = await resolveShare(db, code);
-			await getIndexMeta(db, quickwit, row.indexId, isAdmin(session), 'access');
+			await getIndexMeta(db, quickwit, row.indexId, session.user.role, 'search');
 			return c.json(row);
 		}
 	);

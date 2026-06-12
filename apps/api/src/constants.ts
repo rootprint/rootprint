@@ -14,6 +14,10 @@ export const EXPORT_MAX_ROWS = 10_000;
 // Index visibility
 export const INDEX_VISIBILITIES = ['hidden', 'admin', 'all'] as const;
 
+// Index listing / meta-access view. `search` applies visibility filtering;
+// `admin` returns everything but is honored only for real admins (fail closed).
+export const INDEX_VIEWS = ['search', 'admin'] as const;
+
 // Ingest
 export const CONTENT_TYPE_PROTOBUF = 'application/x-protobuf';
 export const CONTENT_TYPE_NDJSON = 'application/x-ndjson';

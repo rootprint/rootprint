@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { FIELD_VALUES_MAX, INDEX_VISIBILITIES } from '../constants.js';
+import { FIELD_VALUES_MAX, INDEX_VIEWS, INDEX_VISIBILITIES } from '../constants.js';
 import { FilterSchema } from './filters.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, toNum } from '../utils/valibot.js';
@@ -81,5 +81,5 @@ export const PutPreferencesBody = v.object({
 });
 
 export const ListIndexesQuery = v.object({
-	view: v.optional(v.picklist(['search', 'admin']))
+	view: v.optional(v.picklist(INDEX_VIEWS))
 });

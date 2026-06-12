@@ -5,13 +5,13 @@ import type { Db } from '../db/index.js';
 import type { ClusterOverview, PerIndexOverview } from '../types.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { getLatestSnapshotsByIndex } from './index-stats.service.js';
-import { listIndexes } from './index.service.js';
+import { listAllIndexes } from './index.service.js';
 
 export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<ClusterOverview> {
 	const healthRaw = await qw.health().catch(translateQuickwitError);
 
 	const [indexes, snapshots] = await Promise.all([
-		listIndexes(db, qw, 'admin', 'admin'),
+		listAllIndexes(db, qw),
 		getLatestSnapshotsByIndex(db)
 	]);
 

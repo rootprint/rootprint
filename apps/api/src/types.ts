@@ -1,5 +1,5 @@
 import type * as v from 'valibot';
-import type { INDEX_VISIBILITIES } from './constants.js';
+import type { INDEX_VISIBILITIES, INDEX_VIEWS } from './constants.js';
 import type {
 	FieldValueEntrySchema,
 	FieldValuesBulkResponse as FieldValuesBulkResponseSchema,
@@ -69,6 +69,7 @@ export type ApiErrorBody = {
 };
 
 export type IndexVisibility = (typeof INDEX_VISIBILITIES)[number];
+export type IndexView = (typeof INDEX_VIEWS)[number];
 
 export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
 

@@ -16,7 +16,7 @@ import { IndexIdParams } from '../utils/params.js';
 
 export const viewsRouter = new Hono<IndexMetaEnv>()
 	.use('*', requireUser)
-	.use('*', withIndexMeta('access'))
+	.use('*', withIndexMeta('search'))
 	.get(
 		'/',
 		describe({
