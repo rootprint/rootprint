@@ -3,8 +3,11 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { generateSpecs } from 'hono-openapi';
 import type { GenerateSpecOptions } from 'hono-openapi';
-import type { Hono } from 'hono';
+import type { Env, Hono } from 'hono';
+import type { Schema } from 'hono/types';
 
+import { authOpenAPISchema } from '../auth.js';
+import { decorateAuthPaths } from './auth-descriptions.js';
 import { errorResponseComponents } from './errors.js';
 
 function rootVersion(): string {
@@ -41,6 +44,36 @@ export const specOptions = {
 	exclude: [/^\/(?!api\/|v1\/).*/]
 } satisfies Partial<GenerateSpecOptions>;
 
-export async function buildSpec(app: Hono) {
-	return generateSpecs(app, specOptions);
+type PathItemObject = Record<string, unknown>;
+
+function prefixedAuthPaths(paths: Record<string, PathItemObject>): Record<string, PathItemObject> {
+	return Object.fromEntries(Object.entries(paths).map(([p, item]) => [`/api/auth${p}`, item]));
+}
+
+export async function buildSpec<E extends Env, S extends Schema, P extends string>(
+	app: Hono<E, S, P>
+) {
+	const [spec, authSpec] = await Promise.all([
+		generateSpecs(app, specOptions),
+		authOpenAPISchema()
+	]);
+	const authPaths = decorateAuthPaths(
+		prefixedAuthPaths(authSpec.paths as Record<string, PathItemObject>)
+	);
+
+	return {
+		...spec,
+		paths: { ...spec.paths, ...authPaths },
+		components: {
+			...spec.components,
+			securitySchemes: {
+				...spec.components?.securitySchemes,
+				...authSpec.components?.securitySchemes
+			},
+			schemas: {
+				...spec.components?.schemas,
+				...authSpec.components?.schemas
+			}
+		}
+	};
 }

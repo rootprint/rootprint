@@ -30,6 +30,16 @@ export function applyTimeWindow(
 	if (endTs !== undefined) builder.endTimestamp(endTs);
 }
 
+function termsAgg(field: string, size: number) {
+	const agg = AggregationBuilder.terms(field, { size });
+	(agg.terms as { shard_size?: number }).shard_size = size;
+	return agg;
+}
+
+function isTruncated(agg: BucketAggregationResult | undefined): boolean {
+	return (agg?.sum_other_doc_count ?? 0) > 0;
+}
+
 /** Maps terms-aggregation buckets to field-value entries, dropping empty-string keys. */
 function bucketsToEntries(buckets: AggregationBucket[] | undefined): FieldValueEntry[] {
 	return (buckets ?? []).flatMap((b) => {
@@ -118,15 +128,13 @@ export async function fieldValues(
 ): Promise<FieldValuesResponse> {
 	const { query = '*', startTs, endTs, limit = FIELD_VALUES_DEFAULT } = params;
 	const idx = qw.index(indexConfig.indexId);
-	const builder = idx
-		.query(query)
-		.limit(0)
-		.agg('values', AggregationBuilder.terms(field, { size: limit }));
+	const builder = idx.query(query).limit(0).agg('values', termsAgg(field, limit));
 	applyTimeWindow(builder, startTs, endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	const agg = response.aggregations?.['values'] as BucketAggregationResult | undefined;
 	return {
-		values: bucketsToEntries(agg?.buckets)
+		values: bucketsToEntries(agg?.buckets),
+		truncated: isTruncated(agg)
 	};
 }
 
@@ -172,7 +180,7 @@ export async function fieldValuesBulk(
 	const { fields, query = '', filters = [], startTs, endTs, limit = FIELD_VALUES_DEFAULT } = params;
 
 	if (fields.length === 0) {
-		return { values: {} };
+		return { values: {}, truncated: {} };
 	}
 
 	const groups = groupFieldsForBulk(fields, filters);
@@ -183,7 +191,7 @@ export async function fieldValuesBulk(
 			const composed = composeQuery(query, group.effectiveFilters);
 			const builder = idx.query(composed).limit(0);
 			for (const field of group.fields) {
-				builder.agg(field, AggregationBuilder.terms(field, { size: limit }));
+				builder.agg(field, termsAgg(field, limit));
 			}
 			applyTimeWindow(builder, startTs, endTs);
 			const response = await idx.search(builder).catch(translateQuickwitError);
@@ -192,14 +200,16 @@ export async function fieldValuesBulk(
 	);
 
 	const values: Record<string, FieldValueEntry[]> = {};
+	const truncated: Record<string, boolean> = {};
 	let elapsedTimeMicros = 0;
 	for (const { group, response } of groupResults) {
 		elapsedTimeMicros += response.elapsed_time_micros ?? 0;
 		for (const field of group.fields) {
 			const agg = response.aggregations?.[field] as BucketAggregationResult | undefined;
 			values[field] = bucketsToEntries(agg?.buckets);
+			truncated[field] = isTruncated(agg);
 		}
 	}
 
-	return { values, elapsedTimeMicros };
+	return { values, truncated, elapsedTimeMicros };
 }

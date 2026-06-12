@@ -624,6 +624,15 @@
 					"elapsedTimeMicros": {
 						"type": "number"
 					},
+					"truncated": {
+						"additionalProperties": {
+							"type": "boolean"
+						},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					},
 					"values": {
 						"additionalProperties": {
 							"items": {
@@ -638,12 +647,16 @@
 					}
 				},
 				"required": [
-					"values"
+					"values",
+					"truncated"
 				],
 				"type": "object"
 			},
 			"FieldValuesResponse": {
 				"properties": {
+					"truncated": {
+						"type": "boolean"
+					},
 					"values": {
 						"items": {
 							"$ref": "#/components/schemas/FieldValueEntrySchema"
@@ -652,7 +665,8 @@
 					}
 				},
 				"required": [
-					"values"
+					"values",
+					"truncated"
 				],
 				"type": "object"
 			},
@@ -3663,8 +3677,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Get the account info provided by the provider",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -3824,8 +3839,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Ban a user",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -3994,8 +4010,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Create a new user",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -4131,8 +4148,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Get an existing user",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -4282,8 +4300,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Check if the user has permission",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -4432,8 +4451,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Impersonate a user",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -4582,8 +4602,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "List user sessions",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -4833,8 +4854,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "List users",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -4980,8 +5002,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Delete a user and all their sessions and accounts. Cannot be undone.",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5127,8 +5150,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Revoke a user session",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5274,8 +5298,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Revoke all user sessions",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5426,8 +5451,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Set the role of a user",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5578,8 +5604,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Set a user's password",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5689,8 +5716,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Admin stop impersonating",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5836,8 +5864,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Unban a user",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -5988,8 +6017,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Update a user's details",
 				"tags": [
-					"Admin"
+					"Auth administration"
 				]
 			}
 		},
@@ -6338,8 +6368,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Create a new API key for a user",
 				"tags": [
-					"Api-key"
+					"Personal API keys"
 				]
 			}
 		},
@@ -6487,8 +6518,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Delete an existing API key",
 				"tags": [
-					"Api-key"
+					"Personal API keys"
 				]
 			}
 		},
@@ -6740,8 +6772,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Retrieve an existing API key by ID",
 				"tags": [
-					"Api-key"
+					"Personal API keys"
 				]
 			}
 		},
@@ -6999,8 +7032,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "List all API keys for the authenticated user or for a specific organization",
 				"tags": [
-					"Api-key"
+					"Personal API keys"
 				]
 			}
 		},
@@ -7335,8 +7369,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Update an existing API key by ID",
 				"tags": [
-					"Api-key"
+					"Personal API keys"
 				]
 			}
 		},
@@ -7487,8 +7522,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Callback id",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			},
 			"post": {
@@ -7606,8 +7642,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Callback id",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -7776,8 +7813,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Change email",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -7986,8 +8024,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Change the password of the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -8150,8 +8189,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Delete the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -8309,8 +8349,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Callback to complete user deletion with verification token",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -8432,8 +8473,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Displays an error page",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -8587,8 +8629,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Get a valid access token, doing a refresh if needed",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -8725,8 +8768,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Get the current session",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			},
 			"post": {
@@ -8871,8 +8915,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Get the current session",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -9106,8 +9151,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Link a social account to the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -9269,8 +9315,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "List all accounts linked to the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -9395,8 +9442,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "List all active sessions for the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -9526,8 +9574,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Check if the API is working",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -9729,8 +9778,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Refresh the access token using a refresh token",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -9886,8 +9936,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Send a password reset email to the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -10040,8 +10091,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Reset the password for a user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -10187,8 +10239,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Redirects the user to the callback URL with the token",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -10328,8 +10381,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Revoke all other sessions for the user except the current one",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -10477,8 +10531,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Revoke a single session",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -10618,8 +10673,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Revoke all sessions for the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -10772,8 +10828,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Send a verification email to the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -11102,8 +11159,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Sign in with email and password",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -11394,8 +11452,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Sign in with a social provider",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -11532,8 +11591,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Sign out the current user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -11766,8 +11826,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Sign up a user using email and password",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -11917,8 +11978,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Unlink an account",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -12056,8 +12118,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Update the current session",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -12205,8 +12268,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Update the current user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -12360,8 +12424,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Verify the email of the user",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -12568,8 +12633,9 @@
 						"bearerAuth": []
 					}
 				],
+				"summary": "Verify the current user's password",
 				"tags": [
-					"Default"
+					"Authentication"
 				]
 			}
 		},
@@ -12618,8 +12684,12 @@
 				"parameters": [
 					{
 						"in": "query",
-						"name": "includeHidden",
+						"name": "view",
 						"schema": {
+							"enum": [
+								"search",
+								"admin"
+							],
 							"type": "string"
 						}
 					}
@@ -13052,7 +13122,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
-							"maximum": 10000,
+							"maximum": 65000,
 							"minimum": 1,
 							"pattern": "^\\d+$",
 							"type": "integer"
@@ -13158,7 +13228,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
-							"maximum": 10000,
+							"maximum": 65000,
 							"minimum": 1,
 							"pattern": "^\\d+$",
 							"type": "integer"

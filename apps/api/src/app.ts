@@ -34,8 +34,7 @@ import { quickwitErrorToHttp } from './utils/quickwit-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 import { getBetterAuthSecret } from './lib/secret.js';
 import { startStatsCollector } from './services/index-stats.service.js';
-import { openAPIRouteHandler } from 'hono-openapi';
-import { specOptions } from './lib/openapi/spec.js';
+import { buildSpec } from './lib/openapi/spec.js';
 
 // Resolves to apps/web/build from both src/app.ts (dev) and dist/app.js (prod): both are two segments deep in apps/api.
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/build');
@@ -185,7 +184,11 @@ export const routes = app
 	.route('/api/ingest', ndjsonRouter)
 	.route('/v1', otlpRouter);
 
-app.get('/api/openapi.json', openAPIRouteHandler(app, specOptions));
+let openAPISpec: Awaited<ReturnType<typeof buildSpec>> | undefined;
+app.get('/api/openapi.json', async (c) => {
+	openAPISpec ??= await buildSpec(app);
+	return c.json(openAPISpec);
+});
 
 // SPA static-file serving. Mounted AFTER `routes` so /api and /v1 keep their handlers and app.notFound still emits the JSON 404 contract; each handler bails on API paths via isApiPath().
 app.use('*', async (c, next) => {

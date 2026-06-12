@@ -154,13 +154,17 @@ export const FieldValueEntrySchema = named(
 
 export const FieldValuesResponse = named(
 	'FieldValuesResponse',
-	v.object({ values: v.array(FieldValueEntrySchema) })
+	v.object({
+		values: v.array(FieldValueEntrySchema),
+		truncated: v.boolean()
+	})
 );
 
 export const FieldValuesBulkResponse = named(
 	'FieldValuesBulkResponse',
 	v.object({
 		values: v.record(v.string(), v.array(FieldValueEntrySchema)),
+		truncated: v.record(v.string(), v.boolean()),
 		elapsedTimeMicros: v.optional(v.number())
 	})
 );
