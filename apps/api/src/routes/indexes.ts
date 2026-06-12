@@ -79,9 +79,9 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		requireUserOrPersonalKey(LOGS_READ),
 		validator('query', ListIndexesQuery),
 		async (c) => {
-			const { includeHidden } = c.req.valid('query');
+			const { view } = c.req.valid('query');
 			const session = c.get('session');
-			return c.json(await listIndexes(db, quickwit, session.user.role, { includeHidden }));
+			return c.json(await listIndexes(db, quickwit, session.user.role, view));
 		}
 	)
 	.get(

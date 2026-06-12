@@ -81,11 +81,5 @@ export const PutPreferencesBody = v.object({
 });
 
 export const ListIndexesQuery = v.object({
-	// Fail closed: only the literal string "true" enables it; any other value is treated as false.
-	includeHidden: v.optional(
-		v.pipe(
-			v.string(),
-			v.transform((s) => s === 'true')
-		)
-	)
+	view: v.optional(v.picklist(['search', 'admin']))
 });

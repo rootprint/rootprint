@@ -5,7 +5,7 @@ import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ depends }) => {
 	depends(DEP.apiKeys);
-	const [keys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
+	const [keys, indexes] = await Promise.all([listApiKeys(), listIndexes({ view: 'admin' })]);
 	return {
 		keys,
 		indexIds: indexes.map((i) => i.indexId)

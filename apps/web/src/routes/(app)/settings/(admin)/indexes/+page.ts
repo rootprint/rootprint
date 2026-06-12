@@ -4,6 +4,6 @@ import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ depends }) => {
 	depends(DEP.indexes);
-	const indexes = await listIndexes({ includeHidden: true });
+	const indexes = await listIndexes({ view: 'admin' });
 	return { indexes };
 };

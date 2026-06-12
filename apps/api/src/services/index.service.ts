@@ -83,11 +83,11 @@ export async function listIndexes(
 	db: Db,
 	qw: QuickwitClient,
 	role: string | null | undefined,
-	opts: { includeHidden?: boolean } = {}
+	view: 'search' | 'admin' = 'search'
 ): Promise<IndexSummary[]> {
 	const indexes = await qwListIndexes(qw);
 	const isAdmin = role === 'admin';
-	const includeHidden = opts.includeHidden === true && isAdmin;
+	const adminView = view === 'admin' && isAdmin;
 
 	const ids = indexes.map((m) => m.indexId);
 	const rows = ids.length
@@ -120,7 +120,7 @@ export async function listIndexes(
 				createTimestamp: m.createTimestamp
 			};
 		})
-		.filter((m) => includeHidden || canAccessIndex(m.visibility, isAdmin));
+		.filter((m) => adminView || canAccessIndex(m.visibility, isAdmin));
 }
 
 export async function getIndexMeta(

@@ -14,7 +14,7 @@ export const load: PageLoad = async ({ params, depends }) => {
 	}
 
 	try {
-		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
+		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes({ view: 'admin' })]);
 		return {
 			integrationId: params.integration,
 			apiKeys,

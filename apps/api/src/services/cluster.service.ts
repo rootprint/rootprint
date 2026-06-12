@@ -11,7 +11,7 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 	const healthRaw = await qw.health().catch(translateQuickwitError);
 
 	const [indexes, snapshots] = await Promise.all([
-		listIndexes(db, qw, 'admin'),
+		listIndexes(db, qw, 'admin', 'admin'),
 		getLatestSnapshotsByIndex(db)
 	]);
 
