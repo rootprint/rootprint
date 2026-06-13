@@ -259,23 +259,45 @@ function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfi
 		...(input.vrlScript ? { transform: { script: input.vrlScript } } : {})
 	};
 
-	if (input.sourceType === 'kinesis') {
-		return {
-			...base,
-			params: {
-				stream_name: input.streamName,
-				...(input.region ? { region: input.region } : {}),
-				...(input.endpoint ? { endpoint: input.endpoint } : {})
-			}
-		} as SourceConfig;
+	switch (input.sourceType) {
+		case 'kinesis':
+			return {
+				...base,
+				params: {
+					stream_name: input.streamName,
+					...(input.region ? { region: input.region } : {}),
+					...(input.endpoint ? { endpoint: input.endpoint } : {})
+				}
+			} as SourceConfig;
+		case 'file':
+			return {
+				...base,
+				params: {
+					notifications: [
+						{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }
+					]
+				}
+			} as SourceConfig;
+		case 'kafka':
+			return {
+				...base,
+				params: {
+					topic: input.topic,
+					...(input.clientLogLevel ? { client_log_level: input.clientLogLevel } : {}),
+					...(input.clientParams ? { client_params: input.clientParams } : {}),
+					enable_backfill_mode: input.enableBackfillMode ?? false
+				}
+			} as SourceConfig;
+		case 'pulsar':
+			return {
+				...base,
+				params: {
+					topics: input.topics,
+					address: input.address,
+					...(input.consumerName ? { consumer_name: input.consumerName } : {})
+				}
+			} as SourceConfig;
 	}
-
-	return {
-		...base,
-		params: {
-			notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
-		}
-	} as SourceConfig;
 }
 
 export async function createSource(
@@ -316,6 +338,16 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 	const hasUnsupportedConfig =
 		notifications.length > 1 || notifications.some((n) => n.type !== 'sqs');
 
+	const clientParams =
+		params.client_params != null &&
+		typeof params.client_params === 'object' &&
+		!Array.isArray(params.client_params)
+			? (params.client_params as Record<string, unknown>)
+			: null;
+	const topics = Array.isArray(params.topics)
+		? params.topics.filter((t): t is string => typeof t === 'string')
+		: null;
+
 	return {
 		sourceId: source.sourceId,
 		sourceType: source.sourceType,
@@ -328,6 +360,14 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 		queueUrl: typeof firstNotification.queue_url === 'string' ? firstNotification.queue_url : null,
 		messageType:
 			typeof firstNotification.message_type === 'string' ? firstNotification.message_type : null,
+		topic: typeof params.topic === 'string' ? params.topic : null,
+		clientLogLevel: typeof params.client_log_level === 'string' ? params.client_log_level : null,
+		clientParams,
+		enableBackfillMode:
+			typeof params.enable_backfill_mode === 'boolean' ? params.enable_backfill_mode : null,
+		topics,
+		address: typeof params.address === 'string' ? params.address : null,
+		consumerName: typeof params.consumer_name === 'string' ? params.consumer_name : null,
 		vrlScript: source.vrlScript,
 		hasUnsupportedConfig
 	};
@@ -373,18 +413,41 @@ function mergeSourceConfig(
 	}
 
 	const currentParams = (current.params ?? {}) as Record<string, unknown>;
-	if (input.sourceType === 'kinesis') {
-		merged.params = {
-			...currentParams,
-			stream_name: input.streamName,
-			...(input.region ? { region: input.region } : {}),
-			...(input.endpoint ? { endpoint: input.endpoint } : {})
-		};
-	} else {
-		merged.params = {
-			...currentParams,
-			notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
-		};
+	switch (input.sourceType) {
+		case 'kinesis':
+			merged.params = {
+				...currentParams,
+				stream_name: input.streamName,
+				...(input.region ? { region: input.region } : {}),
+				...(input.endpoint ? { endpoint: input.endpoint } : {})
+			};
+			break;
+		case 'file':
+			merged.params = {
+				...currentParams,
+				notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
+			};
+			break;
+		case 'kafka':
+			// Rebuild fresh (no spread): client_params is the full user-edited object,
+			// and enable_backfill_mode is set explicitly so unchecking it on edit clears it.
+			merged.params = {
+				topic: input.topic,
+				...(input.clientLogLevel ? { client_log_level: input.clientLogLevel } : {}),
+				...(input.clientParams ? { client_params: input.clientParams } : {}),
+				enable_backfill_mode: input.enableBackfillMode ?? false
+			};
+			break;
+		case 'pulsar':
+			// Spread currentParams so params we don't model (e.g. `authentication`)
+			// survive an edit instead of being silently dropped.
+			merged.params = {
+				...currentParams,
+				topics: input.topics,
+				address: input.address,
+				...(input.consumerName ? { consumer_name: input.consumerName } : {})
+			};
+			break;
 	}
 
 	return merged;

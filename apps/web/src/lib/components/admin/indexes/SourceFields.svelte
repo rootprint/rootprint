@@ -136,6 +136,8 @@
 				<select id="src-type" bind:value={form.sourceType} class="select select-sm w-full">
 					<option value="kinesis">Amazon Kinesis</option>
 					<option value="file">File (S3 / SQS notifications)</option>
+					<option value="kafka">Apache Kafka</option>
+					<option value="pulsar">Apache Pulsar</option>
 				</select>
 			{/if}
 		</div>
@@ -145,22 +147,39 @@
 		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
 			<div>
 				<label for="src-stream" class="text-sm">Stream name</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">The Kinesis stream to consume.</div>
+				<div class="text-base-content/60 mt-0.5 text-xs">
+					{#if mode === 'edit'}
+						Immutable once the source is created.
+					{:else}
+						The Kinesis stream to consume.
+					{/if}
+				</div>
 			</div>
 			<div class="flex flex-col gap-1">
-				<input
-					id="src-stream"
-					type="text"
-					bind:value={form.streamName}
-					class="input input-sm w-full"
-					class:input-error={fieldErrors.streamName}
-					placeholder="my-stream"
-					autocomplete="off"
-					aria-invalid={fieldErrors.streamName ? 'true' : undefined}
-					aria-describedby={fieldErrors.streamName ? 'src-stream-msg' : undefined}
-				/>
-				{#if fieldErrors.streamName}
-					<p id="src-stream-msg" class="text-error text-xs">{fieldErrors.streamName}</p>
+				{#if mode === 'edit'}
+					<input
+						id="src-stream"
+						type="text"
+						value={form.streamName}
+						class="input input-sm w-full"
+						readonly
+						aria-label="Stream name (read-only)"
+					/>
+				{:else}
+					<input
+						id="src-stream"
+						type="text"
+						bind:value={form.streamName}
+						class="input input-sm w-full"
+						class:input-error={fieldErrors.streamName}
+						placeholder="my-stream"
+						autocomplete="off"
+						aria-invalid={fieldErrors.streamName ? 'true' : undefined}
+						aria-describedby={fieldErrors.streamName ? 'src-stream-msg' : undefined}
+					/>
+					{#if fieldErrors.streamName}
+						<p id="src-stream-msg" class="text-error text-xs">{fieldErrors.streamName}</p>
+					{/if}
 				{/if}
 			</div>
 		</div>
@@ -169,61 +188,83 @@
 			<div>
 				<div class="text-sm">AWS endpoint</div>
 				<div class="text-base-content/60 mt-0.5 text-xs">
-					Provide a region or a custom endpoint — not both. Credentials come from the environment.
+					{#if mode === 'edit'}
+						Immutable once the source is created.
+					{:else}
+						Provide a region or a custom endpoint — not both. Credentials come from the environment.
+					{/if}
 				</div>
 			</div>
 			<div class="flex flex-col gap-2">
-				<div class="flex gap-4 text-sm">
-					<label class="flex items-center gap-2">
-						<input type="radio" class="radio radio-sm" value="region" bind:group={form.awsTarget} />
-						Region
-					</label>
-					<label class="flex items-center gap-2">
-						<input
-							type="radio"
-							class="radio radio-sm"
-							value="endpoint"
-							bind:group={form.awsTarget}
-						/>
-						Custom endpoint
-					</label>
-				</div>
-				{#if form.awsTarget === 'region'}
+				{#if mode === 'edit'}
 					<input
-						id="src-region"
+						id="src-aws-endpoint"
 						type="text"
-						bind:value={form.region}
+						value={form.awsTarget === 'endpoint' ? form.endpoint : form.region}
 						class="input input-sm w-full"
-						class:input-error={fieldErrors.region}
-						placeholder="us-east-1"
-						autocomplete="off"
-						aria-label="AWS region"
-						aria-invalid={fieldErrors.region ? 'true' : undefined}
-						aria-describedby={fieldErrors.region ? 'src-region-msg' : undefined}
+						readonly
+						aria-label={form.awsTarget === 'endpoint'
+							? 'Custom endpoint (read-only)'
+							: 'AWS region (read-only)'}
 					/>
-					{#if fieldErrors.region}
-						<p id="src-region-msg" class="text-error text-xs">{fieldErrors.region}</p>
-					{/if}
 				{:else}
-					<input
-						id="src-endpoint"
-						type="text"
-						bind:value={form.endpoint}
-						class="input input-sm w-full"
-						class:input-error={fieldErrors.endpoint}
-						placeholder="http://localhost:4566"
-						autocomplete="off"
-						aria-label="Custom endpoint"
-						aria-invalid={fieldErrors.endpoint ? 'true' : undefined}
-						aria-describedby={fieldErrors.endpoint ? 'src-endpoint-msg' : undefined}
-					/>
-					{#if fieldErrors.endpoint}
-						<p id="src-endpoint-msg" class="text-error text-xs">{fieldErrors.endpoint}</p>
+					<div class="flex gap-4 text-sm">
+						<label class="flex items-center gap-2">
+							<input
+								type="radio"
+								class="radio radio-sm"
+								value="region"
+								bind:group={form.awsTarget}
+							/>
+							Region
+						</label>
+						<label class="flex items-center gap-2">
+							<input
+								type="radio"
+								class="radio radio-sm"
+								value="endpoint"
+								bind:group={form.awsTarget}
+							/>
+							Custom endpoint
+						</label>
+					</div>
+					{#if form.awsTarget === 'region'}
+						<input
+							id="src-region"
+							type="text"
+							bind:value={form.region}
+							class="input input-sm w-full"
+							class:input-error={fieldErrors.region}
+							placeholder="us-east-1"
+							autocomplete="off"
+							aria-label="AWS region"
+							aria-invalid={fieldErrors.region ? 'true' : undefined}
+							aria-describedby={fieldErrors.region ? 'src-region-msg' : undefined}
+						/>
+						{#if fieldErrors.region}
+							<p id="src-region-msg" class="text-error text-xs">{fieldErrors.region}</p>
+						{/if}
+					{:else}
+						<input
+							id="src-endpoint"
+							type="text"
+							bind:value={form.endpoint}
+							class="input input-sm w-full"
+							class:input-error={fieldErrors.endpoint}
+							placeholder="http://localhost:4566"
+							autocomplete="off"
+							aria-label="Custom endpoint"
+							aria-invalid={fieldErrors.endpoint ? 'true' : undefined}
+							aria-describedby={fieldErrors.endpoint ? 'src-endpoint-msg' : undefined}
+						/>
+						{#if fieldErrors.endpoint}
+							<p id="src-endpoint-msg" class="text-error text-xs">{fieldErrors.endpoint}</p>
+						{/if}
 					{/if}
 				{/if}
 			</div>
 		</div>
-	{:else}
+	{:else if form.sourceType === 'file'}
 		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
 			<div>
 				<label for="src-queue" class="text-sm">SQS queue URL</label>
@@ -261,6 +302,172 @@
 					<option value="s3_notification">S3 notification</option>
 					<option value="raw_uri">Raw URI</option>
 				</select>
+			</div>
+		</div>
+	{:else if form.sourceType === 'kafka'}
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-topic" class="text-sm">Topic</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">
+					{#if mode === 'edit'}
+						Immutable once the source is created.
+					{:else}
+						The Kafka topic to consume.
+					{/if}
+				</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				{#if mode === 'edit'}
+					<input
+						id="src-topic"
+						type="text"
+						value={form.topic}
+						class="input input-sm w-full"
+						readonly
+						aria-label="Kafka topic (read-only)"
+					/>
+				{:else}
+					<input
+						id="src-topic"
+						type="text"
+						bind:value={form.topic}
+						class="input input-sm w-full"
+						class:input-error={fieldErrors.topic}
+						placeholder="my-topic"
+						autocomplete="off"
+						aria-invalid={fieldErrors.topic ? 'true' : undefined}
+						aria-describedby={fieldErrors.topic ? 'src-topic-msg' : undefined}
+					/>
+					{#if fieldErrors.topic}
+						<p id="src-topic-msg" class="text-error text-xs">{fieldErrors.topic}</p>
+					{/if}
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-client-params" class="text-sm">Client params</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">
+					librdkafka settings as a JSON object (e.g. bootstrap.servers, security.protocol).
+					Optional.
+				</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				<textarea
+					id="src-client-params"
+					bind:value={form.clientParamsJson}
+					rows="6"
+					class="textarea textarea-sm w-full font-mono"
+					class:textarea-error={fieldErrors.clientParams}
+					placeholder={'{\n  "bootstrap.servers": "localhost:9092"\n}'}
+					autocomplete="off"
+					spellcheck="false"
+					aria-invalid={fieldErrors.clientParams ? 'true' : undefined}
+					aria-describedby={fieldErrors.clientParams ? 'src-client-params-msg' : undefined}
+				></textarea>
+				{#if fieldErrors.clientParams}
+					<p id="src-client-params-msg" class="text-error text-xs">{fieldErrors.clientParams}</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-log-level" class="text-sm">Client log level</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">librdkafka log verbosity. Optional.</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				<select id="src-log-level" bind:value={form.clientLogLevel} class="select select-sm w-full">
+					<option value="">Default (info)</option>
+					<option value="debug">debug</option>
+					<option value="info">info</option>
+					<option value="warn">warn</option>
+					<option value="error">error</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<div class="text-sm">Backfill mode</div>
+				<div class="text-base-content/60 mt-0.5 text-xs">
+					Consume from the topic's start, then stop at the current end.
+				</div>
+			</div>
+			<label class="flex items-center gap-2 text-sm">
+				<input
+					type="checkbox"
+					class="checkbox checkbox-sm"
+					bind:checked={form.enableBackfillMode}
+				/>
+				Enable backfill mode
+			</label>
+		</div>
+	{:else if form.sourceType === 'pulsar'}
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-topics" class="text-sm">Topics</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">
+					One topic per line. At least one required.
+				</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				<textarea
+					id="src-topics"
+					bind:value={form.pulsarTopics}
+					rows="4"
+					class="textarea textarea-sm w-full font-mono"
+					class:textarea-error={fieldErrors.topics}
+					placeholder="persistent://public/default/my-topic"
+					autocomplete="off"
+					spellcheck="false"
+					aria-invalid={fieldErrors.topics ? 'true' : undefined}
+					aria-describedby={fieldErrors.topics ? 'src-topics-msg' : undefined}
+				></textarea>
+				{#if fieldErrors.topics}
+					<p id="src-topics-msg" class="text-error text-xs">{fieldErrors.topics}</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-address" class="text-sm">Address</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">Pulsar broker URL.</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				<input
+					id="src-address"
+					type="text"
+					bind:value={form.address}
+					class="input input-sm w-full"
+					class:input-error={fieldErrors.address}
+					placeholder="pulsar://localhost:6650"
+					autocomplete="off"
+					aria-invalid={fieldErrors.address ? 'true' : undefined}
+					aria-describedby={fieldErrors.address ? 'src-address-msg' : undefined}
+				/>
+				{#if fieldErrors.address}
+					<p id="src-address-msg" class="text-error text-xs">{fieldErrors.address}</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-consumer" class="text-sm">Consumer name</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">Defaults to "quickwit". Optional.</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				<input
+					id="src-consumer"
+					type="text"
+					bind:value={form.consumerName}
+					class="input input-sm w-full"
+					placeholder="quickwit"
+					autocomplete="off"
+				/>
 			</div>
 		</div>
 	{/if}

@@ -10,7 +10,7 @@
 	import { updateSourceSchema } from 'api/schemas';
 	import type { SourceDetail } from 'api/types';
 	import SourceFields from './SourceFields.svelte';
-	import { formToUpdateInput, sourceDetailToForm } from './source-form';
+	import { formToUpdateInput, sourceDetailToForm, parseClientParams } from './source-form';
 
 	let { indexId, source }: { indexId: string; source: SourceDetail } = $props();
 
@@ -25,6 +25,14 @@
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
+
+		if (form.sourceType === 'kafka') {
+			const clientParams = parseClientParams(form.clientParamsJson);
+			if (clientParams.error) {
+				fieldErrors = { clientParams: clientParams.error };
+				return;
+			}
+		}
 
 		const parsed = v.safeParse(updateSourceSchema, formToUpdateInput(form));
 		if (!parsed.success) {

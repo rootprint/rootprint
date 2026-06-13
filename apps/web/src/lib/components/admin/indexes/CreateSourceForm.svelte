@@ -9,7 +9,7 @@
 	import { createSourceSchema } from 'api/schemas';
 	import type { IndexDetail } from 'api/types';
 	import SourceFields from './SourceFields.svelte';
-	import { emptySourceForm, formToCreateInput } from './source-form';
+	import { emptySourceForm, formToCreateInput, parseClientParams } from './source-form';
 
 	let { detail }: { detail: IndexDetail } = $props();
 
@@ -20,6 +20,14 @@
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
+
+		if (form.sourceType === 'kafka') {
+			const clientParams = parseClientParams(form.clientParamsJson);
+			if (clientParams.error) {
+				fieldErrors = { clientParams: clientParams.error };
+				return;
+			}
+		}
 
 		const parsed = v.safeParse(createSourceSchema, formToCreateInput(form));
 		if (!parsed.success) {
