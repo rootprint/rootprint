@@ -4,6 +4,7 @@
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { formatCell } from '$lib/utils/column-width';
+	import { rowActivate } from '$lib/actions/row-activate';
 
 	let {
 		hit,
@@ -11,14 +12,14 @@
 		gridTemplate,
 		timezoneMode,
 		lineWrap = false,
-		onclick = () => {}
+		onActivate = () => {}
 	}: {
 		hit: LogHit;
 		columns: string[];
 		gridTemplate: string;
 		timezoneMode: TimezoneMode;
 		lineWrap?: boolean;
-		onclick?: () => void;
+		onActivate?: () => void;
 	} = $props();
 
 	const cellWrap = $derived(
@@ -28,11 +29,12 @@
 	const rowWidth = $derived(lineWrap ? 'w-full' : 'w-max min-w-full');
 </script>
 
-<button
-	type="button"
+<div
+	role="button"
+	tabindex="0"
 	class="border-line grid min-h-[25px] items-stretch border-b text-left font-mono text-xs hover:bg-[color-mix(in_oklab,var(--level-color)_14%,transparent)] {rowWidth}"
 	style="grid-template-columns: {gridTemplate}; --level-color: {levelColor(hit.level)};"
-	{onclick}
+	use:rowActivate={onActivate}
 >
 	<span
 		aria-hidden="true"
@@ -49,4 +51,4 @@
 		</span>
 	{/each}
 	<span class="px-2 py-1 {messageWrap}">{hit.message}</span>
-</button>
+</div>

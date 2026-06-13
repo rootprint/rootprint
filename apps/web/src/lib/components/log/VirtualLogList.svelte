@@ -96,7 +96,7 @@
 							columns={activeFields}
 							{timezoneMode}
 							{lineWrap}
-							onclick={() => onRowClick(logs[item.index])}
+							onActivate={() => onRowClick(logs[item.index])}
 						/>
 					{:else}
 						<LogRow
@@ -105,7 +105,7 @@
 							{gridTemplate}
 							{timezoneMode}
 							{lineWrap}
-							onclick={() => onRowClick(logs[item.index])}
+							onActivate={() => onRowClick(logs[item.index])}
 						/>
 					{/if}
 				</div>
