@@ -16,9 +16,9 @@ control, and Quickwit-powered search without sending logs to a hosted SaaS.
 
 ## What You Get
 
-- **Search on object storage** - Query Quickwit-backed indexes stored on S3, MinIO, R2,
+- **Search on object storage** - Query indexes stored on S3, MinIO, R2,
   GCS, Azure Blob, or local disk.
-- **Open ingestion** - Send logs through OTLP HTTP, NDJSON HTTP, Vector, Fluent Bit,
+- **Open ingestion** - Send logs through OTLP Protobuf, NDJSON HTTP, Vector, Fluent Bit,
   Docker, Node.js, Python, Go, and other OTEL-compatible sources.
 - **Incident-ready UI** - Use severity-aware rows, histograms, field filters, saved views,
   detail drawers, and share links.
@@ -49,6 +49,14 @@ Then:
 4. Search them from the Rootprint UI.
 
 Full install guide: https://docs.rootprint.io/install/docker-compose
+
+## Documentation
+
+- Docs: https://docs.rootprint.io
+- Quickstart: https://docs.rootprint.io/quickstart
+- Send logs: https://docs.rootprint.io/send-logs/overview
+- API reference: https://docs.rootprint.io/api/overview
+- Query syntax: https://docs.rootprint.io/search/query-language
 
 ## Repository Layout
 
@@ -85,14 +93,6 @@ Expect breaking changes in APIs, configuration, storage schema, and runtime beha
 releases. Pin exact versions and read the changelog before upgrading.
 
 See [CHANGELOG.md](CHANGELOG.md).
-
-## Documentation
-
-- Docs: https://docs.rootprint.io
-- Quickstart: https://docs.rootprint.io/quickstart
-- Send logs: https://docs.rootprint.io/send-logs/overview
-- API reference: https://docs.rootprint.io/api/overview
-- Query syntax: https://docs.rootprint.io/search/query-language
 
 ## License
 
