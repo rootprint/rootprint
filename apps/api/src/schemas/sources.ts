@@ -1,6 +1,8 @@
 import * as v from 'valibot';
 
-export const SOURCE_TYPES = ['kinesis', 'file'] as const;
+export const SOURCE_TYPES = ['kinesis', 'file', 'kafka', 'pulsar'] as const;
+
+export const KAFKA_LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 
 export const SOURCE_INPUT_FORMATS = [
 	'json',
@@ -51,6 +53,28 @@ const fileFields = {
 	messageType: v.optional(v.picklist(FILE_MESSAGE_TYPES), 's3_notification')
 };
 
+const kafkaFields = {
+	inputFormat,
+	numPipelines,
+	vrlScript,
+	topic: v.pipe(v.string(), v.minLength(1, 'Topic is required.')),
+	clientLogLevel: v.optional(v.picklist(KAFKA_LOG_LEVELS)),
+	clientParams: v.optional(v.record(v.string(), v.unknown())),
+	enableBackfillMode: v.optional(v.boolean())
+};
+
+const pulsarFields = {
+	inputFormat,
+	numPipelines,
+	vrlScript,
+	topics: v.pipe(
+		v.array(v.pipe(v.string(), v.minLength(1))),
+		v.minLength(1, 'At least one topic is required.')
+	),
+	address: v.pipe(v.string(), v.minLength(1, 'Pulsar address is required.')),
+	consumerName: v.optional(v.pipe(v.string(), v.minLength(1)))
+};
+
 const kinesisSource = v.pipe(
 	v.object({ sourceId, sourceType: v.literal('kinesis'), ...kinesisFields }),
 	v.forward(
@@ -64,7 +88,16 @@ const kinesisSource = v.pipe(
 
 const fileSource = v.object({ sourceId, sourceType: v.literal('file'), ...fileFields });
 
-export const createSourceSchema = v.variant('sourceType', [kinesisSource, fileSource]);
+const kafkaSource = v.object({ sourceId, sourceType: v.literal('kafka'), ...kafkaFields });
+
+const pulsarSource = v.object({ sourceId, sourceType: v.literal('pulsar'), ...pulsarFields });
+
+export const createSourceSchema = v.variant('sourceType', [
+	kinesisSource,
+	fileSource,
+	kafkaSource,
+	pulsarSource
+]);
 
 export type CreateSourceInput = v.InferOutput<typeof createSourceSchema>;
 
@@ -81,6 +114,15 @@ const kinesisUpdate = v.pipe(
 
 const fileUpdate = v.object({ sourceType: v.literal('file'), ...fileFields });
 
-export const updateSourceSchema = v.variant('sourceType', [kinesisUpdate, fileUpdate]);
+const kafkaUpdate = v.object({ sourceType: v.literal('kafka'), ...kafkaFields });
+
+const pulsarUpdate = v.object({ sourceType: v.literal('pulsar'), ...pulsarFields });
+
+export const updateSourceSchema = v.variant('sourceType', [
+	kinesisUpdate,
+	fileUpdate,
+	kafkaUpdate,
+	pulsarUpdate
+]);
 
 export type UpdateSourceInput = v.InferOutput<typeof updateSourceSchema>;

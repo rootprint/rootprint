@@ -35,6 +35,13 @@ export const SourceDetailSchema = named(
 		endpoint: v.nullable(v.string()),
 		queueUrl: v.nullable(v.string()),
 		messageType: v.nullable(v.string()),
+		topic: v.nullable(v.string()),
+		clientLogLevel: v.nullable(v.string()),
+		clientParams: v.nullable(v.record(v.string(), v.unknown())),
+		enableBackfillMode: v.nullable(v.boolean()),
+		topics: v.nullable(v.array(v.string())),
+		address: v.nullable(v.string()),
+		consumerName: v.nullable(v.string()),
 		vrlScript: v.nullable(v.string()),
 		hasUnsupportedConfig: v.boolean()
 	})
