@@ -13,6 +13,7 @@ import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal
 import { withIndexConfig } from '../middleware/with-index-config.js';
 import { withIndexMeta } from '../middleware/with-index-meta.js';
 import {
+	createIndexSchema,
 	FieldParams,
 	FieldValuesBulkQuery,
 	FieldValuesQuery,
@@ -34,6 +35,7 @@ import {
 	IndexListResponse,
 	IndexSourceSchema,
 	IndexStatsResponse,
+	IndexSummarySchema,
 	IndexViewConfigResponse,
 	LogSearchResponse,
 	PreferencesResponse,
@@ -41,6 +43,7 @@ import {
 } from '../schemas/responses/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {
+	createIndex,
 	createSource,
 	deleteIndex,
 	deleteSource,
@@ -82,6 +85,24 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			const { view } = c.req.valid('query');
 			const session = c.get('session');
 			return c.json(await listIndexes(db, quickwit, session.user.role, view));
+		}
+	)
+	.post(
+		'/',
+		describe({
+			tag: 'Index management',
+			summary: 'Create index',
+			ok: IndexSummarySchema,
+			okStatus: 201,
+			errors: [400, 409]
+		}),
+		requireUser,
+		requireAdmin,
+		validator('json', createIndexSchema),
+		async (c) => {
+			const input = c.req.valid('json');
+			const created = await createIndex(quickwit, input);
+			return c.json(created, 201);
 		}
 	)
 	.get(

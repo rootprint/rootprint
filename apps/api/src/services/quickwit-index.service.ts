@@ -21,7 +21,7 @@ function flattenFieldMappings(mappings: FieldMapping[], prefix = ''): IndexField
 	return result;
 }
 
-function normalize(meta: IndexMetadata): QuickwitIndexMetadata {
+export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetadata {
 	const cfg = meta.index_config;
 	const doc = cfg.doc_mapping;
 	const sources: QuickwitSource[] = (meta.sources ?? []).map((s: SourceConfig) => ({
@@ -55,7 +55,7 @@ function normalize(meta: IndexMetadata): QuickwitIndexMetadata {
 
 export async function listIndexes(qw: QuickwitClient): Promise<QuickwitIndexMetadata[]> {
 	const all = await qw.listIndexes();
-	return all.map(normalize);
+	return all.map(normalizeIndexMetadata);
 }
 
 export async function getIndex(
@@ -63,7 +63,7 @@ export async function getIndex(
 	indexId: string
 ): Promise<QuickwitIndexMetadata | null> {
 	try {
-		return normalize(await qw.getIndex(indexId));
+		return normalizeIndexMetadata(await qw.getIndex(indexId));
 	} catch (e) {
 		if (e instanceof NotFoundError) return null;
 		throw e;
