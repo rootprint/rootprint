@@ -1,5 +1,12 @@
 # Rootprint
 
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](#)
+[![Hono](https://img.shields.io/badge/Hono-%23E36002.svg?logo=hono&logoColor=white)](#)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-%23FF3E00.svg?logo=svelte&logoColor=white)](#)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%234169E1.svg?logo=postgresql&logoColor=white)](#)
+[![Release](https://img.shields.io/github/v/release/rootprint/rootprint)](https://github.com/rootprint/rootprint/releases)
+[![License](https://img.shields.io/github/license/rootprint/rootprint)](LICENSE)
+
 Open-source, self-hosted log management with full-text search on object-storage-backed indexes.
 
 Rootprint gives engineering teams a focused log search UI, OpenTelemetry ingestion, team access
