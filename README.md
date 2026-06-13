@@ -1,34 +1,25 @@
-<div align="center">
-  <h1>
-		<img alt="Rootprint logo" src="apps/web/src/lib/assets/logo.png" width="40" align="center">
-    Rootprint
-  </h1>
-  <p>Open-source, self-hosted log management platform that runs search directly on cloud storage.</p>
+# Rootprint
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-%233178C6.svg?logo=typescript&logoColor=white)](#)
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](#)
-[![Hono](https://img.shields.io/badge/Hono-%23E36002.svg?logo=hono&logoColor=white)](#)
-[![SvelteKit](https://img.shields.io/badge/SvelteKit-%23FF3E00.svg?logo=svelte&logoColor=white)](#)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%234169E1.svg?logo=postgresql&logoColor=white)](#)
-[![Release](https://img.shields.io/github/v/release/rootprint/rootprint)](https://github.com/rootprint/rootprint/releases)
-[![License](https://img.shields.io/github/license/rootprint/rootprint)](LICENSE)
+Open-source, self-hosted log management with full-text search on object-storage-backed indexes.
 
-</div>
+Rootprint gives engineering teams a focused log search UI, OpenTelemetry ingestion, team access
+control, and Quickwit-powered search without sending logs to a hosted SaaS.
 
-<div align="center">
-  <picture>
-    <img alt="Rootprint Screenshot" src="apps/web/static/hero-screenshot.png" width="80%">
-  </picture>
-</div>
+![Rootprint screenshot](apps/web/static/hero-screenshot.png)
 
-- **Search on object storage** — query logs stored directly on S3 and compatible object storage with Quickwit-powered full-text search
-- **Readable investigation workflow** — use severity-aware log views, structured fields, quick filters, and histograms to move through incidents faster
-- **Open ingest and export paths** — send logs over OTLP, use the HTTP gateway for custom schemas, or ingest from sources like SQS, Kafka, or Pulsar
-- **Self-hosted team access** — run Rootprint on your own infrastructure with invite-based access control and Google Authentication
+## What You Get
 
-## Status
-
-Rootprint is under active development and has not yet reached a stable 1.0 release. Every release may introduce breaking changes in APIs, configuration, storage schema, or runtime behavior. Pin to an exact version, read the [CHANGELOG](CHANGELOG.md) before upgrading, and expect to revisit your setup between releases.
+- **Search on object storage** - Query Quickwit-backed indexes stored on S3, MinIO, R2,
+  GCS, Azure Blob, or local disk.
+- **Open ingestion** - Send logs through OTLP HTTP, NDJSON HTTP, Vector, Fluent Bit,
+  Docker, Node.js, Python, Go, and other OTEL-compatible sources.
+- **Incident-ready UI** - Use severity-aware rows, histograms, field filters, saved views,
+  detail drawers, and share links.
+- **Team access** - Invite users, manage roles, create scoped ingest keys, and enable Google
+  or GitHub OAuth allowlists.
+- **Admin controls** - Manage indexes, sources, field mappings, exports, activity, and
+  Quickwit cluster health.
+- **Open source** - Apache-2.0 licensed. Run it, inspect it, fork it.
 
 ## Quick Start
 
@@ -37,15 +28,65 @@ curl -o docker-compose.yml https://docs.rootprint.io/files/docker-compose.full.y
 docker compose up -d
 ```
 
-For full installation options, see [docs.rootprint.io/install/docker-compose](https://docs.rootprint.io/install/docker-compose).
+Open:
+
+```text
+http://localhost:8282
+```
+
+Then:
+
+1. Create the first admin account.
+2. Create an ingest key in **Settings -> Ingest keys**.
+3. Send logs to the bundled OpenTelemetry index.
+4. Search them from the Rootprint UI.
+
+Full install guide: https://docs.rootprint.io/install/docker-compose
 
 ## Repository Layout
 
-Rootprint is organized as a Bun-workspace monorepo under `apps/`:
+```text
+apps/api   Hono API: ingest, search proxy, auth, admin operations
+apps/web   SvelteKit SPA: log explorer and administration UI
+```
 
-- `apps/api/` - Hono backend (logs ingest, search proxy, auth)
-- `apps/web/` - SvelteKit log viewer UI
+## Local Development
+
+```bash
+bun install
+cp .env.example .env
+docker compose up -d db quickwit
+bun --filter api db:migrate
+bun run dev:api
+bun run dev:web
+```
+
+Common checks:
+
+```bash
+bun --filter '*' check
+bun run lint
+bun run format:check
+bun --filter api build
+```
+
+## Status
+
+Rootprint is under active development and has not reached 1.0.
+
+Expect breaking changes in APIs, configuration, storage schema, and runtime behavior between
+releases. Pin exact versions and read the changelog before upgrading.
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## Documentation
+
+- Docs: https://docs.rootprint.io
+- Quickstart: https://docs.rootprint.io/quickstart
+- Send logs: https://docs.rootprint.io/send-logs/overview
+- API reference: https://docs.rootprint.io/api/overview
+- Query syntax: https://docs.rootprint.io/search/query-language
 
 ## License
 
-[Apache License 2.0](LICENSE)
+Apache-2.0. See [LICENSE](LICENSE).
