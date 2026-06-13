@@ -11,6 +11,13 @@ export const ShareViewResponse = named(
 		query: v.string(),
 		startTime: v.number(),
 		endTime: v.number(),
-		hit: v.record(v.string(), v.unknown())
+		hit: v.record(v.string(), v.unknown()),
+		filters: v.array(
+			v.object({
+				field: v.string(),
+				value: v.string(),
+				exclude: v.boolean()
+			})
+		)
 	})
 );

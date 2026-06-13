@@ -23,7 +23,7 @@
 
 	const joined = $derived(createdAt ? formatDate(createdAt) : 'Unknown');
 	const lastActiveLabel = $derived(lastActive ? formatRelativeTime(lastActive) : 'Never');
-	const authMethod = $derived(hasCredentialAccount ? 'Password' : 'Google');
+	const authMethod = $derived(hasCredentialAccount ? 'Password' : 'Single sign-on');
 	const expiresLabel = $derived(inviteExpiresAt ? formatDateTime(inviteExpiresAt) : null);
 	const showInvite = $derived(!!inviteUrl && (status === 'pending' || status === 'expired'));
 

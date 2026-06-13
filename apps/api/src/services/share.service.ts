@@ -21,7 +21,8 @@ export async function createShare(
 			query: input.query,
 			startTime: input.startTime,
 			endTime: input.endTime,
-			hit: input.hit
+			hit: input.hit,
+			filters: input.filters
 		})
 		.returning({ code: share.code });
 	if (!row) throw internal('Failed to create share');
@@ -35,7 +36,8 @@ export async function resolveShare(db: Db, code: string): Promise<ShareView> {
 			query: share.query,
 			startTime: share.startTime,
 			endTime: share.endTime,
-			hit: share.hit
+			hit: share.hit,
+			filters: share.filters
 		})
 		.from(share)
 		.where(eq(share.code, code))

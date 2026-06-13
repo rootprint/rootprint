@@ -20,14 +20,14 @@
 
 	$effect(() => {
 		if (!data.share) return;
-		const { indexId, query, startTime, endTime, hit } = data.share;
+		const { indexId, query, startTime, endTime, hit, filters } = data.share;
 		const params = serialize({
 			index: indexId,
 			query,
 			timeRange: { type: 'absolute', start: startTime, end: endTime },
 			timezoneMode: 'local',
 			sortDirection: 'desc',
-			filters: []
+			filters
 		});
 		void goto(`/?${params.toString()}`, {
 			replaceState: true,

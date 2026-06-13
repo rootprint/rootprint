@@ -15,7 +15,7 @@
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
-	const MAX_HIT_BYTES = 60 * 1024;
+	const MAX_SHARE_PAYLOAD_BYTES = 64 * 1024;
 
 	const DRAWER_WIDTH_KEY = 'rootprint.drawerWidth';
 	const MIN_DRAWER_WIDTH = 400;
@@ -130,20 +130,22 @@
 			toast.error('Search context not ready');
 			return;
 		}
-		const payloadSize = new TextEncoder().encode(JSON.stringify(hit.raw)).byteLength;
-		if (payloadSize > MAX_HIT_BYTES) {
-			toast.error('Log too large to share');
+		const sharePayload = {
+			indexId,
+			query: store.query,
+			startTime,
+			endTime,
+			hit: hit.raw,
+			filters: store.filters
+		};
+		const payloadSize = new TextEncoder().encode(JSON.stringify(sharePayload)).byteLength;
+		if (payloadSize > MAX_SHARE_PAYLOAD_BYTES) {
+			toast.error('Share payload too large');
 			return;
 		}
 		sharing = true;
 		try {
-			const { code } = await createShare({
-				indexId,
-				query: store.query,
-				startTime,
-				endTime,
-				hit: hit.raw
-			});
+			const { code } = await createShare(sharePayload);
 			const url = `${window.location.origin}/s/${code}`;
 			await copyWithToast(url, 'Share link copied', 'Failed to copy share link');
 		} catch (e) {

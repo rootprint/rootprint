@@ -134,6 +134,7 @@ export const share = pgTable(
 		startTime: integer('start_time').notNull(),
 		endTime: integer('end_time').notNull(),
 		hit: jsonb('hit').$type<Record<string, unknown>>().notNull(),
+		filters: jsonb('filters').$type<Filter[]>().notNull().default([]),
 		createdAt: timestamp('created_at').defaultNow().notNull()
 	},
 	(table) => [index('share_index_id').on(table.indexId)]

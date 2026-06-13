@@ -1833,6 +1833,28 @@
 					"endTime": {
 						"type": "number"
 					},
+					"filters": {
+						"items": {
+							"properties": {
+								"exclude": {
+									"type": "boolean"
+								},
+								"field": {
+									"type": "string"
+								},
+								"value": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"field",
+								"value",
+								"exclude"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
 					"hit": {
 						"additionalProperties": {},
 						"propertyNames": {
@@ -1855,7 +1877,8 @@
 					"query",
 					"startTime",
 					"endTime",
-					"hit"
+					"hit",
+					"filters"
 				],
 				"type": "object"
 			},
@@ -15142,6 +15165,30 @@
 									"endTime": {
 										"minimum": 0,
 										"type": "integer"
+									},
+									"filters": {
+										"default": [],
+										"items": {
+											"properties": {
+												"exclude": {
+													"type": "boolean"
+												},
+												"field": {
+													"minLength": 1,
+													"type": "string"
+												},
+												"value": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"field",
+												"value",
+												"exclude"
+											],
+											"type": "object"
+										},
+										"type": "array"
 									},
 									"hit": {
 										"additionalProperties": {},

@@ -6,7 +6,17 @@ export const shareCreateSchema = v.pipe(
 		query: v.string(),
 		startTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		endTime: v.pipe(v.number(), v.integer(), v.minValue(0)),
-		hit: v.record(v.string(), v.unknown())
+		hit: v.record(v.string(), v.unknown()),
+		filters: v.optional(
+			v.array(
+				v.object({
+					field: v.pipe(v.string(), v.minLength(1)),
+					value: v.string(),
+					exclude: v.boolean()
+				})
+			),
+			[]
+		)
 	}),
 	v.check((b) => b.endTime >= b.startTime, 'endTime must be >= startTime')
 );

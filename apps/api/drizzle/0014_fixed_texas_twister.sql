@@ -1,0 +1,1 @@
+ALTER TABLE "share" ADD COLUMN "filters" jsonb DEFAULT '[]'::jsonb NOT NULL;

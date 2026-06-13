@@ -49,7 +49,7 @@
 			</div>
 		{:else}
 			<div class="border-line text-base-content/60 rounded-box border px-6 py-4 text-sm">
-				Password is managed by your Google account.
+				You sign in with single sign-on, so there's no password to manage.
 			</div>
 		{/if}
 
