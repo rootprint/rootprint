@@ -1,0 +1,47 @@
+meta {
+  name: Create Index
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/indexes
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "indexId": "app-logs",
+    "mode": "dynamic",
+    "timestampField": "timestamp",
+    "fieldMappings": [
+      {
+        "name": "timestamp",
+        "type": "datetime",
+        "inputFormats": ["unix_timestamp", "rfc3339"],
+        "outputFormat": "unix_timestamp_secs",
+        "fastPrecision": "seconds"
+      },
+      {
+        "name": "level",
+        "type": "text",
+        "tokenizer": "raw",
+        "fast": true
+      },
+      {
+        "name": "message",
+        "type": "text",
+        "tokenizer": "default",
+        "record": "position"
+      }
+    ],
+    "defaultSearchFields": ["message"],
+    "storeSource": false,
+    "indexFieldPresence": true,
+    "retention": {
+      "period": "90 days",
+      "schedule": "daily"
+    }
+  }
+}

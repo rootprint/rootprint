@@ -13,7 +13,16 @@ import type {
 	SaveIndexConfigFields,
 	SourceDetail
 } from '../types.js';
-import { NotFoundError, QuickwitError, type QuickwitClient, type SourceConfig } from 'quickwit-js';
+import {
+	NotFoundError,
+	QuickwitError,
+	type CreateIndexRequest,
+	type DocMapping,
+	type FieldMapping,
+	type IndexMetadata,
+	type QuickwitClient,
+	type SourceConfig
+} from 'quickwit-js';
 
 import type { Db } from '../db/index.js';
 import {
@@ -29,7 +38,12 @@ import { conflict, indexAccessError, internal, notFound } from '../utils/http-er
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
-import { getIndex as qwGetIndex, listIndexes as qwListIndexes } from './quickwit-index.service.js';
+import type { CreateIndexInput, FieldMappingInput } from '../schemas/indexes.js';
+import {
+	getIndex as qwGetIndex,
+	listIndexes as qwListIndexes,
+	normalizeIndexMetadata
+} from './quickwit-index.service.js';
 
 const DEFAULT_SETTINGS: IndexSettings = {
 	displayName: null,
@@ -84,6 +98,18 @@ export async function saveIndexConfig(
 		});
 }
 
+function toIndexSummary(m: QuickwitIndexMetadata, settings: IndexSettings): IndexSummary {
+	return {
+		indexId: m.indexId,
+		displayName: settings.displayName,
+		visibility: settings.visibility,
+		fieldCount: m.fields.length,
+		sourceCount: m.sources.length,
+		mode: m.mode,
+		createTimestamp: m.createTimestamp
+	};
+}
+
 export async function listAllIndexes(db: Db, qw: QuickwitClient): Promise<IndexSummary[]> {
 	const indexes = await qwListIndexes(qw);
 
@@ -95,18 +121,7 @@ export async function listAllIndexes(db: Db, qw: QuickwitClient): Promise<IndexS
 		rows.map((r) => [r.indexId, toIndexSettings(r)])
 	);
 
-	return indexes.map((m) => {
-		const s = settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS;
-		return {
-			indexId: m.indexId,
-			displayName: s.displayName,
-			visibility: s.visibility,
-			fieldCount: m.fields.length,
-			sourceCount: m.sources.length,
-			mode: m.mode,
-			createTimestamp: m.createTimestamp
-		};
-	});
+	return indexes.map((m) => toIndexSummary(m, settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS));
 }
 
 export async function listIndexes(
@@ -243,11 +258,10 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 	invalidateApiKeyCache();
 }
 
-// Quickwit deserializes source create/update request bodies as a
-// `VersionedSourceConfig`, which REQUIRES a `version` field (enum "0.9" | "0.7"
-// on Quickwit 0.9). Omitting it fails with "invalid config: missing version".
-// Bump this to match the Quickwit server's source-config format version.
 const QUICKWIT_SOURCE_CONFIG_VERSION = '0.9';
+const QUICKWIT_INDEX_CONFIG_VERSION = '0.9';
+
+type QwFieldMapping = FieldMapping & { coerce?: boolean; expand_dots?: boolean };
 
 function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfig {
 	const base = {
@@ -477,4 +491,93 @@ export async function resetSourceCheckpoint(
 	sourceId: string
 ): Promise<void> {
 	await withNotFound(() => qw.index(indexId).resetSourceCheckpoint(sourceId), 'Source not found');
+}
+
+function toFieldMapping(input: FieldMappingInput, timestampField: string): QwFieldMapping {
+	const fm: QwFieldMapping = { name: input.name, type: input.type };
+	if (input.stored !== undefined) fm.stored = input.stored;
+	if (input.indexed !== undefined) fm.indexed = input.indexed;
+
+	if (input.name === timestampField) fm.fast = true;
+	else if (input.fast !== undefined) fm.fast = input.fast;
+
+	switch (input.type) {
+		case 'text':
+			if (input.tokenizer) fm.tokenizer = input.tokenizer;
+			if (input.record) fm.record = input.record;
+			if (input.fieldnorms !== undefined) fm.fieldnorms = input.fieldnorms;
+			break;
+		case 'json':
+			if (input.tokenizer) fm.tokenizer = input.tokenizer;
+			if (input.record) fm.record = input.record;
+			if (input.expandDots !== undefined) fm.expand_dots = input.expandDots;
+			break;
+		case 'datetime':
+			if (input.inputFormats) fm.input_formats = input.inputFormats;
+			if (input.outputFormat) fm.output_format = input.outputFormat;
+			if (input.fastPrecision) fm.fast_precision = input.fastPrecision;
+			break;
+		case 'i64':
+		case 'u64':
+		case 'f64':
+			if (input.coerce !== undefined) fm.coerce = input.coerce;
+			break;
+	}
+
+	return fm;
+}
+
+function toCreateIndexRequest(input: CreateIndexInput): CreateIndexRequest {
+	const docMapping: DocMapping = {
+		field_mappings: input.fieldMappings.map((f) => toFieldMapping(f, input.timestampField)),
+		timestamp_field: input.timestampField
+	};
+	if (input.mode) docMapping.mode = input.mode;
+	if (input.storeSource !== undefined) docMapping.store_source = input.storeSource;
+	if (input.indexFieldPresence !== undefined) {
+		docMapping.index_field_presence = input.indexFieldPresence;
+	}
+	if (input.tagFields) docMapping.tag_fields = input.tagFields;
+
+	const request: CreateIndexRequest = {
+		version: QUICKWIT_INDEX_CONFIG_VERSION,
+		index_id: input.indexId,
+		doc_mapping: docMapping
+	};
+	if (input.indexUri) request.index_uri = input.indexUri;
+	if (input.commitTimeoutSecs !== undefined) {
+		request.indexing_settings = { commit_timeout_secs: input.commitTimeoutSecs };
+	}
+	if (input.defaultSearchFields) {
+		request.search_settings = { default_search_fields: input.defaultSearchFields };
+	}
+	if (input.retention) {
+		request.retention = input.retention.schedule
+			? { period: input.retention.period, schedule: input.retention.schedule }
+			: { period: input.retention.period };
+	}
+
+	return request;
+}
+
+export async function createIndex(
+	qw: QuickwitClient,
+	input: CreateIndexInput
+): Promise<IndexSummary> {
+	let created: IndexMetadata;
+	try {
+		created = await qw.createIndex(toCreateIndexRequest(input));
+	} catch (err) {
+		if (err instanceof QuickwitError) {
+			const e = err as QuickwitError;
+			if (e.status === 409 || /already exists/i.test(e.message)) {
+				throw conflict('An index with this ID already exists.', 'INDEX_EXISTS', [
+					{ path: 'indexId', message: 'An index with this ID already exists.' }
+				]);
+			}
+		}
+		translateQuickwitError(err);
+	}
+
+	return toIndexSummary(normalizeIndexMetadata(created), DEFAULT_SETTINGS);
 }
