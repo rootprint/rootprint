@@ -2,6 +2,8 @@ export const DEP = {
 	session: 'app:session',
 	apiKeys: 'app:api-keys',
 	personalKeys: 'app:personal-keys',
+	serviceAccounts: 'app:service-accounts',
+	serviceAccountSettings: 'app:service-account-settings',
 	authentication: 'app:authentication',
 	authenticationGoogle: 'app:authentication-google',
 	authenticationGithub: 'app:authentication-github',

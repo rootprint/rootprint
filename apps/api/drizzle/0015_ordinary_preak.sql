@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "is_service_account" boolean DEFAULT false NOT NULL;

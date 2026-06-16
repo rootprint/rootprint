@@ -1,9 +1,9 @@
-import type { CreateUserInput, UserRole } from '../types.js';
+import type { AdminCreateUserInput, UserRole } from '../types.js';
 import { auth } from './auth.js';
 import { fromAuthApiError, internal } from '../utils/http-error.js';
 
 type AdminApi = {
-	createUser: (args: { body: CreateUserInput }) => Promise<unknown>;
+	createUser: (args: { body: AdminCreateUserInput }) => Promise<unknown>;
 	removeUser: (args: { body: { userId: string }; headers: Headers }) => Promise<unknown>;
 	setRole: (args: {
 		body: { userId: string; role: UserRole };
@@ -14,7 +14,9 @@ type AdminApi = {
 
 const api = (): AdminApi => auth().api as unknown as AdminApi;
 
-export async function createAdminUser(input: CreateUserInput): Promise<{ user: { id: string } }> {
+export async function createAdminUser(
+	input: AdminCreateUserInput
+): Promise<{ user: { id: string } }> {
 	let res: unknown;
 	try {
 		res = await api().createUser({ body: input });

@@ -4,7 +4,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { getApiKey, deleteApiKey } from '$lib/api/api-keys';
+	import { deleteApiKey, getApiKey } from '$lib/api/api-keys';
 	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
@@ -102,16 +102,12 @@
 		search.trim() !== '' ? 'No API keys match your search.' : 'No API keys yet.'
 	);
 
-	// Column tracks shared by the whole table via subgrid (see ListCard `cols`), so
-	// the header and every data row align into the same columns. Defining them once
-	// on the card — rather than per-row — keeps the `auto` columns from sizing to
-	// each row's own content and drifting out of alignment.
 	const colTracks = 'minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.5fr) auto auto';
 	const row = 'col-span-full grid grid-cols-subgrid items-center px-4';
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
-	<PageHeader title="Ingest keys" description="Keys that let shippers send logs into an index." />
+	<PageHeader title="API keys" description="Ingest keys let shippers send logs into Rootprint." />
 
 	{#if noIndexes}
 		<p class="text-base-content/60 mt-6 text-sm">
@@ -124,7 +120,7 @@
 			<Search class="h-3.5 w-3.5 opacity-60" />
 			<input
 				type="search"
-				placeholder="Search API keys…"
+				placeholder="Search API keys..."
 				aria-label="Search API keys"
 				bind:value={search}
 			/>
@@ -151,7 +147,7 @@
 				{#each filtered as key (key.id)}
 					<div class="{row} min-h-14 py-3">
 						<div class="truncate text-sm">{key.name}</div>
-						<div class="text-base-content/60 font-mono text-xs">{key.tokenPrefix}…</div>
+						<div class="text-base-content/60 font-mono text-xs">{key.tokenPrefix}...</div>
 						<div class="text-base-content/70 truncate font-mono text-xs">{key.indexId}</div>
 						<div class="text-base-content/50 text-xs">
 							{key.lastUsedAt ? formatRelativeTime(key.lastUsedAt) : 'Never'}
@@ -187,7 +183,7 @@
 	{#if viewLoading}
 		<div class="text-base-content/60 flex items-center gap-2 py-4 text-sm">
 			<span class="loading loading-spinner loading-sm"></span>
-			Loading…
+			Loading...
 		</div>
 	{:else if viewTokenValue}
 		<div class="flex flex-col gap-3">
@@ -204,7 +200,7 @@
 	bind:loading={deleting}
 	title="Delete API key"
 	confirmLabel="Delete"
-	confirmingLabel="Deleting…"
+	confirmingLabel="Deleting..."
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}

@@ -15,7 +15,7 @@ export const load: PageLoad = async ({ url, params, depends }) => {
 	depends(DEP.activityApiKey);
 	const window = parseWindow(url.searchParams.get('window'));
 	const offset = parseOffset(url);
-	const apiKeyId = Number(params.id);
+	const apiKeyId = params.id;
 	return {
 		window,
 		offset,

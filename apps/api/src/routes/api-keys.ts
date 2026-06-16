@@ -4,20 +4,26 @@ import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireAdmin } from '../middleware/require-admin.js';
-import { createApiKeySchema, personalKeyIdParams } from '../schemas/api-keys.js';
+import {
+	createApiKeySchema,
+	createServiceAccountKeySchema,
+	serviceAccountKeyIdParams
+} from '../schemas/api-keys.js';
 import {
 	ApiKeyCreatedResponse,
 	ApiKeyListResponse,
 	ApiKeyValueResponse,
-	PersonalApiKeyListResponse
+	ServiceAccountApiKeyCreatedResponse,
+	ServiceAccountApiKeyListResponse
 } from '../schemas/responses/api-keys.js';
 import {
 	createApiKey,
+	createServiceAccountKey,
 	deleteApiKey,
-	deletePersonalKey,
+	deleteServiceAccountKey,
 	getApiKeyValue,
 	listApiKeys,
-	listPersonalKeys
+	listServiceAccountKeys
 } from '../services/api-key.service.js';
 import { ApiKeyIdParams } from '../utils/params.js';
 
@@ -54,30 +60,45 @@ export const apiKeysRouter = new Hono<AuthedEnv>()
 		}
 	)
 	.get(
-		'/personal',
+		'/service-account',
 		describe({
 			tag: 'API keys',
-			summary: 'List personal API keys (all users)',
-			ok: PersonalApiKeyListResponse
+			summary: 'List service account API keys',
+			ok: ServiceAccountApiKeyListResponse
 		}),
 		async (c) => {
-			return c.json(await listPersonalKeys(db));
+			return c.json(await listServiceAccountKeys(db));
+		}
+	)
+	.post(
+		'/service-account',
+		describe({
+			tag: 'API keys',
+			summary: 'Create a service account API key',
+			ok: ServiceAccountApiKeyCreatedResponse,
+			okStatus: 201,
+			okDescription: 'Service account API key created'
+		}),
+		validator('json', createServiceAccountKeySchema),
+		async (c) => {
+			const { name, userId } = c.req.valid('json');
+			return c.json(await createServiceAccountKey(db, name, userId), 201);
 		}
 	)
 	.delete(
-		'/personal/:id',
+		'/service-account/:id',
 		describe({
 			tag: 'API keys',
-			summary: 'Revoke a personal API key',
+			summary: 'Revoke a service account API key',
 			errors: [404],
 			rawResponses: {
-				'204': { description: 'Personal API key revoked' }
+				'204': { description: 'Service account API key revoked' }
 			}
 		}),
-		validator('param', personalKeyIdParams),
+		validator('param', serviceAccountKeyIdParams),
 		async (c) => {
 			const { id } = c.req.valid('param');
-			await deletePersonalKey(db, id);
+			await deleteServiceAccountKey(db, id);
 			return c.body(null, 204);
 		}
 	)

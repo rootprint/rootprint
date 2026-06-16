@@ -102,7 +102,7 @@ export async function validateInviteToken(
 		})
 		.from(inviteToken)
 		.innerJoin(user, eq(inviteToken.userId, user.id))
-		.where(eq(inviteToken.token, token))
+		.where(and(eq(inviteToken.token, token), eq(user.isServiceAccount, false)))
 		.limit(1);
 
 	if (!rows.length) {

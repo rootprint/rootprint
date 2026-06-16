@@ -12,6 +12,7 @@ export const user = pgTable('user', {
 	banReason: text('ban_reason'),
 	banExpires: timestamp('ban_expires'),
 	lastActive: timestamp('last_active'),
+	isServiceAccount: boolean('is_service_account').notNull().default(false),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()

@@ -4,7 +4,7 @@ import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireAdmin } from '../middleware/require-admin.js';
-import { createInviteSchema, setUserRoleSchema } from '../schemas/users.js';
+import { createUserSchema, setUserRoleSchema } from '../schemas/users.js';
 import { InviteUrlResponse, UserListResponse, UserResponse } from '../schemas/responses/users.js';
 import * as userService from '../services/user.service.js';
 import { UserIdParams } from '../utils/params.js';
@@ -35,19 +35,18 @@ export const usersRouter = new Hono<AuthedEnv>()
 			return c.json(await userService.getUser(db, userId));
 		}
 	)
-	// Creating a user means inviting them: this provisions the user row and issues an invite token.
 	.post(
 		'/',
 		describe({
 			tag: 'User and invite',
-			summary: 'Invite user',
+			summary: 'Create user',
 			ok: InviteUrlResponse,
 			okStatus: 201,
-			okDescription: 'User invited'
+			okDescription: 'User created'
 		}),
-		validator('json', createInviteSchema),
+		validator('json', createUserSchema),
 		async (c) => {
-			const result = await userService.inviteUser(db, c.req.valid('json'));
+			const result = await userService.createUser(db, c.req.valid('json'));
 			return c.json(result, 201);
 		}
 	)
@@ -64,7 +63,7 @@ export const usersRouter = new Hono<AuthedEnv>()
 		validator('param', UserIdParams),
 		async (c) => {
 			const { userId } = c.req.valid('param');
-			await userService.removeUser(userId, c.req.raw.headers);
+			await userService.removeUser(db, userId, c.req.raw.headers);
 			return c.body(null, 204);
 		}
 	)
@@ -84,7 +83,7 @@ export const usersRouter = new Hono<AuthedEnv>()
 			const { userId } = c.req.valid('param');
 			const { role } = c.req.valid('json');
 			const adminId = c.get('session').user.id;
-			await userService.setUserRole(adminId, userId, role, c.req.raw.headers);
+			await userService.setUserRole(db, adminId, userId, role, c.req.raw.headers);
 			return c.body(null, 204);
 		}
 	)

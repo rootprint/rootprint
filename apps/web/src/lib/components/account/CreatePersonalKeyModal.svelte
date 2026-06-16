@@ -5,18 +5,10 @@
 	import { DEP } from '$lib/api/deps';
 	import { issuesToFieldErrors } from '$lib/api/errors';
 	import { authClient } from '$lib/auth-client';
-	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-
-	const createKeySchema = v.object({
-		name: v.pipe(
-			v.string(),
-			v.trim(),
-			v.minLength(1, 'Key name is required.'),
-			v.maxLength(100, 'Key name must be 100 characters or fewer.')
-		)
-	});
+	import OneTimeKeyReveal from '$lib/components/ui/OneTimeKeyReveal.svelte';
+	import { personalKeyNameSchema } from 'api/schemas';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -41,7 +33,7 @@
 		formError = null;
 		fieldErrors = {};
 
-		const parsed = v.safeParse(createKeySchema, { name });
+		const parsed = v.safeParse(personalKeyNameSchema, { name });
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
@@ -54,10 +46,10 @@
 				formError = result.error.message ?? 'Failed to create API key.';
 				return;
 			}
-			await invalidate(DEP.personalKeys);
-			if (!open) return;
 			revealedKey = result.data.key;
 			phase = 'reveal';
+			open = true; // re-open if dismissed mid-request — the one-time token must be shown
+			void invalidate(DEP.personalKeys); // refresh the list in the background
 		} catch (err) {
 			formError = err instanceof Error ? err.message : 'Failed to create API key.';
 		} finally {
@@ -89,12 +81,7 @@
 			/>
 		</form>
 	{:else}
-		<div class="flex flex-col gap-3">
-			<CopyableField value={revealedKey} ariaLabel="Personal API key" />
-			<p class="text-base-content/60 text-xs">
-				This key is shown only once. Copy it now — you won't be able to see it again.
-			</p>
-		</div>
+		<OneTimeKeyReveal value={revealedKey} ariaLabel="Personal API key" />
 	{/if}
 
 	{#snippet actions()}

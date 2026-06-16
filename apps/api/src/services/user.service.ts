@@ -46,7 +46,7 @@ function toUser(
 
 export async function listUsers(db: Db): Promise<User[]> {
 	const [users, invites, credentialAccounts] = await Promise.all([
-		db.select().from(user).orderBy(user.createdAt),
+		db.select().from(user).where(eq(user.isServiceAccount, false)).orderBy(user.createdAt),
 		db.select().from(inviteToken),
 		db.select({ userId: account.userId }).from(account).where(eq(account.providerId, 'credential'))
 	]);
@@ -61,7 +61,11 @@ export async function listUsers(db: Db): Promise<User[]> {
 }
 
 export async function getUser(db: Db, userId: string): Promise<User> {
-	const [u] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+	const [u] = await db
+		.select()
+		.from(user)
+		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
+		.limit(1);
 	if (!u) throw notFound('User not found');
 
 	const [invites, hasCred] = await Promise.all([
@@ -76,7 +80,16 @@ export async function getUser(db: Db, userId: string): Promise<User> {
 	return toUser(u, invite, hasCred);
 }
 
-export async function inviteUser(
+async function ensureHumanUser(db: Db, userId: string): Promise<void> {
+	const [row] = await db
+		.select({ id: user.id })
+		.from(user)
+		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
+		.limit(1);
+	if (!row) throw notFound('User not found');
+}
+
+export async function createUser(
 	db: Db,
 	data: { email: string; name: string; role: UserRole }
 ): Promise<{ inviteUrl: string }> {
@@ -91,6 +104,7 @@ export async function inviteUser(
 }
 
 export async function reissueInvite(db: Db, userId: string): Promise<{ inviteUrl: string }> {
+	await ensureHumanUser(db, userId);
 	const hasCred = await hasCredentialAccount(db, userId);
 	if (!hasCred) {
 		throw badRequest('User has no credential account');
@@ -99,11 +113,13 @@ export async function reissueInvite(db: Db, userId: string): Promise<{ inviteUrl
 	return { inviteUrl: buildInviteUrl(token) };
 }
 
-export async function removeUser(userId: string, headers: Headers): Promise<void> {
+export async function removeUser(db: Db, userId: string, headers: Headers): Promise<void> {
+	await ensureHumanUser(db, userId);
 	await removeAdminUser(userId, headers);
 }
 
 export async function setUserRole(
+	db: Db,
 	adminId: string,
 	userId: string,
 	role: UserRole,
@@ -112,6 +128,7 @@ export async function setUserRole(
 	if (userId === adminId) {
 		throw badRequest('Cannot change your own role');
 	}
+	await ensureHumanUser(db, userId);
 	await setAdminUserRole(userId, role, headers);
 }
 
@@ -124,6 +141,7 @@ export async function resetPassword(
 	if (userId === adminId) {
 		throw badRequest('Cannot reset your own password');
 	}
+	await ensureHumanUser(db, userId);
 	const hasCred = await hasCredentialAccount(db, userId);
 	if (!hasCred) {
 		throw badRequest('User has no credential account');

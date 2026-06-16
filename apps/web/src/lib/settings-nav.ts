@@ -1,4 +1,5 @@
 import {
+	Bot,
 	LayoutDashboard,
 	Activity,
 	Database,
@@ -33,17 +34,18 @@ export const navGroups: NavGroup[] = [
 		label: 'Data',
 		adminOnly: true,
 		items: [
-			{ href: '/settings/indexes', label: 'Indexes', icon: Database },
+			{ href: '/settings/send-logs', label: 'Send logs', icon: Send },
 			{ href: '/settings/api-keys', label: 'API keys', icon: KeyRound },
-			{ href: '/settings/send-logs', label: 'Send logs', icon: Send }
+			{ href: '/settings/indexes', label: 'Indexes', icon: Database }
 		]
 	},
 	{
 		label: 'Security',
 		adminOnly: true,
 		items: [
-			{ href: '/settings/users', label: 'Users', icon: Users },
-			{ href: '/settings/authentication', label: 'Authentication', icon: ShieldCheck }
+			{ href: '/settings/authentication', label: 'Authentication', icon: ShieldCheck },
+			{ href: '/settings/service-accounts', label: 'Service accounts', icon: Bot },
+			{ href: '/settings/users', label: 'Users', icon: Users }
 		]
 	}
 ];
@@ -92,19 +94,15 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	],
 	'/settings/users': () => [ROOT, { label: 'Users' }],
 	'/settings/users/[userId]': () => [ROOT, USERS, { label: 'User' }],
+	'/settings/service-accounts': () => [ROOT, { label: 'Service accounts' }],
 	'/settings/authentication': () => [ROOT, { label: 'Authentication' }],
 	'/settings/authentication/google': () => [ROOT, AUTH, { label: 'Google' }]
 };
 
-/** Strip SvelteKit `(group)` segments from a route id → clean URL pattern. */
 export function routeKey(routeId: string): string {
 	return routeId.replace(/\/\([^)]+\)/g, '');
 }
 
-/**
- * Resolve the breadcrumb trail for the current route. Returns `[]` for routes
- * not in the manifest (the presentational Breadcrumb then renders nothing).
- */
 export function resolveBreadcrumbs(
 	routeId: string | null,
 	params: Params = {}

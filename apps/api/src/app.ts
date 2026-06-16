@@ -28,6 +28,7 @@ import { settingsRouter } from './routes/settings.js';
 import { sharesRouter } from './routes/shares.js';
 import { apiKeysRouter } from './routes/api-keys.js';
 import { usersRouter } from './routes/users.js';
+import { serviceAccountsRouter } from './routes/service-accounts.js';
 import type { ApiErrorBody, ApiErrorDetail } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { quickwitErrorToHttp } from './utils/quickwit-error.js';
@@ -178,6 +179,7 @@ export const routes = app
 	.route('/api/admin/cluster', withAuth(clusterRouter))
 	.route('/api/admin/activity', withAuth(adminActivityRouter))
 	.route('/api/users', withAuth(usersRouter))
+	.route('/api/service-accounts', withAuth(serviceAccountsRouter))
 	.route('/api/api-keys', withAuth(apiKeysRouter))
 	.route('/api/shares', withAuth(sharesRouter))
 	.route('/api/settings', withAuth(settingsRouter))

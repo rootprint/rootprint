@@ -29,17 +29,22 @@ export const ApiKeyCreatedResponse = named(
 
 export const ApiKeyValueResponse = named('ApiKeyValueResponse', v.object({ token: v.string() }));
 
-export const PersonalApiKeyResponse = named(
-	'PersonalApiKeyResponse',
+export const ServiceAccountApiKeyResponse = named(
+	'ServiceAccountApiKeyResponse',
 	v.object({
 		id: v.string(),
 		name: v.nullable(v.string()),
 		start: v.nullable(v.string()),
 		userId: v.string(),
-		userEmail: v.nullable(v.string()),
+		userName: v.string(),
 		lastRequest: v.nullable(isoTimestampString),
 		createdAt: isoTimestampString
 	})
 );
 
-export const PersonalApiKeyListResponse = v.array(PersonalApiKeyResponse);
+export const ServiceAccountApiKeyListResponse = v.array(ServiceAccountApiKeyResponse);
+
+export const ServiceAccountApiKeyCreatedResponse = named(
+	'ServiceAccountApiKeyCreatedResponse',
+	v.object({ id: v.string(), token: v.string() })
+);
