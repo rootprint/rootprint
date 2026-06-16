@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronRight, EyeOff, Globe, Search, ShieldUser } from 'lucide-svelte';
+	import { ChevronRight, EyeOff, Globe, Plus, Search, ShieldUser } from 'lucide-svelte';
 
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import ListRow from '$lib/components/ui/ListRow.svelte';
@@ -43,6 +43,10 @@
 			/>
 		</label>
 		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
+		<a href="/settings/indexes/_new" class="btn btn-primary btn-sm">
+			<Plus class="h-3.5 w-3.5" />
+			Create index
+		</a>
 	</div>
 
 	<div class="mt-4">

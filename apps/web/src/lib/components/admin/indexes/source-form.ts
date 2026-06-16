@@ -2,6 +2,8 @@ import { SOURCE_INPUT_FORMATS, FILE_MESSAGE_TYPES, KAFKA_LOG_LEVELS } from 'api/
 import type { CreateSourceInput, UpdateSourceInput } from 'api/schemas';
 import type { SourceDetail } from 'api/types';
 
+import { lines } from '$lib/utils/lines';
+
 export type SourceType = 'kinesis' | 'file' | 'kafka' | 'pulsar';
 export type InputFormat = (typeof SOURCE_INPUT_FORMATS)[number];
 export type MessageType = (typeof FILE_MESSAGE_TYPES)[number];
@@ -173,10 +175,7 @@ export function formToUpdateInput(form: SourceFormState): UpdateSourceInput {
 			return {
 				...common,
 				sourceType: 'pulsar',
-				topics: form.pulsarTopics
-					.split('\n')
-					.map((t) => t.trim())
-					.filter((t) => t !== ''),
+				topics: lines(form.pulsarTopics),
 				address: form.address.trim(),
 				consumerName: form.consumerName.trim() === '' ? undefined : form.consumerName.trim()
 			};

@@ -4,7 +4,12 @@ import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { FieldConfig } from '$lib/types';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
-import type { CreateSourceInput, SaveIndexConfigInput, UpdateSourceInput } from 'api/schemas';
+import type {
+	CreateIndexInput,
+	CreateSourceInput,
+	SaveIndexConfigInput,
+	UpdateSourceInput
+} from 'api/schemas';
 
 export type IndexStatsResponse = InferResponseType<
 	(typeof client.api.indexes)[':indexId']['stats']['$get'],
@@ -104,6 +109,12 @@ export async function updateSource(
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to update source');
 	return res.json() as Promise<SourceDetail>;
+}
+
+export async function createIndex(input: CreateIndexInput): Promise<IndexSummary> {
+	const res = await client.api.indexes.$post({ json: input });
+	if (!res.ok) throw await readApiError(res, 'Failed to create index');
+	return res.json() as Promise<IndexSummary>;
 }
 
 export async function resetSourceCheckpoint(indexId: string, sourceId: string): Promise<void> {
