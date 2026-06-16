@@ -110,10 +110,6 @@ export const DATETIME_OUTPUT_FORMATS = [
 	'unix_timestamp_nanos'
 ] as const;
 
-// The leading-letter requirement is load-bearing beyond Quickwit's own rules: it
-// guarantees a real index ID can never be `_new`, so the static web route
-// /settings/indexes/_new can't collide with /settings/indexes/[indexId]. Don't
-// loosen this to allow a leading `_` without renaming that route.
 const indexId = v.pipe(
 	v.string(),
 	v.regex(
