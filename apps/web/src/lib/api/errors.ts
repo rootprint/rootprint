@@ -44,6 +44,17 @@ export function issuesToFieldErrors(
 	return out;
 }
 
+export function issuesToPathErrors(
+	issues: readonly v.BaseIssue<unknown>[]
+): Record<string, string> {
+	const out: Record<string, string> = {};
+	for (const issue of issues) {
+		const key = (issue.path ?? []).map((segment) => String(segment.key)).join('.') || '(root)';
+		if (!(key in out)) out[key] = issue.message;
+	}
+	return out;
+}
+
 export function isAbortError(e: unknown): boolean {
 	return (e instanceof DOMException || e instanceof Error) && e.name === 'AbortError';
 }

@@ -493,38 +493,21 @@ export async function resetSourceCheckpoint(
 	await withNotFound(() => qw.index(indexId).resetSourceCheckpoint(sourceId), 'Source not found');
 }
 
+const FIELD_KEY_RENAME: Record<string, string> = {
+	inputFormats: 'input_formats',
+	outputFormat: 'output_format',
+	fastPrecision: 'fast_precision',
+	expandDots: 'expand_dots'
+};
+
 function toFieldMapping(input: FieldMappingInput, timestampField: string): QwFieldMapping {
-	const fm: QwFieldMapping = { name: input.name, type: input.type };
-	if (input.stored !== undefined) fm.stored = input.stored;
-	if (input.indexed !== undefined) fm.indexed = input.indexed;
-
-	if (input.name === timestampField) fm.fast = true;
-	else if (input.fast !== undefined) fm.fast = input.fast;
-
-	switch (input.type) {
-		case 'text':
-			if (input.tokenizer) fm.tokenizer = input.tokenizer;
-			if (input.record) fm.record = input.record;
-			if (input.fieldnorms !== undefined) fm.fieldnorms = input.fieldnorms;
-			break;
-		case 'json':
-			if (input.tokenizer) fm.tokenizer = input.tokenizer;
-			if (input.record) fm.record = input.record;
-			if (input.expandDots !== undefined) fm.expand_dots = input.expandDots;
-			break;
-		case 'datetime':
-			if (input.inputFormats) fm.input_formats = input.inputFormats;
-			if (input.outputFormat) fm.output_format = input.outputFormat;
-			if (input.fastPrecision) fm.fast_precision = input.fastPrecision;
-			break;
-		case 'i64':
-		case 'u64':
-		case 'f64':
-			if (input.coerce !== undefined) fm.coerce = input.coerce;
-			break;
+	const fm: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(input)) {
+		if (value !== undefined) fm[FIELD_KEY_RENAME[key] ?? key] = value;
 	}
+	if (input.name === timestampField) fm.fast = true;
 
-	return fm;
+	return fm as unknown as QwFieldMapping;
 }
 
 function toCreateIndexRequest(input: CreateIndexInput): CreateIndexRequest {

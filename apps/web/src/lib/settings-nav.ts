@@ -65,6 +65,7 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	'/settings/activity': () => [ROOT, { label: 'Activity' }],
 	'/settings/activity/api-keys/[id]': () => [ROOT, ACTIVITY, { label: 'API key' }],
 	'/settings/indexes': () => [ROOT, { label: 'Indexes' }],
+	'/settings/indexes/_new': () => [ROOT, INDEXES, { label: 'New index' }],
 	'/settings/indexes/[indexId]': (p) => [
 		ROOT,
 		INDEXES,

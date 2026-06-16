@@ -207,6 +207,14 @@ export const createIndexSchema = v.pipe(
 	}),
 	v.forward(
 		v.check(
+			(input) =>
+				new Set(input.fieldMappings.map((f) => f.name)).size === input.fieldMappings.length,
+			'Field names must be unique.'
+		),
+		['fieldMappings']
+	),
+	v.forward(
+		v.check(
 			(input) => input.fieldMappings.some((f) => f.name === input.timestampField),
 			'timestamp_field must reference a defined field.'
 		),
