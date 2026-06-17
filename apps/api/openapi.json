@@ -604,17 +604,6 @@
 				],
 				"type": "object"
 			},
-			"CreateUserResponse": {
-				"properties": {
-					"inviteUrl": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"inviteUrl"
-				],
-				"type": "object"
-			},
 			"FieldValueEntrySchema": {
 				"properties": {
 					"count": {
@@ -1344,79 +1333,6 @@
 				],
 				"type": "object"
 			},
-			"PersonalApiKeyCreatedResponse": {
-				"properties": {
-					"id": {
-						"type": "string"
-					},
-					"token": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"id",
-					"token"
-				],
-				"type": "object"
-			},
-			"PersonalApiKeyResponse": {
-				"properties": {
-					"createdAt": {
-						"format": "date-time",
-						"type": "string"
-					},
-					"id": {
-						"type": "string"
-					},
-					"lastRequest": {
-						"anyOf": [
-							{
-								"format": "date-time",
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"name": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"start": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"userId": {
-						"type": "string"
-					},
-					"userName": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"id",
-					"name",
-					"start",
-					"userId",
-					"userName",
-					"lastRequest",
-					"createdAt"
-				],
-				"type": "object"
-			},
 			"PreferencesResponse": {
 				"properties": {
 					"displayFields": {
@@ -1759,6 +1675,79 @@
 					"columns",
 					"createdAt",
 					"updatedAt"
+				],
+				"type": "object"
+			},
+			"ServiceAccountApiKeyCreatedResponse": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"token"
+				],
+				"type": "object"
+			},
+			"ServiceAccountApiKeyResponse": {
+				"properties": {
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"lastRequest": {
+						"anyOf": [
+							{
+								"format": "date-time",
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"start": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"userId": {
+						"type": "string"
+					},
+					"userName": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"start",
+					"userId",
+					"userName",
+					"lastRequest",
+					"createdAt"
 				],
 				"type": "object"
 			},
@@ -2460,7 +2449,7 @@
 				"type": "http"
 			},
 			"personalBearer": {
-				"description": "Personal API key",
+				"description": "Query API key (personal or service account)",
 				"scheme": "bearer",
 				"type": "http"
 			}
@@ -2469,7 +2458,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.3.4"
+		"version": "0.3.5"
 	},
 	"openapi": "3.1.0",
 	"paths": {
@@ -3507,16 +3496,16 @@
 				]
 			}
 		},
-		"/api/api-keys/personal": {
+		"/api/api-keys/service-account": {
 			"get": {
-				"operationId": "getApiApiKeysPersonal",
+				"operationId": "getApiApiKeysServiceAccount",
 				"responses": {
 					"200": {
 						"content": {
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/PersonalApiKeyResponse"
+										"$ref": "#/components/schemas/ServiceAccountApiKeyResponse"
 									},
 									"type": "array"
 								}
@@ -3549,7 +3538,7 @@
 				]
 			},
 			"post": {
-				"operationId": "postApiApiKeysPersonal",
+				"operationId": "postApiApiKeysServiceAccount",
 				"requestBody": {
 					"content": {
 						"application/json": {
@@ -3580,7 +3569,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/PersonalApiKeyCreatedResponse"
+									"$ref": "#/components/schemas/ServiceAccountApiKeyCreatedResponse"
 								}
 							}
 						},
@@ -3611,9 +3600,9 @@
 				]
 			}
 		},
-		"/api/api-keys/personal/{id}": {
+		"/api/api-keys/service-account/{id}": {
 			"delete": {
-				"operationId": "deleteApiApiKeysPersonalById",
+				"operationId": "deleteApiApiKeysServiceAccountById",
 				"parameters": [
 					{
 						"in": "path",
@@ -12952,10 +12941,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "List indexes",
@@ -13613,10 +13602,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get index view config",
@@ -13671,10 +13660,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "List index fields",
@@ -13799,10 +13788,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get bulk field values",
@@ -13897,10 +13886,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get field values",
@@ -14012,10 +14001,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Search logs",
@@ -14224,10 +14213,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get log histogram",
@@ -16349,7 +16338,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/CreateUserResponse"
+									"$ref": "#/components/schemas/InviteUrlResponse"
 								}
 							}
 						},
@@ -16778,8 +16767,8 @@
 	],
 	"servers": [
 		{
-			"description": "Same-origin API",
-			"url": "/"
+			"description": "Rootprint API",
+			"url": "https://example.com"
 		}
 	]
 }

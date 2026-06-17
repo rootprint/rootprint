@@ -1,6 +1,6 @@
 # Contributing to Rootprint
 
-Thanks for contributing to Rootprint. This repository is a Bun-workspace monorepo containing the API server, the web app, the marketing site, and the docs site under `apps/`. Keeping changes focused and well-explained makes reviews faster and safer.
+Thanks for contributing to Rootprint. This repository is a Bun-workspace monorepo with two workspaces under `apps/`: the API server (`apps/api`) and the web app (`apps/web`). Keeping changes focused and well-explained makes reviews faster and safer.
 
 ## Ways to contribute
 
