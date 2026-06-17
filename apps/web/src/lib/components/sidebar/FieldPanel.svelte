@@ -346,7 +346,7 @@
 								groupsCollapsed[group.key as 'attributes' | 'resource_attributes']}
 							<button
 								type="button"
-								class="border-line flex w-full items-center gap-1 border-b px-3 py-1.5"
+								class="border-line flex w-full items-center gap-1 border-b px-3 py-1.5 [&+div]:border-t-0"
 								aria-expanded={!isCollapsed}
 								onclick={() => toggleGroup(group.key as 'attributes' | 'resource_attributes')}
 							>
