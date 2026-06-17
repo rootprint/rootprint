@@ -35,7 +35,14 @@ import {
 	userPreference,
 	view as viewTable
 } from '../db/schema.js';
-import { conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
+import {
+	conflict,
+	indexAccessError,
+	internal,
+	notFound,
+	unprocessable
+} from '../utils/http-error.js';
+import { isRecord } from '../utils/object.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
@@ -295,11 +302,12 @@ function buildPulsarAuth(
 		};
 	}
 	if (input.authMethod === 'token') {
-		if (input.token && input.token.trim() !== '') return { token: input.token };
-		if (currentAuth && typeof currentAuth === 'object' && 'token' in currentAuth) {
-			return currentAuth as Record<string, unknown>;
-		}
-		return undefined;
+		const token = input.token?.trim();
+		if (token) return { token };
+		if (isRecord(currentAuth) && 'token' in currentAuth) return currentAuth;
+		throw unprocessable('Token is required for token authentication.', 'TOKEN_REQUIRED', [
+			{ path: 'token', message: 'Token is required for token authentication.' }
+		]);
 	}
 	return undefined;
 }
@@ -406,6 +414,11 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 		? params.topics.filter((t): t is string => typeof t === 'string')
 		: null;
 
+	const auth = isRecord(params.authentication) ? params.authentication : null;
+	const oauth2 = auth && isRecord(auth.oauth2) ? auth.oauth2 : null;
+	const authMethod: 'token' | 'oauth2' | null =
+		auth && 'token' in auth ? 'token' : oauth2 ? 'oauth2' : null;
+
 	return {
 		sourceId: source.sourceId,
 		sourceType: source.sourceType,
@@ -426,6 +439,12 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 		topics,
 		address: typeof params.address === 'string' ? params.address : null,
 		consumerName: typeof params.consumer_name === 'string' ? params.consumer_name : null,
+		authMethod,
+		oauthIssuerUrl: oauth2 && typeof oauth2.issuer_url === 'string' ? oauth2.issuer_url : null,
+		oauthCredentialsUrl:
+			oauth2 && typeof oauth2.credentials_url === 'string' ? oauth2.credentials_url : null,
+		oauthAudience: oauth2 && typeof oauth2.audience === 'string' ? oauth2.audience : null,
+		oauthScope: oauth2 && typeof oauth2.scope === 'string' ? oauth2.scope : null,
 		vrlScript: source.vrlScript,
 		hasUnsupportedConfig
 	};
@@ -518,8 +537,9 @@ export async function updateSource(
 	input: UpdateSourceInput
 ): Promise<SourceDetail> {
 	const current = await getRawSourceConfig(qw, indexId, sourceId);
+	const merged = mergeSourceConfig(current, sourceId, input);
 	try {
-		await qw.index(indexId).updateSource(sourceId, mergeSourceConfig(current, sourceId, input));
+		await qw.index(indexId).updateSource(sourceId, merged);
 	} catch (err) {
 		if (err instanceof NotFoundError) throw notFound('Source not found');
 		translateQuickwitError(err);
