@@ -3,6 +3,7 @@ import * as v from 'valibot';
 import { INDEX_VISIBILITIES } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
 import { isoTimestampString } from '../../utils/valibot.js';
+import { PULSAR_AUTH_METHODS } from '../sources.js';
 
 export const IndexFieldSchema = named(
 	'IndexFieldSchema',
@@ -42,6 +43,11 @@ export const SourceDetailSchema = named(
 		topics: v.nullable(v.array(v.string())),
 		address: v.nullable(v.string()),
 		consumerName: v.nullable(v.string()),
+		authMethod: v.nullable(v.picklist(PULSAR_AUTH_METHODS)),
+		oauthIssuerUrl: v.nullable(v.string()),
+		oauthCredentialsUrl: v.nullable(v.string()),
+		oauthAudience: v.nullable(v.string()),
+		oauthScope: v.nullable(v.string()),
 		vrlScript: v.nullable(v.string()),
 		hasUnsupportedConfig: v.boolean()
 	})

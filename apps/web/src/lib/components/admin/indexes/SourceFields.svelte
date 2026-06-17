@@ -4,11 +4,13 @@
 	let {
 		form = $bindable(),
 		fieldErrors,
-		mode
+		mode,
+		hasExistingToken = false
 	}: {
 		form: SourceFormState;
 		fieldErrors: Record<string, string>;
 		mode: 'create' | 'edit';
+		hasExistingToken?: boolean;
 	} = $props();
 
 	type Tab = 'connection' | 'transform';
@@ -470,6 +472,143 @@
 				/>
 			</div>
 		</div>
+
+		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+			<div>
+				<label for="src-auth-method" class="text-sm">Authentication</label>
+				<div class="text-base-content/60 mt-0.5 text-xs">
+					How Quickwit authenticates to the broker.
+				</div>
+			</div>
+			<div class="flex flex-col gap-1">
+				<select
+					id="src-auth-method"
+					bind:value={form.pulsarAuthType}
+					class="select select-sm w-full"
+				>
+					<option value="none">None</option>
+					<option value="token">Token</option>
+					<option value="oauth2">OAuth2</option>
+				</select>
+			</div>
+		</div>
+
+		{#if form.pulsarAuthType === 'token'}
+			<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+				<div>
+					<label for="src-pulsar-token" class="text-sm">Token</label>
+					<div class="text-base-content/60 mt-0.5 text-xs">
+						{#if hasExistingToken}
+							Leave blank to keep the current token.
+						{:else}
+							JWT or API key for the broker.
+						{/if}
+					</div>
+				</div>
+				<div class="flex flex-col gap-1">
+					<input
+						id="src-pulsar-token"
+						type="password"
+						bind:value={form.pulsarToken}
+						class="input input-sm w-full"
+						class:input-error={fieldErrors.token}
+						placeholder={hasExistingToken ? '••••••••' : 'eyJhbGciOi…'}
+						autocomplete="off"
+						aria-invalid={fieldErrors.token ? 'true' : undefined}
+						aria-describedby={fieldErrors.token ? 'src-pulsar-token-msg' : undefined}
+					/>
+					{#if fieldErrors.token}
+						<p id="src-pulsar-token-msg" class="text-error text-xs">{fieldErrors.token}</p>
+					{/if}
+				</div>
+			</div>
+		{:else if form.pulsarAuthType === 'oauth2'}
+			<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+				<div>
+					<label for="src-oauth-issuer" class="text-sm">Issuer URL</label>
+					<div class="text-base-content/60 mt-0.5 text-xs">OAuth2 token issuer URL.</div>
+				</div>
+				<div class="flex flex-col gap-1">
+					<input
+						id="src-oauth-issuer"
+						type="text"
+						bind:value={form.pulsarOauthIssuerUrl}
+						class="input input-sm w-full"
+						class:input-error={fieldErrors.oauthIssuerUrl}
+						placeholder="https://auth.example.com/oauth2"
+						autocomplete="off"
+						aria-invalid={fieldErrors.oauthIssuerUrl ? 'true' : undefined}
+						aria-describedby={fieldErrors.oauthIssuerUrl ? 'src-oauth-issuer-msg' : undefined}
+					/>
+					{#if fieldErrors.oauthIssuerUrl}
+						<p id="src-oauth-issuer-msg" class="text-error text-xs">
+							{fieldErrors.oauthIssuerUrl}
+						</p>
+					{/if}
+				</div>
+			</div>
+
+			<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+				<div>
+					<label for="src-oauth-creds" class="text-sm">Credentials URL</label>
+					<div class="text-base-content/60 mt-0.5 text-xs">
+						URL or file path to the service-account credentials.
+					</div>
+				</div>
+				<div class="flex flex-col gap-1">
+					<input
+						id="src-oauth-creds"
+						type="text"
+						bind:value={form.pulsarOauthCredentialsUrl}
+						class="input input-sm w-full"
+						class:input-error={fieldErrors.oauthCredentialsUrl}
+						placeholder="file:///etc/pulsar/credentials.json"
+						autocomplete="off"
+						aria-invalid={fieldErrors.oauthCredentialsUrl ? 'true' : undefined}
+						aria-describedby={fieldErrors.oauthCredentialsUrl ? 'src-oauth-creds-msg' : undefined}
+					/>
+					{#if fieldErrors.oauthCredentialsUrl}
+						<p id="src-oauth-creds-msg" class="text-error text-xs">
+							{fieldErrors.oauthCredentialsUrl}
+						</p>
+					{/if}
+				</div>
+			</div>
+
+			<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+				<div>
+					<label for="src-oauth-audience" class="text-sm">Audience</label>
+					<div class="text-base-content/60 mt-0.5 text-xs">Optional.</div>
+				</div>
+				<div class="flex flex-col gap-1">
+					<input
+						id="src-oauth-audience"
+						type="text"
+						bind:value={form.pulsarOauthAudience}
+						class="input input-sm w-full"
+						placeholder="urn:my-cluster"
+						autocomplete="off"
+					/>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
+				<div>
+					<label for="src-oauth-scope" class="text-sm">Scope</label>
+					<div class="text-base-content/60 mt-0.5 text-xs">Optional.</div>
+				</div>
+				<div class="flex flex-col gap-1">
+					<input
+						id="src-oauth-scope"
+						type="text"
+						bind:value={form.pulsarOauthScope}
+						class="input input-sm w-full"
+						placeholder="api://pulsar/.default"
+						autocomplete="off"
+					/>
+				</div>
+			</div>
+		{/if}
 	{/if}
 
 	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">

@@ -271,6 +271,39 @@ const QUICKWIT_INDEX_CONFIG_VERSION = '0.9';
 
 type QwFieldMapping = FieldMapping & { coerce?: boolean; expand_dots?: boolean };
 
+type PulsarAuthInput = {
+	authMethod?: 'token' | 'oauth2';
+	token?: string;
+	oauthIssuerUrl?: string;
+	oauthCredentialsUrl?: string;
+	oauthAudience?: string;
+	oauthScope?: string;
+};
+
+function buildPulsarAuth(
+	input: PulsarAuthInput,
+	currentAuth?: unknown
+): Record<string, unknown> | undefined {
+	if (input.authMethod === 'oauth2') {
+		return {
+			oauth2: {
+				issuer_url: input.oauthIssuerUrl,
+				credentials_url: input.oauthCredentialsUrl,
+				...(input.oauthAudience ? { audience: input.oauthAudience } : {}),
+				...(input.oauthScope ? { scope: input.oauthScope } : {})
+			}
+		};
+	}
+	if (input.authMethod === 'token') {
+		if (input.token && input.token.trim() !== '') return { token: input.token };
+		if (currentAuth && typeof currentAuth === 'object' && 'token' in currentAuth) {
+			return currentAuth as Record<string, unknown>;
+		}
+		return undefined;
+	}
+	return undefined;
+}
+
 function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfig {
 	const base = {
 		version: QUICKWIT_SOURCE_CONFIG_VERSION,
@@ -310,15 +343,18 @@ function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfi
 					enable_backfill_mode: input.enableBackfillMode ?? false
 				}
 			} as SourceConfig;
-		case 'pulsar':
+		case 'pulsar': {
+			const auth = buildPulsarAuth(input);
 			return {
 				...base,
 				params: {
 					topics: input.topics,
 					address: input.address,
-					...(input.consumerName ? { consumer_name: input.consumerName } : {})
+					...(input.consumerName ? { consumer_name: input.consumerName } : {}),
+					...(auth ? { authentication: auth } : {})
 				}
 			} as SourceConfig;
+		}
 	}
 }
 
@@ -460,16 +496,16 @@ function mergeSourceConfig(
 				enable_backfill_mode: input.enableBackfillMode ?? false
 			};
 			break;
-		case 'pulsar':
-			// Spread currentParams so params we don't model (e.g. `authentication`)
-			// survive an edit instead of being silently dropped.
+		case 'pulsar': {
+			const auth = buildPulsarAuth(input, currentParams.authentication);
 			merged.params = {
-				...currentParams,
 				topics: input.topics,
 				address: input.address,
-				...(input.consumerName ? { consumer_name: input.consumerName } : {})
+				...(input.consumerName ? { consumer_name: input.consumerName } : {}),
+				...(auth ? { authentication: auth } : {})
 			};
 			break;
+		}
 	}
 
 	return merged;

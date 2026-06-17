@@ -34,6 +34,16 @@
 			}
 		}
 
+		if (
+			form.sourceType === 'pulsar' &&
+			form.pulsarAuthType === 'token' &&
+			form.pulsarToken.trim() === '' &&
+			source.authMethod !== 'token'
+		) {
+			fieldErrors = { token: 'Token is required for token authentication.' };
+			return;
+		}
+
 		const parsed = v.safeParse(updateSourceSchema, formToUpdateInput(form));
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
@@ -71,7 +81,12 @@
 			</p>
 		</div>
 	{/if}
-	<SourceFields bind:form {fieldErrors} mode="edit" />
+	<SourceFields
+		bind:form
+		{fieldErrors}
+		mode="edit"
+		hasExistingToken={source.authMethod === 'token'}
+	/>
 
 	<div class="flex items-center justify-between gap-3 px-4 py-3">
 		<p class="text-base-content/60 flex items-center gap-1.5 text-xs">

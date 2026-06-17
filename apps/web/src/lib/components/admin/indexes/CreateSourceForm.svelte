@@ -58,7 +58,7 @@
 	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
-	<SourceFields bind:form {fieldErrors} mode="create" />
+	<SourceFields bind:form {fieldErrors} mode="create" hasExistingToken={false} />
 
 	<div class="flex justify-end gap-2 px-4 py-3">
 		<a href={`/settings/indexes/${detail.indexId}?tab=sources`} class="btn btn-ghost btn-sm">

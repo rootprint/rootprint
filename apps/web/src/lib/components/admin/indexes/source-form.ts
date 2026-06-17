@@ -49,6 +49,13 @@ export type SourceFormState = {
 	pulsarTopics: string;
 	address: string;
 	consumerName: string;
+	// pulsar auth
+	pulsarAuthType: 'none' | 'token' | 'oauth2';
+	pulsarToken: string;
+	pulsarOauthIssuerUrl: string;
+	pulsarOauthCredentialsUrl: string;
+	pulsarOauthAudience: string;
+	pulsarOauthScope: string;
 };
 
 export function emptySourceForm(): SourceFormState {
@@ -70,7 +77,13 @@ export function emptySourceForm(): SourceFormState {
 		enableBackfillMode: false,
 		pulsarTopics: '',
 		address: '',
-		consumerName: ''
+		consumerName: '',
+		pulsarAuthType: 'none',
+		pulsarToken: '',
+		pulsarOauthIssuerUrl: '',
+		pulsarOauthCredentialsUrl: '',
+		pulsarOauthAudience: '',
+		pulsarOauthScope: ''
 	};
 }
 
@@ -117,7 +130,13 @@ export function sourceDetailToForm(detail: SourceDetail): SourceFormState {
 		enableBackfillMode: detail.enableBackfillMode ?? false,
 		pulsarTopics: detail.topics ? detail.topics.join('\n') : '',
 		address: detail.address ?? '',
-		consumerName: detail.consumerName ?? ''
+		consumerName: detail.consumerName ?? '',
+		pulsarAuthType: detail.authMethod ?? 'none',
+		pulsarToken: '',
+		pulsarOauthIssuerUrl: detail.oauthIssuerUrl ?? '',
+		pulsarOauthCredentialsUrl: detail.oauthCredentialsUrl ?? '',
+		pulsarOauthAudience: detail.oauthAudience ?? '',
+		pulsarOauthScope: detail.oauthScope ?? ''
 	};
 }
 
@@ -171,13 +190,30 @@ export function formToUpdateInput(form: SourceFormState): UpdateSourceInput {
 				clientParams: parseClientParams(form.clientParamsJson).value,
 				enableBackfillMode: form.enableBackfillMode
 			};
-		case 'pulsar':
+		case 'pulsar': {
+			const auth =
+				form.pulsarAuthType === 'token'
+					? {
+							authMethod: 'token' as const,
+							token: form.pulsarToken.trim() || undefined
+						}
+					: form.pulsarAuthType === 'oauth2'
+						? {
+								authMethod: 'oauth2' as const,
+								oauthIssuerUrl: form.pulsarOauthIssuerUrl.trim() || undefined,
+								oauthCredentialsUrl: form.pulsarOauthCredentialsUrl.trim() || undefined,
+								oauthAudience: form.pulsarOauthAudience.trim() || undefined,
+								oauthScope: form.pulsarOauthScope.trim() || undefined
+							}
+						: {};
 			return {
 				...common,
 				sourceType: 'pulsar',
 				topics: lines(form.pulsarTopics),
 				address: form.address.trim(),
-				consumerName: form.consumerName.trim() === '' ? undefined : form.consumerName.trim()
+				consumerName: form.consumerName.trim() === '' ? undefined : form.consumerName.trim(),
+				...auth
 			};
+		}
 	}
 }
