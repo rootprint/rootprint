@@ -103,7 +103,7 @@
 	}
 </script>
 
-<div class="border-line border-b">
+<div class="border-line border-y [&+div]:border-t-0">
 	<button
 		type="button"
 		class="flex w-full items-center gap-1 py-1.5 {indented ? 'pr-3 pl-6' : 'px-3'}"
