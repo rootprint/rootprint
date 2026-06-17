@@ -2,6 +2,7 @@ import { eq, inArray } from 'drizzle-orm';
 import type {
 	IndexConfig,
 	IndexDetail,
+	IndexField,
 	IndexMeta,
 	IndexSettings,
 	IndexSource,
@@ -38,7 +39,11 @@ import { conflict, indexAccessError, internal, notFound } from '../utils/http-er
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
-import type { CreateIndexInput, FieldMappingInput } from '../schemas/indexes.js';
+import type {
+	CreateIndexInput,
+	FieldMappingInput,
+	UpdateQuickwitConfigInput
+} from '../schemas/indexes.js';
 import {
 	getIndex as qwGetIndex,
 	listIndexes as qwListIndexes,
@@ -207,6 +212,9 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 		tagFields: index.tagFields,
 		defaultSearchFields: index.defaultSearchFields,
 		storeSource: index.storeSource,
+		indexFieldPresence: index.indexFieldPresence,
+		commitTimeoutSecs: index.commitTimeoutSecs,
+		retention: index.retention,
 		fields: index.fields,
 		sources: index.sources.map((source) => ({
 			sourceId: source.sourceId,
@@ -563,4 +571,110 @@ export async function createIndex(
 	}
 
 	return toIndexSummary(normalizeIndexMetadata(created), DEFAULT_SETTINGS);
+}
+
+function sameStringSet(a: string[], b: string[]): boolean {
+	if (a.length !== b.length) return false;
+	const setA = new Set(a);
+	return b.every((x) => setA.has(x));
+}
+
+export async function updateIndexConfig(
+	qw: QuickwitClient,
+	indexId: string,
+	existingFields: IndexField[],
+	input: UpdateQuickwitConfigInput
+): Promise<void> {
+	const meta = await qw.getIndex(indexId).catch((err: unknown) => {
+		if (err instanceof NotFoundError) throw notFound('Index not found');
+		throw err;
+	});
+	const cfg = meta.index_config;
+	const doc = cfg.doc_mapping;
+
+	const existingNames = new Set<string>([
+		...doc.field_mappings.map((f: FieldMapping) => f.name),
+		...existingFields.map((f) => f.name)
+	]);
+	const collisions = input.newFieldMappings
+		.map((f, i) => ({ name: f.name, i }))
+		.filter((f) => existingNames.has(f.name));
+	if (collisions.length > 0) {
+		throw conflict(
+			'A field with this name already exists.',
+			'FIELD_EXISTS',
+			collisions.map((c) => ({
+				path: `newFieldMappings.${c.i}.name`,
+				message: 'A field with this name already exists.'
+			}))
+		);
+	}
+
+	const docChanged =
+		input.newFieldMappings.length > 0 ||
+		(doc.mode ?? 'dynamic') !== input.mode ||
+		(doc.store_source ?? false) !== input.storeSource ||
+		(doc.index_field_presence ?? false) !== input.indexFieldPresence ||
+		!sameStringSet(doc.tag_fields ?? [], input.tagFields);
+
+	let docMapping: DocMapping;
+	if (docChanged) {
+		const ts = doc.timestamp_field ?? '';
+		docMapping = {
+			...doc,
+			mode: input.mode,
+			store_source: input.storeSource,
+			index_field_presence: input.indexFieldPresence,
+			tag_fields: input.tagFields,
+			field_mappings: [
+				...doc.field_mappings,
+				...input.newFieldMappings.map((f) => toFieldMapping(f, ts))
+			]
+		};
+		delete docMapping.doc_mapping_uid;
+	} else {
+		docMapping = doc;
+	}
+
+	const searchSettings = { ...cfg.search_settings };
+	if (input.defaultSearchFields.length > 0) {
+		searchSettings.default_search_fields = input.defaultSearchFields;
+	} else {
+		delete searchSettings.default_search_fields;
+	}
+
+	const indexingSettings = { ...cfg.indexing_settings };
+	if (input.commitTimeoutSecs === null) {
+		delete indexingSettings.commit_timeout_secs;
+	} else {
+		indexingSettings.commit_timeout_secs = input.commitTimeoutSecs;
+	}
+
+	// PUT is full-replacement: start from the raw config so unmodeled top-level
+	// fields (e.g. ingest_settings on newer Quickwit) survive, then override only
+	// the controlled pieces. The runtime spread copies props TS doesn't model.
+	const request = { ...cfg } as CreateIndexRequest;
+	if (!request.version) request.version = QUICKWIT_INDEX_CONFIG_VERSION;
+	request.doc_mapping = docMapping;
+
+	if (Object.keys(searchSettings).length > 0) request.search_settings = searchSettings;
+	else delete request.search_settings;
+
+	if (Object.keys(indexingSettings).length > 0) request.indexing_settings = indexingSettings;
+	else delete request.indexing_settings;
+
+	if (input.retention) {
+		request.retention = input.retention.schedule
+			? { period: input.retention.period, schedule: input.retention.schedule }
+			: { period: input.retention.period };
+	} else {
+		delete request.retention;
+	}
+
+	try {
+		await qw.updateIndex(indexId, request);
+	} catch (err) {
+		if (err instanceof NotFoundError) throw notFound('Index not found');
+		translateQuickwitError(err);
+	}
 }

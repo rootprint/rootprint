@@ -188,6 +188,8 @@ const retention = v.object({
 	schedule: v.optional(v.pipe(v.string(), v.minLength(1)))
 });
 
+export const RESERVED_FIELD_NAMES = ['_source', '_dynamic', '_field_presence'];
+
 export const createIndexSchema = v.pipe(
 	v.object({
 		indexId,
@@ -226,7 +228,44 @@ export const createIndexSchema = v.pipe(
 			return !field || field.type === 'datetime';
 		}, 'timestamp_field must reference a datetime field.'),
 		['timestampField']
+	),
+	v.forward(
+		v.check(
+			(input) => input.fieldMappings.every((f) => !RESERVED_FIELD_NAMES.includes(f.name)),
+			'Field name is reserved by Quickwit.'
+		),
+		['fieldMappings']
 	)
 );
 
 export type CreateIndexInput = v.InferOutput<typeof createIndexSchema>;
+
+export const updateQuickwitConfigSchema = v.pipe(
+	v.object({
+		mode: v.picklist(INDEX_MODES),
+		defaultSearchFields: v.array(v.pipe(v.string(), v.minLength(1))),
+		tagFields: v.array(v.pipe(v.string(), v.minLength(1))),
+		storeSource: v.boolean(),
+		indexFieldPresence: v.boolean(),
+		commitTimeoutSecs: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1))),
+		retention: v.nullable(retention),
+		newFieldMappings: v.array(fieldMapping)
+	}),
+	v.forward(
+		v.check(
+			(input) =>
+				new Set(input.newFieldMappings.map((f) => f.name)).size === input.newFieldMappings.length,
+			'Field names must be unique.'
+		),
+		['newFieldMappings']
+	),
+	v.forward(
+		v.check(
+			(input) => input.newFieldMappings.every((f) => !RESERVED_FIELD_NAMES.includes(f.name)),
+			'Field name is reserved by Quickwit.'
+		),
+		['newFieldMappings']
+	)
+);
+
+export type UpdateQuickwitConfigInput = v.InferOutput<typeof updateQuickwitConfigSchema>;

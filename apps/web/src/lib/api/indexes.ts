@@ -8,6 +8,7 @@ import type {
 	CreateIndexInput,
 	CreateSourceInput,
 	SaveIndexConfigInput,
+	UpdateQuickwitConfigInput,
 	UpdateSourceInput
 } from 'api/schemas';
 
@@ -138,4 +139,15 @@ export async function getIndexStats(
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load index stats');
 	return res.json() as Promise<IndexStatsResponse>;
+}
+
+export async function updateQuickwitConfig(
+	indexId: string,
+	input: UpdateQuickwitConfigInput
+): Promise<void> {
+	const res = await client.api.indexes[':indexId']['quickwit-config'].$put({
+		param: { indexId },
+		json: input
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to update index configuration');
 }

@@ -13,11 +13,17 @@
 	let {
 		fields = $bindable(),
 		timestampField,
-		fieldErrors
+		fieldErrors,
+		minFields = 1,
+		errorPrefix = 'fieldMappings',
+		showSearchDefault = true
 	}: {
 		fields: FieldRow[];
 		timestampField: string;
 		fieldErrors: Record<string, string>;
+		minFields?: number;
+		errorPrefix?: string;
+		showSearchDefault?: boolean;
 	} = $props();
 
 	function addField() {
@@ -45,7 +51,7 @@
 
 <div class="divide-line flex flex-col divide-y">
 	{#each fields as field, i (i)}
-		{@const nameError = fieldErrors[`fieldMappings.${i}.name`]}
+		{@const nameError = fieldErrors[`${errorPrefix}.${i}.name`]}
 		<div class="flex flex-col gap-2.5 px-4 py-3">
 			<div class="flex items-start gap-2">
 				<div class="flex flex-1 flex-col gap-1">
@@ -100,7 +106,7 @@
 					type="button"
 					class="text-base-content/50 hover:text-error mt-1 disabled:opacity-30"
 					aria-label={`Remove field ${i + 1}`}
-					disabled={fields.length === 1}
+					disabled={fields.length <= minFields}
 					onclick={() => removeField(i)}
 				>
 					<Trash2 class="h-4 w-4" />
@@ -155,7 +161,7 @@
 						</select>
 					</label>
 				{/if}
-				{#if field.type === 'text' || field.type === 'json'}
+				{#if showSearchDefault && (field.type === 'text' || field.type === 'json')}
 					<label class="ml-auto flex items-center gap-1.5">
 						<input
 							type="checkbox"

@@ -1,0 +1,34 @@
+meta {
+  name: Update Quickwit Config
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/quickwit-config
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "mode": "dynamic",
+    "defaultSearchFields": ["body.message"],
+    "tagFields": ["service.name"],
+    "storeSource": false,
+    "indexFieldPresence": true,
+    "commitTimeoutSecs": 60,
+    "retention": {
+      "period": "90 days",
+      "schedule": "daily"
+    },
+    "newFieldMappings": [
+      {
+        "name": "trace_id",
+        "type": "text",
+        "tokenizer": "raw",
+        "fast": true
+      }
+    ]
+  }
+}
