@@ -1333,71 +1333,6 @@
 				],
 				"type": "object"
 			},
-			"PersonalApiKeyResponse": {
-				"properties": {
-					"createdAt": {
-						"format": "date-time",
-						"type": "string"
-					},
-					"id": {
-						"type": "string"
-					},
-					"lastRequest": {
-						"anyOf": [
-							{
-								"format": "date-time",
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"name": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"start": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"userEmail": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"userId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"id",
-					"name",
-					"start",
-					"userId",
-					"userEmail",
-					"lastRequest",
-					"createdAt"
-				],
-				"type": "object"
-			},
 			"PreferencesResponse": {
 				"properties": {
 					"displayFields": {
@@ -1743,6 +1678,114 @@
 				],
 				"type": "object"
 			},
+			"ServiceAccountApiKeyCreatedResponse": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"token"
+				],
+				"type": "object"
+			},
+			"ServiceAccountApiKeyResponse": {
+				"properties": {
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"lastRequest": {
+						"anyOf": [
+							{
+								"format": "date-time",
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"start": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"userId": {
+						"type": "string"
+					},
+					"userName": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"start",
+					"userId",
+					"userName",
+					"lastRequest",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"ServiceAccountCreatedResponse": {
+				"properties": {
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id"
+				],
+				"type": "object"
+			},
+			"ServiceAccountResponse": {
+				"properties": {
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"keyCount": {
+						"type": "number"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"createdAt",
+					"keyCount"
+				],
+				"type": "object"
+			},
 			"Session": {
 				"properties": {
 					"createdAt": {
@@ -1884,6 +1927,60 @@
 			},
 			"SourceDetailSchema": {
 				"properties": {
+					"address": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"clientLogLevel": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"clientParams": {
+						"anyOf": [
+							{
+								"additionalProperties": {},
+								"propertyNames": {
+									"type": "string"
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"consumerName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enableBackfillMode": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -1966,6 +2063,29 @@
 							}
 						]
 					},
+					"topic": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"topics": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"vrlScript": {
 						"anyOf": [
 							{
@@ -1988,6 +2108,13 @@
 					"endpoint",
 					"queueUrl",
 					"messageType",
+					"topic",
+					"clientLogLevel",
+					"clientParams",
+					"enableBackfillMode",
+					"topics",
+					"address",
+					"consumerName",
 					"vrlScript",
 					"hasUnsupportedConfig"
 				],
@@ -2322,7 +2449,7 @@
 				"type": "http"
 			},
 			"personalBearer": {
-				"description": "Personal API key",
+				"description": "Query API key (personal or service account)",
 				"scheme": "bearer",
 				"type": "http"
 			}
@@ -2331,7 +2458,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.3.4"
+		"version": "0.3.5"
 	},
 	"openapi": "3.1.0",
 	"paths": {
@@ -3369,16 +3496,16 @@
 				]
 			}
 		},
-		"/api/api-keys/personal": {
+		"/api/api-keys/service-account": {
 			"get": {
-				"operationId": "getApiApiKeysPersonal",
+				"operationId": "getApiApiKeysServiceAccount",
 				"responses": {
 					"200": {
 						"content": {
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/PersonalApiKeyResponse"
+										"$ref": "#/components/schemas/ServiceAccountApiKeyResponse"
 									},
 									"type": "array"
 								}
@@ -3405,29 +3532,48 @@
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				},
-				"summary": "List personal API keys (all users)",
+				"summary": "List service account API keys",
 				"tags": [
 					"API keys"
 				]
-			}
-		},
-		"/api/api-keys/personal/{id}": {
-			"delete": {
-				"operationId": "deleteApiApiKeysPersonalById",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
+			},
+			"post": {
+				"operationId": "postApiApiKeysServiceAccount",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"name": {
+										"maxLength": 100,
+										"minLength": 1,
+										"type": "string"
+									},
+									"userId": {
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"name",
+									"userId"
+								],
+								"type": "object"
+							}
 						}
-					}
-				],
+					},
+					"required": true
+				},
 				"responses": {
-					"204": {
-						"description": "Personal API key revoked"
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServiceAccountApiKeyCreatedResponse"
+								}
+							}
+						},
+						"description": "Service account API key created"
 					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
@@ -3448,7 +3594,50 @@
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				},
-				"summary": "Revoke a personal API key",
+				"summary": "Create a service account API key",
+				"tags": [
+					"API keys"
+				]
+			}
+		},
+		"/api/api-keys/service-account/{id}": {
+			"delete": {
+				"operationId": "deleteApiApiKeysServiceAccountById",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Service account API key revoked"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Revoke a service account API key",
 				"tags": [
 					"API keys"
 				]
@@ -12752,13 +12941,420 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "List indexes",
+				"tags": [
+					"Index management"
+				]
+			},
+			"post": {
+				"operationId": "postApiIndexes",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"commitTimeoutSecs": {
+										"minimum": 1,
+										"type": "integer"
+									},
+									"defaultSearchFields": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array"
+									},
+									"fieldMappings": {
+										"items": {
+											"oneOf": [
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"fieldnorms": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"record": {
+															"enum": [
+																"basic",
+																"freq",
+																"position"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"tokenizer": {
+															"enum": [
+																"raw",
+																"raw_lowercase",
+																"default",
+																"en_stem",
+																"whitespace",
+																"chinese_compatible",
+																"lowercase"
+															],
+															"type": "string"
+														},
+														"type": {
+															"const": "text"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"coerce": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "i64"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"coerce": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "u64"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"coerce": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "f64"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "bool"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"fastPrecision": {
+															"enum": [
+																"seconds",
+																"milliseconds",
+																"microseconds",
+																"nanoseconds"
+															],
+															"type": "string"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"inputFormats": {
+															"items": {
+																"minLength": 1,
+																"type": "string"
+															},
+															"minItems": 1,
+															"type": "array"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"outputFormat": {
+															"enum": [
+																"rfc3339",
+																"unix_timestamp_secs",
+																"unix_timestamp_millis",
+																"unix_timestamp_micros",
+																"unix_timestamp_nanos"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "datetime"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "ip"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"expandDots": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"record": {
+															"enum": [
+																"basic",
+																"freq",
+																"position"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"tokenizer": {
+															"enum": [
+																"raw",
+																"raw_lowercase",
+																"default",
+																"en_stem",
+																"whitespace",
+																"chinese_compatible",
+																"lowercase"
+															],
+															"type": "string"
+														},
+														"type": {
+															"const": "json"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												}
+											]
+										},
+										"minItems": 1,
+										"type": "array"
+									},
+									"indexFieldPresence": {
+										"type": "boolean"
+									},
+									"indexId": {
+										"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{2,254}$",
+										"type": "string"
+									},
+									"indexUri": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"mode": {
+										"enum": [
+											"dynamic",
+											"lenient",
+											"strict"
+										],
+										"type": "string"
+									},
+									"retention": {
+										"properties": {
+											"period": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"schedule": {
+												"minLength": 1,
+												"type": "string"
+											}
+										},
+										"required": [
+											"period"
+										],
+										"type": "object"
+									},
+									"storeSource": {
+										"type": "boolean"
+									},
+									"tagFields": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array"
+									},
+									"timestampField": {
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"indexId",
+									"timestampField",
+									"fieldMappings"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexSummarySchema"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create index",
 				"tags": [
 					"Index management"
 				]
@@ -13006,10 +13602,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get index view config",
@@ -13064,10 +13660,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "List index fields",
@@ -13192,10 +13788,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get bulk field values",
@@ -13290,10 +13886,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get field values",
@@ -13405,10 +14001,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Search logs",
@@ -13617,10 +14213,10 @@
 				},
 				"security": [
 					{
-						"cookieAuth": []
+						"personalBearer": []
 					},
 					{
-						"personalBearer": []
+						"cookieAuth": []
 					}
 				],
 				"summary": "Get log histogram",
@@ -13879,6 +14475,116 @@
 											"sourceId",
 											"sourceType",
 											"queueUrl"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"clientLogLevel": {
+												"enum": [
+													"debug",
+													"info",
+													"warn",
+													"error"
+												],
+												"type": "string"
+											},
+											"clientParams": {
+												"additionalProperties": {},
+												"propertyNames": {
+													"type": "string"
+												},
+												"type": "object"
+											},
+											"enableBackfillMode": {
+												"type": "boolean"
+											},
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"sourceId": {
+												"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{2,254}$",
+												"type": "string"
+											},
+											"sourceType": {
+												"const": "kafka"
+											},
+											"topic": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceId",
+											"sourceType",
+											"topic"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"address": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"consumerName": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"sourceId": {
+												"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{2,254}$",
+												"type": "string"
+											},
+											"sourceType": {
+												"const": "pulsar"
+											},
+											"topics": {
+												"items": {
+													"minLength": 1,
+													"type": "string"
+												},
+												"minItems": 1,
+												"type": "array"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceId",
+											"sourceType",
+											"topics",
+											"address"
 										],
 										"type": "object"
 									}
@@ -14211,6 +14917,106 @@
 										"required": [
 											"sourceType",
 											"queueUrl"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"clientLogLevel": {
+												"enum": [
+													"debug",
+													"info",
+													"warn",
+													"error"
+												],
+												"type": "string"
+											},
+											"clientParams": {
+												"additionalProperties": {},
+												"propertyNames": {
+													"type": "string"
+												},
+												"type": "object"
+											},
+											"enableBackfillMode": {
+												"type": "boolean"
+											},
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"sourceType": {
+												"const": "kafka"
+											},
+											"topic": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceType",
+											"topic"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"address": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"consumerName": {
+												"minLength": 1,
+												"type": "string"
+											},
+											"inputFormat": {
+												"enum": [
+													"json",
+													"plain_text",
+													"otlp_logs_json",
+													"otlp_logs_protobuf",
+													"otlp_traces_json",
+													"otlp_traces_protobuf"
+												],
+												"type": "string"
+											},
+											"numPipelines": {
+												"minimum": 1,
+												"type": "integer"
+											},
+											"sourceType": {
+												"const": "pulsar"
+											},
+											"topics": {
+												"items": {
+													"minLength": 1,
+													"type": "string"
+												},
+												"minItems": 1,
+												"type": "array"
+											},
+											"vrlScript": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"sourceType",
+											"topics",
+											"address"
 										],
 										"type": "object"
 									}
@@ -14791,6 +15597,148 @@
 				"summary": "Ingest NDJSON log documents",
 				"tags": [
 					"Log ingest"
+				]
+			}
+		},
+		"/api/service-accounts": {
+			"get": {
+				"operationId": "getApiServiceAccounts",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ServiceAccountResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List service accounts",
+				"tags": [
+					"Service accounts"
+				]
+			},
+			"post": {
+				"operationId": "postApiServiceAccounts",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"name": {
+										"maxLength": 128,
+										"minLength": 1,
+										"type": "string"
+									}
+								},
+								"required": [
+									"name"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServiceAccountCreatedResponse"
+								}
+							}
+						},
+						"description": "Service account created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create service account",
+				"tags": [
+					"Service accounts"
+				]
+			}
+		},
+		"/api/service-accounts/{userId}": {
+			"delete": {
+				"operationId": "deleteApiServiceAccountsByUserId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Service account deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete service account",
+				"tags": [
+					"Service accounts"
 				]
 			}
 		},
@@ -15394,7 +16342,7 @@
 								}
 							}
 						},
-						"description": "User invited"
+						"description": "User created"
 					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
@@ -15415,7 +16363,7 @@
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				},
-				"summary": "Invite user",
+				"summary": "Create user",
 				"tags": [
 					"User and invite"
 				]
@@ -15819,8 +16767,8 @@
 	],
 	"servers": [
 		{
-			"description": "Same-origin API",
-			"url": "/"
+			"description": "Rootprint API",
+			"url": "https://example.com"
 		}
 	]
 }

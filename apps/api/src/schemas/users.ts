@@ -1,18 +1,15 @@
 import * as v from 'valibot';
 
+import { boundedName } from './names.js';
+
 export const userRoles = ['admin', 'user'] as const;
 
-export const createInviteSchema = v.object({
+export const createUserSchema = v.object({
 	email: v.pipe(v.string(), v.trim(), v.email('Please enter a valid email')),
-	name: v.pipe(
-		v.string(),
-		v.trim(),
-		v.minLength(1, 'Name is required'),
-		v.maxLength(128, 'Name must be 128 characters or fewer')
-	),
+	name: boundedName('Name', 128),
 	role: v.picklist(userRoles)
 });
-export type CreateInviteInput = v.InferOutput<typeof createInviteSchema>;
+export type CreateUserInput = v.InferOutput<typeof createUserSchema>;
 
 export const setUserRoleSchema = v.object({
 	role: v.picklist(userRoles)

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import * as v from 'valibot';
-	import { createInviteSchema, type CreateInviteInput } from 'api/schemas';
+	import { createUserSchema, type CreateUserInput } from 'api/schemas';
 	import type { UserRole } from 'api/types';
 
-	import { createInvite } from '$lib/api/invites';
+	import { createUser } from '$lib/api/users';
 	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
@@ -21,7 +21,7 @@
 	let name = $state('');
 	let email = $state('');
 	let role = $state<UserRole>('user');
-	let inviteUrl = $state('');
+	let inviteUrl = $state<string | null>(null);
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -31,7 +31,7 @@
 		name = '';
 		email = '';
 		role = 'user';
-		inviteUrl = '';
+		inviteUrl = null;
 		submitting = false;
 		formError = null;
 		fieldErrors = {};
@@ -46,16 +46,16 @@
 		formError = null;
 		fieldErrors = {};
 
-		const parsed = v.safeParse(createInviteSchema, { name, email, role });
+		const parsed = v.safeParse(createUserSchema, { name, email, role });
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
 			return;
 		}
-		const input: CreateInviteInput = parsed.output;
+		const input: CreateUserInput = parsed.output;
 
 		submitting = true;
 		try {
-			const result = await createInvite(input);
+			const result = await createUser(input);
 			inviteUrl = result.inviteUrl;
 			phase = 'reveal';
 			await onCreated?.();
@@ -64,7 +64,7 @@
 				fieldErrors = toFieldErrors(err.body);
 				formError = err.message;
 			} else {
-				formError = err instanceof Error ? err.message : 'Failed to create invite';
+				formError = err instanceof Error ? err.message : 'Failed to create user';
 			}
 		} finally {
 			submitting = false;
@@ -72,9 +72,9 @@
 	}
 </script>
 
-<Modal bind:open title="Invite user" onclose={handleClose}>
+<Modal bind:open title="Create user" onclose={handleClose}>
 	{#if phase === 'form'}
-		<form id="invite-user-form" class="space-y-3" {onsubmit}>
+		<form id="create-user-form" class="space-y-3" {onsubmit}>
 			{#if formError}
 				<div role="alert" class="alert alert-error text-sm">{formError}</div>
 			{/if}
@@ -114,7 +114,7 @@
 				{/snippet}
 			</Field>
 		</form>
-	{:else}
+	{:else if inviteUrl}
 		<div class="flex flex-col gap-3">
 			<p class="text-base-content/60 text-sm">
 				Share this link with <strong>{name}</strong> to complete account setup.
@@ -133,7 +133,7 @@
 			>
 				Cancel
 			</button>
-			<button form="invite-user-form" type="submit" class="btn btn-primary" disabled={submitting}>
+			<button form="create-user-form" type="submit" class="btn btn-primary" disabled={submitting}>
 				{submitting ? 'Creating…' : 'Create & get link'}
 			</button>
 		{:else}

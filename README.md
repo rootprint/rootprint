@@ -18,14 +18,15 @@ control, and Quickwit-powered search without sending logs to a hosted SaaS.
 
 - **Search on object storage** - Query indexes stored on S3, MinIO, R2,
   GCS, Azure Blob, or local disk.
-- **Open ingestion** - Send logs through OTLP Protobuf, NDJSON HTTP, Vector, Fluent Bit,
-  Docker, Node.js, Python, Go, and other OTEL-compatible sources.
+- **Open ingestion** - Send logs through OTLP Protobuf, NDJSON HTTP, the OpenTelemetry
+  Collector, Vector, Fluent Bit, Docker, Nginx, Node.js, Python, Go, and other OTEL-compatible
+  sources.
 - **Incident-ready UI** - Use severity-aware rows, histograms, field filters, saved views,
-  detail drawers, and share links.
-- **Team access** - Invite users, manage roles, create scoped ingest keys, and enable Google
-  or GitHub OAuth allowlists.
-- **Admin controls** - Manage indexes, sources, field mappings, exports, activity, and
-  Quickwit cluster health.
+  detail drawers, share links, and result exports.
+- **Team access** - Invite users, manage roles, create scoped ingest keys, add service accounts
+  and personal API keys, and enable Google or GitHub OAuth allowlists.
+- **Admin controls** - Manage indexes, sources, field configuration, activity, and
+  Quickwit.
 - **Open source** - Apache-2.0 licensed. Run it, inspect it, fork it.
 
 ## Quick Start
@@ -44,8 +45,8 @@ http://localhost:8282
 Then:
 
 1. Create the first admin account.
-2. Create an ingest key in **Settings -> Ingest keys**.
-3. Send logs to the bundled OpenTelemetry index.
+2. Create an ingest key in **Settings -> API keys**.
+3. Send logs to the bundled OpenTelemetry index (`otel-logs-v0_9`).
 4. Search them from the Rootprint UI.
 
 Full install guide: https://docs.rootprint.io/install/docker-compose

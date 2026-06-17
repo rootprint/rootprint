@@ -23,12 +23,16 @@ export const documentation: GenerateSpecOptions['documentation'] = {
 		version: rootVersion(),
 		description: 'HTTP API for the Rootprint log management platform.'
 	},
-	servers: [{ url: '/', description: 'Same-origin API' }],
+	servers: [{ url: 'https://example.com', description: 'Rootprint API' }],
 	components: {
 		securitySchemes: {
 			cookieAuth: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token' },
 			ingestBearer: { type: 'http', scheme: 'bearer', description: 'Ingest API key' },
-			personalBearer: { type: 'http', scheme: 'bearer', description: 'Personal API key' }
+			personalBearer: {
+				type: 'http',
+				scheme: 'bearer',
+				description: 'Query API key (personal or service account)'
+			}
 		},
 		responses: errorResponseComponents
 	},

@@ -4,7 +4,7 @@
 	import { cubicInOut } from 'svelte/easing';
 
 	import { refreshUsers, regenerateInvite, toggleUserRole } from './user-actions';
-	import InviteUserModal from '$lib/components/admin/users/InviteUserModal.svelte';
+	import CreateUserModal from '$lib/components/admin/users/CreateUserModal.svelte';
 	import MemberActionsMenu from '$lib/components/admin/users/MemberActionsMenu.svelte';
 	import RemoveUserModal from '$lib/components/admin/users/RemoveUserModal.svelte';
 	import ResetPasswordModal from '$lib/components/admin/users/ResetPasswordModal.svelte';
@@ -34,7 +34,7 @@
 
 	let filter = $state<Filter>('all');
 	let search = $state('');
-	let inviteOpen = $state(false);
+	let createUserOpen = $state(false);
 	let resetOpen = $state(false);
 	let removeOpen = $state(false);
 	let target = $state<{ id: string; name: string } | null>(null);
@@ -69,7 +69,7 @@
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
-	<PageHeader title="Users" description="Invite new members, manage roles, and revoke access." />
+	<PageHeader title="Users" description="Create users, manage roles, and revoke access." />
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">
 		<div role="tablist" class="flex h-8 items-center gap-5">
@@ -108,9 +108,9 @@
 
 		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
 
-		<button class="btn btn-primary btn-sm" onclick={() => (inviteOpen = true)}>
+		<button class="btn btn-primary btn-sm" onclick={() => (createUserOpen = true)}>
 			<UserPlus class="h-3.5 w-3.5" />
-			Invite user
+			Create user
 		</button>
 	</div>
 
@@ -183,7 +183,7 @@
 	</div>
 </div>
 
-<InviteUserModal bind:open={inviteOpen} onCreated={refreshUsers} />
+<CreateUserModal bind:open={createUserOpen} onCreated={refreshUsers} />
 <ResetPasswordModal
 	bind:open={resetOpen}
 	userId={target?.id ?? ''}

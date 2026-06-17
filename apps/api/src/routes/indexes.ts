@@ -77,7 +77,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Index management',
 			summary: 'List indexes',
 			ok: IndexListResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		validator('query', ListIndexesQuery),
@@ -111,7 +111,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Index management',
 			summary: 'List index fields',
 			ok: IndexFieldsResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		withIndexMeta('search'),
@@ -126,7 +126,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Index management',
 			summary: 'Get index view config',
 			ok: IndexViewConfigResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		withIndexMeta('search'),
@@ -331,7 +331,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Search logs',
 			ok: LogSearchResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
@@ -356,7 +356,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Get log histogram',
 			ok: HistogramResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
@@ -374,7 +374,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Get bulk field values',
 			ok: FieldValuesBulkResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,
@@ -399,7 +399,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Get field values',
 			ok: FieldValuesResponse,
-			security: [{ cookieAuth: [] }, { personalBearer: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		withIndexConfig,

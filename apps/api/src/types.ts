@@ -19,7 +19,7 @@ import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/res
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,
 	ApiKeyValueResponse as ApiKeyValueResponseSchema,
-	PersonalApiKeyResponse as PersonalApiKeyResponseSchema
+	ServiceAccountApiKeyResponse as ServiceAccountApiKeyResponseSchema
 } from './schemas/responses/api-keys.js';
 import type {
 	UserResponse as UserResponseSchema,
@@ -32,6 +32,7 @@ import type {
 	GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema,
 	GitHubAuthSettingsResponse as GitHubAuthSettingsResponseSchema
 } from './schemas/responses/settings.js';
+import type { ServiceAccountResponse as ServiceAccountResponseSchema } from './schemas/responses/service-accounts.js';
 import type {
 	ActorIndexRowResponse as ActorIndexRowResponseSchema,
 	ActorSummaryRowResponse as ActorSummaryRowResponseSchema,
@@ -130,9 +131,11 @@ export type ApiKeyRole = 'ingest';
 
 export type ApiKeySummary = v.InferOutput<typeof ApiKeyResponseSchema>;
 
-export type PersonalApiKeySummary = v.InferOutput<typeof PersonalApiKeyResponseSchema>;
+export type ServiceAccountApiKeySummary = v.InferOutput<typeof ServiceAccountApiKeyResponseSchema>;
 
 export type ApiKeyValue = v.InferOutput<typeof ApiKeyValueResponseSchema>;
+
+export type ServiceAccountSummary = v.InferOutput<typeof ServiceAccountResponseSchema>;
 
 export type VerifiedApiKey = {
 	id: number;
@@ -238,7 +241,7 @@ export type IndexMeta = {
 export type VerifyApiKeyResult = { status: 'ok'; key: VerifiedApiKey } | { status: 'not-found' };
 
 // User administration (lib/auth-admin.ts)
-export type CreateUserInput = {
+export type AdminCreateUserInput = {
 	email: string;
 	name: string;
 	password: string;

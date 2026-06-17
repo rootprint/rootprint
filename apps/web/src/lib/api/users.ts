@@ -2,8 +2,15 @@ import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { UserRole } from 'api/types';
+import type { CreateUserInput } from 'api/schemas';
 
 export type UserView = InferResponseType<typeof client.api.users.$get, 200>[number];
+
+export async function createUser(input: CreateUserInput): Promise<{ inviteUrl: string }> {
+	const res = await client.api.users.$post({ json: input });
+	if (!res.ok) throw await readApiError(res, 'Failed to create user');
+	return res.json() as Promise<{ inviteUrl: string }>;
+}
 
 export async function listUsers(): Promise<UserView[]> {
 	const res = await client.api.users.$get({});

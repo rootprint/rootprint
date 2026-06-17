@@ -40,7 +40,7 @@ Root convenience scripts: `dev:api`, `build:api`, `start:api`, `check`, `lint`, 
 - TypeScript is strict. Every workspace extends `tsconfig.base.json`. Avoid `any` unless unavoidable.
 - Prettier config is at the repo root: tabs, single quotes, no trailing commas, line width ~100.
 - No automated tests in any workspace: no unit, integration, or end-to-end tests.
-- For stack-specific rules (Hono routing, Svelte 5 patterns, Mintlify writing standards), see the relevant workspace's `AGENTS.md`.
+- For stack-specific rules (Hono routing, Svelte 5 patterns), see the relevant workspace's `AGENTS.md`.
 
 ## CI Parity Before Merge
 
