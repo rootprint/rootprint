@@ -21,6 +21,13 @@ function flattenFieldMappings(mappings: FieldMapping[], prefix = ''): IndexField
 	return result;
 }
 
+function normalizeRetention(
+	r: { period?: string; schedule?: string } | undefined | null
+): { period: string; schedule: string | null } | null {
+	if (!r || typeof r.period !== 'string') return null;
+	return { period: r.period, schedule: r.schedule ?? null };
+}
+
 export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetadata {
 	const cfg = meta.index_config;
 	const doc = cfg.doc_mapping;
@@ -47,7 +54,8 @@ export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetada
 		storeDocumentSize: doc.store_document_size ?? null,
 		tagFields: doc.tag_fields ?? null,
 		defaultSearchFields: cfg.search_settings?.default_search_fields ?? null,
-		retention: cfg.retention ?? null,
+		commitTimeoutSecs: cfg.indexing_settings?.commit_timeout_secs ?? null,
+		retention: normalizeRetention(cfg.retention),
 		fields: flattenFieldMappings(doc.field_mappings ?? []),
 		sources
 	};

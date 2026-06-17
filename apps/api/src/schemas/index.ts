@@ -5,6 +5,8 @@ export {
 	type SaveIndexConfigInput,
 	createIndexSchema,
 	type CreateIndexInput,
+	updateQuickwitConfigSchema,
+	type UpdateQuickwitConfigInput,
 	type FieldMappingInput,
 	FIELD_TYPES,
 	TOKENIZERS,

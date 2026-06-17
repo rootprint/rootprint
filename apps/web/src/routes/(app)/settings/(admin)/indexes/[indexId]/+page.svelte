@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronRight, Plus, Search, Trash2 } from 'lucide-svelte';
+	import { ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
@@ -61,14 +61,23 @@
 	<PageHeader>
 		<header class="mt-3 flex items-start justify-between gap-4">
 			<h1 class="text-h1 font-mono break-all">{detail.indexId}</h1>
-			<button
-				type="button"
-				class="btn btn-outline btn-sm btn-error shrink-0"
-				onclick={() => (deleteOpen = true)}
-			>
-				<Trash2 class="h-3.5 w-3.5" />
-				Delete
-			</button>
+			<div class="flex shrink-0 gap-2">
+				<a
+					href="/settings/indexes/{encodeURIComponent(detail.indexId)}/edit"
+					class="btn btn-outline btn-sm"
+				>
+					<Pencil class="h-3.5 w-3.5" />
+					Edit
+				</a>
+				<button
+					type="button"
+					class="btn btn-outline btn-sm btn-error"
+					onclick={() => (deleteOpen = true)}
+				>
+					<Trash2 class="h-3.5 w-3.5" />
+					Delete
+				</button>
+			</div>
 		</header>
 	</PageHeader>
 

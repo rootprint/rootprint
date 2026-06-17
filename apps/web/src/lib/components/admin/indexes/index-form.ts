@@ -90,7 +90,7 @@ export function emptyIndexForm(): IndexFormState {
 	};
 }
 
-function fieldToMapping(field: FieldRow): FieldMappingInput {
+export function fieldToMapping(field: FieldRow): FieldMappingInput {
 	const common: { name: string; indexed: boolean; stored: boolean; fast: boolean } = {
 		name: field.name.trim(),
 		indexed: field.indexed,

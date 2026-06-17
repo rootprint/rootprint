@@ -228,7 +228,8 @@ export type QuickwitIndexMetadata = {
 	storeDocumentSize: boolean | null;
 	tagFields: string[] | null;
 	defaultSearchFields: string[] | null;
-	retention: unknown | null;
+	commitTimeoutSecs: number | null;
+	retention: { period: string; schedule: string | null } | null;
 	fields: IndexField[];
 	sources: QuickwitSource[];
 };

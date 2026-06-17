@@ -23,7 +23,8 @@ import {
 	saveIndexConfigSchema,
 	SourceParams,
 	StatsQuery,
-	ToggleSourceBody
+	ToggleSourceBody,
+	updateQuickwitConfigSchema
 } from '../schemas/indexes.js';
 import { createSourceSchema, updateSourceSchema } from '../schemas/sources.js';
 import {
@@ -54,6 +55,7 @@ import {
 	resetSourceCheckpoint,
 	saveIndexConfig,
 	setSourceEnabled,
+	updateIndexConfig,
 	updateSource
 } from '../services/index.service.js';
 import { getStatsHistory } from '../services/index-stats.service.js';
@@ -190,6 +192,26 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			const { indexId } = c.req.valid('param');
 			const body = c.req.valid('json');
 			await saveIndexConfig(db, indexId, body);
+			return c.body(null, 204);
+		}
+	)
+	.put(
+		'/:indexId/quickwit-config',
+		describe({
+			tag: 'Index management',
+			summary: 'Update Quickwit index configuration',
+			okStatus: 204,
+			errors: [400, 404, 409]
+		}),
+		requireUser,
+		requireAdmin,
+		withIndexMeta('admin'),
+		validator('param', IndexIdParams),
+		validator('json', updateQuickwitConfigSchema),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			const body = c.req.valid('json');
+			await updateIndexConfig(quickwit, indexId, c.get('indexMeta').index.fields, body);
 			return c.body(null, 204);
 		}
 	)

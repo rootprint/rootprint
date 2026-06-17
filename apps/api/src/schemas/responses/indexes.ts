@@ -87,6 +87,9 @@ export const IndexDetailResponse = named(
 		tagFields: v.nullable(v.array(v.string())),
 		defaultSearchFields: v.nullable(v.array(v.string())),
 		storeSource: v.nullable(v.boolean()),
+		indexFieldPresence: v.nullable(v.boolean()),
+		commitTimeoutSecs: v.nullable(v.number()),
+		retention: v.nullable(v.object({ period: v.string(), schedule: v.nullable(v.string()) })),
 		fields: v.array(IndexFieldSchema),
 		sources: v.array(IndexSourceSchema)
 	})
