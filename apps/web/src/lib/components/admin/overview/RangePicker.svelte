@@ -11,10 +11,12 @@
 	const OPTIONS: readonly Window[] = ['24h', '7d', '30d'];
 </script>
 
-<div class="border-line inline-flex rounded border text-xs" role="group">
+<div class="border-line inline-flex rounded border text-xs" role="tablist">
 	{#each OPTIONS as opt (opt)}
 		<button
 			type="button"
+			role="tab"
+			aria-selected={value === opt}
 			class="px-3 py-1 transition-colors {value === opt
 				? 'bg-base-200 text-base-content'
 				: 'text-base-content/60 hover:text-base-content hover:bg-base-200/60'}"

@@ -39,7 +39,7 @@ export function issuesToFieldErrors(
 	const out: Record<string, string> = {};
 	for (const issue of issues) {
 		const key = issue.path?.[0]?.key as string | undefined;
-		if (key) out[key] = issue.message;
+		if (key && !(key in out)) out[key] = issue.message;
 	}
 	return out;
 }

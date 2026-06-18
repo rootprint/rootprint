@@ -44,6 +44,7 @@ export class MetricsPoller {
 	}
 
 	async poll(): Promise<void> {
+		this.now = Date.now();
 		const seq = ++this.#pollSeq;
 		try {
 			const metrics = await getAdminMetrics();
@@ -77,7 +78,6 @@ export class MetricsPoller {
 		this.#timer = setTimeout(async () => {
 			await this.poll();
 			if (this.#stopped) return;
-			this.now = Date.now();
 			this.#schedule();
 		}, POLL_INTERVAL_MS);
 	}

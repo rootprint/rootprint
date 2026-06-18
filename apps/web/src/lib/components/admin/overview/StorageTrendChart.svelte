@@ -6,7 +6,7 @@
 
 	import { browser } from '$app/environment';
 	import { baseContentAt } from '$lib/utils/chart-colors';
-	import { formatGiB } from '$lib/utils/format';
+	import { formatBytes } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
 	import type { Window } from '$lib/utils/time-range';
@@ -215,7 +215,7 @@
 					grid: { show: true, stroke: gridStroke, width: 0.8 },
 					ticks: { show: false },
 					size: 56,
-					values: (_u, splits) => splits.map((v) => formatGiB(Number(v), 1))
+					values: (_u, splits) => splits.map((v) => formatBytes(Number(v)))
 				}
 			]
 		};
@@ -306,7 +306,7 @@
 									<div class="flex flex-1 items-center justify-between gap-4">
 										<span class="text-base-content/60 truncate">{row.label}</span>
 										<span class="text-base-content font-mono font-medium tabular-nums">
-											{formatGiB(row.value, 2)}
+											{formatBytes(row.value)}
 										</span>
 									</div>
 								</div>
@@ -317,7 +317,7 @@
 								<div class="flex flex-1 items-center justify-between gap-4">
 									<span class="text-base-content font-medium">Total</span>
 									<span class="text-base-content font-mono font-medium tabular-nums">
-										{formatGiB(tooltipTotal, 2)}
+										{formatBytes(tooltipTotal)}
 									</span>
 								</div>
 							</div>

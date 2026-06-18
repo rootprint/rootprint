@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDurationSeconds } from '$lib/utils/format';
+	import { formatDurationSeconds, formatOrDash } from '$lib/utils/format';
 	import type { ConnectionState } from '$lib/types';
 
 	type Props = {
@@ -20,7 +20,7 @@
 	};
 
 	const meta = $derived(STATE_META[state]);
-	const uptimeText = $derived(uptimeSeconds === null ? '—' : formatDurationSeconds(uptimeSeconds));
+	const uptimeText = $derived(formatOrDash(uptimeSeconds, formatDurationSeconds));
 	// Strip scheme so the ribbon stays calm; full endpoint is in the title (hover).
 	const endpointShort = $derived(endpoint ? endpoint.replace(/^https?:\/\//, '') : null);
 	const versionTooltip = $derived.by(() => {
