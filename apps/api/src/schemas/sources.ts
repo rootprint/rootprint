@@ -1,7 +1,5 @@
 import * as v from 'valibot';
 
-export const SOURCE_TYPES = ['kinesis', 'file', 'kafka'] as const;
-
 export const KAFKA_LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 
 export const SOURCE_INPUT_FORMATS = [
