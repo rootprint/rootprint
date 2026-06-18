@@ -55,7 +55,7 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
 	}
 
-	if (!sawAnyBytes()) {
+	if (len === null && !sawAnyBytes()) {
 		await upstream.body?.cancel().catch(() => {});
 		throw badRequest('Request body is required', 'EMPTY_BODY');
 	}

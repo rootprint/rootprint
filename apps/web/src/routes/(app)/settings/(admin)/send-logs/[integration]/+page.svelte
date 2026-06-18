@@ -24,12 +24,16 @@
 		})
 	);
 	let realApiKeyValue = $state<string | null>(null);
+	const selectedApiKey = $derived(
+		selectedApiKeyId != null ? (data.apiKeys.find((k) => k.id === selectedApiKeyId) ?? null) : null
+	);
+	const selectedIndexId = $derived(selectedApiKey?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID);
 
 	const ctx = $derived({
 		origin: page.url.origin,
 		apiKey: realApiKeyValue ?? '<your-ingest-api-key>',
 		hasRealApiKey: realApiKeyValue !== null,
-		indexId: DEFAULT_OTEL_LOGS_INDEX_ID,
+		indexId: selectedIndexId,
 		flavor
 	});
 
@@ -41,6 +45,7 @@
 		{integration}
 		apiKeys={data.apiKeys}
 		indexIds={data.indexIds}
+		{selectedIndexId}
 		bind:selectedApiKeyId
 		bind:realApiKeyValue
 	/>

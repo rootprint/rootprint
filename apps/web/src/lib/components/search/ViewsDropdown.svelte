@@ -87,7 +87,7 @@
 			{ query: item.query, filters: item.filters, sortDirection: item.sortDirection },
 			{ push: true }
 		);
-		store.setActiveFields(item.columns !== null ? [...item.columns] : []);
+		if (item.columns !== null) store.setActiveFields([...item.columns]);
 		close();
 	}
 
@@ -118,9 +118,10 @@
 
 	const formCanSave = $derived.by(() => {
 		if (formSubmitting) return false;
-		if (formName.trim().length === 0) return false;
+		const name = formName.trim();
+		if (name.length === 0) return false;
 		if (!editing) return true;
-		const nameChanged = formName !== editing.name;
+		const nameChanged = name !== editing.name;
 		const descChanged = formDescription !== (editing.description ?? '');
 		return nameChanged || descChanged;
 	});
