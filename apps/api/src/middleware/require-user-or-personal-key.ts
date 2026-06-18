@@ -39,9 +39,7 @@ export function requireUserOrPersonalKey(required: Scope): MiddlewareHandler<Aut
 		}
 
 		if (!result.valid || !result.key) {
-			// verifyApiKey never returns USER_BANNED — banned owners are caught by the
-			// owner.banned check below. KEY_DISABLED is the only forbidden-class code it emits.
-			if (result.error?.code === 'KEY_DISABLED') {
+			if (result.error?.code === 'KEY_DISABLED' || result.error?.code === 'KEY_NOT_FOUND') {
 				throw forbidden('API key is not allowed', 'PERSONAL_KEY_FORBIDDEN');
 			}
 			throw unauthorized('Invalid API key', 'PERSONAL_KEY_INVALID');
