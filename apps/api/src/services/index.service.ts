@@ -88,6 +88,16 @@ export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): b
 	return true;
 }
 
+export async function assertIndexAccess(
+	db: Db,
+	indexId: string,
+	role: string | null | undefined
+): Promise<void> {
+	const settings = await getIndexSettings(db, indexId);
+	const isAdmin = role === 'admin';
+	if (!canAccessIndex(settings.visibility, isAdmin)) throw indexAccessError(isAdmin, 'denied');
+}
+
 export async function saveIndexConfig(
 	db: Db,
 	indexId: string,
