@@ -39,6 +39,7 @@
 		const parsed = v.safeParse(saveIndexConfigSchema, payload);
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
+			toast.error('Please fix the highlighted fields.');
 			return;
 		}
 

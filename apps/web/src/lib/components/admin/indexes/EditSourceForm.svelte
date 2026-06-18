@@ -37,6 +37,7 @@
 		const parsed = v.safeParse(updateSourceSchema, formToUpdateInput(form));
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
+			toast.error('Please fix the highlighted fields.');
 			return;
 		}
 
