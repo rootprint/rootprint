@@ -585,9 +585,9 @@ export async function createIndex(
 }
 
 function sameStringSet(a: string[], b: string[]): boolean {
-	if (a.length !== b.length) return false;
 	const setA = new Set(a);
-	return b.every((x) => setA.has(x));
+	const setB = new Set(b);
+	return setA.size === setB.size && [...setA].every((x) => setB.has(x));
 }
 
 export async function updateIndexConfig(
