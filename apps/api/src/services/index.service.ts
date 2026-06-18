@@ -341,6 +341,33 @@ export async function createSource(
 	};
 }
 
+const SECRET_MASK = '••••••';
+const SECRET_KEY = /password|secret/i;
+
+function redactSecrets(params: Record<string, unknown>): Record<string, unknown> {
+	const out: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(params)) {
+		out[key] = SECRET_KEY.test(key) ? SECRET_MASK : value;
+	}
+	return out;
+}
+
+// Swap masked values back to the stored secret so editing other fields doesn't clobber it.
+function restoreSecrets(
+	incoming: Record<string, unknown>,
+	stored: Record<string, unknown>
+): Record<string, unknown> {
+	const out: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(incoming)) {
+		if (value === SECRET_MASK) {
+			if (key in stored) out[key] = stored[key];
+		} else {
+			out[key] = value;
+		}
+	}
+	return out;
+}
+
 export function projectSource(index: QuickwitIndexMetadata, sourceId: string): SourceDetail {
 	const source = index.sources.find((s) => s.sourceId === sourceId);
 	if (!source) throw notFound('Source not found');
@@ -355,7 +382,7 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 		params.client_params != null &&
 		typeof params.client_params === 'object' &&
 		!Array.isArray(params.client_params)
-			? (params.client_params as Record<string, unknown>)
+			? redactSecrets(params.client_params as Record<string, unknown>)
 			: null;
 
 	return {
@@ -435,16 +462,24 @@ function mergeSourceConfig(
 				notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
 			};
 			break;
-		case 'kafka':
-			// Rebuild fresh (no spread): client_params is the full user-edited object,
-			// and enable_backfill_mode is set explicitly so unchecking it on edit clears it.
+		case 'kafka': {
+			const storedClientParams =
+				currentParams.client_params != null &&
+				typeof currentParams.client_params === 'object' &&
+				!Array.isArray(currentParams.client_params)
+					? (currentParams.client_params as Record<string, unknown>)
+					: {};
+			const clientParams = input.clientParams
+				? restoreSecrets(input.clientParams, storedClientParams)
+				: undefined;
 			merged.params = {
 				topic: input.topic,
 				...(input.clientLogLevel ? { client_log_level: input.clientLogLevel } : {}),
-				...(input.clientParams ? { client_params: input.clientParams } : {}),
+				...(clientParams ? { client_params: clientParams } : {}),
 				enable_backfill_mode: input.enableBackfillMode ?? false
 			};
 			break;
+		}
 	}
 
 	return merged;
