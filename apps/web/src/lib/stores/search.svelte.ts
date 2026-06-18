@@ -456,7 +456,7 @@ export class SearchStore {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
 
-		const fetchKey = `${this.selectedIndex}|${this.composedQuery}|${timeWindow.startTs}-${timeWindow.endTs}`;
+		const fetchKey = `${this.selectedIndex}|${this.composedQuery}|${serializeTimeRange(this.timeRange)}`;
 		if (fetchKey === this.#histogramFetchedFor) {
 			this.#histogramAbort?.abort();
 			return;
@@ -582,6 +582,7 @@ export class SearchStore {
 			this.lineWrap = prefs.lineWrap;
 			this.displayMode = prefs.displayMode;
 		} catch (e) {
+			if (this.#disposed) return;
 			if (!this.#activeFieldsGuard.isCurrent(requestId)) return;
 			// Reset cache key so the effect retries on the next reactive run.
 			this.#activeFieldsFetchedFor = null;
@@ -627,6 +628,7 @@ export class SearchStore {
 					this.#confirmedPrefs = saved;
 				})
 				.catch((e) => {
+					if (this.#disposed) return;
 					// Superseded by a newer change (or index switch) — let that one win.
 					if (this.selectedIndex !== indexId || seq !== this.#prefSaveSeq) return;
 					this.activeFields = this.#confirmedPrefs.displayFields ?? [];
