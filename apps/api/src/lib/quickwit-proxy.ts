@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import type { ProxyResult } from '../types.js';
 import { badRequest, serviceUnavailable } from '../utils/http-error.js';
 
-const PROXY_TIMEOUT_MS = 30_000;
+const PROXY_TIMEOUT_MS = 120_000;
 
 type ProxyOpts = {
 	upstreamUrl: string;
@@ -40,15 +40,7 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 	const len = parseContentLength(c.req.header('content-length'));
 	if (len === 0) throw badRequest('Request body is required', 'EMPTY_BODY');
 
-	let body: ReadableStream<Uint8Array>;
-	let sawAnyBytes: (() => boolean) | null = null;
-	if (len !== null && len > 0) {
-		body = reqBody;
-	} else {
-		const tapped = tapBytes(reqBody);
-		body = tapped.body;
-		sawAnyBytes = tapped.sawAnyBytes;
-	}
+	const { body, sawAnyBytes } = tapBytes(reqBody);
 
 	let upstream: Response;
 	try {
@@ -63,14 +55,15 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
 	}
 
-	if (sawAnyBytes && !sawAnyBytes()) {
-		await upstream.arrayBuffer().catch(() => {});
+	if (!sawAnyBytes()) {
+		await upstream.body?.cancel().catch(() => {});
 		throw badRequest('Request body is required', 'EMPTY_BODY');
 	}
 
-	const bodyBytes = await upstream.arrayBuffer();
 	if (upstream.status >= 500) {
+		await upstream.body?.cancel().catch(() => {});
 		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
 	}
+	const bodyBytes = await upstream.arrayBuffer();
 	return { status: upstream.status, headers: upstream.headers, bodyBytes };
 }
