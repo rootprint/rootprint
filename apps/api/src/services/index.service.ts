@@ -652,10 +652,10 @@ export async function updateIndexConfig(
 				...input.newFieldMappings.map((f) => toFieldMapping(f, ts))
 			]
 		};
-		delete docMapping.doc_mapping_uid;
 	} else {
-		docMapping = doc;
+		docMapping = { ...doc };
 	}
+	delete docMapping.doc_mapping_uid;
 
 	const searchSettings = { ...cfg.search_settings };
 	if (input.defaultSearchFields.length > 0) {
