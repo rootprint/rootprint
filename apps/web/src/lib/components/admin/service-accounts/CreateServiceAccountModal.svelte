@@ -48,7 +48,14 @@
 	}
 </script>
 
-<Modal bind:open title="Create service account" onclose={reset}>
+<Modal
+	bind:open
+	title="Create service account"
+	onclose={reset}
+	oncancel={(e) => {
+		if (submitting) e.preventDefault();
+	}}
+>
 	<form id="create-service-account-form" class="space-y-3" {onsubmit}>
 		{#if formError}
 			<div role="alert" class="alert alert-error text-sm">{formError}</div>

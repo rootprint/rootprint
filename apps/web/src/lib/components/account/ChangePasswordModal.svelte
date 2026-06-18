@@ -80,7 +80,14 @@
 	}
 </script>
 
-<Modal bind:open title="Change password" onclose={reset}>
+<Modal
+	bind:open
+	title="Change password"
+	onclose={reset}
+	oncancel={(e) => {
+		if (submitting) e.preventDefault();
+	}}
+>
 	<form id="change-password-form" class="flex flex-col gap-3" {onsubmit}>
 		{#if formError}
 			<div role="alert" class="alert alert-error text-sm">{formError}</div>

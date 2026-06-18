@@ -29,12 +29,10 @@
 	let deleteTarget = $state<DeleteTarget | null>(null);
 	let deleting = $state(false);
 
-	const deleteTitle = $derived(
-		deleteTarget?.kind === 'key' ? 'Revoke service account key' : 'Delete service account'
-	);
-	const deleteConfirmLabel = $derived(deleteTarget?.kind === 'key' ? 'Revoke' : 'Delete');
-	const deleteConfirmingLabel = $derived(
-		deleteTarget?.kind === 'key' ? 'Revoking...' : 'Deleting...'
+	const deleteLabels = $derived(
+		deleteTarget?.kind === 'key'
+			? { title: 'Revoke service account key', confirm: 'Revoke', confirming: 'Revoking…' }
+			: { title: 'Delete service account', confirm: 'Delete', confirming: 'Deleting…' }
 	);
 
 	function openDelete(target: DeleteTarget) {
@@ -57,7 +55,6 @@
 			}
 			await invalidate(DEP.serviceAccountSettings);
 			deleteOpen = false;
-			deleteTarget = null;
 		} catch (e) {
 			const fallback =
 				target.kind === 'key'
@@ -153,7 +150,7 @@
 						<div class="truncate text-sm">{key.name ?? '-'}</div>
 						<div class="text-base-content/70 truncate text-xs">{key.userName}</div>
 						<div class="text-base-content/60 font-mono text-xs">
-							{key.start != null ? `${key.start}...` : '-'}
+							{key.start != null ? `${key.start}…` : '—'}
 						</div>
 						<div class="text-base-content/50 text-xs">
 							{key.lastRequest ? formatRelativeTime(key.lastRequest) : 'Never'}
@@ -181,9 +178,9 @@
 <ConfirmModal
 	bind:open={deleteOpen}
 	bind:loading={deleting}
-	title={deleteTitle}
-	confirmLabel={deleteConfirmLabel}
-	confirmingLabel={deleteConfirmingLabel}
+	title={deleteLabels.title}
+	confirmLabel={deleteLabels.confirm}
+	confirmingLabel={deleteLabels.confirming}
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}
