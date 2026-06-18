@@ -762,6 +762,16 @@
 			},
 			"IndexDetailResponse": {
 				"properties": {
+					"commitTimeoutSecs": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"contextFields": {
 						"anyOf": [
 							{
@@ -804,6 +814,16 @@
 						},
 						"type": "array"
 					},
+					"indexFieldPresence": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"indexId": {
 						"type": "string"
 					},
@@ -827,6 +847,35 @@
 						"anyOf": [
 							{
 								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"retention": {
+						"anyOf": [
+							{
+								"properties": {
+									"period": {
+										"type": "string"
+									},
+									"schedule": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"period",
+									"schedule"
+								],
+								"type": "object"
 							},
 							{
 								"type": "null"
@@ -905,6 +954,9 @@
 					"tagFields",
 					"defaultSearchFields",
 					"storeSource",
+					"indexFieldPresence",
+					"commitTimeoutSecs",
+					"retention",
 					"fields",
 					"sources"
 				],
@@ -1927,16 +1979,6 @@
 			},
 			"SourceDetailSchema": {
 				"properties": {
-					"address": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"clientLogLevel": {
 						"anyOf": [
 							{
@@ -1955,16 +1997,6 @@
 									"type": "string"
 								},
 								"type": "object"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"consumerName": {
-						"anyOf": [
-							{
-								"type": "string"
 							},
 							{
 								"type": "null"
@@ -2073,19 +2105,6 @@
 							}
 						]
 					},
-					"topics": {
-						"anyOf": [
-							{
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"vrlScript": {
 						"anyOf": [
 							{
@@ -2112,9 +2131,6 @@
 					"clientLogLevel",
 					"clientParams",
 					"enableBackfillMode",
-					"topics",
-					"address",
-					"consumerName",
 					"vrlScript",
 					"hasUnsupportedConfig"
 				],
@@ -2458,7 +2474,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.3.5"
+		"version": "0.3.4"
 	},
 	"openapi": "3.1.0",
 	"paths": {
@@ -14365,6 +14381,422 @@
 				]
 			}
 		},
+		"/api/indexes/{indexId}/quickwit-config": {
+			"put": {
+				"operationId": "putApiIndexesByIndexIdQuickwitConfig",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"commitTimeoutSecs": {
+										"anyOf": [
+											{
+												"minimum": 1,
+												"type": "integer"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"defaultSearchFields": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array"
+									},
+									"indexFieldPresence": {
+										"type": "boolean"
+									},
+									"mode": {
+										"enum": [
+											"dynamic",
+											"lenient",
+											"strict"
+										],
+										"type": "string"
+									},
+									"newFieldMappings": {
+										"items": {
+											"oneOf": [
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"fieldnorms": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"record": {
+															"enum": [
+																"basic",
+																"freq",
+																"position"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"tokenizer": {
+															"enum": [
+																"raw",
+																"raw_lowercase",
+																"default",
+																"en_stem",
+																"whitespace",
+																"chinese_compatible",
+																"lowercase"
+															],
+															"type": "string"
+														},
+														"type": {
+															"const": "text"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"coerce": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "i64"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"coerce": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "u64"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"coerce": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "f64"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "bool"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"fastPrecision": {
+															"enum": [
+																"seconds",
+																"milliseconds",
+																"microseconds",
+																"nanoseconds"
+															],
+															"type": "string"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"inputFormats": {
+															"items": {
+																"minLength": 1,
+																"type": "string"
+															},
+															"minItems": 1,
+															"type": "array"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"outputFormat": {
+															"enum": [
+																"rfc3339",
+																"unix_timestamp_secs",
+																"unix_timestamp_millis",
+																"unix_timestamp_micros",
+																"unix_timestamp_nanos"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "datetime"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "ip"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"expandDots": {
+															"type": "boolean"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"record": {
+															"enum": [
+																"basic",
+																"freq",
+																"position"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"tokenizer": {
+															"enum": [
+																"raw",
+																"raw_lowercase",
+																"default",
+																"en_stem",
+																"whitespace",
+																"chinese_compatible",
+																"lowercase"
+															],
+															"type": "string"
+														},
+														"type": {
+															"const": "json"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												}
+											]
+										},
+										"type": "array"
+									},
+									"retention": {
+										"anyOf": [
+											{
+												"properties": {
+													"period": {
+														"minLength": 1,
+														"type": "string"
+													},
+													"schedule": {
+														"minLength": 1,
+														"type": "string"
+													}
+												},
+												"required": [
+													"period"
+												],
+												"type": "object"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"storeSource": {
+										"type": "boolean"
+									},
+									"tagFields": {
+										"items": {
+											"minLength": 1,
+											"type": "string"
+										},
+										"type": "array"
+									}
+								},
+								"required": [
+									"mode",
+									"defaultSearchFields",
+									"tagFields",
+									"storeSource",
+									"indexFieldPresence",
+									"commitTimeoutSecs",
+									"retention",
+									"newFieldMappings"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Update Quickwit index configuration",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
 		"/api/indexes/{indexId}/sources": {
 			"post": {
 				"operationId": "postApiIndexesByIndexIdSources",
@@ -14533,58 +14965,6 @@
 											"sourceId",
 											"sourceType",
 											"topic"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"address": {
-												"minLength": 1,
-												"type": "string"
-											},
-											"consumerName": {
-												"minLength": 1,
-												"type": "string"
-											},
-											"inputFormat": {
-												"enum": [
-													"json",
-													"plain_text",
-													"otlp_logs_json",
-													"otlp_logs_protobuf",
-													"otlp_traces_json",
-													"otlp_traces_protobuf"
-												],
-												"type": "string"
-											},
-											"numPipelines": {
-												"minimum": 1,
-												"type": "integer"
-											},
-											"sourceId": {
-												"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{2,254}$",
-												"type": "string"
-											},
-											"sourceType": {
-												"const": "pulsar"
-											},
-											"topics": {
-												"items": {
-													"minLength": 1,
-													"type": "string"
-												},
-												"minItems": 1,
-												"type": "array"
-											},
-											"vrlScript": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"sourceId",
-											"sourceType",
-											"topics",
-											"address"
 										],
 										"type": "object"
 									}
@@ -14970,53 +15350,6 @@
 										"required": [
 											"sourceType",
 											"topic"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"address": {
-												"minLength": 1,
-												"type": "string"
-											},
-											"consumerName": {
-												"minLength": 1,
-												"type": "string"
-											},
-											"inputFormat": {
-												"enum": [
-													"json",
-													"plain_text",
-													"otlp_logs_json",
-													"otlp_logs_protobuf",
-													"otlp_traces_json",
-													"otlp_traces_protobuf"
-												],
-												"type": "string"
-											},
-											"numPipelines": {
-												"minimum": 1,
-												"type": "integer"
-											},
-											"sourceType": {
-												"const": "pulsar"
-											},
-											"topics": {
-												"items": {
-													"minLength": 1,
-													"type": "string"
-												},
-												"minItems": 1,
-												"type": "array"
-											},
-											"vrlScript": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"sourceType",
-											"topics",
-											"address"
 										],
 										"type": "object"
 									}

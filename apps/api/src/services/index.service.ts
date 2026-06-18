@@ -35,14 +35,7 @@ import {
 	userPreference,
 	view as viewTable
 } from '../db/schema.js';
-import {
-	conflict,
-	indexAccessError,
-	internal,
-	notFound,
-	unprocessable
-} from '../utils/http-error.js';
-import { isRecord } from '../utils/object.js';
+import { conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
@@ -278,40 +271,6 @@ const QUICKWIT_INDEX_CONFIG_VERSION = '0.9';
 
 type QwFieldMapping = FieldMapping & { coerce?: boolean; expand_dots?: boolean };
 
-type PulsarAuthInput = {
-	authMethod?: 'token' | 'oauth2';
-	token?: string;
-	oauthIssuerUrl?: string;
-	oauthCredentialsUrl?: string;
-	oauthAudience?: string;
-	oauthScope?: string;
-};
-
-function buildPulsarAuth(
-	input: PulsarAuthInput,
-	currentAuth?: unknown
-): Record<string, unknown> | undefined {
-	if (input.authMethod === 'oauth2') {
-		return {
-			oauth2: {
-				issuer_url: input.oauthIssuerUrl,
-				credentials_url: input.oauthCredentialsUrl,
-				...(input.oauthAudience ? { audience: input.oauthAudience } : {}),
-				...(input.oauthScope ? { scope: input.oauthScope } : {})
-			}
-		};
-	}
-	if (input.authMethod === 'token') {
-		const token = input.token?.trim();
-		if (token) return { token };
-		if (isRecord(currentAuth) && 'token' in currentAuth) return currentAuth;
-		throw unprocessable('Token is required for token authentication.', 'TOKEN_REQUIRED', [
-			{ path: 'token', message: 'Token is required for token authentication.' }
-		]);
-	}
-	return undefined;
-}
-
 function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfig {
 	const base = {
 		version: QUICKWIT_SOURCE_CONFIG_VERSION,
@@ -351,18 +310,6 @@ function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfi
 					enable_backfill_mode: input.enableBackfillMode ?? false
 				}
 			} as SourceConfig;
-		case 'pulsar': {
-			const auth = buildPulsarAuth(input);
-			return {
-				...base,
-				params: {
-					topics: input.topics,
-					address: input.address,
-					...(input.consumerName ? { consumer_name: input.consumerName } : {}),
-					...(auth ? { authentication: auth } : {})
-				}
-			} as SourceConfig;
-		}
 	}
 }
 
@@ -410,14 +357,6 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 		!Array.isArray(params.client_params)
 			? (params.client_params as Record<string, unknown>)
 			: null;
-	const topics = Array.isArray(params.topics)
-		? params.topics.filter((t): t is string => typeof t === 'string')
-		: null;
-
-	const auth = isRecord(params.authentication) ? params.authentication : null;
-	const oauth2 = auth && isRecord(auth.oauth2) ? auth.oauth2 : null;
-	const authMethod: 'token' | 'oauth2' | null =
-		auth && 'token' in auth ? 'token' : oauth2 ? 'oauth2' : null;
 
 	return {
 		sourceId: source.sourceId,
@@ -436,15 +375,6 @@ export function projectSource(index: QuickwitIndexMetadata, sourceId: string): S
 		clientParams,
 		enableBackfillMode:
 			typeof params.enable_backfill_mode === 'boolean' ? params.enable_backfill_mode : null,
-		topics,
-		address: typeof params.address === 'string' ? params.address : null,
-		consumerName: typeof params.consumer_name === 'string' ? params.consumer_name : null,
-		authMethod,
-		oauthIssuerUrl: oauth2 && typeof oauth2.issuer_url === 'string' ? oauth2.issuer_url : null,
-		oauthCredentialsUrl:
-			oauth2 && typeof oauth2.credentials_url === 'string' ? oauth2.credentials_url : null,
-		oauthAudience: oauth2 && typeof oauth2.audience === 'string' ? oauth2.audience : null,
-		oauthScope: oauth2 && typeof oauth2.scope === 'string' ? oauth2.scope : null,
 		vrlScript: source.vrlScript,
 		hasUnsupportedConfig
 	};
@@ -515,16 +445,6 @@ function mergeSourceConfig(
 				enable_backfill_mode: input.enableBackfillMode ?? false
 			};
 			break;
-		case 'pulsar': {
-			const auth = buildPulsarAuth(input, currentParams.authentication);
-			merged.params = {
-				topics: input.topics,
-				address: input.address,
-				...(input.consumerName ? { consumer_name: input.consumerName } : {}),
-				...(auth ? { authentication: auth } : {})
-			};
-			break;
-		}
 	}
 
 	return merged;

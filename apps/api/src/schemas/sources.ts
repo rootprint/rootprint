@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-export const SOURCE_TYPES = ['kinesis', 'file', 'kafka', 'pulsar'] as const;
+export const SOURCE_TYPES = ['kinesis', 'file', 'kafka'] as const;
 
 export const KAFKA_LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 
@@ -14,8 +14,6 @@ export const SOURCE_INPUT_FORMATS = [
 ] as const;
 
 export const FILE_MESSAGE_TYPES = ['s3_notification', 'raw_uri'] as const;
-
-export const PULSAR_AUTH_METHODS = ['token', 'oauth2'] as const;
 
 const sourceId = v.pipe(
 	v.string(),
@@ -65,24 +63,6 @@ const kafkaFields = {
 	enableBackfillMode: v.optional(v.boolean())
 };
 
-const pulsarFields = {
-	inputFormat,
-	numPipelines,
-	vrlScript,
-	topics: v.pipe(
-		v.array(v.pipe(v.string(), v.minLength(1))),
-		v.minLength(1, 'At least one topic is required.')
-	),
-	address: v.pipe(v.string(), v.minLength(1, 'Pulsar address is required.')),
-	consumerName: v.optional(v.pipe(v.string(), v.minLength(1))),
-	authMethod: v.optional(v.picklist(PULSAR_AUTH_METHODS)),
-	token: v.optional(v.pipe(v.string(), v.minLength(1))),
-	oauthIssuerUrl: v.optional(v.pipe(v.string(), v.minLength(1))),
-	oauthCredentialsUrl: v.optional(v.pipe(v.string(), v.minLength(1))),
-	oauthAudience: v.optional(v.pipe(v.string(), v.minLength(1))),
-	oauthScope: v.optional(v.pipe(v.string(), v.minLength(1)))
-};
-
 const kinesisSource = v.pipe(
 	v.object({ sourceId, sourceType: v.literal('kinesis'), ...kinesisFields }),
 	v.forward(
@@ -98,46 +78,7 @@ const fileSource = v.object({ sourceId, sourceType: v.literal('file'), ...fileFi
 
 const kafkaSource = v.object({ sourceId, sourceType: v.literal('kafka'), ...kafkaFields });
 
-const oauthFieldFilled = (
-	input: {
-		authMethod?: (typeof PULSAR_AUTH_METHODS)[number];
-		oauthIssuerUrl?: string;
-		oauthCredentialsUrl?: string;
-	},
-	field: 'oauthIssuerUrl' | 'oauthCredentialsUrl'
-) => input.authMethod !== 'oauth2' || (input[field]?.trim() ?? '') !== '';
-
-const pulsarSource = v.pipe(
-	v.object({ sourceId, sourceType: v.literal('pulsar'), ...pulsarFields }),
-	v.forward(
-		v.check(
-			(input) => input.authMethod !== 'token' || (input.token?.trim() ?? '') !== '',
-			'Token is required for token authentication.'
-		),
-		['token']
-	),
-	v.forward(
-		v.check(
-			(input) => oauthFieldFilled(input, 'oauthIssuerUrl'),
-			'Issuer URL is required for OAuth2.'
-		),
-		['oauthIssuerUrl']
-	),
-	v.forward(
-		v.check(
-			(input) => oauthFieldFilled(input, 'oauthCredentialsUrl'),
-			'Credentials URL is required for OAuth2.'
-		),
-		['oauthCredentialsUrl']
-	)
-);
-
-export const createSourceSchema = v.variant('sourceType', [
-	kinesisSource,
-	fileSource,
-	kafkaSource,
-	pulsarSource
-]);
+export const createSourceSchema = v.variant('sourceType', [kinesisSource, fileSource, kafkaSource]);
 
 export type CreateSourceInput = v.InferOutput<typeof createSourceSchema>;
 
@@ -156,29 +97,6 @@ const fileUpdate = v.object({ sourceType: v.literal('file'), ...fileFields });
 
 const kafkaUpdate = v.object({ sourceType: v.literal('kafka'), ...kafkaFields });
 
-const pulsarUpdate = v.pipe(
-	v.object({ sourceType: v.literal('pulsar'), ...pulsarFields }),
-	v.forward(
-		v.check(
-			(input) => oauthFieldFilled(input, 'oauthIssuerUrl'),
-			'Issuer URL is required for OAuth2.'
-		),
-		['oauthIssuerUrl']
-	),
-	v.forward(
-		v.check(
-			(input) => oauthFieldFilled(input, 'oauthCredentialsUrl'),
-			'Credentials URL is required for OAuth2.'
-		),
-		['oauthCredentialsUrl']
-	)
-);
-
-export const updateSourceSchema = v.variant('sourceType', [
-	kinesisUpdate,
-	fileUpdate,
-	kafkaUpdate,
-	pulsarUpdate
-]);
+export const updateSourceSchema = v.variant('sourceType', [kinesisUpdate, fileUpdate, kafkaUpdate]);
 
 export type UpdateSourceInput = v.InferOutput<typeof updateSourceSchema>;

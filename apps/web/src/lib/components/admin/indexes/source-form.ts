@@ -2,14 +2,12 @@ import { SOURCE_INPUT_FORMATS, FILE_MESSAGE_TYPES, KAFKA_LOG_LEVELS } from 'api/
 import type { CreateSourceInput, UpdateSourceInput } from 'api/schemas';
 import type { SourceDetail } from 'api/types';
 
-import { lines } from '$lib/utils/lines';
-
-export type SourceType = 'kinesis' | 'file' | 'kafka' | 'pulsar';
+export type SourceType = 'kinesis' | 'file' | 'kafka';
 export type InputFormat = (typeof SOURCE_INPUT_FORMATS)[number];
 export type MessageType = (typeof FILE_MESSAGE_TYPES)[number];
 export type KafkaLogLevel = (typeof KAFKA_LOG_LEVELS)[number];
 
-export const EDITABLE_SOURCE_TYPES = ['kinesis', 'file', 'kafka', 'pulsar'] as const;
+export const EDITABLE_SOURCE_TYPES = ['kinesis', 'file', 'kafka'] as const;
 
 export function isEditableSourceType(type: string): type is SourceType {
 	return (EDITABLE_SOURCE_TYPES as readonly string[]).includes(type);
@@ -45,17 +43,6 @@ export type SourceFormState = {
 	clientLogLevel: '' | KafkaLogLevel;
 	clientParamsJson: string;
 	enableBackfillMode: boolean;
-	// pulsar
-	pulsarTopics: string;
-	address: string;
-	consumerName: string;
-	// pulsar auth
-	pulsarAuthType: 'none' | 'token' | 'oauth2';
-	pulsarToken: string;
-	pulsarOauthIssuerUrl: string;
-	pulsarOauthCredentialsUrl: string;
-	pulsarOauthAudience: string;
-	pulsarOauthScope: string;
 };
 
 export function emptySourceForm(): SourceFormState {
@@ -74,16 +61,7 @@ export function emptySourceForm(): SourceFormState {
 		topic: '',
 		clientLogLevel: '',
 		clientParamsJson: '',
-		enableBackfillMode: false,
-		pulsarTopics: '',
-		address: '',
-		consumerName: '',
-		pulsarAuthType: 'none',
-		pulsarToken: '',
-		pulsarOauthIssuerUrl: '',
-		pulsarOauthCredentialsUrl: '',
-		pulsarOauthAudience: '',
-		pulsarOauthScope: ''
+		enableBackfillMode: false
 	};
 }
 
@@ -127,16 +105,7 @@ export function sourceDetailToForm(detail: SourceDetail): SourceFormState {
 		topic: detail.topic ?? '',
 		clientLogLevel: (detail.clientLogLevel as KafkaLogLevel | null) ?? '',
 		clientParamsJson: detail.clientParams ? JSON.stringify(detail.clientParams, null, 2) : '',
-		enableBackfillMode: detail.enableBackfillMode ?? false,
-		pulsarTopics: detail.topics ? detail.topics.join('\n') : '',
-		address: detail.address ?? '',
-		consumerName: detail.consumerName ?? '',
-		pulsarAuthType: detail.authMethod ?? 'none',
-		pulsarToken: '',
-		pulsarOauthIssuerUrl: detail.oauthIssuerUrl ?? '',
-		pulsarOauthCredentialsUrl: detail.oauthCredentialsUrl ?? '',
-		pulsarOauthAudience: detail.oauthAudience ?? '',
-		pulsarOauthScope: detail.oauthScope ?? ''
+		enableBackfillMode: detail.enableBackfillMode ?? false
 	};
 }
 
@@ -190,30 +159,5 @@ export function formToUpdateInput(form: SourceFormState): UpdateSourceInput {
 				clientParams: parseClientParams(form.clientParamsJson).value,
 				enableBackfillMode: form.enableBackfillMode
 			};
-		case 'pulsar': {
-			const auth =
-				form.pulsarAuthType === 'token'
-					? {
-							authMethod: 'token' as const,
-							token: form.pulsarToken.trim() || undefined
-						}
-					: form.pulsarAuthType === 'oauth2'
-						? {
-								authMethod: 'oauth2' as const,
-								oauthIssuerUrl: form.pulsarOauthIssuerUrl.trim() || undefined,
-								oauthCredentialsUrl: form.pulsarOauthCredentialsUrl.trim() || undefined,
-								oauthAudience: form.pulsarOauthAudience.trim() || undefined,
-								oauthScope: form.pulsarOauthScope.trim() || undefined
-							}
-						: {};
-			return {
-				...common,
-				sourceType: 'pulsar',
-				topics: lines(form.pulsarTopics),
-				address: form.address.trim(),
-				consumerName: form.consumerName.trim() === '' ? undefined : form.consumerName.trim(),
-				...auth
-			};
-		}
 	}
 }
