@@ -6,7 +6,6 @@
 	import { ORIGINS } from '$lib/send-logs/origins';
 
 	let query = $state('');
-	const searching = $derived(query.trim() !== '');
 
 	// Group by origin in ORIGINS order; drop empty groups (e.g. Kubernetes, Cloud today).
 	const sections = $derived(
@@ -40,9 +39,7 @@
 		/>
 	</label>
 
-	{#if integrations.length === 0}
-		<p class="text-base-content/60 mt-10 text-xs">No integrations available.</p>
-	{:else if searching}
+	{#if query.trim() !== ''}
 		<section class="mt-8 flex flex-col gap-3">
 			<p class="text-base-content/60 text-sm font-medium">Results</p>
 			{#if searchResults.length === 0}

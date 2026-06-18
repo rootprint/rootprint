@@ -85,6 +85,8 @@ app.onError((rawErr, c) => {
 				console.warn(logLine);
 			} else if (err.statusCode >= 500) {
 				console.error(logLine);
+			} else {
+				console.warn(logLine);
 			}
 			return otlpErrorFromHttpError(err);
 		}
@@ -186,10 +188,10 @@ export const routes = app
 	.route('/api/ingest', ndjsonRouter)
 	.route('/v1', otlpRouter);
 
-let openAPISpec: Awaited<ReturnType<typeof buildSpec>> | undefined;
+let openAPISpec: ReturnType<typeof buildSpec> | undefined;
 app.get('/api/openapi.json', async (c) => {
-	openAPISpec ??= await buildSpec(app);
-	return c.json(openAPISpec);
+	openAPISpec ??= buildSpec(app);
+	return c.json(await openAPISpec);
 });
 
 // SPA static-file serving. Mounted AFTER `routes` so /api and /v1 keep their handlers and app.notFound still emits the JSON 404 contract; each handler bails on API paths via isApiPath().

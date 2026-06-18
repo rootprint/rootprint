@@ -134,6 +134,7 @@ export function parsePromText(text: string): PromMetric[] {
 
 const METRICS_PATH = '/metrics';
 const FETCH_TIMEOUT_MS = 5000;
+const MAX_METRICS_BYTES = 16 * 1024 * 1024;
 
 export async function fetchQuickwitMetrics(): Promise<{ raw: string; metrics: PromMetric[] }> {
 	const url = quickwitUrl(METRICS_PATH);
@@ -149,6 +150,13 @@ export async function fetchQuickwitMetrics(): Promise<{ raw: string; metrics: Pr
 	if (!res.ok) {
 		throw serviceUnavailable(
 			`Quickwit /metrics returned HTTP ${res.status}`,
+			'QUICKWIT_METRICS_UNAVAILABLE'
+		);
+	}
+	const declared = Number(res.headers.get('content-length'));
+	if (Number.isFinite(declared) && declared > MAX_METRICS_BYTES) {
+		throw serviceUnavailable(
+			`Quickwit /metrics body too large (${declared} bytes)`,
 			'QUICKWIT_METRICS_UNAVAILABLE'
 		);
 	}

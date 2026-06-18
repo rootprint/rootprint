@@ -40,6 +40,7 @@
 				onError?.(duplicateMessage);
 				return;
 			}
+			onError?.(null);
 			input = '';
 			return;
 		}

@@ -88,6 +88,16 @@ export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): b
 	return true;
 }
 
+export async function assertIndexAccess(
+	db: Db,
+	indexId: string,
+	role: string | null | undefined
+): Promise<void> {
+	const settings = await getIndexSettings(db, indexId);
+	const isAdmin = role === 'admin';
+	if (!canAccessIndex(settings.visibility, isAdmin)) throw indexAccessError(isAdmin, 'denied');
+}
+
 export async function saveIndexConfig(
 	db: Db,
 	indexId: string,
@@ -585,9 +595,9 @@ export async function createIndex(
 }
 
 function sameStringSet(a: string[], b: string[]): boolean {
-	if (a.length !== b.length) return false;
 	const setA = new Set(a);
-	return b.every((x) => setA.has(x));
+	const setB = new Set(b);
+	return setA.size === setB.size && [...setA].every((x) => setB.has(x));
 }
 
 export async function updateIndexConfig(
@@ -642,10 +652,10 @@ export async function updateIndexConfig(
 				...input.newFieldMappings.map((f) => toFieldMapping(f, ts))
 			]
 		};
-		delete docMapping.doc_mapping_uid;
 	} else {
-		docMapping = doc;
+		docMapping = { ...doc };
 	}
+	delete docMapping.doc_mapping_uid;
 
 	const searchSettings = { ...cfg.search_settings };
 	if (input.defaultSearchFields.length > 0) {

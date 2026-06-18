@@ -19,13 +19,6 @@ export function formatBytes(n: number): string {
 	return `${(n / 1024 ** 5).toFixed(2)}${NBSP}PiB`;
 }
 
-const GIB = 1024 ** 3;
-
-export function formatGiB(n: number, fractionDigits = 2): string {
-	const v = n / GIB;
-	return `${v.toFixed(fractionDigits)} GiB`;
-}
-
 export function formatDurationSeconds(s: number): string {
 	if (s < 1) return `${(s * 1000).toFixed(0)} ms`;
 	if (s < 60) return `${s.toFixed(2)} s`;

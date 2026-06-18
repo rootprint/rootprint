@@ -69,6 +69,7 @@
 {:else}
 	<div class="dropdown dropdown-end">
 		<button
+			type="button"
 			tabindex="0"
 			class="btn btn-square btn-ghost btn-sm"
 			aria-label="Actions for {user.name}"

@@ -10,5 +10,7 @@
 		title="Edit index"
 		description="Update the Quickwit configuration for {data.detail.indexId}."
 	/>
-	<EditIndexForm detail={data.detail} />
+	{#key data.detail.indexId}
+		<EditIndexForm detail={data.detail} />
+	{/key}
 </div>

@@ -287,7 +287,6 @@ export type LatestIndexSnapshot = {
 	maxTimestamp: number | null;
 };
 
-// Quickwit Prometheus metrics (utils/quickwit-metrics.ts)
 export type PromSample = {
 	labels: Record<string, string>;
 	value: number;
@@ -302,7 +301,6 @@ export type PromMetric = {
 	samples: PromSample[];
 };
 
-// Quickwit proxy (utils/quickwit-proxy.ts)
 export type ProxyResult = {
 	status: number;
 	headers: Headers;

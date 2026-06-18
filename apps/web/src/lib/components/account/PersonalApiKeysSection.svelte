@@ -36,7 +36,6 @@
 			toast.success('API key revoked');
 			await invalidate(DEP.personalKeys);
 			deleteOpen = false;
-			deleteTarget = null;
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Failed to revoke API key');
 		} finally {
@@ -69,7 +68,7 @@
 		<ul class="divide-line mt-4 divide-y">
 			{#each keys as key (key.id)}
 				<li class="flex items-center gap-4 py-2">
-					<span class="min-w-0 flex-1 truncate text-sm">{key.name}</span>
+					<span class="min-w-0 flex-1 truncate text-sm">{key.name ?? '—'}</span>
 					<span class="text-base-content/60 font-mono text-xs">
 						{key.start != null ? `${key.start}…` : '—'}
 					</span>
@@ -82,7 +81,7 @@
 					<button
 						type="button"
 						class="btn btn-square btn-ghost text-error btn-sm"
-						aria-label="Revoke API key {key.name}"
+						aria-label="Revoke API key {key.name ?? ''}"
 						onclick={() => openDelete(key)}
 					>
 						<Trash2 class="h-4 w-4" />

@@ -11,16 +11,16 @@
 
 	let {
 		integration,
-		indexId,
 		apiKeys,
 		indexIds,
+		selectedIndexId,
 		selectedApiKeyId = $bindable<number | null>(null),
 		realApiKeyValue = $bindable<string | null>(null)
 	}: {
 		integration: Integration;
-		indexId: string;
 		apiKeys: ApiKeyView[];
 		indexIds: string[];
+		selectedIndexId: string;
 		selectedApiKeyId?: number | null;
 		realApiKeyValue?: string | null;
 	} = $props();
@@ -40,7 +40,7 @@
 	<Breadcrumb {segments} />
 	<h1 class="text-h1">{integration.label}</h1>
 	<p class="text-base-content/60 text-xs">
-		Sending to <span class="text-base-content">{indexId}</span>
+		Sending to <span class="text-base-content">{selectedIndexId}</span>
 	</p>
 	<ApiKeyChip
 		{apiKeys}

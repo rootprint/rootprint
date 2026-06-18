@@ -16,9 +16,13 @@
 		accounts
 	}: { open?: boolean; accounts: Pick<ServiceAccountView, 'id' | 'name'>[] } = $props();
 
+	function initialUserId() {
+		return accounts.length === 1 ? accounts[0].id : '';
+	}
+
 	let phase = $state<'form' | 'reveal'>('form');
 	let name = $state('');
-	let userId = $state('');
+	let userId = $state(initialUserId());
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -27,7 +31,7 @@
 	function reset() {
 		phase = 'form';
 		name = '';
-		userId = '';
+		userId = initialUserId();
 		submitting = false;
 		formError = null;
 		fieldErrors = {};

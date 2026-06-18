@@ -15,6 +15,7 @@
 	import { listViews, createView, updateView, deleteView } from '$lib/api/views';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
+	import { RequestGuard } from '$lib/stores/request-guard';
 	import { createViewSchema, patchViewSchema } from 'api/schemas';
 	import type { SavedView } from 'api/types';
 
@@ -56,6 +57,8 @@
 		};
 	}
 
+	const refreshGuard = new RequestGuard();
+
 	async function refresh() {
 		const indexId = store.selectedIndex;
 		if (indexId === null) {
@@ -63,15 +66,19 @@
 			error = 'No index selected';
 			return;
 		}
+		const token = refreshGuard.next();
 		loading = true;
 		error = null;
 		try {
-			items = await listViews(indexId);
+			const next = await listViews(indexId);
+			if (!refreshGuard.isCurrent(token)) return;
+			items = next;
 		} catch (e) {
+			if (!refreshGuard.isCurrent(token)) return;
 			error = e instanceof Error ? e.message : 'Failed to load views';
 			items = [];
 		} finally {
-			loading = false;
+			if (refreshGuard.isCurrent(token)) loading = false;
 		}
 	}
 
@@ -111,9 +118,10 @@
 
 	const formCanSave = $derived.by(() => {
 		if (formSubmitting) return false;
-		if (formName.trim().length === 0) return false;
+		const name = formName.trim();
+		if (name.length === 0) return false;
 		if (!editing) return true;
-		const nameChanged = formName !== editing.name;
+		const nameChanged = name !== editing.name;
 		const descChanged = formDescription !== (editing.description ?? '');
 		return nameChanged || descChanged;
 	});
@@ -129,11 +137,12 @@
 			return;
 		}
 
+		const name = formName.trim();
 		let save: () => Promise<void>;
 		if (editing) {
 			const editingView = editing;
 			const patch: { name?: string; description?: string | null } = {};
-			if (formName !== editingView.name) patch.name = formName;
+			if (name !== editingView.name) patch.name = name;
 			if (formDescription !== (editingView.description ?? '')) {
 				patch.description = formDescription === '' ? null : formDescription;
 			}
@@ -148,7 +157,7 @@
 			};
 		} else {
 			const input = {
-				name: formName,
+				name,
 				description: formDescription === '' ? undefined : formDescription,
 				...currentSnapshot()
 			};

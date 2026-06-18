@@ -28,6 +28,7 @@ export const apiKeyPluginConfig = {
 	startingCharactersConfig: { shouldStore: true, charactersLength: 10 },
 	keyExpiration: { disableCustomExpiresTime: true },
 	rateLimit: { enabled: false },
+	deferUpdates: true,
 	permissions: { defaultPermissions: { logs: ['read'] } }
 } satisfies Parameters<typeof apiKey>[0];
 
@@ -173,7 +174,7 @@ export async function authOpenAPISchema() {
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
 		plugins: [admin(), apiKey(apiKeyPluginConfig), openAPI()],
 		baseURL: config.origin,
-		secret: '89ef3f73b6d146d1b87f3a6dd3e18917f1e6c83469024a23',
+		secret: 'openapi-schema-generation-only',
 		emailAndPassword: { enabled: true, disableSignUp: true }
 	});
 	return instance.api.generateOpenAPISchema();

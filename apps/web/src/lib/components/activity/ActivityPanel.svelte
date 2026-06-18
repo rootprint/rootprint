@@ -25,7 +25,7 @@
 		latency: Promise<LatencyBuckets>;
 		indexes?: Promise<ActorIndexes>;
 		recent: Promise<RecentResult>;
-		onSetParam: (key: string, val: string) => void;
+		onSetParam: (key: string, val: string, opts?: { resetOffset?: boolean }) => void;
 	};
 
 	let { window, offset, summary, volume, latency, indexes, recent, onSetParam }: Props = $props();

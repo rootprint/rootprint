@@ -5,6 +5,11 @@ import { FilterSchema } from './filters.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, toNum } from '../utils/valibot.js';
 
+const dedupedStrings = v.pipe(
+	v.array(v.pipe(v.string(), v.minLength(1))),
+	v.transform((arr) => [...new Set(arr)])
+);
+
 export const saveIndexConfigSchema = v.object({
 	displayName: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(128)))),
 	visibility: v.optional(v.picklist(INDEX_VISIBILITIES)),
@@ -200,8 +205,8 @@ export const createIndexSchema = v.pipe(
 			v.array(fieldMapping),
 			v.minLength(1, 'At least one field mapping is required.')
 		),
-		defaultSearchFields: v.optional(v.array(v.pipe(v.string(), v.minLength(1)))),
-		tagFields: v.optional(v.array(v.pipe(v.string(), v.minLength(1)))),
+		defaultSearchFields: v.optional(dedupedStrings),
+		tagFields: v.optional(dedupedStrings),
 		storeSource: v.optional(v.boolean()),
 		indexFieldPresence: v.optional(v.boolean()),
 		commitTimeoutSecs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
@@ -243,8 +248,8 @@ export type CreateIndexInput = v.InferOutput<typeof createIndexSchema>;
 export const updateQuickwitConfigSchema = v.pipe(
 	v.object({
 		mode: v.picklist(INDEX_MODES),
-		defaultSearchFields: v.array(v.pipe(v.string(), v.minLength(1))),
-		tagFields: v.array(v.pipe(v.string(), v.minLength(1))),
+		defaultSearchFields: dedupedStrings,
+		tagFields: dedupedStrings,
 		storeSource: v.boolean(),
 		indexFieldPresence: v.boolean(),
 		commitTimeoutSecs: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1))),

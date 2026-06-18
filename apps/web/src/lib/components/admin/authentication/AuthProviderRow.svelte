@@ -22,8 +22,6 @@
 			<GoogleIcon class="h-5 w-5" />
 		{:else if provider.id === 'github'}
 			<GitHubIcon class="h-5 w-5" />
-		{:else}
-			<span class="text-xs">{provider.name.charAt(0)}</span>
 		{/if}
 	</div>
 

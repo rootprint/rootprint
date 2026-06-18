@@ -32,6 +32,7 @@
 		const parsed = v.safeParse(createSourceSchema, formToCreateInput(form));
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
+			toast.error('Please fix the highlighted fields.');
 			return;
 		}
 
@@ -40,7 +41,7 @@
 			await createSource(detail.indexId, parsed.output);
 			toast.success('Source created');
 			await invalidate(DEP.index(detail.indexId));
-			await goto(`/settings/indexes/${detail.indexId}?tab=sources`);
+			await goto(`/settings/indexes/${encodeURIComponent(detail.indexId)}?tab=sources`);
 		} catch (err) {
 			if (err instanceof ApiError && err.body) {
 				fieldErrors = toFieldErrors(err.body);
@@ -61,7 +62,10 @@
 	<SourceFields bind:form {fieldErrors} mode="create" />
 
 	<div class="flex justify-end gap-2 px-4 py-3">
-		<a href={`/settings/indexes/${detail.indexId}?tab=sources`} class="btn btn-ghost btn-sm">
+		<a
+			href={`/settings/indexes/${encodeURIComponent(detail.indexId)}?tab=sources`}
+			class="btn btn-ghost btn-sm"
+		>
 			Cancel
 		</a>
 		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>

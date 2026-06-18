@@ -24,10 +24,10 @@
 		})
 	);
 	let realApiKeyValue = $state<string | null>(null);
-
-	const selectedIndexId = $derived(
-		data.apiKeys.find((k) => k.id === selectedApiKeyId)?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID
+	const selectedApiKey = $derived(
+		selectedApiKeyId != null ? (data.apiKeys.find((k) => k.id === selectedApiKeyId) ?? null) : null
 	);
+	const selectedIndexId = $derived(selectedApiKey?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID);
 
 	const ctx = $derived({
 		origin: page.url.origin,
@@ -43,9 +43,9 @@
 <div class="mx-auto flex max-w-7xl flex-col gap-2 px-12 py-12">
 	<WizardHeader
 		{integration}
-		indexId={selectedIndexId}
 		apiKeys={data.apiKeys}
 		indexIds={data.indexIds}
+		{selectedIndexId}
 		bind:selectedApiKeyId
 		bind:realApiKeyValue
 	/>

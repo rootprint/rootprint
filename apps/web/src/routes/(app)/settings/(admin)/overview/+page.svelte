@@ -162,7 +162,7 @@
 		{#if clusterError}
 			<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-3 text-xs">
 				Cluster overview unavailable: {clusterError}
-				<button class="ml-2 underline" onclick={loadCluster}>Retry</button>
+				<button class="ml-2 underline" onclick={refresh}>Retry</button>
 			</div>
 		{:else if cluster && cluster.perIndex.length === 0}
 			<div class="border-line text-base-content/60 rounded-box border px-4 py-6 text-sm">

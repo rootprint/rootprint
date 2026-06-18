@@ -18,6 +18,7 @@ export const ndjsonRouter = new Hono<KeyedEnv>().post(
 			'Success and 4xx responses are passed through from Quickwit (400 bodies carry per-document parse errors); ' +
 			'upstream 5xx responses are mapped to the standard 503 error contract.',
 		security: [{ ingestBearer: [] }],
+		errors: [413, 429],
 		rawResponses: {
 			'200': {
 				description: 'Documents accepted for processing',

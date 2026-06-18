@@ -20,9 +20,14 @@
 			.map((f) => f.name.trim())
 	);
 
+	const effectiveTimestampField = $derived(
+		datetimeFields.includes(form.timestampField) ? form.timestampField : (datetimeFields[0] ?? '')
+	);
+
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
+		form.timestampField = effectiveTimestampField;
 
 		const parsed = v.safeParse(createIndexSchema, formToCreateInput(form));
 		if (!parsed.success) {
@@ -105,7 +110,8 @@
 		<div class="flex flex-col gap-1">
 			<select
 				id="idx-ts"
-				bind:value={form.timestampField}
+				value={effectiveTimestampField}
+				onchange={(e) => (form.timestampField = e.currentTarget.value)}
 				class="select select-sm w-full"
 				class:select-error={fieldErrors.timestampField}
 			>
@@ -135,7 +141,7 @@
 		<div class="border-line rounded-box divide-line divide-y border">
 			<FieldMappingsEditor
 				bind:fields={form.fields}
-				timestampField={form.timestampField}
+				timestampField={effectiveTimestampField}
 				{fieldErrors}
 			/>
 		</div>
