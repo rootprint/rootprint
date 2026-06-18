@@ -11,14 +11,12 @@
 
 	let {
 		integration,
-		indexId,
 		apiKeys,
 		indexIds,
 		selectedApiKeyId = $bindable<number | null>(null),
 		realApiKeyValue = $bindable<string | null>(null)
 	}: {
 		integration: Integration;
-		indexId: string;
 		apiKeys: ApiKeyView[];
 		indexIds: string[];
 		selectedApiKeyId?: number | null;
@@ -40,7 +38,7 @@
 	<Breadcrumb {segments} />
 	<h1 class="text-h1">{integration.label}</h1>
 	<p class="text-base-content/60 text-xs">
-		Sending to <span class="text-base-content">{indexId}</span>
+		Sending to <span class="text-base-content">{DEFAULT_OTEL_LOGS_INDEX_ID}</span>
 	</p>
 	<ApiKeyChip
 		{apiKeys}

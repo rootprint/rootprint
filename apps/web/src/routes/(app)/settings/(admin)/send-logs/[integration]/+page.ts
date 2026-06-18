@@ -8,6 +8,7 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, depends }) => {
 	depends(DEP.sendLogsApiKeys);
+	depends(DEP.indexes);
 
 	if (!integrationById.has(params.integration)) {
 		error(404, 'Unknown integration');
