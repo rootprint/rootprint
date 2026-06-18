@@ -48,16 +48,19 @@
 				return;
 			}
 
-			const result = await authClient.signIn.email(parsed.output);
-			if (result?.error) {
-				formError = result.error.message ?? 'Sign-in failed';
+			try {
+				const result = await authClient.signIn.email(parsed.output);
+				if (result?.error) {
+					formError = result.error.message ?? 'Sign-in failed';
+					return;
+				}
+			} catch (err) {
+				formError = err instanceof Error ? err.message : 'Sign-in failed';
 				return;
 			}
 
 			await invalidate(DEP.session);
 			await goto(returnTo);
-		} catch (err) {
-			formError = err instanceof Error ? err.message : 'Sign-in failed';
 		} finally {
 			submitting = false;
 		}

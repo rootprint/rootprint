@@ -80,6 +80,7 @@ export const githubProvider: OAuthProviderDescriptor = {
 		description: 'Only members of these GitHub organizations can sign in.',
 		placeholderEmpty: 'my-org  (press Enter to add)',
 		addLabel: 'Add organization',
+		normalize: (raw) => raw.toLowerCase(),
 		validate: (value) => (orgPattern.test(value) ? null : 'Invalid organization name'),
 		duplicateMessage: 'Organization already added',
 		validateItems: (items) => schemaErrors(githubAllowedOrgsSchema, { allowedOrgs: items }),

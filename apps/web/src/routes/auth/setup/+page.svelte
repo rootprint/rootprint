@@ -28,16 +28,18 @@
 
 		submitting = true;
 		try {
-			await setupPassword(parsed.output);
-			await goto('/auth/sign-in');
-		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				fieldErrors = toFieldErrors(err.body);
-				formError = err.message;
-			} else {
-				formError = err instanceof Error ? err.message : 'Failed to set password';
+			try {
+				await setupPassword(parsed.output);
+			} catch (err) {
+				if (err instanceof ApiError && err.body) {
+					fieldErrors = toFieldErrors(err.body);
+					formError = err.message;
+				} else {
+					formError = err instanceof Error ? err.message : 'Failed to set password';
+				}
+				return;
 			}
-			return;
+			await goto('/auth/sign-in');
 		} finally {
 			submitting = false;
 		}

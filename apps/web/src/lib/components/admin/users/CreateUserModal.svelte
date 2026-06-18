@@ -17,7 +17,6 @@
 		onCreated?: () => void | Promise<void>;
 	} = $props();
 
-	let phase = $state<'form' | 'reveal'>('form');
 	let name = $state('');
 	let email = $state('');
 	let role = $state<UserRole>('user');
@@ -27,7 +26,6 @@
 	let fieldErrors = $state<Record<string, string>>({});
 
 	function reset() {
-		phase = 'form';
 		name = '';
 		email = '';
 		role = 'user';
@@ -35,10 +33,6 @@
 		submitting = false;
 		formError = null;
 		fieldErrors = {};
-	}
-
-	function handleClose() {
-		reset();
 	}
 
 	async function onsubmit(e: SubmitEvent) {
@@ -57,9 +51,9 @@
 		try {
 			const result = await createUser(input);
 			inviteUrl = result.inviteUrl;
-			phase = 'reveal';
 			await onCreated?.();
 		} catch (err) {
+			if (inviteUrl) return;
 			if (err instanceof ApiError && err.body) {
 				fieldErrors = toFieldErrors(err.body);
 				formError = err.message;
@@ -72,8 +66,8 @@
 	}
 </script>
 
-<Modal bind:open title="Create user" onclose={handleClose}>
-	{#if phase === 'form'}
+<Modal bind:open title="Create user" onclose={reset}>
+	{#if !inviteUrl}
 		<form id="create-user-form" class="space-y-3" {onsubmit}>
 			{#if formError}
 				<div role="alert" class="alert alert-error text-sm">{formError}</div>
@@ -114,7 +108,7 @@
 				{/snippet}
 			</Field>
 		</form>
-	{:else if inviteUrl}
+	{:else}
 		<div class="flex flex-col gap-3">
 			<p class="text-base-content/60 text-sm">
 				Share this link with <strong>{name}</strong> to complete account setup.
@@ -124,7 +118,7 @@
 	{/if}
 
 	{#snippet actions()}
-		{#if phase === 'form'}
+		{#if !inviteUrl}
 			<button
 				type="button"
 				class="btn btn-ghost"
