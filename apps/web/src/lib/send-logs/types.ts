@@ -8,8 +8,8 @@ export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'in
 
 export type IntegrationOrigin =
 	| 'OpenTelemetry'
-	| 'Kubernetes'
-	| 'Host'
+	| 'LogAgents'
+	| 'WebServers'
 	| 'Containers'
 	| 'Application'
 	| 'Cloud';

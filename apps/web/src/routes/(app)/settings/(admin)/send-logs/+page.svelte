@@ -7,7 +7,7 @@
 
 	let query = $state('');
 
-	// Group by origin in ORIGINS order; drop empty groups (e.g. Kubernetes, Cloud today).
+	// Group by origin in ORIGINS order; drop empty groups (e.g. Cloud today).
 	const sections = $derived(
 		ORIGINS.map((origin) => ({
 			origin,

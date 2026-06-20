@@ -13,7 +13,7 @@ export const vector: Integration = {
 	id: 'vector',
 	label: 'Vector',
 	icon: VectorIcon,
-	origin: 'Host',
+	origin: 'LogAgents',
 	buildSteps: (ctx) => {
 		const vectorConfig = `sources:
   app_logs:

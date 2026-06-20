@@ -1,4 +1,4 @@
-import { Boxes, Server, Container, Code, Cloud, Waypoints } from 'lucide-svelte';
+import { Cable, Globe, Container, Code, Cloud, Waypoints } from 'lucide-svelte';
 import type { IconComponent, IntegrationOrigin } from './types';
 
 export type OriginMeta = {
@@ -7,12 +7,12 @@ export type OriginMeta = {
 	icon: IconComponent;
 };
 
-/** Router buckets, in coverage-first display order. */
+/** Wizard sections, in display order. */
 export const ORIGINS: OriginMeta[] = [
-	{ id: 'OpenTelemetry', label: 'OpenTelemetry', icon: Waypoints },
-	{ id: 'Kubernetes', label: 'Kubernetes cluster', icon: Boxes },
-	{ id: 'Host', label: 'Host / VM fleet', icon: Server },
-	{ id: 'Containers', label: 'Containers', icon: Container },
 	{ id: 'Application', label: 'Application code', icon: Code },
+	{ id: 'Containers', label: 'Containers', icon: Container },
+	{ id: 'OpenTelemetry', label: 'OpenTelemetry', icon: Waypoints },
+	{ id: 'LogAgents', label: 'Log Agents', icon: Cable },
+	{ id: 'WebServers', label: 'Web Servers', icon: Globe },
 	{ id: 'Cloud', label: 'Cloud provider', icon: Cloud }
 ];

@@ -1,6 +1,7 @@
 import { docker } from './integrations/docker';
 import { fluentBit } from './integrations/fluent-bit';
 import { go } from './integrations/go';
+import { kubernetes } from './integrations/kubernetes';
 import { nginx } from './integrations/nginx';
 import { nodejs } from './integrations/nodejs';
 import { otelCollector } from './integrations/otel-collector';
@@ -10,6 +11,7 @@ import type { Integration } from './types';
 
 export const integrations: Integration[] = [
 	otelCollector,
+	kubernetes,
 	python,
 	nodejs,
 	go,

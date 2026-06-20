@@ -14,7 +14,7 @@ export const fluentBit: Integration = {
 	id: 'fluent-bit',
 	label: 'Fluent Bit',
 	icon: FluentBitIcon,
-	origin: 'Host',
+	origin: 'LogAgents',
 	buildSteps: (ctx) => {
 		const url = new URL(ctx.origin);
 		const host = url.hostname;
