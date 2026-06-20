@@ -7,6 +7,7 @@
 	import { deleteIndex } from '$lib/api/indexes';
 	import IndexConfigForm from '$lib/components/admin/indexes/IndexConfigForm.svelte';
 	import IndexTabs from '$lib/components/admin/indexes/IndexTabs.svelte';
+	import { sourceTypeLabel } from '$lib/components/admin/indexes/source-form';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
@@ -163,7 +164,7 @@
 						<div class="min-w-0 flex-1">
 							<div class="truncate font-mono text-sm">{source.sourceId}</div>
 							<div class="text-base-content/60 truncate text-xs">
-								{source.sourceType} · {source.enabled ? 'enabled' : 'disabled'}
+								{sourceTypeLabel(source.sourceType)} · {source.enabled ? 'enabled' : 'disabled'}
 							</div>
 						</div>
 						<ChevronRight class="h-4 w-4 opacity-50" />

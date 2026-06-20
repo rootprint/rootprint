@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { SourceDetail } from 'api/types';
-	import { isManagedSource } from './source-form';
+	import { isManagedSource, sourceTypeLabel } from './source-form';
 
 	let { source }: { source: SourceDetail } = $props();
 
@@ -10,7 +10,7 @@
 
 	type Row = { label: string; value: string };
 	const rows = $derived.by(() => {
-		const out: Row[] = [{ label: 'Source type', value: source.sourceType }];
+		const out: Row[] = [{ label: 'Source type', value: sourceTypeLabel(source.sourceType) }];
 		if (source.streamName) out.push({ label: 'Stream name', value: source.streamName });
 		if (source.region) out.push({ label: 'Region', value: source.region });
 		if (source.endpoint) out.push({ label: 'Endpoint', value: source.endpoint });
@@ -30,7 +30,8 @@
 				This is a built-in source managed by Quickwit. It can be viewed but not edited, disabled, or
 				deleted here.
 			{:else}
-				This {source.sourceType} source isn't editable in Rootprint. It can be viewed here.
+				This {sourceTypeLabel(source.sourceType)} source isn't editable in Rootprint. It can be viewed
+				here.
 			{/if}
 		</p>
 	</div>

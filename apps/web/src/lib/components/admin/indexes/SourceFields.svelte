@@ -135,7 +135,7 @@
 			{:else}
 				<select id="src-type" bind:value={form.sourceType} class="select select-sm w-full">
 					<option value="kinesis">Amazon Kinesis</option>
-					<option value="file">File (S3 / SQS notifications)</option>
+					<option value="file">Amazon SQS (S3 notifications)</option>
 					<option value="kafka">Apache Kafka</option>
 				</select>
 			{/if}

@@ -7,7 +7,11 @@
 	import { setSourceEnabled, resetSourceCheckpoint, deleteSource } from '$lib/api/indexes';
 	import EditSourceForm from '$lib/components/admin/indexes/EditSourceForm.svelte';
 	import SourceSummary from '$lib/components/admin/indexes/SourceSummary.svelte';
-	import { isEditableSourceType, isManagedSource } from '$lib/components/admin/indexes/source-form';
+	import {
+		isEditableSourceType,
+		isManagedSource,
+		sourceTypeLabel
+	} from '$lib/components/admin/indexes/source-form';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 
@@ -66,7 +70,7 @@
 
 <div class="mx-auto flex max-w-7xl flex-col gap-6 px-12 py-12">
 	<PageHeader
-		description={`Configure how this ${source.sourceType} source ingests into ${indexId}.`}
+		description={`Configure how this ${sourceTypeLabel(source.sourceType)} source ingests into ${indexId}.`}
 		actions={managed ? undefined : sourceActions}
 	>
 		{#snippet children()}

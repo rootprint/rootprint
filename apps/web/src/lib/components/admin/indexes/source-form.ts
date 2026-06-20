@@ -13,6 +13,11 @@ export function isEditableSourceType(type: string): type is SourceType {
 	return (EDITABLE_SOURCE_TYPES as readonly string[]).includes(type);
 }
 
+// Quickwit's S3+SQS ingestion is a `file` source; show it as "SQS" to users.
+export function sourceTypeLabel(type: string): string {
+	return type === 'file' ? 'SQS' : type;
+}
+
 // Quickwit's built-in sources (`_ingest-api-source`, `_ingest-cli-source`) use
 // the `ingest-api` / `ingest-cli` source types and reserve `_`-prefixed IDs.
 // They cannot be deleted or disabled, so the UI hides destructive actions.
