@@ -2,6 +2,36 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2026-06-21
+
+### Added
+
+- **Index creation and editing from the admin UI.** Admins create and edit indexes under **Settings → Indexes** without touching Quickwit. A guided form covers the index ID, document mapping (through a new field-mappings editor), search settings, and retention, backed by new index create/update API routes.
+- **Personal API keys.** Each user mints their own search keys under **Account → API keys**, and the secret shows once on creation. These keys replace the old shared search-role tokens (see _⚠️ Breaking_).
+- **Service accounts.** Admins create non-human service accounts under **Security → Service accounts** and issue API keys scoped to them, which keeps automation separate from real user accounts. The UI documents API-key roles and their use.
+- **Kafka ingest source.** Index ingest sources now support **Kafka** alongside Kinesis and file (SQS/S3-notification), configured from the source forms.
+- **OpenTelemetry Collector and Kubernetes send-logs integrations.** **Settings → Send logs** gains two integrations, plus an origin search to find one as the catalog grows.
+- **Filters saved with views and shares.** Saved views keep the full result setup: query, filters, sort direction, and column layout. Shared links carry their filters too, so a recipient opens the same filtered result (migrations `0012`, `0014`).
+- **Admin-aware index listings.** Index views account for admin scope, so admins see every index.
+
+### ⚠️ Breaking
+
+- **Existing search API keys stop working.** We removed the shared "search" API-key role. Read access now comes only from **personal API keys** (one per user) or **service account** keys (for automation). Migration `0013` deletes every search-role key and drops its `token` audit history. **Action required:** before you upgrade, reissue credentials. Have each user create a personal key under **Account → API keys**, or create a service account under **Security → Service accounts** and issue it a key, then point every log shipper, script, and integration that read with an old search key at the new one. Ingest keys keep working.
+
+### Changed
+
+- **Saved queries became saved views.** Views store the full result setup (query, filters, sort, columns) under one API and a new `ViewsDropdown`. The migration carries existing saved queries over.
+- **File ingest source labelled "SQS."** The UI and API call file-notification sources SQS throughout.
+- **Web app reorganized into feature folders,** and the OAuth provider setup forms collapse into one shared form.
+- **Internal (api):** we split error translation/logging, index-metadata access middleware, and request/response schemas into dedicated modules, and expanded OpenAPI output and field-values metadata.
+- **UI polish.** Tidied the API-key dropdown layout, sidebar row borders, and collapsed sidebar groups. A mobile gate points small-screen users to a desktop browser.
+
+### Fixed
+
+- **Clipboard copy inside modal dialogs.** Copy buttons, such as the one-time key reveal, now work inside a modal.
+- **Log viewer hardened against invalid data.** Malformed log entries no longer break rendering.
+- **API security and admin error handling hardened** across ingest, index access, sharing, and several admin forms.
+
 ## [0.3.4] - 2026-06-06
 
 ### Added
