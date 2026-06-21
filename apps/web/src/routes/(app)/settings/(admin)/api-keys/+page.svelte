@@ -6,7 +6,7 @@
 	import { DEP } from '$lib/api/deps';
 	import { deleteApiKey, getApiKey } from '$lib/api/api-keys';
 	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
-	import CopyableField from '$lib/components/ui/CopyableField.svelte';
+	import SecretReveal from '$lib/components/ui/SecretReveal.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
@@ -186,9 +186,7 @@
 			Loading...
 		</div>
 	{:else if viewTokenValue}
-		<div class="flex flex-col gap-3">
-			<CopyableField value={viewTokenValue} ariaLabel="Ingest token" />
-		</div>
+		<SecretReveal value={viewTokenValue} label="Ingest key" />
 	{/if}
 	{#snippet actions()}
 		<button type="button" class="btn btn-primary" onclick={() => (viewOpen = false)}>Close</button>

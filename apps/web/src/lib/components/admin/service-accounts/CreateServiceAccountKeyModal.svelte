@@ -112,7 +112,7 @@
 			/>
 		</form>
 	{:else}
-		<OneTimeKeyReveal value={revealedKey} ariaLabel="Service account API key" />
+		<OneTimeKeyReveal value={revealedKey} label="API key" />
 	{/if}
 
 	{#snippet actions()}
