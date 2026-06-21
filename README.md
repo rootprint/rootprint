@@ -24,7 +24,7 @@ control, and Quickwit-powered search without sending logs to a hosted SaaS.
 - **Incident-ready UI** - Use severity-aware rows, histograms, field filters, saved views,
   detail drawers, share links, and result exports.
 - **Team access** - Invite users, manage roles, create scoped ingest keys, add service accounts
-  and personal API keys, and enable Google or GitHub OAuth allowlists.
+  and personal API keys, and enable Google or GitHub OAuth.
 - **Admin controls** - Manage indexes, sources, field configuration, activity, and
   Quickwit.
 - **Open source** - Apache-2.0 licensed. Run it, inspect it, fork it.
