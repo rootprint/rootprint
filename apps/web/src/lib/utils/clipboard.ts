@@ -9,19 +9,21 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 			// fall through to legacy path
 		}
 	}
+	const host = [...document.querySelectorAll('dialog[open]')].pop() ?? document.body;
 	const ta = document.createElement('textarea');
 	ta.value = text;
 	ta.setAttribute('readonly', '');
 	ta.style.position = 'fixed';
 	ta.style.opacity = '0';
-	document.body.appendChild(ta);
+	host.appendChild(ta);
+	ta.focus();
 	ta.select();
 	try {
 		return document.execCommand('copy');
 	} catch {
 		return false;
 	} finally {
-		document.body.removeChild(ta);
+		ta.remove();
 	}
 }
 
