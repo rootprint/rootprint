@@ -18,8 +18,8 @@ control, and Quickwit-powered search without sending logs to a hosted SaaS.
 
 - **Search on object storage** - Query indexes stored on S3, MinIO, R2,
   GCS, Azure Blob, or local disk.
-- **Open ingestion** - Send logs through OTLP Protobuf, NDJSON HTTP, the OpenTelemetry
-  Collector, Vector, Fluent Bit, Docker, Nginx, Node.js, Python, Go, and other OTEL-compatible
+- **Open ingestion** - Send logs through OTLP Protobuf or NDJSON HTTP, with OpenTelemetry
+  Collector, Vector, Fluent Bit and other OTEL-compatible
   sources.
 - **Incident-ready UI** - Use severity-aware rows, histograms, field filters, saved views,
   detail drawers, share links, and result exports.
