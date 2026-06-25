@@ -36,11 +36,10 @@ export function computeColumnWidths(
 	return widths;
 }
 
-// Widest message across all hits: the message is the only non-truncated column, so sizing it to the true max keeps every row's scroll width and separators aligned.
-export function computeMessageWidth(logs: { message: string }[], label = 'message'): number {
-	let maxLen = label.length;
+export function computeFieldWidth(logs: Record<string, unknown>[], field: string): number {
+	let maxLen = field.length;
 	for (const log of logs) {
-		const len = log.message?.length ?? 0;
+		const len = formatCell(getByPath(log, field)).length;
 		if (len > maxLen) maxLen = len;
 	}
 	return maxLen + 1;
@@ -49,11 +48,17 @@ export function computeMessageWidth(logs: { message: string }[], label = 'messag
 export function buildGridTemplate(
 	columns: string[],
 	columnWidths: Record<string, number>,
-	messageWidth: number,
+	wideField: string | undefined,
+	wideWidth: number,
 	lineWrap = false
 ): string {
-	const middle = columns.map((c) => `calc(${columnWidths[c] ?? c.length + 1}ch + 1rem)`).join(' ');
-	const prefix = `3px calc(${TIMESTAMP_COLUMN_WIDTH}ch + 1rem)${middle ? ' ' + middle : ''}`;
-	if (lineWrap) return `${prefix} minmax(0, 1fr)`;
-	return `${prefix} calc(${messageWidth}ch + 1rem) 1fr`;
+	const prefix = `3px calc(${TIMESTAMP_COLUMN_WIDTH}ch + 1rem)`;
+	if (columns.length === 0) return `${prefix} ${lineWrap ? 'minmax(0, 1fr)' : '1fr'}`;
+	const tracks = columns
+		.map((c) => {
+			if (c === wideField) return lineWrap ? 'minmax(0, 1fr)' : `calc(${wideWidth}ch + 1rem)`;
+			return `calc(${columnWidths[c] ?? c.length + 1}ch + 1rem)`;
+		})
+		.join(' ');
+	return lineWrap ? `${prefix} ${tracks}` : `${prefix} ${tracks} 1fr`;
 }

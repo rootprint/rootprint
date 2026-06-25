@@ -46,14 +46,12 @@
 	let fieldErrors = $state<Record<string, string>>({});
 	let formSubmitting = $state(false);
 
-	// Empty activeFields means "server defaults" — store null so applying the
-	// view never freezes an empty column list into the user's preferences.
 	function currentSnapshot() {
 		return {
 			query: store.query,
 			filters: store.filters,
 			sortDirection: store.sortDirection,
-			columns: store.activeFields.length > 0 ? store.activeFields : null
+			columns: [...store.activeFields]
 		};
 	}
 

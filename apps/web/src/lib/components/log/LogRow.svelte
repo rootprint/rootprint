@@ -10,6 +10,7 @@
 		hit,
 		columns,
 		gridTemplate,
+		messageField,
 		timezoneMode,
 		lineWrap = false,
 		onActivate = () => {}
@@ -17,6 +18,7 @@
 		hit: LogHit;
 		columns: string[];
 		gridTemplate: string;
+		messageField?: string;
 		timezoneMode: TimezoneMode;
 		lineWrap?: boolean;
 		onActivate?: () => void;
@@ -46,9 +48,8 @@
 		{formatLogRowTimestamp(hit.timestamp, timezoneMode)}
 	</span>
 	{#each columns as column (column)}
-		<span class="px-2 py-1 {cellWrap}" title={column}>
+		<span class="px-2 py-1 {column === messageField ? messageWrap : cellWrap}" title={column}>
 			{formatCell(getByPath(hit.raw, column))}
 		</span>
 	{/each}
-	<span class="px-2 py-1 {messageWrap}">{hit.message}</span>
 </div>

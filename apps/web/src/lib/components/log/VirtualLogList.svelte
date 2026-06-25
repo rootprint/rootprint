@@ -47,6 +47,8 @@
 		scrollMargin: 0
 	});
 
+	const messageField = $derived(fieldConfig?.messageField);
+
 	function measure(node: HTMLElement) {
 		get(virtualizer).measureElement(node);
 	}
@@ -103,6 +105,7 @@
 							hit={logs[item.index]}
 							columns={activeFields}
 							{gridTemplate}
+							{messageField}
 							{timezoneMode}
 							{lineWrap}
 							onActivate={() => onRowClick(logs[item.index])}

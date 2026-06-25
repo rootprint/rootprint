@@ -47,11 +47,11 @@
 		</button>
 		<DisplaySettings
 			activeFields={store.activeFields}
-			allFields={store.fields}
+			allFields={store.columnFields}
 			pinnedStart={store.fieldConfig
 				? [store.fieldConfig.levelField, store.fieldConfig.timestampField]
 				: []}
-			pinnedEnd={store.fieldConfig ? [store.fieldConfig.messageField] : []}
+			messageField={store.fieldConfig?.messageField}
 			lineWrap={store.lineWrap}
 			displayMode={store.displayMode}
 			onColumnsChange={(next) => store.setActiveFields(next)}

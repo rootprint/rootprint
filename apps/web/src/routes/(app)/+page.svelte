@@ -15,7 +15,7 @@
 	import {
 		buildGridTemplate,
 		computeColumnWidths,
-		computeMessageWidth
+		computeFieldWidth
 	} from '$lib/utils/column-width';
 	import { page } from '$app/state';
 	import { replaceState } from '$app/navigation';
@@ -38,12 +38,15 @@
 
 	store.setupAutoSearch();
 
+	const messageField = $derived(store.fieldConfig?.messageField);
 	const columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
 	const messageWidth = $derived(
-		computeMessageWidth(store.logs, store.fieldConfig?.messageField ?? 'message')
+		messageField && store.activeFields.includes(messageField)
+			? computeFieldWidth(store.rawHits, messageField)
+			: 0
 	);
 	const gridTemplate = $derived(
-		buildGridTemplate(store.activeFields, columnWidths, messageWidth, store.lineWrap)
+		buildGridTemplate(store.activeFields, columnWidths, messageField, messageWidth, store.lineWrap)
 	);
 
 	let chartCollapsed = $state(false);

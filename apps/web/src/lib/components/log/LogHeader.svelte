@@ -21,7 +21,6 @@
 	} = $props();
 
 	const timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
-	const messageLabel = $derived(fieldConfig?.messageField ?? 'message');
 	const rowWidth = $derived(lineWrap ? 'w-full' : 'w-max min-w-full');
 </script>
 
@@ -46,5 +45,4 @@
 	{#each columns as column (column)}
 		<span class="truncate px-2 py-1.5 font-sans text-[13px]" title={column}>{column}</span>
 	{/each}
-	<span class="px-2 py-1.5 font-sans text-[13px]">{messageLabel}</span>
 </div>

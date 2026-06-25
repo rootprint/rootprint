@@ -11,7 +11,7 @@
 		activeFields,
 		allFields,
 		pinnedStart = [],
-		pinnedEnd = [],
+		messageField,
 		lineWrap,
 		displayMode,
 		onColumnsChange,
@@ -21,7 +21,7 @@
 		activeFields: string[];
 		allFields: LogField[];
 		pinnedStart?: string[];
-		pinnedEnd?: string[];
+		messageField?: string;
 		lineWrap: boolean;
 		displayMode: DisplayMode;
 		onColumnsChange: (next: string[]) => void;
@@ -43,9 +43,7 @@
 	// $state, not $derived. We re-sync from `activeFields` via $effect.
 	let dndItems = $state<DndItem[]>([]);
 
-	// Filter pinned out of the middle DnD area so legacy displayFields that
-	// contain a pinned field name (level/timestamp/message) don't render twice.
-	const pinnedSet = $derived(new Set<string>([...pinnedStart, ...pinnedEnd]));
+	const pinnedSet = $derived(new Set<string>(pinnedStart));
 
 	$effect(() => {
 		dndItems = activeFields
@@ -73,7 +71,13 @@
 	}
 
 	function addField(name: string) {
-		onColumnsChange([...dndItems.map((f) => f.name), name]);
+		const names = dndItems.map((f) => f.name);
+		const messageIndex = messageField ? names.indexOf(messageField) : -1;
+		onColumnsChange(
+			messageIndex === -1
+				? [...names, name]
+				: [...names.slice(0, messageIndex), name, ...names.slice(messageIndex)]
+		);
 		mode = 'columns';
 		searchTerm = '';
 	}
@@ -113,7 +117,7 @@
 		}
 	});
 
-	const activeSet = $derived(new Set<string>([...activeFields, ...pinnedStart, ...pinnedEnd]));
+	const activeSet = $derived(new Set<string>([...activeFields, ...pinnedStart]));
 
 	const availableFields = $derived.by(() => {
 		let fields = allFields.filter((f) => !activeSet.has(f.name));
@@ -279,10 +283,6 @@
 						<Plus class="h-3 w-3 shrink-0" />
 						<span>Add column</span>
 					</button>
-
-					{#each pinnedEnd as field (field)}
-						{@render pinnedRow(field)}
-					{/each}
 				</div>
 			{/if}
 		</div>

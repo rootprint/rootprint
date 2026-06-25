@@ -22,8 +22,7 @@
 
 	const parts = $derived([
 		formatLogRowTimestamp(hit.timestamp, timezoneMode),
-		...columns.map((c) => formatCell(getByPath(hit.raw, c))),
-		hit.message
+		...columns.map((c) => formatCell(getByPath(hit.raw, c)))
 	]);
 
 	const layout = $derived(
