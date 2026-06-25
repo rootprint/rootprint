@@ -20,10 +20,12 @@
 		onActivate?: () => void;
 	} = $props();
 
-	const parts = $derived([
-		formatLogRowTimestamp(hit.timestamp, timezoneMode),
-		...columns.map((c) => formatCell(getByPath(hit.raw, c)))
-	]);
+	const parts = $derived(
+		[
+			formatLogRowTimestamp(hit.timestamp, timezoneMode),
+			...columns.map((c) => formatCell(getByPath(hit.raw, c)))
+		].filter((p) => p !== '')
+	);
 
 	const layout = $derived(
 		lineWrap ? 'w-full whitespace-pre-wrap break-words' : 'w-max min-w-full whitespace-nowrap'
