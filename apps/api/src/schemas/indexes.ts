@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 
 import { FIELD_VALUES_MAX, INDEX_VIEWS, INDEX_VISIBILITIES } from '../constants.js';
-import { FilterSchema } from './filters.js';
+import { FilterSchema, fieldName } from './filters.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, toNum } from '../utils/valibot.js';
 
@@ -120,14 +120,6 @@ const indexId = v.pipe(
 	v.regex(
 		/^[a-zA-Z][a-zA-Z0-9_-]{2,254}$/,
 		'Index ID must start with a letter and be 3–255 characters (letters, digits, - or _).'
-	)
-);
-
-const fieldName = v.pipe(
-	v.string(),
-	v.regex(
-		/^[@$_\-a-zA-Z][@$_/.\-a-zA-Z0-9]{0,254}$/,
-		'Field name must start with a letter, "@", "$", "_" or "-", then contain only letters, digits, or . - _ / @ $ (max 255 characters).'
 	)
 );
 
