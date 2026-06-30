@@ -9,6 +9,7 @@ import { getIndexMeta } from '../services/index.service.js';
 import { createShare, resolveShare } from '../services/share.service.js';
 import { ShareCreateResponse, ShareViewResponse } from '../schemas/responses/shares.js';
 import { shareCodeParamsSchema, shareCreateSchema } from '../schemas/shares.js';
+import { readLimiter } from '../middleware/rate-limit.js';
 import { unprocessable } from '../utils/http-error.js';
 
 const SHARE_BODY_LIMIT = 64 * 1024;
@@ -46,6 +47,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 			ok: ShareViewResponse,
 			okDescription: 'Resolved share'
 		}),
+		readLimiter,
 		validator('param', shareCodeParamsSchema),
 		async (c) => {
 			const { code } = c.req.valid('param');

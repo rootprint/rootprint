@@ -10,6 +10,7 @@ import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireUser } from '../middleware/require-user.js';
 import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
+import { readLimiter } from '../middleware/rate-limit.js';
 import { withIndexConfig } from '../middleware/with-index-config.js';
 import { withIndexMeta } from '../middleware/with-index-meta.js';
 import {
@@ -356,6 +357,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
+		readLimiter,
 		withIndexConfig,
 		validator('query', SearchQuery),
 		async (c) => {
@@ -381,6 +383,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
+		readLimiter,
 		withIndexConfig,
 		validator('query', HistogramQuery),
 		async (c) => {
@@ -399,6 +402,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
+		readLimiter,
 		withIndexConfig,
 		validator('query', FieldValuesBulkQuery),
 		async (c) => {
@@ -424,6 +428,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
+		readLimiter,
 		withIndexConfig,
 		validator('param', FieldParams),
 		validator('query', FieldValuesQuery),

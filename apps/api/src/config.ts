@@ -13,7 +13,11 @@ export const config = {
 	origin: requireUrlEnv('ORIGIN'),
 	quickwitUrl: requireUrlEnv('QUICKWIT_URL'),
 	frontendUrl: optionalUrlEnv('FRONTEND_URL'),
-	port: intEnv('PORT', 8282)
+	port: intEnv('PORT', 8282),
+	trustedProxyHops: intEnv('TRUST_PROXY_HOPS', 0),
+	rateLimitWindowMs: intEnv('RATE_LIMIT_WINDOW_MS', 60_000),
+	publicAuthRateLimit: intEnv('PUBLIC_AUTH_RATE_LIMIT', 30),
+	readRateLimit: intEnv('READ_RATE_LIMIT', 300)
 };
 
 export type AppConfig = typeof config;

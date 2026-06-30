@@ -24,6 +24,7 @@ import {
 	loadGitHubAuthForBetterAuth,
 	loadGoogleAuthForBetterAuth
 } from '../services/settings.service.js';
+import { publicAuthLimiter, resolveClientIp } from '../middleware/rate-limit.js';
 import { conflict } from '../utils/http-error.js';
 
 // Custom endpoints come first; better-auth wildcard is last so it doesn't shadow them.
@@ -41,6 +42,7 @@ export const authRouter = new Hono<AppEnv>()
 			errors: [409],
 			security: []
 		}),
+		publicAuthLimiter,
 		validator('json', setupAdminSchema),
 		async (c) => {
 			const body = c.req.valid('json');
@@ -62,6 +64,7 @@ export const authRouter = new Hono<AppEnv>()
 			ok: VerifyInviteResponse,
 			security: []
 		}),
+		publicAuthLimiter,
 		validator('json', verifyInviteSchema),
 		async (c) => {
 			const { token } = c.req.valid('json');
@@ -78,6 +81,7 @@ export const authRouter = new Hono<AppEnv>()
 			ok: SetupPasswordResponse,
 			security: []
 		}),
+		publicAuthLimiter,
 		validator('json', setupPasswordSchema),
 		async (c) => {
 			const body = c.req.valid('json');
@@ -125,5 +129,6 @@ export const authRouter = new Hono<AppEnv>()
 		if (!origin || origin === 'null') {
 			req.headers.set('origin', config.origin);
 		}
+		req.headers.set('x-rootprint-client-ip', resolveClientIp(c));
 		return auth().handler(req);
 	});

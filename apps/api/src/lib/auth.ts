@@ -42,6 +42,8 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 		secret,
 		baseURL: config.origin,
 		session: { cookieCache: { enabled: true } },
+		rateLimit: { enabled: true },
+		advanced: { ipAddress: { ipAddressHeaders: ['x-rootprint-client-ip'] } },
 		emailAndPassword: { enabled: true, disableSignUp: true },
 		user: {
 			additionalFields: {
