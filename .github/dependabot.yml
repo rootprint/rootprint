@@ -1,25 +1,25 @@
 version: 2
 updates:
   - package-ecosystem: bun
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     groups:
       minor-and-patch:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
 
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     groups:
       actions:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
 
   # Dockerfile base image
   - package-ecosystem: docker
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
