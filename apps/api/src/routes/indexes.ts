@@ -46,19 +46,21 @@ import {
 import { SearchQuery } from '../schemas/search.js';
 import {
 	createIndex,
-	createSource,
 	deleteIndex,
-	deleteSource,
 	getIndexDetail,
 	getIndexViewConfig,
 	listIndexes,
+	saveIndexConfig,
+	updateIndexConfig
+} from '../services/index.service.js';
+import {
+	createSource,
+	deleteSource,
 	projectSource,
 	resetSourceCheckpoint,
-	saveIndexConfig,
 	setSourceEnabled,
-	updateIndexConfig,
 	updateSource
-} from '../services/index.service.js';
+} from '../services/index-source.service.js';
 import { getStatsHistory } from '../services/index-stats.service.js';
 import {
 	fieldValues,

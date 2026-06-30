@@ -1,4 +1,4 @@
-import { QuickwitError, QuickwitErrorCode } from 'quickwit-js';
+import { NotFoundError, QuickwitError, QuickwitErrorCode } from 'quickwit-js';
 
 import {
 	HttpError,
@@ -50,4 +50,13 @@ export function quickwitErrorToHttp(err: QuickwitError): HttpError {
 export function translateQuickwitError(err: unknown): never {
 	if (err instanceof QuickwitError) throw quickwitErrorToHttp(err);
 	throw err;
+}
+
+export async function withNotFound<T>(fn: () => Promise<T>, message: string): Promise<T> {
+	try {
+		return await fn();
+	} catch (err) {
+		if (err instanceof NotFoundError) throw notFound(message);
+		throw err;
+	}
 }
