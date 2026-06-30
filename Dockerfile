@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # ---------- Stage 1: builder ----------
-FROM oven/bun:1.3.11-slim AS builder
+FROM oven/bun:1.3.14-slim AS builder
 WORKDIR /app
 
 COPY package.json bun.lock tsconfig.base.json ./
@@ -20,7 +20,7 @@ RUN bun --filter web build \
  && bun --filter api build
 
 # ---------- Stage 2: runtime ----------
-FROM oven/bun:1.3.11-slim AS runtime
+FROM oven/bun:1.3.14-slim AS runtime
 WORKDIR /app
 
 COPY --from=builder --chown=bun:bun /app/apps/api/dist    ./apps/api/dist
