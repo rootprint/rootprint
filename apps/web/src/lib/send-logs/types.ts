@@ -7,12 +7,7 @@ export type IconComponent = Component<Record<string, unknown>> | ComponentType;
 export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
 
 export type IntegrationOrigin =
-	| 'OpenTelemetry'
-	| 'LogAgents'
-	| 'WebServers'
-	| 'Containers'
-	| 'Application'
-	| 'Cloud';
+	'OpenTelemetry' | 'LogAgents' | 'WebServers' | 'Containers' | 'Application' | 'Cloud';
 
 export type Snippet = {
 	code: string;

@@ -83,8 +83,7 @@ export interface LogFieldValueBucket {
 }
 
 export type TimeRange =
-	| { type: 'relative'; preset: Preset }
-	| { type: 'absolute'; start: number; end: number };
+	{ type: 'relative'; preset: Preset } | { type: 'absolute'; start: number; end: number };
 
 export interface ParsedQuery {
 	index: string | null;
