@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { Braces, Layers, ListTree, Search, Share2, X } from 'lucide-svelte';
+	import { Braces, Bug, Layers, ListTree, Search, Share2, X } from 'lucide-svelte';
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import type { LogHit, TimezoneMode } from '$lib/types';
 
-	export type DrawerTab = 'parameters' | 'json' | 'context';
+	export type DrawerTab = 'parameters' | 'traceback' | 'json' | 'context';
 
 	let {
 		hit,
 		timezoneMode,
 		activeTab,
 		sharing = false,
+		hasTraceback = false,
 		onTabChange,
 		onSearch,
 		onShare,
@@ -21,17 +22,20 @@
 		timezoneMode: TimezoneMode;
 		activeTab: DrawerTab;
 		sharing?: boolean;
+		hasTraceback?: boolean;
 		onTabChange: (tab: DrawerTab) => void;
 		onSearch: () => void;
 		onShare: () => void;
 		onClose: () => void;
 	} = $props();
 
-	const TABS: { id: DrawerTab; label: string; icon: typeof Layers }[] = [
-		{ id: 'parameters', label: 'Parameters', icon: ListTree },
-		{ id: 'json', label: 'JSON', icon: Braces },
-		{ id: 'context', label: 'Context', icon: Layers }
-	];
+	type TabDef = { id: DrawerTab; label: string; icon: typeof Layers };
+	const TABS = $derived<TabDef[]>([
+		{ id: 'parameters' as DrawerTab, label: 'Parameters', icon: ListTree },
+		...(hasTraceback ? [{ id: 'traceback' as DrawerTab, label: 'Traceback', icon: Bug }] : []),
+		{ id: 'json' as DrawerTab, label: 'JSON', icon: Braces },
+		{ id: 'context' as DrawerTab, label: 'Context', icon: Layers }
+	]);
 
 	function handleTabKeydown(e: KeyboardEvent) {
 		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;

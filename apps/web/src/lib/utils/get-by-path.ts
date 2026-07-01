@@ -1,4 +1,10 @@
+import { resolveEmbeddedJson } from './resolve-embedded-json';
+
 export function getByPath(obj: unknown, path: string): unknown {
+	if (typeof obj === 'string') {
+		const resolved = resolveEmbeddedJson(obj);
+		return resolved === obj ? undefined : getByPath(resolved, path);
+	}
 	if (obj === null || typeof obj !== 'object') return undefined;
 	const record = obj as Record<string, unknown>;
 	if (path in record) return record[path];

@@ -7,10 +7,12 @@
 	import ContextPane from './drawer/ContextPane.svelte';
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
+	import TracebackPane from './drawer/TracebackPane.svelte';
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { searchHighlight } from '$lib/utils/dom-highlight';
+	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
@@ -54,6 +56,14 @@
 	} = $props();
 
 	let activeTab = $state<DrawerTab>('parameters');
+
+	const traceback = $derived.by((): unknown => {
+		const path = store.fieldConfig?.tracebackField;
+		if (!path || !hit) return undefined;
+		return getByPath(hit.raw, path);
+	});
+	const hasTraceback = $derived(traceback != null && traceback !== '');
+
 	let searchOpen = $state(false);
 	let searchTerm = $state('');
 	let sharing = $state(false);
@@ -244,6 +254,7 @@
 			timezoneMode={store.timezoneMode}
 			{activeTab}
 			{sharing}
+			{hasTraceback}
 			onTabChange={(t) => (activeTab = t)}
 			onSearch={() => (searchOpen = !searchOpen)}
 			onShare={shareLog}
@@ -269,6 +280,8 @@
 		>
 			{#if activeTab === 'parameters'}
 				<ParametersPane {hit} {store} />
+			{:else if activeTab === 'traceback'}
+				<TracebackPane value={traceback} />
 			{:else if activeTab === 'context'}
 				<ContextPane {hit} {store} onCloseDrawer={close} />
 			{:else}
