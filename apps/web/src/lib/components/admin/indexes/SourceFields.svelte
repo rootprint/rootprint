@@ -475,8 +475,7 @@
 			autocomplete="off"
 			spellcheck="false"
 			aria-invalid={fieldErrors.vrlScript ? 'true' : undefined}
-			aria-describedby={fieldErrors.vrlScript ? 'src-vrl-msg' : undefined}
-		></textarea>
+			aria-describedby={fieldErrors.vrlScript ? 'src-vrl-msg' : undefined}></textarea>
 		{#if fieldErrors.vrlScript}
 			<p id="src-vrl-msg" class="text-error text-xs">{fieldErrors.vrlScript}</p>
 		{/if}

@@ -200,8 +200,7 @@
 							placeholder="%Y-%m-%d %H:%M:%S"
 							autocomplete="off"
 							spellcheck="false"
-							aria-label={`Field ${i + 1} custom input formats`}
-						></textarea>
+							aria-label={`Field ${i + 1} custom input formats`}></textarea>
 					</div>
 				</div>
 			{/if}

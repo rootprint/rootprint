@@ -38,7 +38,7 @@
 		"bun-types": "^1.3.14",
 		"daisyui": "^5.5.17",
 		"oxlint": "^1.64.0",
-		"prettier-plugin-svelte": "^3.4.1",
+		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"svelte": "^5.48.2",
 		"svelte-check": "^4.3.5",

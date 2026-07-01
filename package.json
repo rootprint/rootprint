@@ -45,7 +45,7 @@
 		"lint-staged": "^17.0.7",
 		"oxlint": "^1.65.0",
 		"prettier": "^3.8.3",
-		"prettier-plugin-svelte": "^3.4.1",
+		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"typescript": "^6.0.3"
 	},
