@@ -217,8 +217,7 @@
 			class="textarea textarea-sm w-full font-mono"
 			placeholder="one field name per line (optional)"
 			autocomplete="off"
-			spellcheck="false"
-		></textarea>
+			spellcheck="false"></textarea>
 	</div>
 
 	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
