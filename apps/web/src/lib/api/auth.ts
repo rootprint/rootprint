@@ -14,9 +14,7 @@ export async function getBootstrap(): Promise<AuthBootstrap> {
 }
 
 export type VerifyInviteResult =
-	| { status: 'valid'; email: string }
-	| { status: 'invalid' }
-	| { status: 'expired' };
+	{ status: 'valid'; email: string } | { status: 'invalid' } | { status: 'expired' };
 
 export async function verifyInvite(token: string): Promise<VerifyInviteResult> {
 	const res = await client.api.auth['verify-invite'].$post({ json: { token } });

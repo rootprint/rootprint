@@ -155,13 +155,14 @@ At the end of implementation, guide users thoroughly on remaining next steps (e.
 **Core:** `npm install better-auth`
 
 **Scoped packages (as needed):**
-| Package | Use case |
-|---------|----------|
-| `@better-auth/passkey` | WebAuthn/Passkey auth |
-| `@better-auth/sso` | SAML/OIDC enterprise SSO |
-| `@better-auth/stripe` | Stripe payments |
-| `@better-auth/scim` | SCIM user provisioning |
-| `@better-auth/expo` | React Native/Expo |
+
+| Package                | Use case                 |
+| ---------------------- | ------------------------ |
+| `@better-auth/passkey` | WebAuthn/Passkey auth    |
+| `@better-auth/sso`     | SAML/OIDC enterprise SSO |
+| `@better-auth/stripe`  | Stripe payments          |
+| `@better-auth/scim`    | SCIM user provisioning   |
+| `@better-auth/expo`    | React Native/Expo        |
 
 ---
 
@@ -206,13 +207,14 @@ Add OAuth secrets as needed: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GOOGLE
 ## Client Config (auth-client.ts)
 
 **Import by framework:**
-| Framework | Import |
-|-----------|--------|
-| React/Next.js | `better-auth/react` |
-| Vue | `better-auth/vue` |
-| Svelte | `better-auth/svelte` |
-| Solid | `better-auth/solid` |
-| Vanilla JS | `better-auth/client` |
+
+| Framework     | Import               |
+| ------------- | -------------------- |
+| React/Next.js | `better-auth/react`  |
+| Vue           | `better-auth/vue`    |
+| Svelte        | `better-auth/svelte` |
+| Solid         | `better-auth/solid`  |
+| Vanilla JS    | `better-auth/client` |
 
 **Client plugins** go in `createAuthClient({ plugins: [...] })`.
 
