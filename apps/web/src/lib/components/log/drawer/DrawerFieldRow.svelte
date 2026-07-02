@@ -31,11 +31,11 @@
 			<span class="break-words whitespace-pre-wrap">{field.value}</span>
 			{#if hasActions}
 				<span
-					class="absolute top-1 right-2 flex shrink-0 gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+					class="join absolute top-0.5 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
 				>
 					<button
 						type="button"
-						class="btn btn-ghost btn-xs btn-square bg-base-100"
+						class="btn btn-xs btn-square join-item"
 						aria-label="Filter for value"
 						title="Filter for value"
 						onclick={(e) => {
@@ -47,7 +47,7 @@
 					</button>
 					<button
 						type="button"
-						class="btn btn-ghost btn-xs btn-square bg-base-100"
+						class="btn btn-xs btn-square join-item"
 						aria-label="Filter out value"
 						title="Filter out value"
 						onclick={(e) => {
@@ -59,7 +59,7 @@
 					</button>
 					<button
 						type="button"
-						class="btn btn-ghost btn-xs btn-square bg-base-100"
+						class="btn btn-xs btn-square join-item"
 						aria-label="Copy value"
 						title="Copy value"
 						onclick={(e) => {
