@@ -126,11 +126,11 @@
 						"type": "string"
 					},
 					"createdAt": {
-						"default": "Generated at runtime",
 						"format": "date-time",
 						"type": "string"
 					},
 					"id": {
+						"readOnly": true,
 						"type": "string"
 					},
 					"idToken": {
@@ -161,6 +161,7 @@
 					}
 				},
 				"required": [
+					"id",
 					"accountId",
 					"providerId",
 					"userId",
@@ -411,6 +412,7 @@
 						"type": "string"
 					},
 					"id": {
+						"readOnly": true,
 						"type": "string"
 					},
 					"key": {
@@ -488,7 +490,14 @@
 						"type": "string"
 					}
 				},
-				"required": [],
+				"required": [
+					"id",
+					"configId",
+					"referenceId",
+					"key",
+					"createdAt",
+					"updatedAt"
+				],
 				"type": "object"
 			},
 			"AuthProvidersResponse": {
@@ -1675,7 +1684,7 @@
 									"type": "boolean"
 								},
 								"field": {
-									"minLength": 1,
+									"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 									"type": "string"
 								},
 								"value": {
@@ -1841,7 +1850,6 @@
 			"Session": {
 				"properties": {
 					"createdAt": {
-						"default": "Generated at runtime",
 						"format": "date-time",
 						"type": "string"
 					},
@@ -1850,6 +1858,7 @@
 						"type": "string"
 					},
 					"id": {
+						"readOnly": true,
 						"type": "string"
 					},
 					"impersonatedBy": {
@@ -1874,6 +1883,7 @@
 					}
 				},
 				"required": [
+					"id",
 					"expiresAt",
 					"token",
 					"createdAt",
@@ -1935,9 +1945,11 @@
 									"type": "boolean"
 								},
 								"field": {
+									"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 									"type": "string"
 								},
 								"value": {
+									"minLength": 1,
 									"type": "string"
 								}
 							},
@@ -2250,7 +2262,6 @@
 						"type": "boolean"
 					},
 					"createdAt": {
-						"default": "Generated at runtime",
 						"format": "date-time",
 						"type": "string"
 					},
@@ -2263,6 +2274,7 @@
 						"type": "boolean"
 					},
 					"id": {
+						"readOnly": true,
 						"type": "string"
 					},
 					"image": {
@@ -2276,14 +2288,15 @@
 						"type": "string"
 					},
 					"updatedAt": {
-						"default": "Generated at runtime",
 						"format": "date-time",
 						"type": "string"
 					}
 				},
 				"required": [
+					"id",
 					"name",
 					"email",
+					"emailVerified",
 					"createdAt",
 					"updatedAt"
 				],
@@ -2379,7 +2392,6 @@
 			"Verification": {
 				"properties": {
 					"createdAt": {
-						"default": "Generated at runtime",
 						"format": "date-time",
 						"type": "string"
 					},
@@ -2388,13 +2400,13 @@
 						"type": "string"
 					},
 					"id": {
+						"readOnly": true,
 						"type": "string"
 					},
 					"identifier": {
 						"type": "string"
 					},
 					"updatedAt": {
-						"default": "Generated at runtime",
 						"format": "date-time",
 						"type": "string"
 					},
@@ -2403,6 +2415,7 @@
 					}
 				},
 				"required": [
+					"id",
 					"identifier",
 					"value",
 					"expiresAt",
@@ -2474,7 +2487,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.3.4"
+		"version": "0.3.5"
 	},
 	"openapi": "3.1.0",
 	"paths": {
@@ -2572,6 +2585,7 @@
 						"in": "query",
 						"name": "offset",
 						"schema": {
+							"default": "0",
 							"minimum": 0,
 							"pattern": "^\\d+$",
 							"type": "integer"
@@ -2581,6 +2595,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
+							"default": "100",
 							"maximum": 500,
 							"minimum": 1,
 							"pattern": "^\\d+$",
@@ -2591,6 +2606,7 @@
 						"in": "query",
 						"name": "status",
 						"schema": {
+							"default": "any",
 							"enum": [
 								"any",
 								"success",
@@ -2892,6 +2908,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
+							"default": "10",
 							"maximum": 50,
 							"minimum": 1,
 							"pattern": "^\\d+$",
@@ -3097,6 +3114,7 @@
 						"in": "query",
 						"name": "offset",
 						"schema": {
+							"default": "0",
 							"minimum": 0,
 							"pattern": "^\\d+$",
 							"type": "integer"
@@ -3106,6 +3124,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
+							"default": "100",
 							"maximum": 500,
 							"minimum": 1,
 							"pattern": "^\\d+$",
@@ -3116,6 +3135,7 @@
 						"in": "query",
 						"name": "status",
 						"schema": {
+							"default": "any",
 							"enum": [
 								"any",
 								"success",
@@ -3923,17 +3943,11 @@
 								"properties": {
 									"banExpiresIn": {
 										"description": "The number of seconds until the ban expires",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"banReason": {
 										"description": "The reason for the ban",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"userId": {
 										"description": "The user id",
@@ -4084,10 +4098,11 @@
 							"schema": {
 								"properties": {
 									"data": {
-										"type": [
-											"string",
-											"null"
-										]
+										"additionalProperties": {},
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
 									},
 									"email": {
 										"description": "The email of the user",
@@ -4098,15 +4113,21 @@
 										"type": "string"
 									},
 									"password": {
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"role": {
-										"type": [
-											"string",
-											"null"
+										"anyOf": [
+											{
+												"description": "The role of the user",
+												"type": "string"
+											},
+											{
+												"items": {
+													"description": "The roles of user",
+													"type": "string"
+												},
+												"type": "array"
+											}
 										]
 									}
 								},
@@ -4845,10 +4866,7 @@
 						"in": "query",
 						"name": "searchValue",
 						"schema": {
-							"type": [
-								"string",
-								"null"
-							]
+							"type": "string"
 						}
 					},
 					{
@@ -4856,10 +4874,11 @@
 						"name": "searchField",
 						"schema": {
 							"description": "The field to search in, defaults to email. Can be `email` or `name`. Eg: \"name\"",
-							"type": [
-								"string",
-								"null"
-							]
+							"enum": [
+								"email",
+								"name"
+							],
+							"type": "string"
 						}
 					},
 					{
@@ -4867,19 +4886,26 @@
 						"name": "searchOperator",
 						"schema": {
 							"description": "The operator to use for the search. Can be `contains`, `starts_with` or `ends_with`. Eg: \"contains\"",
-							"type": [
-								"string",
-								"null"
-							]
+							"enum": [
+								"contains",
+								"starts_with",
+								"ends_with"
+							],
+							"type": "string"
 						}
 					},
 					{
 						"in": "query",
 						"name": "limit",
 						"schema": {
-							"type": [
-								"string",
-								"null"
+							"anyOf": [
+								{
+									"description": "The number of users to return",
+									"type": "string"
+								},
+								{
+									"type": "number"
+								}
 							]
 						}
 					},
@@ -4887,9 +4913,14 @@
 						"in": "query",
 						"name": "offset",
 						"schema": {
-							"type": [
-								"string",
-								"null"
+							"anyOf": [
+								{
+									"description": "The offset to start from",
+									"type": "string"
+								},
+								{
+									"type": "number"
+								}
 							]
 						}
 					},
@@ -4898,10 +4929,7 @@
 						"name": "sortBy",
 						"schema": {
 							"description": "The field to sort by",
-							"type": [
-								"string",
-								"null"
-							]
+							"type": "string"
 						}
 					},
 					{
@@ -4909,10 +4937,11 @@
 						"name": "sortDirection",
 						"schema": {
 							"description": "The direction to sort by",
-							"type": [
-								"string",
-								"null"
-							]
+							"enum": [
+								"asc",
+								"desc"
+							],
+							"type": "string"
 						}
 					},
 					{
@@ -4920,19 +4949,48 @@
 						"name": "filterField",
 						"schema": {
 							"description": "The field to filter by",
-							"type": [
-								"string",
-								"null"
-							]
+							"type": "string"
 						}
 					},
 					{
 						"in": "query",
 						"name": "filterValue",
 						"schema": {
-							"type": [
-								"string",
-								"null"
+							"anyOf": [
+								{
+									"anyOf": [
+										{
+											"anyOf": [
+												{
+													"anyOf": [
+														{
+															"description": "The value to filter by",
+															"type": "string"
+														},
+														{
+															"type": "number"
+														}
+													]
+												},
+												{
+													"type": "boolean"
+												}
+											]
+										},
+										{
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										}
+									]
+								},
+								{
+									"items": {
+										"type": "number"
+									},
+									"type": "array"
+								}
 							]
 						}
 					},
@@ -4941,10 +4999,20 @@
 						"name": "filterOperator",
 						"schema": {
 							"description": "The operator to use for the filter",
-							"type": [
-								"string",
-								"null"
-							]
+							"enum": [
+								"eq",
+								"ne",
+								"lt",
+								"lte",
+								"gt",
+								"gte",
+								"in",
+								"not_in",
+								"contains",
+								"starts_with",
+								"ends_with"
+							],
+							"type": "string"
 						}
 					}
 				],
@@ -5543,8 +5611,20 @@
 							"schema": {
 								"properties": {
 									"role": {
-										"description": "The role to set, this can be a string or an array of strings. Eg: `admin` or `[admin, user]`",
-										"type": "string"
+										"anyOf": [
+											{
+												"description": "The role to set. `admin` or `user` by default",
+												"type": "string"
+											},
+											{
+												"items": {
+													"description": "The roles to set. `admin` or `user` by default",
+													"type": "string"
+												},
+												"type": "array"
+											}
+										],
+										"description": "The role to set, this can be a string or an array of strings. Eg: `admin` or `[admin, user]`"
 									},
 									"userId": {
 										"description": "The user id",
@@ -5697,10 +5777,12 @@
 								"properties": {
 									"newPassword": {
 										"description": "The new password",
+										"minLength": 1,
 										"type": "string"
 									},
 									"userId": {
 										"description": "The user id",
+										"minLength": 1,
 										"type": "string"
 									}
 								},
@@ -6109,8 +6191,10 @@
 							"schema": {
 								"properties": {
 									"data": {
+										"additionalProperties": {},
 										"description": "The user data to update",
-										"type": "string"
+										"propertyNames": {},
+										"type": "object"
 									},
 									"userId": {
 										"description": "The user id",
@@ -6262,100 +6346,73 @@
 								"properties": {
 									"configId": {
 										"description": "The configuration ID to use for the API key. If not provided, the default configuration will be used.",
-										"type": [
-											"string",
-											"null"
-										]
-									},
-									"expiresIn": {
-										"default": null,
 										"type": "string"
 									},
-									"metadata": {
+									"expiresIn": {
+										"description": "Expiration time of the Api Key in seconds",
 										"type": [
-											"string",
+											"number",
 											"null"
 										]
 									},
+									"metadata": {},
 									"name": {
 										"description": "Name of the Api Key",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"organizationId": {
 										"description": "Organization Id of the organization that the Api Key belongs to. Eg: 'org-id'",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"permissions": {
+										"additionalProperties": {
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										},
 										"description": "Permissions of the Api Key.",
-										"type": [
-											"string",
-											"null"
-										]
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
 									},
 									"prefix": {
 										"description": "Prefix of the Api Key",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"rateLimitEnabled": {
 										"description": "Whether the key has rate limiting enabled. server-only. Eg: true",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"rateLimitMax": {
 										"description": "Maximum amount of requests allowed within a window. Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset. server-only. Eg: 100",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"rateLimitTimeWindow": {
 										"description": "The duration in milliseconds where each request is counted. Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset. server-only. Eg: 1000",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"refillAmount": {
 										"description": "Amount to refill the remaining count of the Api Key. server-only. Eg: 100",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"refillInterval": {
 										"description": "Interval to refill the Api Key in milliseconds. server-only. Eg: 1000",
+										"type": "number"
+									},
+									"remaining": {
+										"description": "Remaining number of requests. Server side only",
 										"type": [
 											"number",
 											"null"
 										]
 									},
-									"remaining": {
-										"default": null,
-										"type": "string"
-									},
 									"userId": {
 										"description": "User Id of the user that the Api Key belongs to. server-only. Eg: \"user-id\"",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									}
 								},
-								"required": [
-									"expiresIn",
-									"remaining"
-								],
 								"type": "object"
 							}
 						}
@@ -6761,10 +6818,7 @@
 						"name": "configId",
 						"schema": {
 							"description": "The configuration ID to use for the API key lookup. If not provided, the default configuration will be used.",
-							"type": [
-								"string",
-								"null"
-							]
+							"type": "string"
 						}
 					},
 					{
@@ -7277,95 +7331,75 @@
 								"properties": {
 									"configId": {
 										"description": "The configuration ID to use for the API key lookup. If not provided, the default configuration will be used.",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"enabled": {
 										"description": "Whether the Api Key is enabled or not",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"expiresIn": {
-										"type": "string"
+										"description": "Expiration time of the Api Key in seconds",
+										"type": [
+											"number",
+											"null"
+										]
 									},
 									"keyId": {
 										"description": "The id of the Api Key",
 										"type": "string"
 									},
-									"metadata": {
-										"type": [
-											"string",
-											"null"
-										]
-									},
+									"metadata": {},
 									"name": {
 										"description": "The name of the key",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"permissions": {
-										"type": "string"
+										"additionalProperties": {
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										},
+										"description": "Update the permissions on the API Key. server-only.",
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": [
+											"object",
+											"null"
+										]
 									},
 									"rateLimitEnabled": {
 										"description": "Whether the key has rate limiting enabled.",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"rateLimitMax": {
 										"description": "Maximum amount of requests allowed within a window. Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset. server-only. Eg: 100",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"rateLimitTimeWindow": {
 										"description": "The duration in milliseconds where each request is counted. server-only. Eg: 1000",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"refillAmount": {
 										"description": "The refill amount",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"refillInterval": {
 										"description": "The refill interval",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"remaining": {
 										"description": "The number of remaining requests",
-										"type": [
-											"number",
-											"null"
-										]
+										"type": "number"
 									},
 									"userId": {
 										"description": "The id of the user which the api key belongs to. server-only. Eg: \"some-user-id\"",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									}
 								},
 								"required": [
-									"keyId",
-									"expiresIn",
-									"permissions"
+									"keyId"
 								],
 								"type": "object"
 							}
@@ -7646,7 +7680,16 @@
 		},
 		"/api/auth/callback/{id}": {
 			"get": {
-				"parameters": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
 				"responses": {
 					"400": {
 						"content": {
@@ -7756,16 +7799,45 @@
 				]
 			},
 			"post": {
-				"parameters": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
 				"requestBody": {
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {},
+								"properties": {
+									"code": {
+										"type": "string"
+									},
+									"device_id": {
+										"type": "string"
+									},
+									"error": {
+										"type": "string"
+									},
+									"error_description": {
+										"type": "string"
+									},
+									"state": {
+										"type": "string"
+									},
+									"user": {
+										"type": "string"
+									}
+								},
 								"type": "object"
 							}
 						}
-					}
+					},
+					"required": false
 				},
 				"responses": {
 					"400": {
@@ -7887,10 +7959,7 @@
 								"properties": {
 									"callbackURL": {
 										"description": "The URL to redirect to after email verification",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"newEmail": {
 										"description": "The new email address to set must be a valid email address",
@@ -8067,10 +8136,7 @@
 									},
 									"revokeOtherSessions": {
 										"description": "Must be a boolean value",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									}
 								},
 								"required": [
@@ -8440,10 +8506,7 @@
 						"name": "callbackURL",
 						"schema": {
 							"description": "The URL to redirect to after deletion",
-							"type": [
-								"string",
-								"null"
-							]
+							"type": "string"
 						}
 					}
 				],
@@ -8718,10 +8781,7 @@
 								"properties": {
 									"accountId": {
 										"description": "The account ID associated with the refresh token",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"providerId": {
 										"description": "The provider ID for the OAuth provider",
@@ -8729,10 +8789,7 @@
 									},
 									"userId": {
 										"description": "The user ID associated with the account",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									}
 								},
 								"required": [
@@ -9160,57 +9217,40 @@
 							"schema": {
 								"properties": {
 									"additionalData": {
-										"type": [
-											"string",
-											"null"
-										]
+										"additionalProperties": {},
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
 									},
 									"callbackURL": {
 										"description": "The URL to redirect to after the user has signed in",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"disableRedirect": {
 										"description": "Disable automatic redirection to the provider. Useful for handling the redirection yourself",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"errorCallbackURL": {
 										"description": "The URL to redirect to if there is an error during the link process",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"idToken": {
 										"properties": {
 											"accessToken": {
-												"type": [
-													"string",
-													"null"
-												]
+												"type": "string"
 											},
 											"nonce": {
-												"type": [
-													"string",
-													"null"
-												]
+												"type": "string"
 											},
 											"refreshToken": {
-												"type": [
-													"string",
-													"null"
-												]
+												"type": "string"
 											},
 											"scopes": {
-												"type": [
-													"array",
-													"null"
-												]
+												"items": {
+													"type": "string"
+												},
+												"type": "array"
 											},
 											"token": {
 												"type": "string"
@@ -9219,26 +9259,64 @@
 										"required": [
 											"token"
 										],
-										"type": [
-											"object",
-											"null"
-										]
+										"type": "object"
 									},
 									"provider": {
-										"type": "string"
+										"anyOf": [
+											{
+												"enum": [
+													"apple",
+													"atlassian",
+													"cognito",
+													"discord",
+													"facebook",
+													"figma",
+													"github",
+													"microsoft",
+													"google",
+													"huggingface",
+													"slack",
+													"spotify",
+													"twitch",
+													"twitter",
+													"dropbox",
+													"kick",
+													"linear",
+													"linkedin",
+													"gitlab",
+													"tiktok",
+													"reddit",
+													"roblox",
+													"salesforce",
+													"vk",
+													"zoom",
+													"notion",
+													"kakao",
+													"naver",
+													"line",
+													"paybin",
+													"paypal",
+													"polar",
+													"railway",
+													"vercel",
+													"wechat"
+												],
+												"type": "string"
+											},
+											{
+												"type": "string"
+											}
+										]
 									},
 									"requestSignUp": {
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"scopes": {
 										"description": "Additional scopes to request from the provider",
-										"type": [
-											"array",
-											"null"
-										]
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
 									}
 								},
 								"required": [
@@ -9860,10 +9938,7 @@
 								"properties": {
 									"accountId": {
 										"description": "The account ID associated with the refresh token",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"providerId": {
 										"description": "The provider ID for the OAuth provider",
@@ -9871,10 +9946,7 @@
 									},
 									"userId": {
 										"description": "The user ID associated with the account",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									}
 								},
 								"required": [
@@ -10028,10 +10100,7 @@
 									},
 									"redirectTo": {
 										"description": "The URL to redirect the user to reset their password. If the token isn't valid or expired, it'll be redirected with a query parameter `?error=INVALID_TOKEN`. If the token is valid, it'll be redirected with a query parameter `?token=VALID_TOKEN",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									}
 								},
 								"required": [
@@ -10186,10 +10255,7 @@
 									},
 									"token": {
 										"description": "The token to reset the password",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									}
 								},
 								"required": [
@@ -11216,10 +11282,7 @@
 								"properties": {
 									"callbackURL": {
 										"description": "Callback URL to use as a redirect for email verification",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"email": {
 										"description": "Email of the user",
@@ -11230,12 +11293,8 @@
 										"type": "string"
 									},
 									"rememberMe": {
-										"default": true,
 										"description": "If this is false, the session will not be remembered. Default is `true`.",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									}
 								},
 								"required": [
@@ -11404,61 +11463,41 @@
 							"schema": {
 								"properties": {
 									"additionalData": {
-										"type": [
-											"string",
-											"null"
-										]
+										"additionalProperties": {},
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
 									},
 									"callbackURL": {
 										"description": "Callback URL to redirect to after the user has signed in",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"disableRedirect": {
 										"description": "Disable automatic redirection to the provider. Useful for handling the redirection yourself",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"errorCallbackURL": {
 										"description": "Callback URL to redirect to if an error happens",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"idToken": {
 										"properties": {
 											"accessToken": {
 												"description": "Access token from the provider",
-												"type": [
-													"string",
-													"null"
-												]
+												"type": "string"
 											},
 											"expiresAt": {
 												"description": "Expiry date of the token",
-												"type": [
-													"number",
-													"null"
-												]
+												"type": "number"
 											},
 											"nonce": {
 												"description": "Nonce used to generate the token",
-												"type": [
-													"string",
-													"null"
-												]
+												"type": "string"
 											},
 											"refreshToken": {
 												"description": "Refresh token from the provider",
-												"type": [
-													"string",
-													"null"
-												]
+												"type": "string"
 											},
 											"token": {
 												"description": "ID token from the provider",
@@ -11468,75 +11507,92 @@
 												"description": "The user object from the provider. Only available for some providers like Apple.",
 												"properties": {
 													"email": {
-														"type": [
-															"string",
-															"null"
-														]
+														"type": "string"
 													},
 													"name": {
 														"properties": {
 															"firstName": {
-																"type": [
-																	"string",
-																	"null"
-																]
+																"type": "string"
 															},
 															"lastName": {
-																"type": [
-																	"string",
-																	"null"
-																]
+																"type": "string"
 															}
 														},
-														"type": [
-															"object",
-															"null"
-														]
+														"type": "object"
 													}
 												},
-												"type": [
-													"object",
-													"null"
-												]
+												"type": "object"
 											}
 										},
 										"required": [
 											"token"
 										],
-										"type": [
-											"object",
-											"null"
-										]
+										"type": "object"
 									},
 									"loginHint": {
 										"description": "The login hint to use for the authorization code request",
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"newUserCallbackURL": {
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"provider": {
-										"type": "string"
+										"anyOf": [
+											{
+												"enum": [
+													"apple",
+													"atlassian",
+													"cognito",
+													"discord",
+													"facebook",
+													"figma",
+													"github",
+													"microsoft",
+													"google",
+													"huggingface",
+													"slack",
+													"spotify",
+													"twitch",
+													"twitter",
+													"dropbox",
+													"kick",
+													"linear",
+													"linkedin",
+													"gitlab",
+													"tiktok",
+													"reddit",
+													"roblox",
+													"salesforce",
+													"vk",
+													"zoom",
+													"notion",
+													"kakao",
+													"naver",
+													"line",
+													"paybin",
+													"paypal",
+													"polar",
+													"railway",
+													"vercel",
+													"wechat"
+												],
+												"type": "string"
+											},
+											{
+												"type": "string"
+											}
+										]
 									},
 									"requestSignUp": {
 										"description": "Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider",
-										"type": [
-											"boolean",
-											"null"
-										]
+										"type": "boolean"
 									},
 									"scopes": {
 										"description": "Array of scopes to request from the provider. This will override the default scopes passed.",
-										"type": [
-											"array",
-											"null"
-										]
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
 									}
 								},
 								"required": [
@@ -12070,10 +12126,7 @@
 							"schema": {
 								"properties": {
 									"accountId": {
-										"type": [
-											"string",
-											"null"
-										]
+										"type": "string"
 									},
 									"providerId": {
 										"type": "string"
@@ -12221,11 +12274,16 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {},
+								"additionalProperties": {},
+								"propertyNames": {
+									"description": "Field name must be a string",
+									"type": "string"
+								},
 								"type": "object"
 							}
 						}
-					}
+					},
+					"required": true
 				},
 				"responses": {
 					"200": {
@@ -13721,7 +13779,7 @@
 										"type": "boolean"
 									},
 									"field": {
-										"minLength": 1,
+										"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 										"type": "string"
 									},
 									"value": {
@@ -15475,6 +15533,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
+							"default": "5000",
 							"maximum": 10000,
 							"minimum": 1,
 							"pattern": "^\\d+$",
@@ -15611,7 +15670,7 @@
 													"type": "boolean"
 												},
 												"field": {
-													"minLength": 1,
+													"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 													"type": "string"
 												},
 												"value": {
@@ -15803,7 +15862,7 @@
 													"type": "boolean"
 												},
 												"field": {
-													"minLength": 1,
+													"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 													"type": "string"
 												},
 												"value": {
@@ -15914,6 +15973,12 @@
 					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
@@ -16455,10 +16520,11 @@
 													"type": "boolean"
 												},
 												"field": {
-													"minLength": 1,
+													"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 													"type": "string"
 												},
 												"value": {
+													"minLength": 1,
 													"type": "string"
 												}
 											},

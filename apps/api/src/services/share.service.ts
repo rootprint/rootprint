@@ -1,5 +1,6 @@
+import { randomBytes } from 'node:crypto';
+
 import { eq } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
 
 import type { Db } from '../db/index.js';
 import { share } from '../db/schema.js';
@@ -11,7 +12,9 @@ export async function createShare(
 	userId: string,
 	input: ShareCreateInput
 ): Promise<{ code: string }> {
-	const code = nanoid(10);
+	// 10 chars to satisfy the share-code param validator (v.length(10)) and match
+	// legacy nanoid(10) codes; 10 base64url chars = 60 bits of entropy.
+	const code = randomBytes(8).toString('base64url').slice(0, 10);
 	const [row] = await db
 		.insert(share)
 		.values({

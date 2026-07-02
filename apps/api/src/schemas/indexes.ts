@@ -76,7 +76,7 @@ export const FieldValuesBulkQuery = v.object({
 export const StatsQuery = v.object({
 	from: v.optional(toNum),
 	to: v.optional(toNum),
-	limit: v.optional(intParam({ min: 1, max: 10000, label: 'limit' }))
+	limit: v.optional(intParam({ min: 1, max: 10000, label: 'limit' }), '5000')
 });
 
 export const PutPreferencesBody = v.object({

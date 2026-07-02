@@ -9,6 +9,7 @@ import type {
 	IndexDetailResponse as IndexDetailResponseSchema,
 	IndexFieldSchema,
 	IndexListResponse as IndexListResponseSchema,
+	IndexSourceSchema,
 	IndexStatsPointSchema,
 	IndexViewConfigResponse as IndexViewConfigResponseSchema,
 	LogSearchResponse as LogSearchResponseSchema,
@@ -21,10 +22,7 @@ import type {
 	ApiKeyValueResponse as ApiKeyValueResponseSchema,
 	ServiceAccountApiKeyResponse as ServiceAccountApiKeyResponseSchema
 } from './schemas/responses/api-keys.js';
-import type {
-	UserResponse as UserResponseSchema,
-	InviteUrlResponse as InviteUrlResponseSchema
-} from './schemas/responses/users.js';
+import type { UserResponse as UserResponseSchema } from './schemas/responses/users.js';
 import type { AuthProvidersResponse as AuthProvidersResponseSchema } from './schemas/responses/auth.js';
 import type { HealthResponse as HealthResponseSchema } from './schemas/responses/health.js';
 import type { ShareViewResponse as ShareViewResponseSchema } from './schemas/responses/shares.js';
@@ -36,21 +34,19 @@ import type { ServiceAccountResponse as ServiceAccountResponseSchema } from './s
 import type {
 	ActorIndexRowResponse as ActorIndexRowResponseSchema,
 	ActorSummaryRowResponse as ActorSummaryRowResponseSchema,
-	ClusterHealthResponse as ClusterHealthResponseSchema,
 	ClusterOverviewResponse as ClusterOverviewResponseSchema,
-	ClusterTotalsResponse as ClusterTotalsResponseSchema,
 	LatencyBucketResponse as LatencyBucketResponseSchema,
 	PerIndexOverviewResponse as PerIndexOverviewResponseSchema,
 	QuickwitBuildInfoResponse as QuickwitBuildInfoResponseSchema,
 	QuickwitSnapshotResponse as QuickwitSnapshotResponseSchema,
 	RecentResultResponse as RecentResultResponseSchema,
-	RecentRowResponse as RecentRowResponseSchema,
 	ResourceSnapshotResponse as ResourceSnapshotResponseSchema,
 	SaturationSnapshotResponse as SaturationSnapshotResponseSchema,
 	SummaryRowResponse as SummaryRowResponseSchema,
 	TopActorRowResponse as TopActorRowResponseSchema,
 	VolumeBucketResponse as VolumeBucketResponseSchema
 } from './schemas/responses/admin.js';
+import type { githubCredentialsSchema } from './schemas/settings.js';
 
 export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
 
@@ -74,26 +70,13 @@ export type IndexView = (typeof INDEX_VIEWS)[number];
 
 export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
 
-export type IndexSource = {
-	sourceId: string;
-	sourceType: string;
-	enabled: boolean;
-};
+export type IndexSource = v.InferOutput<typeof IndexSourceSchema>;
 
 export type SourceDetail = v.InferOutput<typeof SourceDetailResponseSchema>;
 
 export type IndexSummary = v.InferOutput<typeof IndexListResponseSchema>[number];
 
 export type IndexDetail = v.InferOutput<typeof IndexDetailResponseSchema>;
-
-export type SaveIndexConfigFields = {
-	displayName?: string | null;
-	visibility?: IndexVisibility;
-	levelField?: string;
-	messageField?: string;
-	tracebackField?: string | null;
-	contextFields?: string[] | null;
-};
 
 export type IndexViewConfig = v.InferOutput<typeof IndexViewConfigResponseSchema>;
 
@@ -125,10 +108,6 @@ export type UserStatus = 'active' | 'pending' | 'expired';
 
 export type User = v.InferOutput<typeof UserResponseSchema>;
 
-export type InviteUrlResult = v.InferOutput<typeof InviteUrlResponseSchema>;
-
-export type ApiKeyRole = 'ingest';
-
 export type ApiKeySummary = v.InferOutput<typeof ApiKeyResponseSchema>;
 
 export type ServiceAccountApiKeySummary = v.InferOutput<typeof ServiceAccountApiKeyResponseSchema>;
@@ -141,7 +120,7 @@ export type VerifiedApiKey = {
 	id: number;
 	name: string;
 	indexId: string;
-	role: ApiKeyRole;
+	role: 'ingest';
 };
 
 export type Scope = Record<string, string[]>;
@@ -164,10 +143,6 @@ export type GitHubAuthSettings = v.InferOutput<typeof GitHubAuthSettingsResponse
 export type AuthProvidersInfo = v.InferOutput<typeof AuthProvidersResponseSchema>;
 
 export type IndexStatsPoint = v.InferOutput<typeof IndexStatsPointSchema>;
-
-export type ClusterHealth = v.InferOutput<typeof ClusterHealthResponseSchema>;
-
-export type ClusterTotals = v.InferOutput<typeof ClusterTotalsResponseSchema>;
 
 export type PerIndexOverview = v.InferOutput<typeof PerIndexOverviewResponseSchema>;
 
@@ -225,7 +200,6 @@ export type QuickwitIndexMetadata = {
 	timestampField: string | null;
 	indexFieldPresence: boolean | null;
 	storeSource: boolean | null;
-	storeDocumentSize: boolean | null;
 	tagFields: string[] | null;
 	defaultSearchFields: string[] | null;
 	commitTimeoutSecs: number | null;
@@ -256,10 +230,7 @@ export type GoogleAuthCredentials = {
 	allowedDomains: string[];
 };
 
-export type GitHubAuthCredentials = {
-	clientId: string;
-	clientSecret: string;
-};
+export type GitHubAuthCredentials = v.InferOutput<typeof githubCredentialsSchema>;
 
 // Export streaming (export.service.ts)
 export type FormatState = {
@@ -319,7 +290,5 @@ export type ActorSummaryRow = v.InferOutput<typeof ActorSummaryRowResponseSchema
 export type VolumeBucket = v.InferOutput<typeof VolumeBucketResponseSchema>;
 
 export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponseSchema>;
-
-export type RecentRow = v.InferOutput<typeof RecentRowResponseSchema>;
 
 export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;

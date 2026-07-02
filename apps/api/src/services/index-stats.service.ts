@@ -6,11 +6,11 @@ import { indexStatsSnapshot } from '../db/schema.js';
 import type { IndexStatsPoint, LatestIndexSnapshot } from '../types.js';
 import { listIndexes } from './quickwit-index.service.js';
 
-export const INDEX_STATS_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+const INDEX_STATS_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 type SnapshotInsert = typeof indexStatsSnapshot.$inferInsert;
 
-export async function captureSnapshots(
+async function captureSnapshots(
 	db: Db,
 	qw: QuickwitClient,
 	now: Date = new Date()

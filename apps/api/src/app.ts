@@ -100,11 +100,9 @@ app.onError((rawErr, c) => {
 		const isTransient = err.retryAfter != null;
 		if (isTransient) {
 			console.warn(logLine);
+			c.header('Retry-After', String(err.retryAfter));
 		} else if (isServerError) {
 			console.error(logLine);
-		}
-		if (isTransient) {
-			c.header('Retry-After', String(err.retryAfter));
 		}
 		const maskMessage = isServerError && !isTransient;
 		return errorJson(

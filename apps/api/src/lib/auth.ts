@@ -21,7 +21,7 @@ import {
 import type { GitHubAuthCredentials, GoogleAuthCredentials } from '../types.js';
 import { db } from './db.js';
 
-export const apiKeyPluginConfig = {
+const apiKeyPluginConfig = {
 	defaultPrefix: 'rpk_',
 	requireName: true,
 	maximumNameLength: 100,

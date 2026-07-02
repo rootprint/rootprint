@@ -21,7 +21,6 @@ import {
 	VolumeBucketsResponse
 } from '../../schemas/responses/admin.js';
 import {
-	getActorLatencyBuckets,
 	getActorRecent,
 	getActorSummary,
 	getActorVolumeBuckets,
@@ -70,7 +69,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		validator('query', TopActorsQuery),
 		async (c) => {
 			const q = c.req.valid('query');
-			return c.json(await getTopActors(db, q.window, q.limit ?? 10));
+			return c.json(await getTopActors(db, q.window, q.limit));
 		}
 	)
 	.get(
@@ -115,7 +114,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorLatencyBuckets(db, q.window, { kind: 'user', userId }));
+			return c.json(await getLatencyBuckets(db, q.window, { kind: 'user', userId }));
 		}
 	)
 	.get(
@@ -145,14 +144,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(
-				await getActorRecent(
-					db,
-					q.window,
-					{ kind: 'user', userId },
-					{ offset: q.offset ?? 0, limit: q.limit ?? 100, status: q.status ?? 'any' }
-				)
-			);
+			return c.json(await getActorRecent(db, q.window, { kind: 'user', userId }, q));
 		}
 	)
 	.get(
@@ -197,7 +189,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(await getActorLatencyBuckets(db, q.window, { kind: 'apiKey', apiKeyId }));
+			return c.json(await getLatencyBuckets(db, q.window, { kind: 'apiKey', apiKeyId }));
 		}
 	)
 	.get(
@@ -212,13 +204,6 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
 			const q = c.req.valid('query');
-			return c.json(
-				await getActorRecent(
-					db,
-					q.window,
-					{ kind: 'apiKey', apiKeyId },
-					{ offset: q.offset ?? 0, limit: q.limit ?? 100, status: q.status ?? 'any' }
-				)
-			);
+			return c.json(await getActorRecent(db, q.window, { kind: 'apiKey', apiKeyId }, q));
 		}
 	);

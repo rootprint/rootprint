@@ -9,8 +9,7 @@ import type {
 	IndexView,
 	IndexViewConfig,
 	IndexVisibility,
-	QuickwitIndexMetadata,
-	SaveIndexConfigFields
+	QuickwitIndexMetadata
 } from '../types.js';
 import {
 	NotFoundError,
@@ -38,6 +37,7 @@ import { invalidateApiKeyCache } from './api-key.service.js';
 import type {
 	CreateIndexInput,
 	FieldMappingInput,
+	SaveIndexConfigInput,
 	UpdateQuickwitConfigInput
 } from '../schemas/indexes.js';
 import {
@@ -84,20 +84,10 @@ export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): b
 	return true;
 }
 
-export async function assertIndexAccess(
-	db: Db,
-	indexId: string,
-	role: string | null | undefined
-): Promise<void> {
-	const settings = await getIndexSettings(db, indexId);
-	const isAdmin = role === 'admin';
-	if (!canAccessIndex(settings.visibility, isAdmin)) throw indexAccessError(isAdmin, 'denied');
-}
-
 export async function saveIndexConfig(
 	db: Db,
 	indexId: string,
-	fields: SaveIndexConfigFields
+	fields: SaveIndexConfigInput
 ): Promise<void> {
 	const updatedAt = new Date();
 	await db
@@ -167,17 +157,10 @@ export async function getIndexMeta(
 	return { settings, index };
 }
 
-export async function getIndexConfig(
-	db: Db,
-	qw: QuickwitClient,
-	indexId: string,
-	role: string | null | undefined
-): Promise<IndexConfig> {
-	const { settings, index } = await getIndexMeta(db, qw, indexId, role, 'search');
-	if (!index.timestampField) throw internal(`Index "${indexId}" has no timestamp_field`);
+function resolveLogFields({ settings, index }: IndexMeta) {
+	if (!index.timestampField) throw internal(`Index "${index.indexId}" has no timestamp_field`);
 
 	return {
-		indexId,
 		levelField: index.fields.some((f) => f.name === settings.levelField) ? settings.levelField : '',
 		timestampField: index.timestampField,
 		messageField: settings.messageField,
@@ -186,19 +169,22 @@ export async function getIndexConfig(
 	};
 }
 
-export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
-	const { settings, index } = meta;
-	if (!index.timestampField) throw internal(`Index "${index.indexId}" has no timestamp_field`);
+export async function getIndexConfig(
+	db: Db,
+	qw: QuickwitClient,
+	indexId: string,
+	role: string | null | undefined
+): Promise<IndexConfig> {
+	const meta = await getIndexMeta(db, qw, indexId, role, 'search');
+	return { indexId, ...resolveLogFields(meta) };
+}
 
+export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
 	return {
-		indexId: index.indexId,
-		displayName: settings.displayName,
-		levelField: index.fields.some((f) => f.name === settings.levelField) ? settings.levelField : '',
-		messageField: settings.messageField,
-		tracebackField: settings.tracebackField,
-		contextFields: settings.contextFields,
-		timestampField: index.timestampField,
-		isOtel: index.indexId.startsWith('otel-')
+		indexId: meta.index.indexId,
+		displayName: meta.settings.displayName,
+		...resolveLogFields(meta),
+		isOtel: meta.index.indexId.startsWith('otel-')
 	};
 }
 
@@ -248,6 +234,10 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 
 const QUICKWIT_INDEX_CONFIG_VERSION = '0.9';
 
+function toRetention(r: { period: string; schedule?: string | null }) {
+	return r.schedule ? { period: r.period, schedule: r.schedule } : { period: r.period };
+}
+
 type QwFieldMapping = FieldMapping & { coerce?: boolean; expand_dots?: boolean };
 
 const FIELD_KEY_RENAME: Record<string, string> = {
@@ -291,11 +281,7 @@ function toCreateIndexRequest(input: CreateIndexInput): CreateIndexRequest {
 	if (input.defaultSearchFields) {
 		request.search_settings = { default_search_fields: input.defaultSearchFields };
 	}
-	if (input.retention) {
-		request.retention = input.retention.schedule
-			? { period: input.retention.period, schedule: input.retention.schedule }
-			: { period: input.retention.period };
-	}
+	if (input.retention) request.retention = toRetention(input.retention);
 
 	return request;
 }
@@ -323,9 +309,7 @@ export async function createIndex(
 }
 
 function sameStringSet(a: string[], b: string[]): boolean {
-	const setA = new Set(a);
-	const setB = new Set(b);
-	return setA.size === setB.size && [...setA].every((x) => setB.has(x));
+	return new Set(a).symmetricDifference(new Set(b)).size === 0;
 }
 
 export async function updateIndexConfig(
@@ -334,10 +318,9 @@ export async function updateIndexConfig(
 	existingFields: IndexField[],
 	input: UpdateQuickwitConfigInput
 ): Promise<void> {
-	const meta = await qw.getIndex(indexId).catch((err: unknown) => {
-		if (err instanceof NotFoundError) throw notFound('Index not found');
-		throw err;
-	});
+	// Explicit type arg: quickwit-js d.ts imports are extensionless, so its types
+	// degrade to error-types under NodeNext and generic inference yields unknown.
+	const meta = await withNotFound<IndexMetadata>(() => qw.getIndex(indexId), 'Index not found');
 	const cfg = meta.index_config;
 	const doc = cfg.doc_mapping;
 
@@ -412,13 +395,8 @@ export async function updateIndexConfig(
 	if (Object.keys(indexingSettings).length > 0) request.indexing_settings = indexingSettings;
 	else delete request.indexing_settings;
 
-	if (input.retention) {
-		request.retention = input.retention.schedule
-			? { period: input.retention.period, schedule: input.retention.schedule }
-			: { period: input.retention.period };
-	} else {
-		delete request.retention;
-	}
+	if (input.retention) request.retention = toRetention(input.retention);
+	else delete request.retention;
 
 	try {
 		await qw.updateIndex(indexId, request);

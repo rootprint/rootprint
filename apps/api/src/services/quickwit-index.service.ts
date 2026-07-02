@@ -51,7 +51,6 @@ export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetada
 		timestampField: doc.timestamp_field ?? null,
 		indexFieldPresence: doc.index_field_presence ?? null,
 		storeSource: doc.store_source ?? null,
-		storeDocumentSize: doc.store_document_size ?? null,
 		tagFields: doc.tag_fields ?? null,
 		defaultSearchFields: cfg.search_settings?.default_search_fields ?? null,
 		commitTimeoutSecs: cfg.indexing_settings?.commit_timeout_secs ?? null,

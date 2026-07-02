@@ -23,4 +23,3 @@ export const createServiceAccountKeySchema = v.object({
 });
 
 export type CreateApiKeyInput = v.InferOutput<typeof createApiKeySchema>;
-export type CreateServiceAccountKeyInput = v.InferOutput<typeof createServiceAccountKeySchema>;

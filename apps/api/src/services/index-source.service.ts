@@ -1,4 +1,10 @@
-import { NotFoundError, QuickwitError, type QuickwitClient, type SourceConfig } from 'quickwit-js';
+import {
+	NotFoundError,
+	QuickwitError,
+	type IndexMetadata,
+	type QuickwitClient,
+	type SourceConfig
+} from 'quickwit-js';
 
 import type { IndexSource, QuickwitIndexMetadata, SourceDetail } from '../types.js';
 import { conflict, notFound } from '../utils/http-error.js';
@@ -25,46 +31,55 @@ export async function deleteSource(
 	await withNotFound(() => qw.index(indexId).deleteSource(sourceId), 'Source not found');
 }
 
+function buildSourceParams(
+	input: UpdateSourceInput,
+	current?: Record<string, unknown>
+): Record<string, unknown> {
+	switch (input.sourceType) {
+		case 'kinesis':
+			return {
+				...current,
+				stream_name: input.streamName,
+				...(input.region ? { region: input.region } : {}),
+				...(input.endpoint ? { endpoint: input.endpoint } : {})
+			};
+		case 'file':
+			return {
+				...current,
+				notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
+			};
+		case 'kafka': {
+			const stored =
+				current?.client_params != null &&
+				typeof current.client_params === 'object' &&
+				!Array.isArray(current.client_params)
+					? (current.client_params as Record<string, unknown>)
+					: {};
+			const clientParams = input.clientParams
+				? current
+					? restoreSecrets(input.clientParams, stored)
+					: input.clientParams
+				: undefined;
+			return {
+				topic: input.topic,
+				...(input.clientLogLevel ? { client_log_level: input.clientLogLevel } : {}),
+				...(clientParams ? { client_params: clientParams } : {}),
+				enable_backfill_mode: input.enableBackfillMode ?? false
+			};
+		}
+	}
+}
+
 function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfig {
-	const base = {
+	return {
 		version: QUICKWIT_SOURCE_CONFIG_VERSION,
 		source_id: sourceId,
 		source_type: input.sourceType,
 		...(input.inputFormat ? { input_format: input.inputFormat } : {}),
 		...(input.numPipelines ? { num_pipelines: input.numPipelines } : {}),
-		...(input.vrlScript ? { transform: { script: input.vrlScript } } : {})
-	};
-
-	switch (input.sourceType) {
-		case 'kinesis':
-			return {
-				...base,
-				params: {
-					stream_name: input.streamName,
-					...(input.region ? { region: input.region } : {}),
-					...(input.endpoint ? { endpoint: input.endpoint } : {})
-				}
-			} as SourceConfig;
-		case 'file':
-			return {
-				...base,
-				params: {
-					notifications: [
-						{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }
-					]
-				}
-			} as SourceConfig;
-		case 'kafka':
-			return {
-				...base,
-				params: {
-					topic: input.topic,
-					...(input.clientLogLevel ? { client_log_level: input.clientLogLevel } : {}),
-					...(input.clientParams ? { client_params: input.clientParams } : {}),
-					enable_backfill_mode: input.enableBackfillMode ?? false
-				}
-			} as SourceConfig;
-	}
+		...(input.vrlScript ? { transform: { script: input.vrlScript } } : {}),
+		params: buildSourceParams(input)
+	} as SourceConfig;
 }
 
 export async function createSource(
@@ -166,10 +181,8 @@ async function getRawSourceConfig(
 	indexId: string,
 	sourceId: string
 ): Promise<SourceConfig> {
-	const meta = await qw.getIndex(indexId).catch((err: unknown) => {
-		if (err instanceof NotFoundError) throw notFound('Index not found');
-		throw err;
-	});
+	// Explicit type arg: see the matching note in index.service.ts.
+	const meta = await withNotFound<IndexMetadata>(() => qw.getIndex(indexId), 'Index not found');
 	const source = (meta.sources ?? []).find((s: SourceConfig) => s.source_id === sourceId);
 	if (!source) throw notFound('Source not found');
 	return source;
@@ -200,41 +213,7 @@ function mergeSourceConfig(
 		delete merged.transform;
 	}
 
-	const currentParams = (current.params ?? {}) as Record<string, unknown>;
-	switch (input.sourceType) {
-		case 'kinesis':
-			merged.params = {
-				...currentParams,
-				stream_name: input.streamName,
-				...(input.region ? { region: input.region } : {}),
-				...(input.endpoint ? { endpoint: input.endpoint } : {})
-			};
-			break;
-		case 'file':
-			merged.params = {
-				...currentParams,
-				notifications: [{ type: 'sqs', queue_url: input.queueUrl, message_type: input.messageType }]
-			};
-			break;
-		case 'kafka': {
-			const storedClientParams =
-				currentParams.client_params != null &&
-				typeof currentParams.client_params === 'object' &&
-				!Array.isArray(currentParams.client_params)
-					? (currentParams.client_params as Record<string, unknown>)
-					: {};
-			const clientParams = input.clientParams
-				? restoreSecrets(input.clientParams, storedClientParams)
-				: undefined;
-			merged.params = {
-				topic: input.topic,
-				...(input.clientLogLevel ? { client_log_level: input.clientLogLevel } : {}),
-				...(clientParams ? { client_params: clientParams } : {}),
-				enable_backfill_mode: input.enableBackfillMode ?? false
-			};
-			break;
-		}
-	}
+	merged.params = buildSourceParams(input, (current.params ?? {}) as Record<string, unknown>);
 
 	return merged;
 }

@@ -22,7 +22,7 @@ export async function isSetupCompleted(db: Db): Promise<boolean> {
 	return rows.length > 0;
 }
 
-export async function claimFirstAdmin(
+async function claimFirstAdmin(
 	tx: Parameters<Parameters<Db['transaction']>[0]>[0]
 ): Promise<boolean> {
 	const inserted = await tx
@@ -162,7 +162,7 @@ export async function setupPassword(
 	return userId;
 }
 
-export async function getGoogleAllowedDomains(db: Db): Promise<string[]> {
+async function getGoogleAllowedDomains(db: Db): Promise<string[]> {
 	const rows = await db
 		.select({ value: appSettings.value })
 		.from(appSettings)
@@ -172,7 +172,7 @@ export async function getGoogleAllowedDomains(db: Db): Promise<string[]> {
 	return parseDomains(rows[0]!.value);
 }
 
-export async function getGitHubAllowedOrgs(db: Db): Promise<string[]> {
+async function getGitHubAllowedOrgs(db: Db): Promise<string[]> {
 	const rows = await db
 		.select({ value: appSettings.value })
 		.from(appSettings)

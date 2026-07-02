@@ -149,7 +149,7 @@ type FieldValuesBulkParams = {
 
 type BulkGroup = { fields: string[]; effectiveFilters: Filter[] };
 
-export function groupFieldsForBulk(fields: string[], filters: Filter[]): BulkGroup[] {
+function groupFieldsForBulk(fields: string[], filters: Filter[]): BulkGroup[] {
 	const uniqueFields = [...new Set(fields)];
 	const filterFieldSet = new Set(filters.map((f) => f.field));
 	const filteredFields = new Set<string>();

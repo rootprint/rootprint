@@ -169,12 +169,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		validator('query', StatsQuery),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
-			const { from, to, limit } = c.req.valid('query');
-			const points = await getStatsHistory(db, indexId, {
-				from,
-				to,
-				limit: limit ?? 5000
-			});
+			const points = await getStatsHistory(db, indexId, c.req.valid('query'));
 			return c.json({ indexId, points });
 		}
 	)

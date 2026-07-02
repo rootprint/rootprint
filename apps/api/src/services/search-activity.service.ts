@@ -33,11 +33,21 @@ function toIso(v: Date | string): string {
 	return typeof v === 'string' ? new Date(v).toISOString() : v.toISOString();
 }
 
-export function resolveWindow(
-	w: ActivityWindow | undefined
-): WindowResolved & { key: ActivityWindow } {
-	const key: ActivityWindow = w ?? '7d';
-	return { key, ...WINDOWS[key] };
+function resolveWindow(w: ActivityWindow | undefined): WindowResolved {
+	return WINDOWS[w ?? '7d'];
+}
+
+const PCTL = sql`
+	percentile_cont(0.5)  WITHIN GROUP (ORDER BY duration_ms)::text AS p50,
+	percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::text AS p95,
+	percentile_cont(0.99) WITHIN GROUP (ORDER BY duration_ms)::text AS p99`;
+
+function bucketExpr(seconds: number) {
+	return sql`to_timestamp(floor(extract(epoch FROM executed_at) / ${seconds}) * ${seconds})`;
+}
+
+function num(x: string | null | undefined): number | null {
+	return x == null ? null : Number(x);
 }
 
 export async function getSummary(db: Db, window: ActivityWindow | undefined): Promise<SummaryRow> {
@@ -50,11 +60,9 @@ export async function getSummary(db: Db, window: ActivityWindow | undefined): Pr
 		p99: string | null;
 	}>(sql`
 		SELECT
-			COUNT(*)::text                                                            AS total,
-			COUNT(*) FILTER (WHERE status = 'error')::text                            AS errors,
-			percentile_cont(0.5)  WITHIN GROUP (ORDER BY duration_ms)::text           AS p50,
-			percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::text           AS p95,
-			percentile_cont(0.99) WITHIN GROUP (ORDER BY duration_ms)::text           AS p99
+			COUNT(*)::text                                 AS total,
+			COUNT(*) FILTER (WHERE status = 'error')::text AS errors,
+			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
 	`);
@@ -63,15 +71,16 @@ export async function getSummary(db: Db, window: ActivityWindow | undefined): Pr
 	return {
 		totalSearches: Number(r.total),
 		errorCount: Number(r.errors),
-		p50: r.p50 === null ? null : Number(r.p50),
-		p95: r.p95 === null ? null : Number(r.p95),
-		p99: r.p99 === null ? null : Number(r.p99)
+		p50: num(r.p50),
+		p95: num(r.p95),
+		p99: num(r.p99)
 	};
 }
 
 export async function getLatencyBuckets(
 	db: Db,
-	window: ActivityWindow | undefined
+	window: ActivityWindow | undefined,
+	actor?: ActorFilter
 ): Promise<LatencyBucket[]> {
 	const { interval, bucketSeconds } = resolveWindow(window);
 	const result = await db.execute<{
@@ -82,22 +91,21 @@ export async function getLatencyBuckets(
 		p99: string | null;
 	}>(sql`
 		SELECT
-			to_timestamp(floor(extract(epoch FROM executed_at) / ${bucketSeconds}) * ${bucketSeconds}) AS bucket,
-			COUNT(*)::text                                                  AS count,
-			percentile_cont(0.5)  WITHIN GROUP (ORDER BY duration_ms)::text AS p50,
-			percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::text AS p95,
-			percentile_cont(0.99) WITHIN GROUP (ORDER BY duration_ms)::text AS p99
+			${bucketExpr(bucketSeconds)} AS bucket,
+			COUNT(*)::text               AS count,
+			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+			${actor ? sql`AND ${actorPredicate(actor)}` : sql``}
 		GROUP BY bucket
 		ORDER BY bucket ASC
 	`);
 	return result.rows.map((r) => ({
 		t: toIso(r.bucket),
 		count: Number(r.count),
-		p50: r.p50 === null ? null : Number(r.p50),
-		p95: r.p95 === null ? null : Number(r.p95),
-		p99: r.p99 === null ? null : Number(r.p99)
+		p50: num(r.p50),
+		p95: num(r.p95),
+		p99: num(r.p99)
 	}));
 }
 
@@ -206,11 +214,9 @@ export async function getActorSummary(
 			p99: string | null;
 		}>(sql`
 			SELECT
-				COUNT(*)::text                                                  AS total,
-				COUNT(*) FILTER (WHERE status = 'error')::text                  AS errors,
-				percentile_cont(0.5)  WITHIN GROUP (ORDER BY duration_ms)::text AS p50,
-				percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::text AS p95,
-				percentile_cont(0.99) WITHIN GROUP (ORDER BY duration_ms)::text AS p99
+				COUNT(*)::text                                 AS total,
+				COUNT(*) FILTER (WHERE status = 'error')::text AS errors,
+				${PCTL}
 			FROM search_audit
 			WHERE executed_at >= ${sinceWindow(interval)}
 			  AND ${actorPredicate(actor)}
@@ -221,9 +227,9 @@ export async function getActorSummary(
 	return {
 		totalSearches: r ? Number(r.total) : 0,
 		errorCount: r ? Number(r.errors) : 0,
-		p50: r?.p50 != null ? Number(r.p50) : null,
-		p95: r?.p95 != null ? Number(r.p95) : null,
-		p99: r?.p99 != null ? Number(r.p99) : null,
+		p50: num(r?.p50),
+		p95: num(r?.p95),
+		p99: num(r?.p99),
 		displayName: id.displayName,
 		email: id.email
 	};
@@ -237,7 +243,7 @@ export async function getActorVolumeBuckets(
 	const { interval, bucketSeconds } = resolveWindow(window);
 	const result = await db.execute<{ bucket: Date | string; count: string }>(sql`
 		SELECT
-			to_timestamp(floor(extract(epoch FROM executed_at) / ${bucketSeconds}) * ${bucketSeconds}) AS bucket,
+			${bucketExpr(bucketSeconds)} AS bucket,
 			COUNT(*)::text AS count
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
@@ -246,40 +252,6 @@ export async function getActorVolumeBuckets(
 		ORDER BY bucket ASC
 	`);
 	return result.rows.map((r) => ({ t: toIso(r.bucket), count: Number(r.count) }));
-}
-
-export async function getActorLatencyBuckets(
-	db: Db,
-	window: ActivityWindow | undefined,
-	actor: ActorFilter
-): Promise<LatencyBucket[]> {
-	const { interval, bucketSeconds } = resolveWindow(window);
-	const result = await db.execute<{
-		bucket: Date | string;
-		count: string;
-		p50: string | null;
-		p95: string | null;
-		p99: string | null;
-	}>(sql`
-		SELECT
-			to_timestamp(floor(extract(epoch FROM executed_at) / ${bucketSeconds}) * ${bucketSeconds}) AS bucket,
-			COUNT(*)::text                                                  AS count,
-			percentile_cont(0.5)  WITHIN GROUP (ORDER BY duration_ms)::text AS p50,
-			percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::text AS p95,
-			percentile_cont(0.99) WITHIN GROUP (ORDER BY duration_ms)::text AS p99
-		FROM search_audit
-		WHERE executed_at >= ${sinceWindow(interval)}
-		  AND ${actorPredicate(actor)}
-		GROUP BY bucket
-		ORDER BY bucket ASC
-	`);
-	return result.rows.map((r) => ({
-		t: toIso(r.bucket),
-		count: Number(r.count),
-		p50: r.p50 === null ? null : Number(r.p50),
-		p95: r.p95 === null ? null : Number(r.p95),
-		p99: r.p99 === null ? null : Number(r.p99)
-	}));
 }
 
 export async function getUserIndexes(

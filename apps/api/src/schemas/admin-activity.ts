@@ -11,14 +11,14 @@ export const WindowQuery = v.object({
 
 export const TopActorsQuery = v.object({
 	window: WindowField,
-	limit: v.optional(intParam({ min: 1, max: 50, label: 'limit' }))
+	limit: v.optional(intParam({ min: 1, max: 50, label: 'limit' }), '10')
 });
 
 export const RecentQuery = v.object({
 	window: WindowField,
-	offset: v.optional(intParam({ min: 0, label: 'offset' })),
-	limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' })),
-	status: v.optional(v.picklist(['any', 'success', 'error']))
+	offset: v.optional(intParam({ min: 0, label: 'offset' }), '0'),
+	limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' }), '100'),
+	status: v.optional(v.picklist(['any', 'success', 'error']), 'any')
 });
 
 export const UserIdParam = v.object({ userId: v.pipe(v.string(), v.minLength(1)) });

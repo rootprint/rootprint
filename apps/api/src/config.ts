@@ -19,5 +19,3 @@ export const config = {
 	publicAuthRateLimit: intEnv('PUBLIC_AUTH_RATE_LIMIT', 30),
 	readRateLimit: intEnv('READ_RATE_LIMIT', 300)
 };
-
-export type AppConfig = typeof config;

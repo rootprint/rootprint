@@ -48,7 +48,6 @@
 		"hono": "^4.12.27",
 		"hono-openapi": "^1.3.0",
 		"hono-rate-limiter": "^0.5.3",
-		"nanoid": "^5.1.16",
 		"pg": "^8.22.0",
 		"quickwit-js": "^0.3.7",
 		"valibot": "^1.4.2"

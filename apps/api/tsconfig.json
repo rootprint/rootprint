@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"outDir": "dist",
 		"rootDir": ".",
+		"lib": ["ES2023", "DOM", "DOM.Iterable", "ESNext.Collection"],
 		"types": ["node", "bun-types"]
 	},
 	"include": ["src/**/*.ts", "tests/**/*.ts"]

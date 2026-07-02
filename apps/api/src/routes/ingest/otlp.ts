@@ -38,6 +38,11 @@ const protobufBinarySchema = {
 	description: 'google.rpc.Status serialised as application/x-protobuf'
 };
 
+const pbErr = (description: string) => ({
+	description,
+	content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+});
+
 export const otlpRouter = new Hono<KeyedEnv>().post(
 	'/logs',
 	describe({
@@ -63,39 +68,18 @@ export const otlpRouter = new Hono<KeyedEnv>().post(
 					}
 				}
 			},
-			'400': {
-				description: 'Upstream rejected the request — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			},
-			'401': {
-				description: 'Missing or invalid ingest bearer token — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			},
-			'403': {
-				description: 'Ingest key does not have access to this index — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			},
-			'404': {
-				description: 'Route not found — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			},
+			'400': pbErr('Upstream rejected the request — google.rpc.Status (protobuf)'),
+			'401': pbErr('Missing or invalid ingest bearer token — google.rpc.Status (protobuf)'),
+			'403': pbErr('Ingest key does not have access to this index — google.rpc.Status (protobuf)'),
+			'404': pbErr('Route not found — google.rpc.Status (protobuf)'),
 			'415': {
 				description:
 					'Unsupported content-type (only application/x-protobuf accepted) — google.rpc.Status (JSON)',
 				content: { 'application/json': { schema: googleRpcStatusSchema } }
 			},
-			'429': {
-				description: 'Upstream rate limit exceeded — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			},
-			'500': {
-				description: 'Internal server error — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			},
-			'503': {
-				description: 'Upstream service unavailable — google.rpc.Status (protobuf)',
-				content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
-			}
+			'429': pbErr('Upstream rate limit exceeded — google.rpc.Status (protobuf)'),
+			'500': pbErr('Internal server error — google.rpc.Status (protobuf)'),
+			'503': pbErr('Upstream service unavailable — google.rpc.Status (protobuf)')
 		}
 	}),
 	requireIngestKey,
