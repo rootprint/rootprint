@@ -1,6 +1,6 @@
 import type { Action } from 'svelte/action';
 
-export const HIGHLIGHT_NAME = 'rootprint-drawer-search';
+const HIGHLIGHT_NAME = 'rootprint-drawer-search';
 
 interface TextSpan {
 	node: Text;

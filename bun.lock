@@ -46,6 +46,8 @@
       "version": "0.0.0",
       "dependencies": {
         "@better-auth/api-key": "^1.6.23",
+        "@shikijs/langs": "^4.3.0",
+        "@shikijs/themes": "^4.3.0",
         "@tanstack/svelte-virtual": "^3.13.31",
         "api": "workspace:*",
         "better-auth": "^1.6.23",

@@ -7,15 +7,54 @@ import {
 	TOKENIZERS
 } from 'api/schemas';
 import type { CreateIndexInput, FieldMappingInput } from 'api/schemas';
+import type { DynamicMapping } from 'api/types';
 
 import { lines } from '$lib/utils/lines';
 
 export type FieldType = (typeof FIELD_TYPES)[number];
-export type Tokenizer = (typeof TOKENIZERS)[number];
-export type RecordOption = (typeof RECORD_OPTIONS)[number];
+type Tokenizer = (typeof TOKENIZERS)[number];
+type RecordOption = (typeof RECORD_OPTIONS)[number];
 export type IndexMode = (typeof INDEX_MODES)[number];
-export type FastPrecision = (typeof FAST_PRECISIONS)[number];
-export type DatetimeOutputFormat = (typeof DATETIME_OUTPUT_FORMATS)[number];
+type FastPrecision = (typeof FAST_PRECISIONS)[number];
+type DatetimeOutputFormat = (typeof DATETIME_OUTPUT_FORMATS)[number];
+
+export type DynamicMappingForm = {
+	indexed: boolean;
+	stored: boolean;
+	fast: boolean;
+	tokenizer: Tokenizer;
+	record: RecordOption;
+	expandDots: boolean;
+};
+
+function defaultDynamicMapping(): DynamicMappingForm {
+	return {
+		indexed: true,
+		stored: true,
+		fast: true,
+		tokenizer: 'raw',
+		record: 'basic',
+		expandDots: true
+	};
+}
+
+// Unknown tokenizer/record values (e.g. a custom tokenizer set out-of-band) fall back to
+// Quickwit's dynamic defaults so the selects stay valid.
+export function toDynamicMappingForm(dm: DynamicMapping | null): DynamicMappingForm {
+	if (!dm) return defaultDynamicMapping();
+	return {
+		indexed: dm.indexed,
+		stored: dm.stored,
+		fast: dm.fast,
+		tokenizer: (TOKENIZERS as readonly string[]).includes(dm.tokenizer)
+			? (dm.tokenizer as Tokenizer)
+			: 'raw',
+		record: (RECORD_OPTIONS as readonly string[]).includes(dm.record)
+			? (dm.record as RecordOption)
+			: 'basic',
+		expandDots: dm.expandDots
+	};
+}
 
 export type FieldRow = {
 	name: string;
@@ -33,9 +72,10 @@ export type FieldRow = {
 	inputFormatsCustom: string;
 	outputFormat: DatetimeOutputFormat;
 	fastPrecision: FastPrecision;
+	description: string;
 };
 
-export type IndexFormState = {
+type IndexFormState = {
 	indexId: string;
 	mode: IndexMode;
 	timestampField: string;
@@ -48,6 +88,9 @@ export type IndexFormState = {
 	commitTimeoutSecs: string;
 	storeSource: boolean;
 	indexFieldPresence: boolean;
+	partitionKey: string;
+	maxNumPartitions: string; // text input, like commitTimeoutSecs
+	dynamic: DynamicMappingForm;
 };
 
 // `fast` is preselected on for every field, not the Quickwit default (false).
@@ -67,7 +110,8 @@ export function emptyFieldRow(type: FieldType = 'text'): FieldRow {
 		inputFormatPresets: ['rfc3339', 'unix_timestamp'],
 		inputFormatsCustom: '',
 		outputFormat: 'rfc3339',
-		fastPrecision: 'seconds'
+		fastPrecision: 'seconds',
+		description: ''
 	};
 }
 
@@ -86,17 +130,28 @@ export function emptyIndexForm(): IndexFormState {
 		tagFields: '',
 		commitTimeoutSecs: '',
 		storeSource: false,
-		indexFieldPresence: false
+		indexFieldPresence: false,
+		partitionKey: '',
+		maxNumPartitions: '',
+		dynamic: defaultDynamicMapping()
 	};
 }
 
 export function fieldToMapping(field: FieldRow): FieldMappingInput {
-	const common: { name: string; indexed: boolean; stored: boolean; fast: boolean } = {
+	const common: {
+		name: string;
+		indexed: boolean;
+		stored: boolean;
+		fast: boolean;
+		description?: string;
+	} = {
 		name: field.name.trim(),
 		indexed: field.indexed,
 		stored: field.stored,
 		fast: field.fast
 	};
+	const description = field.description.trim();
+	if (description) common.description = description;
 
 	switch (field.type) {
 		case 'text':
@@ -168,6 +223,15 @@ export function formToCreateInput(form: IndexFormState): CreateIndexInput {
 		input.retention = { period: form.retentionPeriod.trim() };
 		if (form.retentionSchedule.trim() !== '') {
 			input.retention.schedule = form.retentionSchedule.trim();
+		}
+	}
+
+	if (form.mode === 'dynamic') input.dynamicMapping = { ...form.dynamic };
+
+	if (form.partitionKey.trim() !== '') {
+		input.partitionKey = form.partitionKey.trim();
+		if (form.maxNumPartitions.trim() !== '') {
+			input.maxNumPartitions = Number(form.maxNumPartitions);
 		}
 	}
 

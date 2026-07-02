@@ -1,5 +1,6 @@
 import { eq, inArray } from 'drizzle-orm';
 import type {
+	DynamicMapping,
 	IndexConfig,
 	IndexDetail,
 	IndexField,
@@ -34,16 +35,19 @@ import {
 import { conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
 import { translateQuickwitError, withNotFound } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
-import type {
-	CreateIndexInput,
-	FieldMappingInput,
-	SaveIndexConfigInput,
-	UpdateQuickwitConfigInput
+import {
+	RECORD_OPTIONS,
+	TOKENIZERS,
+	type CreateIndexInput,
+	type FieldMappingInput,
+	type SaveIndexConfigInput,
+	type UpdateQuickwitConfigInput
 } from '../schemas/indexes.js';
 import {
 	getIndex as qwGetIndex,
 	listIndexes as qwListIndexes,
-	normalizeIndexMetadata
+	normalizeIndexMetadata,
+	normalizeDynamicMapping
 } from './quickwit-index.service.js';
 
 const DEFAULT_SETTINGS: IndexSettings = {
@@ -201,6 +205,9 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 		indexUri: index.indexUri,
 		timestampField: index.timestampField,
 		mode: index.mode,
+		partitionKey: index.partitionKey,
+		maxNumPartitions: index.maxNumPartitions,
+		dynamicMapping: index.dynamicMapping,
 		tagFields: index.tagFields,
 		defaultSearchFields: index.defaultSearchFields,
 		storeSource: index.storeSource,
@@ -238,6 +245,56 @@ function toRetention(r: { period: string; schedule?: string | null }) {
 	return r.schedule ? { period: r.period, schedule: r.schedule } : { period: r.period };
 }
 
+const DYNAMIC_MAPPING_DEFAULTS: DynamicMapping = {
+	indexed: true,
+	stored: true,
+	fast: true,
+	tokenizer: 'raw',
+	record: 'basic',
+	expandDots: true
+};
+
+function sameDynamicMapping(a: DynamicMapping, b: DynamicMapping): boolean {
+	return (
+		a.indexed === b.indexed &&
+		a.stored === b.stored &&
+		a.fast === b.fast &&
+		a.tokenizer === b.tokenizer &&
+		a.record === b.record &&
+		a.expandDots === b.expandDots
+	);
+}
+
+// Mirrors the edit form's pre-fill fallbacks (toDynamicMappingForm) so an untouched
+// form round-trips as "unchanged" even when the stored config holds values outside
+// our picklists — otherwise a save would silently rewrite them.
+function toComparableDynamicMapping(
+	dm: Record<string, unknown> | undefined | null
+): DynamicMapping | null {
+	const normalized = normalizeDynamicMapping(dm);
+	if (!normalized) return null;
+	return {
+		...normalized,
+		tokenizer: (TOKENIZERS as readonly string[]).includes(normalized.tokenizer)
+			? normalized.tokenizer
+			: 'raw',
+		record: (RECORD_OPTIONS as readonly string[]).includes(normalized.record)
+			? normalized.record
+			: 'basic'
+	};
+}
+
+function toDynamicMapping(dm: DynamicMapping): Record<string, unknown> {
+	return {
+		indexed: dm.indexed,
+		stored: dm.stored,
+		fast: dm.fast,
+		tokenizer: dm.tokenizer,
+		record: dm.record,
+		expand_dots: dm.expandDots
+	};
+}
+
 type QwFieldMapping = FieldMapping & { coerce?: boolean; expand_dots?: boolean };
 
 const FIELD_KEY_RENAME: Record<string, string> = {
@@ -263,6 +320,15 @@ function toCreateIndexRequest(input: CreateIndexInput): CreateIndexRequest {
 		timestamp_field: input.timestampField
 	};
 	if (input.mode) docMapping.mode = input.mode;
+	if (input.dynamicMapping && (input.mode ?? 'dynamic') === 'dynamic') {
+		docMapping.dynamic_mapping = toDynamicMapping(input.dynamicMapping);
+	}
+	if (input.partitionKey) {
+		docMapping.partition_key = input.partitionKey;
+		if (input.maxNumPartitions !== undefined) {
+			docMapping.max_num_partitions = input.maxNumPartitions;
+		}
+	}
 	if (input.storeSource !== undefined) docMapping.store_source = input.storeSource;
 	if (input.indexFieldPresence !== undefined) {
 		docMapping.index_field_presence = input.indexFieldPresence;
@@ -342,8 +408,23 @@ export async function updateIndexConfig(
 		);
 	}
 
+	const desiredDynamicMapping =
+		input.mode === 'dynamic' ? (input.dynamicMapping ?? DYNAMIC_MAPPING_DEFAULTS) : null;
+	const dynamicMappingChanged = !sameDynamicMapping(
+		toComparableDynamicMapping(doc.dynamic_mapping) ?? DYNAMIC_MAPPING_DEFAULTS,
+		desiredDynamicMapping ?? DYNAMIC_MAPPING_DEFAULTS
+	);
+
+	// Quickwit serializes an unset partition key as '' and defaults max_num_partitions
+	// to 200, so compare against those to avoid rewriting a config that didn't change.
+	const partitioningChanged =
+		(doc.partition_key ?? '') !== (input.partitionKey ?? '') ||
+		(doc.max_num_partitions ?? 200) !== (input.maxNumPartitions ?? 200);
+
 	const docChanged =
 		input.newFieldMappings.length > 0 ||
+		dynamicMappingChanged ||
+		partitioningChanged ||
 		(doc.mode ?? 'dynamic') !== input.mode ||
 		(doc.store_source ?? false) !== input.storeSource ||
 		(doc.index_field_presence ?? false) !== input.indexFieldPresence ||
@@ -363,6 +444,30 @@ export async function updateIndexConfig(
 				...input.newFieldMappings.map((f) => toFieldMapping(f, ts))
 			]
 		};
+		// Untouched dynamic mapping keeps the raw stored value (via the doc spread) so
+		// config our UI can't represent (custom tokenizers, fast normalizer objects)
+		// survives unrelated doc edits. Non-dynamic mode always drops it.
+		if (dynamicMappingChanged || input.mode !== 'dynamic') {
+			if (
+				desiredDynamicMapping &&
+				!sameDynamicMapping(desiredDynamicMapping, DYNAMIC_MAPPING_DEFAULTS)
+			) {
+				docMapping.dynamic_mapping = toDynamicMapping(desiredDynamicMapping);
+			} else {
+				delete docMapping.dynamic_mapping;
+			}
+		}
+		if (input.partitionKey) {
+			docMapping.partition_key = input.partitionKey;
+			if (input.maxNumPartitions !== null) {
+				docMapping.max_num_partitions = input.maxNumPartitions;
+			} else {
+				delete docMapping.max_num_partitions;
+			}
+		} else {
+			delete docMapping.partition_key;
+			delete docMapping.max_num_partitions;
+		}
 	} else {
 		docMapping = { ...doc };
 	}

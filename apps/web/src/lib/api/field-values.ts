@@ -1,45 +1,8 @@
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { Filter, LogFieldValueBucket, TimeRange } from '$lib/types';
-import { composeQuery } from 'api/query';
 import { buildTimeParams, resolveTimeRange } from '$lib/utils/time-range';
 import { FIELD_VALUES_MAX } from 'api/constants';
-
-export type FetchFieldValuesInput = {
-	indexId: string;
-	field: string;
-	query: string;
-	filters: Filter[];
-	timeRange: TimeRange;
-	limit?: number;
-	signal?: AbortSignal;
-};
-
-export async function fetchFieldValues(
-	input: FetchFieldValuesInput
-): Promise<LogFieldValueBucket[]> {
-	const { indexId, field, query, filters, timeRange, limit = FIELD_VALUES_MAX, signal } = input;
-	const { startTs, endTs } = resolveTimeRange(buildTimeParams(timeRange));
-	const composed = composeQuery(query, filters);
-
-	const res = await client.api.indexes[':indexId'].fields[':field'].values.$get(
-		{
-			param: { indexId, field },
-			query: {
-				q: composed,
-				limit: String(limit),
-				...(startTs !== undefined && { startTs: String(startTs) }),
-				...(endTs !== undefined && { endTs: String(endTs) })
-			}
-		},
-		{ fetch: (info: RequestInfo | URL, init?: RequestInit) => fetch(info, { ...init, signal }) }
-	);
-
-	if (!res.ok) throw await readApiError(res, `Failed to load values for "${field}"`);
-
-	const json = await res.json();
-	return json.values;
-}
 
 export type FetchFieldValuesBulkInput = {
 	indexId: string;
@@ -69,7 +32,7 @@ export async function fetchFieldValuesBulk(
 				...(endTs !== undefined && { endTs: String(endTs) })
 			}
 		},
-		{ fetch: (info: RequestInfo | URL, init?: RequestInit) => fetch(info, { ...init, signal }) }
+		{ init: { signal } }
 	);
 
 	if (!res.ok) throw await readApiError(res, `Failed to load values for [${fields.join(', ')}]`);

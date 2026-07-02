@@ -1,4 +1,13 @@
-import { SEVERITY_ORDER } from '$lib/constants/severity';
+const SEVERITY_ORDER = [
+	'trace',
+	'debug',
+	'info',
+	'warn',
+	'warning',
+	'error',
+	'critical',
+	'fatal'
+] as const;
 
 const SEVERITY_ORDER_INDEX = new Map<string, number>(SEVERITY_ORDER.map((v, i) => [v, i]));
 

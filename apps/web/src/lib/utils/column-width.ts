@@ -4,7 +4,7 @@ const MAX_COLUMN_CH = 60;
 const SAMPLE_SIZE = 20;
 
 // Width of "YYYY-MM-DD HH:MM:SS.SSS" produced by formatLogRowTimestamp.
-export const TIMESTAMP_COLUMN_WIDTH = 23;
+const TIMESTAMP_COLUMN_WIDTH = 23;
 
 export function formatCell(value: unknown): string {
 	if (value === null || value === undefined) return '';

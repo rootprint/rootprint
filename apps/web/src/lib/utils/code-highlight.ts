@@ -1,14 +1,33 @@
-import type { BundledLanguage, DecorationItem } from 'shiki/bundle/full';
+import type { DecorationItem, HighlighterCore } from 'shiki/core';
 
-type ShikiBundle = typeof import('shiki/bundle/full');
+/** Every language the app ever highlights: `SnippetLang` plus the JSON pane. */
+export type HighlightLang = 'json' | 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
 
-let modulePromise: Promise<ShikiBundle> | null = null;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
-function loadModule(): Promise<ShikiBundle> {
-	if (!modulePromise) {
-		modulePromise = import('shiki/bundle/full');
+function loadHighlighter(): Promise<HighlighterCore> {
+	if (!highlighterPromise) {
+		highlighterPromise = (async () => {
+			const [{ createHighlighterCore }, { createJavaScriptRegexEngine }] = await Promise.all([
+				import('shiki/core'),
+				import('shiki/engine/javascript')
+			]);
+			return createHighlighterCore({
+				themes: [import('@shikijs/themes/github-light')],
+				langs: [
+					import('@shikijs/langs/json'),
+					import('@shikijs/langs/bash'),
+					import('@shikijs/langs/python'),
+					import('@shikijs/langs/javascript'),
+					import('@shikijs/langs/go'),
+					import('@shikijs/langs/yaml'),
+					import('@shikijs/langs/ini')
+				],
+				engine: createJavaScriptRegexEngine()
+			});
+		})();
 	}
-	return modulePromise;
+	return highlighterPromise;
 }
 
 /**
@@ -20,11 +39,11 @@ function loadModule(): Promise<ShikiBundle> {
  */
 export async function highlightCode(
 	code: string,
-	lang: BundledLanguage,
+	lang: HighlightLang,
 	opts?: { decorations?: DecorationItem[] }
 ): Promise<string> {
-	const mod = await loadModule();
-	return mod.codeToHtml(code, {
+	const highlighter = await loadHighlighter();
+	return highlighter.codeToHtml(code, {
 		lang,
 		theme: 'github-light',
 		decorations: opts?.decorations

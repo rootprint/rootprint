@@ -1,11 +1,30 @@
 import type { FieldMapping, FastFieldConfig, IndexMetadata, SourceConfig } from 'quickwit-js';
 import { NotFoundError } from 'quickwit-js';
 import type { QuickwitClient } from 'quickwit-js';
-import type { IndexField, QuickwitIndexMetadata, QuickwitSource } from '../types.js';
+import type {
+	DynamicMapping,
+	IndexField,
+	QuickwitIndexMetadata,
+	QuickwitSource
+} from '../types.js';
 
 function normalizeFast(value: FastFieldConfig | undefined): boolean | null {
 	if (value === undefined) return null;
 	return value !== false;
+}
+
+export function normalizeDynamicMapping(
+	dm: Record<string, unknown> | undefined | null
+): DynamicMapping | null {
+	if (!dm) return null;
+	return {
+		indexed: (dm.indexed as boolean | undefined) ?? true,
+		stored: (dm.stored as boolean | undefined) ?? true,
+		fast: dm.fast === undefined ? true : dm.fast !== false,
+		tokenizer: (dm.tokenizer as string | undefined) ?? 'raw',
+		record: (dm.record as string | undefined) ?? 'basic',
+		expandDots: (dm.expand_dots as boolean | undefined) ?? true
+	};
 }
 
 function flattenFieldMappings(mappings: FieldMapping[], prefix = ''): IndexField[] {
@@ -15,7 +34,12 @@ function flattenFieldMappings(mappings: FieldMapping[], prefix = ''): IndexField
 		if (f.type === 'object' && f.field_mappings) {
 			result.push(...flattenFieldMappings(f.field_mappings, fullName));
 		} else {
-			result.push({ name: fullName, type: f.type, fast: normalizeFast(f.fast) });
+			result.push({
+				name: fullName,
+				type: f.type,
+				fast: normalizeFast(f.fast),
+				description: f.description ?? null
+			});
 		}
 	}
 	return result;
@@ -48,6 +72,9 @@ export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetada
 		version: cfg.version ?? null,
 		createTimestamp: meta.create_timestamp ?? null,
 		mode: doc.mode ?? null,
+		partitionKey: doc.partition_key ?? null,
+		maxNumPartitions: doc.max_num_partitions ?? null,
+		dynamicMapping: normalizeDynamicMapping(doc.dynamic_mapping),
 		timestampField: doc.timestamp_field ?? null,
 		indexFieldPresence: doc.index_field_presence ?? null,
 		storeSource: doc.store_source ?? null,

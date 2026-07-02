@@ -4,7 +4,7 @@
  * weight in stacked bars (only hue varies). Side effect: warning reads as ochre/dark-amber
  * rather than bright peach — that's intentional.
  */
-export const LEVEL_COLORS: Record<string, string> = {
+const LEVEL_COLORS: Record<string, string> = {
 	error: '#E8463A',
 	critical: '#E8463A',
 	fatal: '#E8463A',

@@ -2,12 +2,12 @@ import { SOURCE_INPUT_FORMATS, FILE_MESSAGE_TYPES, KAFKA_LOG_LEVELS } from 'api/
 import type { CreateSourceInput, UpdateSourceInput } from 'api/schemas';
 import type { SourceDetail } from 'api/types';
 
-export type SourceType = 'kinesis' | 'file' | 'kafka';
-export type InputFormat = (typeof SOURCE_INPUT_FORMATS)[number];
-export type MessageType = (typeof FILE_MESSAGE_TYPES)[number];
-export type KafkaLogLevel = (typeof KAFKA_LOG_LEVELS)[number];
+type SourceType = 'kinesis' | 'file' | 'kafka';
+type InputFormat = (typeof SOURCE_INPUT_FORMATS)[number];
+type MessageType = (typeof FILE_MESSAGE_TYPES)[number];
+type KafkaLogLevel = (typeof KAFKA_LOG_LEVELS)[number];
 
-export const EDITABLE_SOURCE_TYPES = ['kinesis', 'file', 'kafka'] as const;
+const EDITABLE_SOURCE_TYPES = ['kinesis', 'file', 'kafka'] as const;
 
 export function isEditableSourceType(type: string): type is SourceType {
 	return (EDITABLE_SOURCE_TYPES as readonly string[]).includes(type);

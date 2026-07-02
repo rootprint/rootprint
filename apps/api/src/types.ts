@@ -1,6 +1,7 @@
 import type * as v from 'valibot';
 import type { INDEX_VISIBILITIES, INDEX_VIEWS } from './constants.js';
 import type {
+	DynamicMappingSchema,
 	FieldValueEntrySchema,
 	FieldValuesBulkResponse as FieldValuesBulkResponseSchema,
 	FieldValuesResponse as FieldValuesResponseSchema,
@@ -69,6 +70,8 @@ export type IndexVisibility = (typeof INDEX_VISIBILITIES)[number];
 export type IndexView = (typeof INDEX_VIEWS)[number];
 
 export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
+
+export type DynamicMapping = v.InferOutput<typeof DynamicMappingSchema>;
 
 export type IndexSource = v.InferOutput<typeof IndexSourceSchema>;
 
@@ -197,6 +200,9 @@ export type QuickwitIndexMetadata = {
 	version: string | null;
 	createTimestamp: number | null;
 	mode: string | null;
+	partitionKey: string | null;
+	maxNumPartitions: number | null;
+	dynamicMapping: DynamicMapping | null;
 	timestampField: string | null;
 	indexFieldPresence: boolean | null;
 	storeSource: boolean | null;

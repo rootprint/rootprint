@@ -8,6 +8,7 @@
 	import type { OAuthProviderDescriptor } from '$lib/components/admin/authentication/oauth-providers';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import DisplayField from '$lib/components/ui/DisplayField.svelte';
+	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import TagInput from '$lib/components/ui/TagInput.svelte';
 
 	let {
@@ -141,11 +142,7 @@
 		<div role="alert" class="alert alert-error mx-4 mt-4 text-sm">{formError}</div>
 	{/if}
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<div class="text-sm">Callback URL</div>
-			<div class="text-base-content/60 mt-0.5 text-xs">{provider.callbackDescription}</div>
-		</div>
+	<SettingsRow plain label="Callback URL" hint={provider.callbackDescription}>
 		<div class="border-line bg-base-200/40 rounded-box flex items-center gap-3 border px-3 py-2">
 			<code class="text-base-content flex-1 truncate font-mono text-xs">{callbackUrl}</code>
 			<CopyButton
@@ -158,18 +155,16 @@
 				{/snippet}
 			</CopyButton>
 		</div>
-	</div>
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			{#if configured && !editingCredentials}
-				<div class="text-sm">Client ID</div>
-			{:else}
-				<label for="cfg-{provider.id}-client-id" class="text-sm">Client ID</label>
-			{/if}
-			<div class="text-base-content/60 mt-0.5 text-xs">{clientIdHint}</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		plain={configured && !editingCredentials}
+		id="cfg-{provider.id}-client-id"
+		label="Client ID"
+		hint={clientIdHint}
+		error={fieldErrors.clientId}
+	>
+		{#snippet children({ id, invalid, describedBy })}
 			{#if configured && !editingCredentials}
 				<DisplayField value="•••••••••••••••••" ariaLabel="Client ID (configured)">
 					{#snippet action()}
@@ -184,15 +179,15 @@
 					{/snippet}
 				</DisplayField>
 			{:else}
-				<label class="input input-sm w-full" class:input-error={fieldErrors.clientId}>
+				<label class="input input-sm w-full" class:input-error={invalid}>
 					<input
-						id="cfg-{provider.id}-client-id"
+						{id}
 						bind:this={clientIdInput}
 						bind:value={clientId}
 						placeholder={provider.clientIdPlaceholder}
 						autocomplete="off"
-						aria-invalid={fieldErrors.clientId ? 'true' : undefined}
-						aria-describedby={fieldErrors.clientId ? `cfg-${provider.id}-client-id-msg` : undefined}
+						aria-invalid={invalid ? 'true' : undefined}
+						aria-describedby={describedBy}
 					/>
 					{#if configured}
 						<button
@@ -206,24 +201,17 @@
 					{/if}
 				</label>
 			{/if}
-			{#if fieldErrors.clientId}
-				<p id="cfg-{provider.id}-client-id-msg" class="text-error text-xs">
-					{fieldErrors.clientId}
-				</p>
-			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			{#if configured && !editingCredentials}
-				<div class="text-sm">Client Secret</div>
-			{:else}
-				<label for="cfg-{provider.id}-client-secret" class="text-sm">Client Secret</label>
-			{/if}
-			<div class="text-base-content/60 mt-0.5 text-xs">{clientSecretHint}</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		plain={configured && !editingCredentials}
+		id="cfg-{provider.id}-client-secret"
+		label="Client Secret"
+		hint={clientSecretHint}
+		error={fieldErrors.clientSecret}
+	>
+		{#snippet children({ id, invalid, describedBy })}
 			{#if configured && !editingCredentials}
 				<DisplayField value="•••••••••••••••••" ariaLabel="Client Secret (configured)">
 					{#snippet action()}
@@ -238,18 +226,16 @@
 					{/snippet}
 				</DisplayField>
 			{:else}
-				<label class="input input-sm w-full" class:input-error={fieldErrors.clientSecret}>
+				<label class="input input-sm w-full" class:input-error={invalid}>
 					<input
-						id="cfg-{provider.id}-client-secret"
+						{id}
 						bind:this={clientSecretInput}
 						bind:value={clientSecret}
 						type="password"
 						placeholder="Client secret"
 						autocomplete="off"
-						aria-invalid={fieldErrors.clientSecret ? 'true' : undefined}
-						aria-describedby={fieldErrors.clientSecret
-							? `cfg-${provider.id}-client-secret-msg`
-							: undefined}
+						aria-invalid={invalid ? 'true' : undefined}
+						aria-describedby={describedBy}
 					/>
 					{#if configured}
 						<button
@@ -263,20 +249,16 @@
 					{/if}
 				</label>
 			{/if}
-			{#if fieldErrors.clientSecret}
-				<p id="cfg-{provider.id}-client-secret-msg" class="text-error text-xs">
-					{fieldErrors.clientSecret}
-				</p>
-			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<div class="text-sm">{provider.items.label}</div>
-			<div class="text-base-content/60 mt-0.5 text-xs">{provider.items.description}</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		plain
+		label={provider.items.label}
+		hint={provider.items.description}
+		error={fieldErrors[provider.items.fieldKey]}
+	>
+		{#snippet children({ invalid })}
 			<TagInput
 				bind:tags={items}
 				placeholderEmpty={provider.items.placeholderEmpty}
@@ -284,14 +266,11 @@
 				normalize={provider.items.normalize}
 				validate={provider.items.validate}
 				duplicateMessage={provider.items.duplicateMessage}
-				error={Boolean(fieldErrors[provider.items.fieldKey])}
+				error={invalid}
 				onError={setItemsError}
 			/>
-			{#if fieldErrors[provider.items.fieldKey]}
-				<p class="text-error text-xs">{fieldErrors[provider.items.fieldKey]}</p>
-			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
 	<div class="flex justify-end px-4 py-3">
 		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>

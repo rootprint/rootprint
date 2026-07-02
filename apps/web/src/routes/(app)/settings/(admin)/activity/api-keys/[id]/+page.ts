@@ -8,11 +8,9 @@ import {
 	getApiKeyVolume
 } from '$lib/api/activity';
 import { parseWindow } from '$lib/utils/time-range';
-import { DEP } from '$lib/api/deps';
 import { parseOffset } from '$lib/utils/search-params';
 
-export const load: PageLoad = async ({ url, params, depends }) => {
-	depends(DEP.activityApiKey);
+export const load: PageLoad = async ({ url, params }) => {
 	const window = parseWindow(url.searchParams.get('window'));
 	const offset = parseOffset(url);
 	const apiKeyId = params.id;

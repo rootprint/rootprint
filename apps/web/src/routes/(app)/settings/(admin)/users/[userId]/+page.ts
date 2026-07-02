@@ -16,7 +16,7 @@ import { getUser } from '$lib/api/users';
 import { parseOffset } from '$lib/utils/search-params';
 
 export const load: PageLoad = async ({ url, params, depends, parent }) => {
-	depends(DEP.users, DEP.activityUser);
+	depends(DEP.users);
 	const window = parseWindow(url.searchParams.get('window'));
 	const offset = parseOffset(url);
 	const userId = params.userId;

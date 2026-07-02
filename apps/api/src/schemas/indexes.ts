@@ -126,7 +126,8 @@ const indexId = v.pipe(
 const commonFieldOpts = {
 	stored: v.optional(v.boolean()),
 	indexed: v.optional(v.boolean()),
-	fast: v.optional(v.boolean())
+	fast: v.optional(v.boolean()),
+	description: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(1024)))
 };
 
 const numericFieldOpts = {
@@ -185,6 +186,15 @@ const retention = v.object({
 	schedule: v.optional(v.pipe(v.string(), v.minLength(1)))
 });
 
+const dynamicMapping = v.object({
+	indexed: v.boolean(),
+	stored: v.boolean(),
+	fast: v.boolean(),
+	tokenizer: v.picklist(TOKENIZERS),
+	record: v.picklist(RECORD_OPTIONS),
+	expandDots: v.boolean()
+});
+
 export const RESERVED_FIELD_NAMES = ['_source', '_dynamic', '_field_presence'];
 
 export const createIndexSchema = v.pipe(
@@ -192,6 +202,9 @@ export const createIndexSchema = v.pipe(
 		indexId,
 		indexUri: v.optional(v.pipe(v.string(), v.minLength(1))),
 		mode: v.optional(v.picklist(INDEX_MODES)),
+		partitionKey: v.optional(v.pipe(v.string(), v.minLength(1))),
+		maxNumPartitions: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+		dynamicMapping: v.optional(dynamicMapping),
 		timestampField: v.pipe(v.string(), v.minLength(1, 'Timestamp field is required.')),
 		fieldMappings: v.pipe(
 			v.array(fieldMapping),
@@ -232,6 +245,13 @@ export const createIndexSchema = v.pipe(
 			'Field name is reserved by Quickwit.'
 		),
 		['fieldMappings']
+	),
+	v.forward(
+		v.check(
+			(input) => input.maxNumPartitions === undefined || input.partitionKey !== undefined,
+			'maxNumPartitions requires partitionKey.'
+		),
+		['maxNumPartitions']
 	)
 );
 
@@ -240,6 +260,9 @@ export type CreateIndexInput = v.InferOutput<typeof createIndexSchema>;
 export const updateQuickwitConfigSchema = v.pipe(
 	v.object({
 		mode: v.picklist(INDEX_MODES),
+		dynamicMapping: v.nullable(dynamicMapping),
+		partitionKey: v.nullable(v.pipe(v.string(), v.minLength(1))),
+		maxNumPartitions: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1))),
 		defaultSearchFields: dedupedStrings,
 		tagFields: dedupedStrings,
 		storeSource: v.boolean(),
@@ -262,6 +285,13 @@ export const updateQuickwitConfigSchema = v.pipe(
 			'Field name is reserved by Quickwit.'
 		),
 		['newFieldMappings']
+	),
+	v.forward(
+		v.check(
+			(input) => input.maxNumPartitions === null || input.partitionKey !== null,
+			'maxNumPartitions requires partitionKey.'
+		),
+		['maxNumPartitions']
 	)
 );
 

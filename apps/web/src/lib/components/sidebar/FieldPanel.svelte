@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight, Search } from 'lucide-svelte';
-	import type { LevelBucket, LogField, LogFieldValueBucket, Filter } from '$lib/types';
+	import type { LevelBucket, LogField, LogFieldValueBucket } from '$lib/types';
 	import { isOtelAttr, isOtelResourceAttr, serializeTimeRange } from '$lib/utils/fields';
 	import { sortBySeverity } from '$lib/utils/severity';
 	import { levelColor } from '$lib/constants/level-colors';
 	import type { SearchStore } from '$lib/stores/search.svelte';
-	import { fetchFieldValues, fetchFieldValuesBulk } from '$lib/api/field-values';
+	import { fetchFieldValuesBulk } from '$lib/api/field-values';
 	import { filterKey } from '$lib/utils/query-params';
 
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
@@ -111,27 +111,14 @@
 		const ctl = new AbortController();
 		abortCtl = ctl;
 
-		const filters: Filter[] = store.filters;
-		const fetchPromise =
-			pending.length === 1
-				? fetchFieldValues({
-						indexId: id,
-						field: pending[0],
-						query: store.query,
-						filters: filters.filter((f) => f.field !== pending[0]),
-						timeRange: store.timeRange,
-						signal: ctl.signal
-					}).then((arr) => ({ [pending[0]]: arr }))
-				: fetchFieldValuesBulk({
-						indexId: id,
-						fields: pending,
-						query: store.query,
-						filters,
-						timeRange: store.timeRange,
-						signal: ctl.signal
-					});
-
-		fetchPromise
+		fetchFieldValuesBulk({
+			indexId: id,
+			fields: pending,
+			query: store.query,
+			filters: store.filters,
+			timeRange: store.timeRange,
+			signal: ctl.signal
+		})
 			.then((result) => {
 				if (ctl.signal.aborted) return;
 				const nextValues = new Map(valuesByField);

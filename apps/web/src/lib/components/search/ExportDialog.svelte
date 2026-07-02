@@ -32,8 +32,6 @@
 	let format = $state<ExportFormat>('json');
 	let dialogState = $state<DialogState>('idle');
 	let formError = $state<string | null>(null);
-	let preflightTotal = $state<number | null>(null);
-	let preflightCapped = $state(false);
 	let preflightController: AbortController | null = null;
 
 	// Live props are snapshotted on open so a re-search while the dialog is
@@ -61,8 +59,6 @@
 			});
 			dialogState = 'idle';
 			formError = null;
-			preflightTotal = null;
-			preflightCapped = false;
 		} else {
 			preflightController?.abort();
 			preflightController = null;
@@ -77,8 +73,8 @@
 			dialogState !== 'preflighting'
 	);
 
-	const previewTotal = $derived(preflightTotal ?? Math.min(lockedNumHits, EXPORT_MAX_ROWS));
-	const previewCapped = $derived(preflightCapped || lockedNumHits > EXPORT_MAX_ROWS);
+	const previewTotal = $derived(Math.min(lockedNumHits, EXPORT_MAX_ROWS));
+	const previewCapped = $derived(lockedNumHits > EXPORT_MAX_ROWS);
 
 	function exportLabel(f: ExportFormat): string {
 		const upper = f === 'json' ? 'JSON' : f === 'csv' ? 'CSV' : 'Text';
@@ -115,9 +111,6 @@
 				formError = 'No logs match in this time range.';
 				return;
 			}
-
-			preflightTotal = result.total;
-			preflightCapped = result.capped;
 
 			const url = buildExportUrl(exportInput);
 			const a = document.createElement('a');

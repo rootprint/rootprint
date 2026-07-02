@@ -6,7 +6,9 @@
 	import { DEP } from '$lib/api/deps';
 	import { ApiError, issuesToPathErrors, toFieldErrors } from '$lib/api/errors';
 	import { createIndex } from '$lib/api/indexes';
+	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import { createIndexSchema, INDEX_MODES } from 'api/schemas';
+	import DynamicMappingFields from './DynamicMappingFields.svelte';
 	import FieldMappingsEditor from './FieldMappingsEditor.svelte';
 	import { emptyIndexForm, formToCreateInput } from './index-form';
 
@@ -59,61 +61,61 @@
 	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="idx-id" class="text-sm">Index ID</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Starts with a letter; 3–255 chars (letters, digits, - or _).
-			</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		id="idx-id"
+		label="Index ID"
+		hint="Starts with a letter; 3–255 chars (letters, digits, - or _)."
+		error={fieldErrors.indexId}
+	>
+		{#snippet children({ id, invalid, describedBy })}
 			<input
-				id="idx-id"
+				{id}
 				type="text"
 				bind:value={form.indexId}
 				class="input input-sm w-full font-mono"
-				class:input-error={fieldErrors.indexId}
+				class:input-error={invalid}
 				placeholder="app-logs"
 				autocomplete="off"
-				aria-invalid={fieldErrors.indexId ? 'true' : undefined}
+				aria-invalid={invalid ? 'true' : undefined}
+				aria-describedby={describedBy}
 			/>
-			{#if fieldErrors.indexId}
-				<p class="text-error text-xs">{fieldErrors.indexId}</p>
+		{/snippet}
+	</SettingsRow>
+
+	<SettingsRow plain label="Mode" hint="How Quickwit handles fields not in the mapping.">
+		<div class="flex flex-col gap-3">
+			<div class="flex gap-4 text-sm">
+				{#each INDEX_MODES as m (m)}
+					<label class="flex items-center gap-2">
+						<input type="radio" class="radio radio-sm" value={m} bind:group={form.mode} />
+						{m}
+					</label>
+				{/each}
+			</div>
+			{#if form.mode === 'dynamic'}
+				<div class="flex flex-col gap-1">
+					<span class="text-base-content/60 text-xs">Unmapped fields are indexed as:</span>
+					<DynamicMappingFields bind:dm={form.dynamic} />
+				</div>
 			{/if}
 		</div>
-	</div>
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<span class="text-sm">Mode</span>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				How Quickwit handles fields not in the mapping.
-			</div>
-		</div>
-		<div class="flex gap-4 text-sm">
-			{#each INDEX_MODES as m (m)}
-				<label class="flex items-center gap-2">
-					<input type="radio" class="radio radio-sm" value={m} bind:group={form.mode} />
-					{m}
-				</label>
-			{/each}
-		</div>
-	</div>
-
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="idx-ts" class="text-sm">Timestamp field</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Must be one of the datetime fields below. Stored as fast automatically.
-			</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		id="idx-ts"
+		label="Timestamp field"
+		hint="Must be one of the datetime fields below. Stored as fast automatically."
+		error={fieldErrors.timestampField}
+	>
+		{#snippet children({ id, invalid, describedBy })}
 			<select
-				id="idx-ts"
+				{id}
 				value={effectiveTimestampField}
 				onchange={(e) => (form.timestampField = e.currentTarget.value)}
 				class="select select-sm w-full"
-				class:select-error={fieldErrors.timestampField}
+				class:select-error={invalid}
+				aria-invalid={invalid ? 'true' : undefined}
+				aria-describedby={describedBy}
 			>
 				{#if datetimeFields.length === 0}
 					<option value="" disabled selected>Add a datetime field first…</option>
@@ -122,22 +124,15 @@
 					<option value={name}>{name}</option>
 				{/each}
 			</select>
-			{#if fieldErrors.timestampField}
-				<p class="text-error text-xs">{fieldErrors.timestampField}</p>
-			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<span class="text-sm">Fields</span>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				At least one field. Options preselected to Quickwit defaults.
-			</div>
-			{#if fieldErrors.fieldMappings}
-				<p class="text-error mt-1 text-xs">{fieldErrors.fieldMappings}</p>
-			{/if}
-		</div>
+	<SettingsRow
+		plain
+		label="Fields"
+		hint="At least one field. Options preselected to Quickwit defaults."
+		error={fieldErrors.fieldMappings}
+	>
 		<div class="border-line rounded-box divide-line divide-y border">
 			<FieldMappingsEditor
 				bind:fields={form.fields}
@@ -145,131 +140,169 @@
 				{fieldErrors}
 			/>
 		</div>
-	</div>
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<span class="text-sm">Retention</span>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Delete splits older than the period. Optional.
-			</div>
-		</div>
-		<div class="flex flex-col gap-2">
-			<label class="flex items-center gap-2 text-sm">
-				<input type="checkbox" class="checkbox checkbox-sm" bind:checked={form.retentionEnabled} />
-				Enable retention
-			</label>
-			{#if form.retentionEnabled}
-				<div class="flex flex-wrap items-center gap-3">
+	<SettingsRow
+		plain
+		label="Retention"
+		hint="Delete splits older than the period. Optional."
+		error={fieldErrors['retention.period']}
+	>
+		{#snippet children({ invalid })}
+			<div class="flex flex-col gap-2">
+				<label class="flex items-center gap-2 text-sm">
 					<input
-						type="text"
-						bind:value={form.retentionPeriod}
-						class="input input-sm w-40"
-						class:input-error={fieldErrors['retention.period']}
-						placeholder="90 days"
-						autocomplete="off"
-						aria-label="Retention period"
+						type="checkbox"
+						class="checkbox checkbox-sm"
+						bind:checked={form.retentionEnabled}
 					/>
-					<input
-						type="text"
-						bind:value={form.retentionSchedule}
-						class="input input-sm w-40"
-						placeholder="daily (optional)"
-						autocomplete="off"
-						aria-label="Retention evaluation schedule"
-					/>
-				</div>
-				{#if fieldErrors['retention.period']}
-					<p class="text-error text-xs">{fieldErrors['retention.period']}</p>
+					Enable retention
+				</label>
+				{#if form.retentionEnabled}
+					<div class="flex flex-wrap items-center gap-3">
+						<input
+							type="text"
+							bind:value={form.retentionPeriod}
+							class="input input-sm w-40"
+							class:input-error={invalid}
+							placeholder="90 days"
+							autocomplete="off"
+							aria-label="Retention period"
+						/>
+						<input
+							type="text"
+							bind:value={form.retentionSchedule}
+							class="input input-sm w-40"
+							placeholder="daily (optional)"
+							autocomplete="off"
+							aria-label="Retention evaluation schedule"
+						/>
+					</div>
 				{/if}
-			{/if}
-		</div>
-	</div>
-
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="idx-uri" class="text-sm">Index URI</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Where splits are stored. Defaults to the configured index root. Optional.
 			</div>
-		</div>
-		<input
-			id="idx-uri"
-			type="text"
-			bind:value={form.indexUri}
-			class="input input-sm w-full"
-			placeholder="s3://my-bucket/indexes/app-logs (optional)"
-			autocomplete="off"
-		/>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="idx-tags" class="text-sm">Tag fields</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Field values indexed as split tags for pruning. One per line. Optional.
-			</div>
-		</div>
-		<textarea
-			id="idx-tags"
-			bind:value={form.tagFields}
-			rows="2"
-			class="textarea textarea-sm w-full font-mono"
-			placeholder="one field name per line (optional)"
-			autocomplete="off"
-			spellcheck="false"></textarea>
-	</div>
-
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="idx-commit" class="text-sm">Commit timeout (secs)</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				How long indexing waits before committing a split. Optional.
-			</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		id="idx-uri"
+		label="Index URI"
+		hint="Where splits are stored. Defaults to the configured index root. Optional."
+	>
+		{#snippet children({ id })}
 			<input
-				id="idx-commit"
+				{id}
+				type="text"
+				bind:value={form.indexUri}
+				class="input input-sm w-full"
+				placeholder="s3://my-bucket/indexes/app-logs (optional)"
+				autocomplete="off"
+			/>
+		{/snippet}
+	</SettingsRow>
+
+	<SettingsRow
+		id="idx-tags"
+		label="Tag fields"
+		hint="Field values indexed as split tags for pruning. One per line. Optional."
+	>
+		{#snippet children({ id })}
+			<textarea
+				{id}
+				bind:value={form.tagFields}
+				rows="2"
+				class="textarea textarea-sm w-full font-mono"
+				placeholder="one field name per line (optional)"
+				autocomplete="off"
+				spellcheck="false"></textarea>
+		{/snippet}
+	</SettingsRow>
+
+	<SettingsRow
+		id="idx-partition"
+		label="Partition key"
+		hint="Routes documents into separate splits by field value, e.g. tenant_id. Optional."
+	>
+		{#snippet children({ id })}
+			<div class="flex flex-col gap-2">
+				<div class="flex flex-col gap-1">
+					<input
+						{id}
+						type="text"
+						bind:value={form.partitionKey}
+						class="input input-sm w-full font-mono"
+						class:input-error={fieldErrors.partitionKey}
+						placeholder="tenant_id or hash_mod(tenant_id, 50) (optional)"
+						autocomplete="off"
+						aria-invalid={fieldErrors.partitionKey ? 'true' : undefined}
+					/>
+					{#if fieldErrors.partitionKey}
+						<p class="text-error text-xs">{fieldErrors.partitionKey}</p>
+					{/if}
+				</div>
+				{#if form.partitionKey.trim() !== ''}
+					<div class="flex flex-col gap-1">
+						<label for="idx-max-partitions" class="text-base-content/60 text-xs">
+							Max partitions (default 200)
+						</label>
+						<input
+							id="idx-max-partitions"
+							type="text"
+							inputmode="numeric"
+							bind:value={form.maxNumPartitions}
+							class="input input-sm w-40"
+							class:input-error={fieldErrors.maxNumPartitions}
+							placeholder="200"
+							autocomplete="off"
+							aria-invalid={fieldErrors.maxNumPartitions ? 'true' : undefined}
+						/>
+						{#if fieldErrors.maxNumPartitions}
+							<p class="text-error text-xs">{fieldErrors.maxNumPartitions}</p>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		{/snippet}
+	</SettingsRow>
+
+	<SettingsRow
+		id="idx-commit"
+		label="Commit timeout (secs)"
+		hint="How long indexing waits before committing a split. Optional."
+		error={fieldErrors.commitTimeoutSecs}
+	>
+		{#snippet children({ id, invalid, describedBy })}
+			<input
+				{id}
 				type="text"
 				inputmode="numeric"
 				bind:value={form.commitTimeoutSecs}
 				class="input input-sm w-40"
-				class:input-error={fieldErrors.commitTimeoutSecs}
+				class:input-error={invalid}
 				placeholder="60 (optional)"
 				autocomplete="off"
-				aria-invalid={fieldErrors.commitTimeoutSecs ? 'true' : undefined}
+				aria-invalid={invalid ? 'true' : undefined}
+				aria-describedby={describedBy}
 			/>
-			{#if fieldErrors.commitTimeoutSecs}
-				<p class="text-error text-xs">{fieldErrors.commitTimeoutSecs}</p>
-			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<span class="text-sm">Store source</span>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Keep the original document JSON in the index.
-			</div>
-		</div>
+	<SettingsRow plain label="Store source" hint="Keep the original document JSON in the index.">
 		<label class="flex items-center gap-2 text-sm">
 			<input type="checkbox" class="checkbox checkbox-sm" bind:checked={form.storeSource} />
 			Store the source document
 		</label>
-	</div>
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<span class="text-sm">Index field presence</span>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Track which fields exist per document so presence queries work.
-			</div>
-		</div>
+	<SettingsRow
+		plain
+		label="Index field presence"
+		hint="Track which fields exist per document so presence queries work."
+	>
 		<label class="flex items-center gap-2 text-sm">
 			<input type="checkbox" class="checkbox checkbox-sm" bind:checked={form.indexFieldPresence} />
 			Index field presence
 		</label>
-	</div>
+	</SettingsRow>
 
 	<div class="flex justify-end gap-2 px-4 py-3">
 		<a href="/settings/indexes" class="btn btn-ghost btn-sm">Cancel</a>

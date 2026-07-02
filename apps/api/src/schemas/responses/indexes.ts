@@ -9,7 +9,20 @@ export const IndexFieldSchema = named(
 	v.object({
 		name: v.string(),
 		type: v.string(),
-		fast: v.nullable(v.boolean())
+		fast: v.nullable(v.boolean()),
+		description: v.nullable(v.string())
+	})
+);
+
+export const DynamicMappingSchema = named(
+	'DynamicMappingSchema',
+	v.object({
+		indexed: v.boolean(),
+		stored: v.boolean(),
+		fast: v.boolean(),
+		tokenizer: v.string(),
+		record: v.string(),
+		expandDots: v.boolean()
 	})
 );
 
@@ -81,6 +94,9 @@ export const IndexDetailResponse = named(
 		indexUri: v.nullable(v.string()),
 		timestampField: v.nullable(v.string()),
 		mode: v.nullable(v.string()),
+		partitionKey: v.nullable(v.string()),
+		maxNumPartitions: v.nullable(v.number()),
+		dynamicMapping: v.nullable(DynamicMappingSchema),
 		tagFields: v.nullable(v.array(v.string())),
 		defaultSearchFields: v.nullable(v.array(v.string())),
 		storeSource: v.nullable(v.boolean()),

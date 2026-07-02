@@ -7,7 +7,7 @@
 	import HelpMenu from './HelpMenu.svelte';
 	import { readString, writeString } from '$lib/utils/safe-storage';
 
-	type User = { id: string; name: string | null; email: string; role: string };
+	type User = { id: string; name: string | null; email: string };
 
 	let { user }: { user: User } = $props();
 
@@ -21,7 +21,7 @@
 
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
-	const onSearch = $derived(!onSettings && !path.startsWith('/auth'));
+	const onSearch = $derived(!onSettings);
 </script>
 
 <aside

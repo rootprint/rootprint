@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import type { SourceFormState } from './source-form';
 
 	let {
@@ -77,21 +78,18 @@
 	class="divide-line flex flex-col divide-y"
 	class:hidden={activeTab !== 'connection'}
 >
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="src-id" class="text-sm">Source ID</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				{#if mode === 'edit'}
-					Immutable once the source is created.
-				{:else}
-					Starts with a letter; 3–255 chars (letters, digits, - or _).
-				{/if}
-			</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		id="src-id"
+		label="Source ID"
+		hint={mode === 'edit'
+			? 'Immutable once the source is created.'
+			: 'Starts with a letter; 3–255 chars (letters, digits, - or _).'}
+		error={fieldErrors.sourceId}
+	>
+		{#snippet children({ id, invalid, describedBy })}
 			{#if mode === 'edit'}
 				<input
-					id="src-id"
+					{id}
 					type="text"
 					value={form.sourceId}
 					class="input input-sm w-full"
@@ -100,32 +98,25 @@
 				/>
 			{:else}
 				<input
-					id="src-id"
+					{id}
 					type="text"
 					bind:value={form.sourceId}
 					class="input input-sm w-full"
-					class:input-error={fieldErrors.sourceId}
+					class:input-error={invalid}
 					placeholder="e.g. my-kinesis-source"
 					autocomplete="off"
-					aria-invalid={fieldErrors.sourceId ? 'true' : undefined}
-					aria-describedby={fieldErrors.sourceId ? 'src-id-msg' : undefined}
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
 				/>
-				{#if fieldErrors.sourceId}
-					<p id="src-id-msg" class="text-error text-xs">{fieldErrors.sourceId}</p>
-				{/if}
 			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="src-type" class="text-sm">Source type</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">Where Quickwit reads documents from.</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow id="src-type" label="Source type" hint="Where Quickwit reads documents from.">
+		{#snippet children({ id })}
 			{#if mode === 'edit'}
 				<input
-					id="src-type"
+					{id}
 					type="text"
 					value={form.sourceType}
 					class="input input-sm w-full"
@@ -133,31 +124,28 @@
 					aria-label="Source type (read-only)"
 				/>
 			{:else}
-				<select id="src-type" bind:value={form.sourceType} class="select select-sm w-full">
+				<select {id} bind:value={form.sourceType} class="select select-sm w-full">
 					<option value="kinesis">Amazon Kinesis</option>
 					<option value="file">Amazon SQS (S3 notifications)</option>
 					<option value="kafka">Apache Kafka</option>
 				</select>
 			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
 	{#if form.sourceType === 'kinesis'}
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<label for="src-stream" class="text-sm">Stream name</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					{#if mode === 'edit'}
-						Immutable once the source is created.
-					{:else}
-						The Kinesis stream to consume.
-					{/if}
-				</div>
-			</div>
-			<div class="flex flex-col gap-1">
+		<SettingsRow
+			id="src-stream"
+			label="Stream name"
+			hint={mode === 'edit'
+				? 'Immutable once the source is created.'
+				: 'The Kinesis stream to consume.'}
+			error={fieldErrors.streamName}
+		>
+			{#snippet children({ id, invalid, describedBy })}
 				{#if mode === 'edit'}
 					<input
-						id="src-stream"
+						{id}
 						type="text"
 						value={form.streamName}
 						class="input input-sm w-full"
@@ -166,34 +154,27 @@
 					/>
 				{:else}
 					<input
-						id="src-stream"
+						{id}
 						type="text"
 						bind:value={form.streamName}
 						class="input input-sm w-full"
-						class:input-error={fieldErrors.streamName}
+						class:input-error={invalid}
 						placeholder="my-stream"
 						autocomplete="off"
-						aria-invalid={fieldErrors.streamName ? 'true' : undefined}
-						aria-describedby={fieldErrors.streamName ? 'src-stream-msg' : undefined}
+						aria-invalid={invalid ? 'true' : undefined}
+						aria-describedby={describedBy}
 					/>
-					{#if fieldErrors.streamName}
-						<p id="src-stream-msg" class="text-error text-xs">{fieldErrors.streamName}</p>
-					{/if}
 				{/if}
-			</div>
-		</div>
+			{/snippet}
+		</SettingsRow>
 
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<div class="text-sm">AWS endpoint</div>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					{#if mode === 'edit'}
-						Immutable once the source is created.
-					{:else}
-						Provide a region or a custom endpoint — not both. Credentials come from the environment.
-					{/if}
-				</div>
-			</div>
+		<SettingsRow
+			plain
+			label="AWS endpoint"
+			hint={mode === 'edit'
+				? 'Immutable once the source is created.'
+				: 'Provide a region or a custom endpoint — not both. Credentials come from the environment.'}
+		>
 			<div class="flex flex-col gap-2">
 				{#if mode === 'edit'}
 					<input
@@ -262,63 +243,54 @@
 					{/if}
 				{/if}
 			</div>
-		</div>
+		</SettingsRow>
 	{:else if form.sourceType === 'file'}
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<label for="src-queue" class="text-sm">SQS queue URL</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					The SQS queue that receives the bucket notifications.
-				</div>
-			</div>
-			<div class="flex flex-col gap-1">
+		<SettingsRow
+			id="src-queue"
+			label="SQS queue URL"
+			hint="The SQS queue that receives the bucket notifications."
+			error={fieldErrors.queueUrl}
+		>
+			{#snippet children({ id, invalid, describedBy })}
 				<input
-					id="src-queue"
+					{id}
 					type="text"
 					bind:value={form.queueUrl}
 					class="input input-sm w-full"
-					class:input-error={fieldErrors.queueUrl}
+					class:input-error={invalid}
 					placeholder="https://sqs.us-east-1.amazonaws.com/123456789/my-queue"
 					autocomplete="off"
-					aria-invalid={fieldErrors.queueUrl ? 'true' : undefined}
-					aria-describedby={fieldErrors.queueUrl ? 'src-queue-msg' : undefined}
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
 				/>
-				{#if fieldErrors.queueUrl}
-					<p id="src-queue-msg" class="text-error text-xs">{fieldErrors.queueUrl}</p>
-				{/if}
-			</div>
-		</div>
+			{/snippet}
+		</SettingsRow>
 
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<label for="src-message-type" class="text-sm">Message type</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					How the SQS message references the file.
-				</div>
-			</div>
-			<div class="flex flex-col gap-1">
-				<select id="src-message-type" bind:value={form.messageType} class="select select-sm w-full">
+		<SettingsRow
+			id="src-message-type"
+			label="Message type"
+			hint="How the SQS message references the file."
+		>
+			{#snippet children({ id })}
+				<select {id} bind:value={form.messageType} class="select select-sm w-full">
 					<option value="s3_notification">S3 notification</option>
 					<option value="raw_uri">Raw URI</option>
 				</select>
-			</div>
-		</div>
+			{/snippet}
+		</SettingsRow>
 	{:else if form.sourceType === 'kafka'}
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<label for="src-topic" class="text-sm">Topic</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					{#if mode === 'edit'}
-						Immutable once the source is created.
-					{:else}
-						The Kafka topic to consume.
-					{/if}
-				</div>
-			</div>
-			<div class="flex flex-col gap-1">
+		<SettingsRow
+			id="src-topic"
+			label="Topic"
+			hint={mode === 'edit'
+				? 'Immutable once the source is created.'
+				: 'The Kafka topic to consume.'}
+			error={fieldErrors.topic}
+		>
+			{#snippet children({ id, invalid, describedBy })}
 				{#if mode === 'edit'}
 					<input
-						id="src-topic"
+						{id}
 						type="text"
 						value={form.topic}
 						class="input input-sm w-full"
@@ -327,73 +299,62 @@
 					/>
 				{:else}
 					<input
-						id="src-topic"
+						{id}
 						type="text"
 						bind:value={form.topic}
 						class="input input-sm w-full"
-						class:input-error={fieldErrors.topic}
+						class:input-error={invalid}
 						placeholder="my-topic"
 						autocomplete="off"
-						aria-invalid={fieldErrors.topic ? 'true' : undefined}
-						aria-describedby={fieldErrors.topic ? 'src-topic-msg' : undefined}
+						aria-invalid={invalid ? 'true' : undefined}
+						aria-describedby={describedBy}
 					/>
-					{#if fieldErrors.topic}
-						<p id="src-topic-msg" class="text-error text-xs">{fieldErrors.topic}</p>
-					{/if}
 				{/if}
-			</div>
-		</div>
+			{/snippet}
+		</SettingsRow>
 
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<label for="src-client-params" class="text-sm">Client params</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					librdkafka settings as a JSON object (e.g. bootstrap.servers, security.protocol).
-					Optional.
-				</div>
-			</div>
-			<div class="flex flex-col gap-1">
+		<SettingsRow
+			id="src-client-params"
+			label="Client params"
+			hint="librdkafka settings as a JSON object (e.g. bootstrap.servers, security.protocol). Optional."
+			error={fieldErrors.clientParams}
+		>
+			{#snippet children({ id, invalid, describedBy })}
 				<textarea
-					id="src-client-params"
+					{id}
 					bind:value={form.clientParamsJson}
 					rows="6"
 					class="textarea textarea-sm w-full font-mono"
-					class:textarea-error={fieldErrors.clientParams}
+					class:textarea-error={invalid}
 					placeholder={'{\n  "bootstrap.servers": "localhost:9092"\n}'}
 					autocomplete="off"
 					spellcheck="false"
-					aria-invalid={fieldErrors.clientParams ? 'true' : undefined}
-					aria-describedby={fieldErrors.clientParams ? 'src-client-params-msg' : undefined}
-				></textarea>
-				{#if fieldErrors.clientParams}
-					<p id="src-client-params-msg" class="text-error text-xs">{fieldErrors.clientParams}</p>
-				{/if}
-			</div>
-		</div>
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}></textarea>
+			{/snippet}
+		</SettingsRow>
 
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<label for="src-log-level" class="text-sm">Client log level</label>
-				<div class="text-base-content/60 mt-0.5 text-xs">librdkafka log verbosity. Optional.</div>
-			</div>
-			<div class="flex flex-col gap-1">
-				<select id="src-log-level" bind:value={form.clientLogLevel} class="select select-sm w-full">
+		<SettingsRow
+			id="src-log-level"
+			label="Client log level"
+			hint="librdkafka log verbosity. Optional."
+		>
+			{#snippet children({ id })}
+				<select {id} bind:value={form.clientLogLevel} class="select select-sm w-full">
 					<option value="">Default (info)</option>
 					<option value="debug">debug</option>
 					<option value="info">info</option>
 					<option value="warn">warn</option>
 					<option value="error">error</option>
 				</select>
-			</div>
-		</div>
+			{/snippet}
+		</SettingsRow>
 
-		<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-			<div>
-				<div class="text-sm">Backfill mode</div>
-				<div class="text-base-content/60 mt-0.5 text-xs">
-					Consume from the topic's start, then stop at the current end.
-				</div>
-			</div>
+		<SettingsRow
+			plain
+			label="Backfill mode"
+			hint="Consume from the topic's start, then stop at the current end."
+		>
 			<label class="flex items-center gap-2 text-sm">
 				<input
 					type="checkbox"
@@ -402,16 +363,16 @@
 				/>
 				Enable backfill mode
 			</label>
-		</div>
+		</SettingsRow>
 	{/if}
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="src-input-format" class="text-sm">Input format</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">Document format on the wire. Optional.</div>
-		</div>
-		<div class="flex flex-col gap-1">
-			<select id="src-input-format" bind:value={form.inputFormat} class="select select-sm w-full">
+	<SettingsRow
+		id="src-input-format"
+		label="Input format"
+		hint="Document format on the wire. Optional."
+	>
+		{#snippet children({ id })}
+			<select {id} bind:value={form.inputFormat} class="select select-sm w-full">
 				<option value="">Default (JSON)</option>
 				<option value="json">json</option>
 				<option value="plain_text">plain_text</option>
@@ -420,34 +381,30 @@
 				<option value="otlp_traces_json">otlp_traces_json</option>
 				<option value="otlp_traces_protobuf">otlp_traces_protobuf</option>
 			</select>
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 
-	<div class="grid grid-cols-[260px_1fr] gap-6 px-4 py-4">
-		<div>
-			<label for="src-pipelines" class="text-sm">Number of pipelines</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
-				Indexing pipelines for this source. Optional.
-			</div>
-		</div>
-		<div class="flex flex-col gap-1">
+	<SettingsRow
+		id="src-pipelines"
+		label="Number of pipelines"
+		hint="Indexing pipelines for this source. Optional."
+		error={fieldErrors.numPipelines}
+	>
+		{#snippet children({ id, invalid, describedBy })}
 			<input
-				id="src-pipelines"
+				{id}
 				type="text"
 				inputmode="numeric"
 				bind:value={form.numPipelines}
 				class="input input-sm w-full"
-				class:input-error={fieldErrors.numPipelines}
+				class:input-error={invalid}
 				placeholder="1"
 				autocomplete="off"
-				aria-invalid={fieldErrors.numPipelines ? 'true' : undefined}
-				aria-describedby={fieldErrors.numPipelines ? 'src-pipelines-msg' : undefined}
+				aria-invalid={invalid ? 'true' : undefined}
+				aria-describedby={describedBy}
 			/>
-			{#if fieldErrors.numPipelines}
-				<p id="src-pipelines-msg" class="text-error text-xs">{fieldErrors.numPipelines}</p>
-			{/if}
-		</div>
-	</div>
+		{/snippet}
+	</SettingsRow>
 </div>
 
 <div

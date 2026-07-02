@@ -52,6 +52,7 @@
 <div class="divide-line flex flex-col divide-y">
 	{#each fields as field, i (i)}
 		{@const nameError = fieldErrors[`${errorPrefix}.${i}.name`]}
+		{@const descriptionError = fieldErrors[`${errorPrefix}.${i}.description`]}
 		<div class="flex flex-col gap-2.5 px-4 py-3">
 			<div class="flex items-start gap-2">
 				<div class="flex flex-1 flex-col gap-1">
@@ -170,6 +171,22 @@
 						/>
 						default search
 					</label>
+				{/if}
+			</div>
+
+			<div class="flex flex-col gap-1">
+				<input
+					type="text"
+					bind:value={field.description}
+					class="input input-xs w-full max-w-md"
+					class:input-error={descriptionError}
+					placeholder="Description (optional)"
+					autocomplete="off"
+					aria-label={`Field ${i + 1} description`}
+					aria-invalid={descriptionError ? 'true' : undefined}
+				/>
+				{#if descriptionError}
+					<p class="text-error text-xs">{descriptionError}</p>
 				{/if}
 			</div>
 

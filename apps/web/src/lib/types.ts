@@ -109,8 +109,6 @@ export interface SearchResult {
 	rawHits: Record<string, unknown>[];
 	numHits: number;
 	elapsedTimeMicros: number;
-	startTimestamp?: number;
-	endTimestamp?: number;
 }
 
 /** A single scope filter pinned in the Context view. AND-joined into the query. */
