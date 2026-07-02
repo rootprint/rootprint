@@ -41,7 +41,7 @@
 		"*.{ts,js,svelte,json,css,md}": "prettier --write"
 	},
 	"devDependencies": {
-		"@types/node": "^26.0.1",
+		"@types/node": "^26.1.0",
 		"lint-staged": "^17.0.8",
 		"oxlint": "^1.72.0",
 		"prettier": "^3.9.4",
