@@ -97,7 +97,11 @@
 			return store.fields
 				.filter((f) => f.name.toLowerCase().includes(q) || f.displayName.toLowerCase().includes(q))
 				.slice(0, 10)
-				.map((f) => ({ label: f.displayName, detail: f.type, insert: f.name }));
+				.map((f) => ({
+					label: f.displayName,
+					detail: f.name === f.displayName ? f.type : f.name,
+					insert: f.name
+				}));
 		}
 		if (valueState === null || valueState.key !== valueFetchKey) return [];
 		return valueState.buckets
