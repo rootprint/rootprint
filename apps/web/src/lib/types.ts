@@ -121,3 +121,9 @@ export interface ContextChip {
 export type ContextEntry = LogHit & {
 	isAnchor: boolean;
 };
+
+export interface QuerySuggestion {
+	label: string;
+	detail: string | null;
+	insert: string;
+}
