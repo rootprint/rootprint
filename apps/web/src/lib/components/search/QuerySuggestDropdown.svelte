@@ -23,7 +23,7 @@
 			<button
 				type="button"
 				class="flex items-center gap-2 px-2 py-1 font-mono text-xs {i === highlight
-					? 'menu-active'
+					? 'bg-base-content/10'
 					: ''}"
 				onmousedown={(e) => {
 					e.preventDefault();
