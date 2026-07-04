@@ -59,7 +59,7 @@
 		{:else}
 			<table class="w-full table-fixed border-collapse">
 				<tbody>
-					{#each allFields as field (field.name)}
+					{#each allFields as field, i (i)}
 						<DrawerFieldRow {field} />
 					{/each}
 				</tbody>

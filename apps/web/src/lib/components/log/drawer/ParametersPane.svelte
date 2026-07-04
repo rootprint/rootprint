@@ -113,7 +113,7 @@
 						>
 							<table class="w-full table-fixed border-collapse">
 								<tbody>
-									{#each group.fields as field (field.name)}
+									{#each group.fields as field, i (i)}
 										<DrawerFieldRow
 											{field}
 											onFilterFor={(f) => applyFilter(f, false)}
