@@ -115,7 +115,7 @@
 				{#each rec.rows as r (r.id)}
 					<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
 						<span class="text-base-content/60 font-mono text-xs whitespace-nowrap">
-							{formatActivityTimestamp(r.executedAt, 'local')}
+							{formatActivityTimestamp(r.executedAt)}
 						</span>
 						<span class="min-w-0 truncate text-center">{r.indexId}</span>
 						<span class="text-right whitespace-nowrap tabular-nums">

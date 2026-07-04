@@ -4,7 +4,7 @@
 	import LogHeader from './LogHeader.svelte';
 	import LogRow from './LogRow.svelte';
 	import InlineLogRow from './InlineLogRow.svelte';
-	import type { FieldConfig, LogHit, SortDirection, TimezoneMode } from '$lib/types';
+	import type { FieldConfig, LogHit, SortDirection } from '$lib/types';
 	import type { DisplayMode } from 'api/types';
 
 	const ROW_ESTIMATE = 25;
@@ -14,7 +14,6 @@
 		logs,
 		activeFields,
 		gridTemplate,
-		timezoneMode,
 		fieldConfig,
 		sortDirection,
 		viewport,
@@ -26,7 +25,6 @@
 		logs: LogHit[];
 		activeFields: string[];
 		gridTemplate: string;
-		timezoneMode: TimezoneMode;
 		fieldConfig: FieldConfig | null;
 		sortDirection: SortDirection;
 		viewport: HTMLElement | null;
@@ -96,7 +94,6 @@
 						<InlineLogRow
 							hit={logs[item.index]}
 							columns={activeFields}
-							{timezoneMode}
 							{lineWrap}
 							onActivate={() => onRowClick(logs[item.index])}
 						/>
@@ -106,7 +103,6 @@
 							columns={activeFields}
 							{gridTemplate}
 							{messageField}
-							{timezoneMode}
 							{lineWrap}
 							onActivate={() => onRowClick(logs[item.index])}
 						/>

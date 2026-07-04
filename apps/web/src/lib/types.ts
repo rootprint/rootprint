@@ -16,7 +16,6 @@ export interface PersonalApiKey {
 
 export type IndexTabId = 'config' | 'fields' | 'sources';
 
-export type TimezoneMode = 'utc' | 'local';
 export type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
 export interface LevelBucket {
@@ -89,7 +88,6 @@ export interface ParsedQuery {
 	index: string | null;
 	query: string;
 	timeRange: TimeRange;
-	timezoneMode: TimezoneMode;
 	sortDirection: SortDirection;
 	filters: Filter[];
 }

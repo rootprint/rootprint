@@ -25,7 +25,6 @@
 			index: indexId,
 			query,
 			timeRange: { type: 'absolute', start: startTime, end: endTime },
-			timezoneMode: 'local',
 			sortDirection: 'desc',
 			filters
 		});

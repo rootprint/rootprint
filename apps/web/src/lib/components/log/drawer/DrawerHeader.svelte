@@ -3,13 +3,12 @@
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
-	import type { LogHit, TimezoneMode } from '$lib/types';
+	import type { LogHit } from '$lib/types';
 
 	export type DrawerTab = 'parameters' | 'traceback' | 'json' | 'context';
 
 	let {
 		hit,
-		timezoneMode,
 		activeTab,
 		sharing = false,
 		hasTraceback = false,
@@ -19,7 +18,6 @@
 		onClose
 	}: {
 		hit: LogHit;
-		timezoneMode: TimezoneMode;
 		activeTab: DrawerTab;
 		sharing?: boolean;
 		hasTraceback?: boolean;
@@ -126,9 +124,6 @@
 			<span class="text-base-content/80">{levelLabel}</span>
 		</span>
 		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{formatLogRowTimestamp(hit.timestamp, timezoneMode)}</span>
+		<span class="text-base-content/70">{formatLogRowTimestamp(hit.timestamp)}</span>
 	</div>
-	<span class="text-base-content/50 text-[10px] tracking-wider uppercase">
-		{timezoneMode === 'utc' ? 'UTC' : 'local'}
-	</span>
 </div>

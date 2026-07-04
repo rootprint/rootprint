@@ -171,9 +171,6 @@ export class SearchStore {
 	get timeRange() {
 		return this.#parsedQuery().timeRange;
 	}
-	get timezoneMode() {
-		return this.#parsedQuery().timezoneMode;
-	}
 	get sortDirection() {
 		return this.#parsedQuery().sortDirection;
 	}

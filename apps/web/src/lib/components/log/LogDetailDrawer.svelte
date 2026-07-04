@@ -251,7 +251,6 @@
 
 		<DrawerHeader
 			{hit}
-			timezoneMode={store.timezoneMode}
 			{activeTab}
 			{sharing}
 			{hasTraceback}

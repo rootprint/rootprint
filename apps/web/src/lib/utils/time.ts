@@ -1,42 +1,30 @@
 import { format, formatDistanceToNow, getUnixTime, isValid, parse, parseISO } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
-
-import type { TimezoneMode } from '$lib/types';
-
-function formatTs(tsSec: number, timezone: TimezoneMode, pattern: string): string {
-	const ms = tsSec * 1000;
-	return timezone === 'utc' ? formatInTimeZone(ms, 'UTC', pattern) : format(ms, pattern);
-}
 
 /** "HH:MM" */
-export function formatChartTime(tsSec: number, timezone: TimezoneMode): string {
-	return formatTs(tsSec, timezone, 'HH:mm');
+export function formatChartTime(tsSec: number): string {
+	return format(tsSec * 1000, 'HH:mm');
 }
 
 /** "MM-DD HH:MM" */
-export function formatChartDate(tsSec: number, timezone: TimezoneMode): string {
-	return formatTs(tsSec, timezone, 'MM-dd HH:mm');
+export function formatChartDate(tsSec: number): string {
+	return format(tsSec * 1000, 'MM-dd HH:mm');
 }
 
 /** "YYYY-MM-DD HH:MM:SS" */
-export function formatChartTooltip(tsSec: number, timezone: TimezoneMode): string {
-	return formatTs(tsSec, timezone, 'yyyy-MM-dd HH:mm:ss');
+export function formatChartTooltip(tsSec: number): string {
+	return format(tsSec * 1000, 'yyyy-MM-dd HH:mm:ss');
 }
 
 /** "YYYY-MM-DD HH:MM:SS.SSS" — used in the log row timestamp column. */
-export function formatLogRowTimestamp(iso: string, timezone: TimezoneMode): string {
+export function formatLogRowTimestamp(iso: string): string {
 	const d = parseISO(iso);
-	if (!isValid(d)) return '—';
-	const pattern = 'yyyy-MM-dd HH:mm:ss.SSS';
-	return timezone === 'utc' ? formatInTimeZone(d, 'UTC', pattern) : format(d, pattern);
+	return isValid(d) ? format(d, 'yyyy-MM-dd HH:mm:ss.SSS') : '—';
 }
 
 /** "YYYY-MM-DD HH:MM:SS" — second precision, used in the activity tables. */
-export function formatActivityTimestamp(iso: string, timezone: TimezoneMode): string {
+export function formatActivityTimestamp(iso: string): string {
 	const d = parseISO(iso);
-	if (!isValid(d)) return '—';
-	const pattern = 'yyyy-MM-dd HH:mm:ss';
-	return timezone === 'utc' ? formatInTimeZone(d, 'UTC', pattern) : format(d, pattern);
+	return isValid(d) ? format(d, 'yyyy-MM-dd HH:mm:ss') : '—';
 }
 
 export function formatRelativeTime(input: string | Date): string {

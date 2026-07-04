@@ -190,7 +190,6 @@
 						<ContextRow
 							{entry}
 							fieldConfig={l.fieldConfig}
-							timezoneMode={store.timezoneMode}
 							isAnchor={entry.isAnchor}
 							expanded={expandedKeys.has(entry.key)}
 							onToggle={() => toggleEntry(entry)}

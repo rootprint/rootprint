@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LogHit, TimezoneMode } from '$lib/types';
+	import type { LogHit } from '$lib/types';
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import { getByPath } from '$lib/utils/get-by-path';
@@ -11,7 +11,6 @@
 		columns,
 		gridTemplate,
 		messageField,
-		timezoneMode,
 		lineWrap = false,
 		onActivate = () => {}
 	}: {
@@ -19,7 +18,6 @@
 		columns: string[];
 		gridTemplate: string;
 		messageField?: string;
-		timezoneMode: TimezoneMode;
 		lineWrap?: boolean;
 		onActivate?: () => void;
 	} = $props();
@@ -45,7 +43,7 @@
 		style="background-color: var(--level-color);"
 	></span>
 	<span class="text-base-content/60 px-2 py-1">
-		{formatLogRowTimestamp(hit.timestamp, timezoneMode)}
+		{formatLogRowTimestamp(hit.timestamp)}
 	</span>
 	{#each columns as column (column)}
 		<span class="px-2 py-1 {column === messageField ? messageWrap : cellWrap}" title={column}>

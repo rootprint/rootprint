@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LogHit, TimezoneMode } from '$lib/types';
+	import type { LogHit } from '$lib/types';
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import { getByPath } from '$lib/utils/get-by-path';
@@ -9,20 +9,18 @@
 	let {
 		hit,
 		columns,
-		timezoneMode,
 		lineWrap = false,
 		onActivate = () => {}
 	}: {
 		hit: LogHit;
 		columns: string[];
-		timezoneMode: TimezoneMode;
 		lineWrap?: boolean;
 		onActivate?: () => void;
 	} = $props();
 
 	const parts = $derived(
 		[
-			formatLogRowTimestamp(hit.timestamp, timezoneMode),
+			formatLogRowTimestamp(hit.timestamp),
 			...columns.map((c) => formatCell(getByPath(hit.raw, c)))
 		].filter((p) => p !== '')
 	);

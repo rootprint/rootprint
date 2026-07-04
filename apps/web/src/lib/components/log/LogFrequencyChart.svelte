@@ -7,7 +7,7 @@
 	import { slide } from 'svelte/transition';
 	import { untrack } from 'svelte';
 
-	import type { HistogramBucket, TimezoneMode } from '$lib/types';
+	import type { HistogramBucket } from '$lib/types';
 	import { baseContentAt } from '$lib/utils/chart-colors';
 	import { sortBySeverity } from '$lib/utils/severity';
 	import { levelColor } from '$lib/constants/level-colors';
@@ -18,19 +18,11 @@
 		buckets: HistogramBucket[];
 		loading: boolean;
 		error: string | null;
-		timezoneMode: TimezoneMode;
 		collapsed: boolean;
 		onBrush: (startTs: number, endTs: number) => void;
 	};
 
-	let {
-		buckets,
-		loading,
-		error,
-		timezoneMode,
-		collapsed = $bindable(false),
-		onBrush
-	}: Props = $props();
+	let { buckets, loading, error, collapsed = $bindable(false), onBrush }: Props = $props();
 
 	const SECONDS_PER_DAY = 86400;
 
@@ -237,9 +229,7 @@
 					size: 20,
 					space: 120,
 					values: (_u, splits) =>
-						splits.map((v) =>
-							useDate ? formatChartDate(v, timezoneMode) : formatChartTime(v, timezoneMode)
-						)
+						splits.map((v) => (useDate ? formatChartDate(v) : formatChartTime(v)))
 				},
 				{
 					stroke: axisStroke,
@@ -267,7 +257,6 @@
 
 	$effect(() => {
 		void columnarData;
-		void timezoneMode;
 		void collapsed;
 
 		if (browser && !collapsed && columnarData && chartEl) {
@@ -361,7 +350,7 @@
 						style="left: {tooltipLeft}px; top: {tooltipTop}px;"
 					>
 						<div class="text-base-content/60 mb-1 font-mono text-[11px]">
-							{formatChartTooltip(columnarData.uplot[0][tooltipIdx], timezoneMode)}
+							{formatChartTooltip(columnarData.uplot[0][tooltipIdx])}
 						</div>
 						{#each levels as level, i (level)}
 							{@const count = columnarData.rawSeries[i][tooltipIdx]}

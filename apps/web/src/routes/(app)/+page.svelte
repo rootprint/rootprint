@@ -100,7 +100,6 @@
 			buckets={store.histogramBuckets}
 			loading={store.histogramLoading}
 			error={store.histogramError}
-			timezoneMode={store.timezoneMode}
 			bind:collapsed={chartCollapsed}
 			onBrush={(start, end) =>
 				store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
@@ -149,7 +148,6 @@
 						logs={store.logs}
 						activeFields={store.activeFields}
 						{gridTemplate}
-						timezoneMode={store.timezoneMode}
 						fieldConfig={store.fieldConfig}
 						sortDirection={store.sortDirection}
 						{viewport}

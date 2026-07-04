@@ -4,19 +4,17 @@
 	import { levelColor } from '$lib/constants/level-colors';
 	import { groupHitFields } from '$lib/utils/hit-fields';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
-	import type { ContextEntry, FieldConfig, TimezoneMode } from '$lib/types';
+	import type { ContextEntry, FieldConfig } from '$lib/types';
 
 	let {
 		entry,
 		fieldConfig,
-		timezoneMode,
 		isAnchor,
 		expanded,
 		onToggle
 	}: {
 		entry: ContextEntry;
 		fieldConfig: FieldConfig;
-		timezoneMode: TimezoneMode;
 		isAnchor: boolean;
 		expanded: boolean;
 		onToggle: () => void;
@@ -46,7 +44,7 @@
 		<ChevronRight class="text-base-content/50 h-3 w-3 shrink-0" />
 	{/if}
 	<span class="text-base-content/60 shrink-0 whitespace-nowrap">
-		{formatLogRowTimestamp(entry.timestamp, timezoneMode)}
+		{formatLogRowTimestamp(entry.timestamp)}
 	</span>
 	<span class="min-w-0 flex-1 truncate">{entry.message}</span>
 </button>

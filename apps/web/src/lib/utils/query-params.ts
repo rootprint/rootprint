@@ -1,10 +1,9 @@
-import type { Filter, ParsedQuery, SortDirection, TimeRange, TimezoneMode } from '$lib/types';
+import type { Filter, ParsedQuery, SortDirection, TimeRange } from '$lib/types';
 import { isPreset, type Preset } from '$lib/utils/time-range';
 
 const DEFAULTS = {
 	query: '',
 	timeRangePreset: '15m' as Preset,
-	timezoneMode: 'local' as TimezoneMode,
 	sortDirection: 'desc' as SortDirection
 };
 
@@ -56,10 +55,6 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 		params.set('to', String(state.timeRange.end));
 	}
 
-	if (state.timezoneMode !== DEFAULTS.timezoneMode) {
-		params.set('tz', state.timezoneMode);
-	}
-
 	if (state.sortDirection !== DEFAULTS.sortDirection) {
 		params.set('sort', state.sortDirection);
 	}
@@ -90,9 +85,6 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 		timeRange = { type: 'relative', preset: DEFAULTS.timeRangePreset };
 	}
 
-	const tz = params.get('tz');
-	const timezoneMode: TimezoneMode = tz === 'utc' || tz === 'local' ? tz : DEFAULTS.timezoneMode;
-
 	const sort = params.get('sort');
 	const sortDirection: SortDirection =
 		sort === 'asc' || sort === 'desc' ? sort : DEFAULTS.sortDirection;
@@ -103,7 +95,7 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 		if (parsed) filters.push(parsed);
 	}
 
-	return { index, query, timeRange, timezoneMode, sortDirection, filters };
+	return { index, query, timeRange, sortDirection, filters };
 }
 
 /** Merge a partial query update into existing URL params, returning the new search string. */
