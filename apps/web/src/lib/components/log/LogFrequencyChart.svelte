@@ -344,7 +344,7 @@
 				{:else}
 					<div bind:this={chartEl}></div>
 				{/if}
-				{#if tooltipVisible && tooltipIdx != null && columnarData}
+				{#if tooltipVisible && tooltipIdx != null && columnarData && tooltipIdx < columnarData.uplot[0].length}
 					<div
 						class="border-line bg-base-100 pointer-events-none absolute z-20 rounded border px-2.5 py-1.5"
 						style="left: {tooltipLeft}px; top: {tooltipTop}px;"
