@@ -19,6 +19,7 @@ export const kubernetes: Integration = {
 	label: 'Kubernetes',
 	icon: KubernetesIcon,
 	origin: 'Containers',
+	docs: 'https://docs.rootprint.io/send-logs/platforms/kubernetes',
 	buildSteps: (ctx) => {
 		const values = `mode: daemonset
 

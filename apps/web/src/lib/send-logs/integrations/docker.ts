@@ -21,6 +21,7 @@ export const docker: Integration = {
 	label: 'Docker',
 	icon: DockerIcon,
 	origin: 'Containers',
+	docs: 'https://docs.rootprint.io/send-logs/platforms/docker',
 	buildSteps: (ctx) => {
 		const vectorConfig = `sources:
   docker:

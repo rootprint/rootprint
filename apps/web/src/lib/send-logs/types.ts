@@ -55,6 +55,8 @@ export type Integration = {
 	label: string;
 	icon: IconComponent;
 	origin: IntegrationOrigin;
+	/** Page on docs.rootprint.io for this integration. */
+	docs: string;
 	flavors?: Flavor[];
 	defaultFlavor?: string;
 	buildSteps: (ctx: IntegrationContext) => Step[];

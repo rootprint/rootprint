@@ -42,6 +42,7 @@ export const go: Integration = {
 	label: 'Go',
 	icon: GoIcon,
 	origin: 'Application',
+	docs: 'https://docs.rootprint.io/send-logs/languages/go',
 	buildSteps: (ctx) => [
 		{
 			title: 'Install the OpenTelemetry SDK',

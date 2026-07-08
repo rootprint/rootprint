@@ -156,6 +156,7 @@ export const nodejs: Integration = {
 	label: 'Node.js',
 	icon: NodejsIcon,
 	origin: 'Application',
+	docs: 'https://docs.rootprint.io/send-logs/languages/javascript',
 	flavors: [
 		{ id: 'otel', label: 'OpenTelemetry' },
 		{ id: 'pino', label: 'Pino' },

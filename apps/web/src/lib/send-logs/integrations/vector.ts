@@ -14,6 +14,7 @@ export const vector: Integration = {
 	label: 'Vector',
 	icon: VectorIcon,
 	origin: 'LogAgents',
+	docs: 'https://docs.rootprint.io/send-logs/log-agents/vector',
 	buildSteps: (ctx) => {
 		const vectorConfig = `sources:
   app_logs:

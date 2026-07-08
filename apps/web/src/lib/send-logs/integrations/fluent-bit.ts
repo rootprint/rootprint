@@ -15,6 +15,7 @@ export const fluentBit: Integration = {
 	label: 'Fluent Bit',
 	icon: FluentBitIcon,
 	origin: 'LogAgents',
+	docs: 'https://docs.rootprint.io/send-logs/log-agents/fluent-bit',
 	buildSteps: (ctx) => {
 		const url = new URL(ctx.origin);
 		const host = url.hostname;

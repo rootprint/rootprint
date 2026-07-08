@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search } from 'lucide-svelte';
+	import { ExternalLink, Search } from 'lucide-svelte';
 	import IntegrationCard from '$lib/components/send-logs/IntegrationCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { integrations } from '$lib/send-logs/integrations';
@@ -27,7 +27,19 @@
 	<PageHeader
 		title="Send logs"
 		description="Pick where your logs come from to get step-by-step setup instructions."
-	/>
+	>
+		{#snippet actions()}
+			<a
+				href="https://docs.rootprint.io/send-logs/overview"
+				target="_blank"
+				rel="noreferrer"
+				class="link link-hover text-base-content/60 hover:text-base-content flex items-center gap-1.5 text-xs"
+			>
+				Documentation
+				<ExternalLink class="h-3 w-3" />
+			</a>
+		{/snippet}
+	</PageHeader>
 
 	<label class="input input-sm mt-8 w-full max-w-md">
 		<Search class="h-3.5 w-3.5 opacity-60" />

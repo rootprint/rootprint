@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { ExternalLink } from 'lucide-svelte';
 	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
 	import ApiKeyChip from './ApiKeyChip.svelte';
 	import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
@@ -38,7 +39,18 @@
 
 <header class="flex flex-col gap-4">
 	<Breadcrumb {segments} />
-	<h1 class="text-h1">{integration.label}</h1>
+	<div class="flex items-center justify-between gap-4">
+		<h1 class="text-h1">{integration.label}</h1>
+		<a
+			href={integration.docs}
+			target="_blank"
+			rel="noreferrer"
+			class="link link-hover text-base-content/60 hover:text-base-content flex items-center gap-1.5 text-xs"
+		>
+			Documentation
+			<ExternalLink class="h-3 w-3" />
+		</a>
+	</div>
 	<p class="text-base-content/60 text-xs">
 		Sending to <span class="text-base-content">{selectedIndexId}</span>
 	</p>

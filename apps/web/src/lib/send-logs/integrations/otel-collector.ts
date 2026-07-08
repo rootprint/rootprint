@@ -15,6 +15,7 @@ export const otelCollector: Integration = {
 	label: 'OpenTelemetry Collector',
 	icon: OtelCollectorIcon,
 	origin: 'OpenTelemetry',
+	docs: 'https://docs.rootprint.io/send-logs/log-agents/otel-collector',
 	buildSteps: (ctx) => {
 		const config = `receivers:
   filelog:

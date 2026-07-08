@@ -24,6 +24,7 @@ export const python: Integration = {
 	label: 'Python',
 	icon: PythonIcon,
 	origin: 'Application',
+	docs: 'https://docs.rootprint.io/send-logs/languages/python',
 	buildSteps: (ctx) => [
 		{
 			title: 'Install and configure',

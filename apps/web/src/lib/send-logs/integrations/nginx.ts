@@ -15,6 +15,7 @@ export const nginx: Integration = {
 	label: 'Nginx',
 	icon: NginxIcon,
 	origin: 'WebServers',
+	docs: 'https://docs.rootprint.io/send-logs/web-servers/nginx',
 	buildSteps: (ctx) => {
 		const vectorConfig = `sources:
   nginx_logs:
