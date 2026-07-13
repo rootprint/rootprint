@@ -96,7 +96,6 @@
 		if (t.kind === 'field') {
 			return store.fields
 				.filter((f) => f.name.toLowerCase().includes(q) || f.displayName.toLowerCase().includes(q))
-				.slice(0, 10)
 				.map((f) => ({
 					label: f.displayName,
 					detail: f.name === f.displayName ? f.type : f.name,
@@ -106,7 +105,6 @@
 		if (valueState === null || valueState.key !== valueFetchKey) return [];
 		return valueState.buckets
 			.filter((b) => b.value.toLowerCase().includes(q))
-			.slice(0, 10)
 			.map((b) => ({ label: b.value, detail: b.count.toLocaleString(), insert: b.value }));
 	});
 
