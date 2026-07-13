@@ -1,5 +1,6 @@
 import type { Db } from '../db/index.js';
 import { searchAudit } from '../db/schema.js';
+import { logger } from '../lib/logger.js';
 import { HttpError } from '../utils/http-error.js';
 import type { SearchQueryInput } from '../schemas/search.js';
 import type { LogSearchResponse } from '../types.js';
@@ -43,7 +44,9 @@ export async function withSearchAudit(
 				durationMs: Math.round(performance.now() - start),
 				numHits: result.numHits
 			})
-			.catch((err) => console.error('[search_audit] insert failed', err));
+			.catch((insertErr) =>
+				logger.error({ err: insertErr, indexId }, 'search audit insert failed')
+			);
 		return result;
 	} catch (err) {
 		const { code, message } = extractAuditError(err);
@@ -55,7 +58,9 @@ export async function withSearchAudit(
 				errorCode: code,
 				errorMessage: message
 			})
-			.catch((err) => console.error('[search_audit] insert failed', err));
+			.catch((insertErr) =>
+				logger.error({ err: insertErr, indexId }, 'search audit insert failed')
+			);
 		throw err;
 	}
 }

@@ -20,6 +20,7 @@ import {
 } from '../services/settings.service.js';
 import type { GitHubAuthCredentials, GoogleAuthCredentials } from '../types.js';
 import { db } from './db.js';
+import { logger } from './logger.js';
 
 const apiKeyPluginConfig = {
 	defaultPrefix: 'rpk_',
@@ -87,10 +88,7 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 				create: {
 					before: async (session) => {
 						if (await userRetainsOAuthAccess(db, session.userId)) return;
-						console.warn(
-							'[oauth_access] blocking session: user no longer satisfies provider membership',
-							session.userId
-						);
+						logger.warn({ userId: session.userId }, 'oauth access blocked');
 						return false;
 					}
 				}

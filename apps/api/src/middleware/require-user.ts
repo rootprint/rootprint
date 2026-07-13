@@ -6,6 +6,7 @@ import { user } from '../db/schema.js';
 import type { AppEnv } from '../env.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
+import { logger } from '../lib/logger.js';
 import { internal, unauthorized } from '../utils/http-error.js';
 
 // Intentionally unbounded; user cardinality is small in practice and pre-existing pattern.
@@ -27,7 +28,7 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
 	try {
 		session = await auth().api.getSession({ headers: c.req.raw.headers });
 	} catch (err) {
-		console.error(`[require_user] requestId=${c.get('requestId')} getSession failed`, err);
+		logger.error({ err, requestId: c.get('requestId') }, 'session validation failed');
 		throw internal('Session validation failed');
 	}
 	if (!session) throw unauthorized('Unauthorized');

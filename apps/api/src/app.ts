@@ -13,8 +13,10 @@ import { config } from './config.js';
 import type { AppEnv, AuthedEnv } from './env.js';
 import { initAuth } from './lib/auth.js';
 import { connectDb, db, runMigrations } from './lib/db.js';
+import { logger } from './lib/logger.js';
 import { probeQuickwit, quickwit } from './lib/quickwit.js';
 import { requestContext } from './middleware/request-context.js';
+import { requestLogging } from './middleware/request-logging.js';
 import { requireUser } from './middleware/require-user.js';
 import { adminActivityRouter } from './routes/admin/activity.js';
 import { clusterRouter } from './routes/admin/cluster.js';
@@ -55,6 +57,7 @@ function errorJson(c: Context, body: ApiErrorBody['error'], status: ContentfulSt
 export const app = new Hono<AppEnv>();
 
 app.use('*', requestContext);
+app.use('*', requestLogging);
 const allowedOrigins = new Set([
 	config.origin,
 	...(config.frontendUrl ? [config.frontendUrl] : [])
@@ -74,23 +77,29 @@ app.onError((rawErr, c) => {
 		err = quickwitErrorToHttp(rawErr);
 	}
 
-	const logLine =
+	const logMeta =
 		err instanceof HttpError
-			? `[onError] requestId=${requestId} path=${c.req.path} status=${err.statusCode} code=${err.code} message=${err.message}`
-			: `[onError] requestId=${requestId} path=${c.req.path} name=${err.name} code=${String((err as { code?: unknown }).code)} message=${err.message}`;
+			? { requestId, path: c.req.path, statusCode: err.statusCode, code: err.code, err }
+			: {
+					requestId,
+					path: c.req.path,
+					name: err.name,
+					code: String((err as { code?: unknown }).code),
+					err
+				};
 
 	if (c.req.path.startsWith('/v1/')) {
 		if (err instanceof HttpError) {
 			if (err.retryAfter != null) {
-				console.warn(logLine);
+				logger.warn(logMeta, 'request failed');
 			} else if (err.statusCode >= 500) {
-				console.error(logLine);
+				logger.error(logMeta, 'request failed');
 			} else {
-				console.warn(logLine);
+				logger.warn(logMeta, 'request failed');
 			}
 			return otlpErrorFromHttpError(err);
 		}
-		console.error(logLine);
+		logger.error(logMeta, 'request failed');
 		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
 	}
 
@@ -99,10 +108,10 @@ app.onError((rawErr, c) => {
 		// retryAfter marks a client-safe transient error: keep its message, warn-log, advertise Retry-After. Genuine faults stay masked + error-logged.
 		const isTransient = err.retryAfter != null;
 		if (isTransient) {
-			console.warn(logLine);
+			logger.warn(logMeta, 'request failed');
 			c.header('Retry-After', String(err.retryAfter));
 		} else if (isServerError) {
-			console.error(logLine);
+			logger.error(logMeta, 'request failed');
 		}
 		const maskMessage = isServerError && !isTransient;
 		return errorJson(
@@ -147,7 +156,7 @@ app.onError((rawErr, c) => {
 		);
 	}
 
-	console.error(logLine);
+	logger.error(logMeta, 'request failed');
 	return errorJson(
 		c,
 		{ code: 'INTERNAL', message: 'Internal server error', statusCode: 500, requestId },
@@ -215,6 +224,7 @@ app.get('*', async (c, next) => {
 });
 
 async function main(): Promise<void> {
+	logger.info('booting api');
 	await connectDb();
 	await runMigrations();
 
@@ -230,8 +240,10 @@ async function main(): Promise<void> {
 		port: config.port,
 		idleTimeout: 255
 	});
+	logger.info({ port: config.port }, 'api listening');
 
 	const shutdown = () => {
+		logger.info('shutting down api');
 		statsCollector.stop();
 		server.stop(true);
 		process.exit(0);
@@ -242,7 +254,7 @@ async function main(): Promise<void> {
 
 if (import.meta.main) {
 	main().catch((err) => {
-		console.error('Boot failed:', err);
+		logger.error({ err }, 'boot failed');
 		process.exit(1);
 	});
 }

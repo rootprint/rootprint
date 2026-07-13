@@ -3,6 +3,7 @@ import { QuickwitError, type QuickwitClient } from 'quickwit-js';
 
 import type { Db } from '../db/index.js';
 import { indexStatsSnapshot } from '../db/schema.js';
+import { logger } from '../lib/logger.js';
 import type { IndexStatsPoint, LatestIndexSnapshot } from '../types.js';
 import { listIndexes } from './quickwit-index.service.js';
 
@@ -40,10 +41,7 @@ async function captureSnapshots(
 		} catch (err) {
 			failed += 1;
 			const code = err instanceof QuickwitError ? (err as QuickwitError).code : 'UNKNOWN';
-			const message = err instanceof Error ? err.message : String(err);
-			console.warn(
-				`[index-stats] describe failed indexId=${indexId} code=${code} message=${message}`
-			);
+			logger.warn({ err, indexId, code }, 'index stats describe failed');
 		}
 	}
 
@@ -60,8 +58,10 @@ export function startStatsCollector(db: Db, qw: QuickwitClient): { stop: () => v
 
 	const tick = async () => {
 		try {
-			await captureSnapshots(db, qw);
-		} catch {
+			const result = await captureSnapshots(db, qw);
+			if (result.failed > 0) logger.warn(result, 'index stats snapshot partially failed');
+		} catch (err) {
+			logger.warn({ err }, 'index stats snapshot failed');
 			// Swallow so the schedule keeps running on transient failures.
 		} finally {
 			if (!stopped) {
