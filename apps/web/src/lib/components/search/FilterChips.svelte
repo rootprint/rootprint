@@ -34,7 +34,7 @@
 		{#if filters.length >= 2}
 			<button
 				type="button"
-				class="text-primary ml-auto text-xs hover:underline"
+				class="text-success ml-auto cursor-pointer text-xs font-medium hover:underline"
 				onclick={() => store.clearFilters()}
 			>
 				Clear all
