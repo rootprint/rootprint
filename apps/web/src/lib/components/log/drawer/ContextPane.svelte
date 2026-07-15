@@ -155,6 +155,7 @@
 	<div class="flex h-full flex-col">
 		<ContextChipBar
 			chips={l.chips}
+			indexId={l.indexId}
 			disabled={l.loadingInitial}
 			onRemove={(f) => void l.removeChip(f)}
 			{onOpenAsSearch}

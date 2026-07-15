@@ -59,6 +59,8 @@ const DEFAULT_SETTINGS: IndexSettings = {
 	contextFields: null
 };
 
+const DEFAULT_CONTEXT_FIELDS = ['service_name'];
+
 function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings {
 	return {
 		displayName: row.displayName,
@@ -169,7 +171,7 @@ function resolveLogFields({ settings, index }: IndexMeta) {
 		timestampField: index.timestampField,
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
-		contextFields: settings.contextFields
+		contextFields: settings.contextFields ?? DEFAULT_CONTEXT_FIELDS
 	};
 }
 

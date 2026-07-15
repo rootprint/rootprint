@@ -1,18 +1,25 @@
 <script lang="ts">
 	import { ExternalLink, X } from 'lucide-svelte';
+	import { page } from '$app/state';
 	import type { ContextChip } from '$lib/types';
 
 	let {
 		chips,
+		indexId,
 		disabled = false,
 		onRemove,
 		onOpenAsSearch
 	}: {
 		chips: ContextChip[];
+		indexId: string;
 		disabled?: boolean;
 		onRemove: (field: string) => void;
 		onOpenAsSearch: () => void;
 	} = $props();
+
+	const isAdmin = $derived(
+		(page.data.session?.user as { role?: string } | undefined)?.role === 'admin'
+	);
 </script>
 
 <div class="border-line bg-base-100 flex flex-wrap items-center gap-1.5 border-b px-3 py-2">
@@ -20,6 +27,11 @@
 		<span class="text-base-content/40 text-xs italic">
 			Context not scoped — showing surrounding logs
 		</span>
+		{#if isAdmin}
+			<a href="/settings/indexes/{indexId}" class="link link-hover text-xs">
+				Configure context fields
+			</a>
+		{/if}
 	{:else}
 		{#each chips as chip (chip.field)}
 			<span class="badge badge-sm badge-neutral badge-soft gap-1 font-mono">
