@@ -13,7 +13,7 @@ const WINDOW_SECONDS = 15 * 60;
 /** After this many consecutive fully-empty slides in one direction, stop walking. */
 const MAX_EMPTY_SLIDES = 3;
 
-function seedChipsFromIndex(
+export function seedChipsFromIndex(
 	anchor: Record<string, unknown>,
 	fields: readonly string[]
 ): ContextChip[] {
@@ -64,7 +64,12 @@ export class ContextLoader {
 	#nextEntryKey = 0;
 	readonly #anchorKey: string;
 
-	constructor(anchor: LogHit, indexId: string, fieldConfig: FieldConfig) {
+	constructor(
+		anchor: LogHit,
+		indexId: string,
+		fieldConfig: FieldConfig,
+		initialChips: ContextChip[] = []
+	) {
 		this.anchor = anchor;
 		this.indexId = indexId;
 		this.fieldConfig = fieldConfig;
@@ -75,7 +80,7 @@ export class ContextLoader {
 		this.#beforeWindowEnd = this.anchorTs;
 		this.#afterWindowStart = this.anchorTs;
 		this.#anchorKey = hitKey(anchor.raw);
-		this.chips = seedChipsFromIndex(anchor.raw, fieldConfig.contextFields);
+		this.chips = initialChips;
 	}
 
 	/** Post-page bookkeeping for the 'after' direction, given the pre-dedup row count: full page bumps offset; partial slides the slice outward; empty slides count toward MAX_EMPTY_SLIDES before declaring noMore. */
@@ -126,11 +131,9 @@ export class ContextLoader {
 		await this.#fetchInitial();
 	}
 
-	async removeChip(field: string): Promise<void> {
-		if (this.#abort === null) return; // disposed
-		const next = this.chips.filter((c) => c.field !== field);
-		if (next.length === this.chips.length) return;
-		this.chips = next;
+	async setChips(chips: ContextChip[]): Promise<void> {
+		if (this.#abort === null) return; // disposed or not yet initialized
+		this.chips = chips;
 		await this.#fetchInitial();
 	}
 
@@ -209,6 +212,8 @@ export class ContextLoader {
 	}
 
 	async #fetchInitial(): Promise<void> {
+		this.#abort?.abort();
+		this.#abort = new AbortController();
 		if (!Number.isFinite(this.anchorTs)) {
 			this.error = 'This log has an invalid timestamp; surrounding context cannot be loaded.';
 			this.entries = [this.#toEntry(this.anchor.raw, true)];
@@ -217,8 +222,6 @@ export class ContextLoader {
 			this.initEpoch++;
 			return;
 		}
-		this.#abort?.abort();
-		this.#abort = new AbortController();
 		const thisSeq = ++this.#fetchSeq;
 		this.loadingInitial = true;
 		this.error = null;

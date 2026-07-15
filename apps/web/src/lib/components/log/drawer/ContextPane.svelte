@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { ArrowUp, ArrowDown } from 'lucide-svelte';
 
-	import ContextChipBar from './context/ContextChipBar.svelte';
+	import ContextScopeBar from './context/ContextScopeBar.svelte';
 	import ContextRow from './context/ContextRow.svelte';
-	import { ContextLoader } from './context/context-loader.svelte';
+	import { ContextLoader, seedChipsFromIndex } from './context/context-loader.svelte';
+	import { getByPath } from '$lib/utils/get-by-path';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -28,11 +29,45 @@
 	let anchorVisible = $state(true);
 	let anchorAbove = $state(false);
 
+	/** Fields the user toggled on; empty = "All" (unscoped). AND-joined into the context query. */
+	let selectedFields = $state<string[]>([]);
+
+	function hasValue(field: string): boolean {
+		const v = getByPath(hit.raw, field);
+		return v !== undefined && v !== null && !(typeof v === 'string' && v.length === 0);
+	}
+
+	const fieldTabs = $derived(
+		(store.fieldConfig?.contextFields ?? []).map((field) => ({
+			field,
+			disabled: !hasValue(field)
+		}))
+	);
+
+	function setSelectedFields(fields: string[]): void {
+		selectedFields = fields;
+		if (loader) void loader.setChips(seedChipsFromIndex(hit.raw, fields));
+	}
+
 	$effect(() => {
 		const indexId = store.selectedIndex;
 		const fieldConfig = store.fieldConfig;
+		const anchor = hit;
 		if (!indexId || !fieldConfig) return;
-		const next = new ContextLoader(hit, indexId, fieldConfig);
+		const contextFields = new Set(fieldConfig.contextFields);
+		// Re-anchor keeps the toggled fields, minus any removed from config or missing on the new anchor.
+		// selectedFields is untracked so toggling doesn't rebuild the loader (setChips refetches instead).
+		const kept = untrack(() => {
+			const fields = selectedFields.filter((field) => contextFields.has(field) && hasValue(field));
+			if (fields.length !== selectedFields.length) selectedFields = fields;
+			return fields;
+		});
+		const next = new ContextLoader(
+			anchor,
+			indexId,
+			fieldConfig,
+			seedChipsFromIndex(anchor.raw, kept)
+		);
 		loader = next;
 		void next.init();
 		return () => {
@@ -145,11 +180,12 @@
 {#if loader}
 	{@const l = loader}
 	<div class="flex h-full flex-col">
-		<ContextChipBar
-			chips={l.chips}
+		<ContextScopeBar
+			selected={selectedFields}
+			{fieldTabs}
 			indexId={l.indexId}
 			disabled={l.loadingInitial}
-			onRemove={(f) => void l.removeChip(f)}
+			onChange={setSelectedFields}
 			{onOpenAsSearch}
 		/>
 
