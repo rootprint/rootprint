@@ -5,25 +5,25 @@
 	import ContextChipBar from './context/ContextChipBar.svelte';
 	import ContextRow from './context/ContextRow.svelte';
 	import { ContextLoader } from './context/context-loader.svelte';
-	import type { ContextEntry, LogHit } from '$lib/types';
+	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
 	let {
 		hit,
 		store,
-		onCloseDrawer
+		onCloseDrawer,
+		onReplaceHit
 	}: {
 		hit: LogHit;
 		store: SearchStore;
 		onCloseDrawer: () => void;
+		onReplaceHit: (hit: LogHit) => void;
 	} = $props();
 
 	let loader = $state<ContextLoader | null>(null);
 	let scrollEl: HTMLDivElement | null = $state(null);
 	let topSentinel: HTMLDivElement | null = $state(null);
 	let bottomSentinel: HTMLDivElement | null = $state(null);
-
-	let expandedKeys = $state<Set<string>>(new Set());
 
 	let anchorVisible = $state(true);
 	let anchorAbove = $state(false);
@@ -34,7 +34,6 @@
 		if (!indexId || !fieldConfig) return;
 		const next = new ContextLoader(hit, indexId, fieldConfig);
 		loader = next;
-		expandedKeys = new Set();
 		void next.init();
 		return () => {
 			next.dispose();
@@ -123,13 +122,6 @@
 		if (delta > 0) scrollEl.scrollTop = before.top + delta;
 	}
 
-	function toggleEntry(entry: ContextEntry): void {
-		const next = new Set(expandedKeys);
-		if (next.has(entry.key)) next.delete(entry.key);
-		else next.add(entry.key);
-		expandedKeys = next;
-	}
-
 	function scrollToAnchor(): void {
 		const el = scrollEl?.querySelector<HTMLElement>('[data-anchor="true"]');
 		el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -188,13 +180,7 @@
 					</div>
 
 					{#each l.entries as entry (entry.key)}
-						<ContextRow
-							{entry}
-							fieldConfig={l.fieldConfig}
-							isAnchor={entry.isAnchor}
-							expanded={expandedKeys.has(entry.key)}
-							onToggle={() => toggleEntry(entry)}
-						/>
+						<ContextRow {entry} isAnchor={entry.isAnchor} onSelect={() => onReplaceHit(entry)} />
 					{/each}
 
 					<!-- Bottom sentinel: older side -->

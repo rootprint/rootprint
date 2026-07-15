@@ -28,9 +28,7 @@
 			Context not scoped — showing surrounding logs
 		</span>
 		{#if isAdmin}
-			<a href="/settings/indexes/{indexId}" class="link link-hover text-xs">
-				Configure context fields
-			</a>
+			<a href="/settings/indexes/{indexId}" class="btn btn-xs btn-outline">Configure</a>
 		{/if}
 	{:else}
 		{#each chips as chip (chip.field)}

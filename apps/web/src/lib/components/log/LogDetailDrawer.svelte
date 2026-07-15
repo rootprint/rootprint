@@ -48,10 +48,12 @@
 	let {
 		hit,
 		onClose,
+		onReplaceHit,
 		store
 	}: {
 		hit: LogHit | null;
 		onClose: () => void;
+		onReplaceHit: (hit: LogHit) => void;
 		store: SearchStore;
 	} = $props();
 
@@ -106,14 +108,16 @@
 		};
 	});
 
+	let prevHit: LogHit | null = null;
 	$effect(() => {
-		if (hit) {
-			activeTab = 'parameters';
-			searchOpen = false;
-			searchTerm = '';
-			previousFocus = document.activeElement as HTMLElement | null;
-			queueMicrotask(() => dialogRef?.focus());
-		}
+		const opened = hit !== null && prevHit === null;
+		prevHit = hit;
+		if (!opened) return;
+		activeTab = 'parameters';
+		searchOpen = false;
+		searchTerm = '';
+		previousFocus = document.activeElement as HTMLElement | null;
+		queueMicrotask(() => dialogRef?.focus());
 	});
 
 	function close() {
@@ -282,7 +286,7 @@
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
 			{:else if activeTab === 'context'}
-				<ContextPane {hit} {store} onCloseDrawer={close} />
+				<ContextPane {hit} {store} onCloseDrawer={close} {onReplaceHit} />
 			{:else}
 				<JsonPane raw={hit.raw} />
 			{/if}

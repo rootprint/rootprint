@@ -162,4 +162,9 @@
 	</div>
 </div>
 
-<LogDetailDrawer hit={selectedLog} onClose={() => (selectedLog = null)} {store} />
+<LogDetailDrawer
+	hit={selectedLog}
+	onClose={() => (selectedLog = null)}
+	onReplaceHit={(h) => (selectedLog = h)}
+	{store}
+/>
