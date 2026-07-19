@@ -542,6 +542,17 @@
 				],
 				"type": "object"
 			},
+			"ClusterDocumentStatusResponse": {
+				"properties": {
+					"hasDocuments": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"hasDocuments"
+				],
+				"type": "object"
+			},
 			"ClusterHealthResponse": {
 				"properties": {
 					"endpoint": {
@@ -610,6 +621,37 @@
 					"totalSizeBytes",
 					"totalSplits",
 					"latestCapturedAt"
+				],
+				"type": "object"
+			},
+			"DynamicMappingSchema": {
+				"properties": {
+					"expandDots": {
+						"type": "boolean"
+					},
+					"fast": {
+						"type": "boolean"
+					},
+					"indexed": {
+						"type": "boolean"
+					},
+					"record": {
+						"type": "string"
+					},
+					"stored": {
+						"type": "boolean"
+					},
+					"tokenizer": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexed",
+					"stored",
+					"fast",
+					"tokenizer",
+					"record",
+					"expandDots"
 				],
 				"type": "object"
 			},
@@ -817,6 +859,16 @@
 							}
 						]
 					},
+					"dynamicMapping": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/DynamicMappingSchema"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"fields": {
 						"items": {
 							"$ref": "#/components/schemas/IndexFieldSchema"
@@ -849,10 +901,30 @@
 					"levelField": {
 						"type": "string"
 					},
+					"maxNumPartitions": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"messageField": {
 						"type": "string"
 					},
 					"mode": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"partitionKey": {
 						"anyOf": [
 							{
 								"type": "string"
@@ -960,6 +1032,9 @@
 					"indexUri",
 					"timestampField",
 					"mode",
+					"partitionKey",
+					"maxNumPartitions",
+					"dynamicMapping",
 					"tagFields",
 					"defaultSearchFields",
 					"storeSource",
@@ -973,6 +1048,16 @@
 			},
 			"IndexFieldSchema": {
 				"properties": {
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"fast": {
 						"anyOf": [
 							{
@@ -993,7 +1078,8 @@
 				"required": [
 					"name",
 					"type",
-					"fast"
+					"fast",
+					"description"
 				],
 				"type": "object"
 			},
@@ -3342,6 +3428,45 @@
 					}
 				},
 				"summary": "Get cluster overview",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/cluster/document-status": {
+			"get": {
+				"operationId": "getApiAdminClusterDocumentStatus",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ClusterDocumentStatusResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Check whether the cluster has documents",
 				"tags": [
 					"System monitoring"
 				]
@@ -13044,11 +13169,61 @@
 										},
 										"type": "array"
 									},
+									"dynamicMapping": {
+										"properties": {
+											"expandDots": {
+												"type": "boolean"
+											},
+											"fast": {
+												"type": "boolean"
+											},
+											"indexed": {
+												"type": "boolean"
+											},
+											"record": {
+												"enum": [
+													"basic",
+													"freq",
+													"position"
+												],
+												"type": "string"
+											},
+											"stored": {
+												"type": "boolean"
+											},
+											"tokenizer": {
+												"enum": [
+													"raw",
+													"raw_lowercase",
+													"default",
+													"en_stem",
+													"whitespace",
+													"chinese_compatible",
+													"lowercase"
+												],
+												"type": "string"
+											}
+										},
+										"required": [
+											"indexed",
+											"stored",
+											"fast",
+											"tokenizer",
+											"record",
+											"expandDots"
+										],
+										"type": "object"
+									},
 									"fieldMappings": {
 										"items": {
 											"oneOf": [
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -13100,6 +13275,11 @@
 														"coerce": {
 															"type": "boolean"
 														},
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -13127,6 +13307,11 @@
 													"properties": {
 														"coerce": {
 															"type": "boolean"
+														},
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
 														},
 														"fast": {
 															"type": "boolean"
@@ -13156,6 +13341,11 @@
 														"coerce": {
 															"type": "boolean"
 														},
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -13181,6 +13371,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -13206,6 +13401,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -13258,6 +13458,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -13283,6 +13488,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"expandDots": {
 															"type": "boolean"
 														},
@@ -13345,12 +13555,20 @@
 										"minLength": 1,
 										"type": "string"
 									},
+									"maxNumPartitions": {
+										"minimum": 1,
+										"type": "integer"
+									},
 									"mode": {
 										"enum": [
 											"dynamic",
 											"lenient",
 											"strict"
 										],
+										"type": "string"
+									},
+									"partitionKey": {
+										"minLength": 1,
 										"type": "string"
 									},
 									"retention": {
@@ -14476,8 +14694,71 @@
 										},
 										"type": "array"
 									},
+									"dynamicMapping": {
+										"anyOf": [
+											{
+												"properties": {
+													"expandDots": {
+														"type": "boolean"
+													},
+													"fast": {
+														"type": "boolean"
+													},
+													"indexed": {
+														"type": "boolean"
+													},
+													"record": {
+														"enum": [
+															"basic",
+															"freq",
+															"position"
+														],
+														"type": "string"
+													},
+													"stored": {
+														"type": "boolean"
+													},
+													"tokenizer": {
+														"enum": [
+															"raw",
+															"raw_lowercase",
+															"default",
+															"en_stem",
+															"whitespace",
+															"chinese_compatible",
+															"lowercase"
+														],
+														"type": "string"
+													}
+												},
+												"required": [
+													"indexed",
+													"stored",
+													"fast",
+													"tokenizer",
+													"record",
+													"expandDots"
+												],
+												"type": "object"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
 									"indexFieldPresence": {
 										"type": "boolean"
+									},
+									"maxNumPartitions": {
+										"anyOf": [
+											{
+												"minimum": 1,
+												"type": "integer"
+											},
+											{
+												"type": "null"
+											}
+										]
 									},
 									"mode": {
 										"enum": [
@@ -14492,6 +14773,11 @@
 											"oneOf": [
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -14543,6 +14829,11 @@
 														"coerce": {
 															"type": "boolean"
 														},
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -14570,6 +14861,11 @@
 													"properties": {
 														"coerce": {
 															"type": "boolean"
+														},
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
 														},
 														"fast": {
 															"type": "boolean"
@@ -14599,6 +14895,11 @@
 														"coerce": {
 															"type": "boolean"
 														},
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -14624,6 +14925,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -14649,6 +14955,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -14701,6 +15012,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"fast": {
 															"type": "boolean"
 														},
@@ -14726,6 +15042,11 @@
 												},
 												{
 													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
 														"expandDots": {
 															"type": "boolean"
 														},
@@ -14776,6 +15097,17 @@
 										},
 										"type": "array"
 									},
+									"partitionKey": {
+										"anyOf": [
+											{
+												"minLength": 1,
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
 									"retention": {
 										"anyOf": [
 											{
@@ -14812,6 +15144,9 @@
 								},
 								"required": [
 									"mode",
+									"dynamicMapping",
+									"partitionKey",
+									"maxNumPartitions",
 									"defaultSearchFields",
 									"tagFields",
 									"storeSource",

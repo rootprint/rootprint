@@ -166,3 +166,8 @@ export const ClusterOverviewResponse = named(
 		perIndex: v.array(PerIndexOverviewResponse)
 	})
 );
+
+export const ClusterDocumentStatusResponse = named(
+	'ClusterDocumentStatusResponse',
+	v.object({ hasDocuments: v.boolean() })
+);

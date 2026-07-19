@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleX } from 'lucide-svelte';
+	import { CircleX, ExternalLink, Send } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import type { OverlayScrollbars } from 'overlayscrollbars';
 	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
@@ -87,84 +87,117 @@
 	}
 </script>
 
-<div class="flex h-full min-h-0 w-full">
-	<aside class="border-line w-64 shrink-0 border-r">
-		<FieldPanel {store} />
-	</aside>
-
-	<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-		<SearchToolbar {store} />
-		<FilterChips {store} />
-
-		<LogFrequencyChart
-			buckets={store.histogramBuckets}
-			loading={store.histogramLoading}
-			error={store.histogramError}
-			bind:collapsed={chartCollapsed}
-			onBrush={(start, end) =>
-				store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
-		/>
-
-		<ResultsBar {store} />
-
-		<div class="min-h-0 flex-1">
-			<OverlayScrollbarsComponent
-				bind:this={osRef}
-				options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
-				events={{
-					scroll: handleOsScroll,
-					initialized: (instance) => {
-						viewport = instance.elements().viewport;
-					}
-				}}
-				defer
-				class="bg-base-200/30 h-full w-full"
+{#if data.hasDocuments === false}
+	<div class="bg-base-200/30 flex h-full min-h-0 w-full items-center justify-center p-8">
+		<section class="border-line bg-base-100 rounded-box w-full max-w-xl border p-8">
+			<div
+				class="bg-primary text-primary-content mb-6 flex h-10 w-10 items-center justify-center rounded"
 			>
-				{#if displayState === 'loading'}
-					<div class="flex h-full items-center justify-center">
-						<div class="text-base-content/60 flex items-center gap-2 text-xs">
-							<span class="loading loading-spinner loading-sm"></span>
-							Loading…
+				<Send class="h-5 w-5" aria-hidden="true" />
+			</div>
+			<p class="eyebrow">Get started</p>
+			<h1 class="mt-1 text-3xl tracking-tight">Send your first logs</h1>
+			<p class="text-base-content/60 mt-3 max-w-md text-sm leading-6">
+				Your indexes are ready. Choose where your logs come from and follow the integration guide to
+				start searching them in Rootprint.
+			</p>
+			<div class="mt-7 flex flex-wrap items-center gap-3">
+				<a href="/settings/send-logs" class="btn btn-primary btn-sm">
+					<Send class="h-3.5 w-3.5" aria-hidden="true" />
+					Choose an integration
+				</a>
+				<a
+					href="https://docs.rootprint.io/send-logs/overview"
+					target="_blank"
+					rel="noreferrer"
+					class="btn btn-ghost btn-sm"
+				>
+					Read the guide
+					<ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+				</a>
+			</div>
+		</section>
+	</div>
+{:else}
+	<div class="flex h-full min-h-0 w-full">
+		<aside class="border-line w-64 shrink-0 border-r">
+			<FieldPanel {store} />
+		</aside>
+
+		<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+			<SearchToolbar {store} />
+			<FilterChips {store} />
+
+			<LogFrequencyChart
+				buckets={store.histogramBuckets}
+				loading={store.histogramLoading}
+				error={store.histogramError}
+				bind:collapsed={chartCollapsed}
+				onBrush={(start, end) =>
+					store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
+			/>
+
+			<ResultsBar {store} />
+
+			<div class="min-h-0 flex-1">
+				<OverlayScrollbarsComponent
+					bind:this={osRef}
+					options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
+					events={{
+						scroll: handleOsScroll,
+						initialized: (instance) => {
+							viewport = instance.elements().viewport;
+						}
+					}}
+					defer
+					class="bg-base-200/30 h-full w-full"
+				>
+					{#if displayState === 'loading'}
+						<div class="flex h-full items-center justify-center">
+							<div class="text-base-content/60 flex items-center gap-2 text-xs">
+								<span class="loading loading-spinner loading-sm"></span>
+								Loading…
+							</div>
 						</div>
-					</div>
-				{:else if displayState === 'error'}
-					<div class="flex h-full items-center justify-center">
-						<div class="alert alert-error max-w-md">
-							<CircleX class="h-4 w-4 shrink-0" />
-							<span class="text-xs"
-								>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
-							>
+					{:else if displayState === 'error'}
+						<div class="flex h-full items-center justify-center">
+							<div class="alert alert-error max-w-md">
+								<CircleX class="h-4 w-4 shrink-0" />
+								<span class="text-xs"
+									>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
+								>
+							</div>
 						</div>
-					</div>
-				{:else if displayState === 'empty'}
-					<div class="flex h-full flex-col items-center justify-center gap-1">
-						<p class="text-base-content/60 text-xs">No logs found</p>
-						<p class="text-base-content/40 text-[10px]">
-							Try adjusting your time range or query filters
-						</p>
-					</div>
-				{:else}
-					<VirtualLogList
-						logs={store.logs}
-						activeFields={store.activeFields}
-						{gridTemplate}
-						fieldConfig={store.fieldConfig}
-						sortDirection={store.sortDirection}
-						{viewport}
-						lineWrap={store.lineWrap}
-						displayMode={store.displayMode}
-						onToggleSort={() => store.toggleSort()}
-						onRowClick={openRow}
-					/>
-				{/if}
-			</OverlayScrollbarsComponent>
+					{:else if displayState === 'empty'}
+						<div class="flex h-full flex-col items-center justify-center gap-1">
+							<p class="text-base-content/60 text-xs">No logs found</p>
+							<p class="text-base-content/40 text-[10px]">
+								Try adjusting your time range or query filters
+							</p>
+						</div>
+					{:else}
+						<VirtualLogList
+							logs={store.logs}
+							activeFields={store.activeFields}
+							{gridTemplate}
+							fieldConfig={store.fieldConfig}
+							sortDirection={store.sortDirection}
+							{viewport}
+							lineWrap={store.lineWrap}
+							displayMode={store.displayMode}
+							onToggleSort={() => store.toggleSort()}
+							onRowClick={openRow}
+						/>
+					{/if}
+				</OverlayScrollbarsComponent>
+			</div>
 		</div>
 	</div>
-</div>
 
-<LogDetailDrawer
-	hit={selectedLog}
-	onClose={() => (selectedLog = null)}
-	onReplaceHit={(h) => (selectedLog = h)}
-	{store}
-/>
+	<LogDetailDrawer
+		hit={selectedLog}
+		onClose={() => (selectedLog = null)}
+		onReplaceHit={(h) => (selectedLog = h)}
+		{store}
+	/>
+{/if}
