@@ -2,6 +2,31 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-07-21
+
+### Added
+
+- **Query autocomplete.** The search bar suggests field names and completions as you type, with refined field-completion details and a subtle highlight for the active suggestion.
+- **Empty-state onboarding.** A fresh cluster with no documents yet shows a getting-started screen instead of a blank search, pointing admins toward **Settings → Send logs**.
+- **Richer log context drawer.** A new context tab lets you pick which fields make up a log's context, with per-field scope toggles and a set of default context fields. Context rows open their log in place, and a dedicated traceback tab surfaces stack traces.
+- **API rate limiting.** The API now rate-limits requests to protect the backend.
+- **Structured API request logging.** Requests are logged in a structured format for easier searching and diagnostics.
+- **Dynamic field mapping.** Indexes support dynamic mapping, alongside a simpler web UI for it.
+- **Documentation links in Send logs.** The Send logs integrations link out to their setup docs.
+- **Dependabot.** Dependency updates are now proposed automatically.
+
+### Changed
+
+- **Timestamps drop the timezone mode.** Web timestamps render in a single, consistent scheme.
+- **Message fields and column settings backfilled** with sensible defaults; empty inline log parts are filtered out.
+- **Internal (api):** API schemas and services were refactored, and the ingest-source logic was split out of the index service into its own service with a shared field-name schema.
+- **Dependency updates,** including bun 1.3.14, TypeScript 6, and several GitHub Actions.
+
+### Fixed
+
+- **Frequency chart tooltip** no longer reads out of bounds at the chart edges.
+- **Log drawer rows** use stable rendering keys, fixing list update glitches.
+
 ## [0.3.5] - 2026-06-21
 
 ### Added
