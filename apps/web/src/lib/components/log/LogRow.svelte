@@ -12,6 +12,7 @@
 		gridTemplate,
 		messageField,
 		lineWrap = false,
+		isAnchor = false,
 		onActivate = () => {}
 	}: {
 		hit: LogHit;
@@ -19,6 +20,7 @@
 		gridTemplate: string;
 		messageField?: string;
 		lineWrap?: boolean;
+		isAnchor?: boolean;
 		onActivate?: () => void;
 	} = $props();
 
@@ -32,7 +34,13 @@
 <div
 	role="button"
 	tabindex="0"
-	class="border-line grid min-h-[25px] items-stretch border-b text-left font-mono text-xs hover:bg-[color-mix(in_oklab,var(--level-color)_14%,transparent)] {rowWidth}"
+	data-anchor={isAnchor ? 'true' : null}
+	aria-current={isAnchor ? 'true' : undefined}
+	class={[
+		'border-line grid min-h-[25px] items-stretch border-b text-left font-mono text-xs hover:bg-[color-mix(in_oklab,var(--level-color)_14%,transparent)]',
+		rowWidth,
+		isAnchor && 'bg-[color-mix(in_oklab,var(--level-color)_10%,transparent)]'
+	]}
 	style="grid-template-columns: {gridTemplate}; --level-color: {levelColor(hit.level)};"
 	use:rowActivate={onActivate}
 >

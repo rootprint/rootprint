@@ -3,9 +3,15 @@
 	import { ArrowUp, ArrowDown } from 'lucide-svelte';
 
 	import ContextScopeBar from './context/ContextScopeBar.svelte';
-	import ContextRow from './context/ContextRow.svelte';
+	import LogRow from '../LogRow.svelte';
 	import { ContextLoader, seedChipsFromIndex } from './context/context-loader.svelte';
 	import { getByPath } from '$lib/utils/get-by-path';
+	import {
+		buildGridTemplate,
+		computeColumnWidths,
+		computeFieldWidth
+	} from '$lib/utils/column-width';
+	import { readJSON, writeJSON } from '$lib/utils/safe-storage';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -29,8 +35,22 @@
 	let anchorVisible = $state(true);
 	let anchorAbove = $state(false);
 
-	/** Fields the user toggled on; empty = "All" (unscoped). AND-joined into the context query. */
-	let selectedFields = $state<string[]>([]);
+	const storageKey = (indexId: string) => `rootprint.contextFields.${indexId}`;
+
+	function readStoredFields(indexId: string | null): string[] {
+		if (!indexId) return [];
+		// readJSON's generic is an unchecked cast — stored null/{}/42 parse fine, so guard the shape.
+		const stored = readJSON<unknown>(storageKey(indexId), []);
+		if (!Array.isArray(stored)) return [];
+		return stored.filter((f): f is string => typeof f === 'string');
+	}
+
+	/**
+	 * Fields the user toggled on; empty = "All" (unscoped). AND-joined into the context query.
+	 * Read from storage once at mount: safe because the drawer unmounts on index change
+	 * (+page.svelte clears selectedLog), so this component never survives an index switch.
+	 */
+	let selectedFields = $state<string[]>(readStoredFields(untrack(() => store.selectedIndex)));
 
 	function hasValue(field: string): boolean {
 		const v = getByPath(hit.raw, field);
@@ -44,8 +64,21 @@
 		}))
 	);
 
+	const entryRaws = $derived(loader ? loader.entries.map((e) => e.raw) : []);
+	const messageField = $derived(store.fieldConfig?.messageField);
+	const columnWidths = $derived(computeColumnWidths(entryRaws, store.activeFields));
+	const messageWidth = $derived(
+		messageField && store.activeFields.includes(messageField)
+			? computeFieldWidth(entryRaws, messageField)
+			: 0
+	);
+	const gridTemplate = $derived(
+		buildGridTemplate(store.activeFields, columnWidths, messageField, messageWidth, store.lineWrap)
+	);
+
 	function setSelectedFields(fields: string[]): void {
 		selectedFields = fields;
+		if (store.selectedIndex) writeJSON(storageKey(store.selectedIndex), fields);
 		if (loader) void loader.setChips(seedChipsFromIndex(hit.raw, fields));
 	}
 
@@ -199,7 +232,7 @@
 			</div>
 		{:else}
 			<div class="relative min-h-0 flex-1">
-				<div bind:this={scrollEl} class="absolute inset-0 overflow-y-auto">
+				<div bind:this={scrollEl} class="absolute inset-0 overflow-x-auto overflow-y-auto">
 					<!-- Top sentinel: newer side -->
 					<div bind:this={topSentinel}>
 						{#if l.loadingMoreAfter}
@@ -216,7 +249,15 @@
 					</div>
 
 					{#each l.entries as entry (entry.key)}
-						<ContextRow {entry} isAnchor={entry.isAnchor} onSelect={() => onReplaceHit(entry)} />
+						<LogRow
+							hit={entry}
+							columns={store.activeFields}
+							{gridTemplate}
+							{messageField}
+							lineWrap={store.lineWrap}
+							isAnchor={entry.isAnchor}
+							onActivate={() => onReplaceHit(entry)}
+						/>
 					{/each}
 
 					<!-- Bottom sentinel: older side -->

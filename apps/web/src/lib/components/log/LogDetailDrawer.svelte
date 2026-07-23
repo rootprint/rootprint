@@ -286,7 +286,16 @@
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
 			{:else if activeTab === 'context'}
-				<ContextPane {hit} {store} onCloseDrawer={close} {onReplaceHit} />
+				<ContextPane
+					{hit}
+					{store}
+					onCloseDrawer={close}
+					onReplaceHit={(h) => {
+						onReplaceHit(h);
+						activeTab = 'parameters';
+						queueMicrotask(() => dialogRef?.focus());
+					}}
+				/>
 			{:else}
 				<JsonPane raw={hit.raw} />
 			{/if}
