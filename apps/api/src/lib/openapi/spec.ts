@@ -54,6 +54,20 @@ function prefixedAuthPaths(paths: Record<string, PathItemObject>): Record<string
 	return Object.fromEntries(Object.entries(paths).map(([p, item]) => [`/api/auth${p}`, item]));
 }
 
+function markDeprecatedDescriptions(value: unknown): void {
+	if (Array.isArray(value)) {
+		for (const item of value) markDeprecatedDescriptions(item);
+		return;
+	}
+	if (typeof value !== 'object' || value === null) return;
+
+	const object = value as Record<string, unknown>;
+	if (typeof object.description === 'string' && object.description.startsWith('Deprecated')) {
+		object.deprecated = true;
+	}
+	for (const child of Object.values(object)) markDeprecatedDescriptions(child);
+}
+
 export async function buildSpec<E extends Env, S extends Schema, P extends string>(
 	app: Hono<E, S, P>
 ) {
@@ -65,7 +79,7 @@ export async function buildSpec<E extends Env, S extends Schema, P extends strin
 		prefixedAuthPaths(authSpec.paths as Record<string, PathItemObject>)
 	);
 
-	return {
+	const combinedSpec = {
 		...spec,
 		paths: { ...spec.paths, ...authPaths },
 		components: {
@@ -80,4 +94,6 @@ export async function buildSpec<E extends Env, S extends Schema, P extends strin
 			}
 		}
 	};
+	markDeprecatedDescriptions(combinedSpec);
+	return combinedSpec;
 }

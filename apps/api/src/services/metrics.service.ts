@@ -6,6 +6,7 @@ import type {
 	ResourceSnapshot,
 	SaturationSnapshot
 } from '../types.js';
+import { fetchQuickwitBuildInfo } from '../lib/quickwit.js';
 import { fetchQuickwitMetrics } from '../lib/quickwit-metrics.js';
 
 function findMetric(metrics: PromMetric[], name: string): PromMetric | null {
@@ -36,10 +37,15 @@ function buildInfo(metrics: PromMetric[]): QuickwitBuildInfo {
 }
 
 function resources(metrics: PromMetric[]): ResourceSnapshot {
+	const memoryResidentBytes = gaugeValue(
+		findMetric(metrics, 'quickwit_memory_resident_bytes') ??
+			findMetric(metrics, 'process_resident_memory_bytes')
+	);
 	return {
-		memoryRssBytes: gaugeValue(findMetric(metrics, 'process_resident_memory_bytes')),
-		fdsOpen: gaugeValue(findMetric(metrics, 'process_open_fds')),
-		fdsMax: gaugeValue(findMetric(metrics, 'process_max_fds')),
+		memoryResidentBytes,
+		memoryRssBytes: memoryResidentBytes,
+		fdsOpen: null,
+		fdsMax: null,
 		walDiskBytes: gaugeValue(findMetric(metrics, 'quickwit_ingest_wal_disk_used_bytes'))
 	};
 }
@@ -63,14 +69,18 @@ function saturation(metrics: PromMetric[]): SaturationSnapshot {
 export async function getQuickwitMetrics(): Promise<QuickwitSnapshot> {
 	const { metrics } = await fetchQuickwitMetrics();
 	const now = Date.now();
-
-	const startTime = gaugeValue(findMetric(metrics, 'process_start_time_seconds'));
-	const uptimeSeconds = startTime === null ? null : Math.max(0, now / 1000 - startTime);
+	const metricBuildInfo = buildInfo(metrics);
+	const build =
+		metricBuildInfo.version !== null ||
+		metricBuildInfo.commitHash !== null ||
+		metricBuildInfo.buildDate !== null
+			? metricBuildInfo
+			: ((await fetchQuickwitBuildInfo()) ?? metricBuildInfo);
 
 	return {
 		fetchedAt: new Date(now).toISOString(),
-		build: buildInfo(metrics),
-		uptimeSeconds,
+		build,
+		uptimeSeconds: null,
 		resources: resources(metrics),
 		saturation: saturation(metrics)
 	};

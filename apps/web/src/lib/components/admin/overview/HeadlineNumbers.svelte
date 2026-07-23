@@ -10,19 +10,12 @@
 		} | null;
 		live: {
 			cpuBusyRatio: number | null;
-			memoryRssBytes: number | null;
-			fdsOpen: number | null;
-			fdsMax: number | null;
+			memoryResidentBytes: number | null;
 			walDiskBytes: number | null;
 		} | null;
 	};
 
 	let { totals, live }: Props = $props();
-
-	const fdsUtilization = $derived.by(() => {
-		if (!live || live.fdsOpen === null || live.fdsMax === null || live.fdsMax === 0) return null;
-		return live.fdsOpen / live.fdsMax;
-	});
 
 	const cellClass = 'flex flex-col gap-1 px-4 py-3';
 	const seamClass = 'md:border-l md:border-line';
@@ -30,7 +23,7 @@
 	const valueClass = 'text-xl tabular-nums whitespace-nowrap';
 </script>
 
-<div class="border-line rounded-box grid grid-cols-2 overflow-hidden border md:grid-cols-8">
+<div class="border-line rounded-box grid grid-cols-2 overflow-hidden border md:grid-cols-7">
 	<!-- Historical group (from our DB snapshots) -->
 	<div class={cellClass}>
 		<span class={labelClass}>Indexes</span>
@@ -56,11 +49,7 @@
 	</div>
 	<div class={cellClass}>
 		<span class={labelClass}>Memory</span>
-		<span class={valueClass}>{formatOrDash(live?.memoryRssBytes, formatBytes)}</span>
-	</div>
-	<div class={cellClass}>
-		<span class={labelClass}>FDs</span>
-		<span class={valueClass}>{formatOrDash(fdsUtilization, formatPercent)}</span>
+		<span class={valueClass}>{formatOrDash(live?.memoryResidentBytes, formatBytes)}</span>
 	</div>
 	<div class={cellClass}>
 		<span class={labelClass}>WAL</span>

@@ -103,9 +103,19 @@ export const QuickwitBuildInfoResponse = named(
 export const ResourceSnapshotResponse = named(
 	'ResourceSnapshotResponse',
 	v.object({
-		memoryRssBytes: v.nullable(v.number()),
-		fdsOpen: v.nullable(v.number()),
-		fdsMax: v.nullable(v.number()),
+		memoryResidentBytes: v.nullable(v.number()),
+		memoryRssBytes: v.pipe(
+			v.nullable(v.number()),
+			v.metadata({ description: 'Deprecated compatibility alias for memoryResidentBytes.' })
+		),
+		fdsOpen: v.pipe(
+			v.nullable(v.number()),
+			v.metadata({ description: 'Deprecated; unavailable in Quickwit 0.9.' })
+		),
+		fdsMax: v.pipe(
+			v.nullable(v.number()),
+			v.metadata({ description: 'Deprecated; unavailable in Quickwit 0.9.' })
+		),
 		walDiskBytes: v.nullable(v.number())
 	})
 );
@@ -120,7 +130,10 @@ export const QuickwitSnapshotResponse = named(
 	v.object({
 		fetchedAt: v.string(),
 		build: QuickwitBuildInfoResponse,
-		uptimeSeconds: v.nullable(v.number()),
+		uptimeSeconds: v.pipe(
+			v.nullable(v.number()),
+			v.metadata({ description: 'Deprecated; unavailable in Quickwit 0.9.' })
+		),
 		resources: ResourceSnapshotResponse,
 		saturation: SaturationSnapshotResponse
 	})

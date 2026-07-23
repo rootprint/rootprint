@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { formatDurationSeconds, formatOrDash } from '$lib/utils/format';
 	import type { ConnectionState } from '$lib/types';
 
 	type Props = {
@@ -8,10 +7,9 @@
 		version: string | null;
 		commitHash: string | null;
 		buildDate: string | null;
-		uptimeSeconds: number | null;
 	};
 
-	let { state, endpoint, version, commitHash, buildDate, uptimeSeconds }: Props = $props();
+	let { state, endpoint, version, commitHash, buildDate }: Props = $props();
 
 	const STATE_META: Record<ConnectionState, { dot: string; label: string; text: string }> = {
 		connected: { dot: 'bg-success', label: 'Connected', text: 'text-base-content' },
@@ -20,7 +18,6 @@
 	};
 
 	const meta = $derived(STATE_META[state]);
-	const uptimeText = $derived(formatOrDash(uptimeSeconds, formatDurationSeconds));
 	// Strip scheme so the ribbon stays calm; full endpoint is in the title (hover).
 	const endpointShort = $derived(endpoint ? endpoint.replace(/^https?:\/\//, '') : null);
 	const versionTooltip = $derived.by(() => {
@@ -57,7 +54,5 @@
 		<span class="text-base-content/60 font-mono" title={endpoint ?? undefined}
 			>{endpointShort ?? '—'}</span
 		>
-		<span class="text-base-content/20">·</span>
-		<span>up {uptimeText}</span>
 	</div>
 </div>

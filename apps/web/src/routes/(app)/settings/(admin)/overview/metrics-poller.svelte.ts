@@ -36,9 +36,7 @@ export class MetricsPoller {
 		if (!m) return null;
 		return {
 			cpuBusyRatio: m.saturation.cpuBusyRatio,
-			memoryRssBytes: m.resources.memoryRssBytes,
-			fdsOpen: m.resources.fdsOpen,
-			fdsMax: m.resources.fdsMax,
+			memoryResidentBytes: m.resources.memoryResidentBytes,
 			walDiskBytes: m.resources.walDiskBytes
 		};
 	}

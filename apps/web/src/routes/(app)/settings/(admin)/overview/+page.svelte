@@ -143,7 +143,6 @@
 			version={poller.metrics?.build.version ?? null}
 			commitHash={poller.metrics?.build.commitHash ?? null}
 			buildDate={poller.metrics?.build.buildDate ?? null}
-			uptimeSeconds={poller.metrics?.uptimeSeconds ?? null}
 		/>
 
 		<HeadlineNumbers totals={cluster?.totals ?? null} live={poller.liveSummary} />

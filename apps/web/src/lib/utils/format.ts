@@ -19,17 +19,6 @@ export function formatBytes(n: number): string {
 	return `${(n / 1024 ** 5).toFixed(2)}${NBSP}PiB`;
 }
 
-export function formatDurationSeconds(s: number): string {
-	if (s < 1) return `${(s * 1000).toFixed(0)} ms`;
-	if (s < 60) return `${s.toFixed(2)} s`;
-	const days = Math.floor(s / 86400);
-	const hours = Math.floor((s % 86400) / 3600);
-	const mins = Math.floor((s % 3600) / 60);
-	if (days > 0) return `${days}d ${hours}h`;
-	if (hours > 0) return `${hours}h ${mins}m`;
-	return `${mins}m`;
-}
-
 export function formatDurationMs(ms: number | null | undefined): string {
 	if (ms === null || ms === undefined || !Number.isFinite(ms)) return '—';
 	if (ms === 0) return '0 ms';
