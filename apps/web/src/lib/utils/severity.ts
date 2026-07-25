@@ -2,6 +2,7 @@ const SEVERITY_ORDER = [
 	'trace',
 	'debug',
 	'info',
+	'information',
 	'warn',
 	'warning',
 	'error',

@@ -11,6 +11,7 @@ const LEVEL_COLORS: Record<string, string> = {
 	warning: '#D4860A',
 	warn: '#D4860A',
 	info: '#0090D0',
+	information: '#0090D0',
 	debug: '#7060C8',
 	trace: '#7060C8',
 	unknown: '#8B8D98'
