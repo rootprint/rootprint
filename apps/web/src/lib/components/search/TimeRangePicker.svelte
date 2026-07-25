@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { format, fromUnixTime, getUnixTime } from 'date-fns';
-	import { ChevronDown } from 'lucide-svelte';
+	import { ChevronDown, Zap } from 'lucide-svelte';
 
 	import {
 		formatTimeRangeLabel,
@@ -14,13 +14,21 @@
 
 	let {
 		value,
-		onChange
+		live,
+		liveDisabledReason = null,
+		onChange,
+		onLiveToggle
 	}: {
 		value: TimeRange;
+		live: boolean;
+		liveDisabledReason?: string | null;
 		onChange: (next: TimeRange) => void;
+		onLiveToggle: () => void;
 	} = $props();
 
-	const label = $derived(formatTimeRangeLabel(value));
+	const label = $derived(
+		live && value.type === 'relative' ? `Live tail · ${value.preset}` : formatTimeRangeLabel(value)
+	);
 
 	let details = $state<HTMLDetailsElement | null>(null);
 
@@ -96,6 +104,23 @@
 
 	<div class="dropdown-content border-line rounded-box bg-base-100 z-50 mt-1 flex border">
 		<div class="border-line flex w-44 flex-col border-r p-3">
+			<button
+				type="button"
+				class="-mx-3 flex items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 {live
+					? 'bg-base-content text-base-100'
+					: 'text-base-content hover:bg-base-200'}"
+				disabled={liveDisabledReason !== null}
+				title={liveDisabledReason ?? undefined}
+				aria-pressed={live}
+				onclick={() => {
+					onLiveToggle();
+					close();
+				}}
+			>
+				<Zap class="h-3 w-3 shrink-0" />
+				<span>Live tail</span>
+			</button>
+			<div class="border-line -mx-3 mt-1.5 mb-2 border-t"></div>
 			<p class="eyebrow mb-2">Ranges</p>
 			{#each PRESET_OPTIONS as preset (preset)}
 				{@const active = value.type === 'relative' && value.preset === preset}

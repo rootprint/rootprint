@@ -24,6 +24,7 @@
 	import type { LogHit } from '$lib/types';
 
 	const SCROLL_TRIGGER_PX = 1500;
+	const LIVE_SCROLL_STOP_PX = 4;
 
 	let { data } = $props();
 	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
@@ -81,6 +82,7 @@
 
 	function handleOsScroll(os: OverlayScrollbars) {
 		const v = os.elements().viewport;
+		if (store.liveActive && v.scrollTop > LIVE_SCROLL_STOP_PX) store.setLive(false);
 		if (v.scrollHeight - v.scrollTop - v.clientHeight < SCROLL_TRIGGER_PX) {
 			store.maybeLoadMore();
 		}

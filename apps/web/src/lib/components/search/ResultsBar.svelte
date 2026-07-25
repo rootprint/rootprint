@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Download } from 'lucide-svelte';
+	import { Download, Zap } from 'lucide-svelte';
 	import ExportDialog from './ExportDialog.svelte';
 	import DisplaySettings from './DisplaySettings.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
@@ -35,6 +35,22 @@
 	{/if}
 
 	<div class="ml-auto flex items-center gap-1">
+		{#if store.liveEligible}
+			<button
+				type="button"
+				class="btn btn-xs gap-1.5 {store.liveActive ? 'btn-primary' : 'btn-ghost'}"
+				aria-pressed={store.liveActive}
+				onclick={() => store.setLive(!store.liveActive)}
+			>
+				{#if store.liveActive}
+					<span class="bg-primary-content h-1.5 w-1.5 animate-pulse rounded-full"></span>
+					Live
+				{:else}
+					<Zap class="h-3 w-3" />
+					{store.everLive ? 'Resume live tail' : 'Live tail'}
+				{/if}
+			</button>
+		{/if}
 		<button
 			type="button"
 			class="btn btn-xs btn-square btn-ghost"
