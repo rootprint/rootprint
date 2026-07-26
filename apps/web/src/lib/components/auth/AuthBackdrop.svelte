@@ -11,10 +11,11 @@
 >
 	<a
 		href="/"
-		class="absolute bottom-[calc(100%_+_1rem)] left-0 flex items-center"
+		class="absolute bottom-[calc(100%_+_1rem)] left-0 flex items-center gap-2"
 		aria-label="Rootprint home"
 	>
-		<img src="/rootprint-wordmark.png" alt="Rootprint" class="h-7 object-contain" />
+		<img src="/logo.png" alt="" class="h-7 w-7 object-contain" />
+		<span class="text-lg font-semibold tracking-tight">Rootprint</span>
 	</a>
 	{@render children()}
 </div>

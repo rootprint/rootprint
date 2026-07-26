@@ -30,11 +30,10 @@
 		: 'w-60'}"
 >
 	<div class="border-line flex h-12 items-center border-b {collapsed ? 'justify-center' : 'px-4'}">
-		<a href="/" class="flex items-center hover:opacity-80" aria-label="Rootprint home">
-			{#if collapsed}
-				<img src="/logo.png" alt="Rootprint" class="h-6 w-6 object-contain" />
-			{:else}
-				<img src="/rootprint-wordmark.png" alt="Rootprint" class="h-6 object-contain" />
+		<a href="/" class="flex items-center gap-2 hover:opacity-80" aria-label="Rootprint home">
+			<img src="/logo.png" alt="" class="h-6 w-6 object-contain" />
+			{#if !collapsed}
+				<span class="text-base font-semibold tracking-tight">Rootprint</span>
 			{/if}
 		</a>
 	</div>
