@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import { untrack } from 'svelte';
 import { toast } from 'svelte-sonner';
 import type {
 	FieldConfig,
@@ -29,7 +30,8 @@ import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
 
-// Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
+const LIVE_INTERVAL_MS = 5000;
+
 const PREF_SAVE_DEBOUNCE_MS = 300;
 
 export interface SearchStoreOptions {
@@ -48,6 +50,10 @@ export class SearchStore {
 	#prefetching = $state(false);
 	searchError = $state<string | null>(null);
 	hasSearched = $state(false);
+	live = $state(false);
+	everLive = $state(false);
+	liveEligible = $derived(this.sortDirection === 'desc' && this.timeRange.type === 'relative');
+	liveActive = $derived(this.live && this.liveEligible);
 
 	fieldConfig = $state<FieldConfig | null>(null);
 	configError = $state<string | null>(null);
@@ -184,17 +190,18 @@ export class SearchStore {
 		return composeQuery(this.query, this.filters);
 	}
 
-	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
 		return this.#snapshotStartTs;
 	}
 
-	/** Absolute end of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedEndTs(): number | undefined {
 		return this.#snapshotEndTs;
 	}
 
 	navigateQuery(partial: Partial<ParsedQuery>, opts?: { push?: boolean }): void {
+		if (partial.sortDirection === 'asc' || partial.timeRange?.type === 'absolute') {
+			this.live = false;
+		}
 		this.#searchAbort?.abort();
 		this.#histogramAbort?.abort();
 		const url = buildQueryUrl(page.url.searchParams, partial);
@@ -284,6 +291,8 @@ export class SearchStore {
 		this.numHits = 0;
 		this.elapsedTimeMicros = 0;
 		this.rawHits = [];
+		this.live = false;
+		this.everLive = false;
 		this.#snapshotStartTs = undefined;
 		this.#snapshotEndTs = undefined;
 		this.searchError = null;
@@ -295,6 +304,11 @@ export class SearchStore {
 			{ sortDirection: this.sortDirection === 'desc' ? 'asc' : 'desc' },
 			{ push: true }
 		);
+	}
+
+	setLive(next: boolean): void {
+		this.live = next;
+		if (next) this.everLive = true;
 	}
 
 	/**
@@ -353,26 +367,32 @@ export class SearchStore {
 			this.#fieldsFetchedFor = key;
 			this.#loadFields(active, cfg);
 		});
+
+		$effect(() => {
+			if (!this.liveActive) return;
+			untrack(() => this.#tick('fresh'));
+			const timer = setInterval(() => this.#tick('live'), LIVE_INTERVAL_MS);
+			return () => clearInterval(timer);
+		});
 	}
 
 	async #runSearch(
-		mode: 'fresh' | 'append' | 'prefetch' = 'fresh',
+		mode: 'fresh' | 'append' | 'prefetch' | 'live' = 'fresh',
 		timeWindow?: { startTs?: number; endTs?: number }
 	): Promise<void> {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
 
-		const silent = mode === 'prefetch';
-		const append = mode !== 'fresh';
+		const silent = mode === 'prefetch' || mode === 'live';
+		const append = mode === 'append' || mode === 'prefetch';
 
 		this.#searchAbort?.abort();
 		const controller = new AbortController();
 		this.#searchAbort = controller;
 		const requestId = this.#searchGuard.next();
 
-		if (silent) {
-			this.#prefetching = true;
-		} else {
+		if (mode === 'prefetch') this.#prefetching = true;
+		if (!silent) {
 			this.loading = append ? 'appending' : 'fresh';
 			this.searchError = null;
 		}
@@ -390,8 +410,6 @@ export class SearchStore {
 				const resolved = timeWindow ?? resolveTimeRange(buildTimeParams(this.timeRange));
 				startTs = resolved.startTs;
 				endTs = resolved.endTs;
-				this.#snapshotStartTs = startTs;
-				this.#snapshotEndTs = endTs;
 			}
 
 			const result = await searchLogs(
@@ -404,19 +422,25 @@ export class SearchStore {
 					limit: BATCH_SIZE,
 					offset: append ? this.rawHits.length : 0
 				},
-				{ countAll: mode === 'fresh', signal: controller.signal }
+				{ countAll: !append, signal: controller.signal }
 			);
 
 			if (!this.#searchGuard.isCurrent(requestId)) return;
+
+			if (!append) {
+				this.#snapshotStartTs = startTs;
+				this.#snapshotEndTs = endTs;
+			}
 
 			if (append) {
 				this.rawHits = [...this.rawHits, ...result.rawHits];
 			} else {
 				this.rawHits = result.rawHits;
 				this.hasSearched = true;
-				this.#onFreshSearch?.();
+				this.searchError = null;
+				if (mode === 'fresh') this.#onFreshSearch?.();
 			}
-			if (mode === 'fresh') {
+			if (!append) {
 				this.numHits = result.numHits;
 				this.elapsedTimeMicros = result.elapsedTimeMicros;
 			}
@@ -427,7 +451,12 @@ export class SearchStore {
 		} catch (e) {
 			if (isAbortError(e)) return;
 			if (!this.#searchGuard.isCurrent(requestId)) return;
-			if (silent) return;
+			if (mode === 'prefetch') return;
+			if (mode === 'live') {
+				this.live = false;
+				toast.error(e instanceof Error ? e.message : 'Live tail stopped');
+				return;
+			}
 			this.searchError = e instanceof Error ? e.message : 'Search failed';
 			if (mode === 'fresh') {
 				this.rawHits = [];
@@ -437,11 +466,11 @@ export class SearchStore {
 		} finally {
 			if (this.#searchGuard.isCurrent(requestId)) {
 				this.#prefetching = false;
-				if (!silent) this.loading = 'idle';
+				this.loading = 'idle';
 			}
 		}
 
-		if (success && mode === 'fresh') {
+		if (success && mode === 'fresh' && !this.liveActive) {
 			queueMicrotask(() => {
 				if (!this.#searchGuard.isCurrent(requestId)) return;
 				if (this.#canFetchMore()) {
@@ -460,9 +489,13 @@ export class SearchStore {
 		void this.#runSearch('prefetch');
 	}
 
-	async #fetchHistogram(timeWindow: { startTs?: number; endTs?: number }): Promise<void> {
+	async #fetchHistogram(
+		timeWindow: { startTs?: number; endTs?: number },
+		opts?: { silent?: boolean }
+	): Promise<void> {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
+		const silent = opts?.silent ?? false;
 
 		const fetchKey = `${this.selectedIndex}|${this.composedQuery}|${serializeTimeRange(this.timeRange)}`;
 		if (fetchKey === this.#histogramFetchedFor) {
@@ -474,8 +507,10 @@ export class SearchStore {
 		const controller = new AbortController();
 		this.#histogramAbort = controller;
 		const requestId = this.#histogramGuard.next();
-		this.histogramLoading = true;
-		this.histogramError = null;
+		if (!silent) {
+			this.histogramLoading = true;
+			this.histogramError = null;
+		}
 
 		try {
 			const result = await fetchHistogram(
@@ -489,6 +524,7 @@ export class SearchStore {
 			);
 			if (!this.#histogramGuard.isCurrent(requestId)) return;
 			this.histogramBuckets = result.buckets;
+			this.histogramError = null;
 			this.#histogramFetchedFor = fetchKey;
 
 			const newKey = `${this.selectedIndex}|${this.query}|${serializeTimeRange(this.timeRange)}`;
@@ -503,11 +539,19 @@ export class SearchStore {
 			if (isAbortError(e)) return;
 			if (!this.#histogramGuard.isCurrent(requestId)) return;
 			this.#histogramFetchedFor = null;
+			if (silent) return;
 			this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
 			this.histogramBuckets = [];
 		} finally {
 			if (this.#histogramGuard.isCurrent(requestId)) this.histogramLoading = false;
 		}
+	}
+
+	#tick(mode: 'fresh' | 'live'): void {
+		const timeWindow = resolveTimeRange(buildTimeParams(this.timeRange));
+		void this.#runSearch(mode, timeWindow);
+		this.#histogramFetchedFor = null;
+		void this.#fetchHistogram(timeWindow, { silent: mode === 'live' });
 	}
 
 	async #loadConfig(indexId: string): Promise<void> {

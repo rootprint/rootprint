@@ -203,7 +203,21 @@
 
 	<TimeRangePicker
 		value={store.timeRange}
-		onChange={(next) => store.navigateQuery({ timeRange: next }, { push: true })}
+		live={store.liveActive}
+		liveDisabledReason={store.sortDirection === 'asc' ? 'Live tail needs newest-first sort' : null}
+		onChange={(next) => {
+			store.navigateQuery({ timeRange: next }, { push: true });
+		}}
+		onLiveToggle={() => {
+			if (store.liveActive) {
+				store.setLive(false);
+				return;
+			}
+			if (store.timeRange.type !== 'relative') {
+				store.navigateQuery({ timeRange: { type: 'relative', preset: '15m' } }, { push: true });
+			}
+			store.setLive(true);
+		}}
 	/>
 
 	<div class="ml-auto flex items-center gap-1">
