@@ -40,7 +40,7 @@ async function captureSnapshots(
 			});
 		} catch (err) {
 			failed += 1;
-			const code = err instanceof QuickwitError ? (err as QuickwitError).code : 'UNKNOWN';
+			const code = err instanceof QuickwitError ? err.code : 'UNKNOWN';
 			logger.warn({ err, indexId, code }, 'index stats describe failed');
 		}
 	}

@@ -30,7 +30,7 @@
         "hono-rate-limiter": "^0.5.3",
         "pg": "^8.22.0",
         "pino": "^10.3.1",
-        "quickwit-js": "^0.3.7",
+        "quickwit-js": "^0.4.0",
         "valibot": "^1.4.2",
       },
       "devDependencies": {
@@ -639,7 +639,7 @@
 
     "quick-format-unescaped": ["quick-format-unescaped@4.0.4", "", {}, "sha512-tYC1Q1hgyRuHgloV/YXs2w15unPVh8qfu/qCTfhTYamaw7fyhumKa2yGpdSo87vY32rIclj+4fWYQXUMs9EHvg=="],
 
-    "quickwit-js": ["quickwit-js@0.3.7", "", { "peerDependencies": { "typescript": "^5" } }, "sha512-snBeRpM9POyIL8Y5dYAWP+IlSNKd+gedGKpo4LjWyBX8toh5kzzvY5+hVd9hsEtMz99IBeNTP54NKVnVsfY71A=="],
+    "quickwit-js": ["quickwit-js@0.4.0", "", {}, "sha512-onsQ044zf9V1gf29iwzM5bZ2zXQCDRVGpREKjdeEitxDvlbNlIZt1XEaSSUYxhdxK4N9t3yMxOyzTRs2Tr9awQ=="],
 
     "readdirp": ["readdirp@4.1.2", "", {}, "sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg=="],
 

@@ -1,9 +1,8 @@
-import type { QuickwitClient } from 'quickwit-js';
+import type { IndexStats, QuickwitClient } from 'quickwit-js';
 
 import { config } from '../config.js';
 import type { Db } from '../db/index.js';
 import type { ClusterOverview, PerIndexOverview } from '../types.js';
-import { serviceUnavailable } from '../utils/http-error.js';
 import { getLatestSnapshotsByIndex } from './index-stats.service.js';
 import { listAllIndexes } from './index.service.js';
 import { listIndexes as listQuickwitIndexes } from './quickwit-index.service.js';
@@ -22,7 +21,7 @@ export async function getClusterDocumentStatus(
 	let hasError = false;
 	for (const index of indexes) {
 		// Sequential by design: stop issuing Quickwit requests as soon as one index has data.
-		let stats: Awaited<ReturnType<QuickwitClient['describeIndex']>>;
+		let stats: IndexStats;
 		try {
 			// eslint-disable-next-line no-await-in-loop
 			stats = await qw.describeIndex(index.indexId);
@@ -42,11 +41,9 @@ export async function getClusterDocumentStatus(
 }
 
 export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<ClusterOverview> {
-	const healthRaw = await qw.health().catch(() => {
-		throw serviceUnavailable('Quickwit health check failed', 'UPSTREAM_UNAVAILABLE', 5);
-	});
-
-	const [indexes, snapshots] = await Promise.all([
+	const [healthRaw, clusterSnapshot, indexes, snapshots] = await Promise.all([
+		qw.health(),
+		qw.getCluster({ timeout: 1000 }).catch(() => null),
 		listAllIndexes(db, qw),
 		getLatestSnapshotsByIndex(db)
 	]);
@@ -84,7 +81,11 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 	return {
 		health: {
 			healthy: healthRaw.healthy,
-			endpoint: config.quickwitUrl
+			endpoint: config.quickwitUrl,
+			clusterId: clusterSnapshot?.cluster_id ?? null,
+			readyNodes: clusterSnapshot?.ready_nodes.length ?? null,
+			liveNodes: clusterSnapshot?.live_nodes.length ?? null,
+			deadNodes: clusterSnapshot?.dead_nodes.length ?? null
 		},
 		totals: {
 			indexCount: perIndex.length,

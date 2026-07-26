@@ -15,6 +15,7 @@ import type {
 import {
 	NotFoundError,
 	QuickwitError,
+	QuickwitErrorCode,
 	type CreateIndexRequest,
 	type DocMapping,
 	type FieldMapping,
@@ -297,8 +298,6 @@ function toDynamicMapping(dm: DynamicMapping): Record<string, unknown> {
 	};
 }
 
-type QwFieldMapping = FieldMapping & { coerce?: boolean; expand_dots?: boolean };
-
 const FIELD_KEY_RENAME: Record<string, string> = {
 	inputFormats: 'input_formats',
 	outputFormat: 'output_format',
@@ -306,14 +305,14 @@ const FIELD_KEY_RENAME: Record<string, string> = {
 	expandDots: 'expand_dots'
 };
 
-function toFieldMapping(input: FieldMappingInput, timestampField: string): QwFieldMapping {
+function toFieldMapping(input: FieldMappingInput, timestampField: string): FieldMapping {
 	const fm: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(input)) {
 		if (value !== undefined) fm[FIELD_KEY_RENAME[key] ?? key] = value;
 	}
 	if (input.name === timestampField) fm.fast = true;
 
-	return fm as unknown as QwFieldMapping;
+	return fm as unknown as FieldMapping;
 }
 
 function toCreateIndexRequest(input: CreateIndexInput): CreateIndexRequest {
@@ -363,8 +362,7 @@ export async function createIndex(
 		created = await qw.createIndex(toCreateIndexRequest(input));
 	} catch (err) {
 		if (err instanceof QuickwitError) {
-			const e = err as QuickwitError;
-			if (e.status === 409 || /already exists/i.test(e.message)) {
+			if (err.code === QuickwitErrorCode.CONFLICT || /already exists/i.test(err.message)) {
 				throw conflict('An index with this ID already exists.', 'INDEX_EXISTS', [
 					{ path: 'indexId', message: 'An index with this ID already exists.' }
 				]);
@@ -386,14 +384,12 @@ export async function updateIndexConfig(
 	existingFields: IndexField[],
 	input: UpdateQuickwitConfigInput
 ): Promise<void> {
-	// Explicit type arg: quickwit-js d.ts imports are extensionless, so its types
-	// degrade to error-types under NodeNext and generic inference yields unknown.
-	const meta = await withNotFound<IndexMetadata>(() => qw.getIndex(indexId), 'Index not found');
+	const meta = await withNotFound(() => qw.getIndex(indexId), 'Index not found');
 	const cfg = meta.index_config;
 	const doc = cfg.doc_mapping;
 
 	const existingNames = new Set<string>([
-		...doc.field_mappings.map((f: FieldMapping) => f.name),
+		...(doc.field_mappings ?? []).map((f) => f.name),
 		...existingFields.map((f) => f.name)
 	]);
 	const collisions = input.newFieldMappings
@@ -442,13 +438,10 @@ export async function updateIndexConfig(
 			index_field_presence: input.indexFieldPresence,
 			tag_fields: input.tagFields,
 			field_mappings: [
-				...doc.field_mappings,
+				...(doc.field_mappings ?? []),
 				...input.newFieldMappings.map((f) => toFieldMapping(f, ts))
 			]
 		};
-		// Untouched dynamic mapping keeps the raw stored value (via the doc spread) so
-		// config our UI can't represent (custom tokenizers, fast normalizer objects)
-		// survives unrelated doc edits. Non-dynamic mode always drops it.
 		if (dynamicMappingChanged || input.mode !== 'dynamic') {
 			if (
 				desiredDynamicMapping &&
@@ -489,9 +482,6 @@ export async function updateIndexConfig(
 		indexingSettings.commit_timeout_secs = input.commitTimeoutSecs;
 	}
 
-	// PUT is full-replacement: start from the raw config so unmodeled top-level
-	// fields (e.g. ingest_settings on newer Quickwit) survive, then override only
-	// the controlled pieces. The runtime spread copies props TS doesn't model.
 	const request = { ...cfg } as CreateIndexRequest;
 	if (!request.version) request.version = QUICKWIT_INDEX_CONFIG_VERSION;
 	request.doc_mapping = docMapping;

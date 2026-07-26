@@ -1,14 +1,12 @@
-import { QuickwitClient } from 'quickwit-js';
-import * as v from 'valibot';
+import { QuickwitClient, QuickwitError } from 'quickwit-js';
 
 import { config } from '../config.js';
-import { quickwitVersionResponseSchema } from '../schemas/quickwit.js';
 import type { QuickwitBuildInfo } from '../types.js';
 
 export const quickwit = new QuickwitClient({ endpoint: config.quickwitUrl });
 
 export function quickwitUrl(path: string): string {
-	return config.quickwitUrl.replace(/\/+$/, '') + path;
+	return quickwit.endpoint + path;
 }
 
 const VERSION_PATH = '/api/v1/version';
@@ -34,24 +32,22 @@ class PermanentProbeError extends Error {
 	}
 }
 
+function isPermanentProbeStatus(status: number | undefined): boolean {
+	return status !== undefined && status >= 400 && status < 500 && status !== 408 && status !== 429;
+}
+
 export async function probeQuickwit(): Promise<void> {
 	const url = quickwitUrl(VERSION_PATH);
 	let lastError: unknown;
 	for (let attempt = 1; attempt <= PROBE_RETRY; attempt++) {
 		try {
-			const res = await fetch(url, { signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) });
-			if (res.ok) return;
-			// 4xx (except 408 Request Timeout and 429 Too Many Requests) is a permanent
-			// configuration error; retrying won't help. Throw immediately with a clearer message.
-			if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) {
-				throw new PermanentProbeError(
-					`Quickwit at ${url} returned HTTP ${res.status}. Check QUICKWIT_URL — the path may be wrong or the endpoint isn't responding to version probes.`
-				);
-			}
-			lastError = new Error(`Quickwit returned ${res.status}`);
+			await quickwit.getVersion({ timeout: PROBE_TIMEOUT_MS });
+			return;
 		} catch (err) {
-			if (err instanceof PermanentProbeError) {
-				throw err;
+			if (err instanceof QuickwitError && isPermanentProbeStatus(err.status)) {
+				throw new PermanentProbeError(
+					`Quickwit at ${url} returned HTTP ${err.status}. Check QUICKWIT_URL — the path may be wrong or the endpoint isn't responding to version probes.`
+				);
 			}
 			lastError = err;
 		}
@@ -71,22 +67,14 @@ function nonEmpty(value: string | undefined): string | null {
 async function loadQuickwitBuildInfo(): Promise<QuickwitBuildInfo | null> {
 	let value: QuickwitBuildInfo | null = null;
 	try {
-		const res = await fetch(quickwitUrl(VERSION_PATH), {
-			signal: AbortSignal.timeout(BUILD_INFO_TIMEOUT_MS)
-		});
-		if (res.ok) {
-			const result = v.safeParse(quickwitVersionResponseSchema, await res.json());
-			if (result.success) {
-				const build = result.output.build;
-				const info = {
-					version: nonEmpty(build.version),
-					commitHash: nonEmpty(build.commit_short_hash) ?? nonEmpty(build.commit_hash),
-					buildDate: nonEmpty(build.build_date)
-				};
-				if (info.version !== null || info.commitHash !== null || info.buildDate !== null) {
-					value = info;
-				}
-			}
+		const { build } = await quickwit.getVersion({ timeout: BUILD_INFO_TIMEOUT_MS });
+		const info = {
+			version: nonEmpty(build.version),
+			commitHash: nonEmpty(build.commit_short_hash) ?? nonEmpty(build.commit_hash),
+			buildDate: nonEmpty(build.build_date)
+		};
+		if (info.version !== null || info.commitHash !== null || info.buildDate !== null) {
+			value = info;
 		}
 	} catch {
 		// Build identity is optional; metrics remain usable when this fallback fails.

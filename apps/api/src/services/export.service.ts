@@ -4,8 +4,6 @@ import { type QuickwitClient } from 'quickwit-js';
 
 import { EXPORT_MAX_ROWS } from '../constants.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
-import { translateQuickwitError } from '../utils/quickwit-error.js';
-import { applyTimeWindow } from './log.service.js';
 
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();
@@ -137,14 +135,13 @@ export async function buildExportBody(
 	const idx = qw.index(indexConfig.indexId);
 	const state = createFormatState();
 
-	const builder = idx
-		.query(q.q || '*')
-		.limit(EXPORT_MAX_ROWS)
-		.sortBy(indexConfig.timestampField, 'asc');
-	applyTimeWindow(builder, q.startTs, q.endTs);
-
-	const response = await idx.search(builder).catch(translateQuickwitError);
-	const hits = (response.hits ?? []) as Record<string, unknown>[];
+	const hits = await idx.searchHits(
+		idx
+			.query(q.q || '*')
+			.limit(EXPORT_MAX_ROWS)
+			.sortBy(indexConfig.timestampField, 'asc')
+			.timeRange(q.startTs, q.endTs)
+	);
 
 	switch (q.format) {
 		case 'json':
@@ -162,13 +159,7 @@ export async function preflightExport(
 	q: ExportLogsQueryInput
 ): Promise<ExportPreflightResult> {
 	const idx = qw.index(indexConfig.indexId);
-	const builder = idx
-		.query(q.q || '*')
-		.limit(0)
-		.countAll();
-	applyTimeWindow(builder, q.startTs, q.endTs);
-	const response = await idx.search(builder).catch(translateQuickwitError);
-	const numHits = response.num_hits ?? 0;
+	const numHits = await idx.count(idx.query(q.q || '*').timeRange(q.startTs, q.endTs));
 	const total = Math.min(numHits, EXPORT_MAX_ROWS);
 	const capped = numHits > EXPORT_MAX_ROWS;
 	return {

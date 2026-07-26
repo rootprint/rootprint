@@ -1,5 +1,5 @@
-import type { FieldMapping, FastFieldConfig, IndexMetadata, SourceConfig } from 'quickwit-js';
-import { NotFoundError } from 'quickwit-js';
+import type { FieldMapping, IndexMetadata } from 'quickwit-js';
+import { NotFoundError, isFastFieldEnabled } from 'quickwit-js';
 import type { QuickwitClient } from 'quickwit-js';
 import type {
 	DynamicMapping,
@@ -7,11 +7,6 @@ import type {
 	QuickwitIndexMetadata,
 	QuickwitSource
 } from '../types.js';
-
-function normalizeFast(value: FastFieldConfig | undefined): boolean | null {
-	if (value === undefined) return null;
-	return value !== false;
-}
 
 export function normalizeDynamicMapping(
 	dm: Record<string, unknown> | undefined | null
@@ -37,7 +32,7 @@ function flattenFieldMappings(mappings: FieldMapping[], prefix = ''): IndexField
 			result.push({
 				name: fullName,
 				type: f.type,
-				fast: normalizeFast(f.fast),
+				fast: isFastFieldEnabled(f),
 				description: f.description ?? null
 			});
 		}
@@ -55,12 +50,12 @@ function normalizeRetention(
 export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetadata {
 	const cfg = meta.index_config;
 	const doc = cfg.doc_mapping;
-	const sources: QuickwitSource[] = (meta.sources ?? []).map((s: SourceConfig) => ({
+	const sources: QuickwitSource[] = (meta.sources ?? []).map((s) => ({
 		sourceId: s.source_id,
 		sourceType: s.source_type,
 		enabled: s.enabled ?? true,
 		inputFormat: s.input_format ?? null,
-		numPipelines: s.num_pipelines ?? null,
+		numPipelines: 'num_pipelines' in s ? (s.num_pipelines ?? null) : null,
 		params: s.params ?? null,
 		vrlScript: s.transform?.script ?? null
 	}));

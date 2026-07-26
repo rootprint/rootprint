@@ -1,9 +1,10 @@
 import {
 	NotFoundError,
 	QuickwitError,
-	type IndexMetadata,
+	QuickwitErrorCode,
 	type QuickwitClient,
-	type SourceConfig
+	type SourceConfig,
+	type SourceConfigRequest
 } from 'quickwit-js';
 
 import type { IndexSource, QuickwitIndexMetadata, SourceDetail } from '../types.js';
@@ -70,16 +71,31 @@ function buildSourceParams(
 	}
 }
 
-function toSourceConfig(sourceId: string, input: UpdateSourceInput): SourceConfig {
-	return {
-		version: QUICKWIT_SOURCE_CONFIG_VERSION,
-		source_id: sourceId,
-		source_type: input.sourceType,
-		...(input.inputFormat ? { input_format: input.inputFormat } : {}),
-		...(input.numPipelines ? { num_pipelines: input.numPipelines } : {}),
-		...(input.vrlScript ? { transform: { script: input.vrlScript } } : {}),
-		params: buildSourceParams(input)
-	} as SourceConfig;
+function toSourceConfigRequest(
+	sourceId: string,
+	input: UpdateSourceInput,
+	current?: SourceConfig
+): SourceConfigRequest {
+	const cfg: Record<string, unknown> = { ...current };
+	cfg.version = QUICKWIT_SOURCE_CONFIG_VERSION;
+	cfg.source_id = sourceId;
+	cfg.source_type = input.sourceType;
+	if (current) cfg.enabled = current.enabled ?? true;
+
+	if (input.inputFormat) cfg.input_format = input.inputFormat;
+	else delete cfg.input_format;
+
+	if (input.numPipelines) cfg.num_pipelines = input.numPipelines;
+	else delete cfg.num_pipelines;
+
+	if (input.vrlScript) cfg.transform = { ...current?.transform, script: input.vrlScript };
+	else delete cfg.transform;
+
+	cfg.params = buildSourceParams(
+		input,
+		current ? ((current.params ?? {}) as Record<string, unknown>) : undefined
+	);
+	return cfg as unknown as SourceConfigRequest;
 }
 
 export async function createSource(
@@ -89,12 +105,11 @@ export async function createSource(
 ): Promise<IndexSource> {
 	let created: SourceConfig;
 	try {
-		created = await qw.index(indexId).createSource(toSourceConfig(input.sourceId, input));
+		created = await qw.index(indexId).createSource(toSourceConfigRequest(input.sourceId, input));
 	} catch (err) {
 		if (err instanceof NotFoundError) throw notFound('Index not found');
 		if (err instanceof QuickwitError) {
-			const e = err as QuickwitError;
-			if (e.status === 409 || /already (exists|used)/i.test(e.message)) {
+			if (err.code === QuickwitErrorCode.CONFLICT || /already (exists|used)/i.test(err.message)) {
 				throw conflict('A source with this ID already exists.', 'SOURCE_EXISTS', [
 					{ path: 'sourceId', message: 'A source with this ID already exists.' }
 				]);
@@ -181,41 +196,10 @@ async function getRawSourceConfig(
 	indexId: string,
 	sourceId: string
 ): Promise<SourceConfig> {
-	// Explicit type arg: see the matching note in index.service.ts.
-	const meta = await withNotFound<IndexMetadata>(() => qw.getIndex(indexId), 'Index not found');
-	const source = (meta.sources ?? []).find((s: SourceConfig) => s.source_id === sourceId);
+	const meta = await withNotFound(() => qw.getIndex(indexId), 'Index not found');
+	const source = (meta.sources ?? []).find((s) => s.source_id === sourceId);
 	if (!source) throw notFound('Source not found');
 	return source;
-}
-
-function mergeSourceConfig(
-	current: SourceConfig,
-	sourceId: string,
-	input: UpdateSourceInput
-): SourceConfig {
-	const merged: SourceConfig = {
-		...current,
-		version: QUICKWIT_SOURCE_CONFIG_VERSION,
-		source_id: sourceId,
-		source_type: input.sourceType,
-		enabled: current.enabled ?? true
-	};
-
-	if (input.inputFormat) merged.input_format = input.inputFormat;
-	else delete merged.input_format;
-
-	if (input.numPipelines) merged.num_pipelines = input.numPipelines;
-	else delete merged.num_pipelines;
-
-	if (input.vrlScript) {
-		merged.transform = { ...current.transform, script: input.vrlScript };
-	} else {
-		delete merged.transform;
-	}
-
-	merged.params = buildSourceParams(input, (current.params ?? {}) as Record<string, unknown>);
-
-	return merged;
 }
 
 export async function updateSource(
@@ -225,9 +209,8 @@ export async function updateSource(
 	input: UpdateSourceInput
 ): Promise<SourceDetail> {
 	const current = await getRawSourceConfig(qw, indexId, sourceId);
-	const merged = mergeSourceConfig(current, sourceId, input);
 	try {
-		await qw.index(indexId).updateSource(sourceId, merged);
+		await qw.index(indexId).updateSource(sourceId, toSourceConfigRequest(sourceId, input, current));
 	} catch (err) {
 		if (err instanceof NotFoundError) throw notFound('Source not found');
 		translateQuickwitError(err);

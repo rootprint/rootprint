@@ -7,9 +7,13 @@
 		version: string | null;
 		commitHash: string | null;
 		buildDate: string | null;
+		clusterId: string | null;
+		liveNodes: number | null;
+		deadNodes: number | null;
 	};
 
-	let { state, endpoint, version, commitHash, buildDate }: Props = $props();
+	let { state, endpoint, version, commitHash, buildDate, clusterId, liveNodes, deadNodes }: Props =
+		$props();
 
 	const STATE_META: Record<ConnectionState, { dot: string; label: string; text: string }> = {
 		connected: { dot: 'bg-success', label: 'Connected', text: 'text-base-content' },
@@ -25,6 +29,12 @@
 		if (commitHash) parts.push(`commit ${commitHash}`);
 		if (buildDate) parts.push(`built ${buildDate}`);
 		return parts.length > 0 ? parts.join(' · ') : null;
+	});
+	const endpointTooltip = $derived.by(() => {
+		const parts: string[] = [];
+		if (endpoint) parts.push(endpoint);
+		if (clusterId) parts.push(`cluster ${clusterId}`);
+		return parts.length > 0 ? parts.join(' · ') : undefined;
 	});
 </script>
 
@@ -51,8 +61,15 @@
 			<span class="text-base-content/60 font-mono">{version ?? '—'}</span>
 		{/if}
 		<span class="text-base-content/20">·</span>
-		<span class="text-base-content/60 font-mono" title={endpoint ?? undefined}
+		<span class="text-base-content/60 font-mono" title={endpointTooltip}
 			>{endpointShort ?? '—'}</span
 		>
+		{#if liveNodes !== null}
+			<span class="text-base-content/20">·</span>
+			<span class="text-base-content/60">{liveNodes} {liveNodes === 1 ? 'node' : 'nodes'}</span>
+			{#if deadNodes !== null && deadNodes > 0}
+				<span class="text-error">· {deadNodes} dead</span>
+			{/if}
+		{/if}
 	</div>
 </div>

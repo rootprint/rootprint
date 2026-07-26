@@ -143,7 +143,14 @@ export const QuickwitSnapshotResponse = named(
 
 export const ClusterHealthResponse = named(
 	'ClusterHealthResponse',
-	v.object({ healthy: v.boolean(), endpoint: v.string() })
+	v.object({
+		healthy: v.boolean(),
+		endpoint: v.string(),
+		clusterId: v.nullable(v.string()),
+		readyNodes: v.nullable(v.number()),
+		liveNodes: v.nullable(v.number()),
+		deadNodes: v.nullable(v.number())
+	})
 );
 
 export const ClusterTotalsResponse = named(

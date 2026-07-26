@@ -50,7 +50,7 @@
 		"hono-rate-limiter": "^0.5.3",
 		"pg": "^8.22.0",
 		"pino": "^10.3.1",
-		"quickwit-js": "^0.3.7",
+		"quickwit-js": "^0.4.0",
 		"valibot": "^1.4.2"
 	},
 	"devDependencies": {

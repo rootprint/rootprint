@@ -143,6 +143,9 @@
 			version={poller.metrics?.build.version ?? null}
 			commitHash={poller.metrics?.build.commitHash ?? null}
 			buildDate={poller.metrics?.build.buildDate ?? null}
+			clusterId={cluster?.health.clusterId ?? null}
+			liveNodes={cluster?.health.liveNodes ?? null}
+			deadNodes={cluster?.health.deadNodes ?? null}
 		/>
 
 		<HeadlineNumbers totals={cluster?.totals ?? null} live={poller.liveSummary} />

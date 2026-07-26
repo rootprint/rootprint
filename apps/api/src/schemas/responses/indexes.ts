@@ -9,7 +9,7 @@ export const IndexFieldSchema = named(
 	v.object({
 		name: v.string(),
 		type: v.string(),
-		fast: v.nullable(v.boolean()),
+		fast: v.boolean(),
 		description: v.nullable(v.string())
 	})
 );

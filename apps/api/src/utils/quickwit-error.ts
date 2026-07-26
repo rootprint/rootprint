@@ -3,9 +3,11 @@ import { NotFoundError, QuickwitError, QuickwitErrorCode } from 'quickwit-js';
 import {
 	HttpError,
 	badRequest,
+	conflict,
 	forbidden,
 	notFound,
 	serviceUnavailable,
+	tooManyRequests,
 	unauthorized
 } from './http-error.js';
 
@@ -32,6 +34,10 @@ export function quickwitErrorToHttp(err: QuickwitError): HttpError {
 			return unauthorized('Search backend rejected the request', 'QUICKWIT_UNAUTHORIZED');
 		case QuickwitErrorCode.FORBIDDEN:
 			return forbidden('Search backend rejected the request', 'QUICKWIT_FORBIDDEN');
+		case QuickwitErrorCode.CONFLICT:
+			return conflict(err.message, 'QUICKWIT_CONFLICT');
+		case QuickwitErrorCode.TOO_MANY_REQUESTS:
+			return tooManyRequests(err.message, 'UPSTREAM_RATE_LIMIT');
 		case QuickwitErrorCode.CONNECTION_ERROR:
 		case QuickwitErrorCode.TIMEOUT:
 		case QuickwitErrorCode.INTERNAL_SERVER_ERROR:

@@ -15,34 +15,23 @@ import type {
 	LogSearchResponse
 } from '../types.js';
 
-type TimeWindowBuilder = {
-	startTimestamp(t: number): unknown;
-	endTimestamp(t: number): unknown;
-};
-
-/** Applies optional start/end timestamps to a Quickwit search builder. */
-export function applyTimeWindow(
-	builder: TimeWindowBuilder,
-	startTs?: number,
-	endTs?: number
-): void {
-	if (startTs !== undefined) builder.startTimestamp(startTs);
-	if (endTs !== undefined) builder.endTimestamp(endTs);
-}
-
 function termsAgg(field: string, size: number) {
-	const agg = AggregationBuilder.terms(field, { size });
-	(agg.terms as { shard_size?: number }).shard_size = size;
-	return agg;
+	return AggregationBuilder.terms(field, { size, shardSize: size });
 }
 
 function isTruncated(agg: BucketAggregationResult | undefined): boolean {
 	return (agg?.sum_other_doc_count ?? 0) > 0;
 }
 
+function asBuckets(agg: BucketAggregationResult | undefined): AggregationBucket[] {
+	const buckets = agg?.buckets;
+	if (buckets === undefined) return [];
+	return Array.isArray(buckets) ? buckets : Object.values(buckets);
+}
+
 /** Maps terms-aggregation buckets to field-value entries, dropping empty-string keys. */
-function bucketsToEntries(buckets: AggregationBucket[] | undefined): FieldValueEntry[] {
-	return (buckets ?? []).flatMap((b) => {
+function bucketsToEntries(agg: BucketAggregationResult | undefined): FieldValueEntry[] {
+	return asBuckets(agg).flatMap((b) => {
 		const value = String(b.key);
 		return value === '' ? [] : [{ value, count: b.doc_count }];
 	});
@@ -72,9 +61,9 @@ export async function searchLogs(
 		.query(q.q ?? '*')
 		.limit(q.limit ?? 50)
 		.offset(q.offset ?? 0)
-		.sortBy(indexConfig.timestampField, q.sortOrder ?? 'desc');
+		.sortBy(indexConfig.timestampField, q.sortOrder ?? 'desc')
+		.timeRange(q.startTs, q.endTs);
 	if (q.countAll) builder.countAll();
-	applyTimeWindow(builder, q.startTs, q.endTs);
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	return {
 		hits: response.hits,
@@ -99,15 +88,15 @@ export async function histogramLogs(
 		.agg(
 			'histogram',
 			AggregationBuilder.dateHistogram(indexConfig.timestampField, interval, histogramOptions)
-		);
-	applyTimeWindow(builder, startTs, endTs);
-	const response = await idx.search(builder).catch(translateQuickwitError);
+		)
+		.timeRange(startTs, endTs);
+	const response = await idx.search(builder);
 	const agg = response.aggregations?.['histogram'] as BucketAggregationResult | undefined;
 	return {
-		buckets: (agg?.buckets ?? []).map((b: AggregationBucket) => {
+		buckets: asBuckets(agg).map((b) => {
 			const levelsAgg = (b as { levels?: BucketAggregationResult }).levels;
 			const levels: Record<string, number> = {};
-			for (const lb of levelsAgg?.buckets ?? []) {
+			for (const lb of asBuckets(levelsAgg)) {
 				levels[String(lb.key)] = lb.doc_count;
 			}
 			return {
@@ -128,12 +117,15 @@ export async function fieldValues(
 ): Promise<FieldValuesResponse> {
 	const { query = '*', startTs, endTs, limit = FIELD_VALUES_DEFAULT } = params;
 	const idx = qw.index(indexConfig.indexId);
-	const builder = idx.query(query).limit(0).agg('values', termsAgg(field, limit));
-	applyTimeWindow(builder, startTs, endTs);
-	const response = await idx.search(builder).catch(translateQuickwitError);
+	const builder = idx
+		.query(query)
+		.limit(0)
+		.agg('values', termsAgg(field, limit))
+		.timeRange(startTs, endTs);
+	const response = await idx.search(builder);
 	const agg = response.aggregations?.['values'] as BucketAggregationResult | undefined;
 	return {
-		values: bucketsToEntries(agg?.buckets),
+		values: bucketsToEntries(agg),
 		truncated: isTruncated(agg)
 	};
 }
@@ -189,12 +181,11 @@ export async function fieldValuesBulk(
 	const groupResults = await Promise.all(
 		groups.map(async (group) => {
 			const composed = composeQuery(query, group.effectiveFilters);
-			const builder = idx.query(composed).limit(0);
+			const builder = idx.query(composed).limit(0).timeRange(startTs, endTs);
 			for (const field of group.fields) {
 				builder.agg(field, termsAgg(field, limit));
 			}
-			applyTimeWindow(builder, startTs, endTs);
-			const response = await idx.search(builder).catch(translateQuickwitError);
+			const response = await idx.search(builder);
 			return { group, response };
 		})
 	);
@@ -206,7 +197,7 @@ export async function fieldValuesBulk(
 		elapsedTimeMicros += response.elapsed_time_micros ?? 0;
 		for (const field of group.fields) {
 			const agg = response.aggregations?.[field] as BucketAggregationResult | undefined;
-			values[field] = bucketsToEntries(agg?.buckets);
+			values[field] = bucketsToEntries(agg);
 			truncated[field] = isTruncated(agg);
 		}
 	}

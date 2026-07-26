@@ -555,16 +555,60 @@
 			},
 			"ClusterHealthResponse": {
 				"properties": {
+					"clusterId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"deadNodes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"endpoint": {
 						"type": "string"
 					},
 					"healthy": {
 						"type": "boolean"
+					},
+					"liveNodes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"readyNodes": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
 					}
 				},
 				"required": [
 					"healthy",
-					"endpoint"
+					"endpoint",
+					"clusterId",
+					"readyNodes",
+					"liveNodes",
+					"deadNodes"
 				],
 				"type": "object"
 			},
@@ -1059,14 +1103,7 @@
 						]
 					},
 					"fast": {
-						"anyOf": [
-							{
-								"type": "boolean"
-							},
-							{
-								"type": "null"
-							}
-						]
+						"type": "boolean"
 					},
 					"name": {
 						"type": "string"
