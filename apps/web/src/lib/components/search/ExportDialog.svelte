@@ -14,7 +14,7 @@
 		composedQuery: string;
 		startTs: number | undefined;
 		endTs: number | undefined;
-		numHits: number;
+		numHits: number | null;
 		open?: boolean;
 	};
 
@@ -40,7 +40,7 @@
 	let lockedQuery = $state('*');
 	let lockedStartTs = $state<number | undefined>(undefined);
 	let lockedEndTs = $state<number | undefined>(undefined);
-	let lockedNumHits = $state(0);
+	let lockedNumHits = $state<number | null>(null);
 
 	const FORMATS: { value: ExportFormat; label: string }[] = [
 		{ value: 'json', label: 'JSON' },
@@ -69,15 +69,18 @@
 		lockedIndexId !== null &&
 			lockedStartTs !== undefined &&
 			lockedEndTs !== undefined &&
-			lockedNumHits > 0 &&
+			lockedNumHits !== 0 &&
 			dialogState !== 'preflighting'
 	);
 
-	const previewTotal = $derived(Math.min(lockedNumHits, EXPORT_MAX_ROWS));
-	const previewCapped = $derived(lockedNumHits > EXPORT_MAX_ROWS);
+	const previewTotal = $derived(
+		lockedNumHits === null ? null : Math.min(lockedNumHits, EXPORT_MAX_ROWS)
+	);
+	const previewCapped = $derived(lockedNumHits !== null && lockedNumHits > EXPORT_MAX_ROWS);
 
 	function exportLabel(f: ExportFormat): string {
 		const upper = f === 'json' ? 'JSON' : f === 'csv' ? 'CSV' : 'Text';
+		if (previewTotal === null) return `Export as ${upper}`;
 		return `Export ${previewTotal.toLocaleString()} logs as ${upper}`;
 	}
 
@@ -149,9 +152,11 @@
 			</div>
 		</div>
 
-		<p class="text-base-content/70 text-sm">
-			{lockedNumHits.toLocaleString()} logs match your search
-		</p>
+		{#if lockedNumHits !== null}
+			<p class="text-base-content/70 text-sm">
+				{lockedNumHits.toLocaleString()} logs match your search
+			</p>
+		{/if}
 
 		{#if previewCapped}
 			<div

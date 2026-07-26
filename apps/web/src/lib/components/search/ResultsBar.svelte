@@ -21,11 +21,11 @@
 <div
 	class="border-base-content/10 bg-base-100 text-base-content/50 flex items-center gap-1.5 border-b px-3 py-1.5 text-[12px] tracking-wider uppercase"
 >
-	{#if store.loading === 'fresh'}
+	{#if store.loading === 'fresh' || store.histogramLoading}
 		<span class="loading loading-spinner loading-xs"></span>
 		<span>Searching…</span>
 	{:else}
-		<span class="text-base-content/80">{store.numHits.toLocaleString()}</span>
+		<span class="text-base-content/80">{store.numHits?.toLocaleString() ?? '—'}</span>
 		<span>logs found</span>
 		{#if store.hasSearched && store.elapsedTimeMicros > 0}
 			<span class="text-base-content/30">·</span>

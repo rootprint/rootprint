@@ -39,10 +39,12 @@ export async function fetchHistogram(
 
 	// Quickwit's date_histogram returns `key` in ms; normalize to seconds.
 	const bucketMap = new Map<number, { levels: Record<string, number>; count: number }>();
+	let totalDocCount = 0;
 	for (const b of json.buckets) {
 		bucketMap.set(Math.floor(b.key / 1000), { levels: b.levels, count: b.docCount });
+		totalDocCount += b.docCount;
 	}
 
 	const buckets: HistogramBucket[] = padHistogramBuckets(bucketMap, startSec, endSec, intervalSec);
-	return { buckets };
+	return { buckets, totalDocCount };
 }

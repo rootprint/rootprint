@@ -59,6 +59,7 @@ export interface HistogramInput {
 
 export interface HistogramResult {
 	buckets: HistogramBucket[];
+	totalDocCount: number;
 }
 
 export interface FieldConfig {

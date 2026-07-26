@@ -28,6 +28,7 @@ import { isAbortError } from '$lib/api/errors';
 import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
+const MAX_OFFSET = 10_000;
 
 // Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
 const PREF_SAVE_DEBOUNCE_MS = 300;
@@ -42,10 +43,11 @@ export interface SearchStoreOptions {
 
 export class SearchStore {
 	rawHits = $state.raw<Record<string, unknown>[]>([]);
-	numHits = $state(0);
+	numHits = $state<number | null>(null);
 	elapsedTimeMicros = $state(0);
 	loading = $state<'idle' | 'fresh' | 'appending'>('idle');
 	#prefetching = $state(false);
+	#lastBatchFull = false;
 	searchError = $state<string | null>(null);
 	hasSearched = $state(false);
 
@@ -281,9 +283,10 @@ export class SearchStore {
 	}
 
 	handleIndexChange(indexId: string): void {
-		this.numHits = 0;
+		this.numHits = null;
 		this.elapsedTimeMicros = 0;
 		this.rawHits = [];
+		this.#lastBatchFull = false;
 		this.#snapshotStartTs = undefined;
 		this.#snapshotEndTs = undefined;
 		this.searchError = null;
@@ -377,8 +380,6 @@ export class SearchStore {
 			this.searchError = null;
 		}
 
-		let success = false;
-
 		try {
 			let startTs: number | undefined;
 			let endTs: number | undefined;
@@ -404,7 +405,7 @@ export class SearchStore {
 					limit: BATCH_SIZE,
 					offset: append ? this.rawHits.length : 0
 				},
-				{ countAll: mode === 'fresh', signal: controller.signal }
+				{ signal: controller.signal }
 			);
 
 			if (!this.#searchGuard.isCurrent(requestId)) return;
@@ -416,14 +417,12 @@ export class SearchStore {
 				this.hasSearched = true;
 				this.#onFreshSearch?.();
 			}
+			this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
 			if (mode === 'fresh') {
-				this.numHits = result.numHits;
 				this.elapsedTimeMicros = result.elapsedTimeMicros;
 			}
 
 			this.#discoverFields(result.rawHits, { reset: !append });
-
-			success = true;
 		} catch (e) {
 			if (isAbortError(e)) return;
 			if (!this.#searchGuard.isCurrent(requestId)) return;
@@ -431,8 +430,8 @@ export class SearchStore {
 			this.searchError = e instanceof Error ? e.message : 'Search failed';
 			if (mode === 'fresh') {
 				this.rawHits = [];
-				this.numHits = 0;
 				this.elapsedTimeMicros = 0;
+				this.#lastBatchFull = false;
 			}
 		} finally {
 			if (this.#searchGuard.isCurrent(requestId)) {
@@ -440,19 +439,16 @@ export class SearchStore {
 				if (!silent) this.loading = 'idle';
 			}
 		}
-
-		if (success && mode === 'fresh') {
-			queueMicrotask(() => {
-				if (!this.#searchGuard.isCurrent(requestId)) return;
-				if (this.#canFetchMore()) {
-					void this.#runSearch('prefetch');
-				}
-			});
-		}
 	}
 
 	#canFetchMore(): boolean {
-		return this.loading === 'idle' && !this.#prefetching && this.rawHits.length < this.numHits;
+		return (
+			this.loading === 'idle' &&
+			!this.#prefetching &&
+			this.#lastBatchFull &&
+			this.rawHits.length < MAX_OFFSET &&
+			(this.numHits === null || this.rawHits.length < this.numHits)
+		);
 	}
 
 	maybeLoadMore(): void {
@@ -464,7 +460,7 @@ export class SearchStore {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
 
-		const fetchKey = `${this.selectedIndex}|${this.composedQuery}|${serializeTimeRange(this.timeRange)}`;
+		const fetchKey = `${this.selectedIndex}|${this.composedQuery}|${timeWindow.startTs}|${timeWindow.endTs}`;
 		if (fetchKey === this.#histogramFetchedFor) {
 			this.#histogramAbort?.abort();
 			return;
@@ -476,6 +472,7 @@ export class SearchStore {
 		const requestId = this.#histogramGuard.next();
 		this.histogramLoading = true;
 		this.histogramError = null;
+		this.numHits = null;
 
 		try {
 			const result = await fetchHistogram(
@@ -489,6 +486,7 @@ export class SearchStore {
 			);
 			if (!this.#histogramGuard.isCurrent(requestId)) return;
 			this.histogramBuckets = result.buckets;
+			this.numHits = result.totalDocCount;
 			this.#histogramFetchedFor = fetchKey;
 
 			const newKey = `${this.selectedIndex}|${this.query}|${serializeTimeRange(this.timeRange)}`;
@@ -505,6 +503,7 @@ export class SearchStore {
 			this.#histogramFetchedFor = null;
 			this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
 			this.histogramBuckets = [];
+			this.numHits = null;
 		} finally {
 			if (this.#histogramGuard.isCurrent(requestId)) this.histogramLoading = false;
 		}
