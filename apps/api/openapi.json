@@ -17417,7 +17417,7 @@
 		},
 		"/v1/logs": {
 			"post": {
-				"description": "OTLP/HTTP log exporter endpoint. Accepts only application/x-protobuf (ExportLogsServiceRequest). Returns an ExportLogsServiceResponse on success. All error responses use the google.rpc.Status encoding: 415 is JSON, all other errors are binary protobuf.",
+				"description": "OTLP/HTTP logs exporter endpoint. Accepts only application/x-protobuf (ExportLogsServiceRequest). Returns an ExportLogsServiceResponse on success. All error responses use the google.rpc.Status encoding: 415 is JSON, all other errors are binary protobuf.",
 				"operationId": "postV1Logs",
 				"responses": {
 					"200": {
@@ -17454,7 +17454,7 @@
 								}
 							}
 						},
-						"description": "Missing or invalid ingest bearer token — google.rpc.Status (protobuf)"
+						"description": "Missing ingest bearer token — google.rpc.Status (protobuf)"
 					},
 					"403": {
 						"content": {
@@ -17466,7 +17466,7 @@
 								}
 							}
 						},
-						"description": "Ingest key does not have access to this index — google.rpc.Status (protobuf)"
+						"description": "Invalid ingest bearer token — google.rpc.Status (protobuf)"
 					},
 					"404": {
 						"content": {
@@ -17546,6 +17546,140 @@
 				"summary": "Ingest OTLP logs (protobuf)",
 				"tags": [
 					"Log ingest"
+				]
+			}
+		},
+		"/v1/traces": {
+			"post": {
+				"description": "OTLP/HTTP traces exporter endpoint. Accepts only application/x-protobuf (ExportTraceServiceRequest). Returns an ExportTraceServiceResponse on success. All error responses use the google.rpc.Status encoding: 415 is JSON, all other errors are binary protobuf.",
+				"operationId": "postV1Traces",
+				"responses": {
+					"200": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "Serialised opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Traces accepted — empty ExportTraceServiceResponse"
+					},
+					"400": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Upstream rejected the request — google.rpc.Status (protobuf)"
+					},
+					"401": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Missing ingest bearer token — google.rpc.Status (protobuf)"
+					},
+					"403": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Invalid ingest bearer token — google.rpc.Status (protobuf)"
+					},
+					"404": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Route not found — google.rpc.Status (protobuf)"
+					},
+					"415": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"description": "google.rpc.Status",
+									"properties": {
+										"code": {
+											"description": "gRPC status code",
+											"type": "integer"
+										},
+										"message": {
+											"description": "Human-readable error message",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Unsupported content-type (only application/x-protobuf accepted) — google.rpc.Status (JSON)"
+					},
+					"429": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Upstream rate limit exceeded — google.rpc.Status (protobuf)"
+					},
+					"500": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Internal server error — google.rpc.Status (protobuf)"
+					},
+					"503": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Upstream service unavailable — google.rpc.Status (protobuf)"
+					}
+				},
+				"security": [
+					{
+						"ingestBearer": []
+					}
+				],
+				"summary": "Ingest OTLP traces (protobuf)",
+				"tags": [
+					"Trace ingest"
 				]
 			}
 		}
