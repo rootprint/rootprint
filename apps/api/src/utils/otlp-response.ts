@@ -8,13 +8,13 @@ import { HttpError } from './http-error.js';
 
 export { Code };
 
-const EMPTY_EXPORT_LOGS_RESPONSE = toBinary(
+const EMPTY_EXPORT_RESPONSE = toBinary(
 	ExportLogsServiceResponseSchema,
 	create(ExportLogsServiceResponseSchema, {})
 );
 
 export function otlpSuccess(): Response {
-	return new Response(EMPTY_EXPORT_LOGS_RESPONSE, {
+	return new Response(EMPTY_EXPORT_RESPONSE, {
 		status: 200,
 		headers: { 'content-type': CONTENT_TYPE_PROTOBUF }
 	});

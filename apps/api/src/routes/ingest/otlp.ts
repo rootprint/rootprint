@@ -1,18 +1,40 @@
 import { Hono } from 'hono';
+import type { Handler } from 'hono';
 
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
+import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import { badRequest, tooManyRequests, unsupportedMediaType } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
-import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 
-const UNSUPPORTED_CONTENT_TYPE_MESSAGE =
-	'Only application/x-protobuf is accepted. If you are using ' +
-	'@opentelemetry/exporter-logs-otlp-http (defaults to JSON), switch to ' +
-	'@opentelemetry/exporter-logs-otlp-proto. See /send-logs/otlp for details.';
+type SignalConfig = {
+	tag: string;
+	title: string;
+	proto: string;
+	pkg: string;
+	docsHint?: string;
+};
+
+const SIGNALS = {
+	logs: {
+		tag: 'Log ingest',
+		title: 'Logs',
+		proto: 'Logs',
+		pkg: 'logs',
+		docsHint: ' See /send-logs/otlp for details.'
+	},
+	traces: {
+		tag: 'Trace ingest',
+		title: 'Traces',
+		proto: 'Trace',
+		pkg: 'trace'
+	}
+} as const satisfies Record<string, SignalConfig>;
+
+type Signal = keyof typeof SIGNALS;
 
 function parseBaseMediaType(header: string | undefined): string | null {
 	if (!header) return null;
@@ -43,34 +65,35 @@ const pbErr = (description: string) => ({
 	content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
 });
 
-export const otlpRouter = new Hono<KeyedEnv>().post(
-	'/logs',
-	describe({
-		tag: 'Log ingest',
-		summary: 'Ingest OTLP logs (protobuf)',
+function signalDescribe(signal: Signal) {
+	const s: SignalConfig = SIGNALS[signal];
+	return describe({
+		tag: s.tag,
+		summary: `Ingest OTLP ${signal} (protobuf)`,
 		description:
-			'OTLP/HTTP log exporter endpoint. Accepts only application/x-protobuf ' +
-			'(ExportLogsServiceRequest). Returns an ExportLogsServiceResponse on success. ' +
+			`OTLP/HTTP ${signal} exporter endpoint. Accepts only application/x-protobuf ` +
+			`(Export${s.proto}ServiceRequest). Returns an Export${s.proto}ServiceResponse on success. ` +
 			'All error responses use the google.rpc.Status encoding: ' +
 			'415 is JSON, all other errors are binary protobuf.',
 		security: [{ ingestBearer: [] }],
 		rawResponses: {
 			'200': {
-				description: 'Logs accepted — empty ExportLogsServiceResponse',
+				description: `${s.title} accepted — empty Export${s.proto}ServiceResponse`,
 				content: {
 					'application/x-protobuf': {
 						schema: {
 							type: 'string',
 							format: 'binary',
 							description:
-								'Serialised opentelemetry.proto.collector.logs.v1.ExportLogsServiceResponse'
+								`Serialised opentelemetry.proto.collector.${s.pkg}.v1.` +
+								`Export${s.proto}ServiceResponse`
 						}
 					}
 				}
 			},
 			'400': pbErr('Upstream rejected the request — google.rpc.Status (protobuf)'),
-			'401': pbErr('Missing or invalid ingest bearer token — google.rpc.Status (protobuf)'),
-			'403': pbErr('Ingest key does not have access to this index — google.rpc.Status (protobuf)'),
+			'401': pbErr('Missing ingest bearer token — google.rpc.Status (protobuf)'),
+			'403': pbErr('Invalid ingest bearer token — google.rpc.Status (protobuf)'),
 			'404': pbErr('Route not found — google.rpc.Status (protobuf)'),
 			'415': {
 				description:
@@ -81,19 +104,28 @@ export const otlpRouter = new Hono<KeyedEnv>().post(
 			'500': pbErr('Internal server error — google.rpc.Status (protobuf)'),
 			'503': pbErr('Upstream service unavailable — google.rpc.Status (protobuf)')
 		}
-	}),
-	requireIngestKey,
-	async (c) => {
+	});
+}
+
+function signalHandler(signal: Signal): Handler<KeyedEnv> {
+	const s: SignalConfig = SIGNALS[signal];
+	const unsupportedMessage =
+		'Only application/x-protobuf is accepted. If you are using ' +
+		`@opentelemetry/exporter-${s.pkg}-otlp-http (defaults to JSON), switch to ` +
+		`@opentelemetry/exporter-${s.pkg}-otlp-proto.${s.docsHint ?? ''}`;
+	const indexHeader = `qw-otel-${signal}-index`;
+
+	return async (c) => {
 		const baseType = parseBaseMediaType(c.req.header('content-type'));
 		if (baseType !== CONTENT_TYPE_PROTOBUF) {
-			throw unsupportedMediaType(UNSUPPORTED_CONTENT_TYPE_MESSAGE, 'CONTENT_TYPE_UNSUPPORTED');
+			throw unsupportedMediaType(unsupportedMessage, 'CONTENT_TYPE_UNSUPPORTED');
 		}
 
 		const apiKey = c.get('apiKey');
-		const upstreamUrl = quickwitUrl('/api/v1/otlp/v1/logs');
+		const upstreamUrl = quickwitUrl(`/api/v1/otlp/v1/${signal}`);
 		const headers: Record<string, string> = {
 			'content-type': CONTENT_TYPE_PROTOBUF,
-			'qw-otel-logs-index': apiKey.indexId
+			[indexHeader]: apiKey.indexId
 		};
 		const ce = c.req.header('content-encoding');
 		if (ce) headers['content-encoding'] = ce;
@@ -113,5 +145,9 @@ export const otlpRouter = new Hono<KeyedEnv>().post(
 			throw badRequest(msg, 'UPSTREAM_REJECTED');
 		}
 		return otlpSuccess();
-	}
-);
+	};
+}
+
+export const otlpRouter = new Hono<KeyedEnv>()
+	.post('/logs', signalDescribe('logs'), requireIngestKey, signalHandler('logs'))
+	.post('/traces', signalDescribe('traces'), requireIngestKey, signalHandler('traces'));
