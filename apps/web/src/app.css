@@ -111,12 +111,6 @@
 		font-weight: 400;
 		letter-spacing: -0.02em;
 	}
-
-	/* Selection uses the primary so it reads as part of the brand. */
-	::selection {
-		background-color: color-mix(in oklab, var(--color-primary) 35%, transparent);
-		color: var(--color-base-content);
-	}
 }
 
 @layer components {
