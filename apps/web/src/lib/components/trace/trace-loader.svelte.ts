@@ -12,7 +12,7 @@ export class TraceLoader {
 	roots = $state.raw<SpanNode[]>([]);
 	spanCount = $state(0);
 	durationMicros = $state(0);
-	serviceCount = $state(0);
+	services = $state.raw<{ name: string; count: number }[]>([]);
 	errorCount = $state(0);
 	loading = $state(false);
 	error = $state<string | null>(null);
@@ -52,15 +52,17 @@ export class TraceLoader {
 		this.spanCount = nodes.length;
 		if (nodes.length === 0) return;
 
-		const services = new Set<string>();
+		const spansPerService = new Map<string, number>();
 		let durationMicros = 0;
 		let errorCount = 0;
 		for (const node of nodes) {
-			services.add(node.serviceName);
+			spansPerService.set(node.serviceName, (spansPerService.get(node.serviceName) ?? 0) + 1);
 			if (node.isError) errorCount++;
 			durationMicros = Math.max(durationMicros, node.startOffsetMicros + node.durationMicros);
 		}
-		this.serviceCount = services.size;
+		this.services = [...spansPerService]
+			.map(([name, count]) => ({ name, count }))
+			.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 		this.errorCount = errorCount;
 		this.durationMicros = durationMicros;
 
