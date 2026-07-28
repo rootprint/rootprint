@@ -118,7 +118,8 @@ export const IndexViewConfigResponse = named(
 		tracebackField: v.nullable(v.string()),
 		contextFields: v.nullable(v.array(v.string())),
 		timestampField: v.string(),
-		isOtel: v.boolean()
+		isOtel: v.boolean(),
+		hasTraces: v.boolean()
 	})
 );
 
@@ -191,3 +192,18 @@ export const FieldValuesBulkResponse = named(
 		elapsedTimeMicros: v.optional(v.number())
 	})
 );
+
+export const TraceSpanSchema = named(
+	'TraceSpan',
+	v.object({
+		spanId: v.string(),
+		parentSpanId: v.nullable(v.string()),
+		name: v.string(),
+		serviceName: v.string(),
+		startOffsetMicros: v.number(),
+		durationMicros: v.number(),
+		isError: v.boolean()
+	})
+);
+
+export const TraceResponse = named('TraceResponse', v.object({ spans: v.array(TraceSpanSchema) }));

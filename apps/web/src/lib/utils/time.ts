@@ -63,13 +63,10 @@ export function formatTooltipDate(d: Date | number): string {
 	return format(date, 'yyyy-MM-dd HH:mm');
 }
 
-/**
- * Nanosecond durations, formatted for span waterfalls. Sub-millisecond spans are ordinary in
- * traces, so the unit steps down to µs and ns rather than collapsing them all to `0ms`.
- */
-export function formatSpanDuration(nanos: number): string {
-	if (nanos < 1_000) return `${Math.round(nanos)}ns`;
-	if (nanos < 1_000_000) return `${Math.round(nanos / 1_000)}µs`;
-	if (nanos < 1_000_000_000) return `${(nanos / 1_000_000).toFixed(1)}ms`;
-	return `${(nanos / 1_000_000_000).toFixed(2)}s`;
+export function formatSpanDuration(micros: number): string {
+	if (micros === 0) return '<1µs';
+	if (micros < 1_000) return `${micros}µs`;
+	const millis = micros / 1_000;
+	if (Number(millis.toFixed(1)) < 1_000) return `${millis.toFixed(1)}ms`;
+	return `${(micros / 1_000_000).toFixed(2)}s`;
 }

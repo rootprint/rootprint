@@ -1,4 +1,6 @@
 import { eq, inArray } from 'drizzle-orm';
+
+import { config } from '../config.js';
 import type {
 	DynamicMapping,
 	IndexConfig,
@@ -91,6 +93,25 @@ export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): b
 	return true;
 }
 
+/**
+ * Spans are one shared dataset: whoever can read the trace index reads every span in it. Trace ids
+ * cannot gate this — W3C traceparent propagates them in plaintext headers, so they are not secrets.
+ * The trace index's `visibility` is the only gate.
+ */
+export async function canReadTraces(
+	db: Db,
+	qw: QuickwitClient,
+	role: string | null | undefined
+): Promise<boolean> {
+	const traceIndexId = config.traceIndexId;
+	const [settings, index] = await Promise.all([
+		getIndexSettings(db, traceIndexId),
+		qwGetIndex(qw, traceIndexId)
+	]);
+	if (!index) return false;
+	return canAccessIndex(settings.visibility, role === 'admin');
+}
+
 export async function saveIndexConfig(
 	db: Db,
 	indexId: string,
@@ -140,8 +161,11 @@ export async function listIndexes(
 ): Promise<IndexSummary[]> {
 	const all = await listAllIndexes(db, qw);
 	const isAdmin = role === 'admin';
-	const adminView = view === 'admin' && isAdmin;
-	return all.filter((m) => adminView || canAccessIndex(m.visibility, isAdmin));
+	if (view === 'admin' && isAdmin) return all;
+	// Hide the trace index from the log-index list here, not via its `visibility` — that must stay
+	// free to gate span reads, and `hidden` would switch the Trace tab off for admins too.
+	const traceIndexId = config.traceIndexId;
+	return all.filter((m) => canAccessIndex(m.visibility, isAdmin) && m.indexId !== traceIndexId);
 }
 
 export async function getIndexMeta(
@@ -186,12 +210,13 @@ export async function getIndexConfig(
 	return { indexId, ...resolveLogFields(meta) };
 }
 
-export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
+export function getIndexViewConfig(meta: IndexMeta, hasTraces: boolean): IndexViewConfig {
 	return {
 		indexId: meta.index.indexId,
 		displayName: meta.settings.displayName,
 		...resolveLogFields(meta),
-		isOtel: meta.index.indexId.startsWith('otel-')
+		isOtel: meta.index.indexId.startsWith('otel-'),
+		hasTraces
 	};
 }
 

@@ -42,3 +42,9 @@ export function intEnv(name: string, fallback: number): number {
 	}
 	return parsed;
 }
+
+export function strEnv(name: string, fallback: string): string {
+	const raw = process.env[name];
+	if (raw === undefined || raw.trim() === '') return fallback;
+	return raw.trim();
+}

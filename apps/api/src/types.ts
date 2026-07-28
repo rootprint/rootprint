@@ -15,7 +15,9 @@ import type {
 	IndexViewConfigResponse as IndexViewConfigResponseSchema,
 	LogSearchResponse as LogSearchResponseSchema,
 	PreferencesResponse as PreferencesResponseSchema,
-	SourceDetailSchema as SourceDetailResponseSchema
+	SourceDetailSchema as SourceDetailResponseSchema,
+	TraceResponse as TraceResponseSchema,
+	TraceSpanSchema
 } from './schemas/responses/indexes.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
@@ -298,3 +300,7 @@ export type VolumeBucket = v.InferOutput<typeof VolumeBucketResponseSchema>;
 export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponseSchema>;
 
 export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;
+
+export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
+
+export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;

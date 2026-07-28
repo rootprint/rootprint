@@ -45,6 +45,7 @@ import {
 } from '../schemas/responses/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {
+	canReadTraces,
 	createIndex,
 	deleteIndex,
 	getIndexDetail,
@@ -137,7 +138,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		withIndexMeta('search'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			return c.json(getIndexViewConfig(c.get('indexMeta')));
+			const hasTraces = await canReadTraces(db, quickwit, c.get('session').user.role);
+			return c.json(getIndexViewConfig(c.get('indexMeta'), hasTraces));
 		}
 	)
 	.get(
@@ -351,7 +353,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Search logs',
 			ok: LogSearchResponse,
-			security: [{ personalBearer: [] }, { cookieAuth: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }],
+			errors: [429]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		readLimiter,
@@ -377,7 +380,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Get log histogram',
 			ok: HistogramResponse,
-			security: [{ personalBearer: [] }, { cookieAuth: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }],
+			errors: [429]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		readLimiter,
@@ -396,7 +400,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Get bulk field values',
 			ok: FieldValuesBulkResponse,
-			security: [{ personalBearer: [] }, { cookieAuth: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }],
+			errors: [429]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		readLimiter,
@@ -422,7 +427,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Log explorer',
 			summary: 'Get field values',
 			ok: FieldValuesResponse,
-			security: [{ personalBearer: [] }, { cookieAuth: [] }]
+			security: [{ personalBearer: [] }, { cookieAuth: [] }],
+			errors: [429]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
 		readLimiter,

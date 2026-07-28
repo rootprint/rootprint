@@ -70,6 +70,8 @@ export interface FieldConfig {
 	/** Admin-configured field paths that should pre-pin as chips when the Context pane opens. */
 	contextFields: string[];
 	isOtel: boolean;
+	/** Server-resolved: the browser never names the trace index. */
+	hasTraces: boolean;
 }
 
 export interface IndexOption {
@@ -133,19 +135,11 @@ export interface SpanNode {
 	parentSpanId: string | null;
 	name: string;
 	serviceName: string;
-	/**
-	 * Nanoseconds since epoch. Around 1.78e18 — past Number.MAX_SAFE_INTEGER, so JSON.parse rounds
-	 * to roughly 256ns. Fine for a waterfall, but these are geometry and display values only:
-	 * never identity, never exact arithmetic.
-	 */
-	startNanos: number;
-	endNanos: number;
-	/** True only when the span reports `span_status.code === 'error'`. Never inferred from attributes. */
+	startOffsetMicros: number;
+	durationMicros: number;
 	isError: boolean;
 	depth: number;
-	/** Bar offset from trace start, percent of total trace duration. */
 	offsetPct: number;
-	/** Bar width, percent of total trace duration, floored so sub-millisecond spans stay visible. */
 	widthPct: number;
 	children: SpanNode[];
 }
