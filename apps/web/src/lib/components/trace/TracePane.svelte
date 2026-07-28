@@ -2,20 +2,23 @@
 	import { TriangleAlert } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
-	import type { TraceLoader } from './trace/trace-loader.svelte';
+	import type { TraceLoader } from './trace-loader.svelte';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { formatSpanDuration } from '$lib/utils/time';
 	import { traceAxis } from '$lib/utils/trace-axis';
 	import type { SpanNode } from '$lib/types';
 
-	let { loader, anchorSpanId }: { loader: TraceLoader | null; anchorSpanId: string | null } =
-		$props();
+	let {
+		loader,
+		anchorSpanId,
+		filter = ''
+	}: { loader: TraceLoader | null; anchorSpanId: string | null; filter?: string } = $props();
 
 	const TREE_LEFT_PX = 18;
 	const TREE_INDENT_PX = 14;
 	const TREE_LABEL_GAP_PX = 18;
-	// The drawer unmounts this pane whenever the Trace tab is left, so collapse state resets there.
+	// Resets when drawer unmounts on tab change. In the trace page, same instance persists across navigations, so collapsed ids carry over between traces.
 	let collapsedSpanIds = $state<Set<string>>(new Set());
 
 	function toggleSpan(spanId: string): void {
@@ -26,6 +29,7 @@
 	}
 
 	const axis = $derived(traceAxis(loader?.durationMicros ?? 0));
+	const needle = $derived(filter.trim().toLowerCase());
 </script>
 
 {#snippet spanRow(
@@ -41,13 +45,16 @@
 	{@const nodeX = TREE_LEFT_PX + node.depth * TREE_INDENT_PX}
 	{@const parentX = TREE_LEFT_PX + parentDepth * TREE_INDENT_PX}
 	{@const color = serviceColor(node.serviceName)}
+	{@const dimmed =
+		needle !== '' && !`${node.serviceName} ${node.name}`.toLowerCase().includes(needle)}
 	<div
 		role="listitem"
 		aria-level={node.depth + 1}
 		aria-current={isAnchor ? 'true' : undefined}
 		class={[
 			'border-line/40 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b',
-			'even:bg-base-200/50'
+			'even:bg-base-200/50',
+			dimmed && 'opacity-35'
 		]}
 	>
 		<div class="relative flex min-w-0 items-stretch text-xs">
