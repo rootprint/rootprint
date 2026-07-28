@@ -126,3 +126,26 @@ export interface QuerySuggestion {
 	detail: string | null;
 	insert: string;
 }
+
+/** One span in a rendered trace waterfall, with geometry precomputed against the whole trace. */
+export interface SpanNode {
+	spanId: string;
+	parentSpanId: string | null;
+	name: string;
+	serviceName: string;
+	/**
+	 * Nanoseconds since epoch. Around 1.78e18 — past Number.MAX_SAFE_INTEGER, so JSON.parse rounds
+	 * to roughly 256ns. Fine for a waterfall, but these are geometry and display values only:
+	 * never identity, never exact arithmetic.
+	 */
+	startNanos: number;
+	endNanos: number;
+	/** True only when the span reports `span_status.code === 'error'`. Never inferred from attributes. */
+	isError: boolean;
+	depth: number;
+	/** Bar offset from trace start, percent of total trace duration. */
+	offsetPct: number;
+	/** Bar width, percent of total trace duration, floored so sub-millisecond spans stay visible. */
+	widthPct: number;
+	children: SpanNode[];
+}

@@ -33,6 +33,10 @@ const MAX_OFFSET = 10_000;
 // Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
 const PREF_SAVE_DEBOUNCE_MS = 300;
 
+// Quickwit auto-creates exactly one traces index (otel-traces-v0_9). Prefix-matched rather than
+// name-matched so a v0_10 bump doesn't silently break trace discovery.
+const TRACES_INDEX_PREFIX = 'otel-traces';
+
 export interface SearchStoreOptions {
 	/** Reactive accessor for the URL-derived query. Read inside $effect to subscribe. */
 	parsedQuery: () => ParsedQuery;
@@ -158,7 +162,12 @@ export class SearchStore {
 	}
 
 	get indexes(): IndexOption[] {
-		return this.#indexes();
+		return this.#indexes().filter((i) => !i.id.startsWith(TRACES_INDEX_PREFIX));
+	}
+
+	/** Where the Trace tab reads spans from. Kept out of `indexes` — it is not a browsable log index. */
+	get tracesIndexId(): string | null {
+		return this.#indexes().find((i) => i.id.startsWith(TRACES_INDEX_PREFIX))?.id ?? null;
 	}
 
 	/** URL's index if it's in the indexes list, otherwise the first available (or null). */
