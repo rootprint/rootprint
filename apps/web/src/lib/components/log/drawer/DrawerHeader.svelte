@@ -25,7 +25,6 @@
 		sharing?: boolean;
 		hasTraceback?: boolean;
 		hasTrace?: boolean;
-		/** Extra detail appended to the level/timestamp line by whichever pane is active. */
 		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
 		onSearch: () => void;
@@ -120,8 +119,8 @@
 	</div>
 </div>
 
-<div class="border-line flex items-center justify-between border-b px-3 py-2">
-	<div class="flex items-center gap-2 font-mono text-xs">
+<div class="border-line border-b px-4 py-3">
+	<div class="flex flex-wrap items-center gap-2 font-mono text-xs">
 		<span class="inline-flex items-center gap-1.5">
 			<span
 				class="inline-block h-2 w-2 shrink-0 rounded-full"
