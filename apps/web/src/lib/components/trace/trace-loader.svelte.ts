@@ -13,6 +13,7 @@ export class TraceLoader {
 	spanCount = $state(0);
 	durationMicros = $state(0);
 	serviceCount = $state(0);
+	errorCount = $state(0);
 	loading = $state(false);
 	error = $state<string | null>(null);
 
@@ -53,11 +54,14 @@ export class TraceLoader {
 
 		const services = new Set<string>();
 		let durationMicros = 0;
+		let errorCount = 0;
 		for (const node of nodes) {
 			services.add(node.serviceName);
+			if (node.isError) errorCount++;
 			durationMicros = Math.max(durationMicros, node.startOffsetMicros + node.durationMicros);
 		}
 		this.serviceCount = services.size;
+		this.errorCount = errorCount;
 		this.durationMicros = durationMicros;
 
 		const roots: SpanNode[] = [];

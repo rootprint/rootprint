@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Copy, GripVertical } from 'lucide-svelte';
+	import { Copy, ExternalLink, GripVertical } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import DrawerHeader, { type DrawerTab } from './drawer/DrawerHeader.svelte';
@@ -8,8 +8,8 @@
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
-	import TracePane from './drawer/TracePane.svelte';
-	import { TraceLoader } from './drawer/trace/trace-loader.svelte';
+	import TracePane from '$lib/components/trace/TracePane.svelte';
+	import { TraceLoader } from '$lib/components/trace/trace-loader.svelte';
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
@@ -275,6 +275,10 @@
 			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
 			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
 		</button>
+		<a href={`/traces/${id}`} class="btn btn-xs btn-primary ml-auto">
+			<ExternalLink class="h-3 w-3" aria-hidden="true" />
+			Open trace page
+		</a>
 	{/if}
 {/snippet}
 
