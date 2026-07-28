@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { GripVertical } from 'lucide-svelte';
+	import { Copy, GripVertical } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import DrawerHeader, { type DrawerTab } from './drawer/DrawerHeader.svelte';
@@ -255,14 +255,26 @@
 {#snippet traceSummary()}
 	{@const t = traceLoader}
 	{#if t && !t.loading && !t.error && t.spanCount > 0 && traceId}
+		{@const id = traceId}
 		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{traceId.slice(0, 8)}…{traceId.slice(-4)}</span>
-		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{t.spanCount} spans</span>
-		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{formatSpanDuration(t.durationMicros)}</span>
-		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{t.serviceCount} services</span>
+		<span class="badge badge-sm badge-ghost tabular-nums">
+			{formatSpanDuration(t.durationMicros)}
+		</span>
+		<span class="badge badge-sm badge-ghost tabular-nums">
+			{t.spanCount} span{t.spanCount === 1 ? '' : 's'}
+		</span>
+		<span class="badge badge-sm badge-ghost tabular-nums">
+			{t.serviceCount} service{t.serviceCount === 1 ? '' : 's'}
+		</span>
+		<button
+			type="button"
+			class="text-base-content/50 hover:text-base-content flex min-w-0 items-center gap-1"
+			title={id}
+			onclick={() => copyWithToast(id, 'Trace ID copied', 'Failed to copy trace ID')}
+		>
+			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
+			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
+		</button>
 	{/if}
 {/snippet}
 
