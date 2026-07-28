@@ -1,6 +1,15 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { Braces, Bug, Layers, ListTree, Search, Share2, Waypoints, X } from 'lucide-svelte';
+	import {
+		Braces,
+		Bug,
+		ChartNoAxesGantt,
+		Layers,
+		ListTree,
+		Search,
+		Share2,
+		X
+	} from 'lucide-svelte';
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
@@ -36,7 +45,7 @@
 	const TABS = $derived<TabDef[]>([
 		{ id: 'parameters' as DrawerTab, label: 'Parameters', icon: ListTree },
 		...(hasTraceback ? [{ id: 'traceback' as DrawerTab, label: 'Traceback', icon: Bug }] : []),
-		...(hasTrace ? [{ id: 'trace' as DrawerTab, label: 'Trace', icon: Waypoints }] : []),
+		...(hasTrace ? [{ id: 'trace' as DrawerTab, label: 'Trace', icon: ChartNoAxesGantt }] : []),
 		{ id: 'json' as DrawerTab, label: 'JSON', icon: Braces },
 		{ id: 'context' as DrawerTab, label: 'Context', icon: Layers }
 	]);

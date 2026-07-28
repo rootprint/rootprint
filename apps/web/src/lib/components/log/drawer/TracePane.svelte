@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, ChevronRight, TriangleAlert } from 'lucide-svelte';
+	import { TriangleAlert } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import type { TraceLoader } from './trace/trace-loader.svelte';
@@ -28,13 +28,19 @@
 	const axis = $derived(traceAxis(loader?.durationMicros ?? 0));
 </script>
 
-{#snippet spanRow(node: SpanNode, ancestorContinuations: boolean[], isLast: boolean)}
+{#snippet spanRow(
+	node: SpanNode,
+	ancestorRails: (string | null)[],
+	isLast: boolean,
+	parentColor: string | null
+)}
 	{@const isAnchor = node.spanId === anchorSpanId}
 	{@const isCollapsed = collapsedSpanIds.has(node.spanId)}
 	{@const hasVisibleChildren = node.children.length > 0 && !isCollapsed}
 	{@const parentDepth = Math.max(node.depth - 1, 0)}
 	{@const nodeX = TREE_LEFT_PX + node.depth * TREE_INDENT_PX}
 	{@const parentX = TREE_LEFT_PX + parentDepth * TREE_INDENT_PX}
+	{@const color = serviceColor(node.serviceName)}
 	<div
 		role="listitem"
 		aria-level={node.depth + 1}
@@ -45,51 +51,49 @@
 		]}
 	>
 		<div class="relative flex min-w-0 items-stretch text-xs">
-			{#each ancestorContinuations as continues, i (i)}
-				{#if continues}
+			{#each ancestorRails as railColor, i (i)}
+				{#if railColor}
 					<span
-						class="border-accent/45 absolute inset-y-0 border-l"
-						style={`left:${TREE_LEFT_PX + i * TREE_INDENT_PX}px`}
+						class="absolute inset-y-0 border-l"
+						style={`left:${TREE_LEFT_PX + i * TREE_INDENT_PX}px;border-color:${railColor}`}
 					></span>
 				{/if}
 			{/each}
 			{#if node.depth > 0}
 				<span
-					class={['border-accent/45 absolute top-0 border-l', isLast ? 'h-1/2' : 'bottom-0']}
-					style={`left:${parentX}px`}
+					class={['absolute top-0 border-l', isLast ? 'h-1/2' : 'bottom-0']}
+					style={`left:${parentX}px;border-color:${parentColor}`}
 				></span>
 				<span
-					class="border-accent/45 absolute top-1/2 border-t"
-					style={`left:${parentX}px;width:${nodeX - parentX}px`}
+					class="absolute top-1/2 border-t"
+					style={`left:${parentX}px;width:${nodeX - parentX}px;border-color:${parentColor}`}
 				></span>
 			{/if}
 			{#if hasVisibleChildren}
-				<span class="border-accent/45 absolute top-1/2 bottom-0 border-l" style={`left:${nodeX}px`}
+				<span
+					class="absolute top-1/2 bottom-0 border-l"
+					style={`left:${nodeX}px;border-color:${color}`}
 				></span>
 			{/if}
 			{#if node.children.length > 0}
 				<button
 					type="button"
-					class="border-accent/55 bg-base-100 text-accent hover:border-accent absolute top-1/2 z-10 flex h-4 min-w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-px rounded border px-0.5 font-mono text-[9px] leading-none"
-					style={`left:${nodeX}px`}
+					class="absolute top-1/2 z-10 flex h-4 min-w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded border px-1 font-mono text-[9px] leading-none"
+					style={`left:${nodeX}px;border-color:${color};${
+						isCollapsed
+							? `background-color:${color};color:color-mix(in oklab, ${color} 22%, black)`
+							: `background-color:var(--color-base-100);color:${color}`
+					}`}
 					onclick={() => toggleSpan(node.spanId)}
 					aria-expanded={!isCollapsed}
 					aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${node.name}`}
 				>
 					{node.children.length}
-					{#if isCollapsed}
-						<ChevronRight class="h-2.5 w-2.5" aria-hidden="true" />
-					{:else}
-						<ChevronDown class="h-2.5 w-2.5" aria-hidden="true" />
-					{/if}
 				</button>
 			{:else}
 				<span
-					class={[
-						'border-base-100 absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border',
-						node.isError ? 'bg-error' : 'bg-accent/70'
-					]}
-					style={`left:${nodeX}px`}
+					class="border-base-100 absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+					style={`left:${nodeX}px;background-color:${node.isError ? 'var(--color-error)' : color}`}
 				></span>
 			{/if}
 			<span
@@ -126,8 +130,9 @@
 		{#each node.children as child, index (child.spanId)}
 			{@render spanRow(
 				child,
-				node.depth === 0 ? [] : [...ancestorContinuations, !isLast],
-				index === node.children.length - 1
+				node.depth === 0 ? [] : [...ancestorRails, isLast ? null : color],
+				index === node.children.length - 1,
+				color
 			)}
 		{/each}
 	{/if}
@@ -174,7 +179,7 @@
 			role="list"
 		>
 			{#each l.roots as root (root.spanId)}
-				{@render spanRow(root, [], true)}
+				{@render spanRow(root, [], true, null)}
 			{/each}
 		</OverlayScrollbarsComponent>
 	{/if}
