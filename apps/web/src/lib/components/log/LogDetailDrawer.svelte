@@ -260,12 +260,6 @@
 		<span class="badge badge-sm badge-ghost tabular-nums">
 			{formatSpanDuration(t.durationMicros)}
 		</span>
-		<span class="badge badge-sm badge-ghost tabular-nums">
-			{t.spanCount} span{t.spanCount === 1 ? '' : 's'}
-		</span>
-		<span class="badge badge-sm badge-ghost tabular-nums">
-			{t.serviceCount} service{t.serviceCount === 1 ? '' : 's'}
-		</span>
 		<button
 			type="button"
 			class="text-base-content/50 hover:text-base-content flex min-w-0 items-center gap-1"
