@@ -1307,6 +1307,9 @@
 							}
 						]
 					},
+					"hasTraces": {
+						"type": "boolean"
+					},
 					"indexId": {
 						"type": "string"
 					},
@@ -1341,7 +1344,8 @@
 					"tracebackField",
 					"contextFields",
 					"timestampField",
-					"isOtel"
+					"isOtel",
+					"hasTraces"
 				],
 				"type": "object"
 			},
@@ -2384,6 +2388,62 @@
 					"avgDurationMs",
 					"errorCount",
 					"indexes"
+				],
+				"type": "object"
+			},
+			"TraceResponse": {
+				"properties": {
+					"spans": {
+						"items": {
+							"$ref": "#/components/schemas/TraceSpan"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"spans"
+				],
+				"type": "object"
+			},
+			"TraceSpan": {
+				"properties": {
+					"durationMicros": {
+						"type": "number"
+					},
+					"isError": {
+						"type": "boolean"
+					},
+					"name": {
+						"type": "string"
+					},
+					"parentSpanId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"serviceName": {
+						"type": "string"
+					},
+					"spanId": {
+						"type": "string"
+					},
+					"startOffsetMicros": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"spanId",
+					"parentSpanId",
+					"name",
+					"serviceName",
+					"startOffsetMicros",
+					"durationMicros",
+					"isError"
 				],
 				"type": "object"
 			},
@@ -14127,6 +14187,9 @@
 					"404": {
 						"$ref": "#/components/responses/NotFound"
 					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
 					},
@@ -14224,6 +14287,9 @@
 					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
@@ -14339,6 +14405,9 @@
 					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
@@ -14551,6 +14620,9 @@
 					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
@@ -17034,6 +17106,9 @@
 					"404": {
 						"$ref": "#/components/responses/NotFound"
 					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
 					},
@@ -17044,6 +17119,67 @@
 				"summary": "Resolve a share link",
 				"tags": [
 					"Shares"
+				]
+			}
+		},
+		"/api/traces/{traceId}": {
+			"get": {
+				"operationId": "getApiTracesByTraceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "traceId",
+						"required": true,
+						"schema": {
+							"pattern": "^(?!0{32}$)[0-9a-f]{32}$",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "Get trace spans",
+				"tags": [
+					"Log explorer"
 				]
 			}
 		},

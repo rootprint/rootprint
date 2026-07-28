@@ -4,25 +4,19 @@
 
 	import type { TraceLoader } from './trace/trace-loader.svelte';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
+	import { serviceColor } from '$lib/utils/service-color';
 	import { formatSpanDuration } from '$lib/utils/time';
+	import { traceAxis } from '$lib/utils/trace-axis';
 	import type { SpanNode } from '$lib/types';
 
-	let { loader }: { loader: TraceLoader | null } = $props();
+	let { loader, anchorSpanId }: { loader: TraceLoader | null; anchorSpanId: string | null } =
+		$props();
 
 	const TREE_LEFT_PX = 18;
 	const TREE_INDENT_PX = 14;
 	const TREE_LABEL_GAP_PX = 18;
-	const TRACE_SERVICE_COLOR_COUNT = 8;
-	const TICK_TARGET = 6;
+	// The drawer unmounts this pane whenever the Trace tab is left, so collapse state resets there.
 	let collapsedSpanIds = $state<Set<string>>(new Set());
-	let collapsedTraceId = $state<string | null>(null);
-
-	$effect(() => {
-		const traceId = loader?.traceId ?? null;
-		if (traceId === collapsedTraceId) return;
-		collapsedTraceId = traceId;
-		collapsedSpanIds = new Set();
-	});
 
 	function toggleSpan(spanId: string): void {
 		const next = new Set(collapsedSpanIds);
@@ -31,67 +25,9 @@
 		collapsedSpanIds = next;
 	}
 
-	function serviceColor(serviceName: string): string {
-		let hash = 2166136261;
-		for (let i = 0; i < serviceName.length; i++) {
-			hash ^= serviceName.charCodeAt(i);
-			hash = Math.imul(hash, 16777619);
-		}
-		return `var(--trace-service-${((hash >>> 0) % TRACE_SERVICE_COLOR_COUNT) + 1})`;
-	}
-
-	function niceStep(raw: number): number {
-		const pow = 10 ** Math.floor(Math.log10(raw));
-		const frac = raw / pow;
-		return (frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 5 ? 5 : 10) * pow;
-	}
-
-	/** One unit for the whole axis, so ticks read 0/50/100ms instead of switching units mid-scale. */
-	function axisFormatter(totalNanos: number): (n: number) => string {
-		let div = 1;
-		let suffix = 'ns';
-		if (totalNanos >= 1_000_000_000) {
-			div = 1_000_000_000;
-			suffix = 's';
-		} else if (totalNanos >= 1_000_000) {
-			div = 1_000_000;
-			suffix = 'ms';
-		} else if (totalNanos >= 1_000) {
-			div = 1_000;
-			suffix = 'µs';
-		}
-		const decimals = suffix === 's' ? 1 : 0;
-		return (n) => `${(n / div).toFixed(decimals)}${suffix}`;
-	}
-
-	const total = $derived(loader?.durationNanos ?? 0);
-	const stepNanos = $derived(total > 0 ? niceStep(total / TICK_TARGET) : 0);
-	const ticks = $derived.by(() => {
-		if (stepNanos <= 0) return [];
-		const format = axisFormatter(total);
-		const out: { pct: number; label: string }[] = [];
-		for (let t = 0; t <= total; t += stepNanos) {
-			out.push({ pct: (t / total) * 100, label: format(t) });
-		}
-		return out;
-	});
-
-	// Gridlines as a repeating background rather than per-tick elements: the ticks are evenly
-	// spaced, so one gradient per row draws the whole grid with no extra DOM.
-	const gridStyle = $derived(
-		stepNanos > 0
-			? `background-image:repeating-linear-gradient(to right,var(--color-line) 0 1px,transparent 1px ${(stepNanos / total) * 100}%)`
-			: ''
-	);
-
-	const anchorSpanId = $derived(loader?.anchorSpanId ?? null);
+	const axis = $derived(traceAxis(loader?.durationMicros ?? 0));
 </script>
 
-<!--
-	Both the axis header and every row use this grid, so tick labels line up with the bars beneath
-	them. `pr-14` reserves a gutter at the track's right edge: a bar ending at 100% still needs
-	somewhere to put its duration label.
--->
 {#snippet spanRow(node: SpanNode, ancestorContinuations: boolean[], isLast: boolean)}
 	{@const isAnchor = node.spanId === anchorSpanId}
 	{@const isCollapsed = collapsedSpanIds.has(node.spanId)}
@@ -105,7 +41,7 @@
 		aria-current={isAnchor ? 'true' : undefined}
 		class={[
 			'border-line/40 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b',
-			isAnchor && 'bg-primary/10'
+			'even:bg-base-200/50'
 		]}
 	>
 		<div class="relative flex min-w-0 items-stretch text-xs">
@@ -171,7 +107,7 @@
 				{/if}
 			</span>
 		</div>
-		<div class="py-1.5 pr-14" style={gridStyle}>
+		<div class="py-1.5 pr-14" style={axis.gridStyle}>
 			<div class="relative h-4">
 				<div
 					class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
@@ -181,7 +117,7 @@
 					class="text-base-content/60 absolute top-1/2 ml-1.5 -translate-y-1/2 font-mono text-[10px] whitespace-nowrap"
 					style={`left:${node.offsetPct + node.widthPct}%`}
 				>
-					{formatSpanDuration(node.endNanos - node.startNanos)}
+					{formatSpanDuration(node.durationMicros)}
 				</span>
 			</div>
 		</div>
@@ -209,19 +145,15 @@
 			class="text-base-content/60 flex flex-1 items-center justify-center px-6 text-center text-sm"
 		>
 			No spans found for this trace. They may not have been ingested, or they may fall outside the
-			15-minute window around this log.
+			trace index's retention window.
 		</div>
 	{:else}
 		{@const l = loader}
 		<div class="border-line grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b">
-			<div class="px-3 py-1.5 text-[10px]">
-				{#if l.totalHits > l.spanCount}
-					<span class="text-warning">showing first {l.spanCount} of {l.totalHits} spans</span>
-				{/if}
-			</div>
+			<div></div>
 			<div class="py-1.5 pr-14">
 				<div class="relative h-4">
-					{#each ticks as tick (tick.pct)}
+					{#each axis.ticks as tick (tick.pct)}
 						<span
 							class={[
 								'text-base-content/50 absolute top-0 font-mono text-[10px]',

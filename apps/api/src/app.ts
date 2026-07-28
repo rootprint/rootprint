@@ -28,6 +28,7 @@ import { ndjsonRouter } from './routes/ingest/ndjson.js';
 import { otlpRouter } from './routes/ingest/otlp.js';
 import { settingsRouter } from './routes/settings.js';
 import { sharesRouter } from './routes/shares.js';
+import { tracesRouter } from './routes/traces.js';
 import { apiKeysRouter } from './routes/api-keys.js';
 import { usersRouter } from './routes/users.js';
 import { serviceAccountsRouter } from './routes/service-accounts.js';
@@ -184,6 +185,7 @@ export const routes = app
 	.route('/api/health', healthRouter)
 	.route('/api/auth', authRouter)
 	.route('/api/indexes', indexesRouter)
+	.route('/api/traces', tracesRouter)
 	.route('/api/admin/metrics', withAuth(metricsRouter))
 	.route('/api/admin/cluster', withAuth(clusterRouter))
 	.route('/api/admin/activity', withAuth(adminActivityRouter))

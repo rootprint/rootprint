@@ -1,0 +1,15 @@
+meta {
+  name: Get Trace
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/traces/{{traceId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

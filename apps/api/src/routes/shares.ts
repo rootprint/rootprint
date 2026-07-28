@@ -45,7 +45,8 @@ export const sharesRouter = new Hono<AuthedEnv>()
 			tag: 'Shares',
 			summary: 'Resolve a share link',
 			ok: ShareViewResponse,
-			okDescription: 'Resolved share'
+			okDescription: 'Resolved share',
+			errors: [429]
 		}),
 		readLimiter,
 		validator('param', shareCodeParamsSchema),

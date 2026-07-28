@@ -296,3 +296,21 @@ export const updateQuickwitConfigSchema = v.pipe(
 );
 
 export type UpdateQuickwitConfigInput = v.InferOutput<typeof updateQuickwitConfigSchema>;
+
+// Rejects the all-zeros id: OTLP writes it on logs that carry no trace context.
+const TRACE_ID_RE = /^(?!0{32}$)[0-9a-f]{32}$/;
+
+/** Shared with the web drawer, which uses it to decide whether to offer the Trace tab. */
+export function isTraceId(value: unknown): value is string {
+	return typeof value === 'string' && TRACE_ID_RE.test(value);
+}
+
+export const TraceParams = v.object({
+	traceId: v.pipe(
+		v.string(),
+		v.regex(
+			TRACE_ID_RE,
+			'Expected a 32-character lowercase hexadecimal trace id that is not all zeros'
+		)
+	)
+});

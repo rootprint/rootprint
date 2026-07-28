@@ -17,6 +17,7 @@
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import { formatSpanDuration } from '$lib/utils/time';
+	import { isTraceId } from 'api/schemas';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -70,24 +71,33 @@
 	const hasTraceback = $derived(traceback != null && traceback !== '');
 	const traceId = $derived.by((): string | null => {
 		const v = hit?.raw['trace_id'];
+		return isTraceId(v) ? v : null;
+	});
+	const anchorSpanId = $derived.by((): string | null => {
+		const v = hit?.raw['span_id'];
 		return typeof v === 'string' && v.length > 0 ? v : null;
 	});
-	const tracesIndexId = $derived(store.tracesIndexId);
-	const hasTrace = $derived(traceId !== null && tracesIndexId !== null);
+	const hasTrace = $derived((store.fieldConfig?.hasTraces ?? false) && traceId !== null);
 
-	// Owned here rather than inside TracePane so the trace summary can render on the drawer's meta
-	// line. Still built only while the tab is open, so a drawer whose Trace tab is never opened
-	// issues no query. TraceLoader.init() has no self-abort, so each effect run gets a fresh one.
-	let traceLoader = $state<TraceLoader | null>(null);
+	let traceLoader = $state.raw<TraceLoader | null>(null);
+	let built: string | null = null;
+	const traceKey = $derived(hasTrace ? traceId : null);
+
 	$effect(() => {
-		if (activeTab !== 'trace' || !hit || !traceId || !tracesIndexId) {
+		const key = traceKey;
+		return () => {
+			traceLoader?.dispose();
 			traceLoader = null;
-			return;
-		}
-		const next = new TraceLoader(hit, tracesIndexId, traceId);
+			if (built === key) built = null;
+		};
+	});
+
+	$effect(() => {
+		if (activeTab !== 'trace' || traceKey === null || built === traceKey) return;
+		built = traceKey;
+		const next = new TraceLoader(traceKey);
 		traceLoader = next;
 		void next.init();
-		return () => next.dispose();
 	});
 
 	let searchOpen = $state(false);
@@ -142,6 +152,11 @@
 		searchTerm = '';
 		previousFocus = document.activeElement as HTMLElement | null;
 		queueMicrotask(() => dialogRef?.focus());
+	});
+
+	$effect(() => {
+		if (activeTab === 'trace' && !hasTrace) activeTab = 'parameters';
+		else if (activeTab === 'traceback' && !hasTraceback) activeTab = 'parameters';
 	});
 
 	function close() {
@@ -238,16 +253,16 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#snippet traceSummary()}
-	{@const l = traceLoader}
-	{#if l && !l.loading && !l.error && l.spanCount > 0 && traceId}
+	{@const t = traceLoader}
+	{#if t && !t.loading && !t.error && t.spanCount > 0 && traceId}
 		<span class="text-base-content/30">·</span>
 		<span class="text-base-content/70">{traceId.slice(0, 8)}…{traceId.slice(-4)}</span>
 		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{l.spanCount} spans</span>
+		<span class="text-base-content/70">{t.spanCount} spans</span>
 		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{formatSpanDuration(l.durationNanos)}</span>
+		<span class="text-base-content/70">{formatSpanDuration(t.durationMicros)}</span>
 		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{l.serviceCount} services</span>
+		<span class="text-base-content/70">{t.serviceCount} services</span>
 	{/if}
 {/snippet}
 
@@ -325,8 +340,8 @@
 				<ParametersPane {hit} {store} />
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
-			{:else if activeTab === 'trace' && traceId && tracesIndexId}
-				<TracePane loader={traceLoader} />
+			{:else if activeTab === 'trace' && hasTrace}
+				<TracePane loader={traceLoader} {anchorSpanId} />
 			{:else if activeTab === 'context'}
 				<ContextPane
 					{hit}
