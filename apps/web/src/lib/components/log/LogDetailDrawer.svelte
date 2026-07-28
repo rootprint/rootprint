@@ -8,12 +8,15 @@
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
+	import TracePane from './drawer/TracePane.svelte';
+	import { TraceLoader } from './drawer/trace/trace-loader.svelte';
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { searchHighlight } from '$lib/utils/dom-highlight';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
+	import { formatSpanDuration } from '$lib/utils/time';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -65,6 +68,27 @@
 		return getByPath(hit.raw, path);
 	});
 	const hasTraceback = $derived(traceback != null && traceback !== '');
+	const traceId = $derived.by((): string | null => {
+		const v = hit?.raw['trace_id'];
+		return typeof v === 'string' && v.length > 0 ? v : null;
+	});
+	const tracesIndexId = $derived(store.tracesIndexId);
+	const hasTrace = $derived(traceId !== null && tracesIndexId !== null);
+
+	// Owned here rather than inside TracePane so the trace summary can render on the drawer's meta
+	// line. Still built only while the tab is open, so a drawer whose Trace tab is never opened
+	// issues no query. TraceLoader.init() has no self-abort, so each effect run gets a fresh one.
+	let traceLoader = $state<TraceLoader | null>(null);
+	$effect(() => {
+		if (activeTab !== 'trace' || !hit || !traceId || !tracesIndexId) {
+			traceLoader = null;
+			return;
+		}
+		const next = new TraceLoader(hit, tracesIndexId, traceId);
+		traceLoader = next;
+		void next.init();
+		return () => next.dispose();
+	});
 
 	let searchOpen = $state(false);
 	let searchTerm = $state('');
@@ -213,6 +237,20 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
+{#snippet traceSummary()}
+	{@const l = traceLoader}
+	{#if l && !l.loading && !l.error && l.spanCount > 0 && traceId}
+		<span class="text-base-content/30">·</span>
+		<span class="text-base-content/70">{traceId.slice(0, 8)}…{traceId.slice(-4)}</span>
+		<span class="text-base-content/30">·</span>
+		<span class="text-base-content/70">{l.spanCount} spans</span>
+		<span class="text-base-content/30">·</span>
+		<span class="text-base-content/70">{formatSpanDuration(l.durationNanos)}</span>
+		<span class="text-base-content/30">·</span>
+		<span class="text-base-content/70">{l.serviceCount} services</span>
+	{/if}
+{/snippet}
+
 {#if hit && store.fieldConfig && widthPx > 0}
 	<button
 		type="button"
@@ -258,6 +296,8 @@
 			{activeTab}
 			{sharing}
 			{hasTraceback}
+			{hasTrace}
+			meta={traceSummary}
 			onTabChange={(t) => (activeTab = t)}
 			onSearch={() => (searchOpen = !searchOpen)}
 			onShare={shareLog}
@@ -285,6 +325,8 @@
 				<ParametersPane {hit} {store} />
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
+			{:else if activeTab === 'trace' && traceId && tracesIndexId}
+				<TracePane loader={traceLoader} />
 			{:else if activeTab === 'context'}
 				<ContextPane
 					{hit}

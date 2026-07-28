@@ -194,6 +194,16 @@
 	--chart-3: var(--color-success);
 	--chart-4: var(--color-warning);
 	--chart-5: var(--color-error);
+
+	/* Categorical trace palette. Service names hash into this ramp; red stays reserved for errors. */
+	--trace-service-1: #3b82f6;
+	--trace-service-2: #8b5cf6;
+	--trace-service-3: #06b6d4;
+	--trace-service-4: #10b981;
+	--trace-service-5: #84cc16;
+	--trace-service-6: #eab308;
+	--trace-service-7: #f97316;
+	--trace-service-8: #ec4899;
 }
 
 ::highlight(rootprint-drawer-search) {

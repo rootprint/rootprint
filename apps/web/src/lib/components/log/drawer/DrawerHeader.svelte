@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { Braces, Bug, Layers, ListTree, Search, Share2, X } from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
+	import { Braces, Bug, Layers, ListTree, Search, Share2, Waypoints, X } from 'lucide-svelte';
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import type { LogHit } from '$lib/types';
 
-	export type DrawerTab = 'parameters' | 'traceback' | 'json' | 'context';
+	export type DrawerTab = 'parameters' | 'traceback' | 'trace' | 'json' | 'context';
 
 	let {
 		hit,
 		activeTab,
 		sharing = false,
 		hasTraceback = false,
+		hasTrace = false,
+		meta,
 		onTabChange,
 		onSearch,
 		onShare,
@@ -21,6 +24,9 @@
 		activeTab: DrawerTab;
 		sharing?: boolean;
 		hasTraceback?: boolean;
+		hasTrace?: boolean;
+		/** Extra detail appended to the level/timestamp line by whichever pane is active. */
+		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
 		onSearch: () => void;
 		onShare: () => void;
@@ -31,6 +37,7 @@
 	const TABS = $derived<TabDef[]>([
 		{ id: 'parameters' as DrawerTab, label: 'Parameters', icon: ListTree },
 		...(hasTraceback ? [{ id: 'traceback' as DrawerTab, label: 'Traceback', icon: Bug }] : []),
+		...(hasTrace ? [{ id: 'trace' as DrawerTab, label: 'Trace', icon: Waypoints }] : []),
 		{ id: 'json' as DrawerTab, label: 'JSON', icon: Braces },
 		{ id: 'context' as DrawerTab, label: 'Context', icon: Layers }
 	]);
@@ -125,5 +132,6 @@
 		</span>
 		<span class="text-base-content/30">·</span>
 		<span class="text-base-content/70">{formatLogRowTimestamp(hit.timestamp)}</span>
+		{@render meta?.()}
 	</div>
 </div>
