@@ -120,7 +120,9 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
-			return c.json({ fields: c.get('indexMeta').index.fields });
+			const indexMeta = c.get('indexMeta');
+			if (indexMeta.settings.isTraceIndex) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+			return c.json({ fields: indexMeta.index.fields });
 		}
 	)
 	.get(
