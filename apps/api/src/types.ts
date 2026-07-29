@@ -1,5 +1,4 @@
 import type * as v from 'valibot';
-import type { INDEX_VISIBILITIES, INDEX_VIEWS } from './constants.js';
 import type {
 	DynamicMappingSchema,
 	FieldValueEntrySchema,
@@ -69,9 +68,6 @@ export type ApiErrorBody = {
 		details?: ApiErrorDetail[];
 	};
 };
-
-export type IndexVisibility = (typeof INDEX_VISIBILITIES)[number];
-export type IndexView = (typeof INDEX_VIEWS)[number];
 
 export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
 
@@ -173,7 +169,7 @@ export type ExportFormat = 'json' | 'csv' | 'text';
 // Index configuration (index.service.ts)
 export type IndexSettings = {
 	displayName: string | null;
-	visibility: IndexVisibility;
+	isTraceIndex: boolean;
 	levelField: string;
 	messageField: string;
 	tracebackField: string | null;

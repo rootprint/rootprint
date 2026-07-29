@@ -16,7 +16,7 @@ const LOGS_READ: Scope = { logs: ['read'] };
 export const tracesRouter = new Hono<IndexMetaEnv>()
 	.use('*', requireUserOrPersonalKey(LOGS_READ))
 	.use('*', readLimiter)
-	.use('*', withIndexMeta('search'))
+	.use('*', withIndexMeta)
 	.get(
 		'/:traceId',
 		describe({

@@ -7,11 +7,11 @@ import { DEP } from '$lib/api/deps';
 export const load: PageLoad = async ({ params, depends }) => {
 	depends(DEP.index(params.indexId));
 	try {
-		const [detail, indexes] = await Promise.all([
-			getIndex(params.indexId),
-			listIndexes({ view: 'admin' })
-		]);
-		return { detail, indexIds: indexes.map((i) => i.indexId) };
+		const [detail, indexes] = await Promise.all([getIndex(params.indexId), listIndexes()]);
+		return {
+			detail,
+			traceIndexIds: indexes.filter((i) => i.isTraceIndex).map((i) => i.indexId)
+		};
 	} catch (e) {
 		if (e instanceof ApiError && e.status === 404) throw error(404, 'Index not found');
 		if (e instanceof ApiError) throw error(e.status, e.message);

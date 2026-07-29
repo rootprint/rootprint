@@ -942,6 +942,9 @@
 							}
 						]
 					},
+					"isTraceIndex": {
+						"type": "boolean"
+					},
 					"levelField": {
 						"type": "string"
 					},
@@ -1068,20 +1071,12 @@
 								"type": "null"
 							}
 						]
-					},
-					"visibility": {
-						"enum": [
-							"hidden",
-							"admin",
-							"all"
-						],
-						"type": "string"
 					}
 				},
 				"required": [
 					"indexId",
 					"displayName",
-					"visibility",
+					"isTraceIndex",
 					"levelField",
 					"messageField",
 					"tracebackField",
@@ -1238,16 +1233,6 @@
 			},
 			"IndexSummarySchema": {
 				"properties": {
-					"createTimestamp": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"displayName": {
 						"anyOf": [
 							{
@@ -1258,24 +1243,11 @@
 							}
 						]
 					},
-					"fieldCount": {
-						"type": "number"
-					},
 					"indexId": {
 						"type": "string"
 					},
-					"mode": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"sourceCount": {
-						"type": "number"
+					"isTraceIndex": {
+						"type": "boolean"
 					},
 					"traceIndexId": {
 						"anyOf": [
@@ -1286,24 +1258,12 @@
 								"type": "null"
 							}
 						]
-					},
-					"visibility": {
-						"enum": [
-							"hidden",
-							"admin",
-							"all"
-						],
-						"type": "string"
 					}
 				},
 				"required": [
 					"indexId",
 					"displayName",
-					"visibility",
-					"fieldCount",
-					"sourceCount",
-					"mode",
-					"createTimestamp",
+					"isTraceIndex",
 					"traceIndexId"
 				],
 				"type": "object"
@@ -1529,20 +1489,11 @@
 								"type": "null"
 							}
 						]
-					},
-					"visibility": {
-						"enum": [
-							"hidden",
-							"admin",
-							"all"
-						],
-						"type": "string"
 					}
 				},
 				"required": [
 					"indexId",
 					"displayName",
-					"visibility",
 					"numDocs",
 					"sizeBytes",
 					"uncompressedBytes",
@@ -13238,19 +13189,6 @@
 		"/api/indexes": {
 			"get": {
 				"operationId": "getApiIndexes",
-				"parameters": [
-					{
-						"in": "query",
-						"name": "view",
-						"schema": {
-							"enum": [
-								"search",
-								"admin"
-							],
-							"type": "string"
-						}
-					}
-				],
 				"responses": {
 					"200": {
 						"content": {
@@ -13930,6 +13868,9 @@
 											}
 										]
 									},
+									"isTraceIndex": {
+										"type": "boolean"
+									},
 									"levelField": {
 										"minLength": 1,
 										"type": "string"
@@ -13963,14 +13904,6 @@
 												"type": "null"
 											}
 										]
-									},
-									"visibility": {
-										"enum": [
-											"hidden",
-											"admin",
-											"all"
-										],
-										"type": "string"
 									}
 								},
 								"required": [],

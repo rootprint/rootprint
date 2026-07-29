@@ -14,26 +14,37 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 
-import type { DisplayMode, Filter, IndexVisibility } from '../types.js';
+import type { DisplayMode, Filter } from '../types.js';
 
 import { user } from './auth.schema.js';
 
-export const indexSettings = pgTable('index_settings', {
-	indexId: text('index_id').primaryKey(),
-	displayName: text('display_name'),
-	visibility: text('visibility').$type<IndexVisibility>().notNull().default('all'),
-	levelField: text('level_field').notNull().default('severity_text'),
-	messageField: text('message_field').notNull().default('body.message'),
-	tracebackField: text('traceback_field'),
-	contextFields: jsonb('context_fields').$type<string[] | null>(),
-	traceIndexId: text('trace_index_id'),
-	traceIdField: text('trace_id_field').notNull().default('trace_id'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.defaultNow()
-		.notNull()
-		.$onUpdate(() => new Date())
-});
+export const indexSettings = pgTable(
+	'index_settings',
+	{
+		indexId: text('index_id').primaryKey(),
+		displayName: text('display_name'),
+		isTraceIndex: boolean('is_trace_index').notNull().default(false),
+		levelField: text('level_field').notNull().default('severity_text'),
+		messageField: text('message_field').notNull().default('body.message'),
+		tracebackField: text('traceback_field'),
+		contextFields: jsonb('context_fields').$type<string[] | null>(),
+		traceIndexId: text('trace_index_id'),
+		traceIdField: text('trace_id_field').notNull().default('trace_id'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.notNull()
+			.$onUpdate(() => new Date())
+	},
+	(table) => [
+		// A span store holds no spans of its own. Enforced here so the invariant survives
+		// any write path, not just saveIndexConfig.
+		check(
+			'index_settings_trace_index_check',
+			sql`NOT ${table.isTraceIndex} OR ${table.traceIndexId} IS NULL`
+		)
+	]
+);
 
 export const userPreference = pgTable(
 	'user_preference',

@@ -9,7 +9,7 @@
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-logs/constants';
 	import type { Integration } from '$lib/send-logs/types';
 	import type { ApiKeyView } from '$lib/api/api-keys';
-	import type { IngestIndexOption } from '$lib/types';
+	import type { IndexSummary } from 'api/types';
 
 	let {
 		integration,
@@ -21,7 +21,7 @@
 	}: {
 		integration: Integration;
 		apiKeys: ApiKeyView[];
-		indexes: IngestIndexOption[];
+		indexes: IndexSummary[];
 		selectedIndexId: string;
 		selectedApiKeyId?: number | null;
 		realApiKeyValue?: string | null;

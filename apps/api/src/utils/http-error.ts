@@ -41,11 +41,6 @@ export const serviceUnavailable = (
 	retryAfter?: number | string
 ) => new HttpError(503, code, message, undefined, retryAfter);
 
-export function indexAccessError(isAdmin: boolean, kind: 'denied' | 'missing'): HttpError {
-	if (kind === 'missing' && isAdmin) return notFound('Index not found', 'INDEX_NOT_FOUND');
-	return new HttpError(403, 'INDEX_NOT_ACCESSIBLE', 'Index not accessible');
-}
-
 export function isUniqueViolation(err: unknown): boolean {
 	if (typeof err !== 'object' || err === null) return false;
 	if ((err as { code?: unknown }).code === '23505') return true;

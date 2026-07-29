@@ -9,13 +9,13 @@
 	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import TagInput from '$lib/components/ui/TagInput.svelte';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
-	import type { IndexDetail, IndexVisibility } from 'api/types';
+	import type { IndexDetail } from 'api/types';
 
-	let { detail, indexIds }: { detail: IndexDetail; indexIds: string[] } = $props();
+	let { detail, traceIndexIds }: { detail: IndexDetail; traceIndexIds: string[] } = $props();
 
 	const initial = detail;
 	let displayName = $state(initial.displayName ?? '');
-	let visibility = $state<IndexVisibility>(initial.visibility);
+	let isTraceIndex = $state(initial.isTraceIndex);
 	let levelField = $state(initial.levelField);
 	let messageField = $state(initial.messageField);
 	let tracebackField = $state(initial.tracebackField ?? '');
@@ -23,11 +23,10 @@
 	let traceIndexId = $state(initial.traceIndexId ?? '');
 	let traceIdField = $state(initial.traceIdField);
 
-	const selectableIndexIds = $derived(indexIds.filter((id) => id !== detail.indexId));
 	const indexOptions = $derived(
-		traceIndexId !== '' && !selectableIndexIds.includes(traceIndexId)
-			? [traceIndexId, ...selectableIndexIds]
-			: selectableIndexIds
+		traceIndexId !== '' && !traceIndexIds.includes(traceIndexId)
+			? [traceIndexId, ...traceIndexIds]
+			: traceIndexIds
 	);
 
 	let submitting = $state(false);
@@ -39,12 +38,12 @@
 
 		const payload: SaveIndexConfigInput = {
 			displayName: displayName.trim() === '' ? null : displayName.trim(),
-			visibility,
+			isTraceIndex,
 			levelField: levelField.trim(),
 			messageField: messageField.trim(),
 			tracebackField: tracebackField.trim() === '' ? null : tracebackField.trim(),
 			contextFields: contextFieldTags.length === 0 ? null : [...contextFieldTags],
-			traceIndexId: traceIndexId === '' ? null : traceIndexId,
+			traceIndexId: isTraceIndex || traceIndexId === '' ? null : traceIndexId,
 			traceIdField: traceIdField.trim()
 		};
 
@@ -99,149 +98,146 @@
 	</SettingsRow>
 
 	<SettingsRow
-		id="cfg-visibility"
-		label="Visibility"
-		hint="Who can see this index on the search page. Does not gate spans read through a paired log index — restrict the log index instead."
-		error={fieldErrors.visibility}
+		id="cfg-is-trace-index"
+		label="Stores spans"
+		hint="This index holds OTLP spans rather than logs, so it stays out of the log explorer and becomes selectable as another index's span store."
+		error={fieldErrors.isTraceIndex}
 	>
-		{#snippet children({ id, invalid, describedBy })}
-			<select
-				{id}
-				bind:value={visibility}
-				class="select select-sm w-full"
-				class:select-error={invalid}
-				aria-invalid={invalid ? 'true' : undefined}
-				aria-describedby={describedBy}
-			>
-				<option value="all">Public — everyone</option>
-				<option value="admin">Admins only</option>
-				<option value="hidden">Hidden</option>
-			</select>
-		{/snippet}
-	</SettingsRow>
-
-	<SettingsRow
-		id="cfg-level-field"
-		label="Level field"
-		hint="Field that carries the log severity."
-		error={fieldErrors.levelField}
-	>
-		{#snippet children({ id, invalid, describedBy })}
+		{#snippet children({ id, describedBy })}
 			<input
 				{id}
-				type="text"
-				bind:value={levelField}
-				class="input input-sm w-full"
-				class:input-error={invalid}
-				placeholder="level"
-				autocomplete="off"
-				aria-invalid={invalid ? 'true' : undefined}
+				type="checkbox"
+				bind:checked={isTraceIndex}
+				class="toggle toggle-sm"
 				aria-describedby={describedBy}
 			/>
 		{/snippet}
 	</SettingsRow>
 
-	<SettingsRow
-		id="cfg-message-field"
-		label="Message field"
-		hint="The primary human-readable message per row."
-		error={fieldErrors.messageField}
-	>
-		{#snippet children({ id, invalid, describedBy })}
-			<input
-				{id}
-				type="text"
-				bind:value={messageField}
-				class="input input-sm w-full"
-				class:input-error={invalid}
-				placeholder="message"
-				autocomplete="off"
-				aria-invalid={invalid ? 'true' : undefined}
-				aria-describedby={describedBy}
-			/>
-		{/snippet}
-	</SettingsRow>
+	{#if !isTraceIndex}
+		<SettingsRow
+			id="cfg-level-field"
+			label="Level field"
+			hint="Field that carries the log severity."
+			error={fieldErrors.levelField}
+		>
+			{#snippet children({ id, invalid, describedBy })}
+				<input
+					{id}
+					type="text"
+					bind:value={levelField}
+					class="input input-sm w-full"
+					class:input-error={invalid}
+					placeholder="level"
+					autocomplete="off"
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
+				/>
+			{/snippet}
+		</SettingsRow>
 
-	<SettingsRow
-		id="cfg-traceback-field"
-		label="Traceback field"
-		hint="Dot-notation path to stacktrace data. Optional."
-		error={fieldErrors.tracebackField}
-	>
-		{#snippet children({ id, invalid, describedBy })}
-			<input
-				{id}
-				type="text"
-				bind:value={tracebackField}
-				class="input input-sm w-full"
-				class:input-error={invalid}
-				placeholder="e.g. message.traceback"
-				autocomplete="off"
-				aria-invalid={invalid ? 'true' : undefined}
-				aria-describedby={describedBy}
-			/>
-		{/snippet}
-	</SettingsRow>
+		<SettingsRow
+			id="cfg-message-field"
+			label="Message field"
+			hint="The primary human-readable message per row."
+			error={fieldErrors.messageField}
+		>
+			{#snippet children({ id, invalid, describedBy })}
+				<input
+					{id}
+					type="text"
+					bind:value={messageField}
+					class="input input-sm w-full"
+					class:input-error={invalid}
+					placeholder="message"
+					autocomplete="off"
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
+				/>
+			{/snippet}
+		</SettingsRow>
 
-	<SettingsRow
-		id="cfg-trace-index"
-		label="Trace index"
-		hint="Index holding the OTLP spans for these logs. Must use the otel-traces schema. The chosen index is hidden from the log explorer's index picker."
-		error={fieldErrors.traceIndexId}
-	>
-		{#snippet children({ id, invalid, describedBy })}
-			<select
-				{id}
-				bind:value={traceIndexId}
-				class="select select-sm w-full"
-				class:select-error={invalid}
-				aria-invalid={invalid ? 'true' : undefined}
-				aria-describedby={describedBy}
-			>
-				<option value="">None — this index has no traces</option>
-				{#each indexOptions as option (option)}
-					<option value={option}>{option}</option>
-				{/each}
-			</select>
-		{/snippet}
-	</SettingsRow>
+		<SettingsRow
+			id="cfg-traceback-field"
+			label="Traceback field"
+			hint="Dot-notation path to stacktrace data. Optional."
+			error={fieldErrors.tracebackField}
+		>
+			{#snippet children({ id, invalid, describedBy })}
+				<input
+					{id}
+					type="text"
+					bind:value={tracebackField}
+					class="input input-sm w-full"
+					class:input-error={invalid}
+					placeholder="e.g. message.traceback"
+					autocomplete="off"
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
+				/>
+			{/snippet}
+		</SettingsRow>
 
-	<SettingsRow
-		id="cfg-trace-id-field"
-		label="Trace ID field"
-		hint="Log field carrying the W3C trace id, used to link a log line to its trace. Supports dot-notation."
-		error={fieldErrors.traceIdField}
-	>
-		{#snippet children({ id, invalid, describedBy })}
-			<input
-				{id}
-				type="text"
-				bind:value={traceIdField}
-				class="input input-sm w-full"
-				class:input-error={invalid}
-				placeholder="trace_id"
-				autocomplete="off"
-				aria-invalid={invalid ? 'true' : undefined}
-				aria-describedby={describedBy}
-			/>
-		{/snippet}
-	</SettingsRow>
+		<SettingsRow
+			id="cfg-trace-index"
+			label="Trace index"
+			hint="Lists indexes marked Stores spans. If the list is empty, mark the span index first."
+			error={fieldErrors.traceIndexId}
+		>
+			{#snippet children({ id, invalid, describedBy })}
+				<select
+					{id}
+					bind:value={traceIndexId}
+					class="select select-sm w-full"
+					class:select-error={invalid}
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
+				>
+					<option value="">None — this index has no traces</option>
+					{#each indexOptions as option (option)}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			{/snippet}
+		</SettingsRow>
 
-	<SettingsRow
-		plain
-		label="Context fields"
-		hint="Fields used for log context search. Leave empty to use all fields. Supports dot-notation."
-		error={fieldErrors.contextFields}
-	>
-		{#snippet children({ invalid })}
-			<TagInput
-				bind:tags={contextFieldTags}
-				placeholderEmpty="service.name  (press Enter to add)"
-				addLabel="Add context field"
-				error={invalid}
-			/>
-		{/snippet}
-	</SettingsRow>
+		<SettingsRow
+			id="cfg-trace-id-field"
+			label="Trace ID field"
+			hint="Log field carrying the W3C trace id, used to link a log line to its trace. Supports dot-notation."
+			error={fieldErrors.traceIdField}
+		>
+			{#snippet children({ id, invalid, describedBy })}
+				<input
+					{id}
+					type="text"
+					bind:value={traceIdField}
+					class="input input-sm w-full"
+					class:input-error={invalid}
+					placeholder="trace_id"
+					autocomplete="off"
+					aria-invalid={invalid ? 'true' : undefined}
+					aria-describedby={describedBy}
+				/>
+			{/snippet}
+		</SettingsRow>
+
+		<SettingsRow
+			plain
+			label="Context fields"
+			hint="Fields used for log context search. Leave empty to use all fields. Supports dot-notation."
+			error={fieldErrors.contextFields}
+		>
+			{#snippet children({ invalid })}
+				<TagInput
+					bind:tags={contextFieldTags}
+					placeholderEmpty="service.name  (press Enter to add)"
+					addLabel="Add context field"
+					error={invalid}
+				/>
+			{/snippet}
+		</SettingsRow>
+	{/if}
 
 	<div class="flex justify-end px-4 py-3">
 		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>

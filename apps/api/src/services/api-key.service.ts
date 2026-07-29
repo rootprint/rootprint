@@ -4,7 +4,6 @@ import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import {
 	API_KEY_DISPLAY_PREFIX_LENGTH,
 	API_KEY_RANDOM_BYTES,
-	defaultTraceIndexId,
 	INGEST_PREFIX,
 	LAST_USED_THROTTLE_SECONDS
 } from '../constants.js';
@@ -244,7 +243,6 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 			name: apiKey.name,
 			indexId: apiKey.indexId,
 			traceIndexId: indexSettings.traceIndexId,
-			settingsIndexId: indexSettings.indexId,
 			role: apiKey.role
 		})
 		.from(apiKey)
@@ -257,15 +255,10 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 		return { status: 'not-found' };
 	}
 
-	const { settingsIndexId, ...verified } = row;
-	if (settingsIndexId === null) {
-		verified.traceIndexId = defaultTraceIndexId(verified.indexId);
-	}
-
 	// lastTouchAt: 0 forces the first resolveHit to fire the lastUsedAt write.
 	const entry: ApiKeyCacheEntry = {
 		kind: 'hit',
-		row: verified,
+		row,
 		lastTouchAt: 0,
 		expiresAt: now + POSITIVE_TTL_MS
 	};
