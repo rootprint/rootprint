@@ -151,4 +151,5 @@ export interface TraceModel {
 	durationMicros: number;
 	services: { name: string; count: number }[];
 	errorCount: number;
+	isPartial: boolean;
 }
