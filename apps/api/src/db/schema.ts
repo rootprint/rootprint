@@ -83,7 +83,6 @@ export const apiKey = pgTable(
 		token: text('token').notNull().unique(),
 		role: text('role').$type<'ingest'>().notNull(),
 		indexId: text('index_id').notNull(),
-		traceIndexId: text('trace_index_id'),
 		lastUsedAt: timestamp('last_used_at'),
 		createdByUserId: text('created_by_user_id')
 			.notNull()

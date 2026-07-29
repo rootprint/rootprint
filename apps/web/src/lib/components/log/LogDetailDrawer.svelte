@@ -2,6 +2,8 @@
 	import { Copy, ExternalLink, GripVertical } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
+	import { page } from '$app/state';
+
 	import DrawerHeader, { type DrawerTab } from './drawer/DrawerHeader.svelte';
 	import DrawerSearchBox from './drawer/DrawerSearchBox.svelte';
 	import ContextPane from './drawer/ContextPane.svelte';
@@ -9,14 +11,13 @@
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
-	import { TraceLoader } from '$lib/components/trace/trace-loader.svelte';
+	import { TraceResource } from '$lib/components/trace/trace-resource.svelte';
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { searchHighlight } from '$lib/utils/dom-highlight';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
-	import { formatSpanDuration } from '$lib/utils/time';
 	import { isTraceId } from 'api/schemas';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
@@ -75,36 +76,42 @@
 		const v = getByPath(hit.raw, path);
 		return isTraceId(v) ? v : null;
 	});
-	const anchorSpanId = $derived.by((): string | null => {
-		const v = hit?.raw['span_id'];
-		return typeof v === 'string' && v.length > 0 ? v : null;
-	});
 	const hasTrace = $derived((store.fieldConfig?.hasTraces ?? false) && traceId !== null);
 
-	let traceLoader = $state.raw<TraceLoader | null>(null);
-	let built: string | null = null;
-	const traceKey = $derived(hasTrace ? traceId : null);
-	const loaderKey = $derived(
-		traceKey !== null && store.selectedIndex !== null ? `${store.selectedIndex}|${traceKey}` : null
+	const traceTarget = $derived(
+		hasTrace && traceId !== null && store.selectedIndex !== null
+			? { indexId: store.selectedIndex, traceId }
+			: null
 	);
+	const traceKey = $derived(traceTarget && `${traceTarget.indexId}|${traceTarget.traceId}`);
+
+	let traceResource = $state.raw<TraceResource | null>(null);
+	// Deliberately not reactive: the loader effect below assigns traceResource, and reading it there
+	// would retrigger that effect.
+	let requestedKey: string | null = null;
 
 	$effect(() => {
-		const key = loaderKey;
+		void traceKey;
 		return () => {
-			traceLoader?.dispose();
-			traceLoader = null;
-			if (built === key) built = null;
+			traceResource?.dispose();
+			traceResource = null;
+			requestedKey = null;
 		};
 	});
 
+	// Explicit returnTo rather than history state: a reload or a pasted link carries no nav state.
+	function tracePageHref(indexId: string, id: string): string {
+		const returnTo = `${page.url.pathname}${page.url.search}`;
+		return `/traces/${encodeURIComponent(indexId)}/${id}?returnTo=${encodeURIComponent(returnTo)}`;
+	}
+
 	$effect(() => {
-		const indexId = store.selectedIndex;
-		if (activeTab !== 'trace' || traceKey === null || indexId === null || built === loaderKey)
-			return;
-		built = loaderKey;
-		const next = new TraceLoader(indexId, traceKey);
-		traceLoader = next;
-		void next.init();
+		const target = traceTarget;
+		if (activeTab !== 'trace' || !target || requestedKey === traceKey) return;
+		requestedKey = traceKey;
+		const next = new TraceResource(target.indexId, target.traceId);
+		traceResource = next;
+		void next.load();
 	});
 
 	let searchOpen = $state(false);
@@ -260,13 +267,9 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#snippet traceSummary()}
-	{@const t = traceLoader}
-	{#if t && !t.loading && !t.error && t.spanCount > 0 && traceId}
+	{#if traceId}
 		{@const id = traceId}
 		<span class="text-base-content/30">·</span>
-		<span class="badge badge-sm badge-ghost tabular-nums">
-			{formatSpanDuration(t.durationMicros)}
-		</span>
 		<button
 			type="button"
 			class="text-base-content/50 hover:text-base-content flex min-w-0 items-center gap-1"
@@ -276,13 +279,12 @@
 			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
 			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
 		</button>
-		<a
-			href={`/traces/${id}?index=${encodeURIComponent(store.selectedIndex ?? '')}`}
-			class="btn btn-xs btn-primary ml-auto"
-		>
-			<ExternalLink class="h-3 w-3" aria-hidden="true" />
-			Open trace page
-		</a>
+		{#if traceTarget}
+			<a href={tracePageHref(traceTarget.indexId, id)} class="btn btn-xs btn-primary ml-auto">
+				<ExternalLink class="h-3 w-3" aria-hidden="true" />
+				Open trace page
+			</a>
+		{/if}
 	{/if}
 {/snippet}
 
@@ -332,6 +334,7 @@
 			{sharing}
 			{hasTraceback}
 			{hasTrace}
+			width={widthPx}
 			meta={traceSummary}
 			onTabChange={(t) => (activeTab = t)}
 			onSearch={() => (searchOpen = !searchOpen)}
@@ -361,7 +364,12 @@
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
 			{:else if activeTab === 'trace' && hasTrace}
-				<TracePane loader={traceLoader} {anchorSpanId} />
+				<TracePane
+					model={traceResource?.model ?? null}
+					loading={traceResource?.loading ?? true}
+					error={traceResource?.error ?? null}
+					onRetry={() => void traceResource?.load()}
+				/>
 			{:else if activeTab === 'context'}
 				<ContextPane
 					{hit}

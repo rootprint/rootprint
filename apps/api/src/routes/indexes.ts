@@ -180,7 +180,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			tag: 'Index management',
 			summary: 'Update index configuration',
 			okStatus: 204,
-			errors: [409]
+			errors: [400]
 		}),
 		requireUser,
 		requireAdmin,

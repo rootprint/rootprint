@@ -124,15 +124,15 @@
     {
       "idx": 17,
       "version": "7",
-      "when": 1785313293012,
-      "tag": "0017_first_wendell_vaughn",
+      "when": 1785323935428,
+      "tag": "0017_great_daredevil",
       "breakpoints": true
     },
     {
       "idx": 18,
       "version": "7",
-      "when": 1785313301179,
-      "tag": "0018_backfill_trace_pairing",
+      "when": 1785325305445,
+      "tag": "0018_pair_otel_logs_with_otel_traces",
       "breakpoints": true
     }
   ]

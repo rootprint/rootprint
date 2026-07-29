@@ -6,8 +6,7 @@ export const apiKeyRoleSchema = v.picklist(['ingest'] as const);
 
 export const createApiKeySchema = v.object({
 	name: boundedName('API key name', 100),
-	indexId: v.pipe(v.string(), v.trim(), v.minLength(1, 'Index ID is required')),
-	traceIndexId: v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.minLength(1))))
+	indexId: v.pipe(v.string(), v.trim(), v.minLength(1, 'Index ID is required'))
 });
 
 export const serviceAccountKeyIdParams = v.object({

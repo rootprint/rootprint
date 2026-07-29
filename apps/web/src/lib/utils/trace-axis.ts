@@ -2,7 +2,6 @@ const TICK_TARGET = 6;
 
 export interface TraceAxis {
 	ticks: { pct: number; label: string }[];
-	/** Vertical gridline background, one line per tick. Empty when there is nothing to scale. */
 	gridStyle: string;
 }
 

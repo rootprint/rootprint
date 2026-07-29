@@ -2,6 +2,7 @@ import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
+import { OTEL_TRACES_INDEX } from 'api/constants';
 import type { FieldConfig, IngestIndexOption } from '$lib/types';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
 import type {
@@ -35,14 +36,14 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 	};
 }
 
-/**
- * Log indexes an ingest key can target, from an admin-view index list. Trace indexes are excluded:
- * shipping logs into one is never intended, and the API's own search-view list drops them too.
- */
+/** Log indexes an ingest key can target, from an admin-view list. Trace indexes are excluded. */
 export function ingestIndexOptions(indexes: IndexSummary[]): IngestIndexOption[] {
-	const traceTargets = new Set(
-		indexes.map((i) => i.traceIndexId).filter((id): id is string => id !== null)
-	);
+	// Seeded with OTEL_TRACES_INDEX to match the API's listIndexes, which drops it whether or not a
+	// settings row names it.
+	const traceTargets = new Set([
+		OTEL_TRACES_INDEX,
+		...indexes.map((i) => i.traceIndexId).filter((id): id is string => id !== null)
+	]);
 	return indexes
 		.filter((i) => !traceTargets.has(i.indexId))
 		.map((i) => ({ indexId: i.indexId, traceIndexId: i.traceIndexId }));

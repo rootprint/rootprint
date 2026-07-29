@@ -23,6 +23,7 @@
 		sharing = false,
 		hasTraceback = false,
 		hasTrace = false,
+		width,
 		meta,
 		onTabChange,
 		onSearch,
@@ -34,6 +35,7 @@
 		sharing?: boolean;
 		hasTraceback?: boolean;
 		hasTrace?: boolean;
+		width: number;
 		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
 		onSearch: () => void;
@@ -49,6 +51,8 @@
 		{ id: 'json' as DrawerTab, label: 'JSON', icon: Braces },
 		{ id: 'context' as DrawerTab, label: 'Context', icon: Layers }
 	]);
+
+	const compact = $derived(width > 0 && width < 560);
 
 	function handleTabKeydown(e: KeyboardEvent) {
 		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
@@ -66,14 +70,14 @@
 	const levelHex = $derived(levelColor(hit.level));
 </script>
 
-<div
-	class="border-line flex items-center justify-between border-b px-3"
-	role="tablist"
-	aria-label="Log detail tabs"
-	tabindex={-1}
-	onkeydown={handleTabKeydown}
->
-	<div class="flex">
+<div class="border-line flex items-center justify-between gap-2 border-b px-3">
+	<div
+		class="flex min-w-0"
+		role="tablist"
+		aria-label="Log detail tabs"
+		tabindex={-1}
+		onkeydown={handleTabKeydown}
+	>
 		{#each TABS as tab (tab.id)}
 			{@const Icon = tab.icon}
 			<button
@@ -83,15 +87,17 @@
 				aria-selected={activeTab === tab.id}
 				aria-controls={`drawer-panel-${tab.id}`}
 				tabindex={activeTab === tab.id ? 0 : -1}
-				class={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs ${
+				class={`flex items-center gap-1.5 border-b-2 py-2.5 text-xs ${compact ? 'px-2.5' : 'px-3'} ${
 					activeTab === tab.id
 						? 'border-primary text-base-content'
 						: 'text-base-content/60 border-transparent'
 				}`}
+				title={compact ? tab.label : undefined}
+				aria-label={compact ? tab.label : undefined}
 				onclick={() => onTabChange(tab.id)}
 			>
-				<Icon class="h-3.5 w-3.5" />
-				{tab.label}
+				<Icon class="h-3.5 w-3.5 shrink-0" />
+				{#if !compact}{tab.label}{/if}
 			</button>
 		{/each}
 	</div>

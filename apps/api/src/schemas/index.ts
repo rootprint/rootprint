@@ -13,11 +13,11 @@ export {
 	RECORD_OPTIONS,
 	INDEX_MODES,
 	FAST_PRECISIONS,
-	DATETIME_OUTPUT_FORMATS,
-	isTraceId
+	DATETIME_OUTPUT_FORMATS
 } from './indexes.js';
 export * from './service-accounts.js';
 export * from './settings.js';
 export * from './sources.js';
+export * from './traces.js';
 export * from './users.js';
 export * from './views.js';

@@ -4,13 +4,14 @@ import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import {
 	API_KEY_DISPLAY_PREFIX_LENGTH,
 	API_KEY_RANDOM_BYTES,
+	defaultTraceIndexId,
 	INGEST_PREFIX,
 	LAST_USED_THROTTLE_SECONDS
 } from '../constants.js';
 import type { Db } from '../db/index.js';
 import { auth } from '../lib/auth.js';
 // apiKey = custom ingest-key table; personalApiKey = Better Auth plugin table.
-import { apiKey, apikey as personalApiKey, user } from '../db/schema.js';
+import { apiKey, apikey as personalApiKey, indexSettings, user } from '../db/schema.js';
 import type {
 	ApiKeySummary,
 	ApiKeyValue,
@@ -90,7 +91,6 @@ function toApiKeySummary(
 		tokenPrefix,
 		role: row.role,
 		indexId: row.indexId,
-		traceIndexId: row.traceIndexId,
 		lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
 		createdAt: row.createdAt.toISOString(),
 		createdByUserId: row.createdByUserId
@@ -105,7 +105,6 @@ export async function listApiKeys(db: Db): Promise<ApiKeySummary[]> {
 			tokenPrefix: sql<string>`substring(${apiKey.token} for ${API_KEY_DISPLAY_PREFIX_LENGTH})`,
 			role: apiKey.role,
 			indexId: apiKey.indexId,
-			traceIndexId: apiKey.traceIndexId,
 			lastUsedAt: apiKey.lastUsedAt,
 			createdAt: apiKey.createdAt,
 			createdByUserId: apiKey.createdByUserId
@@ -129,7 +128,6 @@ export async function createApiKey(
 				token,
 				role: 'ingest',
 				indexId: input.indexId,
-				traceIndexId: input.traceIndexId ?? null,
 				createdByUserId
 			})
 			.returning()
@@ -245,10 +243,12 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 			id: apiKey.id,
 			name: apiKey.name,
 			indexId: apiKey.indexId,
-			traceIndexId: apiKey.traceIndexId,
+			traceIndexId: indexSettings.traceIndexId,
+			settingsIndexId: indexSettings.indexId,
 			role: apiKey.role
 		})
 		.from(apiKey)
+		.leftJoin(indexSettings, eq(indexSettings.indexId, apiKey.indexId))
 		.where(eq(apiKey.token, bearer))
 		.limit(1);
 
@@ -257,10 +257,15 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 		return { status: 'not-found' };
 	}
 
+	const { settingsIndexId, ...verified } = row;
+	if (settingsIndexId === null) {
+		verified.traceIndexId = defaultTraceIndexId(verified.indexId);
+	}
+
 	// lastTouchAt: 0 forces the first resolveHit to fire the lastUsedAt write.
 	const entry: ApiKeyCacheEntry = {
 		kind: 'hit',
-		row,
+		row: verified,
 		lastTouchAt: 0,
 		expiresAt: now + POSITIVE_TTL_MS
 	};

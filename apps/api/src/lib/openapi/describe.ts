@@ -78,6 +78,10 @@ type DescribeArgs = {
 	okDescription?: string;
 	/** Error status codes to document beyond the baseline (400/401/403/404/500/503) */
 	errors?: number[];
+	/** Skip the shared JSON error baseline, for routes whose errors are protobuf (OTLP) not JSON. */
+	baselineErrors?: boolean;
+	/** Raw OpenAPI requestBody object — for non-JSON request payloads (protobuf, NDJSON). */
+	requestBody?: unknown;
 	security?: NonNullable<DescribeRouteOptions['security']>;
 	/**
 	 * Raw OpenAPI response objects merged in last (final precedence) — for
@@ -95,6 +99,8 @@ function describe(args: DescribeArgs) {
 		okStatus = 200,
 		okDescription = 'Successful response',
 		errors = [],
+		baselineErrors = true,
+		requestBody,
 		security,
 		rawResponses
 	} = args;
@@ -104,7 +110,7 @@ function describe(args: DescribeArgs) {
 
 	const responses = {
 		...successResponses,
-		...errorResponses(errors),
+		...(baselineErrors ? errorResponses(errors) : {}),
 		...rawResponses
 	} as DescribeRouteOptions['responses'];
 
@@ -113,6 +119,9 @@ function describe(args: DescribeArgs) {
 		summary,
 		...(description !== undefined ? { description } : {}),
 		responses,
+		...(requestBody !== undefined
+			? { requestBody: requestBody as DescribeRouteOptions['requestBody'] }
+			: {}),
 		...(security !== undefined ? { security } : {})
 	});
 }
