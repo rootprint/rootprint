@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { ArrowLeft, Check, Copy, Search } from 'lucide-svelte';
 
 	import TracePane from '$lib/components/trace/TracePane.svelte';
@@ -71,6 +72,15 @@
 			{/snippet}
 		</CopyButton>
 	</div>
+
+	{#if model.isPartial}
+		<div class="border-line flex items-center gap-2 border-b px-4 py-1.5 text-xs">
+			<span class="text-warning">
+				Some parent spans are still being indexed — this trace may be incomplete.
+			</span>
+			<button class="btn btn-ghost btn-xs" onclick={() => invalidateAll()}>Reload</button>
+		</div>
+	{/if}
 
 	{#if hasSpans}
 		<div class="border-line border-b px-4 py-2">

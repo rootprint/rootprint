@@ -9,7 +9,8 @@ const EMPTY: TraceModel = {
 	spanCount: 0,
 	durationMicros: 0,
 	services: [],
-	errorCount: 0
+	errorCount: 0,
+	isPartial: false
 };
 
 /** Shapes a flat span list into the waterfall tree, with geometry precomputed against the trace. */
@@ -36,10 +37,15 @@ export function buildTraceModel(spans: TraceSpan[]): TraceModel {
 		.toSorted((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
 	const roots: SpanNode[] = [];
+	let isPartial = false;
 	for (const node of nodes) {
 		const parent = node.parentSpanId ? byId.get(node.parentSpanId) : undefined;
 		if (parent && parent !== node) parent.children.push(node);
-		else roots.push(node);
+		else {
+			// A long-running parent is only exported when it ends, so children can be searchable first.
+			if (node.parentSpanId && !parent) isPartial = true;
+			roots.push(node);
+		}
 	}
 
 	const total = Math.max(durationMicros, 1);
@@ -65,5 +71,5 @@ export function buildTraceModel(spans: TraceSpan[]): TraceModel {
 	}
 	roots.sort((a, b) => a.startOffsetMicros - b.startOffsetMicros);
 
-	return { roots, spanCount: nodes.length, durationMicros, services, errorCount };
+	return { roots, spanCount: nodes.length, durationMicros, services, errorCount, isPartial };
 }
