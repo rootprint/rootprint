@@ -2,6 +2,17 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ⚠️ Breaking
+
+- **Per-index visibility is gone.** Any index previously set to `admin` or `hidden` becomes readable by every signed-in user and every `logs:read` personal API key once the migration runs. The `visibility` field is gone from `PATCH /api/indexes/:indexId`, and the `?view=` query parameter is gone from `GET /api/indexes`.
+- **`GET /api/indexes` returns a smaller row.** `fieldCount`, `sourceCount`, `mode`, and `createTimestamp` are no longer included; all four are available per index from `GET /api/indexes/:indexId`.
+
+### Added
+
+- **Trace indexes.** Indexes can be marked as trace indexes, which keeps them out of the log explorer and makes them selectable as a log index's span store.
+
 ## [0.3.6] - 2026-07-21
 
 ### Added

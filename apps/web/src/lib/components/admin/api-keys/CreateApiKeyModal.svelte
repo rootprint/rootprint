@@ -7,7 +7,7 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import OneTimeKeyReveal from '$lib/components/ui/OneTimeKeyReveal.svelte';
 	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
-	import type { IngestIndexOption } from '$lib/types';
+	import type { IndexSummary } from 'api/types';
 
 	let {
 		open = $bindable(false),
@@ -17,7 +17,7 @@
 		onCreated
 	}: {
 		open?: boolean;
-		indexes: IngestIndexOption[];
+		indexes: IndexSummary[];
 		/** Preselected index; ignored when not present in `indexes`. */
 		defaultIndexId?: string;
 		invalidateKey?: string;

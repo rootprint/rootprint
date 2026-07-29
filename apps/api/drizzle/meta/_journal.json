@@ -134,6 +134,20 @@
       "when": 1785325305445,
       "tag": "0018_pair_otel_logs_with_otel_traces",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785351270431,
+      "tag": "0019_lucky_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785351280722,
+      "tag": "0020_silent_blink",
+      "breakpoints": true
     }
   ]
 }

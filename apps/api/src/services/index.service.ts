@@ -8,10 +8,7 @@ import type {
 	IndexMeta,
 	IndexSettings,
 	IndexSummary,
-	IndexView,
-	IndexViewConfig,
-	IndexVisibility,
-	QuickwitIndexMetadata
+	IndexViewConfig
 } from '../types.js';
 import {
 	NotFoundError,
@@ -20,11 +17,9 @@ import {
 	type CreateIndexRequest,
 	type DocMapping,
 	type FieldMapping,
-	type IndexMetadata,
 	type QuickwitClient
 } from 'quickwit-js';
 
-import { defaultTraceIndexId, OTEL_TRACES_INDEX } from '../constants.js';
 import type { Db } from '../db/index.js';
 import {
 	apiKey,
@@ -35,7 +30,7 @@ import {
 	userPreference,
 	view as viewTable
 } from '../db/schema.js';
-import { badRequest, conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
+import { badRequest, conflict, internal, notFound } from '../utils/http-error.js';
 import { translateQuickwitError, withNotFound } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import {
@@ -49,13 +44,12 @@ import {
 import {
 	getIndex as qwGetIndex,
 	listIndexes as qwListIndexes,
-	normalizeIndexMetadata,
 	normalizeDynamicMapping
 } from './quickwit-index.service.js';
 
 const DEFAULT_SETTINGS: IndexSettings = {
 	displayName: null,
-	visibility: 'all',
+	isTraceIndex: false,
 	levelField: 'severity_text',
 	messageField: 'body.message',
 	tracebackField: 'attributes.exception.stacktrace',
@@ -64,16 +58,12 @@ const DEFAULT_SETTINGS: IndexSettings = {
 	traceIdField: 'trace_id'
 };
 
-function defaultSettings(indexId: string): IndexSettings {
-	return { ...DEFAULT_SETTINGS, traceIndexId: defaultTraceIndexId(indexId) };
-}
-
 const DEFAULT_CONTEXT_FIELDS = ['service_name'];
 
 function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings {
 	return {
 		displayName: row.displayName,
-		visibility: row.visibility,
+		isTraceIndex: row.isTraceIndex,
 		levelField: row.levelField,
 		messageField: row.messageField,
 		tracebackField: row.tracebackField,
@@ -90,15 +80,9 @@ export async function getIndexSettings(db: Db, indexId: string): Promise<IndexSe
 		.where(eq(indexSettings.indexId, indexId))
 		.limit(1);
 
-	if (!row) return defaultSettings(indexId);
+	if (!row) return DEFAULT_SETTINGS;
 
 	return toIndexSettings(row);
-}
-
-export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): boolean {
-	if (visibility === 'hidden') return false;
-	if (visibility === 'admin') return isAdmin;
-	return true;
 }
 
 export async function saveIndexConfig(
@@ -106,43 +90,61 @@ export async function saveIndexConfig(
 	indexId: string,
 	fields: SaveIndexConfigInput
 ): Promise<void> {
-	// listIndexes filters out pairing targets, so a self-paired index would vanish from the explorer.
-	if (fields.traceIndexId === indexId) {
-		throw badRequest('An index cannot be its own trace index.', 'TRACE_PAIRING_SELF', [
-			{ path: 'traceIndexId', message: 'Pick a different index.' }
-		]);
+	const existing = await getIndexSettings(db, indexId);
+	const isTraceIndex = fields.isTraceIndex ?? existing.isTraceIndex;
+	// A span store holds no spans of its own, so marking one drops its pairing.
+	const traceIndexId = isTraceIndex
+		? null
+		: fields.traceIndexId !== undefined
+			? fields.traceIndexId
+			: existing.traceIndexId;
+
+	if (traceIndexId !== null) {
+		const target = await getIndexSettings(db, traceIndexId);
+		if (!target.isTraceIndex) {
+			throw badRequest(
+				'The paired index is not marked as a trace index.',
+				'TRACE_PAIRING_NOT_TRACE_INDEX',
+				[{ path: 'traceIndexId', message: 'Pick an index marked as a trace index.' }]
+			);
+		}
 	}
 
-	const existing = await getIndexSettings(db, indexId);
-	const traceIndexId =
-		fields.traceIndexId !== undefined ? fields.traceIndexId : existing.traceIndexId;
-
 	const updatedAt = new Date();
-	await db
-		.insert(indexSettings)
-		.values({ indexId, ...existing, ...fields, updatedAt })
-		.onConflictDoUpdate({
-			target: indexSettings.indexId,
-			set: { ...fields, updatedAt }
-		});
+	await db.transaction(async (tx) => {
+		await tx
+			.insert(indexSettings)
+			.values({ indexId, ...existing, ...fields, isTraceIndex, traceIndexId, updatedAt })
+			.onConflictDoUpdate({
+				target: indexSettings.indexId,
+				set: { ...fields, isTraceIndex, traceIndexId, updatedAt }
+			});
 
-	if (traceIndexId !== existing.traceIndexId) invalidateApiKeyCache();
+		// Un-marking dangles every pairing that points here, and ingest keys resolve their span
+		// destination from that pairing — so clear them, the way deleteIndex already does.
+		if (existing.isTraceIndex && !isTraceIndex) {
+			await tx
+				.update(indexSettings)
+				.set({ traceIndexId: null })
+				.where(eq(indexSettings.traceIndexId, indexId));
+		}
+	});
+
+	if (traceIndexId !== existing.traceIndexId || isTraceIndex !== existing.isTraceIndex) {
+		invalidateApiKeyCache();
+	}
 }
 
-function toIndexSummary(m: QuickwitIndexMetadata, settings: IndexSettings): IndexSummary {
+function toIndexSummary(indexId: string, settings: IndexSettings): IndexSummary {
 	return {
-		indexId: m.indexId,
+		indexId,
 		displayName: settings.displayName,
-		visibility: settings.visibility,
-		fieldCount: m.fields.length,
-		sourceCount: m.sources.length,
-		mode: m.mode,
-		createTimestamp: m.createTimestamp,
+		isTraceIndex: settings.isTraceIndex,
 		traceIndexId: settings.traceIndexId
 	};
 }
 
-export async function listAllIndexes(db: Db, qw: QuickwitClient): Promise<IndexSummary[]> {
+export async function listIndexes(db: Db, qw: QuickwitClient): Promise<IndexSummary[]> {
 	const indexes = await qwListIndexes(qw);
 
 	const ids = indexes.map((m) => m.indexId);
@@ -154,49 +156,20 @@ export async function listAllIndexes(db: Db, qw: QuickwitClient): Promise<IndexS
 	);
 
 	return indexes.map((m) =>
-		toIndexSummary(m, settingsMap.get(m.indexId) ?? defaultSettings(m.indexId))
+		toIndexSummary(m.indexId, settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS)
 	);
-}
-
-export async function listIndexes(
-	db: Db,
-	qw: QuickwitClient,
-	role: string | null | undefined,
-	view: IndexView = 'search'
-): Promise<IndexSummary[]> {
-	const all = await listAllIndexes(db, qw);
-	const isAdmin = role === 'admin';
-	if (view === 'admin' && isAdmin) return all;
-	// Trace indexes are not log indexes. OTEL_TRACES_INDEX holds spans whether or not a row names it.
-	const targets = new Set(
-		(await db.selectDistinct({ id: indexSettings.traceIndexId }).from(indexSettings))
-			.map((r) => r.id)
-			.filter((id): id is string => id !== null)
-	);
-	targets.add(OTEL_TRACES_INDEX);
-	// traceIndexId is stripped: only admin tooling needs the pairing, this list goes to every user.
-	return all
-		.filter((m) => canAccessIndex(m.visibility, isAdmin) && !targets.has(m.indexId))
-		.map((m) => ({ ...m, traceIndexId: null }));
 }
 
 export async function getIndexMeta(
 	db: Db,
 	qw: QuickwitClient,
-	indexId: string,
-	role: string | null | undefined,
-	view: IndexView
+	indexId: string
 ): Promise<IndexMeta> {
 	const [settings, index] = await Promise.all([
 		getIndexSettings(db, indexId),
 		qwGetIndex(qw, indexId)
 	]);
-	const isAdmin = role === 'admin';
-	const adminView = view === 'admin' && isAdmin;
-	if (!adminView && !canAccessIndex(settings.visibility, isAdmin)) {
-		throw indexAccessError(isAdmin, 'denied');
-	}
-	if (!index) throw indexAccessError(isAdmin, 'missing');
+	if (!index) throw notFound('Index not found', 'INDEX_NOT_FOUND');
 	return { settings, index };
 }
 
@@ -215,10 +188,11 @@ function resolveLogFields({ settings, index }: IndexMeta) {
 export async function getIndexConfig(
 	db: Db,
 	qw: QuickwitClient,
-	indexId: string,
-	role: string | null | undefined
+	indexId: string
 ): Promise<IndexConfig> {
-	const meta = await getIndexMeta(db, qw, indexId, role, 'search');
+	const meta = await getIndexMeta(db, qw, indexId);
+	// A span schema has no level or message field, so the explorer would render an empty grid.
+	if (meta.settings.isTraceIndex) throw notFound('Index not found', 'INDEX_NOT_FOUND');
 	return { indexId, ...resolveLogFields(meta) };
 }
 
@@ -238,7 +212,7 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 	return {
 		indexId: index.indexId,
 		displayName: settings.displayName,
-		visibility: settings.visibility,
+		isTraceIndex: settings.isTraceIndex,
 		levelField: settings.levelField,
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
@@ -402,9 +376,8 @@ export async function createIndex(
 	qw: QuickwitClient,
 	input: CreateIndexInput
 ): Promise<IndexSummary> {
-	let created: IndexMetadata;
 	try {
-		created = await qw.createIndex(toCreateIndexRequest(input));
+		await qw.createIndex(toCreateIndexRequest(input));
 	} catch (err) {
 		if (err instanceof QuickwitError) {
 			if (err.code === QuickwitErrorCode.CONFLICT || /already exists/i.test(err.message)) {
@@ -416,7 +389,7 @@ export async function createIndex(
 		translateQuickwitError(err);
 	}
 
-	return toIndexSummary(normalizeIndexMetadata(created), defaultSettings(input.indexId));
+	return toIndexSummary(input.indexId, DEFAULT_SETTINGS);
 }
 
 function sameStringSet(a: string[], b: string[]): boolean {

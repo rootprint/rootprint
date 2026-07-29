@@ -11,15 +11,15 @@ export type IndexConfigEnv = AuthedEnv & {
 	Variables: AuthedEnv['Variables'] & { indexConfig: IndexConfig };
 };
 
-// Fetches the index config once (also enforcing access via getIndexConfig) and
-// stashes it on the context so handlers don't re-fetch.
+// Fetches the index config once (getIndexConfig 404s if the index doesn't exist or
+// is a trace index) and stashes it on the context so handlers don't re-fetch.
 export const withIndexConfig: MiddlewareHandler<IndexConfigEnv> = async (c, next) => {
 	// The `/:indexId` route pattern guarantees a non-empty segment, so this
 	// guard is defensive; it intentionally answers 404 (not a 400 validation
 	// error) for the should-never-happen missing-id case.
 	const indexId = c.req.param('indexId');
 	if (!indexId) throw notFound('Index not found');
-	const config = await getIndexConfig(db, quickwit, indexId, c.get('session').user.role);
+	const config = await getIndexConfig(db, quickwit, indexId);
 	c.set('indexConfig', config);
 	await next();
 };

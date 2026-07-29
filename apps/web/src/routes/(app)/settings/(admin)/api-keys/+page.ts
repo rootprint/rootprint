@@ -1,13 +1,13 @@
 import type { PageLoad } from './$types';
 import { listApiKeys } from '$lib/api/api-keys';
-import { ingestIndexOptions, listIndexes } from '$lib/api/indexes';
+import { listIndexes } from '$lib/api/indexes';
 import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ depends }) => {
 	depends(DEP.apiKeys);
-	const [keys, indexes] = await Promise.all([listApiKeys(), listIndexes({ view: 'admin' })]);
+	const [keys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
 	return {
 		keys,
-		indexes: ingestIndexOptions(indexes)
+		indexes: indexes.filter((i) => !i.isTraceIndex)
 	};
 };

@@ -115,9 +115,9 @@ Sibling top-level dirs:
 
 ## Traces
 
-- Spans live in their own Quickwit index, paired to a log index by `index_settings.trace_index_id`. There is no instance-wide trace index and no env var — pairing is per index and opt-in (`defaultSettings()` pairs only Quickwit's canonical `otel-logs-v0_9`).
-- `GET /api/indexes/:indexId/traces/:traceId` (`routes/traces.ts`) resolves the trace index from the **log** index's pairing via `withIndexMeta('search')`, so a span read is authorized by the log index's visibility. Trace ids are not authorization.
-- A trace index carries no visibility of its own: it is readable by any signed-in user, and log indexes of differing visibility may share one. Accepted deliberately — spans that arrived through an `admin`-visible log index are readable by anyone who knows the trace id. Do not reintroduce a same-visibility check without deciding the model first.
+- Spans live in their own Quickwit index, marked as one by `index_settings.is_trace_index`, and paired to a log index by `index_settings.trace_index_id`. Pairing is per index and opt-in (`defaultSettings()` marks Quickwit's canonical `otel-traces-v0_9` and pairs `otel-logs-v0_9` to it).
+- `GET /api/indexes/:indexId/traces/:traceId` (`routes/traces.ts`) resolves the trace index from the **log** index's pairing via `withIndexMeta` (no argument). Trace ids are not authorization.
+- There is no per-index read gate: any authenticated user (or a personal key with `logs:read`) may read any log index. A trace index is not readable as a log index — `getIndexConfig` 404s on one, so the log-explorer, histogram, field-values, and export routes all reject it.
 - Ingest keys never store a span destination. `verifyApiKey` resolves it by joining `index_settings` on the key's `index_id`, so re-pairing an index reaches keys that already exist; `saveIndexConfig` evicts the key cache when the pairing changes.
 - `POST /v1/traces` writes to that resolved destination (`routes/ingest/otlp.ts`). A key whose log index is unpaired gets a 400 rather than writing somewhere unreadable.
 - Deleting a trace index unpairs every log index that pointed at it (`deleteIndex`), so trace tabs disappear cleanly instead of erroring. Known gap: the UPDATE only reaches real `index_settings` rows, so an index still on the `defaultSettings()` pairing keeps a Trace tab that errors.

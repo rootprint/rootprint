@@ -7,8 +7,6 @@
 
 	const message = $derived.by(() => {
 		switch (data.error) {
-			case 'forbidden':
-				return "You don't have access to this share link's index.";
 			case 'not_found':
 				return "This share link doesn't exist or was removed.";
 			case 'unknown':

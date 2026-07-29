@@ -1,6 +1,5 @@
 import * as v from 'valibot';
 
-import { INDEX_VISIBILITIES } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
 import { isoTimestampString } from '../../utils/valibot.js';
 
@@ -71,12 +70,8 @@ export const IndexSummarySchema = named(
 	v.object({
 		indexId: v.string(),
 		displayName: v.nullable(v.string()),
-		visibility: v.picklist(INDEX_VISIBILITIES),
-		fieldCount: v.number(),
-		sourceCount: v.number(),
-		mode: v.nullable(v.string()),
-		createTimestamp: v.nullable(v.number()),
-		/** Admin view only; null in the search view, which has no reason to name trace indexes. */
+		isTraceIndex: v.boolean(),
+		/** The paired span store, or null. */
 		traceIndexId: v.nullable(v.string())
 	})
 );
@@ -88,7 +83,7 @@ export const IndexDetailResponse = named(
 	v.object({
 		indexId: v.string(),
 		displayName: v.nullable(v.string()),
-		visibility: v.picklist(INDEX_VISIBILITIES),
+		isTraceIndex: v.boolean(),
 		levelField: v.string(),
 		messageField: v.string(),
 		tracebackField: v.nullable(v.string()),

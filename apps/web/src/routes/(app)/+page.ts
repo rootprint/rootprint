@@ -16,10 +16,12 @@ export const load = (async ({ parent }) => {
 	const [summaries, documentStatus] = await Promise.all([listIndexes(), documentStatusPromise]);
 	if (documentStatus?.hasDocuments === true) writeString(HAS_SEEN_DOCUMENTS_KEY, '1');
 
-	const indexes: IndexOption[] = summaries.map((s) => ({
-		id: s.indexId,
-		name: s.displayName ?? s.indexId
-	}));
+	const indexes: IndexOption[] = summaries
+		.filter((s) => !s.isTraceIndex)
+		.map((s) => ({
+			id: s.indexId,
+			name: s.displayName ?? s.indexId
+		}));
 	return {
 		indexes,
 		hasDocuments: hasSeenDocuments ? true : (documentStatus?.hasDocuments ?? null)

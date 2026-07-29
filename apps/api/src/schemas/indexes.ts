@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { FIELD_VALUES_MAX, INDEX_VIEWS, INDEX_VISIBILITIES } from '../constants.js';
+import { FIELD_VALUES_MAX } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, toNum } from '../utils/valibot.js';
@@ -12,7 +12,7 @@ const dedupedStrings = v.pipe(
 
 export const saveIndexConfigSchema = v.object({
 	displayName: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(128)))),
-	visibility: v.optional(v.picklist(INDEX_VISIBILITIES)),
+	isTraceIndex: v.optional(v.boolean()),
 	levelField: v.optional(v.pipe(v.string(), v.minLength(1))),
 	messageField: v.optional(v.pipe(v.string(), v.minLength(1))),
 	tracebackField: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
@@ -85,10 +85,6 @@ export const PutPreferencesBody = v.object({
 	displayFields: v.nullable(v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100))),
 	lineWrap: v.boolean(),
 	displayMode: v.picklist(['table', 'inline'])
-});
-
-export const ListIndexesQuery = v.object({
-	view: v.optional(v.picklist(INDEX_VIEWS))
 });
 
 export const FIELD_TYPES = ['text', 'i64', 'u64', 'f64', 'bool', 'datetime', 'ip', 'json'] as const;

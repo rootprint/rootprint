@@ -20,7 +20,6 @@ import {
 	FieldValuesBulkQuery,
 	FieldValuesQuery,
 	HistogramQuery,
-	ListIndexesQuery,
 	PutPreferencesBody,
 	saveIndexConfigSchema,
 	SourceParams,
@@ -72,6 +71,7 @@ import {
 import { getPreferences, putPreferences } from '../services/preference.service.js';
 import { withSearchAudit } from '../services/search-audit.service.js';
 import type { Scope } from '../types.js';
+import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
 
 const LOGS_READ: Scope = { logs: ['read'] };
@@ -86,11 +86,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
-		validator('query', ListIndexesQuery),
 		async (c) => {
-			const { view } = c.req.valid('query');
-			const session = c.get('session');
-			return c.json(await listIndexes(db, quickwit, session.user.role, view));
+			return c.json(await listIndexes(db, quickwit));
 		}
 	)
 	.post(
@@ -120,7 +117,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
-		withIndexMeta('search'),
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
 			return c.json({ fields: c.get('indexMeta').index.fields });
@@ -135,10 +132,12 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
-		withIndexMeta('search'),
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
-			return c.json(getIndexViewConfig(c.get('indexMeta')));
+			const indexMeta = c.get('indexMeta');
+			if (indexMeta.settings.isTraceIndex) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+			return c.json(getIndexViewConfig(indexMeta));
 		}
 	)
 	.get(
@@ -150,7 +149,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
 			return c.json(getIndexDetail(c.get('indexMeta')));
@@ -165,7 +164,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', IndexIdParams),
 		validator('query', StatsQuery),
 		async (c) => {
@@ -184,7 +182,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', IndexIdParams),
 		validator('json', saveIndexConfigSchema),
 		async (c) => {
@@ -204,7 +201,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		validator('json', updateQuickwitConfigSchema),
 		async (c) => {
@@ -224,7 +221,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -243,7 +239,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', IndexIdParams),
 		validator('json', createSourceSchema),
 		async (c) => {
@@ -263,7 +258,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
+		withIndexMeta,
 		validator('param', SourceParams),
 		async (c) => {
 			const { sourceId } = c.req.valid('param');
@@ -280,7 +275,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', SourceParams),
 		validator('json', updateSourceSchema),
 		async (c) => {
@@ -300,7 +294,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
@@ -318,7 +311,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', SourceParams),
 		validator('json', ToggleSourceBody),
 		async (c) => {
@@ -338,7 +330,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
-		withIndexMeta('admin'),
 		validator('param', SourceParams),
 		async (c) => {
 			const { indexId, sourceId } = c.req.valid('param');
@@ -455,7 +446,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			ok: PreferencesResponse
 		}),
 		requireUser,
-		withIndexMeta('search'),
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -471,7 +461,6 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			ok: PreferencesResponse
 		}),
 		requireUser,
-		withIndexMeta('search'),
 		validator('param', IndexIdParams),
 		validator('json', PutPreferencesBody),
 		async (c) => {

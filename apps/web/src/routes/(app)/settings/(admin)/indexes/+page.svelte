@@ -1,17 +1,10 @@
 <script lang="ts">
-	import { ChevronRight, EyeOff, Globe, Plus, Search, ShieldUser } from 'lucide-svelte';
+	import { ChevronRight, Plus, Search, Waypoints } from 'lucide-svelte';
 
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { pluralize } from '$lib/utils/format';
-	import type { IndexVisibility } from 'api/types';
-
-	const visibilityMeta: Record<IndexVisibility, { icon: typeof Globe; label: string }> = {
-		all: { icon: Globe, label: 'Public' },
-		admin: { icon: ShieldUser, label: 'Admins' },
-		hidden: { icon: EyeOff, label: 'Hidden' }
-	};
 
 	let { data } = $props();
 	const indexes = $derived(data.indexes);
@@ -52,14 +45,14 @@
 	<div class="mt-4">
 		<ListCard empty={filtered.length === 0} {emptyMessage}>
 			{#each filtered as idx (idx.indexId)}
-				{@const meta = visibilityMeta[idx.visibility]}
-				{@const VisIcon = meta.icon}
 				<ListRow href={`/settings/indexes/${encodeURIComponent(idx.indexId)}`}>
 					<div class="min-w-0 flex-1 truncate font-mono text-sm">{idx.indexId}</div>
-					<span class="badge badge-sm badge-ghost gap-1">
-						<VisIcon class="h-3 w-3" />
-						{meta.label}
-					</span>
+					{#if idx.isTraceIndex}
+						<span class="badge badge-sm badge-ghost gap-1">
+							<Waypoints class="h-3 w-3" />
+							Traces
+						</span>
+					{/if}
 					<ChevronRight class="h-4 w-4 opacity-50" />
 				</ListRow>
 			{/each}

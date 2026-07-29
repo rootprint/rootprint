@@ -34,7 +34,8 @@ export const sharesRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const body = c.req.valid('json');
 			const session = c.get('session');
-			await getIndexMeta(db, quickwit, body.indexId, session.user.role, 'search');
+			// Asserts the index still exists.
+			await getIndexMeta(db, quickwit, body.indexId);
 			const result = await createShare(db, session.user.id, body);
 			return c.json(result, 201);
 		}
@@ -52,9 +53,9 @@ export const sharesRouter = new Hono<AuthedEnv>()
 		validator('param', shareCodeParamsSchema),
 		async (c) => {
 			const { code } = c.req.valid('param');
-			const session = c.get('session');
 			const row = await resolveShare(db, code);
-			await getIndexMeta(db, quickwit, row.indexId, session.user.role, 'search');
+			// Asserts the index still exists.
+			await getIndexMeta(db, quickwit, row.indexId);
 			return c.json(row);
 		}
 	);

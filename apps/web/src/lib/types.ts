@@ -80,12 +80,6 @@ export interface IndexOption {
 	name: string;
 }
 
-/** A log index an ingest key can target, plus where that key's spans would go. */
-export interface IngestIndexOption {
-	indexId: string;
-	traceIndexId: string | null;
-}
-
 export interface LogFieldValueBucket {
 	value: string;
 	count: number;

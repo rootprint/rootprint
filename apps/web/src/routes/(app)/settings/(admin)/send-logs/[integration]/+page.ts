@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { listApiKeys } from '$lib/api/api-keys';
 import { ApiError } from '$lib/api/errors';
-import { ingestIndexOptions, listIndexes } from '$lib/api/indexes';
+import { listIndexes } from '$lib/api/indexes';
 import { integrationById } from '$lib/send-logs/integrations';
 import { DEP } from '$lib/api/deps';
 import type { PageLoad } from './$types';
@@ -15,11 +15,11 @@ export const load: PageLoad = async ({ params, depends }) => {
 	}
 
 	try {
-		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes({ view: 'admin' })]);
+		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
 		return {
 			integrationId: params.integration,
 			apiKeys,
-			indexes: ingestIndexOptions(indexes)
+			indexes: indexes.filter((i) => !i.isTraceIndex)
 		};
 	} catch (e) {
 		if (e instanceof ApiError) error(e.status, e.message);

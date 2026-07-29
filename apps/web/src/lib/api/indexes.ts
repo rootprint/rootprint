@@ -2,8 +2,7 @@ import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
-import { OTEL_TRACES_INDEX } from 'api/constants';
-import type { FieldConfig, IngestIndexOption } from '$lib/types';
+import type { FieldConfig } from '$lib/types';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
 import type {
 	CreateIndexInput,
@@ -36,23 +35,8 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 	};
 }
 
-/** Log indexes an ingest key can target, from an admin-view list. Trace indexes are excluded. */
-export function ingestIndexOptions(indexes: IndexSummary[]): IngestIndexOption[] {
-	// Seeded with OTEL_TRACES_INDEX to match the API's listIndexes, which drops it whether or not a
-	// settings row names it.
-	const traceTargets = new Set([
-		OTEL_TRACES_INDEX,
-		...indexes.map((i) => i.traceIndexId).filter((id): id is string => id !== null)
-	]);
-	return indexes
-		.filter((i) => !traceTargets.has(i.indexId))
-		.map((i) => ({ indexId: i.indexId, traceIndexId: i.traceIndexId }));
-}
-
-export async function listIndexes(opts: { view?: 'admin' } = {}): Promise<IndexSummary[]> {
-	const res = await client.api.indexes.$get({
-		query: opts.view ? { view: opts.view } : {}
-	});
+export async function listIndexes(): Promise<IndexSummary[]> {
+	const res = await client.api.indexes.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load indexes');
 	return res.json() as Promise<IndexSummary[]>;
 }

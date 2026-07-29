@@ -4,7 +4,7 @@ import { config } from '../config.js';
 import type { Db } from '../db/index.js';
 import type { ClusterOverview, PerIndexOverview } from '../types.js';
 import { getLatestSnapshotsByIndex } from './index-stats.service.js';
-import { listAllIndexes } from './index.service.js';
+import { listIndexes } from './index.service.js';
 import { listIndexes as listQuickwitIndexes } from './quickwit-index.service.js';
 
 // First-run onboarding is an ever-seen milestone, not a live emptiness indicator.
@@ -44,7 +44,7 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 	const [healthRaw, clusterSnapshot, indexes, snapshots] = await Promise.all([
 		qw.health(),
 		qw.getCluster({ timeout: 1000 }).catch(() => null),
-		listAllIndexes(db, qw),
+		listIndexes(db, qw),
 		getLatestSnapshotsByIndex(db)
 	]);
 
@@ -55,7 +55,6 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 		return {
 			indexId: i.indexId,
 			displayName: i.displayName,
-			visibility: i.visibility,
 			numDocs: snap ? snap.numDocs : null,
 			sizeBytes: snap ? snap.sizeBytes : null,
 			uncompressedBytes: snap ? snap.uncompressedBytes : null,
