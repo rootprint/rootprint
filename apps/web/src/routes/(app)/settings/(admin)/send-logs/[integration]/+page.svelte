@@ -44,7 +44,7 @@
 	<WizardHeader
 		{integration}
 		apiKeys={data.apiKeys}
-		indexIds={data.indexIds}
+		indexes={data.indexes}
 		{selectedIndexId}
 		bind:selectedApiKeyId
 		bind:realApiKeyValue

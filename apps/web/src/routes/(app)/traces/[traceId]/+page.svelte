@@ -10,6 +10,7 @@
 	import { formatSpanDuration } from '$lib/utils/time';
 
 	const traceId = $derived(page.params.traceId ?? '');
+	const indexId = $derived(page.url.searchParams.get('index') ?? '');
 
 	// Carries the logs query back with us; a bare '/' would drop the user's search.
 	let backHref = $state('/');
@@ -22,7 +23,7 @@
 	let filter = $state('');
 
 	$effect(() => {
-		const next = new TraceLoader(traceId);
+		const next = new TraceLoader(indexId, traceId);
 		loader = next;
 		filter = '';
 		void next.init();

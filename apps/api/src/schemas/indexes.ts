@@ -16,7 +16,9 @@ export const saveIndexConfigSchema = v.object({
 	levelField: v.optional(v.pipe(v.string(), v.minLength(1))),
 	messageField: v.optional(v.pipe(v.string(), v.minLength(1))),
 	tracebackField: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
-	contextFields: v.optional(v.nullable(v.array(v.string())))
+	contextFields: v.optional(v.nullable(v.array(v.string()))),
+	traceIndexId: v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.minLength(1)))),
+	traceIdField: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1)))
 });
 
 export type SaveIndexConfigInput = v.InferOutput<typeof saveIndexConfigSchema>;
@@ -306,6 +308,7 @@ export function isTraceId(value: unknown): value is string {
 }
 
 export const TraceParams = v.object({
+	...IndexIdParams.entries,
 	traceId: v.pipe(
 		v.string(),
 		v.regex(

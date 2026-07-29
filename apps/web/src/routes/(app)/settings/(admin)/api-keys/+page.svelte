@@ -16,7 +16,7 @@
 
 	let { data } = $props();
 	const keys = $derived(data.keys);
-	const indexIds = $derived(data.indexIds);
+	const indexes = $derived(data.indexes);
 
 	let search = $state('');
 
@@ -96,7 +96,7 @@
 		}
 	}
 
-	const noIndexes = $derived(indexIds.length === 0);
+	const noIndexes = $derived(indexes.length === 0);
 	const countLabel = $derived(pluralize(filtered.length, 'key'));
 	const emptyMessage = $derived(
 		search.trim() !== '' ? 'No API keys match your search.' : 'No API keys yet.'
@@ -148,7 +148,14 @@
 					<div class="{row} min-h-14 py-3">
 						<div class="truncate text-sm">{key.name}</div>
 						<div class="text-base-content/60 font-mono text-xs">{key.tokenPrefix}...</div>
-						<div class="text-base-content/70 truncate font-mono text-xs">{key.indexId}</div>
+						<div class="min-w-0">
+							<div class="text-base-content/70 truncate font-mono text-xs">{key.indexId}</div>
+							{#if key.traceIndexId}
+								<div class="text-base-content/50 truncate font-mono text-xs">
+									Spans → {key.traceIndexId}
+								</div>
+							{/if}
+						</div>
 						<div class="text-base-content/50 text-xs">
 							{key.lastUsedAt ? formatRelativeTime(key.lastUsedAt) : 'Never'}
 						</div>
@@ -177,7 +184,7 @@
 	</div>
 </div>
 
-<CreateApiKeyModal bind:open={createOpen} {indexIds} invalidateKey={DEP.apiKeys} />
+<CreateApiKeyModal bind:open={createOpen} {indexes} invalidateKey={DEP.apiKeys} />
 
 <Modal bind:open={viewOpen} title="API key: {viewTarget?.name ?? ''}" onclose={handleViewClose}>
 	{#if viewLoading}

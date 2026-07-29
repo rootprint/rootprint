@@ -90,6 +90,7 @@ function toApiKeySummary(
 		tokenPrefix,
 		role: row.role,
 		indexId: row.indexId,
+		traceIndexId: row.traceIndexId,
 		lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
 		createdAt: row.createdAt.toISOString(),
 		createdByUserId: row.createdByUserId
@@ -104,6 +105,7 @@ export async function listApiKeys(db: Db): Promise<ApiKeySummary[]> {
 			tokenPrefix: sql<string>`substring(${apiKey.token} for ${API_KEY_DISPLAY_PREFIX_LENGTH})`,
 			role: apiKey.role,
 			indexId: apiKey.indexId,
+			traceIndexId: apiKey.traceIndexId,
 			lastUsedAt: apiKey.lastUsedAt,
 			createdAt: apiKey.createdAt,
 			createdByUserId: apiKey.createdByUserId
@@ -127,6 +129,7 @@ export async function createApiKey(
 				token,
 				role: 'ingest',
 				indexId: input.indexId,
+				traceIndexId: input.traceIndexId ?? null,
 				createdByUserId
 			})
 			.returning()
@@ -242,6 +245,7 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 			id: apiKey.id,
 			name: apiKey.name,
 			indexId: apiKey.indexId,
+			traceIndexId: apiKey.traceIndexId,
 			role: apiKey.role
 		})
 		.from(apiKey)

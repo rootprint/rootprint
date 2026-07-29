@@ -9,18 +9,19 @@
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-logs/constants';
 	import type { Integration } from '$lib/send-logs/types';
 	import type { ApiKeyView } from '$lib/api/api-keys';
+	import type { IngestIndexOption } from '$lib/types';
 
 	let {
 		integration,
 		apiKeys,
-		indexIds,
+		indexes,
 		selectedIndexId,
 		selectedApiKeyId = $bindable<number | null>(null),
 		realApiKeyValue = $bindable<string | null>(null)
 	}: {
 		integration: Integration;
 		apiKeys: ApiKeyView[];
-		indexIds: string[];
+		indexes: IngestIndexOption[];
 		selectedIndexId: string;
 		selectedApiKeyId?: number | null;
 		realApiKeyValue?: string | null;
@@ -64,7 +65,7 @@
 
 <CreateApiKeyModal
 	bind:open={createOpen}
-	{indexIds}
+	{indexes}
 	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
 	invalidateKey={DEP.sendLogsApiKeys}
 	onCreated={handleCreated}

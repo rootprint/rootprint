@@ -1,16 +1,16 @@
 import type { QuickwitClient } from 'quickwit-js';
 
-import { config } from '../config.js';
 import type { TraceResponse } from '../types.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 
 // ponytail: Jaeger's get_trace takes no limit, so a pathological trace transfers whole.
 // Upgrade: Quickwit's `max_fetch_spans`, or paging back through a raw search.
-export async function getTrace(qw: QuickwitClient, traceId: string): Promise<TraceResponse> {
-	const trace = await qw
-		.traces(config.traceIndexId)
-		.getTrace(traceId)
-		.catch(translateQuickwitError);
+export async function getTrace(
+	qw: QuickwitClient,
+	traceIndexId: string,
+	traceId: string
+): Promise<TraceResponse> {
+	const trace = await qw.traces(traceIndexId).getTrace(traceId).catch(translateQuickwitError);
 	if (!trace || trace.spans.length === 0) return { spans: [] };
 
 	// reduce, not Math.min(...spans): the span count is unbounded and a spread would overflow.
