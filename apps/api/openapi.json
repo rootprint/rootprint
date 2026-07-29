@@ -364,16 +364,6 @@
 					},
 					"tokenPrefix": {
 						"type": "string"
-					},
-					"traceIndexId": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
 					}
 				},
 				"required": [
@@ -382,7 +372,6 @@
 					"tokenPrefix",
 					"role",
 					"indexId",
-					"traceIndexId",
 					"lastUsedAt",
 					"createdAt",
 					"createdByUserId"
@@ -3763,17 +3752,6 @@
 										"maxLength": 100,
 										"minLength": 1,
 										"type": "string"
-									},
-									"traceIndexId": {
-										"anyOf": [
-											{
-												"minLength": 1,
-												"type": "string"
-											},
-											{
-												"type": "null"
-											}
-										]
 									}
 								},
 								"required": [
@@ -14015,9 +13993,6 @@
 					"404": {
 						"$ref": "#/components/responses/NotFound"
 					},
-					"409": {
-						"$ref": "#/components/responses/Conflict"
-					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
 					},
@@ -16173,7 +16148,7 @@
 				],
 				"summary": "Get trace spans",
 				"tags": [
-					"Log explorer"
+					"Traces"
 				]
 			}
 		},
@@ -17629,8 +17604,20 @@
 		},
 		"/v1/logs": {
 			"post": {
-				"description": "OTLP/HTTP logs exporter endpoint. Accepts only application/x-protobuf (ExportLogsServiceRequest). Returns an ExportLogsServiceResponse on success. All error responses use the google.rpc.Status encoding: 415 is JSON, all other errors are binary protobuf.",
+				"description": "OTLP/HTTP logs exporter endpoint. Accepts only application/x-protobuf (ExportLogsServiceRequest). The destination index comes from the ingest key. Quickwit answers with JSON, so the response is re-encoded as protobuf, preserving the partial_success count of rejected records. Errors use the google.rpc.Status encoding: 415 is JSON, everything else is binary protobuf. See /send-logs/otlp for details.",
 				"operationId": "postV1Logs",
+				"requestBody": {
+					"content": {
+						"application/x-protobuf": {
+							"schema": {
+								"description": "Serialised opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest",
+								"format": "binary",
+								"type": "string"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
 						"content": {
@@ -17642,55 +17629,67 @@
 								}
 							}
 						},
-						"description": "Logs accepted — empty ExportLogsServiceResponse"
+						"description": "Accepted. ExportLogsServiceResponse — empty when every record was accepted, or carrying partial_success when Quickwit rejected some."
 					},
 					"400": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Upstream rejected the request — google.rpc.Status (protobuf)"
+						"description": "Upstream rejected the request, or the ingest key has no paired trace index"
 					},
 					"401": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Missing ingest bearer token — google.rpc.Status (protobuf)"
+						"description": "Missing ingest bearer token"
 					},
 					"403": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Invalid ingest bearer token — google.rpc.Status (protobuf)"
+						"description": "Invalid ingest bearer token"
 					},
 					"404": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Route not found — google.rpc.Status (protobuf)"
+						"description": "Route not found"
+					},
+					"413": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status (protobuf)",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Payload too large"
 					},
 					"415": {
 						"content": {
@@ -17717,37 +17716,25 @@
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Upstream rate limit exceeded — google.rpc.Status (protobuf)"
-					},
-					"500": {
-						"content": {
-							"application/x-protobuf": {
-								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
-									"format": "binary",
-									"type": "string"
-								}
-							}
-						},
-						"description": "Internal server error — google.rpc.Status (protobuf)"
+						"description": "Upstream rate limit exceeded — honour retry-after"
 					},
 					"503": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Upstream service unavailable — google.rpc.Status (protobuf)"
+						"description": "Upstream unavailable. Every upstream 5xx is reported as 503"
 					}
 				},
 				"security": [
@@ -17763,8 +17750,20 @@
 		},
 		"/v1/traces": {
 			"post": {
-				"description": "OTLP/HTTP traces exporter endpoint. Accepts only application/x-protobuf (ExportTraceServiceRequest). Returns an ExportTraceServiceResponse on success. All error responses use the google.rpc.Status encoding: 415 is JSON, all other errors are binary protobuf.",
+				"description": "OTLP/HTTP traces exporter endpoint. Accepts only application/x-protobuf (ExportTraceServiceRequest). The destination index comes from the ingest key. Quickwit answers with JSON, so the response is re-encoded as protobuf, preserving the partial_success count of rejected records. Errors use the google.rpc.Status encoding: 415 is JSON, everything else is binary protobuf.",
 				"operationId": "postV1Traces",
+				"requestBody": {
+					"content": {
+						"application/x-protobuf": {
+							"schema": {
+								"description": "Serialised opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest",
+								"format": "binary",
+								"type": "string"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
 						"content": {
@@ -17776,55 +17775,67 @@
 								}
 							}
 						},
-						"description": "Traces accepted — empty ExportTraceServiceResponse"
+						"description": "Accepted. ExportTraceServiceResponse — empty when every record was accepted, or carrying partial_success when Quickwit rejected some."
 					},
 					"400": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Upstream rejected the request — google.rpc.Status (protobuf)"
+						"description": "Upstream rejected the request, or the ingest key has no paired trace index"
 					},
 					"401": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Missing ingest bearer token — google.rpc.Status (protobuf)"
+						"description": "Missing ingest bearer token"
 					},
 					"403": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Invalid ingest bearer token — google.rpc.Status (protobuf)"
+						"description": "Invalid ingest bearer token"
 					},
 					"404": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Route not found — google.rpc.Status (protobuf)"
+						"description": "Route not found"
+					},
+					"413": {
+						"content": {
+							"application/x-protobuf": {
+								"schema": {
+									"description": "google.rpc.Status (protobuf)",
+									"format": "binary",
+									"type": "string"
+								}
+							}
+						},
+						"description": "Payload too large"
 					},
 					"415": {
 						"content": {
@@ -17851,37 +17862,25 @@
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Upstream rate limit exceeded — google.rpc.Status (protobuf)"
-					},
-					"500": {
-						"content": {
-							"application/x-protobuf": {
-								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
-									"format": "binary",
-									"type": "string"
-								}
-							}
-						},
-						"description": "Internal server error — google.rpc.Status (protobuf)"
+						"description": "Upstream rate limit exceeded — honour retry-after"
 					},
 					"503": {
 						"content": {
 							"application/x-protobuf": {
 								"schema": {
-									"description": "google.rpc.Status serialised as application/x-protobuf",
+									"description": "google.rpc.Status (protobuf)",
 									"format": "binary",
 									"type": "string"
 								}
 							}
 						},
-						"description": "Upstream service unavailable — google.rpc.Status (protobuf)"
+						"description": "Upstream unavailable. Every upstream 5xx is reported as 503"
 					}
 				},
 				"security": [

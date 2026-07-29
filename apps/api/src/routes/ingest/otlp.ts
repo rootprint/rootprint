@@ -7,34 +7,15 @@ import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
 import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import { badRequest, tooManyRequests, unsupportedMediaType } from '../../utils/http-error.js';
+import { badRequest, HttpError, unsupportedMediaType } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
 
-type SignalConfig = {
-	tag: string;
-	title: string;
-	proto: string;
-	pkg: string;
-	docsHint?: string;
-};
+type Signal = 'logs' | 'traces';
 
 const SIGNALS = {
-	logs: {
-		tag: 'Log ingest',
-		title: 'Logs',
-		proto: 'Logs',
-		pkg: 'logs',
-		docsHint: ' See /send-logs/otlp for details.'
-	},
-	traces: {
-		tag: 'Trace ingest',
-		title: 'Traces',
-		proto: 'Trace',
-		pkg: 'trace'
-	}
-} as const satisfies Record<string, SignalConfig>;
-
-type Signal = keyof typeof SIGNALS;
+	logs: { pkg: 'logs', proto: 'Logs', docsHint: ' See /send-logs/otlp for details.' },
+	traces: { pkg: 'trace', proto: 'Trace', docsHint: '' }
+} as const satisfies Record<Signal, { pkg: string; proto: string; docsHint: string }>;
 
 function parseBaseMediaType(header: string | undefined): string | null {
 	if (!header) return null;
@@ -43,76 +24,90 @@ function parseBaseMediaType(header: string | undefined): string | null {
 	return trimmed ? trimmed : null;
 }
 
-// google.rpc.Status JSON shape returned for 415 (unsupportedContentType uses JSON, not protobuf)
-const googleRpcStatusSchema = {
-	type: 'object',
-	description: 'google.rpc.Status',
-	properties: {
-		code: { type: 'integer', description: 'gRPC status code' },
-		message: { type: 'string', description: 'Human-readable error message' }
-	}
-};
-
-// google.rpc.Status binary protobuf shape returned for 429/503/400
-const protobufBinarySchema = {
-	type: 'string',
-	format: 'binary',
-	description: 'google.rpc.Status serialised as application/x-protobuf'
-};
+const binary = (description: string) => ({ type: 'string', format: 'binary', description });
 
 const pbErr = (description: string) => ({
 	description,
-	content: { 'application/x-protobuf': { schema: protobufBinarySchema } }
+	content: { 'application/x-protobuf': { schema: binary('google.rpc.Status (protobuf)') } }
 });
 
+// Replaces the shared JSON error baseline. No 500: otlpErrorFromHttpError clamps 5xx to 503, the
+// status OTLP clients treat as retryable.
+const OTLP_ERRORS = {
+	'400': pbErr('Upstream rejected the request, or the ingest key has no paired trace index'),
+	'401': pbErr('Missing ingest bearer token'),
+	'403': pbErr('Invalid ingest bearer token'),
+	'404': pbErr('Route not found'),
+	'413': pbErr('Payload too large'),
+	'415': {
+		// The one JSON error: an exporter sending the wrong content-type may not decode protobuf back.
+		description:
+			'Unsupported content-type (only application/x-protobuf accepted) — google.rpc.Status (JSON)',
+		content: {
+			'application/json': {
+				schema: {
+					type: 'object',
+					description: 'google.rpc.Status',
+					properties: {
+						code: { type: 'integer', description: 'gRPC status code' },
+						message: { type: 'string', description: 'Human-readable error message' }
+					}
+				}
+			}
+		}
+	},
+	'429': pbErr('Upstream rate limit exceeded — honour retry-after'),
+	'503': pbErr('Upstream unavailable. Every upstream 5xx is reported as 503')
+};
+
 function signalDescribe(signal: Signal) {
-	const s: SignalConfig = SIGNALS[signal];
+	const { pkg, proto, docsHint } = SIGNALS[signal];
 	return describe({
-		tag: s.tag,
+		tag: signal === 'logs' ? 'Log ingest' : 'Trace ingest',
 		summary: `Ingest OTLP ${signal} (protobuf)`,
 		description:
 			`OTLP/HTTP ${signal} exporter endpoint. Accepts only application/x-protobuf ` +
-			`(Export${s.proto}ServiceRequest). Returns an Export${s.proto}ServiceResponse on success. ` +
-			'All error responses use the google.rpc.Status encoding: ' +
-			'415 is JSON, all other errors are binary protobuf.',
+			`(Export${proto}ServiceRequest). The destination index comes from the ingest key. Quickwit ` +
+			'answers with JSON, so the response is re-encoded as protobuf, preserving the ' +
+			'partial_success count of rejected records. ' +
+			'Errors use the google.rpc.Status encoding: 415 is JSON, everything else is binary protobuf.' +
+			docsHint,
 		security: [{ ingestBearer: [] }],
+		requestBody: {
+			required: true,
+			content: {
+				'application/x-protobuf': {
+					schema: binary(
+						`Serialised opentelemetry.proto.collector.${pkg}.v1.Export${proto}ServiceRequest`
+					)
+				}
+			}
+		},
+		baselineErrors: false,
 		rawResponses: {
 			'200': {
-				description: `${s.title} accepted — empty Export${s.proto}ServiceResponse`,
+				description:
+					`Accepted. Export${proto}ServiceResponse — empty when every record was accepted, or ` +
+					'carrying partial_success when Quickwit rejected some.',
 				content: {
 					'application/x-protobuf': {
-						schema: {
-							type: 'string',
-							format: 'binary',
-							description:
-								`Serialised opentelemetry.proto.collector.${s.pkg}.v1.` +
-								`Export${s.proto}ServiceResponse`
-						}
+						schema: binary(
+							`Serialised opentelemetry.proto.collector.${pkg}.v1.Export${proto}ServiceResponse`
+						)
 					}
 				}
 			},
-			'400': pbErr('Upstream rejected the request — google.rpc.Status (protobuf)'),
-			'401': pbErr('Missing ingest bearer token — google.rpc.Status (protobuf)'),
-			'403': pbErr('Invalid ingest bearer token — google.rpc.Status (protobuf)'),
-			'404': pbErr('Route not found — google.rpc.Status (protobuf)'),
-			'415': {
-				description:
-					'Unsupported content-type (only application/x-protobuf accepted) — google.rpc.Status (JSON)',
-				content: { 'application/json': { schema: googleRpcStatusSchema } }
-			},
-			'429': pbErr('Upstream rate limit exceeded — google.rpc.Status (protobuf)'),
-			'500': pbErr('Internal server error — google.rpc.Status (protobuf)'),
-			'503': pbErr('Upstream service unavailable — google.rpc.Status (protobuf)')
+			...OTLP_ERRORS
 		}
 	});
 }
 
 function signalHandler(signal: Signal): Handler<KeyedEnv> {
-	const s: SignalConfig = SIGNALS[signal];
+	const { pkg, docsHint } = SIGNALS[signal];
 	const unsupportedMessage =
 		'Only application/x-protobuf is accepted. If you are using ' +
-		`@opentelemetry/exporter-${s.pkg}-otlp-http (defaults to JSON), switch to ` +
-		`@opentelemetry/exporter-${s.pkg}-otlp-proto.${s.docsHint ?? ''}`;
+		`@opentelemetry/exporter-${pkg}-otlp-http (defaults to JSON), switch to ` +
+		`@opentelemetry/exporter-${pkg}-otlp-proto.${docsHint}`;
 	const indexHeader = `qw-otel-${signal}-index`;
 
 	return async (c) => {
@@ -122,12 +117,15 @@ function signalHandler(signal: Signal): Handler<KeyedEnv> {
 		}
 
 		const apiKey = c.get('apiKey');
-		const destinationIndex = signal === 'traces' ? apiKey.traceIndexId : apiKey.indexId;
-		if (!destinationIndex) {
-			throw badRequest(
-				'This ingest key has no trace index configured.',
-				'TRACE_INDEX_NOT_CONFIGURED'
-			);
+		let destinationIndex = apiKey.indexId;
+		if (signal === 'traces') {
+			if (!apiKey.traceIndexId) {
+				throw badRequest(
+					`Log index "${apiKey.indexId}" has no paired trace index, so this key cannot send spans.`,
+					'TRACE_INDEX_NOT_CONFIGURED'
+				);
+			}
+			destinationIndex = apiKey.traceIndexId;
 		}
 		const upstreamUrl = quickwitUrl(`/api/v1/otlp/v1/${signal}`);
 		const headers: Record<string, string> = {
@@ -139,19 +137,18 @@ function signalHandler(signal: Signal): Handler<KeyedEnv> {
 
 		const result = await proxyToQuickwit(c, { upstreamUrl, headers });
 
-		if (result.status === 429) {
-			const retryAfter = result.headers.get('retry-after') ?? undefined;
-			const msg = await readUpstreamMessage(new Response(result.bodyBytes), 'Upstream rate limit');
-			throw tooManyRequests(msg, 'UPSTREAM_RATE_LIMIT', retryAfter);
-		}
 		if (result.status >= 400) {
-			const msg = await readUpstreamMessage(
-				new Response(result.bodyBytes),
-				'Upstream rejected request'
+			// Preserve the upstream status: 413 and 429 mean different things to an exporter than 400.
+			throw new HttpError(
+				result.status,
+				result.status === 429 ? 'UPSTREAM_RATE_LIMIT' : 'UPSTREAM_REJECTED',
+				readUpstreamMessage(result.bodyBytes, 'Upstream rejected request'),
+				undefined,
+				result.headers.get('retry-after') ?? undefined
 			);
-			throw badRequest(msg, 'UPSTREAM_REJECTED');
 		}
-		return otlpSuccess();
+
+		return otlpSuccess(signal, result.bodyBytes);
 	};
 }
 

@@ -9,7 +9,6 @@ import {
 	createServiceAccountKeySchema,
 	serviceAccountKeyIdParams
 } from '../schemas/api-keys.js';
-import { getIndexSettings } from '../services/index.service.js';
 import {
 	ApiKeyCreatedResponse,
 	ApiKeyListResponse,
@@ -56,21 +55,7 @@ export const apiKeysRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const body = c.req.valid('json');
 			const userId = c.get('session').user.id;
-			// Default the span destination to the log index's pairing, so the write target matches
-			// what readers of that log index can open unless an admin passes an explicit override.
-			// An explicit `null` (logs-only key) must be kept as-is, not folded into the default —
-			// hence the presence check rather than `??`.
-			//
-			// ponytail: the key's span destination is snapshotted here, never re-synced. Re-pointing the log
-			// index later leaves collectors writing to the old trace index while readers query the new one —
-			// the symptom is an empty trace, not an error. Upgrade: resolve it at ingest time from the log
-			// index's pairing, or add an update route for keys.
-			const traceIndexId =
-				'traceIndexId' in body
-					? body.traceIndexId
-					: (await getIndexSettings(db, body.indexId)).traceIndexId;
-			const result = await createApiKey(db, userId, { ...body, traceIndexId });
-			return c.json(result, 201);
+			return c.json(await createApiKey(db, userId, body), 201);
 		}
 	)
 	.get(

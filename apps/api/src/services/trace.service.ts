@@ -25,6 +25,7 @@ export async function getTrace(
 			serviceName: trace.processes[s.processID ?? '']?.serviceName ?? 'unknown',
 			startOffsetMicros: s.startTime - traceStart,
 			durationMicros: s.duration,
+			// json!(v_bool) (quickwit-serve/src/jaeger_api/model.rs). OK spans carry no error tag.
 			isError: s.tags.some((t) => t.key === 'error' && t.value === true)
 		}))
 	};

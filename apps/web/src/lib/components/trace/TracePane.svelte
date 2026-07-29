@@ -1,35 +1,60 @@
 <script lang="ts">
-	import { TriangleAlert } from 'lucide-svelte';
+	import { RotateCw, TriangleAlert } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
-	import type { TraceLoader } from './trace-loader.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
+
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { formatSpanDuration } from '$lib/utils/time';
 	import { traceAxis } from '$lib/utils/trace-axis';
-	import type { SpanNode } from '$lib/types';
+	import type { SpanNode, TraceModel } from '$lib/types';
 
 	let {
-		loader,
-		anchorSpanId,
-		filter = ''
-	}: { loader: TraceLoader | null; anchorSpanId: string | null; filter?: string } = $props();
+		model,
+		filter = '',
+		loading = false,
+		error = null,
+		onRetry
+	}: {
+		model: TraceModel | null;
+		filter?: string;
+		loading?: boolean;
+		error?: string | null;
+		onRetry?: () => void;
+	} = $props();
 
 	const TREE_LEFT_PX = 18;
 	const TREE_INDENT_PX = 14;
 	const TREE_LABEL_GAP_PX = 18;
-	// Resets when drawer unmounts on tab change. In the trace page, same instance persists across navigations, so collapsed ids carry over between traces.
-	let collapsedSpanIds = $state<Set<string>>(new Set());
+	const collapsedSpanIds = new SvelteSet<string>();
 
 	function toggleSpan(spanId: string): void {
-		const next = new Set(collapsedSpanIds);
-		if (next.has(spanId)) next.delete(spanId);
-		else next.add(spanId);
-		collapsedSpanIds = next;
+		if (!collapsedSpanIds.delete(spanId)) collapsedSpanIds.add(spanId);
 	}
 
-	const axis = $derived(traceAxis(loader?.durationMicros ?? 0));
+	const axis = $derived(traceAxis(model?.durationMicros ?? 0));
 	const needle = $derived(filter.trim().toLowerCase());
+
+	const matches = (node: SpanNode): boolean =>
+		`${node.serviceName} ${node.name}`.toLowerCase().includes(needle);
+
+	const forcedOpen = $derived.by(() => {
+		if (needle === '' || !model) return null;
+		const open = new Set<string>();
+		const walk = (node: SpanNode): boolean => {
+			let hit = matches(node);
+			for (const child of node.children) {
+				if (walk(child)) {
+					hit = true;
+					open.add(node.spanId);
+				}
+			}
+			return hit;
+		};
+		for (const root of model.roots) walk(root);
+		return open;
+	});
 </script>
 
 {#snippet spanRow(
@@ -38,19 +63,16 @@
 	isLast: boolean,
 	parentColor: string | null
 )}
-	{@const isAnchor = node.spanId === anchorSpanId}
-	{@const isCollapsed = collapsedSpanIds.has(node.spanId)}
+	{@const isCollapsed = collapsedSpanIds.has(node.spanId) && !forcedOpen?.has(node.spanId)}
 	{@const hasVisibleChildren = node.children.length > 0 && !isCollapsed}
 	{@const parentDepth = Math.max(node.depth - 1, 0)}
 	{@const nodeX = TREE_LEFT_PX + node.depth * TREE_INDENT_PX}
 	{@const parentX = TREE_LEFT_PX + parentDepth * TREE_INDENT_PX}
 	{@const color = serviceColor(node.serviceName)}
-	{@const dimmed =
-		needle !== '' && !`${node.serviceName} ${node.name}`.toLowerCase().includes(needle)}
+	{@const dimmed = needle !== '' && !matches(node)}
 	<div
 		role="listitem"
 		aria-level={node.depth + 1}
-		aria-current={isAnchor ? 'true' : undefined}
 		class={[
 			'border-line/40 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b',
 			'even:bg-base-200/50',
@@ -122,7 +144,7 @@
 			<div class="relative h-4">
 				<div
 					class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
-					style={`left:${node.offsetPct}%;width:${node.widthPct}%;background-color:${serviceColor(node.serviceName)};${node.isError ? 'outline:1px solid var(--color-error);outline-offset:1px' : ''}`}
+					style={`left:${node.offsetPct}%;width:${node.widthPct}%;background-color:${color};${node.isError ? 'outline:1px solid var(--color-error);outline-offset:1px' : ''}`}
 				></div>
 				<span
 					class="text-base-content/60 absolute top-1/2 ml-1.5 -translate-y-1/2 font-mono text-[10px] whitespace-nowrap"
@@ -137,7 +159,7 @@
 		{#each node.children as child, index (child.spanId)}
 			{@render spanRow(
 				child,
-				node.depth === 0 ? [] : [...ancestorRails, isLast ? null : color],
+				node.depth === 0 ? [] : [...ancestorRails, isLast ? null : parentColor],
 				index === node.children.length - 1,
 				color
 			)}
@@ -146,21 +168,34 @@
 {/snippet}
 
 <div class="flex h-full flex-col">
-	{#if loader?.error}
-		<p class="text-warning px-3 py-2 text-sm">{loader.error}</p>
-	{:else if !loader || loader.loading}
-		<div class="flex flex-1 items-center justify-center">
-			<span class="loading loading-spinner loading-sm"></span>
-		</div>
-	{:else if loader.spanCount === 0}
+	{#if error}
 		<div
+			role="alert"
+			class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
+		>
+			<p class="text-warning text-sm">{error}</p>
+			{#if onRetry}
+				<button type="button" class="btn btn-sm btn-ghost gap-1.5" onclick={onRetry}>
+					<RotateCw class="h-3.5 w-3.5" />
+					Try again
+				</button>
+			{/if}
+		</div>
+	{:else if loading || !model}
+		<div role="status" class="flex flex-1 items-center justify-center">
+			<span class="loading loading-spinner loading-sm"></span>
+			<span class="sr-only">Loading trace</span>
+		</div>
+	{:else if model.spanCount === 0}
+		<div
+			role="status"
 			class="text-base-content/60 flex flex-1 items-center justify-center px-6 text-center text-sm"
 		>
 			No spans found for this trace. They may not have been ingested, they may fall outside the
 			trace index's retention window, or this log index may be paired with the wrong trace index.
 		</div>
 	{:else}
-		{@const l = loader}
+		{@const m = model}
 		<div class="border-line grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b">
 			<div></div>
 			<div class="py-1.5 pr-14">
@@ -179,15 +214,15 @@
 				</div>
 			</div>
 		</div>
-		<OverlayScrollbarsComponent
-			options={OS_SCROLLBAR_OPTIONS}
-			defer
-			class="min-h-0 flex-1"
-			role="list"
-		>
-			{#each l.roots as root (root.spanId)}
-				{@render spanRow(root, [], true, null)}
-			{/each}
+		<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="min-h-0 flex-1">
+			<!-- role="list" has to sit on the element that directly owns the rows: OverlayScrollbars
+			     reparents children into its own viewport wrapper, so a role on the component never
+			     reaches them. -->
+			<div role="list">
+				{#each m.roots as root (root.spanId)}
+					{@render spanRow(root, [], true, null)}
+				{/each}
+			</div>
 		</OverlayScrollbarsComponent>
 	{/if}
 </div>

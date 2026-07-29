@@ -39,9 +39,6 @@
 	let fieldErrors = $state<Record<string, string>>({});
 	let revealedKey = $state('');
 
-	// The key's span destination is the selected log index's pairing, resolved server-side on create.
-	// Surfacing it here is the only chance to notice an unpaired index before a collector is deployed
-	// and every span batch starts coming back 400.
 	const spanDestination = $derived(
 		indexId === '' ? null : (indexes.find((i) => i.indexId === indexId)?.traceIndexId ?? null)
 	);

@@ -17,6 +17,7 @@
 	let { data } = $props();
 	const keys = $derived(data.keys);
 	const indexes = $derived(data.indexes);
+	const spanDestinations = $derived(new Map(indexes.map((i) => [i.indexId, i.traceIndexId])));
 
 	let search = $state('');
 
@@ -145,14 +146,15 @@
 					<span></span>
 				</div>
 				{#each filtered as key (key.id)}
+					{@const spanDestination = spanDestinations.get(key.indexId)}
 					<div class="{row} min-h-14 py-3">
 						<div class="truncate text-sm">{key.name}</div>
 						<div class="text-base-content/60 font-mono text-xs">{key.tokenPrefix}...</div>
 						<div class="min-w-0">
 							<div class="text-base-content/70 truncate font-mono text-xs">{key.indexId}</div>
-							{#if key.traceIndexId}
+							{#if spanDestination}
 								<div class="text-base-content/50 truncate font-mono text-xs">
-									Spans → {key.traceIndexId}
+									Spans → {spanDestination}
 								</div>
 							{/if}
 						</div>

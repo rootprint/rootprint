@@ -1,5 +1,5 @@
 import type { Preset } from '$lib/utils/time-range';
-import type { Filter, SortDirection } from 'api/types';
+import type { Filter, SortDirection, TraceSpan } from 'api/types';
 
 export type { Filter, SortDirection };
 
@@ -137,16 +137,18 @@ export interface QuerySuggestion {
 }
 
 /** One span in a rendered trace waterfall, with geometry precomputed against the whole trace. */
-export interface SpanNode {
-	spanId: string;
-	parentSpanId: string | null;
-	name: string;
-	serviceName: string;
-	startOffsetMicros: number;
-	durationMicros: number;
-	isError: boolean;
+export interface SpanNode extends TraceSpan {
 	depth: number;
 	offsetPct: number;
 	widthPct: number;
 	children: SpanNode[];
+}
+
+/** A trace shaped for rendering: the waterfall tree plus the header's summary figures. */
+export interface TraceModel {
+	roots: SpanNode[];
+	spanCount: number;
+	durationMicros: number;
+	services: { name: string; count: number }[];
+	errorCount: number;
 }

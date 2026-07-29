@@ -5,8 +5,8 @@ import { quickwit } from '../lib/quickwit.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { withIndexMeta, type IndexMetaEnv } from '../middleware/with-index-meta.js';
-import { TraceParams } from '../schemas/indexes.js';
-import { TraceResponse } from '../schemas/responses/indexes.js';
+import { TraceParams } from '../schemas/traces.js';
+import { TraceResponse } from '../schemas/responses/traces.js';
 import { getTrace } from '../services/trace.service.js';
 import type { Scope } from '../types.js';
 import { notFound } from '../utils/http-error.js';
@@ -20,7 +20,7 @@ export const tracesRouter = new Hono<IndexMetaEnv>()
 	.get(
 		'/:traceId',
 		describe({
-			tag: 'Log explorer',
+			tag: 'Traces',
 			summary: 'Get trace spans',
 			ok: TraceResponse,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],

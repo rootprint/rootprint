@@ -15,10 +15,12 @@ import type {
 	IndexViewConfigResponse as IndexViewConfigResponseSchema,
 	LogSearchResponse as LogSearchResponseSchema,
 	PreferencesResponse as PreferencesResponseSchema,
-	SourceDetailSchema as SourceDetailResponseSchema,
+	SourceDetailSchema as SourceDetailResponseSchema
+} from './schemas/responses/indexes.js';
+import type {
 	TraceResponse as TraceResponseSchema,
 	TraceSpanSchema
-} from './schemas/responses/indexes.js';
+} from './schemas/responses/traces.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,
@@ -125,6 +127,7 @@ export type VerifiedApiKey = {
 	id: number;
 	name: string;
 	indexId: string;
+	/** Span destination, resolved from indexId's pairing at verification time. */
 	traceIndexId: string | null;
 	role: 'ingest';
 };

@@ -8,13 +8,59 @@ import { HttpError } from './http-error.js';
 
 export { Code };
 
-const EMPTY_EXPORT_RESPONSE = toBinary(
-	ExportLogsServiceResponseSchema,
-	create(ExportLogsServiceResponseSchema, {})
-);
+function isRecord(v: unknown): v is Record<string, unknown> {
+	return typeof v === 'object' && v !== null;
+}
 
-export function otlpSuccess(): Response {
-	return new Response(EMPTY_EXPORT_RESPONSE, {
+/** prost serialises int64 as a JSON number; protobuf-JSON also permits a string. Accept both. */
+function toCount(v: unknown): number {
+	const n = typeof v === 'string' ? Number(v) : v;
+	return typeof n === 'number' && Number.isFinite(n) && n > 0 ? Math.trunc(n) : 0;
+}
+
+function readPartialSuccess(
+	signal: 'logs' | 'traces',
+	bodyBytes: ArrayBuffer
+): { rejectedLogRecords: bigint; errorMessage: string } | null {
+	const text = new TextDecoder().decode(bodyBytes).trim();
+	if (!text) return null;
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(text);
+	} catch {
+		return null;
+	}
+	if (!isRecord(parsed)) return null;
+
+	const ps = parsed.partial_success ?? parsed.partialSuccess;
+	if (!isRecord(ps)) return null;
+
+	const rejectedRaw =
+		signal === 'traces'
+			? (ps.rejected_spans ?? ps.rejectedSpans)
+			: (ps.rejected_log_records ?? ps.rejectedLogRecords);
+	const rejected = toCount(rejectedRaw);
+	const messageRaw = ps.error_message ?? ps.errorMessage;
+	const errorMessage = typeof messageRaw === 'string' ? messageRaw : '';
+
+	// Quickwit sends partial_success even on a full success, and OTLP treats an empty one as unset.
+	if (rejected === 0 && errorMessage === '') return null;
+	return { rejectedLogRecords: BigInt(rejected), errorMessage };
+}
+
+/**
+ * Quickwit answers OTLP/HTTP with JSON, which a protobuf exporter cannot decode, so re-encode while
+ * carrying over its rejected-record count. One schema covers both signals: ExportLogsServiceResponse
+ * and ExportTraceServiceResponse have identical wire shapes.
+ */
+export function otlpSuccess(signal: 'logs' | 'traces', bodyBytes: ArrayBuffer): Response {
+	const partialSuccess = readPartialSuccess(signal, bodyBytes);
+	const body = toBinary(
+		ExportLogsServiceResponseSchema,
+		create(ExportLogsServiceResponseSchema, partialSuccess ? { partialSuccess } : {})
+	);
+	return new Response(body, {
 		status: 200,
 		headers: { 'content-type': CONTENT_TYPE_PROTOBUF }
 	});
@@ -40,27 +86,23 @@ export function unsupportedContentType(message: string): Response {
 	});
 }
 
-export async function readUpstreamMessage(upstream: Response, fallback: string): Promise<string> {
+export function readUpstreamMessage(bodyBytes: ArrayBuffer, fallback: string): string {
+	const text = new TextDecoder().decode(bodyBytes);
+	if (!text) return fallback;
 	try {
-		const text = await upstream.text();
-		if (!text) return fallback;
-		try {
-			const parsed = JSON.parse(text) as unknown;
-			if (
-				parsed &&
-				typeof parsed === 'object' &&
-				'message' in parsed &&
-				typeof (parsed as { message: unknown }).message === 'string'
-			) {
-				return (parsed as { message: string }).message;
-			}
-		} catch {
-			// body was not JSON; fall through to raw text
+		const parsed = JSON.parse(text) as unknown;
+		if (
+			parsed &&
+			typeof parsed === 'object' &&
+			'message' in parsed &&
+			typeof (parsed as { message: unknown }).message === 'string'
+		) {
+			return (parsed as { message: string }).message;
 		}
-		return text.length > 512 ? text.slice(0, 512) : text;
 	} catch {
-		return fallback;
+		// body was not JSON; fall through to raw text
 	}
+	return text.length > 512 ? text.slice(0, 512) : text;
 }
 
 function statusToGrpcCode(status: number): number {

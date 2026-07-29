@@ -24,6 +24,7 @@ import {
 	type QuickwitClient
 } from 'quickwit-js';
 
+import { defaultTraceIndexId, OTEL_TRACES_INDEX } from '../constants.js';
 import type { Db } from '../db/index.js';
 import {
 	apiKey,
@@ -34,7 +35,7 @@ import {
 	userPreference,
 	view as viewTable
 } from '../db/schema.js';
-import { conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
+import { badRequest, conflict, indexAccessError, internal, notFound } from '../utils/http-error.js';
 import { translateQuickwitError, withNotFound } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import {
@@ -59,9 +60,13 @@ const DEFAULT_SETTINGS: IndexSettings = {
 	messageField: 'body.message',
 	tracebackField: 'attributes.exception.stacktrace',
 	contextFields: null,
-	traceIndexId: 'otel-traces-v0_9',
+	traceIndexId: null,
 	traceIdField: 'trace_id'
 };
+
+function defaultSettings(indexId: string): IndexSettings {
+	return { ...DEFAULT_SETTINGS, traceIndexId: defaultTraceIndexId(indexId) };
+}
 
 const DEFAULT_CONTEXT_FIELDS = ['service_name'];
 
@@ -85,7 +90,7 @@ export async function getIndexSettings(db: Db, indexId: string): Promise<IndexSe
 		.where(eq(indexSettings.indexId, indexId))
 		.limit(1);
 
-	if (!row) return DEFAULT_SETTINGS;
+	if (!row) return defaultSettings(indexId);
 
 	return toIndexSettings(row);
 }
@@ -101,14 +106,27 @@ export async function saveIndexConfig(
 	indexId: string,
 	fields: SaveIndexConfigInput
 ): Promise<void> {
+	// listIndexes filters out pairing targets, so a self-paired index would vanish from the explorer.
+	if (fields.traceIndexId === indexId) {
+		throw badRequest('An index cannot be its own trace index.', 'TRACE_PAIRING_SELF', [
+			{ path: 'traceIndexId', message: 'Pick a different index.' }
+		]);
+	}
+
+	const existing = await getIndexSettings(db, indexId);
+	const traceIndexId =
+		fields.traceIndexId !== undefined ? fields.traceIndexId : existing.traceIndexId;
+
 	const updatedAt = new Date();
 	await db
 		.insert(indexSettings)
-		.values({ indexId, ...fields, updatedAt })
+		.values({ indexId, ...existing, ...fields, updatedAt })
 		.onConflictDoUpdate({
 			target: indexSettings.indexId,
 			set: { ...fields, updatedAt }
 		});
+
+	if (traceIndexId !== existing.traceIndexId) invalidateApiKeyCache();
 }
 
 function toIndexSummary(m: QuickwitIndexMetadata, settings: IndexSettings): IndexSummary {
@@ -135,7 +153,9 @@ export async function listAllIndexes(db: Db, qw: QuickwitClient): Promise<IndexS
 		rows.map((r) => [r.indexId, toIndexSettings(r)])
 	);
 
-	return indexes.map((m) => toIndexSummary(m, settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS));
+	return indexes.map((m) =>
+		toIndexSummary(m, settingsMap.get(m.indexId) ?? defaultSettings(m.indexId))
+	);
 }
 
 export async function listIndexes(
@@ -147,17 +167,14 @@ export async function listIndexes(
 	const all = await listAllIndexes(db, qw);
 	const isAdmin = role === 'admin';
 	if (view === 'admin' && isAdmin) return all;
-	// Trace indexes are not log indexes. The set is data now, not one configured id, so read the
-	// distinct pairing targets; union the default so a fresh install with no settings rows still
-	// hides otel-traces-v0_9 from the picker.
+	// Trace indexes are not log indexes. OTEL_TRACES_INDEX holds spans whether or not a row names it.
 	const targets = new Set(
 		(await db.selectDistinct({ id: indexSettings.traceIndexId }).from(indexSettings))
 			.map((r) => r.id)
 			.filter((id): id is string => id !== null)
 	);
-	if (DEFAULT_SETTINGS.traceIndexId) targets.add(DEFAULT_SETTINGS.traceIndexId);
-	// traceIndexId is stripped here: this list goes to every user, and only admin tooling (the ingest
-	// key form) needs the pairing. IndexViewConfig reports hasTraces for the same reason.
+	targets.add(OTEL_TRACES_INDEX);
+	// traceIndexId is stripped: only admin tooling needs the pairing, this list goes to every user.
 	return all
 		.filter((m) => canAccessIndex(m.visibility, isAdmin) && !targets.has(m.indexId))
 		.map((m) => ({ ...m, traceIndexId: null }));
@@ -260,11 +277,11 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 		await tx.delete(share).where(eq(share.indexId, indexId));
 		await tx.delete(apiKey).where(eq(apiKey.indexId, indexId));
 		await tx.delete(searchAudit).where(eq(searchAudit.indexId, indexId));
+		// Unpair every log index that pointed here; keys resolve their destination from that pairing.
 		await tx
 			.update(indexSettings)
 			.set({ traceIndexId: null })
 			.where(eq(indexSettings.traceIndexId, indexId));
-		await tx.update(apiKey).set({ traceIndexId: null }).where(eq(apiKey.traceIndexId, indexId));
 	});
 
 	invalidateApiKeyCache();
@@ -399,7 +416,7 @@ export async function createIndex(
 		translateQuickwitError(err);
 	}
 
-	return toIndexSummary(normalizeIndexMetadata(created), DEFAULT_SETTINGS);
+	return toIndexSummary(normalizeIndexMetadata(created), defaultSettings(input.indexId));
 }
 
 function sameStringSet(a: string[], b: string[]): boolean {

@@ -1,11 +1,16 @@
-export function signInPathWithReturnTo(currentPath: string): string {
-	if (!currentPath || currentPath === '/') return '/auth/sign-in';
-	return `/auth/sign-in?returnTo=${encodeURIComponent(currentPath)}`;
-}
+const BASE = 'https://return-to.invalid';
 
-// Reject anything that isn't a single-slash relative path so an attacker
-// can't smuggle in a protocol-relative URL like `//evil.com`.
+/**
+ * Keep only same-origin relative paths. Resolved rather than prefix-checked because the parser folds
+ * `\` into `/` and strips tabs: `/\evil.com` is offsite despite starting with a single slash.
+ */
 export function safeReturnTo(raw: string | null): string {
-	if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
-	return raw;
+	if (!raw) return '/';
+	try {
+		const url = new URL(raw, BASE);
+		if (url.origin !== BASE) return '/';
+		return url.pathname + url.search + url.hash;
+	} catch {
+		return '/';
+	}
 }

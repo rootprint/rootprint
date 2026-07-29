@@ -1,6 +1,6 @@
 {
-  "id": "0943bcf4-ef94-4d64-9ea4-8fce513bf49c",
-  "prevId": "314b49e8-315c-4692-8dd7-1c28e45d648b",
+  "id": "0e5dc593-fcf4-4688-b904-41c97ff0e9df",
+  "prevId": "66b6e97b-610c-4809-a41c-4dc5540f3afd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -37,12 +37,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "trace_index_id": {
-          "name": "trace_index_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "last_used_at": {
           "name": "last_used_at",

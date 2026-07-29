@@ -22,6 +22,13 @@ export const INDEX_VIEWS = ['search', 'admin'] as const;
 export const CONTENT_TYPE_PROTOBUF = 'application/x-protobuf';
 export const CONTENT_TYPE_JSON = 'application/json';
 
+export const OTEL_LOGS_INDEX = 'otel-logs-v0_9';
+export const OTEL_TRACES_INDEX = 'otel-traces-v0_9';
+
+export function defaultTraceIndexId(indexId: string): string | null {
+	return indexId === OTEL_LOGS_INDEX ? OTEL_TRACES_INDEX : null;
+}
+
 // Search
 export const FIELD_VALUES_MAX = 65_000;
 
