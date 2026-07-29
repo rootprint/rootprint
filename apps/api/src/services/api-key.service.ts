@@ -19,7 +19,7 @@ import type {
 	VerifiedApiKey,
 	VerifyApiKeyResult
 } from '../types.js';
-import { fromAuthApiError, internal, notFound } from '../utils/http-error.js';
+import { badRequest, fromAuthApiError, internal, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 
 function generateApiKey(): string {
@@ -118,6 +118,17 @@ export async function createApiKey(
 	createdByUserId: string,
 	input: CreateApiKeyInput
 ): Promise<{ summary: ApiKeySummary; token: string }> {
+	const [target] = await db
+		.select({ isTraceIndex: indexSettings.isTraceIndex })
+		.from(indexSettings)
+		.where(eq(indexSettings.indexId, input.indexId))
+		.limit(1);
+	if (target?.isTraceIndex) {
+		throw badRequest('That index is a trace index.', 'INDEX_IS_TRACE_INDEX', [
+			{ path: 'indexId', message: 'Pick a log index.' }
+		]);
+	}
+
 	const token = generateApiKey();
 	const [row] = await withUniqueViolation('API key name already exists', 'CONFLICT', () =>
 		db
