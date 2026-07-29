@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { config as loadEnv } from 'dotenv';
 
-import { intEnv, optionalUrlEnv, requireEnv, requireUrlEnv, strEnv } from './utils/require-env.js';
+import { intEnv, optionalUrlEnv, requireEnv, requireUrlEnv } from './utils/require-env.js';
 
 const repoRootEnv = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../.env');
 loadEnv({ path: repoRootEnv });
@@ -12,7 +12,6 @@ export const config = {
 	databaseUrl: requireEnv('DATABASE_URL'),
 	origin: requireUrlEnv('ORIGIN'),
 	quickwitUrl: requireUrlEnv('QUICKWIT_URL'),
-	traceIndexId: strEnv('TRACE_INDEX_ID', 'otel-traces-v0_9'),
 	frontendUrl: optionalUrlEnv('FRONTEND_URL'),
 	port: intEnv('PORT', 8282),
 	trustedProxyHops: intEnv('TRUST_PROXY_HOPS', 0),

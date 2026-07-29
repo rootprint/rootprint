@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import type { Handler } from 'hono';
 
-import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
@@ -123,9 +122,13 @@ function signalHandler(signal: Signal): Handler<KeyedEnv> {
 		}
 
 		const apiKey = c.get('apiKey');
-		// Spans must not go to `apiKey.indexId`: a log index lacks their timestamp field, so
-		// Quickwit drops every span while the exporter still sees 200.
-		const destinationIndex = signal === 'traces' ? config.traceIndexId : apiKey.indexId;
+		const destinationIndex = signal === 'traces' ? apiKey.traceIndexId : apiKey.indexId;
+		if (!destinationIndex) {
+			throw badRequest(
+				'This ingest key has no trace index configured.',
+				'TRACE_INDEX_NOT_CONFIGURED'
+			);
+		}
 		const upstreamUrl = quickwitUrl(`/api/v1/otlp/v1/${signal}`);
 		const headers: Record<string, string> = {
 			'content-type': CONTENT_TYPE_PROTOBUF,

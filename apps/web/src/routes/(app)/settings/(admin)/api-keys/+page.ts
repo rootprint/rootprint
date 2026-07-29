@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import { listApiKeys } from '$lib/api/api-keys';
-import { listIndexes } from '$lib/api/indexes';
+import { ingestIndexOptions, listIndexes } from '$lib/api/indexes';
 import { DEP } from '$lib/api/deps';
 
 export const load: PageLoad = async ({ depends }) => {
@@ -8,6 +8,6 @@ export const load: PageLoad = async ({ depends }) => {
 	const [keys, indexes] = await Promise.all([listApiKeys(), listIndexes({ view: 'admin' })]);
 	return {
 		keys,
-		indexIds: indexes.map((i) => i.indexId)
+		indexes: ingestIndexOptions(indexes)
 	};
 };

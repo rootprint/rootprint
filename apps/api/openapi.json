@@ -364,6 +364,16 @@
 					},
 					"tokenPrefix": {
 						"type": "string"
+					},
+					"traceIndexId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
 					}
 				},
 				"required": [
@@ -372,6 +382,7 @@
 					"tokenPrefix",
 					"role",
 					"indexId",
+					"traceIndexId",
 					"lastUsedAt",
 					"createdAt",
 					"createdByUserId"
@@ -1046,6 +1057,19 @@
 							}
 						]
 					},
+					"traceIdField": {
+						"type": "string"
+					},
+					"traceIndexId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"tracebackField": {
 						"anyOf": [
 							{
@@ -1073,6 +1097,8 @@
 					"messageField",
 					"tracebackField",
 					"contextFields",
+					"traceIndexId",
+					"traceIdField",
 					"indexUri",
 					"timestampField",
 					"mode",
@@ -1262,6 +1288,16 @@
 					"sourceCount": {
 						"type": "number"
 					},
+					"traceIndexId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"visibility": {
 						"enum": [
 							"hidden",
@@ -1278,7 +1314,8 @@
 					"fieldCount",
 					"sourceCount",
 					"mode",
-					"createTimestamp"
+					"createTimestamp",
+					"traceIndexId"
 				],
 				"type": "object"
 			},
@@ -1325,6 +1362,9 @@
 					"timestampField": {
 						"type": "string"
 					},
+					"traceIdField": {
+						"type": "string"
+					},
 					"tracebackField": {
 						"anyOf": [
 							{
@@ -1345,6 +1385,7 @@
 					"contextFields",
 					"timestampField",
 					"isOtel",
+					"traceIdField",
 					"hasTraces"
 				],
 				"type": "object"
@@ -3722,6 +3763,17 @@
 										"maxLength": 100,
 										"minLength": 1,
 										"type": "string"
+									},
+									"traceIndexId": {
+										"anyOf": [
+											{
+												"minLength": 1,
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
 									}
 								},
 								"required": [
@@ -13908,6 +13960,21 @@
 										"minLength": 1,
 										"type": "string"
 									},
+									"traceIdField": {
+										"minLength": 1,
+										"type": "string"
+									},
+									"traceIndexId": {
+										"anyOf": [
+											{
+												"minLength": 1,
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
 									"tracebackField": {
 										"anyOf": [
 											{
@@ -16040,6 +16107,76 @@
 				]
 			}
 		},
+		"/api/indexes/{indexId}/traces/{traceId}": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdTracesByTraceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "traceId",
+						"required": true,
+						"schema": {
+							"pattern": "^(?!0{32}$)[0-9a-f]{32}$",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "Get trace spans",
+				"tags": [
+					"Log explorer"
+				]
+			}
+		},
 		"/api/indexes/{indexId}/views": {
 			"get": {
 				"operationId": "getApiIndexesByIndexIdViews",
@@ -17119,67 +17256,6 @@
 				"summary": "Resolve a share link",
 				"tags": [
 					"Shares"
-				]
-			}
-		},
-		"/api/traces/{traceId}": {
-			"get": {
-				"operationId": "getApiTracesByTraceId",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "traceId",
-						"required": true,
-						"schema": {
-							"pattern": "^(?!0{32}$)[0-9a-f]{32}$",
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TraceResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"429": {
-						"$ref": "#/components/responses/TooManyRequests"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"security": [
-					{
-						"personalBearer": []
-					},
-					{
-						"cookieAuth": []
-					}
-				],
-				"summary": "Get trace spans",
-				"tags": [
-					"Log explorer"
 				]
 			}
 		},

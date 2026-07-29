@@ -26,6 +26,8 @@ export const indexSettings = pgTable('index_settings', {
 	messageField: text('message_field').notNull().default('body.message'),
 	tracebackField: text('traceback_field'),
 	contextFields: jsonb('context_fields').$type<string[] | null>(),
+	traceIndexId: text('trace_index_id'),
+	traceIdField: text('trace_id_field').notNull().default('trace_id'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
@@ -81,6 +83,7 @@ export const apiKey = pgTable(
 		token: text('token').notNull().unique(),
 		role: text('role').$type<'ingest'>().notNull(),
 		indexId: text('index_id').notNull(),
+		traceIndexId: text('trace_index_id'),
 		lastUsedAt: timestamp('last_used_at'),
 		createdByUserId: text('created_by_user_id')
 			.notNull()

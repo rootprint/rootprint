@@ -7,25 +7,28 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import OneTimeKeyReveal from '$lib/components/ui/OneTimeKeyReveal.svelte';
 	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
+	import type { IngestIndexOption } from '$lib/types';
 
 	let {
 		open = $bindable(false),
-		indexIds,
+		indexes,
 		defaultIndexId,
 		invalidateKey,
 		onCreated
 	}: {
 		open?: boolean;
-		indexIds: string[];
-		/** Preselected index; ignored when not present in `indexIds`. */
+		indexes: IngestIndexOption[];
+		/** Preselected index; ignored when not present in `indexes`. */
 		defaultIndexId?: string;
 		invalidateKey?: string;
 		onCreated?: (summary: ApiKeyView, secret: string) => void;
 	} = $props();
 
 	function initialIndexId() {
-		if (defaultIndexId !== undefined && indexIds.includes(defaultIndexId)) return defaultIndexId;
-		return indexIds.length === 1 ? indexIds[0] : '';
+		if (defaultIndexId !== undefined && indexes.some((i) => i.indexId === defaultIndexId)) {
+			return defaultIndexId;
+		}
+		return indexes.length === 1 ? indexes[0].indexId : '';
 	}
 
 	let phase = $state<'form' | 'reveal'>('form');
@@ -35,6 +38,13 @@
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 	let revealedKey = $state('');
+
+	// The key's span destination is the selected log index's pairing, resolved server-side on create.
+	// Surfacing it here is the only chance to notice an unpaired index before a collector is deployed
+	// and every span batch starts coming back 400.
+	const spanDestination = $derived(
+		indexId === '' ? null : (indexes.find((i) => i.indexId === indexId)?.traceIndexId ?? null)
+	);
 
 	function reset() {
 		phase = 'form';
@@ -114,12 +124,25 @@
 						required
 					>
 						<option value="" disabled>Select an index…</option>
-						{#each indexIds as option (option)}
-							<option value={option}>{option}</option>
+						{#each indexes as option (option.indexId)}
+							<option value={option.indexId}>{option.indexId}</option>
 						{/each}
 					</select>
 				{/snippet}
 			</Field>
+
+			{#if indexId !== ''}
+				{#if spanDestination}
+					<p class="text-base-content/60 text-xs">
+						Spans from this key go to <span class="font-mono">{spanDestination}</span>.
+					</p>
+				{:else}
+					<p class="text-warning text-xs">
+						This index has no paired trace index, so the key will reject spans. Pair one under
+						Settings → Indexes if you plan to send traces.
+					</p>
+				{/if}
+			{/if}
 		</form>
 	{:else}
 		<OneTimeKeyReveal value={revealedKey} label="Ingest key" />

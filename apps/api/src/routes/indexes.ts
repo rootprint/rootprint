@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 
 import { exportsRouter } from './exports.js';
+import { tracesRouter } from './traces.js';
 import { viewsRouter } from './views.js';
 
 import { db } from '../lib/db.js';
@@ -45,7 +46,6 @@ import {
 } from '../schemas/responses/indexes.js';
 import { SearchQuery } from '../schemas/search.js';
 import {
-	canReadTraces,
 	createIndex,
 	deleteIndex,
 	getIndexDetail,
@@ -138,8 +138,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		withIndexMeta('search'),
 		validator('param', IndexIdParams),
 		async (c) => {
-			const hasTraces = await canReadTraces(db, quickwit, c.get('session').user.role);
-			return c.json(getIndexViewConfig(c.get('indexMeta'), hasTraces));
+			return c.json(getIndexViewConfig(c.get('indexMeta')));
 		}
 	)
 	.get(
@@ -483,4 +482,5 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}
 	)
 	.route('/:indexId/logs/export', exportsRouter)
+	.route('/:indexId/traces', tracesRouter)
 	.route('/:indexId/views', viewsRouter);

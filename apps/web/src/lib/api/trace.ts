@@ -3,11 +3,12 @@ import { readApiError } from '$lib/api/errors';
 import type { TraceResponse } from 'api/types';
 
 export async function fetchTrace(
+	indexId: string,
 	traceId: string,
 	opts: { signal?: AbortSignal } = {}
 ): Promise<TraceResponse> {
-	const res = await client.api.traces[':traceId'].$get(
-		{ param: { traceId } },
+	const res = await client.api.indexes[':indexId'].traces[':traceId'].$get(
+		{ param: { indexId, traceId } },
 		{ init: { signal: opts.signal } }
 	);
 

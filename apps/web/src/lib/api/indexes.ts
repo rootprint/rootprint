@@ -2,7 +2,7 @@ import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
-import type { FieldConfig } from '$lib/types';
+import type { FieldConfig, IngestIndexOption } from '$lib/types';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
 import type {
 	CreateIndexInput,
@@ -30,8 +30,22 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 		tracebackField: json.tracebackField ?? 'traceback',
 		contextFields: json.contextFields ?? [],
 		isOtel: json.isOtel,
+		traceIdField: json.traceIdField,
 		hasTraces: json.hasTraces
 	};
+}
+
+/**
+ * Log indexes an ingest key can target, from an admin-view index list. Trace indexes are excluded:
+ * shipping logs into one is never intended, and the API's own search-view list drops them too.
+ */
+export function ingestIndexOptions(indexes: IndexSummary[]): IngestIndexOption[] {
+	const traceTargets = new Set(
+		indexes.map((i) => i.traceIndexId).filter((id): id is string => id !== null)
+	);
+	return indexes
+		.filter((i) => !traceTargets.has(i.indexId))
+		.map((i) => ({ indexId: i.indexId, traceIndexId: i.traceIndexId }));
 }
 
 export async function listIndexes(opts: { view?: 'admin' } = {}): Promise<IndexSummary[]> {

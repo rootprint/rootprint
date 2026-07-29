@@ -70,6 +70,7 @@ export interface FieldConfig {
 	/** Admin-configured field paths that should pre-pin as chips when the Context pane opens. */
 	contextFields: string[];
 	isOtel: boolean;
+	traceIdField: string;
 	/** Server-resolved: the browser never names the trace index. */
 	hasTraces: boolean;
 }
@@ -77,6 +78,12 @@ export interface FieldConfig {
 export interface IndexOption {
 	id: string;
 	name: string;
+}
+
+/** A log index an ingest key can target, plus where that key's spans would go. */
+export interface IngestIndexOption {
+	indexId: string;
+	traceIndexId: string | null;
 }
 
 export interface LogFieldValueBucket {

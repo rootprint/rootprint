@@ -125,6 +125,7 @@ export type VerifiedApiKey = {
 	id: number;
 	name: string;
 	indexId: string;
+	traceIndexId: string | null;
 	role: 'ingest';
 };
 
@@ -174,6 +175,8 @@ export type IndexSettings = {
 	messageField: string;
 	tracebackField: string | null;
 	contextFields: string[] | null;
+	traceIndexId: string | null;
+	traceIdField: string;
 };
 
 export type IndexConfig = {

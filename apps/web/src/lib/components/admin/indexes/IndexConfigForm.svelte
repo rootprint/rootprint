@@ -11,7 +11,7 @@
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
 	import type { IndexDetail, IndexVisibility } from 'api/types';
 
-	let { detail }: { detail: IndexDetail } = $props();
+	let { detail, indexIds }: { detail: IndexDetail; indexIds: string[] } = $props();
 
 	const initial = detail;
 	let displayName = $state(initial.displayName ?? '');
@@ -20,6 +20,15 @@
 	let messageField = $state(initial.messageField);
 	let tracebackField = $state(initial.tracebackField ?? '');
 	let contextFieldTags = $state<string[]>([...(initial.contextFields ?? [])]);
+	let traceIndexId = $state(initial.traceIndexId ?? '');
+	let traceIdField = $state(initial.traceIdField);
+
+	const selectableIndexIds = $derived(indexIds.filter((id) => id !== detail.indexId));
+	const indexOptions = $derived(
+		traceIndexId !== '' && !selectableIndexIds.includes(traceIndexId)
+			? [traceIndexId, ...selectableIndexIds]
+			: selectableIndexIds
+	);
 
 	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -34,7 +43,9 @@
 			levelField: levelField.trim(),
 			messageField: messageField.trim(),
 			tracebackField: tracebackField.trim() === '' ? null : tracebackField.trim(),
-			contextFields: contextFieldTags.length === 0 ? null : [...contextFieldTags]
+			contextFields: contextFieldTags.length === 0 ? null : [...contextFieldTags],
+			traceIndexId: traceIndexId === '' ? null : traceIndexId,
+			traceIdField: traceIdField.trim()
 		};
 
 		const parsed = v.safeParse(saveIndexConfigSchema, payload);
@@ -90,7 +101,7 @@
 	<SettingsRow
 		id="cfg-visibility"
 		label="Visibility"
-		hint="Who can see this index on the search page."
+		hint="Who can see this index on the search page. Does not gate spans read through a paired log index — restrict the log index instead."
 		error={fieldErrors.visibility}
 	>
 		{#snippet children({ id, invalid, describedBy })}
@@ -165,6 +176,50 @@
 				class="input input-sm w-full"
 				class:input-error={invalid}
 				placeholder="e.g. message.traceback"
+				autocomplete="off"
+				aria-invalid={invalid ? 'true' : undefined}
+				aria-describedby={describedBy}
+			/>
+		{/snippet}
+	</SettingsRow>
+
+	<SettingsRow
+		id="cfg-trace-index"
+		label="Trace index"
+		hint="Index holding the OTLP spans for these logs. Must use the otel-traces schema. The chosen index is hidden from the log explorer's index picker."
+		error={fieldErrors.traceIndexId}
+	>
+		{#snippet children({ id, invalid, describedBy })}
+			<select
+				{id}
+				bind:value={traceIndexId}
+				class="select select-sm w-full"
+				class:select-error={invalid}
+				aria-invalid={invalid ? 'true' : undefined}
+				aria-describedby={describedBy}
+			>
+				<option value="">None — this index has no traces</option>
+				{#each indexOptions as option (option)}
+					<option value={option}>{option}</option>
+				{/each}
+			</select>
+		{/snippet}
+	</SettingsRow>
+
+	<SettingsRow
+		id="cfg-trace-id-field"
+		label="Trace ID field"
+		hint="Log field carrying the W3C trace id, used to link a log line to its trace. Supports dot-notation."
+		error={fieldErrors.traceIdField}
+	>
+		{#snippet children({ id, invalid, describedBy })}
+			<input
+				{id}
+				type="text"
+				bind:value={traceIdField}
+				class="input input-sm w-full"
+				class:input-error={invalid}
+				placeholder="trace_id"
 				autocomplete="off"
 				aria-invalid={invalid ? 'true' : undefined}
 				aria-describedby={describedBy}

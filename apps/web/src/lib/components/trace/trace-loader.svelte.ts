@@ -7,6 +7,7 @@ import type { TraceSpan } from 'api/types';
 const MIN_WIDTH_PCT = 0.4;
 
 export class TraceLoader {
+	readonly indexId: string;
 	readonly traceId: string;
 
 	roots = $state.raw<SpanNode[]>([]);
@@ -19,7 +20,8 @@ export class TraceLoader {
 
 	#abort: AbortController | null = null;
 
-	constructor(traceId: string) {
+	constructor(indexId: string, traceId: string) {
+		this.indexId = indexId;
 		this.traceId = traceId;
 	}
 
@@ -27,7 +29,9 @@ export class TraceLoader {
 		this.#abort = new AbortController();
 		this.loading = true;
 		try {
-			const { spans } = await fetchTrace(this.traceId, { signal: this.#abort.signal });
+			const { spans } = await fetchTrace(this.indexId, this.traceId, {
+				signal: this.#abort.signal
+			});
 			this.#build(spans);
 		} catch (e) {
 			if (isAbortError(e)) return;

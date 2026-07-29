@@ -70,7 +70,9 @@
 	});
 	const hasTraceback = $derived(traceback != null && traceback !== '');
 	const traceId = $derived.by((): string | null => {
-		const v = hit?.raw['trace_id'];
+		const path = store.fieldConfig?.traceIdField;
+		if (!path || !hit) return null;
+		const v = getByPath(hit.raw, path);
 		return isTraceId(v) ? v : null;
 	});
 	const anchorSpanId = $derived.by((): string | null => {
@@ -82,9 +84,12 @@
 	let traceLoader = $state.raw<TraceLoader | null>(null);
 	let built: string | null = null;
 	const traceKey = $derived(hasTrace ? traceId : null);
+	const loaderKey = $derived(
+		traceKey !== null && store.selectedIndex !== null ? `${store.selectedIndex}|${traceKey}` : null
+	);
 
 	$effect(() => {
-		const key = traceKey;
+		const key = loaderKey;
 		return () => {
 			traceLoader?.dispose();
 			traceLoader = null;
@@ -93,9 +98,11 @@
 	});
 
 	$effect(() => {
-		if (activeTab !== 'trace' || traceKey === null || built === traceKey) return;
-		built = traceKey;
-		const next = new TraceLoader(traceKey);
+		const indexId = store.selectedIndex;
+		if (activeTab !== 'trace' || traceKey === null || indexId === null || built === loaderKey)
+			return;
+		built = loaderKey;
+		const next = new TraceLoader(indexId, traceKey);
 		traceLoader = next;
 		void next.init();
 	});
@@ -269,7 +276,10 @@
 			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
 			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
 		</button>
-		<a href={`/traces/${id}`} class="btn btn-xs btn-primary ml-auto">
+		<a
+			href={`/traces/${id}?index=${encodeURIComponent(store.selectedIndex ?? '')}`}
+			class="btn btn-xs btn-primary ml-auto"
+		>
 			<ExternalLink class="h-3 w-3" aria-hidden="true" />
 			Open trace page
 		</a>

@@ -75,7 +75,9 @@ export const IndexSummarySchema = named(
 		fieldCount: v.number(),
 		sourceCount: v.number(),
 		mode: v.nullable(v.string()),
-		createTimestamp: v.nullable(v.number())
+		createTimestamp: v.nullable(v.number()),
+		/** Admin view only; null in the search view, which has no reason to name trace indexes. */
+		traceIndexId: v.nullable(v.string())
 	})
 );
 
@@ -91,6 +93,8 @@ export const IndexDetailResponse = named(
 		messageField: v.string(),
 		tracebackField: v.nullable(v.string()),
 		contextFields: v.nullable(v.array(v.string())),
+		traceIndexId: v.nullable(v.string()),
+		traceIdField: v.string(),
 		indexUri: v.nullable(v.string()),
 		timestampField: v.nullable(v.string()),
 		mode: v.nullable(v.string()),
@@ -119,6 +123,7 @@ export const IndexViewConfigResponse = named(
 		contextFields: v.nullable(v.array(v.string())),
 		timestampField: v.string(),
 		isOtel: v.boolean(),
+		traceIdField: v.string(),
 		hasTraces: v.boolean()
 	})
 );

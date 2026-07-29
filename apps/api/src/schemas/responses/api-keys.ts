@@ -13,6 +13,7 @@ export const ApiKeyResponse = named(
 		tokenPrefix: v.string(),
 		role: apiKeyRoleSchema,
 		indexId: v.string(),
+		traceIndexId: v.nullable(v.string()),
 		lastUsedAt: v.nullable(isoTimestampString),
 		createdAt: isoTimestampString,
 		createdByUserId: v.string()

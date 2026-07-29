@@ -1,6 +1,5 @@
 import { eq, inArray } from 'drizzle-orm';
 
-import { config } from '../config.js';
 import type {
 	DynamicMapping,
 	IndexConfig,
@@ -59,7 +58,9 @@ const DEFAULT_SETTINGS: IndexSettings = {
 	levelField: 'severity_text',
 	messageField: 'body.message',
 	tracebackField: 'attributes.exception.stacktrace',
-	contextFields: null
+	contextFields: null,
+	traceIndexId: 'otel-traces-v0_9',
+	traceIdField: 'trace_id'
 };
 
 const DEFAULT_CONTEXT_FIELDS = ['service_name'];
@@ -71,7 +72,9 @@ function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings 
 		levelField: row.levelField,
 		messageField: row.messageField,
 		tracebackField: row.tracebackField,
-		contextFields: row.contextFields
+		contextFields: row.contextFields,
+		traceIndexId: row.traceIndexId,
+		traceIdField: row.traceIdField
 	};
 }
 
@@ -91,25 +94,6 @@ export function canAccessIndex(visibility: IndexVisibility, isAdmin: boolean): b
 	if (visibility === 'hidden') return false;
 	if (visibility === 'admin') return isAdmin;
 	return true;
-}
-
-/**
- * Spans are one shared dataset: whoever can read the trace index reads every span in it. Trace ids
- * cannot gate this — W3C traceparent propagates them in plaintext headers, so they are not secrets.
- * The trace index's `visibility` is the only gate.
- */
-export async function canReadTraces(
-	db: Db,
-	qw: QuickwitClient,
-	role: string | null | undefined
-): Promise<boolean> {
-	const traceIndexId = config.traceIndexId;
-	const [settings, index] = await Promise.all([
-		getIndexSettings(db, traceIndexId),
-		qwGetIndex(qw, traceIndexId)
-	]);
-	if (!index) return false;
-	return canAccessIndex(settings.visibility, role === 'admin');
 }
 
 export async function saveIndexConfig(
@@ -135,7 +119,8 @@ function toIndexSummary(m: QuickwitIndexMetadata, settings: IndexSettings): Inde
 		fieldCount: m.fields.length,
 		sourceCount: m.sources.length,
 		mode: m.mode,
-		createTimestamp: m.createTimestamp
+		createTimestamp: m.createTimestamp,
+		traceIndexId: settings.traceIndexId
 	};
 }
 
@@ -162,10 +147,20 @@ export async function listIndexes(
 	const all = await listAllIndexes(db, qw);
 	const isAdmin = role === 'admin';
 	if (view === 'admin' && isAdmin) return all;
-	// Hide the trace index from the log-index list here, not via its `visibility` — that must stay
-	// free to gate span reads, and `hidden` would switch the Trace tab off for admins too.
-	const traceIndexId = config.traceIndexId;
-	return all.filter((m) => canAccessIndex(m.visibility, isAdmin) && m.indexId !== traceIndexId);
+	// Trace indexes are not log indexes. The set is data now, not one configured id, so read the
+	// distinct pairing targets; union the default so a fresh install with no settings rows still
+	// hides otel-traces-v0_9 from the picker.
+	const targets = new Set(
+		(await db.selectDistinct({ id: indexSettings.traceIndexId }).from(indexSettings))
+			.map((r) => r.id)
+			.filter((id): id is string => id !== null)
+	);
+	if (DEFAULT_SETTINGS.traceIndexId) targets.add(DEFAULT_SETTINGS.traceIndexId);
+	// traceIndexId is stripped here: this list goes to every user, and only admin tooling (the ingest
+	// key form) needs the pairing. IndexViewConfig reports hasTraces for the same reason.
+	return all
+		.filter((m) => canAccessIndex(m.visibility, isAdmin) && !targets.has(m.indexId))
+		.map((m) => ({ ...m, traceIndexId: null }));
 }
 
 export async function getIndexMeta(
@@ -210,13 +205,14 @@ export async function getIndexConfig(
 	return { indexId, ...resolveLogFields(meta) };
 }
 
-export function getIndexViewConfig(meta: IndexMeta, hasTraces: boolean): IndexViewConfig {
+export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
 	return {
 		indexId: meta.index.indexId,
 		displayName: meta.settings.displayName,
 		...resolveLogFields(meta),
 		isOtel: meta.index.indexId.startsWith('otel-'),
-		hasTraces
+		traceIdField: meta.settings.traceIdField,
+		hasTraces: meta.settings.traceIndexId !== null
 	};
 }
 
@@ -230,6 +226,8 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
 		contextFields: settings.contextFields,
+		traceIndexId: settings.traceIndexId,
+		traceIdField: settings.traceIdField,
 		indexUri: index.indexUri,
 		timestampField: index.timestampField,
 		mode: index.mode,
@@ -262,6 +260,11 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 		await tx.delete(share).where(eq(share.indexId, indexId));
 		await tx.delete(apiKey).where(eq(apiKey.indexId, indexId));
 		await tx.delete(searchAudit).where(eq(searchAudit.indexId, indexId));
+		await tx
+			.update(indexSettings)
+			.set({ traceIndexId: null })
+			.where(eq(indexSettings.traceIndexId, indexId));
+		await tx.update(apiKey).set({ traceIndexId: null }).where(eq(apiKey.traceIndexId, indexId));
 	});
 
 	invalidateApiKeyCache();
