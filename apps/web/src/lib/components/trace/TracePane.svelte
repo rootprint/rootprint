@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { RotateCw, TriangleAlert } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+	import { tick } from 'svelte';
 
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -36,6 +37,23 @@
 	function toggleSpan(spanId: string): void {
 		if (!collapsedSpanIds.delete(spanId)) collapsedSpanIds.add(spanId);
 	}
+
+	$effect.pre(() => {
+		if (!model || !selectedSpanId) return;
+
+		const spanId = selectedSpanId;
+		let node = model.byId.get(spanId);
+		while (node?.parentSpanId) {
+			collapsedSpanIds.delete(node.parentSpanId);
+			node = model.byId.get(node.parentSpanId);
+		}
+
+		void tick().then(() => {
+			if (selectedSpanId === spanId) {
+				document.getElementById(`span-btn-${spanId}`)?.scrollIntoView({ block: 'nearest' });
+			}
+		});
+	});
 
 	const axis = $derived(traceAxis(model?.durationMicros ?? 0));
 	const needle = $derived(filter.trim().toLowerCase());
