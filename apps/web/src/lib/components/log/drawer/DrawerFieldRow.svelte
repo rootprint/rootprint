@@ -4,11 +4,13 @@
 
 	let {
 		field,
+		keyClass = 'w-56 max-w-[14rem]',
 		onFilterFor,
 		onFilterOut,
 		onCopy
 	}: {
 		field: DrawerField;
+		keyClass?: string;
 		onFilterFor?: (field: DrawerField) => void;
 		onFilterOut?: (field: DrawerField) => void;
 		onCopy?: (field: DrawerField) => void;
@@ -19,7 +21,10 @@
 
 <tr class="group border-line border-b align-top">
 	<td
-		class="border-line text-base-content/70 w-56 max-w-[14rem] truncate border-r px-3 py-1.5 font-mono text-xs"
+		class={[
+			'border-line text-base-content/70 truncate border-r px-3 py-1.5 font-mono text-xs',
+			keyClass
+		]}
 		title={field.name}
 	>
 		{field.displayName}
@@ -33,42 +38,48 @@
 				<span
 					class="join absolute top-0.5 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
 				>
-					<button
-						type="button"
-						class="btn btn-xs btn-square join-item"
-						aria-label="Filter for value"
-						title="Filter for value"
-						onclick={(e) => {
-							onFilterFor?.(field);
-							e.currentTarget.blur();
-						}}
-					>
-						<Plus class="h-3 w-3" />
-					</button>
-					<button
-						type="button"
-						class="btn btn-xs btn-square join-item"
-						aria-label="Filter out value"
-						title="Filter out value"
-						onclick={(e) => {
-							onFilterOut?.(field);
-							e.currentTarget.blur();
-						}}
-					>
-						<Minus class="h-3 w-3" />
-					</button>
-					<button
-						type="button"
-						class="btn btn-xs btn-square join-item"
-						aria-label="Copy value"
-						title="Copy value"
-						onclick={(e) => {
-							onCopy?.(field);
-							e.currentTarget.blur();
-						}}
-					>
-						<Copy class="h-3 w-3" />
-					</button>
+					{#if onFilterFor}
+						<button
+							type="button"
+							class="btn btn-xs btn-square join-item"
+							aria-label="Filter for value"
+							title="Filter for value"
+							onclick={(e) => {
+								onFilterFor?.(field);
+								e.currentTarget.blur();
+							}}
+						>
+							<Plus class="h-3 w-3" />
+						</button>
+					{/if}
+					{#if onFilterOut}
+						<button
+							type="button"
+							class="btn btn-xs btn-square join-item"
+							aria-label="Filter out value"
+							title="Filter out value"
+							onclick={(e) => {
+								onFilterOut?.(field);
+								e.currentTarget.blur();
+							}}
+						>
+							<Minus class="h-3 w-3" />
+						</button>
+					{/if}
+					{#if onCopy}
+						<button
+							type="button"
+							class="btn btn-xs btn-square join-item"
+							aria-label="Copy value"
+							title="Copy value"
+							onclick={(e) => {
+								onCopy?.(field);
+								e.currentTarget.blur();
+							}}
+						>
+							<Copy class="h-3 w-3" />
+						</button>
+					{/if}
 				</span>
 			{/if}
 		{/if}

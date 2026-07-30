@@ -1,28 +1,18 @@
 import type { SpanNode, TraceModel } from '$lib/types';
-import type { TraceSpan } from 'api/types';
+import type { TraceResponse } from 'api/types';
 
 /** Spans of a few tens of microseconds are normal; without a floor their bar renders zero-width. */
 const MIN_WIDTH_PCT = 0.4;
 
-const EMPTY: TraceModel = {
-	roots: [],
-	spanCount: 0,
-	durationMicros: 0,
-	services: [],
-	errorCount: 0,
-	isPartial: false
-};
-
 /** Shapes a flat span list into the waterfall tree, with geometry precomputed against the trace. */
-export function buildTraceModel(spans: TraceSpan[]): TraceModel {
+export function buildTraceModel(trace: TraceResponse): TraceModel {
 	const byId = new Map<string, SpanNode>();
-	for (const s of spans) {
+	for (const s of trace.spans) {
 		byId.set(s.spanId, { ...s, depth: 0, offsetPct: 0, widthPct: 0, children: [] });
 	}
 
 	// Duplicate span ids collapse here, so spanCount is distinct ids rather than spans returned.
 	const nodes = [...byId.values()];
-	if (nodes.length === 0) return EMPTY;
 
 	const spansPerService = new Map<string, number>();
 	let durationMicros = 0;
@@ -71,5 +61,15 @@ export function buildTraceModel(spans: TraceSpan[]): TraceModel {
 	}
 	roots.sort((a, b) => a.startOffsetMicros - b.startOffsetMicros);
 
-	return { roots, spanCount: nodes.length, durationMicros, services, errorCount, isPartial };
+	return {
+		roots,
+		spanCount: nodes.length,
+		durationMicros,
+		services,
+		errorCount,
+		isPartial,
+		resources: trace.resources,
+		traceStartMicros: trace.traceStartMicros,
+		byId
+	};
 }

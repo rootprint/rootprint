@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { ArrowLeft, Check, Copy, Search } from 'lucide-svelte';
+	import { prefersReducedMotion } from 'svelte/motion';
+	import { slide } from 'svelte/transition';
 
+	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { serviceColor } from '$lib/utils/service-color';
@@ -14,6 +17,23 @@
 	const hasSpans = $derived(model.spanCount > 0);
 
 	let filter = $state('');
+
+	const rootSpanId = $derived(root?.spanId ?? null);
+	let selection = $state<{ traceId: string; spanId: string | null }>({ traceId: '', spanId: null });
+	const selectedSpanId = $derived(
+		selection.traceId === data.traceId ? selection.spanId : rootSpanId
+	);
+	const selectedSpan = $derived(selectedSpanId ? (model.byId.get(selectedSpanId) ?? null) : null);
+
+	const selectSpan = (spanId: string): void => {
+		selection = { traceId: data.traceId, spanId };
+	};
+
+	const closePanel = (): void => {
+		const closed = selectedSpanId;
+		selection = { traceId: data.traceId, spanId: null };
+		if (closed) document.getElementById(`span-btn-${closed}`)?.focus();
+	};
 </script>
 
 <div class="flex h-full min-h-0 w-full flex-col">
@@ -96,11 +116,26 @@
 		</div>
 	{/if}
 
-	<div class="min-h-0 flex-1">
-		<!-- Keyed on the trace: collapsed span ids are per-trace state and must not carry across
-		     /traces/A → /traces/B. -->
-		{#key data.traceId}
-			<TracePane {model} {filter} />
-		{/key}
+	<div class="flex min-h-0 flex-1">
+		<div class="min-w-0 flex-1">
+			{#key data.traceId}
+				<TracePane {model} {filter} {selectedSpanId} onSelectSpan={selectSpan} />
+			{/key}
+		</div>
+
+		{#if selectedSpan}
+			<aside
+				class="border-line w-[clamp(22rem,42vw,34rem)] shrink-0 overflow-hidden border-l"
+				aria-label="Span detail"
+				transition:slide={{ axis: 'x', duration: prefersReducedMotion.current ? 0 : 200 }}
+			>
+				<SpanDetailPane
+					span={selectedSpan}
+					resources={model.resources}
+					traceStartMicros={model.traceStartMicros}
+					onClose={closePanel}
+				/>
+			</aside>
+		{/if}
 	</div>
 </div>

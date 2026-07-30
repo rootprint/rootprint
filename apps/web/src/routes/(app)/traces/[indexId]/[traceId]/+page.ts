@@ -11,12 +11,12 @@ export const load: PageLoad = async ({ params, url }) => {
 	if (!isTraceId(params.traceId)) throw error(400, 'Not a valid trace id');
 
 	try {
-		const { spans } = await fetchTrace(params.indexId, params.traceId);
+		const trace = await fetchTrace(params.indexId, params.traceId);
 		return {
 			indexId: params.indexId,
 			traceId: params.traceId,
 			returnTo: safeReturnTo(url.searchParams.get('returnTo')),
-			model: buildTraceModel(spans)
+			model: buildTraceModel(trace)
 		};
 	} catch (e) {
 		if (e instanceof ApiError) throw error(e.status, e.message);

@@ -70,3 +70,7 @@ export function formatSpanDuration(micros: number): string {
 	if (Number(millis.toFixed(1)) < 1_000) return `${millis.toFixed(1)}ms`;
 	return `${(micros / 1_000_000).toFixed(2)}s`;
 }
+
+export function formatSpanStart(micros: number): string {
+	return format(new Date(micros / 1000), 'yyyy-MM-dd HH:mm:ss.SSS');
+}
