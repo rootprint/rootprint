@@ -138,14 +138,6 @@
 		database: dbCalls.length
 	});
 
-	const serviceCountBelow = $derived(new Set(subtree.map((s) => s.serviceName)).size);
-	const subtreeStats = $derived([
-		{ value: subtree.length, label: 'Spans' },
-		{ value: serviceCountBelow, label: 'Services' },
-		{ value: dbCalls.length, label: 'DB calls' },
-		{ value: errorsBelow.length, label: 'Errors', isError: true }
-	]);
-
 	const copyValue = (f: DrawerField): void => void copyWithToast(f.value, 'Value copied');
 </script>
 
@@ -338,29 +330,6 @@
 				</section>
 
 				{#if subtree.length > 0}
-					<section>
-						<h3 class="eyebrow mb-2">Subtree</h3>
-						<dl
-							class="border-line divide-line grid grid-cols-4 divide-x overflow-hidden rounded-md border"
-						>
-							{#each subtreeStats as stat (stat.label)}
-								<div class="flex min-w-0 flex-col px-2 py-2.5 text-center">
-									<dt class="text-base-content/50 order-2 mt-0.5 truncate text-[10px]">
-										{stat.label}
-									</dt>
-									<dd
-										class={[
-											'order-1 text-base leading-5 tabular-nums',
-											stat.isError && stat.value > 0 && 'text-error'
-										]}
-									>
-										{stat.value}
-									</dd>
-								</div>
-							{/each}
-						</dl>
-					</section>
-
 					<section>
 						<div class="mb-2 flex items-baseline justify-between gap-3">
 							<h3 class="eyebrow">Top operations</h3>
