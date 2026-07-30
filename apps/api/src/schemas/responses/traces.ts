@@ -2,6 +2,17 @@ import * as v from 'valibot';
 
 import { named } from '../../lib/openapi/describe.js';
 
+const TraceAttributesSchema = v.record(v.string(), v.string());
+
+export const SpanEventSchema = named(
+	'SpanEvent',
+	v.object({
+		name: v.string(),
+		timeOffsetMicros: v.number(),
+		fields: TraceAttributesSchema
+	})
+);
+
 export const TraceSpanSchema = named(
 	'TraceSpan',
 	v.object({
@@ -11,8 +22,18 @@ export const TraceSpanSchema = named(
 		serviceName: v.string(),
 		startOffsetMicros: v.number(),
 		durationMicros: v.number(),
-		isError: v.boolean()
+		isError: v.boolean(),
+		attributes: TraceAttributesSchema,
+		resourceId: v.nullable(v.string()),
+		events: v.array(SpanEventSchema)
 	})
 );
 
-export const TraceResponse = named('TraceResponse', v.object({ spans: v.array(TraceSpanSchema) }));
+export const TraceResponse = named(
+	'TraceResponse',
+	v.object({
+		spans: v.array(TraceSpanSchema),
+		traceStartMicros: v.number(),
+		resources: v.record(v.string(), TraceAttributesSchema)
+	})
+);

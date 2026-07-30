@@ -15,13 +15,17 @@
 		filter = '',
 		loading = false,
 		error = null,
-		onRetry
+		onRetry,
+		selectedSpanId = null,
+		onSelectSpan
 	}: {
 		model: TraceModel | null;
 		filter?: string;
 		loading?: boolean;
 		error?: string | null;
 		onRetry?: () => void;
+		selectedSpanId?: string | null;
+		onSelectSpan?: (spanId: string) => void;
 	} = $props();
 
 	const TREE_LEFT_PX = 18;
@@ -57,6 +61,18 @@
 	});
 </script>
 
+{#snippet spanLabel(node: SpanNode)}
+	<span class="shrink-0 font-medium whitespace-nowrap">{node.serviceName}</span>
+	<span class="text-base-content/50 min-w-0 truncate">{node.name}</span>
+	{#if node.isError}
+		<TriangleAlert
+			class="text-error h-3 w-3 shrink-0"
+			role="img"
+			aria-label="Span reported an error"
+		/>
+	{/if}
+{/snippet}
+
 {#snippet spanRow(
 	node: SpanNode,
 	ancestorRails: (string | null)[],
@@ -70,14 +86,23 @@
 	{@const parentX = TREE_LEFT_PX + parentDepth * TREE_INDENT_PX}
 	{@const color = serviceColor(node.serviceName)}
 	{@const dimmed = needle !== '' && !matches(node)}
+	{@const isSelected = node.spanId === selectedSpanId}
+	{@const labelClass = 'flex min-w-0 items-center gap-1.5 py-1.5 pr-3'}
+	{@const labelStyle = `padding-left:${nodeX + TREE_LABEL_GAP_PX}px`}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div
 		role="listitem"
 		aria-level={node.depth + 1}
+		aria-current={isSelected ? 'true' : undefined}
 		class={[
 			'border-line/40 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b',
-			'even:bg-base-200/50',
-			dimmed && 'opacity-35'
+			!isSelected && 'even:bg-base-200/50',
+			isSelected && 'bg-base-300',
+			dimmed && 'opacity-35',
+			onSelectSpan && 'cursor-pointer'
 		]}
+		onclick={() => onSelectSpan?.(node.spanId)}
 	>
 		<div class="relative flex min-w-0 items-stretch text-xs">
 			{#each ancestorRails as railColor, i (i)}
@@ -113,7 +138,10 @@
 							? `background-color:${color};color:color-mix(in oklab, ${color} 22%, black)`
 							: `background-color:var(--color-base-100);color:${color}`
 					}`}
-					onclick={() => toggleSpan(node.spanId)}
+					onclick={(e) => {
+						e.stopPropagation();
+						toggleSpan(node.spanId);
+					}}
 					aria-expanded={!isCollapsed}
 					aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${node.name}`}
 				>
@@ -125,20 +153,20 @@
 					style={`left:${nodeX}px;background-color:${node.isError ? 'var(--color-error)' : color}`}
 				></span>
 			{/if}
-			<span
-				class="flex min-w-0 items-center gap-1.5 py-1.5 pr-3"
-				style={`padding-left:${nodeX + TREE_LABEL_GAP_PX}px`}
-			>
-				<span class="shrink-0 font-medium whitespace-nowrap">{node.serviceName}</span>
-				<span class="text-base-content/50 min-w-0 truncate">{node.name}</span>
-				{#if node.isError}
-					<TriangleAlert
-						class="text-error h-3 w-3 shrink-0"
-						role="img"
-						aria-label="Span reported an error"
-					/>
-				{/if}
-			</span>
+			{#if onSelectSpan}
+				<button
+					type="button"
+					id={`span-btn-${node.spanId}`}
+					class={[labelClass, 'text-left']}
+					style={labelStyle}
+				>
+					{@render spanLabel(node)}
+				</button>
+			{:else}
+				<span class={labelClass} style={labelStyle}>
+					{@render spanLabel(node)}
+				</span>
+			{/if}
 		</div>
 		<div class="py-1.5 pr-14" style={axis.gridStyle}>
 			<div class="relative h-4">

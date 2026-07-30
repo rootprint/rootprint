@@ -28,8 +28,8 @@ export class TraceResource {
 		this.loading = true;
 		this.error = null;
 		try {
-			const { spans } = await fetchTrace(this.indexId, this.traceId, { signal: abort.signal });
-			this.model = buildTraceModel(spans);
+			const trace = await fetchTrace(this.indexId, this.traceId, { signal: abort.signal });
+			this.model = buildTraceModel(trace);
 		} catch (e) {
 			if (isAbortError(e)) return;
 			this.error = e instanceof Error ? e.message : 'Failed to load trace';

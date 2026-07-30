@@ -146,4 +146,7 @@ export interface TraceModel {
 	services: { name: string; count: number }[];
 	errorCount: number;
 	isPartial: boolean;
+	resources: Record<string, Record<string, string>>;
+	traceStartMicros: number;
+	byId: ReadonlyMap<string, SpanNode>;
 }

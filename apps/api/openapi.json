@@ -2275,6 +2275,31 @@
 				],
 				"type": "object"
 			},
+			"SpanEvent": {
+				"properties": {
+					"fields": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					},
+					"name": {
+						"type": "string"
+					},
+					"timeOffsetMicros": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"name",
+					"timeOffsetMicros",
+					"fields"
+				],
+				"type": "object"
+			},
 			"SummaryRowResponse": {
 				"properties": {
 					"errorCount": {
@@ -2374,22 +2399,57 @@
 			},
 			"TraceResponse": {
 				"properties": {
+					"resources": {
+						"additionalProperties": {
+							"additionalProperties": {
+								"type": "string"
+							},
+							"propertyNames": {
+								"type": "string"
+							},
+							"type": "object"
+						},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					},
 					"spans": {
 						"items": {
 							"$ref": "#/components/schemas/TraceSpan"
 						},
 						"type": "array"
+					},
+					"traceStartMicros": {
+						"type": "number"
 					}
 				},
 				"required": [
-					"spans"
+					"spans",
+					"traceStartMicros",
+					"resources"
 				],
 				"type": "object"
 			},
 			"TraceSpan": {
 				"properties": {
+					"attributes": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"propertyNames": {
+							"type": "string"
+						},
+						"type": "object"
+					},
 					"durationMicros": {
 						"type": "number"
+					},
+					"events": {
+						"items": {
+							"$ref": "#/components/schemas/SpanEvent"
+						},
+						"type": "array"
 					},
 					"isError": {
 						"type": "boolean"
@@ -2398,6 +2458,16 @@
 						"type": "string"
 					},
 					"parentSpanId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"resourceId": {
 						"anyOf": [
 							{
 								"type": "string"
@@ -2424,7 +2494,10 @@
 					"serviceName",
 					"startOffsetMicros",
 					"durationMicros",
-					"isError"
+					"isError",
+					"attributes",
+					"resourceId",
+					"events"
 				],
 				"type": "object"
 			},

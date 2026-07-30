@@ -17,6 +17,7 @@ import type {
 	SourceDetailSchema as SourceDetailResponseSchema
 } from './schemas/responses/indexes.js';
 import type {
+	SpanEventSchema,
 	TraceResponse as TraceResponseSchema,
 	TraceSpanSchema
 } from './schemas/responses/traces.js';
@@ -304,5 +305,7 @@ export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponseSchema>;
 export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;
 
 export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
+
+export type SpanEvent = v.InferOutput<typeof SpanEventSchema>;
 
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
