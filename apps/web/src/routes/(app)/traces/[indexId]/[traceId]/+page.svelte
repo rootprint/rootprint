@@ -133,6 +133,7 @@
 					span={selectedSpan}
 					resources={model.resources}
 					traceStartMicros={model.traceStartMicros}
+					onSelectSpan={selectSpan}
 					onClose={closePanel}
 				/>
 			</aside>
