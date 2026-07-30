@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { ArrowLeft, Check, Copy, Search } from 'lucide-svelte';
+	import { ArrowLeft, Check, Copy, ScrollText, Search } from 'lucide-svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { slide } from 'svelte/transition';
 
@@ -8,7 +8,9 @@
 	import TracePane from '$lib/components/trace/TracePane.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { serviceColor } from '$lib/utils/service-color';
+	import { traceLogsHref } from '$lib/utils/trace-logs';
 	import { formatSpanDuration } from '$lib/utils/time';
+	import type { SpanNode } from '$lib/types';
 
 	let { data } = $props();
 
@@ -27,6 +29,31 @@
 
 	const selectSpan = (spanId: string): void => {
 		selection = { traceId: data.traceId, spanId };
+	};
+
+	const logsTarget = $derived({
+		indexId: data.indexId,
+		traceIdField: data.traceIdField,
+		traceId: data.traceId,
+		traceStartMicros: model.traceStartMicros
+	});
+
+	const traceLogsUrl = $derived(
+		traceLogsHref({ ...logsTarget, startOffsetMicros: 0, durationMicros: model.durationMicros })
+	);
+
+	const spanLogs = (span: SpanNode): { href: string; count: number } | null => {
+		const count = data.spanLogCounts.counts?.get(span.spanId) ?? 0;
+		if (count === 0) return null;
+		return {
+			href: traceLogsHref({
+				...logsTarget,
+				startOffsetMicros: span.startOffsetMicros,
+				durationMicros: span.durationMicros,
+				spanId: span.spanId
+			}),
+			count
+		};
 	};
 
 	const closePanel = (): void => {
@@ -77,20 +104,28 @@
 				</div>
 			{/if}
 		</div>
-		<CopyButton
-			text={data.traceId}
-			class="text-base-content/50 hover:text-base-content flex shrink-0 items-center gap-1 font-mono text-xs"
-			ariaLabel="Copy trace ID"
-		>
-			{#snippet children({ copied }: { copied: boolean })}
-				{data.traceId}
-				{#if copied}
-					<Check class="h-3 w-3 shrink-0" />
-				{:else}
-					<Copy class="h-3 w-3 shrink-0" />
-				{/if}
-			{/snippet}
-		</CopyButton>
+		<div class="flex shrink-0 items-center gap-3">
+			{#if hasSpans}
+				<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
+					<ScrollText class="h-3.5 w-3.5" />
+					Logs for this trace
+				</a>
+			{/if}
+			<CopyButton
+				text={data.traceId}
+				class="text-base-content/50 hover:text-base-content flex items-center gap-1 font-mono text-xs"
+				ariaLabel="Copy trace ID"
+			>
+				{#snippet children({ copied }: { copied: boolean })}
+					{data.traceId}
+					{#if copied}
+						<Check class="h-3 w-3 shrink-0" />
+					{:else}
+						<Copy class="h-3 w-3 shrink-0" />
+					{/if}
+				{/snippet}
+			</CopyButton>
+		</div>
 	</div>
 
 	{#if model.isPartial}
@@ -119,7 +154,7 @@
 	<div class="flex min-h-0 flex-1">
 		<div class="min-w-0 flex-1">
 			{#key data.traceId}
-				<TracePane {model} {filter} {selectedSpanId} onSelectSpan={selectSpan} />
+				<TracePane {model} {filter} {selectedSpanId} onSelectSpan={selectSpan} {spanLogs} />
 			{/key}
 		</div>
 
@@ -135,6 +170,7 @@
 					traceStartMicros={model.traceStartMicros}
 					onSelectSpan={selectSpan}
 					onClose={closePanel}
+					logsHref={spanLogs(selectedSpan)?.href ?? null}
 				/>
 			</aside>
 		{/if}

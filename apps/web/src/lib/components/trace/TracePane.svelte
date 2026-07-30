@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RotateCw, TriangleAlert } from 'lucide-svelte';
+	import { RotateCw, ScrollText, TriangleAlert } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { tick } from 'svelte';
 
@@ -18,7 +18,8 @@
 		error = null,
 		onRetry,
 		selectedSpanId = null,
-		onSelectSpan
+		onSelectSpan,
+		spanLogs
 	}: {
 		model: TraceModel | null;
 		filter?: string;
@@ -27,6 +28,7 @@
 		onRetry?: () => void;
 		selectedSpanId?: string | null;
 		onSelectSpan?: (spanId: string) => void;
+		spanLogs?: (span: SpanNode) => { href: string; count: number } | null;
 	} = $props();
 
 	const TREE_LEFT_PX = 18;
@@ -98,6 +100,7 @@
 	parentColor: string | null
 )}
 	{@const isCollapsed = collapsedSpanIds.has(node.spanId) && !forcedOpen?.has(node.spanId)}
+	{@const logs = spanLogs?.(node) ?? null}
 	{@const hasVisibleChildren = node.children.length > 0 && !isCollapsed}
 	{@const parentDepth = Math.max(node.depth - 1, 0)}
 	{@const nodeX = TREE_LEFT_PX + node.depth * TREE_INDENT_PX}
@@ -184,6 +187,19 @@
 				<span class={labelClass} style={labelStyle}>
 					{@render spanLabel(node)}
 				</span>
+			{/if}
+			{#if logs}
+				<a
+					href={logs.href}
+					target="_blank"
+					rel="noopener"
+					class="text-base-content/50 hover:text-base-content flex shrink-0 items-center gap-1 self-center pr-2"
+					aria-label={`View ${logs.count} ${logs.count === 1 ? 'log' : 'logs'} for ${node.name}`}
+					onclick={(e) => e.stopPropagation()}
+				>
+					<ScrollText class="h-3.5 w-3.5" />
+					<span class="font-mono text-[10px] tabular-nums">{logs.count}</span>
+				</a>
 			{/if}
 		</div>
 		<div class="py-1.5 pr-14" style={axis.gridStyle}>

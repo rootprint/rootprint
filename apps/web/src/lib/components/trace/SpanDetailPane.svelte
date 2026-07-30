@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X } from 'lucide-svelte';
+	import { ScrollText, X } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import DrawerFieldRow from '$lib/components/log/drawer/DrawerFieldRow.svelte';
@@ -28,13 +28,15 @@
 		resources,
 		traceStartMicros,
 		onSelectSpan,
-		onClose
+		onClose,
+		logsHref
 	}: {
 		span: SpanNode;
 		resources: Record<string, Record<string, string>>;
 		traceStartMicros: number;
 		onSelectSpan: (spanId: string) => void;
 		onClose: () => void;
+		logsHref: string | null;
 	} = $props();
 
 	const TABS: { id: SpanTab; label: string }[] = [
@@ -197,14 +199,22 @@
 			</div>
 			<h2 class="mt-1 truncate font-mono text-base leading-5" title={span.name}>{span.name}</h2>
 		</div>
-		<button
-			type="button"
-			class="btn btn-ghost btn-xs btn-square shrink-0"
-			aria-label="Close span detail"
-			onclick={onClose}
-		>
-			<X class="h-3.5 w-3.5" />
-		</button>
+		<div class="flex shrink-0 items-center gap-1.5">
+			{#if logsHref}
+				<a href={logsHref} target="_blank" rel="noopener" class="btn btn-primary btn-xs gap-1.5">
+					<ScrollText class="h-3.5 w-3.5" />
+					Logs for this span
+				</a>
+			{/if}
+			<button
+				type="button"
+				class="btn btn-ghost btn-xs btn-square"
+				aria-label="Close span detail"
+				onclick={onClose}
+			>
+				<X class="h-3.5 w-3.5" />
+			</button>
+		</div>
 	</div>
 
 	<div
