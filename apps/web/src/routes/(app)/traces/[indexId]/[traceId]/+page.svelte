@@ -64,69 +64,81 @@
 </script>
 
 <div class="flex h-full min-h-0 w-full flex-col">
-	<div class="border-line flex items-start justify-between gap-4 border-b px-4 py-3">
-		<div class="min-w-0">
+	<header class="border-line border-b px-4 py-3">
+		<div class="flex flex-wrap items-center justify-between gap-2">
 			<a href={data.returnTo} class="btn btn-ghost btn-xs -ml-2 gap-1.5">
 				<ArrowLeft class="h-3.5 w-3.5" />
 				Back to logs
 			</a>
-			<div class="mt-1 flex min-w-0 items-baseline gap-3">
-				<h1 class="truncate font-mono text-lg font-medium">
-					{root ? root.name : 'Trace'}
-				</h1>
-				{#if hasSpans}
-					<p class="text-base-content/70 shrink-0 font-mono text-lg tabular-nums">
-						{formatSpanDuration(model.durationMicros)}
-					</p>
-				{/if}
-			</div>
-			{#if hasSpans}
-				<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-					{#each model.services as service (service.name)}
-						<span class="flex min-w-0 items-center gap-1.5">
-							<span
-								class="h-2 w-2 shrink-0 rounded-full"
-								style={`background-color:${serviceColor(service.name)}`}
-							></span>
-							<span class="truncate">{service.name}</span>
-							<span class="text-base-content/50 tabular-nums">{service.count}</span>
-						</span>
-					{/each}
-					<span class="text-base-content/30">·</span>
-					<span class="text-base-content/60 tabular-nums">
-						{model.spanCount} span{model.spanCount === 1 ? '' : 's'}
-					</span>
-					{#if model.errorCount > 0}
-						<span class="text-error tabular-nums">
-							{model.errorCount} error{model.errorCount === 1 ? '' : 's'}
-						</span>
-					{/if}
-				</div>
-			{/if}
-		</div>
-		<div class="flex shrink-0 items-center gap-3">
 			{#if hasSpans}
 				<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
 					<ScrollText class="h-3.5 w-3.5" />
 					Logs for this trace
 				</a>
 			{/if}
-			<CopyButton
-				text={data.traceId}
-				class="text-base-content/50 hover:text-base-content flex items-center gap-1 font-mono text-xs"
-				ariaLabel="Copy trace ID"
-			>
-				{#snippet children({ copied }: { copied: boolean })}
-					{data.traceId}
-					{#if copied}
-						<Check class="h-3 w-3 shrink-0" />
-					{:else}
-						<Copy class="h-3 w-3 shrink-0" />
-					{/if}
-				{/snippet}
-			</CopyButton>
 		</div>
-	</div>
+
+		<div class="mt-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+			<div class="min-w-0">
+				<p class="eyebrow">Operation</p>
+				<div class="mt-0.5 flex min-w-0 items-baseline gap-3">
+					<h1 class="truncate font-mono text-lg font-medium">
+						{root ? root.name : 'Trace'}
+					</h1>
+					{#if hasSpans}
+						<p class="text-base-content/60 shrink-0 font-mono text-lg tabular-nums">
+							{formatSpanDuration(model.durationMicros)}
+						</p>
+					{/if}
+				</div>
+			</div>
+
+			<div class="min-w-0 sm:max-w-[min(48vw,36rem)] sm:text-right">
+				<p class="eyebrow">Trace ID</p>
+				<CopyButton
+					text={data.traceId}
+					class="text-base-content/50 hover:text-base-content mt-0.5 flex w-full min-w-0 items-center gap-1.5 sm:justify-end"
+					ariaLabel="Copy trace ID"
+				>
+					{#snippet children({ copied }: { copied: boolean })}
+						<span class="truncate font-mono text-xs">{data.traceId}</span>
+						{#if copied}
+							<Check class="h-3 w-3 shrink-0" />
+						{:else}
+							<Copy class="h-3 w-3 shrink-0" />
+						{/if}
+					{/snippet}
+				</CopyButton>
+			</div>
+		</div>
+
+		{#if hasSpans}
+			<div
+				class="border-line mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-xs"
+			>
+				<span class="eyebrow mr-1">Services</span>
+				{#each model.services as service (service.name)}
+					<span class="flex min-w-0 items-center gap-1.5">
+						<span
+							class="h-2 w-2 shrink-0 rounded-full"
+							style={`background-color:${serviceColor(service.name)}`}
+						></span>
+						<span class="truncate">{service.name}</span>
+						<span class="text-base-content/50 tabular-nums">{service.count}</span>
+					</span>
+				{/each}
+				<span class="bg-line hidden h-3 w-px sm:block"></span>
+				<span class="text-base-content/60 font-mono tabular-nums">
+					{model.spanCount} span{model.spanCount === 1 ? '' : 's'}
+				</span>
+				{#if model.errorCount > 0}
+					<span class="text-error font-mono tabular-nums">
+						{model.errorCount} error{model.errorCount === 1 ? '' : 's'}
+					</span>
+				{/if}
+			</div>
+		{/if}
+	</header>
 
 	{#if model.isPartial}
 		<div class="border-line flex items-center gap-2 border-b px-4 py-1.5 text-xs">
