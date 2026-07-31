@@ -1,0 +1,20 @@
+meta {
+  name: Trace Histogram
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/traces/histogram?startTs=1700000000&endTs=1700000900
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1700000000
+  endTs: 1700000900
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

@@ -204,6 +204,18 @@
 	--trace-service-6: #eab308;
 	--trace-service-7: #f97316;
 	--trace-service-8: #ec4899;
+
+	/* Sequential ramp for the trace duration heatmap. Density is read off lightness, so it must stay
+	   monotonic; the primary at varying alpha cannot. Empty cells go unpainted, so the palest step also
+	   means "has traces" and starts at blue-300 (blue-100 was ~1.1:1 on white).
+	   ponytail: still under WCAG 3:1 — no light→dark ramp on white clears it; tint the plot background. */
+	--trace-heat-1: #93c5fd;
+	--trace-heat-2: #60a5fa;
+	--trace-heat-3: #3b82f6;
+	--trace-heat-4: #2563eb;
+	--trace-heat-5: #1d4ed8;
+	--trace-heat-6: #1e40af;
+	--trace-heat-7: #172554;
 }
 
 ::highlight(rootprint-drawer-search) {

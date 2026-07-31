@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { browser } from '$app/environment';
-	import { PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-svelte';
+	import { ChartNoAxesGantt, PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-svelte';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
@@ -21,7 +21,8 @@
 
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
-	const onSearch = $derived(!onSettings);
+	const onTraces = $derived(path.startsWith('/traces'));
+	const onSearch = $derived(path === '/' || path.startsWith('/s/'));
 </script>
 
 <aside
@@ -40,6 +41,13 @@
 
 	<nav aria-label="Primary" class="flex flex-1 flex-col gap-0.5 px-2 py-3">
 		<SidebarNavItem href="/" label="Search" icon={Search} active={onSearch} {collapsed} />
+		<SidebarNavItem
+			href="/traces"
+			label="Traces"
+			icon={ChartNoAxesGantt}
+			active={onTraces}
+			{collapsed}
+		/>
 	</nav>
 
 	<div class="border-line border-t px-2 py-3">

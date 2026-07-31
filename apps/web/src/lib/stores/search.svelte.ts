@@ -312,12 +312,12 @@ export class SearchStore {
 		$effect(() => {
 			const urlIndex = this.#parsedQuery().index;
 			if (urlIndex === null) {
-				const remembered = readLastIndex();
+				const remembered = readLastIndex('logs');
 				if (remembered && this.indexes.some((i) => i.id === remembered)) {
 					this.navigateQuery({ index: remembered });
 					return;
 				}
-				if (remembered) clearLastIndex();
+				if (remembered) clearLastIndex('logs');
 			}
 
 			const active = this.selectedIndex;
@@ -342,7 +342,7 @@ export class SearchStore {
 			this.#runSearch('fresh', timeWindow);
 			this.#fetchHistogram(timeWindow);
 
-			writeLastIndex(active);
+			writeLastIndex('logs', active);
 		});
 
 		// Separate effect: fields depend on fieldConfig + selectedIndex, not on query/time.
