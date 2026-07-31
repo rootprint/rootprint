@@ -3,7 +3,8 @@ import { composeQuery } from 'api/query';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
-import { buildTimeParams } from '$lib/utils/time-range';
+import type { TimeRange, TraceHistogramResponse } from '$lib/types';
+import { buildTimeParams, resolveWindow } from '$lib/utils/time-range';
 import {
 	SPAN_ID_FIELD,
 	traceLogsFilters,
@@ -62,4 +63,22 @@ export async function fetchSpanLogCounts(
 		counts.set(spanId, (counts.get(spanId) ?? 0) + 1);
 	}
 	return counts;
+}
+
+export async function fetchTraceHistogram(
+	input: { indexId: string; timeRange: TimeRange },
+	signal?: AbortSignal
+): Promise<TraceHistogramResponse> {
+	const { startTs, endTs } = resolveWindow(input.timeRange);
+	const res = await client.api.indexes[':indexId'].traces.histogram.$get(
+		{
+			param: { indexId: input.indexId },
+			query: { startTs: String(startTs), endTs: String(endTs) }
+		},
+		{ init: { signal } }
+	);
+
+	if (!res.ok) throw await readApiError(res, 'Failed to load trace histogram');
+
+	return res.json();
 }

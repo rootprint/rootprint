@@ -73,13 +73,19 @@ export function resolveTimeRange(
 ): { startTs?: number; endTs?: number } {
 	if (input.timeRange !== undefined) {
 		if (!isPreset(input.timeRange)) return {};
-		const endTs = getUnixTime(new Date());
-		return { startTs: endTs - presetDurationSec(input.timeRange), endTs };
+		return resolveWindow({ type: 'relative', preset: input.timeRange });
 	}
 	if (input.startTimestamp !== undefined && input.endTimestamp !== undefined) {
 		return { startTs: input.startTimestamp, endTs: input.endTimestamp };
 	}
 	return {};
+}
+
+/** Unlike `resolveTimeRange`, always resolves to a concrete window — both fields are non-optional. */
+export function resolveWindow(range: TimeRange): { startTs: number; endTs: number } {
+	if (range.type === 'absolute') return { startTs: range.start, endTs: range.end };
+	const endTs = getUnixTime(new Date());
+	return { startTs: endTs - presetDurationSec(range.preset), endTs };
 }
 
 export function formatTimeRangeLabel(r: TimeRange): string {

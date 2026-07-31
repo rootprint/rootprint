@@ -115,12 +115,13 @@ Sibling top-level dirs:
 
 ## Traces
 
-- Spans live in their own Quickwit index, marked as one by `index_settings.is_trace_index`, and paired to a log index by `index_settings.trace_index_id`. Pairing is per index and opt-in (`defaultSettings()` marks Quickwit's canonical `otel-traces-v0_9` and pairs `otel-logs-v0_9` to it).
+- Spans live in their own Quickwit index, marked as one by `index_settings.is_trace_index`, and paired to a log index by `index_settings.trace_index_id`. Pairing is per index and opt-in, and only ever lives in a real `index_settings` row — migration `0019` seeds the two canonical otel rows. Never synthesize a pairing in code: one that has no row cannot be cleared by `saveIndexConfig` or `deleteIndex`.
 - `GET /api/indexes/:indexId/traces/:traceId` (`routes/traces.ts`) resolves the trace index from the **log** index's pairing via `withIndexMeta` (no argument). Trace ids are not authorization.
+- `GET /api/indexes/:indexId/traces/histogram` is the duration heatmap: `is_root:true` root spans, a date histogram whose interval comes off a ladder that targets ~100 columns, with a `span_duration_millis` range sub-aggregation over ×4 duration bands. The window is snapped outward to interval boundaries, so the response can span one column more than the requested range. It names `is_root`, `span_start_timestamp_nanos` and `span_duration_millis` directly, so a paired index that is not `otel-traces`-shaped surfaces a Quickwit validation error.
 - There is no per-index read gate: any authenticated user (or a personal key with `logs:read`) may read any log index. A trace index is not readable as a log index — `getIndexConfig` 404s on one, so the log-explorer, histogram, field-values, and export routes all reject it.
 - Ingest keys never store a span destination. `verifyApiKey` resolves it by joining `index_settings` on the key's `index_id`, so re-pairing an index reaches keys that already exist; `saveIndexConfig` evicts the key cache when the pairing changes.
 - `POST /v1/traces` writes to that resolved destination (`routes/ingest/otlp.ts`). A key whose log index is unpaired gets a 400 rather than writing somewhere unreadable.
-- Deleting a trace index unpairs every log index that pointed at it (`deleteIndex`), so trace tabs disappear cleanly instead of erroring. Known gap: the UPDATE only reaches real `index_settings` rows, so an index still on the `defaultSettings()` pairing keeps a Trace tab that errors.
+- Deleting a trace index unpairs every log index that pointed at it (`deleteIndex`), so trace tabs disappear cleanly instead of erroring. Marking an index as a trace index clears its own `traceIndexId`; un-marking one nulls every pairing that pointed at it. The `CHECK (NOT is_trace_index OR trace_index_id IS NULL)` constraint holds the invariant structurally.
 - Schemas live in `schemas/traces.ts` and `schemas/responses/traces.ts`; span shaping is in `trace.service.ts`.
 
 ## Environment Variables

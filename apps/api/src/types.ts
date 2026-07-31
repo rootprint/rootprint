@@ -18,6 +18,7 @@ import type {
 } from './schemas/responses/indexes.js';
 import type {
 	SpanEventSchema,
+	TraceHistogramResponse as TraceHistogramResponseSchema,
 	TraceResponse as TraceResponseSchema,
 	TraceSpanSchema
 } from './schemas/responses/traces.js';
@@ -309,3 +310,5 @@ export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
 export type SpanEvent = v.InferOutput<typeof SpanEventSchema>;
 
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
+
+export type TraceHistogramResponse = v.InferOutput<typeof TraceHistogramResponseSchema>;

@@ -2397,6 +2397,95 @@
 				],
 				"type": "object"
 			},
+			"TraceDurationBand": {
+				"properties": {
+					"fromMs": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Inclusive lower edge in milliseconds; null on the open-ended bottom band."
+					},
+					"key": {
+						"description": "Stable identifier for the band, e.g. \"64-256\".",
+						"type": "string"
+					},
+					"toMs": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Exclusive upper edge in milliseconds; null on the open-ended top band."
+					}
+				},
+				"required": [
+					"key",
+					"fromMs",
+					"toMs"
+				],
+				"type": "object"
+			},
+			"TraceHistogramColumn": {
+				"properties": {
+					"counts": {
+						"description": "Traces per duration band. Aligned positionally with bands: counts[i] belongs to bands[i].",
+						"items": {
+							"type": "number"
+						},
+						"type": "array"
+					},
+					"docCount": {
+						"description": "Traces in this column, across all bands.",
+						"type": "number"
+					},
+					"timestamp": {
+						"description": "Unix timestamp in seconds at the start of the column; it spans intervalSec.",
+						"type": "number"
+					}
+				},
+				"required": [
+					"timestamp",
+					"docCount",
+					"counts"
+				],
+				"type": "object"
+			},
+			"TraceHistogramResponse": {
+				"properties": {
+					"bands": {
+						"description": "Duration bands, ascending, from the open-ended bottom band up.",
+						"items": {
+							"$ref": "#/components/schemas/TraceDurationBand"
+						},
+						"type": "array"
+					},
+					"columns": {
+						"description": "One entry per interval across the window, ascending and gap-free; empty intervals are present with zero counts.",
+						"items": {
+							"$ref": "#/components/schemas/TraceHistogramColumn"
+						},
+						"type": "array"
+					},
+					"intervalSec": {
+						"description": "Column width in seconds, chosen by the server from the requested window; the client does not set it.",
+						"type": "number"
+					}
+				},
+				"required": [
+					"intervalSec",
+					"bands",
+					"columns"
+				],
+				"type": "object"
+			},
 			"TraceResponse": {
 				"properties": {
 					"resources": {
@@ -16085,6 +16174,86 @@
 				"summary": "Get index stats history",
 				"tags": [
 					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/traces/histogram": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdTracesHistogram",
+				"parameters": [
+					{
+						"description": "Window start as a Unix timestamp in seconds, inclusive.",
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Window end as a Unix timestamp in seconds, exclusive.",
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceHistogramResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "Get trace duration heatmap",
+				"tags": [
+					"Traces"
 				]
 			}
 		},

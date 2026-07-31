@@ -4,7 +4,7 @@
 
 Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static`, a fully prerendered SPA with no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
 
-For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see the root `CLAUDE.md`.
+For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see [Svelte 5 Patterns](#svelte-5-patterns) below.
 
 ## Stack
 
@@ -62,7 +62,7 @@ Do not add `try/catch` to a loader unless it implements one of the two non-defau
 
 - Use runes: `$props`, `$state`, `$derived`, `$effect`, `$bindable`.
 - `<script lang="ts">` everywhere.
-- For deeper Svelte 5 / SvelteKit guidance, the Svelte MCP server is documented in the root `CLAUDE.md`.
+- For deeper Svelte 5 / SvelteKit guidance, use the Svelte MCP server: call `list-sections` first, then `get-documentation` for every section whose `use_cases` match the task.
 
 ## Design System
 

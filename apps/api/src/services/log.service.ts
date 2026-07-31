@@ -1,9 +1,10 @@
-import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 'quickwit-js';
+import type { BucketAggregationResult, QuickwitClient } from 'quickwit-js';
 import { AggregationBuilder } from 'quickwit-js';
 
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
 import { composeQuery } from '../lib/query/compose-query.js';
+import { asBuckets } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import type {
 	FieldValueEntry,
@@ -21,12 +22,6 @@ function termsAgg(field: string, size: number) {
 
 function isTruncated(agg: BucketAggregationResult | undefined): boolean {
 	return (agg?.sum_other_doc_count ?? 0) > 0;
-}
-
-function asBuckets(agg: BucketAggregationResult | undefined): AggregationBucket[] {
-	const buckets = agg?.buckets;
-	if (buckets === undefined) return [];
-	return Array.isArray(buckets) ? buckets : Object.values(buckets);
 }
 
 /** Maps terms-aggregation buckets to field-value entries, dropping empty-string keys. */
