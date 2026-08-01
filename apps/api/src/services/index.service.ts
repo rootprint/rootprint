@@ -30,7 +30,8 @@ import {
 	userPreference,
 	view as viewTable
 } from '../db/schema.js';
-import { badRequest, conflict, internal, notFound } from '../utils/http-error.js';
+import { config } from '../config.js';
+import { conflict, internal, notFound } from '../utils/http-error.js';
 import { translateQuickwitError, withNotFound } from '../utils/quickwit-error.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import {
@@ -49,12 +50,10 @@ import {
 
 const DEFAULT_SETTINGS: IndexSettings = {
 	displayName: null,
-	isTraceIndex: false,
 	levelField: 'severity_text',
 	messageField: 'body.message',
 	tracebackField: 'attributes.exception.stacktrace',
 	contextFields: null,
-	traceIndexId: null,
 	traceIdField: 'trace_id'
 };
 
@@ -63,12 +62,10 @@ const DEFAULT_CONTEXT_FIELDS = ['service_name'];
 function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings {
 	return {
 		displayName: row.displayName,
-		isTraceIndex: row.isTraceIndex,
 		levelField: row.levelField,
 		messageField: row.messageField,
 		tracebackField: row.tracebackField,
 		contextFields: row.contextFields,
-		traceIndexId: row.traceIndexId,
 		traceIdField: row.traceIdField
 	};
 }
@@ -91,56 +88,22 @@ export async function saveIndexConfig(
 	fields: SaveIndexConfigInput
 ): Promise<void> {
 	const existing = await getIndexSettings(db, indexId);
-	const isTraceIndex = fields.isTraceIndex ?? existing.isTraceIndex;
-	// A span store holds no spans of its own, so marking one drops its pairing.
-	const traceIndexId = isTraceIndex
-		? null
-		: fields.traceIndexId !== undefined
-			? fields.traceIndexId
-			: existing.traceIndexId;
-
-	if (traceIndexId !== null) {
-		const target = await getIndexSettings(db, traceIndexId);
-		if (!target.isTraceIndex) {
-			throw badRequest(
-				'The paired index is not marked as a trace index.',
-				'TRACE_PAIRING_NOT_TRACE_INDEX',
-				[{ path: 'traceIndexId', message: 'Pick an index marked as a trace index.' }]
-			);
-		}
-	}
-
 	const updatedAt = new Date();
-	await db.transaction(async (tx) => {
-		await tx
-			.insert(indexSettings)
-			.values({ indexId, ...existing, ...fields, isTraceIndex, traceIndexId, updatedAt })
-			.onConflictDoUpdate({
-				target: indexSettings.indexId,
-				set: { ...fields, isTraceIndex, traceIndexId, updatedAt }
-			});
-
-		// Un-marking dangles every pairing that points here, and ingest keys resolve their span
-		// destination from that pairing — so clear them, the way deleteIndex already does.
-		if (existing.isTraceIndex && !isTraceIndex) {
-			await tx
-				.update(indexSettings)
-				.set({ traceIndexId: null })
-				.where(eq(indexSettings.traceIndexId, indexId));
-		}
-	});
-
-	if (traceIndexId !== existing.traceIndexId || isTraceIndex !== existing.isTraceIndex) {
-		invalidateApiKeyCache();
-	}
+	await db
+		.insert(indexSettings)
+		.values({ indexId, ...existing, ...fields, updatedAt })
+		.onConflictDoUpdate({
+			target: indexSettings.indexId,
+			set: { ...fields, updatedAt }
+		});
 }
 
 function toIndexSummary(indexId: string, settings: IndexSettings): IndexSummary {
 	return {
 		indexId,
 		displayName: settings.displayName,
-		isTraceIndex: settings.isTraceIndex,
-		traceIndexId: settings.traceIndexId
+		// Derived, not stored: the span store is whichever index `config.traceIndexId` names.
+		isTraceIndex: indexId === config.traceIndexId
 	};
 }
 
@@ -192,7 +155,7 @@ export async function getIndexConfig(
 ): Promise<IndexConfig> {
 	const meta = await getIndexMeta(db, qw, indexId);
 	// A span schema has no level or message field, so the explorer would render an empty grid.
-	if (meta.settings.isTraceIndex) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+	if (indexId === config.traceIndexId) throw notFound('Index not found', 'INDEX_NOT_FOUND');
 	return { indexId, ...resolveLogFields(meta) };
 }
 
@@ -202,8 +165,7 @@ export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
 		displayName: meta.settings.displayName,
 		...resolveLogFields(meta),
 		isOtel: meta.index.indexId.startsWith('otel-'),
-		traceIdField: meta.settings.traceIdField,
-		hasTraces: meta.settings.traceIndexId !== null
+		traceIdField: meta.settings.traceIdField
 	};
 }
 
@@ -212,12 +174,11 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 	return {
 		indexId: index.indexId,
 		displayName: settings.displayName,
-		isTraceIndex: settings.isTraceIndex,
+		isTraceIndex: index.indexId === config.traceIndexId,
 		levelField: settings.levelField,
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
 		contextFields: settings.contextFields,
-		traceIndexId: settings.traceIndexId,
 		traceIdField: settings.traceIdField,
 		indexUri: index.indexUri,
 		timestampField: index.timestampField,
@@ -251,11 +212,6 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 		await tx.delete(share).where(eq(share.indexId, indexId));
 		await tx.delete(apiKey).where(eq(apiKey.indexId, indexId));
 		await tx.delete(searchAudit).where(eq(searchAudit.indexId, indexId));
-		// Unpair every log index that pointed here; keys resolve their destination from that pairing.
-		await tx
-			.update(indexSettings)
-			.set({ traceIndexId: null })
-			.where(eq(indexSettings.traceIndexId, indexId));
 	});
 
 	invalidateApiKeyCache();

@@ -11,7 +11,22 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ### Added
 
-- **Trace indexes.** Indexes can be marked as trace indexes, which keeps them out of the log explorer and makes them selectable as a log index's span store.
+- **Traces.** Ingest OTLP spans with `POST /v1/traces` from any existing ingest key, and browse them at `GET /api/traces/*` — trace search, a duration heatmap, and full waterfall detail with span attributes, events, and links back to correlated logs. Spans are stored in one configured index (`TRACE_INDEX_ID`, defaulting to `otel-traces-v0_9`).
+
+### Fixed
+
+- **Traces older than the Jaeger lookback window can be opened again.** Trace detail now runs an
+  unbounded `trace_id` search instead of Quickwit's Jaeger API, which ignored the requested window and
+  looked back a fixed 72 hours. The `jaeger:` block in `quickwit.yaml` is no longer read and has been
+  removed.
+- **Oversized traces are reported rather than silently clipped** — the detail response carries
+  `truncated`, and the view says when spans are missing.
+- **The attributes panel is quieter on error spans**: `otel.status_code` and `error` are dropped as
+  restatements of the span's own error state. `span.kind` and `otel.status_description` are kept.
+- **The trace list shows one row per trace**, collapsing the duplicate root-span documents that OTLP
+  retries can produce.
+- **Refresh reloads the service and operation dropdowns**, not just the results and heatmap.
+- **Fractional `startTs`/`endTs` are rejected** instead of being rounded outward into a wider window.
 
 ## [0.3.6] - 2026-07-21
 

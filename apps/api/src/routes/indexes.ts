@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 
 import { exportsRouter } from './exports.js';
-import { tracesRouter } from './traces.js';
 import { viewsRouter } from './views.js';
 
+import { config } from '../config.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
@@ -121,7 +121,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		validator('param', IndexIdParams),
 		async (c) => {
 			const indexMeta = c.get('indexMeta');
-			if (indexMeta.settings.isTraceIndex) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+			if (c.req.param('indexId') === config.traceIndexId)
+				throw notFound('Index not found', 'INDEX_NOT_FOUND');
 			return c.json({ fields: indexMeta.index.fields });
 		}
 	)
@@ -138,7 +139,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		validator('param', IndexIdParams),
 		async (c) => {
 			const indexMeta = c.get('indexMeta');
-			if (indexMeta.settings.isTraceIndex) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+			if (c.req.param('indexId') === config.traceIndexId)
+				throw notFound('Index not found', 'INDEX_NOT_FOUND');
 			return c.json(getIndexViewConfig(indexMeta));
 		}
 	)
@@ -184,6 +186,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}),
 		requireUser,
 		requireAdmin,
+		// The only mutation here that never touches Quickwit, so nothing else would 404 a bad index id.
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		validator('json', saveIndexConfigSchema),
 		async (c) => {
@@ -473,5 +477,4 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}
 	)
 	.route('/:indexId/logs/export', exportsRouter)
-	.route('/:indexId/traces', tracesRouter)
 	.route('/:indexId/views', viewsRouter);

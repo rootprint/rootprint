@@ -11,23 +11,16 @@
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
 	import type { IndexDetail } from 'api/types';
 
-	let { detail, traceIndexIds }: { detail: IndexDetail; traceIndexIds: string[] } = $props();
+	let { detail }: { detail: IndexDetail } = $props();
 
 	const initial = detail;
 	let displayName = $state(initial.displayName ?? '');
-	let isTraceIndex = $state(initial.isTraceIndex);
+	const isTraceIndex = initial.isTraceIndex;
 	let levelField = $state(initial.levelField);
 	let messageField = $state(initial.messageField);
 	let tracebackField = $state(initial.tracebackField ?? '');
 	let contextFieldTags = $state<string[]>([...(initial.contextFields ?? [])]);
-	let traceIndexId = $state(initial.traceIndexId ?? '');
 	let traceIdField = $state(initial.traceIdField);
-
-	const indexOptions = $derived(
-		traceIndexId !== '' && !traceIndexIds.includes(traceIndexId)
-			? [traceIndexId, ...traceIndexIds]
-			: traceIndexIds
-	);
 
 	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -38,12 +31,10 @@
 
 		const payload: SaveIndexConfigInput = {
 			displayName: displayName.trim() === '' ? null : displayName.trim(),
-			isTraceIndex,
 			levelField: levelField.trim(),
 			messageField: messageField.trim(),
 			tracebackField: tracebackField.trim() === '' ? null : tracebackField.trim(),
 			contextFields: contextFieldTags.length === 0 ? null : [...contextFieldTags],
-			traceIndexId: isTraceIndex || traceIndexId === '' ? null : traceIndexId,
 			traceIdField: traceIdField.trim()
 		};
 
@@ -92,23 +83,6 @@
 				placeholder="e.g. Production Traces"
 				autocomplete="off"
 				aria-invalid={invalid ? 'true' : undefined}
-				aria-describedby={describedBy}
-			/>
-		{/snippet}
-	</SettingsRow>
-
-	<SettingsRow
-		id="cfg-is-trace-index"
-		label="Stores spans"
-		hint="This index holds OTLP spans rather than logs, so it stays out of the log explorer and becomes selectable as another index's span store."
-		error={fieldErrors.isTraceIndex}
-	>
-		{#snippet children({ id, describedBy })}
-			<input
-				{id}
-				type="checkbox"
-				bind:checked={isTraceIndex}
-				class="toggle toggle-sm"
 				aria-describedby={describedBy}
 			/>
 		{/snippet}
@@ -175,29 +149,6 @@
 					aria-invalid={invalid ? 'true' : undefined}
 					aria-describedby={describedBy}
 				/>
-			{/snippet}
-		</SettingsRow>
-
-		<SettingsRow
-			id="cfg-trace-index"
-			label="Trace index"
-			hint="Lists indexes marked Stores spans. If the list is empty, mark the span index first."
-			error={fieldErrors.traceIndexId}
-		>
-			{#snippet children({ id, invalid, describedBy })}
-				<select
-					{id}
-					bind:value={traceIndexId}
-					class="select select-sm w-full"
-					class:select-error={invalid}
-					aria-invalid={invalid ? 'true' : undefined}
-					aria-describedby={describedBy}
-				>
-					<option value="">None — this index has no traces</option>
-					{#each indexOptions as option (option)}
-						<option value={option}>{option}</option>
-					{/each}
-				</select>
 			{/snippet}
 		</SettingsRow>
 

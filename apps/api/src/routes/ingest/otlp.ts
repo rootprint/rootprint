@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
 import type { Handler } from 'hono';
 
+import { config } from '../../config.js';
 import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
 import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import { badRequest, HttpError, unsupportedMediaType } from '../../utils/http-error.js';
+import { HttpError, unsupportedMediaType } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
 
 type Signal = 'logs' | 'traces';
@@ -34,7 +35,7 @@ const pbErr = (description: string) => ({
 // Replaces the shared JSON error baseline. No 500: otlpErrorFromHttpError clamps 5xx to 503, the
 // status OTLP clients treat as retryable.
 const OTLP_ERRORS = {
-	'400': pbErr('Upstream rejected the request, or the ingest key has no paired trace index'),
+	'400': pbErr('Upstream rejected the request'),
 	'401': pbErr('Missing ingest bearer token'),
 	'403': pbErr('Invalid ingest bearer token'),
 	'404': pbErr('Route not found'),
@@ -67,7 +68,11 @@ function signalDescribe(signal: Signal) {
 		summary: `Ingest OTLP ${signal} (protobuf)`,
 		description:
 			`OTLP/HTTP ${signal} exporter endpoint. Accepts only application/x-protobuf ` +
-			`(Export${proto}ServiceRequest). The destination index comes from the ingest key. Quickwit ` +
+			`(Export${proto}ServiceRequest). ` +
+			(signal === 'traces'
+				? 'Spans go to the single span store named by TRACE_INDEX_ID, not to the ingest key’s index. '
+				: 'The destination index comes from the ingest key. ') +
+			'Quickwit ' +
 			'answers with JSON, so the response is re-encoded as protobuf, preserving the ' +
 			'partial_success count of rejected records. ' +
 			'Errors use the google.rpc.Status encoding: 415 is JSON, everything else is binary protobuf.' +
@@ -117,16 +122,7 @@ function signalHandler(signal: Signal): Handler<KeyedEnv> {
 		}
 
 		const apiKey = c.get('apiKey');
-		let destinationIndex = apiKey.indexId;
-		if (signal === 'traces') {
-			if (!apiKey.traceIndexId) {
-				throw badRequest(
-					`Log index "${apiKey.indexId}" has no paired trace index, so this key cannot send spans.`,
-					'TRACE_INDEX_NOT_CONFIGURED'
-				);
-			}
-			destinationIndex = apiKey.traceIndexId;
-		}
+		const destinationIndex = signal === 'traces' ? config.traceIndexId : apiKey.indexId;
 		const upstreamUrl = quickwitUrl(`/api/v1/otlp/v1/${signal}`);
 		const headers: Record<string, string> = {
 			'content-type': CONTENT_TYPE_PROTOBUF,

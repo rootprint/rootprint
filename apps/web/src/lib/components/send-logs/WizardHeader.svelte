@@ -15,6 +15,7 @@
 		integration,
 		apiKeys,
 		indexes,
+		traceIndexId,
 		selectedIndexId,
 		selectedApiKeyId = $bindable<number | null>(null),
 		realApiKeyValue = $bindable<string | null>(null)
@@ -22,6 +23,8 @@
 		integration: Integration;
 		apiKeys: ApiKeyView[];
 		indexes: IndexSummary[];
+		/** Null when the span store does not exist in Quickwit. */
+		traceIndexId: string | null;
 		selectedIndexId: string;
 		selectedApiKeyId?: number | null;
 		realApiKeyValue?: string | null;
@@ -67,6 +70,7 @@
 	bind:open={createOpen}
 	{indexes}
 	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
+	{traceIndexId}
 	invalidateKey={DEP.sendLogsApiKeys}
 	onCreated={handleCreated}
 />

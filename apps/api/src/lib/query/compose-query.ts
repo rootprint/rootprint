@@ -1,6 +1,7 @@
 import type { Filter } from '../../types.js';
 
-const ESCAPE_TRIGGER_RE = /[\s:()[\]{}!+\-~^"\\*?/&|]/;
+// `<`, `>` and `=` are range operators to Quickwit's parser; a JVM `Foo.<init>` span name hits them.
+const ESCAPE_TRIGGER_RE = /[\s:()[\]{}!+\-~^"\\*?/&|<>=]/;
 
 export function escapeFilterValue(value: string): string {
 	if (ESCAPE_TRIGGER_RE.test(value)) {

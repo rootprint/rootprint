@@ -1,7 +1,13 @@
 import type { Preset } from '$lib/utils/time-range';
-import type { Filter, SortDirection, TraceHistogramResponse, TraceSpan } from 'api/types';
+import type {
+	Filter,
+	SortDirection,
+	TraceHistogramResponse,
+	TraceListRow,
+	TraceSpan
+} from 'api/types';
 
-export type { Filter, SortDirection, TraceHistogramResponse };
+export type { Filter, SortDirection, TraceHistogramResponse, TraceListRow };
 
 /** One crumb in a breadcrumb trail. Ancestors set `href`; the current page omits it. */
 export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean };
@@ -74,8 +80,6 @@ export interface FieldConfig {
 	contextFields: string[];
 	isOtel: boolean;
 	traceIdField: string;
-	/** Server-resolved: the browser never names the trace index. */
-	hasTraces: boolean;
 }
 
 export interface IndexOption {

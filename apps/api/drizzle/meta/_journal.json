@@ -148,6 +148,13 @@
       "when": 1785351280722,
       "tag": "0020_silent_blink",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785582026532,
+      "tag": "0021_closed_thena",
+      "breakpoints": true
     }
   ]
 }

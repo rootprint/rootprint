@@ -45,6 +45,7 @@
 		{integration}
 		apiKeys={data.apiKeys}
 		indexes={data.indexes}
+		traceIndexId={data.traceIndexId}
 		{selectedIndexId}
 		bind:selectedApiKeyId
 		bind:realApiKeyValue

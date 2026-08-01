@@ -3,8 +3,8 @@ import { composeQuery } from 'api/query';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
-import type { TimeRange, TraceHistogramResponse } from '$lib/types';
-import { buildTimeParams, resolveWindow } from '$lib/utils/time-range';
+import type { SortDirection, TraceHistogramResponse, TraceListRow } from '$lib/types';
+import { buildTimeParams } from '$lib/utils/time-range';
 import {
 	SPAN_ID_FIELD,
 	traceLogsFilters,
@@ -12,20 +12,12 @@ import {
 	type TraceLogsTarget
 } from '$lib/utils/trace-logs';
 
-/**
- * The log search endpoint's own ceiling (`SearchQuery.limit`, max 1000), so this is as far as one
- * request reaches. A terms aggregation would have avoided documents entirely, but `span_id` isn't a fast
- * field in `otel-logs-v0_9`; a normal trace is far under this anyway.
- */
+/** The log search endpoint's own ceiling. A terms agg would dodge documents, but `span_id` isn't fast. */
 const MAX_TRACE_LOGS = 1000;
 
-export async function fetchTrace(
-	indexId: string,
-	traceId: string,
-	opts: { signal?: AbortSignal } = {}
-) {
-	const res = await client.api.indexes[':indexId'].traces[':traceId'].$get(
-		{ param: { indexId, traceId } },
+export async function fetchTrace(traceId: string, opts: { signal?: AbortSignal } = {}) {
+	const res = await client.api.traces[':traceId'].$get(
+		{ param: { traceId } },
 		{ init: { signal: opts.signal } }
 	);
 
@@ -39,7 +31,6 @@ export async function fetchSpanLogCounts(
 ): Promise<Map<string, number> | null> {
 	const { rawHits } = await searchLogs({
 		indexId: input.indexId,
-		// Same filters the row's link carries, composed the way the explorer will compose them.
 		query: composeQuery('', traceLogsFilters(input)),
 		limit: MAX_TRACE_LOGS,
 		offset: 0,
@@ -48,8 +39,7 @@ export async function fetchSpanLogCounts(
 	});
 
 	if (rawHits.length === MAX_TRACE_LOGS) {
-		// Degrades to the state the pane already has for "counts unavailable": no row icons, and the
-		// header's trace-wide link — the right tool for a trace this chatty anyway — still works.
+		// Degrades to "counts unavailable": no row icons, header's trace-wide link still works.
 		console.warn(
 			`Trace ${input.traceId} has at least ${MAX_TRACE_LOGS} logs, more than one request reaches; per-span log counts are unavailable.`
 		);
@@ -65,20 +55,94 @@ export async function fetchSpanLogCounts(
 	return counts;
 }
 
+export interface TraceWindow {
+	startTs: number;
+	endTs: number;
+	service: string | null;
+	operation: string | null;
+	minMs: number | null;
+	maxMs: number | null;
+	errorsOnly: boolean;
+}
+
+function filterParams(input: TraceWindow) {
+	return {
+		startTs: String(input.startTs),
+		endTs: String(input.endTs),
+		...(input.service !== null && { service: input.service }),
+		...(input.operation !== null && { operation: input.operation }),
+		...(input.minMs !== null && { minDurationMs: String(input.minMs) }),
+		...(input.maxMs !== null && { maxDurationMs: String(input.maxMs) }),
+		...(input.errorsOnly && { errorsOnly: 'true' })
+	};
+}
+
 export async function fetchTraceHistogram(
-	input: { indexId: string; timeRange: TimeRange },
+	input: TraceWindow,
 	signal?: AbortSignal
 ): Promise<TraceHistogramResponse> {
-	const { startTs, endTs } = resolveWindow(input.timeRange);
-	const res = await client.api.indexes[':indexId'].traces.histogram.$get(
-		{
-			param: { indexId: input.indexId },
-			query: { startTs: String(startTs), endTs: String(endTs) }
-		},
+	const res = await client.api.traces.histogram.$get(
+		{ query: filterParams(input) },
 		{ init: { signal } }
 	);
 
 	if (!res.ok) throw await readApiError(res, 'Failed to load trace histogram');
 
 	return res.json();
+}
+
+export type TraceSearchInput = TraceWindow & {
+	limit: number;
+	offset: number;
+	sortOrder: SortDirection;
+};
+
+export async function searchTraces(
+	input: TraceSearchInput,
+	signal?: AbortSignal
+): Promise<TraceListRow[]> {
+	const res = await client.api.traces.search.$get(
+		{
+			query: {
+				...filterParams(input),
+				limit: String(input.limit),
+				offset: String(input.offset),
+				sortOrder: input.sortOrder
+			}
+		},
+		{ init: { signal } }
+	);
+
+	if (!res.ok) throw await readApiError(res, 'Trace search failed');
+
+	return (await res.json()).traces;
+}
+
+export async function fetchTraceServices(
+	window: { startTs: number; endTs: number },
+	signal?: AbortSignal
+): Promise<string[]> {
+	const res = await client.api.traces.services.$get(
+		{ query: { startTs: String(window.startTs), endTs: String(window.endTs) } },
+		{ init: { signal } }
+	);
+
+	if (!res.ok) throw await readApiError(res, 'Failed to load services');
+
+	return (await res.json()).services;
+}
+
+export async function fetchTraceOperations(
+	service: string,
+	window: { startTs: number; endTs: number },
+	signal?: AbortSignal
+): Promise<string[]> {
+	const res = await client.api.traces.operations.$get(
+		{ query: { service, startTs: String(window.startTs), endTs: String(window.endTs) } },
+		{ init: { signal } }
+	);
+
+	if (!res.ok) throw await readApiError(res, 'Failed to load operations');
+
+	return (await res.json()).operations;
 }

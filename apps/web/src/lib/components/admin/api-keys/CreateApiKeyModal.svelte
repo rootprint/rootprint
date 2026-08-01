@@ -13,6 +13,7 @@
 		open = $bindable(false),
 		indexes,
 		defaultIndexId,
+		traceIndexId,
 		invalidateKey,
 		onCreated
 	}: {
@@ -20,6 +21,8 @@
 		indexes: IndexSummary[];
 		/** Preselected index; ignored when not present in `indexes`. */
 		defaultIndexId?: string;
+		/** Null when the span store does not exist in Quickwit. */
+		traceIndexId: string | null;
 		invalidateKey?: string;
 		onCreated?: (summary: ApiKeyView, secret: string) => void;
 	} = $props();
@@ -38,10 +41,6 @@
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 	let revealedKey = $state('');
-
-	const spanDestination = $derived(
-		indexId === '' ? null : (indexes.find((i) => i.indexId === indexId)?.traceIndexId ?? null)
-	);
 
 	function reset() {
 		phase = 'form';
@@ -128,17 +127,14 @@
 				{/snippet}
 			</Field>
 
-			{#if indexId !== ''}
-				{#if spanDestination}
-					<p class="text-base-content/60 text-xs">
-						Spans from this key go to <span class="font-mono">{spanDestination}</span>.
-					</p>
-				{:else}
-					<p class="text-warning text-xs">
-						This index has no paired trace index, so the key will reject spans. Pair one under
-						Settings → Indexes if you plan to send traces.
-					</p>
-				{/if}
+			{#if traceIndexId}
+				<p class="text-base-content/60 text-xs">
+					Spans from this key go to <span class="font-mono">{traceIndexId}</span>.
+				</p>
+			{:else}
+				<p class="text-warning text-xs">
+					No span store exists in Quickwit yet, so spans sent with this key have nowhere to land.
+				</p>
 			{/if}
 		</form>
 	{:else}

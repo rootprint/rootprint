@@ -12,12 +12,10 @@ export class TraceResource {
 	loading = $state(false);
 	error = $state<string | null>(null);
 
-	readonly indexId: string;
 	readonly traceId: string;
 	#abort: AbortController | null = null;
 
-	constructor(indexId: string, traceId: string) {
-		this.indexId = indexId;
+	constructor(traceId: string) {
 		this.traceId = traceId;
 	}
 
@@ -28,7 +26,7 @@ export class TraceResource {
 		this.loading = true;
 		this.error = null;
 		try {
-			const trace = await fetchTrace(this.indexId, this.traceId, { signal: abort.signal });
+			const trace = await fetchTrace(this.traceId, { signal: abort.signal });
 			this.model = buildTraceModel(trace);
 		} catch (e) {
 			if (isAbortError(e)) return;

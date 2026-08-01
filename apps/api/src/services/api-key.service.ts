@@ -9,8 +9,9 @@ import {
 } from '../constants.js';
 import type { Db } from '../db/index.js';
 import { auth } from '../lib/auth.js';
+import { config } from '../config.js';
 // apiKey = custom ingest-key table; personalApiKey = Better Auth plugin table.
-import { apiKey, apikey as personalApiKey, indexSettings, user } from '../db/schema.js';
+import { apiKey, apikey as personalApiKey, user } from '../db/schema.js';
 import type {
 	ApiKeySummary,
 	ApiKeyValue,
@@ -118,12 +119,7 @@ export async function createApiKey(
 	createdByUserId: string,
 	input: CreateApiKeyInput
 ): Promise<{ summary: ApiKeySummary; token: string }> {
-	const [target] = await db
-		.select({ isTraceIndex: indexSettings.isTraceIndex })
-		.from(indexSettings)
-		.where(eq(indexSettings.indexId, input.indexId))
-		.limit(1);
-	if (target?.isTraceIndex) {
+	if (input.indexId === config.traceIndexId) {
 		throw badRequest('That index is a trace index.', 'INDEX_IS_TRACE_INDEX', [
 			{ path: 'indexId', message: 'Pick a log index.' }
 		]);
@@ -253,11 +249,9 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 			id: apiKey.id,
 			name: apiKey.name,
 			indexId: apiKey.indexId,
-			traceIndexId: indexSettings.traceIndexId,
 			role: apiKey.role
 		})
 		.from(apiKey)
-		.leftJoin(indexSettings, eq(indexSettings.indexId, apiKey.indexId))
 		.where(eq(apiKey.token, bearer))
 		.limit(1);
 
