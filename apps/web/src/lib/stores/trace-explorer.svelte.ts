@@ -48,9 +48,6 @@ export class TraceExplorerStore {
 	tracesError = $state<string | null>(null);
 	hasSearched = $state(false);
 
-	/** From the heatmap's summed columns, over a differently-snapped window. Approximate; display only. */
-	numHits = $state<number | null>(null);
-
 	services = $state.raw<string[]>([]);
 	operations = $state.raw<string[]>([]);
 	operationsLoading = $state(false);
@@ -217,14 +214,12 @@ export class TraceExplorerStore {
 
 		this.heatmapError = null;
 		this.heatmapLoading = true;
-		this.numHits = null;
 
 		try {
 			const { startTs, endTs } = resolveWindow(timeRange);
 			const result = await fetchTraceHistogram({ startTs, endTs, ...params }, ctl.signal);
 			if (!this.#heatmapGuard.isCurrent(requestId)) return;
 			this.heatmap = result;
-			this.numHits = result.totalCount;
 			this.#heatmapFetchedFor = fetchKey;
 		} catch (e) {
 			if (isAbortError(e)) return;
@@ -236,7 +231,7 @@ export class TraceExplorerStore {
 		}
 	}
 
-	/** A short batch is the only end-of-results signal — `numHits` is the wrong window to page against. */
+	/** A short batch is the end-of-results signal. */
 	get hasMore(): boolean {
 		return this.#lastBatchFull && this.traces.length < TRACE_MAX_ROWS;
 	}

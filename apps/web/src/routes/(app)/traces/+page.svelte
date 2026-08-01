@@ -8,7 +8,6 @@
 	import TraceFilters from '$lib/components/trace/TraceFilters.svelte';
 	import TraceHeatmapPanel from '$lib/components/trace/TraceHeatmapPanel.svelte';
 	import TraceList from '$lib/components/trace/TraceList.svelte';
-	import TraceResultsBar from '$lib/components/trace/TraceResultsBar.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import { TraceExplorerStore } from '$lib/stores/trace-explorer.svelte';
 	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
@@ -78,8 +77,6 @@
 		retry={() => store.refresh()}
 		bind:collapsed={chartCollapsed}
 	/>
-
-	<TraceResultsBar {store} />
 
 	<section class="flex min-h-0 flex-1 flex-col" aria-label="Traces">
 		<div class="bg-base-200/30 min-h-0 flex-1">

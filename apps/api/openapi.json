@@ -2451,17 +2451,12 @@
 					"intervalSec": {
 						"description": "Column width in seconds, chosen by the server from the requested window; the client does not set it.",
 						"type": "number"
-					},
-					"totalCount": {
-						"description": "Traces across every column, i.e. the size of the result set the search endpoint pages through under the same filters. Approximate at the edges: the grid window is snapped outward to interval boundaries, so it can over-count by up to one interval per side.",
-						"type": "number"
 					}
 				},
 				"required": [
 					"intervalSec",
 					"bands",
-					"columns",
-					"totalCount"
+					"columns"
 				],
 				"type": "object"
 			},
@@ -17580,6 +17575,7 @@
 						"in": "query",
 						"name": "limit",
 						"schema": {
+							"default": "20",
 							"maximum": 200,
 							"minimum": 1,
 							"pattern": "^\\d+$",
@@ -17591,6 +17587,7 @@
 						"in": "query",
 						"name": "offset",
 						"schema": {
+							"default": "0",
 							"maximum": 10000,
 							"minimum": 0,
 							"pattern": "^\\d+$",
@@ -17601,6 +17598,7 @@
 						"in": "query",
 						"name": "sortOrder",
 						"schema": {
+							"default": "desc",
 							"enum": [
 								"asc",
 								"desc"
