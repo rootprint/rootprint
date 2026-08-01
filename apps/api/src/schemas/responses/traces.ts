@@ -163,13 +163,6 @@ export const TraceHistogramResponse = named(
 				description:
 					'One entry per interval across the window, ascending and gap-free; empty intervals are present with zero counts.'
 			})
-		),
-		totalCount: v.pipe(
-			v.number(),
-			v.metadata({
-				description:
-					'Traces across every column, i.e. the size of the result set the search endpoint pages through under the same filters. Approximate at the edges: the grid window is snapped outward to interval boundaries, so it can over-count by up to one interval per side.'
-			})
 		)
 	})
 );

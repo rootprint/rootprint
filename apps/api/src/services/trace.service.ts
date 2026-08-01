@@ -369,14 +369,12 @@ export async function traceHistogram(
 	);
 
 	const columns: TraceHistogramResponse['columns'] = [];
-	let totalCount = 0;
 	// `<`, not `<=`: the search range is half-open, so `gridEnd` can hold no document.
 	for (let ts = gridStart; ts < gridEnd && columns.length <= MAX_INTERVALS; ts += intervalSec) {
 		const counts = byTs.get(ts) ?? DURATION_BANDS.map(() => 0);
 		const docCount = counts.reduce((a, b) => a + b, 0);
-		totalCount += docCount;
 		columns.push({ timestamp: ts, docCount, counts });
 	}
 
-	return { intervalSec, bands: DURATION_BANDS, columns, totalCount };
+	return { intervalSec, bands: DURATION_BANDS, columns };
 }
