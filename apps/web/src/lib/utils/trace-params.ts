@@ -44,13 +44,12 @@ export function traceFilterKey(p: TraceParams): string {
 export function buildTraceUrl(
 	current: URLSearchParams,
 	partial: Partial<TraceParams> & {
-		index?: string;
 		timeRange?: TimeRange;
 		sortDirection?: SortDirection;
 	}
 ): string {
 	const base = buildQueryUrl(current, {
-		...(partial.index !== undefined && { index: partial.index }),
+		index: null,
 		...(partial.timeRange !== undefined && { timeRange: partial.timeRange }),
 		...(partial.sortDirection !== undefined && { sortDirection: partial.sortDirection })
 	});

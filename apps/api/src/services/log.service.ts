@@ -3,6 +3,7 @@ import { AggregationBuilder } from 'quickwit-js';
 
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
+import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import { composeQuery } from '../lib/query/compose-query.js';
 import { asBuckets, termsAgg } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
@@ -53,7 +54,7 @@ export async function searchLogs(
 		.limit(q.limit ?? 50)
 		.offset(q.offset ?? 0)
 		.sortBy(indexConfig.timestampField, q.sortOrder ?? 'desc')
-		.timeRange(q.startTs, q.endTs);
+		.timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs));
 	if (q.countAll) builder.countAll();
 	const response = await idx.search(builder).catch(translateQuickwitError);
 	return {
@@ -80,7 +81,7 @@ export async function histogramLogs(
 			'histogram',
 			AggregationBuilder.dateHistogram(indexConfig.timestampField, interval, histogramOptions)
 		)
-		.timeRange(startTs, endTs);
+		.timeRange(toQuickwitTimestamp(startTs), toQuickwitTimestamp(endTs));
 	const response = await idx.search(builder);
 	const agg = response.aggregations?.['histogram'] as BucketAggregationResult | undefined;
 	return {
@@ -112,7 +113,7 @@ export async function fieldValues(
 		.query(query)
 		.limit(0)
 		.agg('values', termsAgg(field, limit))
-		.timeRange(startTs, endTs);
+		.timeRange(toQuickwitTimestamp(startTs), toQuickwitTimestamp(endTs));
 	const response = await idx.search(builder);
 	const agg = response.aggregations?.['values'] as BucketAggregationResult | undefined;
 	return {
@@ -172,7 +173,10 @@ export async function fieldValuesBulk(
 	const groupResults = await Promise.all(
 		groups.map(async (group) => {
 			const composed = composeQuery(query, group.effectiveFilters);
-			const builder = idx.query(composed).limit(0).timeRange(startTs, endTs);
+			const builder = idx
+				.query(composed)
+				.limit(0)
+				.timeRange(toQuickwitTimestamp(startTs), toQuickwitTimestamp(endTs));
 			for (const field of group.fields) {
 				builder.agg(field, termsAgg(field, limit));
 			}

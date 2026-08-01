@@ -1,0 +1,21 @@
+meta {
+  name: List Trace Operations
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/traces/operations?startTs=1700000000&endTs=1700000900&service=checkout
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1700000000
+  endTs: 1700000900
+  service: checkout
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

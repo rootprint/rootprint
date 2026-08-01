@@ -4,6 +4,7 @@ import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
 import type { SortDirection, TraceHistogramResponse, TraceListRow } from '$lib/types';
+import type { TraceParams } from '$lib/utils/trace-params';
 import { buildTimeParams } from '$lib/utils/time-range';
 import {
 	SPAN_ID_FIELD,
@@ -55,15 +56,10 @@ export async function fetchSpanLogCounts(
 	return counts;
 }
 
-export interface TraceWindow {
+export type TraceWindow = TraceParams & {
 	startTs: number;
 	endTs: number;
-	service: string | null;
-	operation: string | null;
-	minMs: number | null;
-	maxMs: number | null;
-	errorsOnly: boolean;
-}
+};
 
 function filterParams(input: TraceWindow) {
 	return {

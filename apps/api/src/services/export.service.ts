@@ -3,6 +3,7 @@ import type { ExportPreflightResult, FormatState, IndexConfig } from '../types.j
 import { type QuickwitClient } from 'quickwit-js';
 
 import { EXPORT_MAX_ROWS } from '../constants.js';
+import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
 
 const NEWLINE = '\n';
@@ -140,7 +141,7 @@ export async function buildExportBody(
 			.query(q.q || '*')
 			.limit(EXPORT_MAX_ROWS)
 			.sortBy(indexConfig.timestampField, 'asc')
-			.timeRange(q.startTs, q.endTs)
+			.timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs))
 	);
 
 	switch (q.format) {
@@ -159,7 +160,9 @@ export async function preflightExport(
 	q: ExportLogsQueryInput
 ): Promise<ExportPreflightResult> {
 	const idx = qw.index(indexConfig.indexId);
-	const numHits = await idx.count(idx.query(q.q || '*').timeRange(q.startTs, q.endTs));
+	const numHits = await idx.count(
+		idx.query(q.q || '*').timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs))
+	);
 	const total = Math.min(numHits, EXPORT_MAX_ROWS);
 	const capped = numHits > EXPORT_MAX_ROWS;
 	return {

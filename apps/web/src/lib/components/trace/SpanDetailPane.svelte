@@ -98,7 +98,7 @@
 	]);
 
 	const attributes = $derived(toFields(span.attributes));
-	const resource = $derived(span.resourceId ? (resources[span.resourceId] ?? null) : null);
+	const resource = $derived(resources[span.resourceId] ?? null);
 
 	const subtree = $derived(descendants(span));
 

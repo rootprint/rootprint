@@ -9,6 +9,11 @@ export function quickwitUrl(path: string): string {
 	return quickwit.endpoint + path;
 }
 
+/** Quickwit's search REST API accepts only i64 Unix seconds. */
+export function toQuickwitTimestamp(value: number | undefined): number | undefined {
+	return value === undefined ? undefined : Math.trunc(value);
+}
+
 const VERSION_PATH = '/api/v1/version';
 const PROBE_RETRY = 6;
 const PROBE_DELAY_MS = 2000;

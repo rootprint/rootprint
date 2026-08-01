@@ -1,5 +1,5 @@
 {
-  "id": "66b6e97b-610c-4809-a41c-4dc5540f3afd",
+  "id": "8305ef87-e77a-40e2-bde3-0bc96c13ad98",
   "prevId": "391624b3-0b08-40eb-ac80-e926a1347c40",
   "version": "7",
   "dialect": "postgresql",
@@ -194,13 +194,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "visibility": {
-          "name": "visibility",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'all'"
-        },
         "level_field": {
           "name": "level_field",
           "type": "text",
@@ -224,12 +217,6 @@
         "context_fields": {
           "name": "context_fields",
           "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "trace_index_id": {
-          "name": "trace_index_id",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

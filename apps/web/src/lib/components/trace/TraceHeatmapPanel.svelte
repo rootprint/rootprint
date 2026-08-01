@@ -10,15 +10,14 @@
 		data,
 		loading,
 		error,
-		retry,
-		collapsed = $bindable(false)
+		retry
 	}: {
 		data: TraceHistogramResponse | null;
 		loading: boolean;
 		error: string | null;
 		retry: () => void;
-		collapsed?: boolean;
 	} = $props();
+	let collapsed = $state(false);
 
 	const bucketWidthLabel = $derived(
 		data === null ? null : formatDurationMs(data.intervalSec * 1000)

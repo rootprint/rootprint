@@ -2,6 +2,7 @@
 	import { RefreshCw } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import type { OverlayScrollbars } from 'overlayscrollbars';
+	import { tick } from 'svelte';
 
 	import { page } from '$app/state';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
@@ -10,22 +11,45 @@
 	import TraceList from '$lib/components/trace/TraceList.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import { TraceExplorerStore } from '$lib/stores/trace-explorer.svelte';
+	import { readLastIndex, writeLastIndex } from '$lib/utils/last-index';
 	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
 
 	const SCROLL_TRIGGER_PX = 1500;
 
 	let { data } = $props();
 	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
+	let selectedIndex = $state<string | null>(null);
 
 	const store = new TraceExplorerStore({
 		searchParams: () => page.url.searchParams,
-		indexes: () => data.indexes,
 		onFreshSearch: () => osRef?.osInstance()?.elements().viewport.scrollTo(0, 0)
 	});
 
 	store.setupAutoSearch();
 
-	let chartCollapsed = $state(false);
+	$effect(() => {
+		if (selectedIndex !== null && data.indexes.some((index) => index.id === selectedIndex)) return;
+		const remembered = readLastIndex();
+		selectedIndex =
+			data.indexes.find((index) => index.id === remembered)?.id ?? data.indexes[0]?.id ?? null;
+		if (selectedIndex !== null) writeLastIndex(selectedIndex);
+	});
+
+	$effect(() => {
+		if (store.traces.length === 0 || !store.hasMore) return;
+		void tick().then(() => maybeFillViewport());
+	});
+
+	function selectIndex(indexId: string): void {
+		selectedIndex = indexId;
+		writeLastIndex(indexId);
+	}
+
+	function maybeFillViewport(os = osRef?.osInstance()): void {
+		if (store.traces.length === 0 || !store.hasMore) return;
+		const viewport = os?.elements().viewport;
+		if (viewport && viewport.scrollHeight <= viewport.clientHeight) store.maybeLoadMore();
+	}
 
 	function handleOsScroll(os: OverlayScrollbars) {
 		const v = os.elements().viewport;
@@ -42,8 +66,8 @@
 	>
 		<select
 			class="select select-sm w-48 font-mono text-xs"
-			value={store.selectedIndex}
-			onchange={(e) => store.navigate({ index: e.currentTarget.value }, { push: true })}
+			value={selectedIndex}
+			onchange={(e) => selectIndex(e.currentTarget.value)}
 			aria-label="Logs index for trace links"
 		>
 			{#each data.indexes as option (option.id)}
@@ -68,14 +92,13 @@
 		</button>
 	</div>
 
-	<TraceFilters {store} />
+	<TraceFilters {store} logIndexId={selectedIndex} />
 
 	<TraceHeatmapPanel
 		data={store.heatmap}
 		loading={store.heatmapLoading}
 		error={store.heatmapError}
 		retry={() => store.refresh()}
-		bind:collapsed={chartCollapsed}
 	/>
 
 	<section class="flex min-h-0 flex-1 flex-col" aria-label="Traces">
@@ -97,12 +120,12 @@
 				<OverlayScrollbarsComponent
 					bind:this={osRef}
 					options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
-					events={{ scroll: handleOsScroll }}
+					events={{ scroll: handleOsScroll, initialized: maybeFillViewport }}
 					defer
 					class="h-full w-full"
 				>
 					<TraceList
-						logIndexId={store.selectedIndex}
+						logIndexId={selectedIndex}
 						traces={store.traces}
 						sortDirection={store.sortDirection}
 						onToggleSort={() => store.toggleSort()}

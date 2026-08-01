@@ -85,9 +85,9 @@ export async function getIndexSettings(db: Db, indexId: string): Promise<IndexSe
 export async function saveIndexConfig(
 	db: Db,
 	indexId: string,
+	existing: IndexSettings,
 	fields: SaveIndexConfigInput
 ): Promise<void> {
-	const existing = await getIndexSettings(db, indexId);
 	const updatedAt = new Date();
 	await db
 		.insert(indexSettings)

@@ -7,7 +7,7 @@
 	import type { TraceExplorerStore } from '$lib/stores/trace-explorer.svelte';
 	import { traceDetailHref } from '$lib/utils/trace-params';
 
-	let { store }: { store: TraceExplorerStore } = $props();
+	let { store, logIndexId }: { store: TraceExplorerStore; logIndexId: string | null } = $props();
 
 	const params = $derived(store.params);
 
@@ -19,7 +19,7 @@
 		const id = traceIdInput.trim().toLowerCase();
 		if (!isTraceId(id)) return;
 		traceIdInput = '';
-		void goto(traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url }));
+		void goto(traceDetailHref(id, { index: logIndexId, returnTo: page.url }));
 	}
 
 	/** Mirrors `RootFilterEntries` in apps/api/src/schemas/traces.ts; past it the API 400s. */
@@ -34,26 +34,21 @@
 		return ms;
 	}
 
-	function onMinDuration(raw: string): void {
-		const value = parseMs(raw);
-		if (value === undefined) return;
-		const max = params.maxMs;
-		store.navigate(
-			value !== null && max !== null && value > max
-				? { minMs: value, maxMs: value }
-				: { minMs: value }
-		);
-	}
-
-	function onMaxDuration(raw: string): void {
-		const value = parseMs(raw);
-		if (value === undefined) return;
-		const min = params.minMs;
-		store.navigate(
-			value !== null && min !== null && value < min
-				? { maxMs: value, minMs: value }
-				: { maxMs: value }
-		);
+	function commitDuration(bound: 'min' | 'max', input: HTMLInputElement): void {
+		const value = parseMs(input.value);
+		const other = bound === 'min' ? params.maxMs : params.minMs;
+		const invalidPair =
+			value !== null &&
+			value !== undefined &&
+			other !== null &&
+			(bound === 'min' ? value > other : value < other);
+		if (value === undefined || invalidPair) {
+			const current = bound === 'min' ? params.minMs : params.maxMs;
+			input.value = current === null ? '' : String(current);
+			return;
+		}
+		if (bound === 'min') store.navigate({ minMs: value });
+		else store.navigate({ maxMs: value });
 	}
 </script>
 
@@ -64,7 +59,7 @@
 	<select
 		class="select select-xs w-44"
 		value={params.service ?? ''}
-		onchange={(e) => store.setService(e.currentTarget.value || null)}
+		onchange={(e) => store.navigate({ service: e.currentTarget.value || null }, { push: true })}
 		aria-label="Service"
 	>
 		<option value="">All services</option>
@@ -110,7 +105,7 @@
 			class="input input-xs w-20 tabular-nums"
 			placeholder="min"
 			value={params.minMs ?? ''}
-			onchange={(e) => onMinDuration(e.currentTarget.value)}
+			onchange={(e) => commitDuration('min', e.currentTarget)}
 			aria-label="Minimum root span duration in milliseconds"
 		/>
 		<span class="text-base-content/30 text-xs">–</span>
@@ -122,7 +117,7 @@
 			class="input input-xs w-20 tabular-nums"
 			placeholder="max"
 			value={params.maxMs ?? ''}
-			onchange={(e) => onMaxDuration(e.currentTarget.value)}
+			onchange={(e) => commitDuration('max', e.currentTarget)}
 			aria-label="Maximum root span duration in milliseconds"
 		/>
 		<span class="text-base-content/50 text-xs">ms</span>

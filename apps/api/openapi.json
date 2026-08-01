@@ -2615,14 +2615,7 @@
 						]
 					},
 					"resourceId": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
+						"type": "string"
 					},
 					"serviceName": {
 						"type": "string"
