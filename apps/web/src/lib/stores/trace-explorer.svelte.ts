@@ -8,16 +8,8 @@ import {
 	fetchTraceServices,
 	searchTraces
 } from '$lib/api/traces';
-import { RequestGuard } from '$lib/stores/request-guard';
-import type {
-	IndexOption,
-	SortDirection,
-	TimeRange,
-	TraceHistogramResponse,
-	TraceListRow
-} from '$lib/types';
+import type { SortDirection, TimeRange, TraceHistogramResponse, TraceListRow } from '$lib/types';
 import { serializeTimeRange } from '$lib/utils/fields';
-import { clearLastIndex, readLastIndex, writeLastIndex } from '$lib/utils/last-index';
 import { deserialize } from '$lib/utils/query-params';
 import { resolveWindow } from '$lib/utils/time-range';
 import {
@@ -29,12 +21,10 @@ import {
 
 const TRACE_BATCH_SIZE = 100;
 
-// ponytail: 2000 rows because TraceList renders a plain `{#each}`. Raise it once the list virtualizes.
 const TRACE_MAX_ROWS = 2_000;
 
 export interface TraceExplorerOptions {
 	searchParams: () => URLSearchParams;
-	indexes: () => IndexOption[];
 	onFreshSearch?: () => void;
 }
 
@@ -55,45 +45,27 @@ export class TraceExplorerStore {
 	#opts: TraceExplorerOptions;
 	#onFreshSearch?: () => void;
 	#nonce = $state(0);
-	#disposed = false;
 
 	#prefetching = $state(false);
 	#lastBatchFull = $state(false);
 	/** Hits received, NOT `traces.length`: the server pages by document offset, before dedup. */
 	#scanned = 0;
 	#byId = new Map<string, TraceListRow>();
-	#snapshotStartTs: number | undefined;
-	#snapshotEndTs: number | undefined;
+	#snapshot: { startTs: number; endTs: number } | null = null;
 
 	#heatmapAbort?: AbortController;
-	#heatmapGuard = new RequestGuard();
 	#heatmapFetchedFor: string | null = null;
 
 	#searchAbort?: AbortController;
-	#searchGuard = new RequestGuard();
-	#searchFetchedFor: string | null = null;
 
 	#servicesAbort?: AbortController;
-	#servicesGuard = new RequestGuard();
 	#servicesFetchedFor: string | null = null;
 	#operationsAbort?: AbortController;
-	#operationsGuard = new RequestGuard();
 	#operationsFetchedFor: string | null = null;
 
 	constructor(opts: TraceExplorerOptions) {
 		this.#opts = opts;
 		this.#onFreshSearch = opts.onFreshSearch;
-	}
-
-	get indexes(): IndexOption[] {
-		return this.#opts.indexes();
-	}
-
-	get selectedIndex(): string | null {
-		const id = deserialize(this.#opts.searchParams()).index;
-		return id !== null && this.indexes.some((i) => i.id === id)
-			? id
-			: (this.indexes[0]?.id ?? null);
 	}
 
 	get timeRange(): TimeRange {
@@ -123,15 +95,8 @@ export class TraceExplorerStore {
 		});
 	}
 
-	setService(service: string | null): void {
-		this.navigate({ service, operation: null }, { push: true });
-	}
-
 	refresh(): void {
 		this.#nonce++;
-		this.#heatmapFetchedFor = null;
-		this.#servicesFetchedFor = null;
-		this.#operationsFetchedFor = null;
 	}
 
 	/** MUST be called inside component context (not from the constructor). */
@@ -139,25 +104,6 @@ export class TraceExplorerStore {
 		$effect(() => () => this.dispose());
 
 		$effect(() => {
-			const urlIndex = deserialize(this.#opts.searchParams()).index;
-			if (urlIndex === null) {
-				const remembered = readLastIndex('traces');
-				if (remembered !== null && this.indexes.some((i) => i.id === remembered)) {
-					this.navigate({ index: remembered });
-					return;
-				}
-				if (remembered !== null) clearLastIndex('traces');
-			}
-
-			const indexId = this.selectedIndex;
-			if (indexId !== null) {
-				if (urlIndex !== indexId) {
-					this.navigate({ index: indexId });
-					return;
-				}
-				writeLastIndex('traces', indexId);
-			}
-
 			const range = this.timeRange;
 			const params = this.params;
 			void this.#nonce;
@@ -165,16 +111,10 @@ export class TraceExplorerStore {
 		});
 
 		$effect(() => {
-			const indexId = this.selectedIndex;
-			if (indexId !== null && deserialize(this.#opts.searchParams()).index !== indexId) return;
 			const range = this.timeRange;
 			const params = this.params;
 			const sort = this.sortDirection;
-			// Keyed: this effect also re-runs for URL params the search ignores (the index picker), and
-			// re-searching would discard every loaded page.
-			const fetchKey = `${this.#nonce}|${serializeTimeRange(range)}|${traceFilterKey(params)}|${sort}`;
-			if (fetchKey === this.#searchFetchedFor) return;
-			this.#searchFetchedFor = fetchKey;
+			void this.#nonce;
 			void this.#runSearch(range, params, sort, 'fresh');
 		});
 
@@ -187,10 +127,8 @@ export class TraceExplorerStore {
 			const service = this.params.service;
 			void this.#nonce;
 			if (service === null) {
-				// Abort and invalidate the guard token, or a response resolving after this clear repopulates
-				// `operations` for a service that is no longer selected.
 				this.#operationsAbort?.abort();
-				this.#operationsGuard.next();
+				this.#operationsAbort = undefined;
 				this.#operationsFetchedFor = null;
 				this.operations = [];
 				this.operationsLoading = false;
@@ -201,16 +139,14 @@ export class TraceExplorerStore {
 	}
 
 	async #loadHeatmap(timeRange: TimeRange, params: TraceParams): Promise<void> {
-		if (this.#disposed) return;
 		// Serialized range, not the resolved {startTs,endTs}: `resolveWindow` re-anchors a relative preset
 		// to `now` on every call, so a resolved key would differ every time and never skip anything.
-		const fetchKey = `${serializeTimeRange(timeRange)}|${traceFilterKey(params)}`;
+		const fetchKey = `${this.#nonce}|${serializeTimeRange(timeRange)}|${traceFilterKey(params)}`;
 		if (fetchKey === this.#heatmapFetchedFor) return;
 
 		this.#heatmapAbort?.abort();
 		const ctl = new AbortController();
 		this.#heatmapAbort = ctl;
-		const requestId = this.#heatmapGuard.next();
 
 		this.heatmapError = null;
 		this.heatmapLoading = true;
@@ -218,16 +154,16 @@ export class TraceExplorerStore {
 		try {
 			const { startTs, endTs } = resolveWindow(timeRange);
 			const result = await fetchTraceHistogram({ startTs, endTs, ...params }, ctl.signal);
-			if (!this.#heatmapGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#heatmapAbort !== ctl) return;
 			this.heatmap = result;
 			this.#heatmapFetchedFor = fetchKey;
 		} catch (e) {
 			if (isAbortError(e)) return;
-			if (!this.#heatmapGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#heatmapAbort !== ctl) return;
 			this.heatmapError = e instanceof Error ? e.message : 'Failed to load traces';
 			this.#heatmapFetchedFor = null;
 		} finally {
-			if (this.#heatmapGuard.isCurrent(requestId)) this.heatmapLoading = false;
+			if (!ctl.signal.aborted && this.#heatmapAbort === ctl) this.heatmapLoading = false;
 		}
 	}
 
@@ -251,17 +187,16 @@ export class TraceExplorerStore {
 		sortDirection: SortDirection,
 		mode: 'fresh' | 'prefetch'
 	): Promise<void> {
-		if (this.#disposed) return;
 		const append = mode === 'prefetch';
 
 		this.#searchAbort?.abort();
 		const ctl = new AbortController();
 		this.#searchAbort = ctl;
-		const requestId = this.#searchGuard.next();
 
 		if (append) {
 			this.#prefetching = true;
 		} else {
+			this.#prefetching = false;
 			this.tracesError = null;
 			this.tracesLoading = true;
 		}
@@ -269,23 +204,17 @@ export class TraceExplorerStore {
 		try {
 			// Appends reuse the pinned window: re-resolving a relative preset shifts every row's position
 			// and duplicates or skips rows at the offset boundary.
-			let startTs: number;
-			let endTs: number;
-			if (append && this.#snapshotStartTs !== undefined && this.#snapshotEndTs !== undefined) {
-				startTs = this.#snapshotStartTs;
-				endTs = this.#snapshotEndTs;
+			let window: { startTs: number; endTs: number };
+			if (append && this.#snapshot !== null) {
+				window = this.#snapshot;
 			} else {
-				const resolved = resolveWindow(timeRange);
-				startTs = resolved.startTs;
-				endTs = resolved.endTs;
-				this.#snapshotStartTs = startTs;
-				this.#snapshotEndTs = endTs;
+				window = resolveWindow(timeRange);
+				this.#snapshot = window;
 			}
 
 			const rows = await searchTraces(
 				{
-					startTs,
-					endTs,
+					...window,
 					...params,
 					limit: TRACE_BATCH_SIZE,
 					offset: append ? this.#scanned : 0,
@@ -293,12 +222,10 @@ export class TraceExplorerStore {
 				},
 				ctl.signal
 			);
-			if (!this.#searchGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#searchAbort !== ctl) return;
 
 			this.#scanned = append ? this.#scanned + rows.length : rows.length;
 			if (!append) this.#byId.clear();
-			// ponytail: dedup is silent — an enumeration of 4,913 root documents found 4,913 distinct
-			// trace ids, so multi-root traces do not occur here. Add a badge when one is observed.
 			for (const row of rows) {
 				if (!this.#byId.has(row.traceId)) this.#byId.set(row.traceId, row);
 			}
@@ -310,16 +237,15 @@ export class TraceExplorerStore {
 			}
 		} catch (e) {
 			if (isAbortError(e)) return;
-			if (!this.#searchGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#searchAbort !== ctl) return;
 			if (append) return;
 			this.tracesError = e instanceof Error ? e.message : 'Trace search failed';
 			this.traces = [];
 			this.#byId.clear();
 			this.#scanned = 0;
 			this.#lastBatchFull = false;
-			this.#searchFetchedFor = null;
 		} finally {
-			if (this.#searchGuard.isCurrent(requestId)) {
+			if (!ctl.signal.aborted && this.#searchAbort === ctl) {
 				this.#prefetching = false;
 				if (!append) this.tracesLoading = false;
 			}
@@ -327,56 +253,50 @@ export class TraceExplorerStore {
 	}
 
 	async #loadServices(timeRange: TimeRange): Promise<void> {
-		if (this.#disposed) return;
-		const fetchKey = serializeTimeRange(timeRange);
+		const fetchKey = `${this.#nonce}|${serializeTimeRange(timeRange)}`;
 		if (fetchKey === this.#servicesFetchedFor) return;
 		this.#servicesAbort?.abort();
 		const ctl = new AbortController();
 		this.#servicesAbort = ctl;
-		const requestId = this.#servicesGuard.next();
 		this.services = [];
 		try {
 			const { startTs, endTs } = resolveWindow(timeRange);
 			const services = await fetchTraceServices({ startTs, endTs }, ctl.signal);
-			if (!this.#servicesGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#servicesAbort !== ctl) return;
 			this.services = services;
 			this.#servicesFetchedFor = fetchKey;
 		} catch (e) {
 			if (isAbortError(e)) return;
-			if (!this.#servicesGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#servicesAbort !== ctl) return;
 			this.services = [];
 			this.#servicesFetchedFor = null;
 		}
 	}
 
 	async #loadOperations(service: string, timeRange: TimeRange): Promise<void> {
-		if (this.#disposed) return;
-		const fetchKey = `${service}|${serializeTimeRange(timeRange)}`;
+		const fetchKey = `${this.#nonce}|${service}|${serializeTimeRange(timeRange)}`;
 		if (fetchKey === this.#operationsFetchedFor) return;
 		this.#operationsAbort?.abort();
 		const ctl = new AbortController();
 		this.#operationsAbort = ctl;
-		const requestId = this.#operationsGuard.next();
 		this.operationsLoading = true;
 		try {
 			const { startTs, endTs } = resolveWindow(timeRange);
 			const operations = await fetchTraceOperations(service, { startTs, endTs }, ctl.signal);
-			if (!this.#operationsGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#operationsAbort !== ctl) return;
 			this.operations = operations;
 			this.#operationsFetchedFor = fetchKey;
 		} catch (e) {
 			if (isAbortError(e)) return;
-			if (!this.#operationsGuard.isCurrent(requestId)) return;
+			if (ctl.signal.aborted || this.#operationsAbort !== ctl) return;
 			this.operations = [];
 			this.#operationsFetchedFor = null;
 		} finally {
-			if (this.#operationsGuard.isCurrent(requestId)) this.operationsLoading = false;
+			if (!ctl.signal.aborted && this.#operationsAbort === ctl) this.operationsLoading = false;
 		}
 	}
 
 	dispose(): void {
-		if (this.#disposed) return;
-		this.#disposed = true;
 		this.#heatmapAbort?.abort();
 		this.#searchAbort?.abort();
 		this.#servicesAbort?.abort();

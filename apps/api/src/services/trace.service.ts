@@ -2,16 +2,9 @@ import { AggregationBuilder } from 'quickwit-js';
 import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 'quickwit-js';
 
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
+import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import { escapeFilterValue } from '../lib/query/compose-query.js';
-import type {
-	TraceHistogramResponse,
-	TraceListRow,
-	TraceOperationsResponse,
-	TraceResponse,
-	TraceSearchResponse,
-	TraceServicesResponse,
-	TraceSpan
-} from '../types.js';
+import type { TraceHistogramResponse, TraceListRow, TraceResponse, TraceSpan } from '../types.js';
 import { asBuckets, termsAgg } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 
@@ -192,7 +185,7 @@ export interface RootSpanFilters {
 	errorsOnly?: boolean;
 }
 
-function rootSpanQuery(f: RootSpanFilters): string {
+export function rootSpanQuery(f: RootSpanFilters): string {
 	// `is_root` is indexed but not stored, so it never shows up in a hit — it is still queryable, and
 	// `parent_span_id` is not indexed at all.
 	const clauses = ['is_root:true'];
@@ -240,7 +233,7 @@ export async function searchTraces(
 		offset: number;
 		sortOrder: 'asc' | 'desc';
 	}
-): Promise<TraceSearchResponse> {
+): Promise<{ traces: TraceListRow[] }> {
 	const idx = qw.index(traceIndexId);
 	const builder = idx
 		.query(rootSpanQuery(params))
@@ -248,31 +241,41 @@ export async function searchTraces(
 		.offset(params.offset)
 		// `span_start_timestamp_nanos` is indexed:false but fast:true, which is what sorting reads.
 		.sortBy('span_start_timestamp_nanos', params.sortOrder)
-		.timeRange(params.startTs, params.endTs);
+		.timeRange(toQuickwitTimestamp(params.startTs), toQuickwitTimestamp(params.endTs));
 	const response = await idx.search<RootSpanHit>(builder).catch(translateQuickwitError);
 
 	return { traces: response.hits.map(rootRow) };
 }
 
-/** Over roots, not all spans, or the dropdown offers services that select nothing. Both are `fast: true`. */
+async function listRootTerms(
+	qw: QuickwitClient,
+	traceIndexId: string,
+	field: string,
+	query: string,
+	params: { startTs: number; endTs: number }
+): Promise<string[]> {
+	const idx = qw.index(traceIndexId);
+	const builder = idx
+		.query(query)
+		.limit(0)
+		.agg('values', termsAgg(field, FIELD_VALUES_DEFAULT))
+		.timeRange(toQuickwitTimestamp(params.startTs), toQuickwitTimestamp(params.endTs));
+	const response = await idx.search(builder).catch(translateQuickwitError);
+
+	const agg = response.aggregations?.['values'] as BucketAggregationResult | undefined;
+	return asBuckets(agg)
+		.map((bucket) => String(bucket.key))
+		.filter((value) => value !== '');
+}
+
+/** Over roots, not all spans, or the dropdown offers services that select nothing. */
 export async function listTraceServices(
 	qw: QuickwitClient,
 	traceIndexId: string,
 	params: { startTs: number; endTs: number }
-): Promise<TraceServicesResponse> {
-	const idx = qw.index(traceIndexId);
-	const builder = idx
-		.query('is_root:true')
-		.limit(0)
-		.agg('services', termsAgg('service_name', FIELD_VALUES_DEFAULT))
-		.timeRange(params.startTs, params.endTs);
-	const response = await idx.search(builder).catch(translateQuickwitError);
-
-	const agg = response.aggregations?.['services'] as BucketAggregationResult | undefined;
+): Promise<{ services: string[] }> {
 	return {
-		services: asBuckets(agg)
-			.map((b) => String(b.key))
-			.filter((s) => s !== '')
+		services: await listRootTerms(qw, traceIndexId, 'service_name', 'is_root:true', params)
 	};
 }
 
@@ -280,20 +283,15 @@ export async function listTraceOperations(
 	qw: QuickwitClient,
 	traceIndexId: string,
 	params: { startTs: number; endTs: number; service: string }
-): Promise<TraceOperationsResponse> {
-	const idx = qw.index(traceIndexId);
-	const builder = idx
-		.query(rootSpanQuery({ service: params.service }))
-		.limit(0)
-		.agg('operations', termsAgg('span_name', FIELD_VALUES_DEFAULT))
-		.timeRange(params.startTs, params.endTs);
-	const response = await idx.search(builder).catch(translateQuickwitError);
-
-	const agg = response.aggregations?.['operations'] as BucketAggregationResult | undefined;
+): Promise<{ operations: string[] }> {
 	return {
-		operations: asBuckets(agg)
-			.map((b) => String(b.key))
-			.filter((o) => o !== '')
+		operations: await listRootTerms(
+			qw,
+			traceIndexId,
+			'span_name',
+			rootSpanQuery({ service: params.service }),
+			params
+		)
 	};
 }
 

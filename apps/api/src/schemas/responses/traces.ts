@@ -24,7 +24,7 @@ export const TraceSpanSchema = named(
 		durationMicros: v.number(),
 		isError: v.boolean(),
 		attributes: TraceAttributesSchema,
-		resourceId: v.nullable(v.string()),
+		resourceId: v.string(),
 		events: v.array(SpanEventSchema)
 	})
 );

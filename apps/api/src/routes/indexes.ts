@@ -69,7 +69,7 @@ import {
 	searchLogs
 } from '../services/log.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
-import { withSearchAudit } from '../services/search-audit.service.js';
+import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
 import type { Scope } from '../types.js';
 import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
@@ -193,7 +193,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { indexId } = c.req.valid('param');
 			const body = c.req.valid('json');
-			await saveIndexConfig(db, indexId, body);
+			await saveIndexConfig(db, indexId, c.get('indexMeta').settings, body);
 			return c.body(null, 204);
 		}
 	)
@@ -359,13 +359,13 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const q = c.req.valid('query');
 			const indexConfig = c.get('indexConfig');
-			const session = c.get('session');
-			const keyActor = c.get('apiKeyActor');
-			const actor = keyActor
-				? ({ source: 'token', apiKeyId: keyActor.keyId } as const)
-				: ({ source: 'ui', userId: session.user.id } as const);
-			const result = await withSearchAudit(db, actor, indexConfig.indexId, q, () =>
-				searchLogs(quickwit, indexConfig, q)
+			const result = await withSearchAudit(
+				db,
+				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
+				indexConfig.indexId,
+				{ query: q.q ?? '', startTs: q.startTs, endTs: q.endTs },
+				() => searchLogs(quickwit, indexConfig, q),
+				(response) => response.numHits
 			);
 			return c.json(result);
 		}

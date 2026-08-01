@@ -1,0 +1,23 @@
+meta {
+  name: Search Traces
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/traces/search?startTs=1700000000&endTs=1700000900&limit=100&offset=0&sortOrder=desc
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1700000000
+  endTs: 1700000900
+  limit: 100
+  offset: 0
+  sortOrder: desc
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

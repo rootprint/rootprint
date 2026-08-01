@@ -26,7 +26,6 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 - **The trace list shows one row per trace**, collapsing the duplicate root-span documents that OTLP
   retries can produce.
 - **Refresh reloads the service and operation dropdowns**, not just the results and heatmap.
-- **Fractional `startTs`/`endTs` are rejected** instead of being rounded outward into a wider window.
 
 ## [0.3.6] - 2026-07-21
 

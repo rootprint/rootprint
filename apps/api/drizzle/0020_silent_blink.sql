@@ -1,1 +1,0 @@
-ALTER TABLE "index_settings" DROP COLUMN "visibility";

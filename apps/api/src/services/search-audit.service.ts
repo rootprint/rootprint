@@ -2,8 +2,6 @@ import type { Db } from '../db/index.js';
 import { searchAudit } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 import { HttpError } from '../utils/http-error.js';
-import type { SearchQueryInput } from '../schemas/search.js';
-import type { LogSearchResponse } from '../types.js';
 
 const MAX_MSG = 500;
 
@@ -22,19 +20,36 @@ function extractAuditError(err: unknown): { code: string; message: string } {
 // together here rather than passed as loose fields.
 type AuditActor = { source: 'ui'; userId: string } | { source: 'token'; apiKeyId: string };
 
+export function auditActor(userId: string, apiKeyId?: string): AuditActor {
+	return apiKeyId === undefined ? { source: 'ui', userId } : { source: 'token', apiKeyId };
+}
+
+type SearchAuditMetadata = {
+	query: string;
+	startTs?: number;
+	endTs?: number;
+};
+
 /**
- * Runs a log search, timing it and recording a success/error row in search_audit.
+ * Runs a search, timing it and recording a success/error row in search_audit.
  * The audit insert is fire-and-forget so it never blocks or fails the request.
  */
-export async function withSearchAudit(
+export async function withSearchAudit<Result>(
 	db: Db,
 	actor: AuditActor,
 	indexId: string,
-	q: SearchQueryInput,
-	run: () => Promise<LogSearchResponse>
-): Promise<LogSearchResponse> {
+	metadata: SearchAuditMetadata,
+	run: () => Promise<Result>,
+	resultCount: (result: Result) => number | null = () => null
+): Promise<Result> {
 	const start = performance.now();
-	const base = { ...actor, indexId, query: q.q ?? '', startTs: q.startTs, endTs: q.endTs };
+	const base = {
+		...actor,
+		indexId,
+		query: metadata.query,
+		startTs: metadata.startTs === undefined ? undefined : Math.trunc(metadata.startTs),
+		endTs: metadata.endTs === undefined ? undefined : Math.trunc(metadata.endTs)
+	};
 	try {
 		const result = await run();
 		db.insert(searchAudit)
@@ -42,7 +57,7 @@ export async function withSearchAudit(
 				...base,
 				status: 'success',
 				durationMs: Math.round(performance.now() - start),
-				numHits: result.numHits
+				numHits: resultCount(result)
 			})
 			.catch((insertErr) =>
 				logger.error({ err: insertErr, indexId }, 'search audit insert failed')
