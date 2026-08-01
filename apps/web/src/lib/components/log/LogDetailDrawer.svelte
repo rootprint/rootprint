@@ -18,6 +18,7 @@
 	import { searchHighlight } from '$lib/utils/dom-highlight';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
+	import { traceDetailHref } from '$lib/utils/trace-params';
 	import { isTraceId } from 'api/schemas';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
@@ -76,7 +77,9 @@
 		const v = getByPath(hit.raw, path);
 		return isTraceId(v) ? v : null;
 	});
-	const hasTrace = $derived((store.fieldConfig?.hasTraces ?? false) && traceId !== null);
+	// ponytail: no span-store existence check — a deployment with no trace index shows this link and
+	// the target 404s. Add the check when someone hits it; it costs a Quickwit call per config load.
+	const hasTrace = $derived(traceId !== null);
 
 	const traceTarget = $derived(
 		hasTrace && traceId !== null && store.selectedIndex !== null
@@ -101,15 +104,14 @@
 
 	// Explicit returnTo rather than history state: a reload or a pasted link carries no nav state.
 	function tracePageHref(indexId: string, id: string): string {
-		const returnTo = `${page.url.pathname}${page.url.search}`;
-		return `/traces/${encodeURIComponent(indexId)}/${id}?returnTo=${encodeURIComponent(returnTo)}`;
+		return traceDetailHref(id, { index: indexId, returnTo: page.url });
 	}
 
 	$effect(() => {
 		const target = traceTarget;
 		if (activeTab !== 'trace' || !target || requestedKey === traceKey) return;
 		requestedKey = traceKey;
-		const next = new TraceResource(target.indexId, target.traceId);
+		const next = new TraceResource(target.traceId);
 		traceResource = next;
 		void next.load();
 	});

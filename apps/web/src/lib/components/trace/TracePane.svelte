@@ -44,8 +44,11 @@
 		if (!model || !selectedSpanId) return;
 
 		const spanId = selectedSpanId;
+		// `buildTraceModel` tolerates cyclic parent links, so this walk has to as well or it never ends.
+		const seen = new Set<string>();
 		let node = model.byId.get(spanId);
-		while (node?.parentSpanId) {
+		while (node?.parentSpanId && !seen.has(node.spanId)) {
+			seen.add(node.spanId);
 			collapsedSpanIds.delete(node.parentSpanId);
 			node = model.byId.get(node.parentSpanId);
 		}

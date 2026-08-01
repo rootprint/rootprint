@@ -1052,16 +1052,6 @@
 					"traceIdField": {
 						"type": "string"
 					},
-					"traceIndexId": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"tracebackField": {
 						"anyOf": [
 							{
@@ -1081,7 +1071,6 @@
 					"messageField",
 					"tracebackField",
 					"contextFields",
-					"traceIndexId",
 					"traceIdField",
 					"indexUri",
 					"timestampField",
@@ -1248,23 +1237,12 @@
 					},
 					"isTraceIndex": {
 						"type": "boolean"
-					},
-					"traceIndexId": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
 					}
 				},
 				"required": [
 					"indexId",
 					"displayName",
-					"isTraceIndex",
-					"traceIndexId"
+					"isTraceIndex"
 				],
 				"type": "object"
 			},
@@ -1292,9 +1270,6 @@
 								"type": "null"
 							}
 						]
-					},
-					"hasTraces": {
-						"type": "boolean"
 					},
 					"indexId": {
 						"type": "string"
@@ -1334,8 +1309,7 @@
 					"contextFields",
 					"timestampField",
 					"isOtel",
-					"traceIdField",
-					"hasTraces"
+					"traceIdField"
 				],
 				"type": "object"
 			},
@@ -2477,12 +2451,67 @@
 					"intervalSec": {
 						"description": "Column width in seconds, chosen by the server from the requested window; the client does not set it.",
 						"type": "number"
+					},
+					"totalCount": {
+						"description": "Traces across every column, i.e. the size of the result set the search endpoint pages through under the same filters. Approximate at the edges: the grid window is snapped outward to interval boundaries, so it can over-count by up to one interval per side.",
+						"type": "number"
 					}
 				},
 				"required": [
 					"intervalSec",
 					"bands",
-					"columns"
+					"columns",
+					"totalCount"
+				],
+				"type": "object"
+			},
+			"TraceListRow": {
+				"properties": {
+					"rootDurationMicros": {
+						"description": "The root span's own duration, not the trace's. Derived from span_end_timestamp_nanos minus span_start_timestamp_nanos, because span_duration_millis floors sub-millisecond spans to 0.",
+						"type": "number"
+					},
+					"rootIsError": {
+						"description": "Whether the root span's own span_status reports an error. A trace whose failure lives in a descendant, or in span_attributes rather than span_status, reports false here.",
+						"type": "boolean"
+					},
+					"rootOperation": {
+						"description": "The root span's operation name.",
+						"type": "string"
+					},
+					"rootService": {
+						"description": "The root span's service.",
+						"type": "string"
+					},
+					"rootStartMicros": {
+						"description": "Root span start, as Unix epoch microseconds.",
+						"type": "number"
+					},
+					"traceId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"traceId",
+					"rootOperation",
+					"rootService",
+					"rootStartMicros",
+					"rootDurationMicros",
+					"rootIsError"
+				],
+				"type": "object"
+			},
+			"TraceOperationsResponse": {
+				"properties": {
+					"operations": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"operations"
 				],
 				"type": "object"
 			},
@@ -2511,12 +2540,46 @@
 					},
 					"traceStartMicros": {
 						"type": "number"
+					},
+					"truncated": {
+						"description": "The trace has more span documents than one request returns, or contained documents missing a required field, so some spans are absent. The displayed trace is incomplete.",
+						"type": "boolean"
 					}
 				},
 				"required": [
 					"spans",
 					"traceStartMicros",
-					"resources"
+					"resources",
+					"truncated"
+				],
+				"type": "object"
+			},
+			"TraceSearchResponse": {
+				"properties": {
+					"traces": {
+						"description": "One row per matching root span, ordered by root start time. Page with limit/offset; the total for the same filters comes from the histogram endpoint.",
+						"items": {
+							"$ref": "#/components/schemas/TraceListRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"traces"
+				],
+				"type": "object"
+			},
+			"TraceServicesResponse": {
+				"properties": {
+					"services": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"services"
 				],
 				"type": "object"
 			},
@@ -14030,9 +14093,6 @@
 											}
 										]
 									},
-									"isTraceIndex": {
-										"type": "boolean"
-									},
 									"levelField": {
 										"minLength": 1,
 										"type": "string"
@@ -14044,17 +14104,6 @@
 									"traceIdField": {
 										"minLength": 1,
 										"type": "string"
-									},
-									"traceIndexId": {
-										"anyOf": [
-											{
-												"minLength": 1,
-												"type": "string"
-											},
-											{
-												"type": "null"
-											}
-										]
 									},
 									"tracebackField": {
 										"anyOf": [
@@ -16177,156 +16226,6 @@
 				]
 			}
 		},
-		"/api/indexes/{indexId}/traces/histogram": {
-			"get": {
-				"operationId": "getApiIndexesByIndexIdTracesHistogram",
-				"parameters": [
-					{
-						"description": "Window start as a Unix timestamp in seconds, inclusive.",
-						"in": "query",
-						"name": "startTs",
-						"required": true,
-						"schema": {
-							"minimum": 0,
-							"type": "number"
-						}
-					},
-					{
-						"description": "Window end as a Unix timestamp in seconds, exclusive.",
-						"in": "query",
-						"name": "endTs",
-						"required": true,
-						"schema": {
-							"minimum": 0,
-							"type": "number"
-						}
-					},
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TraceHistogramResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"429": {
-						"$ref": "#/components/responses/TooManyRequests"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"security": [
-					{
-						"personalBearer": []
-					},
-					{
-						"cookieAuth": []
-					}
-				],
-				"summary": "Get trace duration heatmap",
-				"tags": [
-					"Traces"
-				]
-			}
-		},
-		"/api/indexes/{indexId}/traces/{traceId}": {
-			"get": {
-				"operationId": "getApiIndexesByIndexIdTracesByTraceId",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "traceId",
-						"required": true,
-						"schema": {
-							"pattern": "^(?!0{32}$)[0-9a-f]{32}$",
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TraceResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"429": {
-						"$ref": "#/components/responses/TooManyRequests"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"security": [
-					{
-						"personalBearer": []
-					},
-					{
-						"cookieAuth": []
-					}
-				],
-				"summary": "Get trace spans",
-				"tags": [
-					"Traces"
-				]
-			}
-		},
 		"/api/indexes/{indexId}/views": {
 			"get": {
 				"operationId": "getApiIndexesByIndexIdViews",
@@ -17409,6 +17308,487 @@
 				]
 			}
 		},
+		"/api/traces/histogram": {
+			"get": {
+				"operationId": "getApiTracesHistogram",
+				"parameters": [
+					{
+						"description": "Window start as a Unix timestamp in seconds, inclusive.",
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Window end as a Unix timestamp in seconds, exclusive.",
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "service",
+						"schema": {
+							"maxLength": 255,
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "operation",
+						"schema": {
+							"maxLength": 255,
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "minDurationMs",
+						"schema": {
+							"maximum": 3600000,
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "maxDurationMs",
+						"schema": {
+							"maximum": 3600000,
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "errorsOnly",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceHistogramResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "Get trace duration heatmap",
+				"tags": [
+					"Traces"
+				]
+			}
+		},
+		"/api/traces/operations": {
+			"get": {
+				"operationId": "getApiTracesOperations",
+				"parameters": [
+					{
+						"description": "Window start as a Unix timestamp in seconds, inclusive.",
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Window end as a Unix timestamp in seconds, exclusive.",
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "service",
+						"required": true,
+						"schema": {
+							"maxLength": 255,
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceOperationsResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "List operations that root a trace for a service",
+				"tags": [
+					"Traces"
+				]
+			}
+		},
+		"/api/traces/search": {
+			"get": {
+				"operationId": "getApiTracesSearch",
+				"parameters": [
+					{
+						"description": "Window start as a Unix timestamp in seconds, inclusive.",
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Window end as a Unix timestamp in seconds, exclusive.",
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "service",
+						"schema": {
+							"maxLength": 255,
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "operation",
+						"schema": {
+							"maxLength": 255,
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "minDurationMs",
+						"schema": {
+							"maximum": 3600000,
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "maxDurationMs",
+						"schema": {
+							"maximum": 3600000,
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "errorsOnly",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"maximum": 200,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"description": "Rows to skip. The ceiling matches the deep-paging limit the log explorer accepts; past it, narrow the window instead.",
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"maximum": 10000,
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"schema": {
+							"enum": [
+								"asc",
+								"desc"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceSearchResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "Search traces",
+				"tags": [
+					"Traces"
+				]
+			}
+		},
+		"/api/traces/services": {
+			"get": {
+				"operationId": "getApiTracesServices",
+				"parameters": [
+					{
+						"description": "Window start as a Unix timestamp in seconds, inclusive.",
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Window end as a Unix timestamp in seconds, exclusive.",
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceServicesResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "List services that root a trace",
+				"tags": [
+					"Traces"
+				]
+			}
+		},
+		"/api/traces/{traceId}": {
+			"get": {
+				"operationId": "getApiTracesByTraceId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "traceId",
+						"required": true,
+						"schema": {
+							"pattern": "^(?!0{32}$)[0-9a-f]{32}$",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TraceResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "Get trace spans",
+				"tags": [
+					"Traces"
+				]
+			}
+		},
 		"/api/users": {
 			"get": {
 				"operationId": "getApiUsers",
@@ -17816,7 +18196,7 @@
 								}
 							}
 						},
-						"description": "Upstream rejected the request, or the ingest key has no paired trace index"
+						"description": "Upstream rejected the request"
 					},
 					"401": {
 						"content": {
@@ -17925,7 +18305,7 @@
 		},
 		"/v1/traces": {
 			"post": {
-				"description": "OTLP/HTTP traces exporter endpoint. Accepts only application/x-protobuf (ExportTraceServiceRequest). The destination index comes from the ingest key. Quickwit answers with JSON, so the response is re-encoded as protobuf, preserving the partial_success count of rejected records. Errors use the google.rpc.Status encoding: 415 is JSON, everything else is binary protobuf.",
+				"description": "OTLP/HTTP traces exporter endpoint. Accepts only application/x-protobuf (ExportTraceServiceRequest). Spans go to the single span store named by TRACE_INDEX_ID, not to the ingest key’s index. Quickwit answers with JSON, so the response is re-encoded as protobuf, preserving the partial_success count of rejected records. Errors use the google.rpc.Status encoding: 415 is JSON, everything else is binary protobuf.",
 				"operationId": "postV1Traces",
 				"requestBody": {
 					"content": {
@@ -17962,7 +18342,7 @@
 								}
 							}
 						},
-						"description": "Upstream rejected the request, or the ingest key has no paired trace index"
+						"description": "Upstream rejected the request"
 					},
 					"401": {
 						"content": {

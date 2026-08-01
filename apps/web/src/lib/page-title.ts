@@ -7,7 +7,7 @@ const STATIC_TITLES: Record<string, string> = {
 	'/': 'Logs',
 	'/s/[code]': 'Shared log',
 	'/traces': 'Traces',
-	'/traces/[indexId]/[traceId]': 'Trace',
+	'/traces/[traceId]': 'Trace',
 	'/auth/sign-in': 'Sign in',
 	'/auth/setup': 'Setup',
 	'/auth/setup-admin': 'Admin setup'

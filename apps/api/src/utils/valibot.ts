@@ -3,8 +3,8 @@ import * as v from 'valibot';
 /** A string query/path param coerced to a finite number. */
 export const toNum = v.pipe(v.string(), v.decimal(), v.transform(Number), v.number());
 
-/** A Unix-seconds window bound. Fractional, because the web client's `from`/`to` are not rounded. */
-export const tsParam = v.pipe(toNum, v.minValue(0));
+/** A Unix-seconds window bound. Truncated, not rejected: `/logs` accepts `Date.now() / 1000` too. */
+export const tsParam = v.pipe(toNum, v.minValue(0), v.transform(Math.trunc));
 
 /**
  * A string query/path param coerced to an integer in `[min, max]`.

@@ -34,8 +34,68 @@ export const TraceResponse = named(
 	v.object({
 		spans: v.array(TraceSpanSchema),
 		traceStartMicros: v.number(),
-		resources: v.record(v.string(), TraceAttributesSchema)
+		resources: v.record(v.string(), TraceAttributesSchema),
+		truncated: v.pipe(
+			v.boolean(),
+			v.metadata({
+				description:
+					'The trace has more span documents than one request returns, or contained documents missing a required field, so some spans are absent. The displayed trace is incomplete.'
+			})
+		)
 	})
+);
+
+export const TraceListRowSchema = named(
+	'TraceListRow',
+	v.object({
+		traceId: v.string(),
+		rootOperation: v.pipe(
+			v.string(),
+			v.metadata({ description: "The root span's operation name." })
+		),
+		rootService: v.pipe(v.string(), v.metadata({ description: "The root span's service." })),
+		rootStartMicros: v.pipe(
+			v.number(),
+			v.metadata({ description: 'Root span start, as Unix epoch microseconds.' })
+		),
+		rootDurationMicros: v.pipe(
+			v.number(),
+			v.metadata({
+				description:
+					"The root span's own duration, not the trace's. Derived from span_end_timestamp_nanos minus span_start_timestamp_nanos, because span_duration_millis floors sub-millisecond spans to 0."
+			})
+		),
+		rootIsError: v.pipe(
+			v.boolean(),
+			v.metadata({
+				description:
+					"Whether the root span's own span_status reports an error. A trace whose failure lives in a descendant, or in span_attributes rather than span_status, reports false here."
+			})
+		)
+	})
+);
+
+export const TraceSearchResponse = named(
+	'TraceSearchResponse',
+	v.object({
+		traces: v.pipe(
+			v.array(TraceListRowSchema),
+			v.metadata({
+				description:
+					'One row per matching root span, ordered by root start time. Page with limit/offset; the total for the same filters comes from the histogram endpoint.'
+			})
+		)
+	})
+);
+
+export const TraceServicesResponse = named(
+	'TraceServicesResponse',
+	v.object({ services: v.array(v.string()) })
+);
+
+export const TraceOperationsResponse = named(
+	'TraceOperationsResponse',
+	v.object({ operations: v.array(v.string()) })
 );
 
 export const TraceDurationBandSchema = named(
@@ -102,6 +162,13 @@ export const TraceHistogramResponse = named(
 			v.metadata({
 				description:
 					'One entry per interval across the window, ascending and gap-free; empty intervals are present with zero counts.'
+			})
+		),
+		totalCount: v.pipe(
+			v.number(),
+			v.metadata({
+				description:
+					'Traces across every column, i.e. the size of the result set the search endpoint pages through under the same filters. Approximate at the edges: the grid window is snapped outward to interval boundaries, so it can over-count by up to one interval per side.'
 			})
 		)
 	})

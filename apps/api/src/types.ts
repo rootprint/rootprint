@@ -19,7 +19,11 @@ import type {
 import type {
 	SpanEventSchema,
 	TraceHistogramResponse as TraceHistogramResponseSchema,
+	TraceListRowSchema,
+	TraceOperationsResponse as TraceOperationsResponseSchema,
 	TraceResponse as TraceResponseSchema,
+	TraceSearchResponse as TraceSearchResponseSchema,
+	TraceServicesResponse as TraceServicesResponseSchema,
 	TraceSpanSchema
 } from './schemas/responses/traces.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
@@ -125,8 +129,6 @@ export type VerifiedApiKey = {
 	id: number;
 	name: string;
 	indexId: string;
-	/** Span destination, resolved from indexId's pairing at verification time. */
-	traceIndexId: string | null;
 	role: 'ingest';
 };
 
@@ -171,12 +173,10 @@ export type ExportFormat = 'json' | 'csv' | 'text';
 // Index configuration (index.service.ts)
 export type IndexSettings = {
 	displayName: string | null;
-	isTraceIndex: boolean;
 	levelField: string;
 	messageField: string;
 	tracebackField: string | null;
 	contextFields: string[] | null;
-	traceIndexId: string | null;
 	traceIdField: string;
 };
 
@@ -312,3 +312,11 @@ export type SpanEvent = v.InferOutput<typeof SpanEventSchema>;
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
 
 export type TraceHistogramResponse = v.InferOutput<typeof TraceHistogramResponseSchema>;
+
+export type TraceListRow = v.InferOutput<typeof TraceListRowSchema>;
+
+export type TraceSearchResponse = v.InferOutput<typeof TraceSearchResponseSchema>;
+
+export type TraceServicesResponse = v.InferOutput<typeof TraceServicesResponseSchema>;
+
+export type TraceOperationsResponse = v.InferOutput<typeof TraceOperationsResponseSchema>;

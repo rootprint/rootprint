@@ -12,6 +12,7 @@ export const config = {
 	databaseUrl: requireEnv('DATABASE_URL'),
 	origin: requireUrlEnv('ORIGIN'),
 	quickwitUrl: requireUrlEnv('QUICKWIT_URL'),
+	traceIndexId: process.env.TRACE_INDEX_ID || 'otel-traces-v0_9',
 	frontendUrl: optionalUrlEnv('FRONTEND_URL'),
 	port: intEnv('PORT', 8282),
 	trustedProxyHops: intEnv('TRUST_PROXY_HOPS', 0),

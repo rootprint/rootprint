@@ -4,7 +4,7 @@ import { AggregationBuilder } from 'quickwit-js';
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
 import { composeQuery } from '../lib/query/compose-query.js';
-import { asBuckets } from '../utils/aggregations.js';
+import { asBuckets, termsAgg } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import type {
 	FieldValueEntry,
@@ -15,10 +15,6 @@ import type {
 	IndexConfig,
 	LogSearchResponse
 } from '../types.js';
-
-function termsAgg(field: string, size: number) {
-	return AggregationBuilder.terms(field, { size, shardSize: size });
-}
 
 function isTruncated(agg: BucketAggregationResult | undefined): boolean {
 	return (agg?.sum_other_doc_count ?? 0) > 0;

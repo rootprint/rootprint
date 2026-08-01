@@ -18,6 +18,11 @@
 	const root = $derived(model.roots[0] ?? null);
 	const hasSpans = $derived(model.spanCount > 0);
 
+	// safeReturnTo has already reduced this to a same-origin path, so a prefix test is enough.
+	const backLabel = $derived(
+		data.returnTo.startsWith('/traces') ? 'Back to traces' : 'Back to logs'
+	);
+
 	let filter = $state('');
 
 	const rootSpanId = $derived(root?.spanId ?? null);
@@ -31,25 +36,32 @@
 		selection = { traceId: data.traceId, spanId };
 	};
 
-	const logsTarget = $derived({
-		indexId: data.indexId,
-		traceIdField: data.traceIdField,
-		traceId: data.traceId,
-		traceStartMicros: model.traceStartMicros
-	});
+	const logsTarget = $derived(
+		data.logTarget === null
+			? null
+			: {
+					indexId: data.logTarget.indexId,
+					traceIdField: data.logTarget.traceIdField,
+					traceId: data.traceId,
+					traceStartMicros: model.traceStartMicros
+				}
+	);
 
 	const traceLogsUrl = $derived(
-		traceLogsHref({ ...logsTarget, startOffsetMicros: 0, durationMicros: model.durationMicros })
+		logsTarget === null
+			? null
+			: traceLogsHref({ ...logsTarget, startOffsetMicros: 0, durationMicros: model.durationMicros })
 	);
 
 	const spanLogs = (span: SpanNode): { href: string; count: number } | null => {
-		const count = data.spanLogCounts.counts?.get(span.spanId) ?? 0;
-		if (count === 0) return null;
+		const count = data.spanLogCounts?.counts?.get(span.spanId) ?? 0;
+		if (logsTarget === null || count === 0) return null;
 		return {
+			// The trace's window, not the span's: that is what the count was taken over.
 			href: traceLogsHref({
 				...logsTarget,
-				startOffsetMicros: span.startOffsetMicros,
-				durationMicros: span.durationMicros,
+				startOffsetMicros: 0,
+				durationMicros: model.durationMicros,
 				spanId: span.spanId
 			}),
 			count
@@ -68,9 +80,9 @@
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			<a href={data.returnTo} class="btn btn-ghost btn-xs -ml-2 gap-1.5">
 				<ArrowLeft class="h-3.5 w-3.5" />
-				Back to logs
+				{backLabel}
 			</a>
-			{#if hasSpans}
+			{#if hasSpans && traceLogsUrl}
 				<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
 					<ScrollText class="h-3.5 w-3.5" />
 					Logs for this trace
@@ -146,6 +158,14 @@
 				Some parent spans are still being indexed — this trace may be incomplete.
 			</span>
 			<button class="btn btn-ghost btn-xs" onclick={() => invalidateAll()}>Reload</button>
+		</div>
+	{/if}
+
+	{#if data.truncated}
+		<div class="border-line flex items-center gap-2 border-b px-4 py-1.5 text-xs">
+			<span class="text-warning">
+				This trace is too large to display in full — some spans are not shown.
+			</span>
 		</div>
 	{/if}
 

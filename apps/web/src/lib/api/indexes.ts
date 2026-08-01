@@ -30,8 +30,7 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 		tracebackField: json.tracebackField ?? 'traceback',
 		contextFields: json.contextFields ?? [],
 		isOtel: json.isOtel,
-		traceIdField: json.traceIdField,
-		hasTraces: json.hasTraces
+		traceIdField: json.traceIdField
 	};
 }
 

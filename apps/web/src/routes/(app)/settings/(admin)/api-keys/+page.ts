@@ -8,6 +8,7 @@ export const load: PageLoad = async ({ depends }) => {
 	const [keys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
 	return {
 		keys,
-		indexes: indexes.filter((i) => !i.isTraceIndex)
+		indexes: indexes.filter((i) => !i.isTraceIndex),
+		traceIndexId: indexes.find((i) => i.isTraceIndex)?.indexId ?? null
 	};
 };

@@ -19,7 +19,8 @@ export const load: PageLoad = async ({ params, depends }) => {
 		return {
 			integrationId: params.integration,
 			apiKeys,
-			indexes: indexes.filter((i) => !i.isTraceIndex)
+			indexes: indexes.filter((i) => !i.isTraceIndex),
+			traceIndexId: indexes.find((i) => i.isTraceIndex)?.indexId ?? null
 		};
 	} catch (e) {
 		if (e instanceof ApiError) error(e.status, e.message);

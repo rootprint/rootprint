@@ -86,7 +86,7 @@
 
 	{#if activeTab === 'config'}
 		{#key detail.indexId}
-			<IndexConfigForm {detail} traceIndexIds={data.traceIndexIds} />
+			<IndexConfigForm {detail} />
 		{/key}
 	{:else if activeTab === 'fields'}
 		<div class="flex flex-col gap-3">

@@ -70,9 +70,7 @@ export const IndexSummarySchema = named(
 	v.object({
 		indexId: v.string(),
 		displayName: v.nullable(v.string()),
-		isTraceIndex: v.boolean(),
-		/** The paired span store, or null. */
-		traceIndexId: v.nullable(v.string())
+		isTraceIndex: v.boolean()
 	})
 );
 
@@ -88,7 +86,6 @@ export const IndexDetailResponse = named(
 		messageField: v.string(),
 		tracebackField: v.nullable(v.string()),
 		contextFields: v.nullable(v.array(v.string())),
-		traceIndexId: v.nullable(v.string()),
 		traceIdField: v.string(),
 		indexUri: v.nullable(v.string()),
 		timestampField: v.nullable(v.string()),
@@ -118,8 +115,7 @@ export const IndexViewConfigResponse = named(
 		contextFields: v.nullable(v.array(v.string())),
 		timestampField: v.string(),
 		isOtel: v.boolean(),
-		traceIdField: v.string(),
-		hasTraces: v.boolean()
+		traceIdField: v.string()
 	})
 );
 
