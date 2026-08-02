@@ -39,9 +39,9 @@
 			{/if}
 			<span
 				class="text-base-content/50 text-left text-[14px] tracking-wider uppercase"
-				title="Root span durations across the window, under the same filters as the list"
+				title="Span durations across the window, under the same filters as the list"
 			>
-				Root span duration
+				Span duration
 			</span>
 		</button>
 		<div

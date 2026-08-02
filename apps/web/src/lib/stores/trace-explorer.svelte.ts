@@ -2,8 +2,8 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 
 import { isAbortError } from '$lib/api/errors';
-import { fetchTraceHistogram, fetchTraceServices, searchTraces } from '$lib/api/traces';
-import type { SortDirection, TimeRange, TraceHistogramResponse, TraceListRow } from '$lib/types';
+import { fetchTraceHistogram, fetchTraceServices, searchSpans } from '$lib/api/traces';
+import type { SortDirection, SpanListRow, TimeRange, TraceHistogramResponse } from '$lib/types';
 import { serializeTimeRange } from '$lib/utils/fields';
 import { deserialize } from '$lib/utils/query-params';
 import { resolveWindow } from '$lib/utils/time-range';
@@ -14,9 +14,12 @@ import {
 	type TraceParams
 } from '$lib/utils/trace-params';
 
-const TRACE_BATCH_SIZE = 100;
+const SPAN_BATCH_SIZE = 100;
 
-const TRACE_MAX_ROWS = 2_000;
+const SPAN_MAX_ROWS = 10_000;
+
+/** Mirrors the `offset` ceiling in apps/api/src/schemas/traces.ts; past it the API 400s. */
+const OFFSET_CEILING = 10_000;
 
 export interface TraceExplorerOptions {
 	searchParams: () => URLSearchParams;
@@ -28,9 +31,9 @@ export class TraceExplorerStore {
 	heatmapLoading = $state(false);
 	heatmapError = $state<string | null>(null);
 
-	traces = $state.raw<TraceListRow[]>([]);
-	tracesLoading = $state(false);
-	tracesError = $state<string | null>(null);
+	spans = $state.raw<SpanListRow[]>([]);
+	spansLoading = $state(false);
+	spansError = $state<string | null>(null);
 	hasSearched = $state(false);
 
 	services = $state.raw<string[]>([]);
@@ -41,9 +44,13 @@ export class TraceExplorerStore {
 
 	#prefetching = $state(false);
 	#lastBatchFull = $state(false);
-	/** Hits received, NOT `traces.length`: the server pages by document offset, before dedup. */
+	/** Documents received, NOT `spans.length`: the server pages by document offset, before dedup. */
 	#scanned = 0;
-	#byId = new Map<string, TraceListRow>();
+	/**
+	 * OTLP delivery is at-least-once and Quickwit has no upsert, so retries write duplicate documents
+	 * for one logical span. `span_id` alone is not enough — it is 8 bytes and unique only within a trace.
+	 */
+	#byId = new Map<string, SpanListRow>();
 	#snapshot: { startTs: number; endTs: number } | null = null;
 
 	#heatmapAbort?: AbortController;
@@ -137,7 +144,7 @@ export class TraceExplorerStore {
 		} catch (e) {
 			if (isAbortError(e)) return;
 			if (ctl.signal.aborted || this.#heatmapAbort !== ctl) return;
-			this.heatmapError = e instanceof Error ? e.message : 'Failed to load traces';
+			this.heatmapError = e instanceof Error ? e.message : 'Failed to load the heatmap';
 			this.#heatmapFetchedFor = null;
 		} finally {
 			if (!ctl.signal.aborted && this.#heatmapAbort === ctl) this.heatmapLoading = false;
@@ -146,11 +153,15 @@ export class TraceExplorerStore {
 
 	/** A short batch is the end-of-results signal. */
 	get hasMore(): boolean {
-		return this.#lastBatchFull && this.traces.length < TRACE_MAX_ROWS;
+		return (
+			this.#lastBatchFull &&
+			this.spans.length < SPAN_MAX_ROWS &&
+			this.#scanned + SPAN_BATCH_SIZE <= OFFSET_CEILING
+		);
 	}
 
 	#canFetchMore(): boolean {
-		return !this.tracesLoading && !this.#prefetching && this.hasMore;
+		return !this.spansLoading && !this.#prefetching && this.hasMore;
 	}
 
 	maybeLoadMore(): void {
@@ -174,8 +185,8 @@ export class TraceExplorerStore {
 			this.#prefetching = true;
 		} else {
 			this.#prefetching = false;
-			this.tracesError = null;
-			this.tracesLoading = true;
+			this.spansError = null;
+			this.spansLoading = true;
 		}
 
 		try {
@@ -189,11 +200,11 @@ export class TraceExplorerStore {
 				this.#snapshot = window;
 			}
 
-			const rows = await searchTraces(
+			const rows = await searchSpans(
 				{
 					...window,
 					...params,
-					limit: TRACE_BATCH_SIZE,
+					limit: SPAN_BATCH_SIZE,
 					offset: append ? this.#scanned : 0,
 					sortOrder: sortDirection
 				},
@@ -204,10 +215,11 @@ export class TraceExplorerStore {
 			this.#scanned = append ? this.#scanned + rows.length : rows.length;
 			if (!append) this.#byId.clear();
 			for (const row of rows) {
-				if (!this.#byId.has(row.traceId)) this.#byId.set(row.traceId, row);
+				const key = `${row.traceId}:${row.spanId}`;
+				if (!this.#byId.has(key)) this.#byId.set(key, row);
 			}
-			this.traces = [...this.#byId.values()];
-			this.#lastBatchFull = rows.length === TRACE_BATCH_SIZE;
+			this.spans = [...this.#byId.values()];
+			this.#lastBatchFull = rows.length === SPAN_BATCH_SIZE;
 			if (!append) {
 				this.hasSearched = true;
 				this.#onFreshSearch?.();
@@ -216,15 +228,15 @@ export class TraceExplorerStore {
 			if (isAbortError(e)) return;
 			if (ctl.signal.aborted || this.#searchAbort !== ctl) return;
 			if (append) return;
-			this.tracesError = e instanceof Error ? e.message : 'Trace search failed';
-			this.traces = [];
+			this.spansError = e instanceof Error ? e.message : 'Span search failed';
+			this.spans = [];
 			this.#byId.clear();
 			this.#scanned = 0;
 			this.#lastBatchFull = false;
 		} finally {
 			if (!ctl.signal.aborted && this.#searchAbort === ctl) {
 				this.#prefetching = false;
-				if (!append) this.tracesLoading = false;
+				if (!append) this.spansLoading = false;
 			}
 		}
 	}

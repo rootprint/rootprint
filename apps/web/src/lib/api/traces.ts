@@ -3,7 +3,7 @@ import { composeQuery } from 'api/query';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
-import type { SortDirection, TraceHistogramResponse, TraceListRow } from '$lib/types';
+import type { SortDirection, SpanListRow, TraceHistogramResponse } from '$lib/types';
 import type { TraceParams } from '$lib/utils/trace-params';
 import { buildTimeParams } from '$lib/utils/time-range';
 import {
@@ -66,10 +66,7 @@ function filterParams(input: TraceWindow) {
 		startTs: String(input.startTs),
 		endTs: String(input.endTs),
 		...(input.service !== null && { service: input.service }),
-		...(input.operation !== null && { operation: input.operation }),
-		...(input.minMs !== null && { minDurationMs: String(input.minMs) }),
-		...(input.maxMs !== null && { maxDurationMs: String(input.maxMs) }),
-		...(input.errorsOnly && { errorsOnly: 'true' })
+		...(input.q !== '' && { q: input.q })
 	};
 }
 
@@ -93,10 +90,10 @@ export type TraceSearchInput = TraceWindow & {
 	sortOrder: SortDirection;
 };
 
-export async function searchTraces(
+export async function searchSpans(
 	input: TraceSearchInput,
 	signal?: AbortSignal
-): Promise<TraceListRow[]> {
+): Promise<SpanListRow[]> {
 	const res = await client.api.traces.search.$get(
 		{
 			query: {
@@ -109,9 +106,9 @@ export async function searchTraces(
 		{ init: { signal } }
 	);
 
-	if (!res.ok) throw await readApiError(res, 'Trace search failed');
+	if (!res.ok) throw await readApiError(res, 'Span search failed');
 
-	return (await res.json()).traces;
+	return (await res.json()).spans;
 }
 
 export async function fetchTraceServices(
@@ -126,19 +123,4 @@ export async function fetchTraceServices(
 	if (!res.ok) throw await readApiError(res, 'Failed to load services');
 
 	return (await res.json()).services;
-}
-
-export async function fetchTraceOperations(
-	service: string,
-	window: { startTs: number; endTs: number },
-	signal?: AbortSignal
-): Promise<string[]> {
-	const res = await client.api.traces.operations.$get(
-		{ query: { service, startTs: String(window.startTs), endTs: String(window.endTs) } },
-		{ init: { signal } }
-	);
-
-	if (!res.ok) throw await readApiError(res, 'Failed to load operations');
-
-	return (await res.json()).operations;
 }

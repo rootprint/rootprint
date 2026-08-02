@@ -11,7 +11,7 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ### Added
 
-- **Traces.** Ingest OTLP spans with `POST /v1/traces` from any existing ingest key, and browse them at `GET /api/traces/*` — trace search, a duration heatmap, and full waterfall detail with span attributes, events, and links back to correlated logs. Spans are stored in one configured index (`TRACE_INDEX_ID`, defaulting to `otel-traces-v0_9`).
+- **Traces.** Ingest OTLP spans with `POST /v1/traces` from any existing ingest key, and browse them at `GET /api/traces/*` — span search, a duration heatmap, and full waterfall detail with span attributes, events, and links back to correlated logs. Span search is a free-text Quickwit query over every span, not just trace roots, so a query can match a child span's attributes; `is_root:true` narrows the list to trace roots. Spans are stored in one configured index (`TRACE_INDEX_ID`, defaulting to `otel-traces-v0_9`).
 
 ### Fixed
 
@@ -23,9 +23,9 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
   `truncated`, and the view says when spans are missing.
 - **The attributes panel is quieter on error spans**: `otel.status_code` and `error` are dropped as
   restatements of the span's own error state. `span.kind` and `otel.status_description` are kept.
-- **The trace list shows one row per trace**, collapsing the duplicate root-span documents that OTLP
+- **The span list shows one row per logical span**, collapsing the duplicate documents that OTLP
   retries can produce.
-- **Refresh reloads the service and operation dropdowns**, not just the results and heatmap.
+- **Refresh reloads the service dropdown**, not just the results and heatmap.
 
 ## [0.3.6] - 2026-07-21
 

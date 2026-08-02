@@ -3,8 +3,14 @@ import type { AggregationBucket, BucketAggregationResult, QuickwitClient } from 
 
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit.js';
-import { escapeFilterValue } from '../lib/query/compose-query.js';
-import type { TraceHistogramResponse, TraceListRow, TraceResponse, TraceSpan } from '../types.js';
+import { composeQuery } from '../lib/query/compose-query.js';
+import type {
+	Filter,
+	SpanListRow,
+	TraceHistogramResponse,
+	TraceResponse,
+	TraceSpan
+} from '../types.js';
 import { asBuckets, termsAgg } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 
@@ -172,35 +178,26 @@ export async function getTrace(
 }
 
 /**
- * One root span per trace, shared by the list, the heatmap and the rosters. Jaeger's `find_traces` is
- * unusable here: it aggregates over `trace_id`, and aggregations have no offset, so it cannot page.
- *
- * Accepted cost: these clauses see only the root, so a failure in a child never surfaces its trace.
+ * Every span document is a row. `is_root:true` is deliberately absent: with root-only matching a query
+ * can never reach a child span's attributes, and recovering the trace behind a matching child needs a
+ * `trace_id` terms aggregation, which has no offset and so cannot page. `is_root:true` typed into `q`
+ * restores the one-row-per-trace view.
  */
-export interface RootSpanFilters {
+export interface SpanFilters {
 	service?: string;
-	operation?: string;
-	minDurationMs?: number;
-	maxDurationMs?: number;
-	errorsOnly?: boolean;
+	q?: string;
 }
 
-export function rootSpanQuery(f: RootSpanFilters): string {
-	// `is_root` is indexed but not stored, so it never shows up in a hit — it is still queryable, and
-	// `parent_span_id` is not indexed at all.
-	const clauses = ['is_root:true'];
-	// `service_name` and `span_name` use the `raw` tokenizer, so a value with spaces needs quoting.
-	if (f.service !== undefined) clauses.push(`service_name:${escapeFilterValue(f.service)}`);
-	if (f.operation !== undefined) clauses.push(`span_name:${escapeFilterValue(f.operation)}`);
-	// Coarser than the displayed value: `span_duration_millis` floors sub-ms to 0.
-	if (f.minDurationMs !== undefined) clauses.push(`span_duration_millis:>=${f.minDurationMs}`);
-	if (f.maxDurationMs !== undefined) clauses.push(`span_duration_millis:<=${f.maxDurationMs}`);
-	if (f.errorsOnly) clauses.push('span_status.code:error');
-	return clauses.join(' AND ');
+export function spanQuery(f: SpanFilters): string {
+	// composeQuery quotes `raw`-tokenizer values that contain spaces and returns `*` for empty input.
+	const filters: Filter[] =
+		f.service === undefined ? [] : [{ field: 'service_name', value: f.service, exclude: false }];
+	return composeQuery(f.q ?? '', filters);
 }
 
-interface RootSpanHit {
+interface SpanHit {
 	trace_id?: unknown;
+	span_id?: unknown;
 	service_name?: unknown;
 	span_name?: unknown;
 	span_start_timestamp_nanos?: unknown;
@@ -208,46 +205,46 @@ interface RootSpanHit {
 	span_status?: unknown;
 }
 
-/** Total by construction: offset paging counts rows, so dropping a bad hit would silently skip traces. */
-function rootRow(hit: RootSpanHit): TraceListRow {
+/** Total by construction: offset paging counts documents, so dropping a bad hit would skip spans. */
+function spanRow(hit: SpanHit): SpanListRow {
 	const start = toMicros(hit.span_start_timestamp_nanos);
 	const end = toMicros(hit.span_end_timestamp_nanos);
 
 	return {
 		traceId: asText(hit.trace_id, ''),
-		rootOperation: asText(hit.span_name, '(unnamed)'),
-		rootService: asText(hit.service_name, 'unknown'),
-		rootStartMicros: start ?? 0,
-		rootDurationMicros: start !== null && end !== null && end > start ? end - start : 0,
-		rootIsError: isErrorStatus(hit.span_status)
+		spanId: asText(hit.span_id, ''),
+		operation: asText(hit.span_name, '(unnamed)'),
+		service: asText(hit.service_name, 'unknown'),
+		startMicros: start ?? 0,
+		durationMicros: start !== null && end !== null && end > start ? end - start : 0,
+		isError: isErrorStatus(hit.span_status)
 	};
 }
 
-export async function searchTraces(
+export async function searchSpans(
 	qw: QuickwitClient,
 	traceIndexId: string,
-	params: RootSpanFilters & {
+	params: SpanFilters & {
 		startTs: number;
 		endTs: number;
 		limit: number;
 		offset: number;
 		sortOrder: 'asc' | 'desc';
 	}
-): Promise<{ traces: TraceListRow[] }> {
+): Promise<{ spans: SpanListRow[] }> {
 	const idx = qw.index(traceIndexId);
 	const builder = idx
-		.query(rootSpanQuery(params))
+		.query(spanQuery(params))
 		.limit(params.limit)
 		.offset(params.offset)
-		// `span_start_timestamp_nanos` is indexed:false but fast:true, which is what sorting reads.
 		.sortBy('span_start_timestamp_nanos', params.sortOrder)
 		.timeRange(toQuickwitTimestamp(params.startTs), toQuickwitTimestamp(params.endTs));
-	const response = await idx.search<RootSpanHit>(builder).catch(translateQuickwitError);
+	const response = await idx.search<SpanHit>(builder).catch(translateQuickwitError);
 
-	return { traces: response.hits.map(rootRow) };
+	return { spans: response.hits.map(spanRow) };
 }
 
-async function listRootTerms(
+async function listSpanTerms(
 	qw: QuickwitClient,
 	traceIndexId: string,
 	field: string,
@@ -268,31 +265,12 @@ async function listRootTerms(
 		.filter((value) => value !== '');
 }
 
-/** Over roots, not all spans, or the dropdown offers services that select nothing. */
 export async function listTraceServices(
 	qw: QuickwitClient,
 	traceIndexId: string,
 	params: { startTs: number; endTs: number }
 ): Promise<{ services: string[] }> {
-	return {
-		services: await listRootTerms(qw, traceIndexId, 'service_name', 'is_root:true', params)
-	};
-}
-
-export async function listTraceOperations(
-	qw: QuickwitClient,
-	traceIndexId: string,
-	params: { startTs: number; endTs: number; service: string }
-): Promise<{ operations: string[] }> {
-	return {
-		operations: await listRootTerms(
-			qw,
-			traceIndexId,
-			'span_name',
-			rootSpanQuery({ service: params.service }),
-			params
-		)
-	};
+	return { services: await listSpanTerms(qw, traceIndexId, 'service_name', '*', params) };
 }
 
 // Intervals, not columns: the snapped window below can span one column more than that.
@@ -340,7 +318,7 @@ function bandCounts(bucket: AggregationBucket): number[] {
 export async function traceHistogram(
 	qw: QuickwitClient,
 	traceIndexId: string,
-	params: RootSpanFilters & { startTs: number; endTs: number }
+	params: SpanFilters & { startTs: number; endTs: number }
 ): Promise<TraceHistogramResponse> {
 	const { startTs, endTs } = params;
 	const intervalSec = heatmapIntervalSeconds(endTs - startTs);
@@ -350,7 +328,7 @@ export async function traceHistogram(
 	const gridEnd = Math.ceil(endTs / intervalSec) * intervalSec;
 	const idx = qw.index(traceIndexId);
 	const builder = idx
-		.query(rootSpanQuery(params))
+		.query(spanQuery(params))
 		.limit(0)
 		.agg(
 			'over_time',

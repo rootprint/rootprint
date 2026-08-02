@@ -18,8 +18,8 @@ import type {
 } from './schemas/responses/indexes.js';
 import type {
 	SpanEventSchema,
+	SpanListRowSchema,
 	TraceHistogramResponse as TraceHistogramResponseSchema,
-	TraceListRowSchema,
 	TraceResponse as TraceResponseSchema,
 	TraceSpanSchema
 } from './schemas/responses/traces.js';
@@ -310,4 +310,4 @@ export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
 
 export type TraceHistogramResponse = v.InferOutput<typeof TraceHistogramResponseSchema>;
 
-export type TraceListRow = v.InferOutput<typeof TraceListRowSchema>;
+export type SpanListRow = v.InferOutput<typeof SpanListRowSchema>;

@@ -45,31 +45,35 @@ export const TraceResponse = named(
 	})
 );
 
-export const TraceListRowSchema = named(
-	'TraceListRow',
+export const SpanListRowSchema = named(
+	'SpanListRow',
 	v.object({
-		traceId: v.string(),
-		rootOperation: v.pipe(
+		traceId: v.pipe(v.string(), v.metadata({ description: 'The trace this span belongs to.' })),
+		spanId: v.pipe(
 			v.string(),
-			v.metadata({ description: "The root span's operation name." })
+			v.metadata({
+				description:
+					'Unique only within traceId, and only per logical span: OTLP retries can write more than one document for the same traceId/spanId pair.'
+			})
 		),
-		rootService: v.pipe(v.string(), v.metadata({ description: "The root span's service." })),
-		rootStartMicros: v.pipe(
+		operation: v.pipe(v.string(), v.metadata({ description: "The span's operation name." })),
+		service: v.pipe(v.string(), v.metadata({ description: "The span's service." })),
+		startMicros: v.pipe(
 			v.number(),
-			v.metadata({ description: 'Root span start, as Unix epoch microseconds.' })
+			v.metadata({ description: 'Span start, as Unix epoch microseconds.' })
 		),
-		rootDurationMicros: v.pipe(
+		durationMicros: v.pipe(
 			v.number(),
 			v.metadata({
 				description:
-					"The root span's own duration, not the trace's. Derived from span_end_timestamp_nanos minus span_start_timestamp_nanos, because span_duration_millis floors sub-millisecond spans to 0."
+					'Derived from span_end_timestamp_nanos minus span_start_timestamp_nanos, because span_duration_millis floors sub-millisecond spans to 0.'
 			})
 		),
-		rootIsError: v.pipe(
+		isError: v.pipe(
 			v.boolean(),
 			v.metadata({
 				description:
-					"Whether the root span's own span_status reports an error. A trace whose failure lives in a descendant, or in span_attributes rather than span_status, reports false here."
+					"Whether this span's own span_status reports an error. An ancestor or descendant failing does not set it, nor does a failure recorded only in span_attributes."
 			})
 		)
 	})
@@ -78,11 +82,11 @@ export const TraceListRowSchema = named(
 export const TraceSearchResponse = named(
 	'TraceSearchResponse',
 	v.object({
-		traces: v.pipe(
-			v.array(TraceListRowSchema),
+		spans: v.pipe(
+			v.array(SpanListRowSchema),
 			v.metadata({
 				description:
-					'One row per matching root span, ordered by root start time. Page with limit/offset; the total for the same filters comes from the histogram endpoint.'
+					'One row per matching span document, ordered by span start time. Page with limit/offset; duplicate documents from OTLP retries are collapsed by the client, not here.'
 			})
 		)
 	})
@@ -91,11 +95,6 @@ export const TraceSearchResponse = named(
 export const TraceServicesResponse = named(
 	'TraceServicesResponse',
 	v.object({ services: v.array(v.string()) })
-);
-
-export const TraceOperationsResponse = named(
-	'TraceOperationsResponse',
-	v.object({ operations: v.array(v.string()) })
 );
 
 export const TraceDurationBandSchema = named(
@@ -131,13 +130,16 @@ export const TraceHistogramColumnSchema = named(
 		),
 		docCount: v.pipe(
 			v.number(),
-			v.metadata({ description: 'Traces in this column, across all bands.' })
+			v.metadata({
+				description:
+					'Matching span documents in this column, across all bands. Aggregations cannot collapse OTLP retry duplicates, so this counts documents, not logical spans.'
+			})
 		),
 		counts: v.pipe(
 			v.array(v.number()),
 			v.metadata({
 				description:
-					'Traces per duration band. Aligned positionally with bands: counts[i] belongs to bands[i].'
+					'Span documents per duration band. Aligned positionally with bands: counts[i] belongs to bands[i].'
 			})
 		)
 	})

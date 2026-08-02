@@ -74,7 +74,7 @@
 	});
 
 	const summary = $derived.by(() => {
-		if (!data || !visible) return 'Trace duration heatmap: no traces in this time range.';
+		if (!data || !visible) return 'Span duration heatmap: no spans in this time range.';
 		const from = formatChartTooltip(data.columns[0].timestamp);
 		const to = formatChartTooltip(
 			data.columns[data.columns.length - 1].timestamp + data.intervalSec
@@ -82,7 +82,7 @@
 		const perBand = data.bands.map((_, i) => data.columns.reduce((sum, c) => sum + c.counts[i], 0));
 		const peak = data.bands[perBand.indexOf(Math.max(...perBand))];
 		const total = perBand.reduce((sum, n) => sum + n, 0);
-		return `Trace duration heatmap, ${from} to ${to}: ${total} traces, most of them ${bandRange(peak)}.`;
+		return `Span duration heatmap, ${from} to ${to}: ${total} spans, most of them ${bandRange(peak)}.`;
 	});
 
 	let containerEl = $state<HTMLDivElement | null>(null);
@@ -297,7 +297,7 @@
 			width,
 			height,
 			// uPlot needs a series per data array; this one is never drawn.
-			series: [{ label: 'Time' }, { label: 'Traces', show: false }],
+			series: [{ label: 'Time' }, { label: 'Spans', show: false }],
 			cursor: { drag: { x: false, y: false }, points: { show: false } },
 			legend: { show: false },
 			hooks: { draw: [drawCells] },
@@ -381,7 +381,7 @@
 	</div>
 {:else if visible === null}
 	<div class="flex h-full items-center justify-center" role="status">
-		<p class="text-base-content/60 text-xs">No traces in this time range</p>
+		<p class="text-base-content/60 text-xs">No spans in this time range</p>
 	</div>
 {:else}
 	<div
@@ -402,7 +402,7 @@
 				<p class="text-base-content/60 font-mono text-[10px]">{tooltipText.when}</p>
 				<p class="mt-1">{tooltipText.band}</p>
 				<p class="text-base-content/60">
-					{pluralize(tooltipText.count, 'trace')}
+					{pluralize(tooltipText.count, 'span')}
 				</p>
 			</div>
 		{/if}

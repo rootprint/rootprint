@@ -9,7 +9,7 @@
 	import { isTraceId } from 'api/schemas';
 	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
 	import TraceHeatmapPanel from '$lib/components/trace/TraceHeatmapPanel.svelte';
-	import TraceList from '$lib/components/trace/TraceList.svelte';
+	import SpanList from '$lib/components/trace/SpanList.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import { TraceExplorerStore } from '$lib/stores/trace-explorer.svelte';
 	import { readLastIndex } from '$lib/utils/last-index';
@@ -37,23 +37,34 @@
 	);
 
 	$effect(() => {
-		if (store.traces.length === 0 || !store.hasMore) return;
+		if (store.spans.length === 0 || !store.hasMore) return;
 		void tick().then(() => maybeFillViewport());
 	});
 
-	let traceIdInput = $state('');
-	const traceIdValid = $derived(isTraceId(traceIdInput.trim().toLowerCase()));
+	let queryInput = $state(store.params.q);
+	let focused = $state(false);
 
-	function jumpToTrace(event: SubmitEvent): void {
+	// Only while the box is not focused: the URL changes on every toolbar navigation
+	// (service, time range, sort), not just on q, so an unguarded sync would discard
+	// text the user is still typing.
+	$effect(() => {
+		if (!focused) queryInput = store.params.q;
+	});
+
+	function runQuery(event: SubmitEvent): void {
 		event.preventDefault();
-		const id = traceIdInput.trim().toLowerCase();
-		if (!isTraceId(id)) return;
-		traceIdInput = '';
-		void goto(traceDetailHref(id, { index: linkIndex, returnTo: page.url }));
+		const raw = queryInput.trim().toLowerCase();
+		// isTraceId rejects the all-zeros id, so OTLP's null trace id falls through to a query.
+		if (isTraceId(raw)) {
+			queryInput = '';
+			void goto(traceDetailHref(raw, { index: linkIndex, returnTo: page.url }));
+			return;
+		}
+		store.navigate({ q: queryInput.trim() }, { push: true });
 	}
 
 	function maybeFillViewport(os = osRef?.osInstance()): void {
-		if (store.traces.length === 0 || !store.hasMore) return;
+		if (store.spans.length === 0 || !store.hasMore) return;
 		const viewport = os?.elements().viewport;
 		if (viewport && viewport.scrollHeight <= viewport.clientHeight) store.maybeLoadMore();
 	}
@@ -69,7 +80,7 @@
 <div class="bg-base-100 flex h-full min-h-0 w-full flex-col">
 	<div
 		class="border-line flex h-12 shrink-0 items-center gap-2 border-b px-3"
-		aria-label="Trace search"
+		aria-label="Span search"
 	>
 		<select
 			class="select select-sm w-44"
@@ -88,17 +99,16 @@
 			{/each}
 		</select>
 
-		<form class="min-w-0 flex-1" onsubmit={jumpToTrace}>
+		<form class="min-w-0 flex-1" onsubmit={runQuery}>
 			<input
 				type="text"
-				class="input input-sm validator w-full font-mono"
-				placeholder="Go to trace ID…"
-				bind:value={traceIdInput}
-				aria-label="Trace ID"
-				aria-invalid={traceIdInput !== '' && !traceIdValid}
-				title={traceIdInput !== '' && !traceIdValid
-					? 'Expected 32 hexadecimal characters'
-					: undefined}
+				class="input input-sm w-full font-mono"
+				placeholder="Search spans… (or paste a trace ID)"
+				bind:value={queryInput}
+				aria-label="Span query"
+				title="e.g. is_root:true · span_duration_millis:>=100 · span_status.code:error · span_attributes.<key>:<value>"
+				onfocus={() => (focused = true)}
+				onblur={() => (focused = false)}
 			/>
 		</form>
 
@@ -124,20 +134,20 @@
 		retry={() => store.refresh()}
 	/>
 
-	<section class="flex min-h-0 flex-1 flex-col" aria-label="Traces">
+	<section class="flex min-h-0 flex-1 flex-col" aria-label="Spans">
 		<div class="bg-base-200/30 min-h-0 flex-1">
-			{#if store.tracesError}
+			{#if store.spansError}
 				<div class="p-4">
-					<PanelError message={store.tracesError} retry={() => store.refresh()} />
+					<PanelError message={store.spansError} retry={() => store.refresh()} />
 				</div>
-			{:else if (store.tracesLoading || !store.hasSearched) && store.traces.length === 0}
+			{:else if (store.spansLoading || !store.hasSearched) && store.spans.length === 0}
 				<div class="flex h-full items-center justify-center">
 					<span class="loading loading-spinner loading-sm"></span>
 				</div>
-			{:else if store.traces.length === 0}
+			{:else if store.spans.length === 0}
 				<div class="flex h-full flex-col items-center justify-center gap-1">
-					<p class="text-base-content/60 text-xs">No traces found</p>
-					<p class="text-base-content/40 text-[10px]">Try a wider time range or fewer filters</p>
+					<p class="text-base-content/60 text-xs">No spans found</p>
+					<p class="text-base-content/40 text-[10px]">Try a wider time range or a simpler query</p>
 				</div>
 			{:else}
 				<OverlayScrollbarsComponent
@@ -147,9 +157,9 @@
 					defer
 					class="h-full w-full"
 				>
-					<TraceList
+					<SpanList
 						logIndexId={linkIndex}
-						traces={store.traces}
+						spans={store.spans}
 						sortDirection={store.sortDirection}
 						onToggleSort={() => store.toggleSort()}
 					/>

@@ -2274,6 +2274,48 @@
 				],
 				"type": "object"
 			},
+			"SpanListRow": {
+				"properties": {
+					"durationMicros": {
+						"description": "Derived from span_end_timestamp_nanos minus span_start_timestamp_nanos, because span_duration_millis floors sub-millisecond spans to 0.",
+						"type": "number"
+					},
+					"isError": {
+						"description": "Whether this span's own span_status reports an error. An ancestor or descendant failing does not set it, nor does a failure recorded only in span_attributes.",
+						"type": "boolean"
+					},
+					"operation": {
+						"description": "The span's operation name.",
+						"type": "string"
+					},
+					"service": {
+						"description": "The span's service.",
+						"type": "string"
+					},
+					"spanId": {
+						"description": "Unique only within traceId, and only per logical span: OTLP retries can write more than one document for the same traceId/spanId pair.",
+						"type": "string"
+					},
+					"startMicros": {
+						"description": "Span start, as Unix epoch microseconds.",
+						"type": "number"
+					},
+					"traceId": {
+						"description": "The trace this span belongs to.",
+						"type": "string"
+					}
+				},
+				"required": [
+					"traceId",
+					"spanId",
+					"operation",
+					"service",
+					"startMicros",
+					"durationMicros",
+					"isError"
+				],
+				"type": "object"
+			},
 			"SummaryRowResponse": {
 				"properties": {
 					"errorCount": {
@@ -2410,14 +2452,14 @@
 			"TraceHistogramColumn": {
 				"properties": {
 					"counts": {
-						"description": "Traces per duration band. Aligned positionally with bands: counts[i] belongs to bands[i].",
+						"description": "Span documents per duration band. Aligned positionally with bands: counts[i] belongs to bands[i].",
 						"items": {
 							"type": "number"
 						},
 						"type": "array"
 					},
 					"docCount": {
-						"description": "Traces in this column, across all bands.",
+						"description": "Matching span documents in this column, across all bands. Aggregations cannot collapse OTLP retry duplicates, so this counts documents, not logical spans.",
 						"type": "number"
 					},
 					"timestamp": {
@@ -2457,56 +2499,6 @@
 					"intervalSec",
 					"bands",
 					"columns"
-				],
-				"type": "object"
-			},
-			"TraceListRow": {
-				"properties": {
-					"rootDurationMicros": {
-						"description": "The root span's own duration, not the trace's. Derived from span_end_timestamp_nanos minus span_start_timestamp_nanos, because span_duration_millis floors sub-millisecond spans to 0.",
-						"type": "number"
-					},
-					"rootIsError": {
-						"description": "Whether the root span's own span_status reports an error. A trace whose failure lives in a descendant, or in span_attributes rather than span_status, reports false here.",
-						"type": "boolean"
-					},
-					"rootOperation": {
-						"description": "The root span's operation name.",
-						"type": "string"
-					},
-					"rootService": {
-						"description": "The root span's service.",
-						"type": "string"
-					},
-					"rootStartMicros": {
-						"description": "Root span start, as Unix epoch microseconds.",
-						"type": "number"
-					},
-					"traceId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"traceId",
-					"rootOperation",
-					"rootService",
-					"rootStartMicros",
-					"rootDurationMicros",
-					"rootIsError"
-				],
-				"type": "object"
-			},
-			"TraceOperationsResponse": {
-				"properties": {
-					"operations": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array"
-					}
-				},
-				"required": [
-					"operations"
 				],
 				"type": "object"
 			},
@@ -2551,16 +2543,16 @@
 			},
 			"TraceSearchResponse": {
 				"properties": {
-					"traces": {
-						"description": "One row per matching root span, ordered by root start time. Page with limit/offset; the total for the same filters comes from the histogram endpoint.",
+					"spans": {
+						"description": "One row per matching span document, ordered by span start time. Page with limit/offset; duplicate documents from OTLP retries are collapsed by the client, not here.",
 						"items": {
-							"$ref": "#/components/schemas/TraceListRow"
+							"$ref": "#/components/schemas/SpanListRow"
 						},
 						"type": "array"
 					}
 				},
 				"required": [
-					"traces"
+					"spans"
 				],
 				"type": "object"
 			},
@@ -17330,38 +17322,11 @@
 						}
 					},
 					{
+						"description": "Raw Quickwit query text; empty matches every span. Root spans only is `is_root:true`.",
 						"in": "query",
-						"name": "operation",
+						"name": "q",
 						"schema": {
-							"maxLength": 255,
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "minDurationMs",
-						"schema": {
-							"maximum": 3600000,
-							"minimum": 0,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					},
-					{
-						"in": "query",
-						"name": "maxDurationMs",
-						"schema": {
-							"maximum": 3600000,
-							"minimum": 0,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					},
-					{
-						"in": "query",
-						"name": "errorsOnly",
-						"schema": {
+							"default": "",
 							"type": "string"
 						}
 					}
@@ -17407,89 +17372,7 @@
 						"cookieAuth": []
 					}
 				],
-				"summary": "Get trace duration heatmap",
-				"tags": [
-					"Traces"
-				]
-			}
-		},
-		"/api/traces/operations": {
-			"get": {
-				"operationId": "getApiTracesOperations",
-				"parameters": [
-					{
-						"description": "Window start as a Unix timestamp in seconds, inclusive.",
-						"in": "query",
-						"name": "startTs",
-						"required": true,
-						"schema": {
-							"minimum": 0,
-							"type": "number"
-						}
-					},
-					{
-						"description": "Window end as a Unix timestamp in seconds, exclusive.",
-						"in": "query",
-						"name": "endTs",
-						"required": true,
-						"schema": {
-							"minimum": 0,
-							"type": "number"
-						}
-					},
-					{
-						"in": "query",
-						"name": "service",
-						"required": true,
-						"schema": {
-							"maxLength": 255,
-							"minLength": 1,
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TraceOperationsResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"429": {
-						"$ref": "#/components/responses/TooManyRequests"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"security": [
-					{
-						"personalBearer": []
-					},
-					{
-						"cookieAuth": []
-					}
-				],
-				"summary": "List operations that root a trace for a service",
+				"summary": "Get span duration heatmap",
 				"tags": [
 					"Traces"
 				]
@@ -17529,38 +17412,11 @@
 						}
 					},
 					{
+						"description": "Raw Quickwit query text; empty matches every span. Root spans only is `is_root:true`.",
 						"in": "query",
-						"name": "operation",
+						"name": "q",
 						"schema": {
-							"maxLength": 255,
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "minDurationMs",
-						"schema": {
-							"maximum": 3600000,
-							"minimum": 0,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					},
-					{
-						"in": "query",
-						"name": "maxDurationMs",
-						"schema": {
-							"maximum": 3600000,
-							"minimum": 0,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					},
-					{
-						"in": "query",
-						"name": "errorsOnly",
-						"schema": {
+							"default": "",
 							"type": "string"
 						}
 					},
@@ -17576,7 +17432,7 @@
 						}
 					},
 					{
-						"description": "Rows to skip. The ceiling matches the deep-paging limit the log explorer accepts; past it, narrow the window instead.",
+						"description": "Documents to skip, before duplicate spans are collapsed. The ceiling matches the deep-paging limit the log explorer accepts; past it, narrow the window instead.",
 						"in": "query",
 						"name": "offset",
 						"schema": {
@@ -17641,7 +17497,7 @@
 						"cookieAuth": []
 					}
 				],
-				"summary": "Search traces",
+				"summary": "Search spans",
 				"tags": [
 					"Traces"
 				]
@@ -17713,7 +17569,7 @@
 						"cookieAuth": []
 					}
 				],
-				"summary": "List services that root a trace",
+				"summary": "List services seen in any span",
 				"tags": [
 					"Traces"
 				]

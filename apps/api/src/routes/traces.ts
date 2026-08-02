@@ -9,14 +9,12 @@ import { readLimiter } from '../middleware/rate-limit.js';
 import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import {
 	TraceHistogramQuery,
-	TraceOperationsQuery,
 	TraceParams,
 	TraceRosterQuery,
 	TraceSearchQuery
 } from '../schemas/traces.js';
 import {
 	TraceHistogramResponse,
-	TraceOperationsResponse,
 	TraceResponse,
 	TraceSearchResponse,
 	TraceServicesResponse
@@ -24,10 +22,9 @@ import {
 import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
 import {
 	getTrace,
-	listTraceOperations,
 	listTraceServices,
-	rootSpanQuery,
-	searchTraces,
+	searchSpans,
+	spanQuery,
 	traceHistogram
 } from '../services/trace.service.js';
 import type { Scope } from '../types.js';
@@ -46,7 +43,7 @@ export const tracesRouter = new Hono<AuthedEnv>()
 		'/histogram',
 		describe({
 			tag: 'Traces',
-			summary: 'Get trace duration heatmap',
+			summary: 'Get span duration heatmap',
 			ok: TraceHistogramResponse,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],
 			errors: [400, 429]
@@ -59,7 +56,7 @@ export const tracesRouter = new Hono<AuthedEnv>()
 				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
 				config.traceIndexId,
 				{
-					query: auditQuery('/histogram', rootSpanQuery(q)),
+					query: auditQuery('/histogram', spanQuery(q)),
 					startTs: q.startTs,
 					endTs: q.endTs
 				},
@@ -72,7 +69,7 @@ export const tracesRouter = new Hono<AuthedEnv>()
 		'/search',
 		describe({
 			tag: 'Traces',
-			summary: 'Search traces',
+			summary: 'Search spans',
 			ok: TraceSearchResponse,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],
 			errors: [400, 429]
@@ -85,11 +82,11 @@ export const tracesRouter = new Hono<AuthedEnv>()
 				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
 				config.traceIndexId,
 				{
-					query: auditQuery('/search', rootSpanQuery(q)),
+					query: auditQuery('/search', spanQuery(q)),
 					startTs: q.startTs,
 					endTs: q.endTs
 				},
-				() => searchTraces(quickwit, config.traceIndexId, q)
+				() => searchSpans(quickwit, config.traceIndexId, q)
 			);
 			return c.json(result);
 		}
@@ -98,7 +95,7 @@ export const tracesRouter = new Hono<AuthedEnv>()
 		'/services',
 		describe({
 			tag: 'Traces',
-			summary: 'List services that root a trace',
+			summary: 'List services seen in any span',
 			ok: TraceServicesResponse,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],
 			errors: [400, 429]
@@ -111,37 +108,11 @@ export const tracesRouter = new Hono<AuthedEnv>()
 				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
 				config.traceIndexId,
 				{
-					query: auditQuery('/services', 'is_root:true'),
+					query: auditQuery('/services', '*'),
 					startTs: q.startTs,
 					endTs: q.endTs
 				},
 				() => listTraceServices(quickwit, config.traceIndexId, q)
-			);
-			return c.json(result);
-		}
-	)
-	.get(
-		'/operations',
-		describe({
-			tag: 'Traces',
-			summary: 'List operations that root a trace for a service',
-			ok: TraceOperationsResponse,
-			security: [{ personalBearer: [] }, { cookieAuth: [] }],
-			errors: [400, 429]
-		}),
-		validator('query', TraceOperationsQuery),
-		async (c) => {
-			const q = c.req.valid('query');
-			const result = await withSearchAudit(
-				db,
-				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
-				config.traceIndexId,
-				{
-					query: auditQuery('/operations', rootSpanQuery({ service: q.service })),
-					startTs: q.startTs,
-					endTs: q.endTs
-				},
-				() => listTraceOperations(quickwit, config.traceIndexId, q)
 			);
 			return c.json(result);
 		}
