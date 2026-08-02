@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import { ArrowLeft, Check, Copy, ScrollText, Search } from 'lucide-svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { slide } from 'svelte/transition';
@@ -7,12 +8,31 @@
 	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import { writeLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { traceLogsHref } from '$lib/utils/trace-logs';
 	import { formatSpanDuration } from '$lib/utils/time';
 	import type { SpanNode } from '$lib/types';
 
 	let { data } = $props();
+
+	/** Rewrites `?index=`, which the load reads — so this refetches the field config and span log counts. */
+	function selectLogIndex(id: string | null): void {
+		const params = new URLSearchParams(page.url.searchParams);
+		if (id === null) {
+			params.delete('index');
+		} else {
+			params.set('index', id);
+			// Correct it once and every later trace link inherits the fix.
+			writeLastIndex(id);
+		}
+		const query = params.toString();
+		void goto(`/traces/${data.traceId}${query ? `?${query}` : ''}`, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true
+		});
+	}
 
 	const model = $derived(data.model);
 	const root = $derived(model.roots[0] ?? null);
@@ -82,12 +102,32 @@
 				<ArrowLeft class="h-3.5 w-3.5" />
 				{backLabel}
 			</a>
-			{#if hasSpans && traceLogsUrl}
-				<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
-					<ScrollText class="h-3.5 w-3.5" />
-					Logs for this trace
-				</a>
-			{/if}
+			<div class="flex items-center gap-2">
+				<select
+					class="select select-xs w-44 font-mono"
+					value={data.logIndexId ?? ''}
+					onchange={(e) => selectLogIndex(e.currentTarget.value || null)}
+					aria-label="Log index for span correlation"
+					title="Which index holds the logs for this trace"
+				>
+					<option value="">No log index</option>
+					<!-- A `?index=` naming a deleted index would otherwise render the select blank, which reads
+					     as "no index chosen" while the URL still says otherwise. -->
+					{#if data.logIndexId !== null && !data.indexes.some((i) => i.id === data.logIndexId)}
+						<option value={data.logIndexId}>{data.logIndexId} (missing)</option>
+					{/if}
+					{#each data.indexes as option (option.id)}
+						<option value={option.id}>{option.name}</option>
+					{/each}
+				</select>
+
+				{#if hasSpans && traceLogsUrl}
+					<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
+						<ScrollText class="h-3.5 w-3.5" />
+						Logs for this trace
+					</a>
+				{/if}
+			</div>
 		</div>
 
 		<div class="mt-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
