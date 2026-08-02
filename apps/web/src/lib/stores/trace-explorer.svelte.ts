@@ -2,12 +2,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 
 import { isAbortError } from '$lib/api/errors';
-import {
-	fetchTraceHistogram,
-	fetchTraceOperations,
-	fetchTraceServices,
-	searchTraces
-} from '$lib/api/traces';
+import { fetchTraceHistogram, fetchTraceServices, searchTraces } from '$lib/api/traces';
 import type { SortDirection, TimeRange, TraceHistogramResponse, TraceListRow } from '$lib/types';
 import { serializeTimeRange } from '$lib/utils/fields';
 import { deserialize } from '$lib/utils/query-params';
@@ -39,8 +34,6 @@ export class TraceExplorerStore {
 	hasSearched = $state(false);
 
 	services = $state.raw<string[]>([]);
-	operations = $state.raw<string[]>([]);
-	operationsLoading = $state(false);
 
 	#opts: TraceExplorerOptions;
 	#onFreshSearch?: () => void;
@@ -60,8 +53,6 @@ export class TraceExplorerStore {
 
 	#servicesAbort?: AbortController;
 	#servicesFetchedFor: string | null = null;
-	#operationsAbort?: AbortController;
-	#operationsFetchedFor: string | null = null;
 
 	constructor(opts: TraceExplorerOptions) {
 		this.#opts = opts;
@@ -121,20 +112,6 @@ export class TraceExplorerStore {
 		$effect(() => {
 			void this.#nonce;
 			void this.#loadServices(this.timeRange);
-		});
-
-		$effect(() => {
-			const service = this.params.service;
-			void this.#nonce;
-			if (service === null) {
-				this.#operationsAbort?.abort();
-				this.#operationsAbort = undefined;
-				this.#operationsFetchedFor = null;
-				this.operations = [];
-				this.operationsLoading = false;
-				return;
-			}
-			void this.#loadOperations(service, this.timeRange);
 		});
 	}
 
@@ -273,33 +250,9 @@ export class TraceExplorerStore {
 		}
 	}
 
-	async #loadOperations(service: string, timeRange: TimeRange): Promise<void> {
-		const fetchKey = `${this.#nonce}|${service}|${serializeTimeRange(timeRange)}`;
-		if (fetchKey === this.#operationsFetchedFor) return;
-		this.#operationsAbort?.abort();
-		const ctl = new AbortController();
-		this.#operationsAbort = ctl;
-		this.operationsLoading = true;
-		try {
-			const { startTs, endTs } = resolveWindow(timeRange);
-			const operations = await fetchTraceOperations(service, { startTs, endTs }, ctl.signal);
-			if (ctl.signal.aborted || this.#operationsAbort !== ctl) return;
-			this.operations = operations;
-			this.#operationsFetchedFor = fetchKey;
-		} catch (e) {
-			if (isAbortError(e)) return;
-			if (ctl.signal.aborted || this.#operationsAbort !== ctl) return;
-			this.operations = [];
-			this.#operationsFetchedFor = null;
-		} finally {
-			if (!ctl.signal.aborted && this.#operationsAbort === ctl) this.operationsLoading = false;
-		}
-	}
-
 	dispose(): void {
 		this.#heatmapAbort?.abort();
 		this.#searchAbort?.abort();
 		this.#servicesAbort?.abort();
-		this.#operationsAbort?.abort();
 	}
 }
