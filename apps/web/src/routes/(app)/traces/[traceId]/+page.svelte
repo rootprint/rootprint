@@ -46,9 +46,14 @@
 	let filter = $state('');
 
 	const rootSpanId = $derived(root?.spanId ?? null);
+	const linkedSpanId = $derived.by(() => {
+		const requested = page.url.searchParams.get('span');
+		return requested !== null && model.byId.has(requested) ? requested : null;
+	});
+
 	let selection = $state<{ traceId: string; spanId: string | null }>({ traceId: '', spanId: null });
 	const selectedSpanId = $derived(
-		selection.traceId === data.traceId ? selection.spanId : rootSpanId
+		selection.traceId === data.traceId ? selection.spanId : (linkedSpanId ?? rootSpanId)
 	);
 	const selectedSpan = $derived(selectedSpanId ? (model.byId.get(selectedSpanId) ?? null) : null);
 

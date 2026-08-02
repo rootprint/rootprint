@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/traces/histogram?startTs=1700000000&endTs=1700000900
+  url: {{baseUrl}}/api/traces/histogram?startTs=1700000000&endTs=1700000900&q=is_root%3Atrue
   body: none
   auth: bearer
 }
@@ -13,6 +13,7 @@ get {
 params:query {
   startTs: 1700000000
   endTs: 1700000900
+  q: is_root:true
 }
 
 auth:bearer {

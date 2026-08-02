@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/traces/search?startTs=1700000000&endTs=1700000900&limit=100&offset=0&sortOrder=desc
+  url: {{baseUrl}}/api/traces/search?startTs=1700000000&endTs=1700000900&q=is_root%3Atrue&limit=100&offset=0&sortOrder=desc
   body: none
   auth: bearer
 }
@@ -13,6 +13,7 @@ get {
 params:query {
   startTs: 1700000000
   endTs: 1700000900
+  q: is_root:true
   limit: 100
   offset: 0
   sortOrder: desc

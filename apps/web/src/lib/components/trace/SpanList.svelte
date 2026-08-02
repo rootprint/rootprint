@@ -2,19 +2,19 @@
 	import { ArrowDown, ArrowUp, CircleX } from 'lucide-svelte';
 
 	import { page } from '$app/state';
-	import type { SortDirection, TraceListRow } from '$lib/types';
+	import type { SortDirection, SpanListRow } from '$lib/types';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { formatSpanDuration, formatSpanStart } from '$lib/utils/time';
 	import { traceDetailHref } from '$lib/utils/trace-params';
 
 	let {
 		logIndexId,
-		traces,
+		spans,
 		sortDirection,
 		onToggleSort
 	}: {
 		logIndexId: string | null;
-		traces: TraceListRow[];
+		spans: SpanListRow[];
 		sortDirection: SortDirection;
 		onToggleSort: () => void;
 	} = $props();
@@ -39,46 +39,45 @@
 				<ArrowUp class="h-3 w-3" />
 			{/if}
 		</button>
-		<span class="px-3 py-1.5">Root operation</span>
-		<span class="px-3 py-1.5 text-right">Root duration</span>
-		<span class="px-3 py-1.5 text-right">Root status</span>
+		<span class="px-3 py-1.5">Operation</span>
+		<span class="px-3 py-1.5 text-right">Duration</span>
+		<span class="px-3 py-1.5 text-right">Status</span>
 	</div>
 
-	{#each traces as row (row.traceId)}
+	{#each spans as row (`${row.traceId}:${row.spanId}`)}
 		<a
-			href={traceDetailHref(row.traceId, { index: logIndexId, returnTo: page.url })}
+			href={traceDetailHref(row.traceId, {
+				index: logIndexId,
+				returnTo: page.url,
+				span: row.spanId
+			})}
 			class="border-line hover:bg-base-200/40 grid {GRID} items-center border-b text-xs"
 		>
 			<span class="text-base-content/60 px-3 py-2 font-mono tabular-nums">
-				{formatSpanStart(row.rootStartMicros)}
+				{formatSpanStart(row.startMicros)}
 			</span>
 
 			<span class="flex min-w-0 items-center gap-2 px-3 py-2">
 				<span
 					class="h-2 w-2 shrink-0 rounded-full"
-					style={`background-color:${serviceColor(row.rootService)}`}
+					style={`background-color:${serviceColor(row.service)}`}
 				></span>
-				<span class="shrink-0 truncate">{row.rootService}</span>
-				<span class="truncate font-mono">{row.rootOperation}</span>
+				<span class="shrink-0 truncate">{row.service}</span>
+				<span class="truncate font-mono">{row.operation}</span>
 			</span>
 
 			<span class="px-3 py-2 text-right font-mono tabular-nums">
-				{formatSpanDuration(row.rootDurationMicros)}
+				{formatSpanDuration(row.durationMicros)}
 			</span>
 
 			<span class="flex items-center justify-end px-3 py-2">
-				{#if row.rootIsError}
-					<span class="text-error flex items-center gap-1" title="The root span failed">
+				{#if row.isError}
+					<span class="text-error flex items-center gap-1" title="This span failed">
 						<CircleX class="h-3 w-3" aria-hidden="true" />
 						Error
 					</span>
 				{:else}
-					<span
-						class="text-base-content/30"
-						title="The root span succeeded — a descendant span may still have failed"
-					>
-						OK
-					</span>
+					<span class="text-base-content/30" title="This span succeeded">OK</span>
 				{/if}
 			</span>
 		</a>
