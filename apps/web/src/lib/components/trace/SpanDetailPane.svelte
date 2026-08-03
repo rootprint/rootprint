@@ -59,7 +59,7 @@
 	function handleTabKeydown(e: KeyboardEvent): void {
 		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
 		e.preventDefault();
-		const order = TABS.map((t) => t.id);
+		const order = TABS.map((t) => t.id).filter((id) => !isDisabled(id));
 		const idx = order.indexOf(activeTab);
 		const next =
 			e.key === 'ArrowRight'
@@ -136,6 +136,12 @@
 	const tabCounts: Partial<Record<SpanTab, number>> = $derived({
 		events: span.events.length,
 		database: dbCalls.length
+	});
+
+	const isDisabled = (id: SpanTab): boolean => id in tabCounts && !tabCounts[id];
+
+	$effect(() => {
+		if (isDisabled(activeTab)) activeTab = 'overview';
 	});
 
 	const copyValue = (f: DrawerField): void => void copyWithToast(f.value, 'Value copied');
@@ -224,8 +230,10 @@
 				aria-selected={activeTab === tab.id}
 				aria-controls={`span-panel-${tab.id}`}
 				tabindex={activeTab === tab.id ? 0 : -1}
+				disabled={isDisabled(tab.id)}
 				class={[
 					'shrink-0 border-b-2 px-3 py-2.5 text-xs',
+					'disabled:text-base-content/30 disabled:cursor-not-allowed',
 					activeTab === tab.id
 						? 'border-primary text-base-content font-medium'
 						: 'text-base-content/60 border-transparent'
