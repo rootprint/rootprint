@@ -75,6 +75,13 @@ export const SpanListRowSchema = named(
 				description:
 					"Whether this span's own span_status reports an error. An ancestor or descendant failing does not set it, nor does a failure recorded only in span_attributes."
 			})
+		),
+		isRoot: v.pipe(
+			v.boolean(),
+			v.metadata({
+				description:
+					'Whether this span starts its trace. Derived from an empty parent_span_id: `is_root` is queryable in the otel-traces schema but never returned in hits.'
+			})
 		)
 	})
 );
