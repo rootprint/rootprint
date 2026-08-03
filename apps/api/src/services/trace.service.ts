@@ -198,6 +198,7 @@ export function spanQuery(f: SpanFilters): string {
 interface SpanHit {
 	trace_id?: unknown;
 	span_id?: unknown;
+	parent_span_id?: unknown;
 	service_name?: unknown;
 	span_name?: unknown;
 	span_start_timestamp_nanos?: unknown;
@@ -217,7 +218,8 @@ function spanRow(hit: SpanHit): SpanListRow {
 		service: asText(hit.service_name, 'unknown'),
 		startMicros: start ?? 0,
 		durationMicros: start !== null && end !== null && end > start ? end - start : 0,
-		isError: isErrorStatus(hit.span_status)
+		isError: isErrorStatus(hit.span_status),
+		isRoot: asText(hit.parent_span_id, '') === ''
 	};
 }
 
