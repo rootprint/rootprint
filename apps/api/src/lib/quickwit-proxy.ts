@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 
 import type { ProxyResult } from '../types.js';
 import { badRequest, serviceUnavailable } from '../utils/http-error.js';
+import { readUpstreamMessage } from '../utils/otlp-response.js';
 
 const PROXY_TIMEOUT_MS = 120_000;
 
@@ -61,8 +62,11 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 	}
 
 	if (upstream.status >= 500) {
-		await upstream.body?.cancel().catch(() => {});
-		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
+		const errBytes = await upstream.arrayBuffer().catch(() => new ArrayBuffer(0));
+		throw serviceUnavailable(
+			readUpstreamMessage(errBytes, 'Upstream unavailable'),
+			'UPSTREAM_UNAVAILABLE'
+		);
 	}
 	const bodyBytes = await upstream.arrayBuffer();
 	return { status: upstream.status, headers: upstream.headers, bodyBytes };
