@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { Play, Share2 } from 'lucide-svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { isTraceId } from 'api/schemas';
+	import { traceDetailHref } from '$lib/utils/trace-params';
 	import TimeRangePicker from './TimeRangePicker.svelte';
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
@@ -137,7 +141,7 @@
 			e.preventDefault();
 			void accept(highlight);
 		} else if (e.key === 'Enter') {
-			commitQuery();
+			if (!openedTrace()) commitQuery();
 		} else if (e.key === 'Escape' && open) {
 			e.stopPropagation();
 			dismissed = true;
@@ -149,6 +153,20 @@
 		if (queryInput !== store.query) {
 			store.runQuery(queryInput);
 		}
+	}
+
+	/**
+	 * A pasted trace id opens the trace instead of searching — it is an id, not a log query, and matches
+	 * no log field. Only on Enter or Run: blur also commits, and navigating away from a click would
+	 * surprise. `isTraceId` rejects the all-zeros id, so OTLP's null trace id still falls through.
+	 */
+	function openedTrace(): boolean {
+		const raw = queryInput.trim().toLowerCase();
+		if (!isTraceId(raw)) return false;
+		queryInput = '';
+		dismissed = true;
+		void goto(traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url }));
+		return true;
 	}
 
 	function shareLink() {
@@ -173,7 +191,7 @@
 		<input
 			type="text"
 			class="input input-sm w-full font-mono"
-			placeholder="Search logs…"
+			placeholder="Search logs… (or paste a trace ID)"
 			bind:this={inputEl}
 			bind:value={queryInput}
 			onfocus={() => {
@@ -221,7 +239,9 @@
 			class="btn btn-sm btn-primary"
 			aria-label="Run query"
 			title="Run query"
-			onclick={() => store.runQuery(queryInput)}
+			onclick={() => {
+				if (!openedTrace()) store.runQuery(queryInput);
+			}}
 		>
 			<Play class="h-3.5 w-3.5" />
 			Run

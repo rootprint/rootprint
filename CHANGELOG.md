@@ -6,26 +6,32 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ### ⚠️ Breaking
 
-- **Per-index visibility is gone.** Any index previously set to `admin` or `hidden` becomes readable by every signed-in user and every `logs:read` personal API key once the migration runs. The `visibility` field is gone from `PATCH /api/indexes/:indexId`, and the `?view=` query parameter is gone from `GET /api/indexes`.
-- **`GET /api/indexes` returns a smaller row.** `fieldCount`, `sourceCount`, `mode`, and `createTimestamp` are no longer included; all four are available per index from `GET /api/indexes/:indexId`.
+- **Per-index visibility is gone.** Any index previously set to `admin` or `hidden` becomes readable by every signed-in user and every `logs:read` personal API key once the migration runs. The `visibility` field is gone from `PATCH /api/indexes/:indexId`, the `?view=` query parameter is gone from `GET /api/indexes`, and `visibility` is gone from every per-index row in `GET /api/admin/cluster`.
+
+  **Action required before upgrading.** Migration `0017` drops the column, so once it has run there is no record of which indexes were restricted. Inventory them first:
+
+  ```sql
+  SELECT index_id, visibility FROM index_settings WHERE visibility <> 'all';
+  ```
+
+  The migration is forward-only and runs automatically at boot. Rolling the image back to 0.3.6 afterwards leaves that version selecting a column that no longer exists, which fails every index read — recovery needs a database restore.
+
+- **`GET /api/indexes` returns a smaller row.** `fieldCount`, `sourceCount`, `mode`, and `createTimestamp` are no longer included. `mode` moved to `GET /api/indexes/:indexId`, where `fieldCount` and `sourceCount` can be derived from `fields` and `sources`; note that endpoint is admin-only and cookie-authenticated, so it is not a substitute for callers using a personal API key. `createTimestamp` is removed with no replacement.
 
 ### Added
 
-- **Traces.** Ingest OTLP spans with `POST /v1/traces` from any existing ingest key, and browse them at `GET /api/traces/*` — span search, a duration heatmap, and full waterfall detail with span attributes, events, and links back to correlated logs. Span search is a free-text Quickwit query over every span, not just trace roots, so a query can match a child span's attributes; `is_root:true` narrows the list to trace roots. Spans are stored in one configured index (`TRACE_INDEX_ID`, defaulting to `otel-traces-v0_9`).
+- **Traces.** Ingest OTLP spans with `POST /v1/traces` using any existing ingest key, and open a trace from the log that belongs to it — the log detail drawer gains a **Trace** tab with an inline waterfall, and a full trace page at `/traces/:traceId` shows the waterfall with per-span attributes, events, and links back to correlated logs. Pasting a trace ID into the log search box opens that trace directly. Spans are stored in one configured index (`TRACE_INDEX_ID`, defaulting to `otel-traces-v0_9`).
 
-### Fixed
+  Trace detail is a raw `trace_id` search with no time bound, so a trace stays openable for as long as its spans are retained — Quickwit's Jaeger API, which this does not use, ignored the requested window and looked back a fixed 72 hours. The response carries `truncated`, and the view says so when a trace is larger than one request returns. Duplicate span documents that OTLP retries produce are collapsed by `span_id`. In the attributes panel `otel.status_code` and `error` are dropped as restatements of the span's own error state, while `span.kind` and `otel.status_description` are kept.
 
-- **Traces older than the Jaeger lookback window can be opened again.** Trace detail now runs an
-  unbounded `trace_id` search instead of Quickwit's Jaeger API, which ignored the requested window and
-  looked back a fixed 72 hours. The `jaeger:` block in `quickwit.yaml` is no longer read and has been
-  removed.
-- **Oversized traces are reported rather than silently clipped** — the detail response carries
-  `truncated`, and the view says when spans are missing.
-- **The attributes panel is quieter on error spans**: `otel.status_code` and `error` are dropped as
-  restatements of the span's own error state. `span.kind` and `otel.status_description` are kept.
-- **The span list shows one row per logical span**, collapsing the duplicate documents that OTLP
-  retries can produce.
-- **Refresh reloads the service dropdown**, not just the results and heatmap.
+  There is no span search or trace list in this release: traces are reached from a log or by trace ID.
+
+- **Per-index "Trace ID field" setting.** `traceIdField` on `PATCH /api/indexes/:indexId` and in the index config form names the path to a trace ID inside a log document. It is what links logs to traces in both directions, and it defaults to `trace_id`.
+
+### Changed
+
+- **Ingest keys can no longer be created against the span store.** `POST /api/api-keys` returns `400 INDEX_IS_TRACE_INDEX` for an index equal to `TRACE_INDEX_ID`, since a key anchored there would write log documents into the span index. Existing keys are unaffected.
+- **`POST /v1/logs` now reports partial failures.** It forwards Quickwit's `partial_success.rejected_log_records` instead of always returning an empty success body, and upstream 4xx statuses pass through rather than collapsing to `400`. OTLP exporters that were receiving silent successes will start seeing rejections they were previously blind to.
 
 ## [0.3.6] - 2026-07-21
 
