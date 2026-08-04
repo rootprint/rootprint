@@ -14,7 +14,7 @@
 	import { TraceExplorerStore } from '$lib/stores/trace-explorer.svelte';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	import { traceDetailHref, withDurationClause } from '$lib/utils/trace-params';
 
 	const SCROLL_TRIGGER_PX = 1500;
 
@@ -132,6 +132,18 @@
 		loading={store.heatmapLoading}
 		error={store.heatmapError}
 		retry={() => store.refresh()}
+		onBrush={(sel) =>
+			store.navigate(
+				{
+					...(sel.time && {
+						timeRange: { type: 'absolute', start: sel.time.startTs, end: sel.time.endTs }
+					}),
+					...(sel.duration && {
+						q: withDurationClause(store.params.q, sel.duration.fromMs, sel.duration.toMs)
+					})
+				},
+				{ push: true }
+			)}
 	/>
 
 	<section class="flex min-h-0 flex-1 flex-col" aria-label="Spans">
