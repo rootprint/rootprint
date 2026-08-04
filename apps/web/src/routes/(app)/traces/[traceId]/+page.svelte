@@ -38,11 +38,6 @@
 	const root = $derived(model.roots[0] ?? null);
 	const hasSpans = $derived(model.spanCount > 0);
 
-	// safeReturnTo has already reduced this to a same-origin path, so a prefix test is enough.
-	const backLabel = $derived(
-		data.returnTo.startsWith('/traces') ? 'Back to traces' : 'Back to logs'
-	);
-
 	let filter = $state('');
 
 	const rootSpanId = $derived(root?.spanId ?? null);
@@ -105,7 +100,7 @@
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			<a href={data.returnTo} class="btn btn-ghost btn-xs -ml-2 gap-1.5">
 				<ArrowLeft class="h-3.5 w-3.5" />
-				{backLabel}
+				Back to logs
 			</a>
 			<div class="flex items-center gap-2">
 				<select

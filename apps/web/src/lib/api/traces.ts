@@ -3,8 +3,6 @@ import { composeQuery } from 'api/query';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
-import type { SortDirection, SpanListRow, TraceHistogramResponse } from '$lib/types';
-import type { TraceParams } from '$lib/utils/trace-params';
 import { buildTimeParams } from '$lib/utils/time-range';
 import {
 	SPAN_ID_FIELD,
@@ -54,73 +52,4 @@ export async function fetchSpanLogCounts(
 		counts.set(spanId, (counts.get(spanId) ?? 0) + 1);
 	}
 	return counts;
-}
-
-export type TraceWindow = TraceParams & {
-	startTs: number;
-	endTs: number;
-};
-
-function filterParams(input: TraceWindow) {
-	return {
-		startTs: String(input.startTs),
-		endTs: String(input.endTs),
-		...(input.service !== null && { service: input.service }),
-		...(input.q !== '' && { q: input.q })
-	};
-}
-
-export async function fetchTraceHistogram(
-	input: TraceWindow,
-	signal?: AbortSignal
-): Promise<TraceHistogramResponse> {
-	const res = await client.api.traces.histogram.$get(
-		{ query: filterParams(input) },
-		{ init: { signal } }
-	);
-
-	if (!res.ok) throw await readApiError(res, 'Failed to load trace histogram');
-
-	return res.json();
-}
-
-export type TraceSearchInput = TraceWindow & {
-	limit: number;
-	offset: number;
-	sortOrder: SortDirection;
-};
-
-export async function searchSpans(
-	input: TraceSearchInput,
-	signal?: AbortSignal
-): Promise<SpanListRow[]> {
-	const res = await client.api.traces.search.$get(
-		{
-			query: {
-				...filterParams(input),
-				limit: String(input.limit),
-				offset: String(input.offset),
-				sortOrder: input.sortOrder
-			}
-		},
-		{ init: { signal } }
-	);
-
-	if (!res.ok) throw await readApiError(res, 'Span search failed');
-
-	return (await res.json()).spans;
-}
-
-export async function fetchTraceServices(
-	window: { startTs: number; endTs: number },
-	signal?: AbortSignal
-): Promise<string[]> {
-	const res = await client.api.traces.services.$get(
-		{ query: { startTs: String(window.startTs), endTs: String(window.endTs) } },
-		{ init: { signal } }
-	);
-
-	if (!res.ok) throw await readApiError(res, 'Failed to load services');
-
-	return (await res.json()).services;
 }

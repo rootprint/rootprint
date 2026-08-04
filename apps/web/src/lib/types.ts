@@ -1,13 +1,7 @@
 import type { Preset } from '$lib/utils/time-range';
-import type {
-	Filter,
-	SortDirection,
-	SpanListRow,
-	TraceHistogramResponse,
-	TraceSpan
-} from 'api/types';
+import type { Filter, SortDirection, TraceSpan } from 'api/types';
 
-export type { Filter, SortDirection, SpanListRow, TraceHistogramResponse };
+export type { Filter, SortDirection };
 
 /** One crumb in a breadcrumb trail. Ancestors set `href`; the current page omits it. */
 export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean };
@@ -66,14 +60,6 @@ export interface HistogramInput {
 export interface HistogramResult {
 	buckets: HistogramBucket[];
 	totalDocCount: number;
-}
-
-/** The heatmap renders the wire response unchanged, so this names its parts rather than restating them. */
-export type TraceDurationBand = TraceHistogramResponse['bands'][number];
-
-export interface TraceHeatmapBrush {
-	time: { startTs: number; endTs: number } | null;
-	duration: { fromMs: number | null; toMs: number | null } | null;
 }
 
 export interface FieldConfig {
