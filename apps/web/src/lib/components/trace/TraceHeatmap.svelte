@@ -6,7 +6,7 @@
 
 	import { browser } from '$app/environment';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import type { TraceDurationBand, TraceHistogramResponse } from '$lib/types';
+	import type { TraceDurationBand, TraceHeatmapBrush, TraceHistogramResponse } from '$lib/types';
 	import { baseContentAt, CANVAS_FALLBACK_COLOR, cssVarColor } from '$lib/utils/chart-colors';
 	import { formatDurationMs, pluralize } from '$lib/utils/format';
 	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
@@ -15,12 +15,14 @@
 		data,
 		loading,
 		error,
-		retry
+		retry,
+		onBrush
 	}: {
 		data: TraceHistogramResponse | null;
 		loading: boolean;
 		error: string | null;
 		retry: () => void;
+		onBrush: (sel: TraceHeatmapBrush) => void;
 	} = $props();
 
 	const SECONDS_PER_DAY = 86400;
@@ -56,6 +58,11 @@
 		if (band.fromMs === null) return `under ${formatDurationMs(band.toMs ?? 0)}`;
 		if (band.toMs === null) return `${formatDurationMs(band.fromMs)} and above`;
 		return `${formatDurationMs(band.fromMs)} – ${formatDurationMs(band.toMs)}`;
+	}
+
+	function twoSignificant(ms: number): number {
+		const step = 10 ** Math.max(0, Math.floor(Math.log10(ms)) - 1);
+		return Math.round(ms / step) * step;
 	}
 
 	/** Visible band range: all-zero bands are trimmed off the ends of the axis, interior ones kept. */
@@ -166,6 +173,8 @@
 		}
 	}
 
+	const clamp = (value: number, max: number): number => Math.min(Math.max(value, 0), max);
+
 	async function buildChart() {
 		if (!browser || !chartEl || !data || !visible) return;
 		const buildId = ++chartBuildId;
@@ -234,6 +243,29 @@
 		const halfCell = grid.intervalSec / 2;
 		const rowCount = hi - lo + 1;
 
+		const spanSec = grid.intervalSec * (grid.columns.length + 1);
+		const columnAt = (px: number, boxWidth: number): number =>
+			((px / boxWidth) * spanSec - halfCell) / grid.intervalSec;
+		const rowAt = (px: number, boxHeight: number): number => (px / boxHeight) * rowCount;
+
+		const LADDER_STEP = 4;
+		const interiorEdges = grid.bands.slice(1).map((band) => band.fromMs ?? 0);
+		const bandEdges = [
+			interiorEdges[0] / LADDER_STEP,
+			...interiorEdges,
+			interiorEdges[interiorEdges.length - 1] * LADDER_STEP
+		];
+
+		/** Duration at a fractional band position, log-linear inside a band to match the ×4 ladder. */
+		const msAtBand = (position: number): number => {
+			const index = clamp(Math.floor(position), grid.bands.length - 1);
+			const from = bandEdges[index];
+			return from * (bandEdges[index + 1] / from) ** (position - index);
+		};
+
+		const secondsAt = (px: number, boxWidth: number): number =>
+			grid.columns[0].timestamp + columnAt(px, boxWidth) * grid.intervalSec;
+
 		/**
 		 * Hit-testing from the plot area's own box rather than uPlot's cursor: `cursor.idx` / `posToVal`
 		 * made the reported cell disagree with the crosshair.
@@ -249,12 +281,8 @@
 				const x = event.clientX - overRect.left;
 				const y = event.clientY - overRect.top;
 
-				const rowFromTop = Math.floor((y / overRect.height) * rowCount);
-				// The x scale spans one cell more than the data, half a cell of padding on each side,
-				// so seconds are measured from the first column's start.
-				const spanSec = grid.intervalSec * (grid.columns.length + 1);
-				const secondsFromStart = (x / overRect.width) * spanSec - halfCell;
-				const columnIndex = Math.floor(secondsFromStart / grid.intervalSec);
+				const rowFromTop = Math.floor(rowAt(y, overRect.height));
+				const columnIndex = Math.floor(columnAt(x, overRect.width));
 
 				if (
 					rowFromTop < 0 ||
@@ -293,14 +321,61 @@
 			};
 		}
 
+		function onSelect(u: uPlotLib): void {
+			const { left, top, width: selWidth, height: selHeight } = u.select;
+			const plotWidth = u.over.clientWidth;
+			const plotHeight = u.over.clientHeight;
+			u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+
+			if (loading) return;
+			if (plotWidth <= 0 || plotHeight <= 0) return;
+
+			const thinX = selWidth < 4;
+			const thinY = selHeight < 4;
+			if (thinX && thinY) return;
+
+			const timeUntouched = thinX || (left <= 0 && left + selWidth >= plotWidth);
+			const durationUntouched = thinY || (top <= 0 && top + selHeight >= plotHeight);
+			if (timeUntouched && durationUntouched) return;
+
+			let time: TraceHeatmapBrush['time'] = null;
+			if (!timeUntouched) {
+				const spanStart = grid.columns[0].timestamp;
+				const spanEnd = grid.columns[grid.columns.length - 1].timestamp + grid.intervalSec;
+				const clampTs = (ts: number): number => Math.min(Math.max(ts, spanStart), spanEnd);
+				const startTs = clampTs(Math.floor(secondsAt(left, plotWidth)));
+				const endTs = clampTs(Math.ceil(secondsAt(left + selWidth, plotWidth)));
+				time = { startTs, endTs: endTs > startTs ? endTs : startTs + 1 };
+			}
+
+			let duration: TraceHeatmapBrush['duration'] = null;
+			if (!durationUntouched) {
+				const fromRaw = msAtBand(lo + rowCount - rowAt(top + selHeight, plotHeight));
+				const toRaw = msAtBand(lo + rowCount - rowAt(top, plotHeight));
+				const fromMs = fromRaw < 1 ? null : twoSignificant(fromRaw);
+				const openTop = top <= 0 && hi === grid.bands.length - 1;
+				const toRounded = openTop ? null : twoSignificant(toRaw);
+				const toMs =
+					fromMs !== null && toRounded !== null && toRounded <= fromMs ? fromMs + 1 : toRounded;
+				duration = fromMs === null && toMs === null ? null : { fromMs, toMs };
+			}
+
+			if (time === null && duration === null) return;
+			onBrush({ time, duration });
+		}
+
 		const opts: uPlotLib.Options = {
 			width,
 			height,
 			// uPlot needs a series per data array; this one is never drawn.
 			series: [{ label: 'Time' }, { label: 'Spans', show: false }],
-			cursor: { drag: { x: false, y: false }, points: { show: false } },
+			cursor: {
+				drag: { x: true, y: true, dist: 4, setScale: false },
+				points: { show: false }
+			},
+			select: { show: true, left: 0, top: 0, width: 0, height: 0 },
 			legend: { show: false },
-			hooks: { draw: [drawCells] },
+			hooks: { draw: [drawCells], setSelect: [onSelect] },
 			scales: {
 				x: {
 					time: true,
@@ -386,7 +461,7 @@
 {:else}
 	<div
 		bind:this={containerEl}
-		class="relative h-full w-full transition-opacity"
+		class="trace-heatmap relative h-full w-full transition-opacity"
 		class:opacity-50={loading}
 		aria-busy={loading}
 		role="img"

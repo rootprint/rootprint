@@ -34,6 +34,9 @@
 	const TREE_LEFT_PX = 18;
 	const TREE_INDENT_PX = 14;
 	const TREE_LABEL_GAP_PX = 18;
+	const TREE_MAX_INDENT_PCT = 45;
+	const indentX = (depth: number): string =>
+		`min(${TREE_LEFT_PX + depth * TREE_INDENT_PX}px, ${TREE_MAX_INDENT_PCT}%)`;
 	const collapsedSpanIds = new SvelteSet<string>();
 
 	function toggleSpan(spanId: string): void {
@@ -98,7 +101,7 @@
 
 {#snippet spanRow(
 	node: SpanNode,
-	ancestorRails: (string | null)[],
+	ancestorRails: { x: string; color: string }[],
 	isLast: boolean,
 	parentColor: string | null
 )}
@@ -106,13 +109,18 @@
 	{@const logs = spanLogs?.(node) ?? null}
 	{@const hasVisibleChildren = node.children.length > 0 && !isCollapsed}
 	{@const parentDepth = Math.max(node.depth - 1, 0)}
-	{@const nodeX = TREE_LEFT_PX + node.depth * TREE_INDENT_PX}
-	{@const parentX = TREE_LEFT_PX + parentDepth * TREE_INDENT_PX}
+	{@const nodeX = indentX(node.depth)}
+	{@const parentX = indentX(parentDepth)}
 	{@const color = serviceColor(node.serviceName)}
+	<!-- Only rails that are actually drawn are carried down: a placeholder per level made this O(depth²). -->
+	{@const childRails =
+		isLast || parentColor === null
+			? ancestorRails
+			: [...ancestorRails, { x: parentX, color: parentColor }]}
 	{@const dimmed = needle !== '' && !matches(node)}
 	{@const isSelected = node.spanId === selectedSpanId}
 	{@const labelClass = 'flex min-w-0 items-center gap-1.5 py-1.5 pr-3'}
-	{@const labelStyle = `padding-left:${nodeX + TREE_LABEL_GAP_PX}px`}
+	{@const labelStyle = `padding-left:calc(${nodeX} + ${TREE_LABEL_GAP_PX}px)`}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div
@@ -128,36 +136,34 @@
 		]}
 		onclick={() => onSelectSpan?.(node.spanId)}
 	>
-		<div class="relative flex min-w-0 items-stretch text-xs">
-			{#each ancestorRails as railColor, i (i)}
-				{#if railColor}
-					<span
-						class="absolute inset-y-0 border-l"
-						style={`left:${TREE_LEFT_PX + i * TREE_INDENT_PX}px;border-color:${railColor}`}
-					></span>
-				{/if}
+		<div class="relative flex min-w-0 items-stretch overflow-hidden text-xs">
+			{#each ancestorRails as rail, i (i)}
+				<span
+					class="absolute inset-y-0 border-l"
+					style={`left:${rail.x};border-color:${rail.color}`}
+				></span>
 			{/each}
 			{#if node.depth > 0}
 				<span
 					class={['absolute top-0 border-l', isLast ? 'h-1/2' : 'bottom-0']}
-					style={`left:${parentX}px;border-color:${parentColor}`}
+					style={`left:${parentX};border-color:${parentColor}`}
 				></span>
 				<span
 					class="absolute top-1/2 border-t"
-					style={`left:${parentX}px;width:${nodeX - parentX}px;border-color:${parentColor}`}
+					style={`left:${parentX};width:calc(${nodeX} - ${parentX});border-color:${parentColor}`}
 				></span>
 			{/if}
 			{#if hasVisibleChildren}
 				<span
 					class="absolute top-1/2 bottom-0 border-l"
-					style={`left:${nodeX}px;border-color:${color}`}
+					style={`left:${nodeX};border-color:${color}`}
 				></span>
 			{/if}
 			{#if node.children.length > 0}
 				<button
 					type="button"
 					class="absolute top-1/2 z-10 flex h-4 min-w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded border px-1 font-mono text-[9px] leading-none"
-					style={`left:${nodeX}px;border-color:${color};${
+					style={`left:${nodeX};border-color:${color};${
 						isCollapsed
 							? `background-color:${color};color:color-mix(in oklab, ${color} 22%, black)`
 							: `background-color:var(--color-base-100);color:${color}`
@@ -174,7 +180,7 @@
 			{:else}
 				<span
 					class="border-base-100 absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
-					style={`left:${nodeX}px;background-color:${node.isError ? 'var(--color-error)' : color}`}
+					style={`left:${nodeX};background-color:${node.isError ? 'var(--color-error)' : color}`}
 				></span>
 			{/if}
 			{#if onSelectSpan}
@@ -222,12 +228,7 @@
 	</div>
 	{#if !isCollapsed}
 		{#each node.children as child, index (child.spanId)}
-			{@render spanRow(
-				child,
-				node.depth === 0 ? [] : [...ancestorRails, isLast ? null : parentColor],
-				index === node.children.length - 1,
-				color
-			)}
+			{@render spanRow(child, childRails, index === node.children.length - 1, color)}
 		{/each}
 	{/if}
 {/snippet}

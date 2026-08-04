@@ -3,19 +3,21 @@
 	import { slide } from 'svelte/transition';
 
 	import TraceHeatmap from '$lib/components/trace/TraceHeatmap.svelte';
-	import type { TraceHistogramResponse } from '$lib/types';
+	import type { TraceHeatmapBrush, TraceHistogramResponse } from '$lib/types';
 	import { formatDurationMs } from '$lib/utils/format';
 
 	let {
 		data,
 		loading,
 		error,
-		retry
+		retry,
+		onBrush
 	}: {
 		data: TraceHistogramResponse | null;
 		loading: boolean;
 		error: string | null;
 		retry: () => void;
+		onBrush: (sel: TraceHeatmapBrush) => void;
 	} = $props();
 	let collapsed = $state(false);
 
@@ -24,7 +26,7 @@
 	);
 </script>
 
-<div class="border-line border-b">
+<div class="border-line border-b select-none">
 	<div class="flex items-center px-3 py-1.5">
 		<button
 			type="button"
@@ -60,7 +62,7 @@
 	{#if !collapsed}
 		<div transition:slide={{ duration: 200 }}>
 			<div class="h-[150px] px-2 pb-2">
-				<TraceHeatmap {data} {loading} {error} {retry} />
+				<TraceHeatmap {data} {loading} {error} {retry} {onBrush} />
 			</div>
 		</div>
 	{/if}

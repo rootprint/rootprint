@@ -71,6 +71,11 @@ export interface HistogramResult {
 /** The heatmap renders the wire response unchanged, so this names its parts rather than restating them. */
 export type TraceDurationBand = TraceHistogramResponse['bands'][number];
 
+export interface TraceHeatmapBrush {
+	time: { startTs: number; endTs: number } | null;
+	duration: { fromMs: number | null; toMs: number | null } | null;
+}
+
 export interface FieldConfig {
 	timestampField: string;
 	levelField: string;

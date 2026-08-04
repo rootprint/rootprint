@@ -18,6 +18,20 @@ export function traceFilterKey(p: TraceParams): string {
 	return `${p.service ?? ''}|${p.q}`;
 }
 
+const DURATION_CLAUSE_RE = /^(?:\((.*)\) AND )?span_duration_millis:\[(?:\d+|\*) TO (?:\d+|\*)\}$/;
+
+export function stripDurationClause(q: string): string {
+	const match = DURATION_CLAUSE_RE.exec(q.trim());
+	return match ? (match[1] ?? '') : q;
+}
+
+/** Open-ended bands pass `null`, which becomes `*`. Upper bound is exclusive: bands are `[from, to)`. */
+export function withDurationClause(q: string, fromMs: number | null, toMs: number | null): string {
+	const rest = stripDurationClause(q).trim();
+	const clause = `span_duration_millis:[${fromMs ?? '*'} TO ${toMs ?? '*'}}`;
+	return rest === '' ? clause : `(${rest}) AND ${clause}`;
+}
+
 /**
  * Merges a partial update into the URL. `timeRange` goes through `buildQueryUrl` so the time picker
  * behaves exactly as the log explorer's; that serializer emits only the params it owns, so trace

@@ -223,6 +223,12 @@
 	color: var(--color-base-content);
 }
 
+.trace-heatmap .u-select {
+	background-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
+	outline: 1px solid var(--color-base-content);
+	outline-offset: -1px;
+}
+
 @theme inline {
 	/* Canonical hairline: 1px line at 10% base-content. Generates border-line,
 	   border-b-line, divide-line, etc. — the single source for all hairlines. */
