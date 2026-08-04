@@ -123,6 +123,11 @@ export async function listIndexes(db: Db, qw: QuickwitClient): Promise<IndexSumm
 	);
 }
 
+/** The span store has no level or message field, so every log-index route must refuse it. */
+export function assertNotTraceIndex(indexId: string): void {
+	if (indexId === config.traceIndexId) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+}
+
 export async function getIndexMeta(
 	db: Db,
 	qw: QuickwitClient,
@@ -155,7 +160,7 @@ export async function getIndexConfig(
 ): Promise<IndexConfig> {
 	const meta = await getIndexMeta(db, qw, indexId);
 	// A span schema has no level or message field, so the explorer would render an empty grid.
-	if (indexId === config.traceIndexId) throw notFound('Index not found', 'INDEX_NOT_FOUND');
+	assertNotTraceIndex(indexId);
 	return { indexId, ...resolveLogFields(meta) };
 }
 

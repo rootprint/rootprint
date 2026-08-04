@@ -19,15 +19,8 @@ export interface OperationRollup {
 	slowestSpanId: string;
 }
 
-/** The subtree below `span`, excluding itself. Iterative: trace depth is unbounded. */
 export function descendants(span: SpanNode): SpanNode[] {
-	const out: SpanNode[] = [];
-	const stack: SpanNode[] = [...span.children];
-	for (let node = stack.pop(); node; node = stack.pop()) {
-		out.push(node);
-		for (const child of node.children) stack.push(child);
-	}
-	return out;
+	return span.children.flatMap((child) => [child, ...descendants(child)]);
 }
 
 /**
@@ -63,7 +56,7 @@ export function selfMicros(span: SpanNode): number {
 }
 
 /** Groups spans by service+name, heaviest total first. The count is the N+1 signal. */
-export function topOperations(spans: SpanNode[], limit: number): OperationRollup[] {
+export function topOperations(spans: SpanNode[]): OperationRollup[] {
 	const groups = new Map<string, OperationRollup & { slowestMicros: number }>();
 	for (const s of spans) {
 		// Not `a:b` — span names carry colons (`GET /orders/:id`), so a delimiter can't be unambiguous.
@@ -88,7 +81,7 @@ export function topOperations(spans: SpanNode[], limit: number): OperationRollup
 			group.slowestSpanId = s.spanId;
 		}
 	}
-	return [...groups.values()].toSorted((a, b) => b.totalMicros - a.totalMicros).slice(0, limit);
+	return [...groups.values()].toSorted((a, b) => b.totalMicros - a.totalMicros).slice(0, 5);
 }
 
 export const dbSystem = (span: SpanNode): string => attr(span, DB_SYSTEM_KEYS);

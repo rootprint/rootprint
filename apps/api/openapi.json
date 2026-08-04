@@ -13922,7 +13922,7 @@
 										"type": "string"
 									},
 									"traceIdField": {
-										"minLength": 1,
+										"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
 										"type": "string"
 									},
 									"tracebackField": {

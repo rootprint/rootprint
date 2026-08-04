@@ -192,6 +192,7 @@
 			type="text"
 			class="input input-sm w-full font-mono"
 			placeholder="Search logs… (or paste a trace ID)"
+			title={'Search logs with a Quickwit query. A bare 32-character hex trace ID opens that trace instead — wrap it in quotes to search for it as text.'}
 			bind:this={inputEl}
 			bind:value={queryInput}
 			onfocus={() => {

@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
+import { rejectTraceIndex } from '../middleware/reject-trace-index.js';
 import { requireUser } from '../middleware/require-user.js';
 import { withIndexMeta } from '../middleware/with-index-meta.js';
 import { SavedViewListResponse, SavedViewResponse } from '../schemas/responses/views.js';
@@ -17,6 +18,7 @@ import { IndexIdParams } from '../utils/params.js';
 
 export const viewsRouter = new Hono<AuthedEnv>()
 	.use('*', requireUser)
+	.use('*', rejectTraceIndex)
 	.use('*', withIndexMeta)
 	.get(
 		'/',
