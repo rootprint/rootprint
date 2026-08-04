@@ -9,8 +9,6 @@
 	import { serviceColor } from '$lib/utils/service-color';
 	import {
 		dbSpans,
-		dbStatement,
-		dbSystem,
 		descendants,
 		describeSpan,
 		exceptionHeadline,
@@ -21,7 +19,7 @@
 	import type { SpanNode } from '$lib/types';
 	import type { DrawerField } from '$lib/utils/hit-fields';
 
-	type SpanTab = 'overview' | 'parameters' | 'events' | 'database';
+	type SpanTab = 'overview' | 'parameters' | 'events';
 
 	let {
 		span,
@@ -42,8 +40,7 @@
 	const TABS: { id: SpanTab; label: string }[] = [
 		{ id: 'overview', label: 'Overview' },
 		{ id: 'parameters', label: 'Parameters' },
-		{ id: 'events', label: 'Events' },
-		{ id: 'database', label: 'Database' }
+		{ id: 'events', label: 'Events' }
 	];
 
 	/** Rendered on the exception's own header and <pre>, so they'd be duplicates in the field table. */
@@ -52,8 +49,10 @@
 	let activeTab = $state<SpanTab>('overview');
 	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
 
+	const spanId = $derived(span.spanId);
+
 	$effect(() => {
-		if (span.spanId) osRef?.osInstance()?.elements().viewport.scrollTo(0, 0);
+		if (spanId) osRef?.osInstance()?.elements().viewport.scrollTo(0, 0);
 	});
 
 	function handleTabKeydown(e: KeyboardEvent): void {
@@ -122,20 +121,17 @@
 
 	const description = $derived(describeSpan(span));
 
-	const rollups = $derived(topOperations(subtree, 5));
+	const rollups = $derived(topOperations(subtree));
 
 	const dbCalls = $derived(
 		dbSpans([span, ...subtree]).toSorted((a, b) => a.startOffsetMicros - b.startOffsetMicros)
 	);
 
 	const dbTotalMicros = $derived(dbCalls.reduce((sum, s) => sum + s.durationMicros, 0));
-	// reduce, not Math.max(...spread): the db-call count is unbounded.
-	const dbMaxMicros = $derived(dbCalls.reduce((max, s) => Math.max(max, s.durationMicros), 1));
 	const dbSharePct = $derived(percentOf(dbTotalMicros, span.durationMicros));
 
 	const tabCounts: Partial<Record<SpanTab, number>> = $derived({
-		events: span.events.length,
-		database: dbCalls.length
+		events: span.events.length
 	});
 
 	const isDisabled = (id: SpanTab): boolean => id in tabCounts && !tabCounts[id];
@@ -172,14 +168,6 @@
 
 {#snippet empty(message: string)}
 	<p class="text-base-content/50 text-xs">{message}</p>
-{/snippet}
-
-{#snippet bar(pct: number, width: string)}
-	<span class={['bg-base-content/10 block h-1.5 shrink-0 overflow-hidden rounded-full', width]}>
-		<!-- A call a few µs long beside a much longer one is normal; without a floor its bar renders zero-width. -->
-		<span class="bg-primary block h-full rounded-full" style={`width:${Math.max(pct, 0.4)}%`}
-		></span>
-	</span>
 {/snippet}
 
 <div class="flex h-full min-h-0 flex-col">
@@ -228,17 +216,19 @@
 				role="tab"
 				id={`span-tab-${tab.id}`}
 				aria-selected={activeTab === tab.id}
-				aria-controls={`span-panel-${tab.id}`}
+				aria-controls="span-detail-panel"
 				tabindex={activeTab === tab.id ? 0 : -1}
-				disabled={isDisabled(tab.id)}
+				aria-disabled={isDisabled(tab.id)}
 				class={[
 					'shrink-0 border-b-2 px-3 py-2.5 text-xs',
-					'disabled:text-base-content/30 disabled:cursor-not-allowed',
+					isDisabled(tab.id) && 'text-base-content/30 cursor-not-allowed',
 					activeTab === tab.id
 						? 'border-primary text-base-content font-medium'
 						: 'text-base-content/60 border-transparent'
 				]}
-				onclick={() => (activeTab = tab.id)}
+				onclick={() => {
+					if (!isDisabled(tab.id)) activeTab = tab.id;
+				}}
 			>
 				{tab.label}
 				{#if tabCounts[tab.id]}
@@ -257,7 +247,7 @@
 		<div
 			class="flex flex-col gap-5 px-4 py-4"
 			role="tabpanel"
-			id={`span-panel-${activeTab}`}
+			id="span-detail-panel"
 			aria-labelledby={`span-tab-${activeTab}`}
 		>
 			{#if activeTab === 'overview'}
@@ -335,6 +325,13 @@
 							</dd>
 						</div>
 					</dl>
+					{#if dbCalls.length > 0}
+						<p class="text-base-content/60 mt-2 text-xs">
+							{pluralize(dbCalls.length, 'database operation')} ·
+							<span class="font-mono tabular-nums">{formatSpanDuration(dbTotalMicros)}</span>
+							cumulative{dbSharePct === null ? '' : ` · ${dbSharePct}% of span duration`}
+						</p>
+					{/if}
 				</section>
 
 				{#if subtree.length > 0}
@@ -410,37 +407,6 @@
 					{/each}
 				{:else}
 					{@render empty('No events for this span')}
-				{/if}
-			{:else if activeTab === 'database'}
-				{#if dbCalls.length > 0}
-					<section>
-						<p class="text-base-content/60 mb-2 text-xs">
-							{pluralize(dbCalls.length, 'operation')} ·
-							<span class="font-mono tabular-nums">{formatSpanDuration(dbTotalMicros)}</span>
-							cumulative{dbSharePct === null ? '' : ` · ${dbSharePct}% of span duration`}
-						</p>
-						<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
-							{#each dbCalls as call (call.spanId)}
-								<button
-									type="button"
-									class="hover:bg-base-200 flex w-full items-center gap-2 px-2 py-1.5 text-left"
-									onclick={() => onSelectSpan(call.spanId)}
-									title={dbStatement(call)}
-								>
-									<span class="w-14 shrink-0 font-mono text-xs tabular-nums">
-										{formatSpanDuration(call.durationMicros)}
-									</span>
-									{@render bar((call.durationMicros / dbMaxMicros) * 100, 'w-10')}
-									<span class="min-w-0 flex-1 truncate font-mono text-xs">{dbStatement(call)}</span>
-									<span class="text-base-content/50 shrink-0 font-mono text-[10px]">
-										{dbSystem(call) || 'database'}
-									</span>
-								</button>
-							{/each}
-						</div>
-					</section>
-				{:else}
-					{@render empty('No spans with db.system underneath this one.')}
 				{/if}
 			{/if}
 		</div>

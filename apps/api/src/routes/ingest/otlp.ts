@@ -8,7 +8,7 @@ import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
 import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
-import { HttpError, unsupportedMediaType } from '../../utils/http-error.js';
+import { badRequest, HttpError, unsupportedMediaType } from '../../utils/http-error.js';
 import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
 
 type Signal = 'logs' | 'traces';
@@ -122,6 +122,12 @@ function signalHandler(signal: Signal): Handler<KeyedEnv> {
 		}
 
 		const apiKey = c.get('apiKey');
+		if (signal !== 'traces' && apiKey.indexId === config.traceIndexId) {
+			throw badRequest(
+				'This key targets the span store. Send spans to POST /v1/traces instead.',
+				'INDEX_IS_TRACE_INDEX'
+			);
+		}
 		const destinationIndex = signal === 'traces' ? config.traceIndexId : apiKey.indexId;
 		const upstreamUrl = quickwitUrl(`/api/v1/otlp/v1/${signal}`);
 		const headers: Record<string, string> = {

@@ -125,7 +125,6 @@
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div
 		role="listitem"
-		aria-level={node.depth + 1}
 		aria-current={isSelected ? 'true' : undefined}
 		class={[
 			'border-line/40 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b',

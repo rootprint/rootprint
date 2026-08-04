@@ -1,11 +1,13 @@
 import { Hono } from 'hono';
 
+import { config } from '../../config.js';
 import { CONTENT_TYPE_JSON } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
 import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
+import { badRequest } from '../../utils/http-error.js';
 
 export const ndjsonRouter = new Hono<KeyedEnv>().post(
 	'/ndjson',
@@ -39,6 +41,12 @@ export const ndjsonRouter = new Hono<KeyedEnv>().post(
 	requireIngestKey,
 	async (c) => {
 		const apiKey = c.get('apiKey');
+		if (apiKey.indexId === config.traceIndexId) {
+			throw badRequest(
+				'This key targets the span store. Send spans to POST /v1/traces instead.',
+				'INDEX_IS_TRACE_INDEX'
+			);
+		}
 		const upstreamUrl = quickwitUrl(`/api/v1/${encodeURIComponent(apiKey.indexId)}/ingest`);
 		const contentType = c.req.header('content-type') ?? CONTENT_TYPE_JSON;
 

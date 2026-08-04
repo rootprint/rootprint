@@ -32,6 +32,7 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 - **Ingest keys can no longer be created against the span store.** `POST /api/api-keys` returns `400 INDEX_IS_TRACE_INDEX` for an index equal to `TRACE_INDEX_ID`, since a key anchored there would write log documents into the span index. Existing keys are unaffected.
 - **`POST /v1/logs` now reports partial failures.** It forwards Quickwit's `partial_success.rejected_log_records` instead of always returning an empty success body, and upstream 4xx statuses pass through rather than collapsing to `400`. OTLP exporters that were receiving silent successes will start seeing rejections they were previously blind to.
+- **Filter values containing `<`, `>` or `=` are now quoted when composed into a query.** Saved views and shares whose filter values contain those characters produce a slightly different Quickwit query than before; results should be the same or more accurate, since previously those characters were passed through as query operators.
 
 ## [0.3.6] - 2026-07-21
 

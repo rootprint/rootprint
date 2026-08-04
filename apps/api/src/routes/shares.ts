@@ -5,7 +5,7 @@ import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { quickwit } from '../lib/quickwit.js';
-import { getIndexMeta } from '../services/index.service.js';
+import { assertNotTraceIndex, getIndexMeta } from '../services/index.service.js';
 import { createShare, resolveShare } from '../services/share.service.js';
 import { ShareCreateResponse, ShareViewResponse } from '../schemas/responses/shares.js';
 import { shareCodeParamsSchema, shareCreateSchema } from '../schemas/shares.js';
@@ -35,6 +35,7 @@ export const sharesRouter = new Hono<AuthedEnv>()
 			const body = c.req.valid('json');
 			const session = c.get('session');
 			// Asserts the index still exists.
+			assertNotTraceIndex(body.indexId);
 			await getIndexMeta(db, quickwit, body.indexId);
 			const result = await createShare(db, session.user.id, body);
 			return c.json(result, 201);

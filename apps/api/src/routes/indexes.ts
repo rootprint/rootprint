@@ -3,7 +3,6 @@ import { Hono } from 'hono';
 import { exportsRouter } from './exports.js';
 import { viewsRouter } from './views.js';
 
-import { config } from '../config.js';
 import { db } from '../lib/db.js';
 import { quickwit } from '../lib/quickwit.js';
 import { describe, validator } from '../lib/openapi/describe.js';
@@ -11,6 +10,7 @@ import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireUser } from '../middleware/require-user.js';
 import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
+import { rejectTraceIndex } from '../middleware/reject-trace-index.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { withIndexConfig } from '../middleware/with-index-config.js';
 import { withIndexMeta } from '../middleware/with-index-meta.js';
@@ -71,7 +71,6 @@ import {
 import { getPreferences, putPreferences } from '../services/preference.service.js';
 import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
 import type { Scope } from '../types.js';
-import { notFound } from '../utils/http-error.js';
 import { IndexIdParams } from '../utils/params.js';
 
 const LOGS_READ: Scope = { logs: ['read'] };
@@ -117,12 +116,11 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
+		rejectTraceIndex,
 		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
 			const indexMeta = c.get('indexMeta');
-			if (c.req.param('indexId') === config.traceIndexId)
-				throw notFound('Index not found', 'INDEX_NOT_FOUND');
 			return c.json({ fields: indexMeta.index.fields });
 		}
 	)
@@ -135,12 +133,11 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			security: [{ personalBearer: [] }, { cookieAuth: [] }]
 		}),
 		requireUserOrPersonalKey(LOGS_READ),
+		rejectTraceIndex,
 		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
 			const indexMeta = c.get('indexMeta');
-			if (c.req.param('indexId') === config.traceIndexId)
-				throw notFound('Index not found', 'INDEX_NOT_FOUND');
 			return c.json(getIndexViewConfig(indexMeta));
 		}
 	)
@@ -452,6 +449,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			ok: PreferencesResponse
 		}),
 		requireUser,
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		async (c) => {
 			const { indexId } = c.req.valid('param');
@@ -467,6 +465,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			ok: PreferencesResponse
 		}),
 		requireUser,
+		withIndexMeta,
 		validator('param', IndexIdParams),
 		validator('json', PutPreferencesBody),
 		async (c) => {
