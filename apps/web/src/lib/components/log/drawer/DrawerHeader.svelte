@@ -64,6 +64,7 @@
 				? order[(idx + 1) % order.length]
 				: order[(idx - 1 + order.length) % order.length];
 		onTabChange(next);
+		document.getElementById(`drawer-tab-${next}`)?.focus();
 	}
 
 	const levelLabel = $derived(hit.level.toUpperCase() || 'UNKNOWN');

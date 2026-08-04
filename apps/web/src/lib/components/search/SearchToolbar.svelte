@@ -240,6 +240,9 @@
 			class="btn btn-sm btn-primary"
 			aria-label="Run query"
 			title="Run query"
+			onmousedown={(e) => {
+				e.preventDefault();
+			}}
 			onclick={() => {
 				if (!openedTrace()) store.runQuery(queryInput);
 			}}
