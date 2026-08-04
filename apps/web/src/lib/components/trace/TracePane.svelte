@@ -256,8 +256,8 @@
 			role="status"
 			class="text-base-content/60 flex flex-1 items-center justify-center px-6 text-center text-sm"
 		>
-			No spans found for this trace. They may not have been ingested, they may fall outside the
-			trace index's retention window, or this log index may be paired with the wrong trace index.
+			No spans found for this trace. They may not have been ingested, or they may fall outside the
+			trace index's retention window.
 		</div>
 	{:else}
 		{@const m = model}
