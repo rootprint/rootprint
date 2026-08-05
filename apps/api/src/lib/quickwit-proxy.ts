@@ -2,9 +2,28 @@ import type { Context } from 'hono';
 
 import type { ProxyResult } from '../types.js';
 import { badRequest, serviceUnavailable } from '../utils/http-error.js';
-import { readUpstreamMessage } from '../utils/otlp-response.js';
 
 const PROXY_TIMEOUT_MS = 120_000;
+
+/** Quickwit reports errors as `{message}` JSON; anything else is surfaced as clipped raw text. */
+export function readUpstreamMessage(bodyBytes: ArrayBuffer, fallback: string): string {
+	const text = new TextDecoder().decode(bodyBytes);
+	if (!text) return fallback;
+	try {
+		const parsed = JSON.parse(text) as unknown;
+		if (
+			parsed &&
+			typeof parsed === 'object' &&
+			'message' in parsed &&
+			typeof (parsed as { message: unknown }).message === 'string'
+		) {
+			return (parsed as { message: string }).message;
+		}
+	} catch {
+		// body was not JSON; fall through to raw text
+	}
+	return text.length > 512 ? text.slice(0, 512) : text;
+}
 
 type ProxyOpts = {
 	upstreamUrl: string;

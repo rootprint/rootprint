@@ -158,9 +158,9 @@ export async function getIndexConfig(
 	qw: QuickwitClient,
 	indexId: string
 ): Promise<IndexConfig> {
-	const meta = await getIndexMeta(db, qw, indexId);
 	// A span schema has no level or message field, so the explorer would render an empty grid.
 	assertNotTraceIndex(indexId);
+	const meta = await getIndexMeta(db, qw, indexId);
 	return { indexId, ...resolveLogFields(meta) };
 }
 

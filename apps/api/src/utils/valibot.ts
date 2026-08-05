@@ -3,14 +3,6 @@ import * as v from 'valibot';
 /** A string query/path param coerced to a finite number. */
 export const toNum = v.pipe(v.string(), v.decimal(), v.transform(Number), v.number());
 
-/** A non-negative Unix-seconds window bound. Fractional seconds are valid. */
-export const tsParam = v.pipe(toNum, v.minValue(0));
-
-/**
- * A string query/path param coerced to an integer in `[min, max]`.
- * Accepts only non-negative integer strings (no decimals, signs, trailing chars).
- * Bounds are declarative so @valibot/to-json-schema emits {type:'integer', minimum, maximum}.
- */
 export const intParam = ({
 	min,
 	max,

@@ -86,25 +86,6 @@ export function unsupportedContentType(message: string): Response {
 	});
 }
 
-export function readUpstreamMessage(bodyBytes: ArrayBuffer, fallback: string): string {
-	const text = new TextDecoder().decode(bodyBytes);
-	if (!text) return fallback;
-	try {
-		const parsed = JSON.parse(text) as unknown;
-		if (
-			parsed &&
-			typeof parsed === 'object' &&
-			'message' in parsed &&
-			typeof (parsed as { message: unknown }).message === 'string'
-		) {
-			return (parsed as { message: string }).message;
-		}
-	} catch {
-		// body was not JSON; fall through to raw text
-	}
-	return text.length > 512 ? text.slice(0, 512) : text;
-}
-
 function statusToGrpcCode(status: number): number {
 	if (status === 401) return Code.UNAUTHENTICATED;
 	if (status === 403) return Code.PERMISSION_DENIED;
