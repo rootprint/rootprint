@@ -30,12 +30,11 @@ export const tracesRouter = new Hono<AuthedEnv>()
 		validator('param', TraceParams),
 		async (c) => {
 			const { traceId } = c.req.valid('param');
-			const query = `trace_id:${traceId}`;
 			const result = await withSearchAudit(
 				db,
 				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
 				config.traceIndexId,
-				{ query: `[GET /api/traces/:traceId] ${query}` },
+				{ query: `trace_id:${traceId}` },
 				() => getTrace(quickwit, config.traceIndexId, traceId),
 				(r) => r.spans.length
 			);

@@ -1,4 +1,4 @@
-import type { QuickwitClient } from 'quickwit-js';
+import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
 
 import type { TraceResponse, TraceSpan } from '../types.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
@@ -86,6 +86,13 @@ const toMicros = (v: unknown): number | null =>
 const asText = (v: unknown, fallback: string): string =>
 	typeof v === 'string' && v !== '' ? v : fallback;
 
+const emptyTrace = (truncated = false): TraceResponse => ({
+	spans: [],
+	traceStartMicros: 0,
+	resources: {},
+	truncated
+});
+
 export async function getTrace(
 	qw: QuickwitClient,
 	traceIndexId: string,
@@ -96,9 +103,11 @@ export async function getTrace(
 		.query(`trace_id:${traceId}`)
 		.limit(MAX_TRACE_SPANS)
 		.sortBy('span_start_timestamp_nanos', 'asc');
-	const response = await idx.search<RawSpanHit>(builder).catch(translateQuickwitError);
-	if (response.hits.length === 0)
-		return { spans: [], traceStartMicros: 0, resources: {}, truncated: false };
+	const response = await idx.search<RawSpanHit>(builder).catch((err: unknown) => {
+		if (err instanceof QuickwitError && err.code === QuickwitErrorCode.NOT_FOUND) return null;
+		return translateQuickwitError(err);
+	});
+	if (response === null || response.hits.length === 0) return emptyTrace();
 
 	let truncated = response.num_hits > response.hits.length;
 
@@ -162,8 +171,7 @@ export async function getTrace(
 		});
 	}
 
-	if (spans.length === 0)
-		return { spans: [], traceStartMicros: 0, resources: {}, truncated: response.num_hits > 0 };
+	if (spans.length === 0) return emptyTrace(response.num_hits > 0);
 
 	// reduce, not Math.min(...spans): the span count is unbounded and a spread would overflow.
 	const traceStartMicros = spans.reduce((min, s) => Math.min(min, s.startOffsetMicros), Infinity);

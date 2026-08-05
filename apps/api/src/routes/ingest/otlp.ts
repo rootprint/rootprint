@@ -6,10 +6,10 @@ import { CONTENT_TYPE_PROTOBUF } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit.js';
-import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
+import { proxyToQuickwit, readUpstreamMessage } from '../../lib/quickwit-proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import { badRequest, HttpError, unsupportedMediaType } from '../../utils/http-error.js';
-import { otlpSuccess, readUpstreamMessage } from '../../utils/otlp-response.js';
+import { otlpSuccess } from '../../utils/otlp-response.js';
 
 type Signal = 'logs' | 'traces';
 
