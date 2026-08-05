@@ -77,8 +77,6 @@
 		const v = getByPath(hit.raw, path);
 		return isTraceId(v) ? v : null;
 	});
-	const hasTrace = $derived(traceId !== null);
-
 	let traceResource = $state.raw<TraceResource | null>(null);
 	// Deliberately not reactive: the loader effect below assigns traceResource, and reading it there
 	// would retrigger that effect.
@@ -95,12 +93,16 @@
 
 	$effect(() => {
 		const id = traceId;
-		if (activeTab !== 'trace' || id === null || requestedKey === id) return;
+		if (id === null || requestedKey === id) return;
 		requestedKey = id;
 		const next = new TraceResource(id);
 		traceResource = next;
 		void next.load();
 	});
+
+	const hasTrace = $derived(
+		(traceResource?.model?.spanCount ?? 0) > 0 || traceResource?.error != null
+	);
 
 	let searchOpen = $state(false);
 	let searchTerm = $state('');
@@ -267,13 +269,15 @@
 			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
 			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
 		</button>
-		<a
-			href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
-			class="btn btn-xs btn-primary ml-auto"
-		>
-			<ExternalLink class="h-3 w-3" aria-hidden="true" />
-			Open trace page
-		</a>
+		{#if hasTrace}
+			<a
+				href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
+				class="btn btn-xs btn-primary ml-auto"
+			>
+				<ExternalLink class="h-3 w-3" aria-hidden="true" />
+				Open trace page
+			</a>
+		{/if}
 	{/if}
 {/snippet}
 
