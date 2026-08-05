@@ -5,11 +5,6 @@ import { translateQuickwitError } from '../utils/quickwit-error.js';
 
 const NANOS_PER_MICRO = 1_000;
 
-/**
- * A trace is rendered whole in one response, so this is a payload ceiling, not a paging limit:
- * 10k spans measured ~22 MB, which is neither renderable nor cheap to hold. `truncated` reports the
- * clip. ponytail: a flat cap, not windowed fetching — revisit if real traces reach it.
- */
 const MAX_TRACE_SPANS = 2_000;
 
 const REDUNDANT_ATTRIBUTES = ['otel.status_code', 'error'];
@@ -99,10 +94,7 @@ export async function getTrace(
 	traceId: string
 ): Promise<TraceResponse> {
 	const idx = qw.index(traceIndexId);
-	const builder = idx
-		.query(`trace_id:${traceId}`)
-		.limit(MAX_TRACE_SPANS)
-		.sortBy('span_start_timestamp_nanos', 'asc');
+	const builder = idx.query(`trace_id:${traceId}`).limit(MAX_TRACE_SPANS);
 	const response = await idx.search<RawSpanHit>(builder).catch((err: unknown) => {
 		if (err instanceof QuickwitError && err.code === QuickwitErrorCode.NOT_FOUND) return null;
 		return translateQuickwitError(err);
