@@ -8,7 +8,7 @@ import { quickwit } from '../lib/quickwit.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { TraceParams } from '../schemas/traces.js';
-import { TraceResponse } from '../schemas/responses/traces.js';
+import { TraceResponseSchema } from '../schemas/responses/traces.js';
 import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
 import { getTrace } from '../services/trace.service.js';
 import type { Scope } from '../types.js';
@@ -23,7 +23,7 @@ export const tracesRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Traces',
 			summary: 'Get trace spans',
-			ok: TraceResponse,
+			ok: TraceResponseSchema,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],
 			errors: [429]
 		}),

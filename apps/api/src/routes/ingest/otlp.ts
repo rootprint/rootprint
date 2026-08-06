@@ -25,7 +25,11 @@ function parseBaseMediaType(header: string | undefined): string | null {
 	return trimmed ? trimmed : null;
 }
 
-const binary = (description: string) => ({ type: 'string', format: 'binary', description });
+const binary = (description: string) => ({
+	type: 'string' as const,
+	format: 'binary',
+	description
+});
 
 const pbErr = (description: string) => ({
 	description,
