@@ -20,8 +20,9 @@ export const kubernetes: Integration = {
 	icon: KubernetesIcon,
 	origin: 'Containers',
 	docs: 'https://docs.rootprint.io/send-logs/platforms/kubernetes',
-	buildSteps: (ctx) => {
-		const values = `mode: daemonset
+	logs: {
+		buildSteps: (ctx) => {
+			const values = `mode: daemonset
 
 presets:
   logsCollection:
@@ -55,48 +56,49 @@ config:
         processors: [memory_limiter, k8sattributes, transform, batch]
         exporters: [otlphttp]`;
 
-		return [
-			{
-				title: 'Add the OpenTelemetry Helm repo',
-				body:
-					'The Collector runs as a DaemonSet — one pod per node — tailing every pod’s ' +
-					'stdout/stderr off the kubelet. Per-platform packaging is maintained upstream.',
-				snippets: [{ code: ADD_REPO, lang: 'bash', copyTitle: 'Copy repo commands' }]
-			},
-			{
-				title: 'Write values.yaml',
-				body:
-					'The endpoint and API key are prefilled. The kubernetesAttributes preset tags every ' +
-					'record with pod, namespace, node, and container; the transform infers severity from the ' +
-					'message body.',
-				snippets: [
-					{
-						code: values,
-						lang: 'yaml',
-						copyTitle: 'Copy values.yaml',
-						highlightValue: highlightKey(ctx)
+			return [
+				{
+					title: 'Add the OpenTelemetry Helm repo',
+					body:
+						'The Collector runs as a DaemonSet — one pod per node — tailing every pod’s ' +
+						'stdout/stderr off the kubelet. Per-platform packaging is maintained upstream.',
+					snippets: [{ code: ADD_REPO, lang: 'bash', copyTitle: 'Copy repo commands' }]
+				},
+				{
+					title: 'Write values.yaml',
+					body:
+						'The endpoint and API key are prefilled. The kubernetesAttributes preset tags every ' +
+						'record with pod, namespace, node, and container; the transform infers severity from the ' +
+						'message body.',
+					snippets: [
+						{
+							code: values,
+							lang: 'yaml',
+							copyTitle: 'Copy values.yaml',
+							highlightValue: highlightKey(ctx)
+						}
+					],
+					callout: {
+						variant: 'info',
+						html:
+							'Want cluster events (OOMKills, scheduling) or the attribute reference? See the ' +
+							'<a href="https://docs.rootprint.io/send-logs/platforms/kubernetes" target="_blank" rel="noreferrer" class="link">Kubernetes docs</a>.'
 					}
-				],
-				callout: {
-					variant: 'info',
-					html:
-						'Want cluster events (OOMKills, scheduling) or the attribute reference? See the ' +
-						'<a href="https://docs.rootprint.io/send-logs/platforms/kubernetes" target="_blank" rel="noreferrer" class="link">Kubernetes docs</a>.'
+				},
+				{
+					title: 'Install the chart',
+					body: 'Deploys the DaemonSet into a dedicated namespace.',
+					snippets: [{ code: INSTALL, lang: 'bash', copyTitle: 'Copy install command' }]
+				},
+				{
+					title: 'Send a test log',
+					body:
+						'Runs a one-off pod that prints a line and exits — the node’s Collector tails it and ships ' +
+						'it within a few seconds. Clean up with `kubectl delete pod rootprint-smoke-test`.',
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
+					verify: searchVerifyLink(ctx.indexId)
 				}
-			},
-			{
-				title: 'Install the chart',
-				body: 'Deploys the DaemonSet into a dedicated namespace.',
-				snippets: [{ code: INSTALL, lang: 'bash', copyTitle: 'Copy install command' }]
-			},
-			{
-				title: 'Send a test log',
-				body:
-					'Runs a one-off pod that prints a line and exits — the node’s Collector tails it and ships ' +
-					'it within a few seconds. Clean up with `kubectl delete pod rootprint-smoke-test`.',
-				snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-				verify: searchVerifyLink(ctx.indexId)
-			}
-		];
+			];
+		}
 	}
 };

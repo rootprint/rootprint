@@ -102,7 +102,7 @@
 				start searching them in Rootprint.
 			</p>
 			<div class="mt-7 flex flex-wrap items-center gap-3">
-				<a href="/settings/send-logs" class="btn btn-primary btn-sm">
+				<a href="/settings/send-telemetry" class="btn btn-primary btn-sm">
 					<Send class="h-3.5 w-3.5" aria-hidden="true" />
 					Choose an integration
 				</a>

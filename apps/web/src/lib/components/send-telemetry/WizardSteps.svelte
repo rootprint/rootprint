@@ -1,6 +1,6 @@
 <script lang="ts">
 	import StepBlock from './StepBlock.svelte';
-	import type { Step } from '$lib/send-logs/types';
+	import type { Step } from '$lib/send-telemetry/types';
 
 	let { steps }: { steps: Step[] } = $props();
 </script>

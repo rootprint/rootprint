@@ -9,7 +9,7 @@ import {
 	ShieldCheck,
 	UserRound
 } from 'lucide-svelte';
-import { integrationById } from '$lib/send-logs/integrations';
+import { integrationById } from '$lib/send-telemetry/integrations';
 import type { BreadcrumbSegment } from '$lib/types';
 
 export type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
@@ -34,7 +34,7 @@ export const navGroups: NavGroup[] = [
 		label: 'Data',
 		adminOnly: true,
 		items: [
-			{ href: '/settings/send-logs', label: 'Send logs', icon: Send },
+			{ href: '/settings/send-telemetry', label: 'Send logs & traces', icon: Send },
 			{ href: '/settings/api-keys', label: 'API keys', icon: KeyRound },
 			{ href: '/settings/indexes', label: 'Indexes', icon: Database }
 		]
@@ -54,7 +54,10 @@ export const navGroups: NavGroup[] = [
 const ROOT: BreadcrumbSegment = { label: 'Settings', href: '/settings' };
 const ACTIVITY: BreadcrumbSegment = { label: 'Activity', href: '/settings/activity' };
 const INDEXES: BreadcrumbSegment = { label: 'Indexes', href: '/settings/indexes' };
-const SEND_LOGS: BreadcrumbSegment = { label: 'Send logs', href: '/settings/send-logs' };
+const SEND_TELEMETRY: BreadcrumbSegment = {
+	label: 'Send logs & traces',
+	href: '/settings/send-telemetry'
+};
 const AUTH: BreadcrumbSegment = { label: 'Authentication', href: '/settings/authentication' };
 const USERS: BreadcrumbSegment = { label: 'Users', href: '/settings/users' };
 
@@ -86,10 +89,10 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 		{ label: p.sourceId ?? 'Source', mono: true }
 	],
 	'/settings/api-keys': () => [ROOT, { label: 'API keys' }],
-	'/settings/send-logs': () => [ROOT, { label: 'Send logs' }],
-	'/settings/send-logs/[integration]': (p) => [
+	'/settings/send-telemetry': () => [ROOT, { label: 'Send logs & traces' }],
+	'/settings/send-telemetry/[integration]': (p) => [
 		ROOT,
-		SEND_LOGS,
+		SEND_TELEMETRY,
 		{ label: integrationById.get(p.integration ?? '')?.label ?? 'Integration' }
 	],
 	'/settings/users': () => [ROOT, { label: 'Users' }],

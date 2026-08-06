@@ -2,7 +2,7 @@
 	import { Search } from 'lucide-svelte';
 	import CodeBlock from './CodeBlock.svelte';
 	import Callout from './Callout.svelte';
-	import type { Step } from '$lib/send-logs/types';
+	import type { Step } from '$lib/send-telemetry/types';
 
 	let { index, step, isLast }: { index: number; step: Step; isLast: boolean } = $props();
 

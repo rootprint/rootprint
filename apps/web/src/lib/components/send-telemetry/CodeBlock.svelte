@@ -2,8 +2,8 @@
 	import { CodeXml, Check, Copy } from 'lucide-svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { highlightCode } from '$lib/utils/code-highlight';
-	import { apiKeyDecorations } from '$lib/send-logs/snippet-utils';
-	import type { SnippetLang } from '$lib/send-logs/types';
+	import { apiKeyDecorations } from '$lib/send-telemetry/snippet-utils';
+	import type { SnippetLang } from '$lib/send-telemetry/types';
 
 	let {
 		code,

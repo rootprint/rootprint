@@ -6,13 +6,14 @@
 	import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
 	import { resolveBreadcrumbs } from '$lib/settings-nav';
 	import { DEP } from '$lib/api/deps';
-	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-logs/constants';
-	import type { Integration } from '$lib/send-logs/types';
+	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-telemetry/constants';
+	import type { Integration, Signal } from '$lib/send-telemetry/types';
 	import type { ApiKeyView } from '$lib/api/api-keys';
 	import type { IndexSummary } from 'api/types';
 
 	let {
 		integration,
+		signal,
 		apiKeys,
 		indexes,
 		traceIndexId,
@@ -21,6 +22,7 @@
 		realApiKeyValue = $bindable<string | null>(null)
 	}: {
 		integration: Integration;
+		signal: Signal;
 		apiKeys: ApiKeyView[];
 		indexes: IndexSummary[];
 		/** Null when the span store does not exist in Quickwit. */
@@ -55,9 +57,22 @@
 			<ExternalLink class="h-3 w-3" />
 		</a>
 	</div>
-	<p class="text-base-content/60 text-xs">
-		Sending to <span class="text-base-content">{selectedIndexId}</span>
-	</p>
+	{#if signal === 'traces'}
+		{#if traceIndexId}
+			<p class="text-base-content/60 text-xs">
+				Spans go to <span class="text-base-content font-mono">{traceIndexId}</span> — the span store,
+				not the key’s index.
+			</p>
+		{:else}
+			<p class="text-warning text-xs">
+				No span store exists in Quickwit yet, so spans sent with this key have nowhere to land.
+			</p>
+		{/if}
+	{:else}
+		<p class="text-base-content/60 text-xs">
+			Sending to <span class="text-base-content">{selectedIndexId}</span>
+		</p>
+	{/if}
 	<ApiKeyChip
 		{apiKeys}
 		bind:selectedApiKeyId
@@ -71,6 +86,6 @@
 	{indexes}
 	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
 	{traceIndexId}
-	invalidateKey={DEP.sendLogsApiKeys}
+	invalidateKey={DEP.sendTelemetryApiKeys}
 	onCreated={handleCreated}
 />

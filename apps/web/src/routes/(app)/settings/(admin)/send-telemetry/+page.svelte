@@ -1,17 +1,25 @@
 <script lang="ts">
 	import { ExternalLink, Search } from 'lucide-svelte';
-	import IntegrationCard from '$lib/components/send-logs/IntegrationCard.svelte';
+	import { page } from '$app/state';
+	import IntegrationCard from '$lib/components/send-telemetry/IntegrationCard.svelte';
+	import TabLinks from '$lib/components/send-telemetry/TabLinks.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { integrations } from '$lib/send-logs/integrations';
-	import { ORIGINS } from '$lib/send-logs/origins';
+	import { integrations } from '$lib/send-telemetry/integrations';
+	import { ORIGINS } from '$lib/send-telemetry/origins';
+	import { SIGNAL_TABS, signalFromUrl } from '$lib/send-telemetry/signal';
 
 	let query = $state('');
 
-	// Group by origin in ORIGINS order; drop empty groups (e.g. Cloud today).
+	const signal = $derived(signalFromUrl(page.url));
+
+	/** Only integrations that support the active signal — Vector and Docker emit no spans. */
+	const available = $derived(integrations.filter((i) => i[signal]));
+
+	// Group by origin in ORIGINS order; drop empty groups.
 	const sections = $derived(
 		ORIGINS.map((origin) => ({
 			origin,
-			items: integrations.filter((i) => i.origin === origin.id)
+			items: available.filter((i) => i.origin === origin.id)
 		})).filter((s) => s.items.length > 0)
 	);
 
@@ -19,14 +27,14 @@
 	const searchResults = $derived.by(() => {
 		const q = query.trim().toLowerCase();
 		if (!q) return [];
-		return integrations.filter((i) => i.label.toLowerCase().includes(q));
+		return available.filter((i) => i.label.toLowerCase().includes(q));
 	});
 </script>
 
 <div class="mx-auto max-w-7xl px-12 py-12">
 	<PageHeader
-		title="Send logs"
-		description="Pick where your logs come from to get step-by-step setup instructions."
+		title={'Send logs & traces'}
+		description="Pick where your logs and traces come from to get step-by-step setup instructions."
 	>
 		{#snippet actions()}
 			<a
@@ -40,6 +48,8 @@
 			</a>
 		{/snippet}
 	</PageHeader>
+
+	<TabLinks items={SIGNAL_TABS} active={signal} param="signal" ariaLabel="Telemetry signal" />
 
 	<label class="input input-sm mt-8 w-full max-w-md">
 		<Search class="h-3.5 w-3.5 opacity-60" />
@@ -59,7 +69,7 @@
 			{:else}
 				<div class="flex flex-wrap gap-3">
 					{#each searchResults as integration (integration.id)}
-						<IntegrationCard {integration} />
+						<IntegrationCard {integration} {signal} />
 					{/each}
 				</div>
 			{/if}
@@ -70,7 +80,7 @@
 				<p class="text-base-content/60 text-sm font-medium">{origin.label}</p>
 				<div class="flex flex-wrap gap-3">
 					{#each items as integration (integration.id)}
-						<IntegrationCard {integration} />
+						<IntegrationCard {integration} {signal} />
 					{/each}
 				</div>
 			</section>

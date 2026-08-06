@@ -6,5 +6,5 @@ export const DEP = {
 	indexes: 'app:indexes',
 	index: (id: string): `app:index:${string}` => `app:index:${id}`,
 	users: 'app:users',
-	sendLogsApiKeys: 'send-logs:api-keys'
+	sendTelemetryApiKeys: 'send-telemetry:api-keys'
 } as const;

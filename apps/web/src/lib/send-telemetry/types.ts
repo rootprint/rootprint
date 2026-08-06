@@ -48,7 +48,18 @@ export type IntegrationContext = {
 	flavor?: string;
 };
 
-export type Flavor = { id: string; label: string };
+export type Signal = 'logs' | 'traces';
+
+/** A tab in a `TabLinks` bar. `Flavor` is the same shape under its domain name. */
+export type TabItem = { id: string; label: string };
+
+export type Flavor = TabItem;
+
+export type SignalSetup = {
+	flavors?: Flavor[];
+	defaultFlavor?: string;
+	buildSteps: (ctx: IntegrationContext) => Step[];
+};
 
 export type Integration = {
 	id: string;
@@ -57,7 +68,7 @@ export type Integration = {
 	origin: IntegrationOrigin;
 	/** Page on docs.rootprint.io for this integration. */
 	docs: string;
-	flavors?: Flavor[];
-	defaultFlavor?: string;
-	buildSteps: (ctx: IntegrationContext) => Step[];
+	logs: SignalSetup;
+	/** Absent when the integration cannot emit spans — no Traces tab is rendered for it. */
+	traces?: SignalSetup;
 };
