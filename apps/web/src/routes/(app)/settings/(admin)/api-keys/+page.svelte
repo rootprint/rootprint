@@ -111,7 +111,8 @@
 
 	{#if noIndexes}
 		<p class="text-base-content/60 mt-6 text-sm">
-			Create an <a class="link" href="/settings/indexes">index</a> before issuing API keys.
+			Create a <a class="link" href="/settings/indexes">log index</a> before issuing API keys. Ingest
+			keys cannot target the span store.
 		</p>
 	{/if}
 
