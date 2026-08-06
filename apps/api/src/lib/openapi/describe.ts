@@ -81,7 +81,7 @@ type DescribeArgs = {
 	/** Skip the shared JSON error baseline, for routes whose errors are protobuf (OTLP) not JSON. */
 	baselineErrors?: boolean;
 	/** Raw OpenAPI requestBody object — for non-JSON request payloads (protobuf, NDJSON). */
-	requestBody?: unknown;
+	requestBody?: DescribeRouteOptions['requestBody'];
 	security?: NonNullable<DescribeRouteOptions['security']>;
 	/**
 	 * Raw OpenAPI response objects merged in last (final precedence) — for
@@ -119,9 +119,7 @@ function describe(args: DescribeArgs) {
 		summary,
 		...(description !== undefined ? { description } : {}),
 		responses,
-		...(requestBody !== undefined
-			? { requestBody: requestBody as DescribeRouteOptions['requestBody'] }
-			: {}),
+		...(requestBody !== undefined ? { requestBody } : {}),
 		...(security !== undefined ? { security } : {})
 	});
 }

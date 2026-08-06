@@ -16,10 +16,7 @@ import type {
 	PreferencesResponse as PreferencesResponseSchema,
 	SourceDetailSchema as SourceDetailResponseSchema
 } from './schemas/responses/indexes.js';
-import type {
-	TraceResponse as TraceResponseSchema,
-	TraceSpanSchema
-} from './schemas/responses/traces.js';
+import type { TraceResponseSchema, TraceSpanSchema } from './schemas/responses/traces.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,

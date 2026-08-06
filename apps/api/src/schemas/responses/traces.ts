@@ -29,7 +29,7 @@ export const TraceSpanSchema = named(
 	})
 );
 
-export const TraceResponse = named(
+export const TraceResponseSchema = named(
 	'TraceResponse',
 	v.object({
 		spans: v.array(TraceSpanSchema),
