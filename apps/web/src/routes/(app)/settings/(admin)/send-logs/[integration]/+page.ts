@@ -16,11 +16,12 @@ export const load: PageLoad = async ({ params, depends }) => {
 
 	try {
 		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
+		const traceIndexId = indexes.find((i) => i.isTraceIndex)?.indexId ?? null;
 		return {
 			integrationId: params.integration,
-			apiKeys,
+			apiKeys: apiKeys.filter((k) => k.indexId !== traceIndexId),
 			indexes: indexes.filter((i) => !i.isTraceIndex),
-			traceIndexId: indexes.find((i) => i.isTraceIndex)?.indexId ?? null
+			traceIndexId
 		};
 	} catch (e) {
 		if (e instanceof ApiError) error(e.status, e.message);
