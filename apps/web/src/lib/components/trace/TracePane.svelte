@@ -233,7 +233,7 @@
 {/snippet}
 
 <div class="flex h-full flex-col">
-	{#if error}
+	{#if error && !loading}
 		<div
 			role="alert"
 			class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
@@ -265,15 +265,15 @@
 			<div></div>
 			<div class="py-1.5 pr-14">
 				<div class="relative h-4">
-					{#each axis.ticks as tick (tick.pct)}
+					{#each axis.ticks as axisTick (axisTick.pct)}
 						<span
 							class={[
 								'text-base-content/50 absolute top-0 font-mono text-[10px]',
-								tick.pct > 0 && '-translate-x-1/2'
+								axisTick.pct > 0 && '-translate-x-1/2'
 							]}
-							style={`left:${tick.pct}%`}
+							style={`left:${axisTick.pct}%`}
 						>
-							{tick.label}
+							{axisTick.label}
 						</span>
 					{/each}
 				</div>

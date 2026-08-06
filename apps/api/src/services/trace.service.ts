@@ -1,5 +1,6 @@
 import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
 
+import { logger } from '../lib/logger.js';
 import type { TraceResponse, TraceSpan } from '../types.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 
@@ -96,7 +97,10 @@ export async function getTrace(
 	const idx = qw.index(traceIndexId);
 	const builder = idx.query(`trace_id:${traceId}`).limit(MAX_TRACE_SPANS);
 	const response = await idx.search<RawSpanHit>(builder).catch((err: unknown) => {
-		if (err instanceof QuickwitError && err.code === QuickwitErrorCode.NOT_FOUND) return null;
+		if (err instanceof QuickwitError && err.code === QuickwitErrorCode.NOT_FOUND) {
+			logger.warn({ traceIndexId }, 'span store not found — every trace will read as empty');
+			return null;
+		}
 		return translateQuickwitError(err);
 	});
 	if (response === null || response.hits.length === 0) return emptyTrace();

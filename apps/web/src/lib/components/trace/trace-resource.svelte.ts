@@ -24,10 +24,10 @@ export class TraceResource {
 		this.#abort?.abort();
 		this.#abort = abort;
 		this.loading = true;
-		this.error = null;
 		try {
 			const trace = await fetchTrace(this.traceId, { signal: abort.signal });
 			this.model = buildTraceModel(trace);
+			this.error = null;
 		} catch (e) {
 			if (isAbortError(e)) return;
 			this.error = e instanceof Error ? e.message : 'Failed to load trace';
