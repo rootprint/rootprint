@@ -2,7 +2,7 @@ import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
-import type { FieldConfig } from '$lib/types';
+import type { FieldConfig, IndexOption } from '$lib/types';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
 import type {
 	CreateIndexInput,
@@ -38,6 +38,12 @@ export async function listIndexes(): Promise<IndexSummary[]> {
 	const res = await client.api.indexes.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load indexes');
 	return res.json() as Promise<IndexSummary[]>;
+}
+
+export function toLogIndexOptions(summaries: IndexSummary[]): IndexOption[] {
+	return summaries
+		.filter((s) => !s.isTraceIndex)
+		.map((s) => ({ id: s.indexId, name: s.displayName ?? s.indexId }));
 }
 
 export async function getIndex(indexId: string): Promise<IndexDetail> {

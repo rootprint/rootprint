@@ -20,5 +20,6 @@ export function traceDetailHref(
 		params.set('returnTo', `${opts.returnTo.pathname}${opts.returnTo.search}${opts.returnTo.hash}`);
 	}
 	const query = params.toString();
-	return query ? `/traces/${traceId}?${query}` : `/traces/${traceId}`;
+	const path = `/traces/${encodeURIComponent(traceId)}`;
+	return query ? `${path}?${query}` : path;
 }
