@@ -1,0 +1,22 @@
+meta {
+  name: User Recent Searches
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/users/{{userId}}/recent
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+  ~offset: 0
+  ~limit: 100
+  ~status: any
+}
+
+docs {
+  status is one of any, success, error.
+}

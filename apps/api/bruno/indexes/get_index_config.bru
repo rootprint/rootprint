@@ -1,0 +1,20 @@
+meta {
+  name: Get Index View Config
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/config
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+docs {
+  The resolved log-explorer view config (timestamp/message/severity mapping).
+  Readable with a session cookie or a personal key bearer token.
+}

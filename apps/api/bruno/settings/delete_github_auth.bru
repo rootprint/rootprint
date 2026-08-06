@@ -1,0 +1,11 @@
+meta {
+  name: Delete GitHub Credentials
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/api/settings/auth/github/credentials
+  body: none
+  auth: none
+}

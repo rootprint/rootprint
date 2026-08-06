@@ -1,0 +1,11 @@
+meta {
+  name: Delete Service Account
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/service-accounts/{{serviceAccountUserId}}
+  body: none
+  auth: none
+}

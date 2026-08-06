@@ -1,0 +1,18 @@
+meta {
+  name: Set GitHub Credentials
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/settings/auth/github/credentials
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "clientId": "Iv1.your-github-client-id",
+    "clientSecret": "your-github-client-secret"
+  }
+}

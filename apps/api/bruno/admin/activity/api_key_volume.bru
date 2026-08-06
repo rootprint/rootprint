@@ -1,0 +1,15 @@
+meta {
+  name: API Key Volume
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/api-keys/{{apiKeyId}}/volume
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

@@ -1,0 +1,11 @@
+meta {
+  name: Reset Source Checkpoint
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/sources/{{sourceId}}/reset-checkpoint
+  body: none
+  auth: none
+}

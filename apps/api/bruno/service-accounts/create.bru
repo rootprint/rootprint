@@ -1,0 +1,17 @@
+meta {
+  name: Create Service Account
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/service-accounts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "log-agent"
+  }
+}

@@ -1,0 +1,11 @@
+meta {
+  name: Get GitHub Auth Status
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/settings/auth/github
+  body: none
+  auth: none
+}

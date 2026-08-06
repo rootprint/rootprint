@@ -1,0 +1,15 @@
+meta {
+  name: User Summary
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/users/{{userId}}/summary
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

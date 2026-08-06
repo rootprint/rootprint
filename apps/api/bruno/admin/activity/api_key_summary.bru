@@ -1,0 +1,15 @@
+meta {
+  name: API Key Summary
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/api-keys/{{apiKeyId}}/summary
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

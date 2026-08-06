@@ -1,0 +1,29 @@
+meta {
+  name: Field Values (Bulk)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/fields/values
+  body: none
+  auth: bearer
+}
+
+params:query {
+  fields: severity_text,service_name
+  ~q: error
+  ~startTs: 1700000000
+  ~endTs: 1800000000
+  ~limit: 20
+  ~filters: [{"field":"severity_text","value":"ERROR","exclude":false}]
+}
+
+auth:bearer {
+  token: 
+}
+
+docs {
+  fields is a comma-separated list. filters is a JSON-encoded array (see
+  schemas/filters.ts) and is optional.
+}

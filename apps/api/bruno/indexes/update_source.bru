@@ -1,0 +1,25 @@
+meta {
+  name: Update Source
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/sources/{{sourceId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sourceType": "kafka",
+    "topic": "app-logs",
+    "inputFormat": "json",
+    "numPipelines": 2
+  }
+}
+
+docs {
+  Full replace — sourceType must match the existing source. Point sourceId at a
+  source created by Create Source; the built-in _ingest-api-source is not editable.
+}

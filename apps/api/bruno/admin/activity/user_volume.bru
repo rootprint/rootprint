@@ -1,0 +1,15 @@
+meta {
+  name: User Volume
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/users/{{userId}}/volume
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

@@ -1,0 +1,15 @@
+meta {
+  name: User Latency
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/users/{{userId}}/latency
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

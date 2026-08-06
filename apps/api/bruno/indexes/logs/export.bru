@@ -1,0 +1,25 @@
+meta {
+  name: Export Logs
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/logs/export
+  body: none
+  auth: none
+}
+
+params:query {
+  startTs: 1700000000
+  endTs: 1800000000
+  format: json
+  ~q: error
+  ~dryRun: true
+}
+
+docs {
+  format is one of json, csv, text. With dryRun=true the response is a JSON
+  preflight estimate; drop it to stream the gzipped file. Session cookie only —
+  personal keys cannot export.
+}

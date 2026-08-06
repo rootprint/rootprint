@@ -1,0 +1,26 @@
+meta {
+  name: Create Source
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/sources
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sourceId": "kafka-app-logs",
+    "sourceType": "kafka",
+    "topic": "app-logs",
+    "inputFormat": "json",
+    "numPipelines": 1
+  }
+}
+
+docs {
+  sourceType is one of kafka, kinesis, file — each with its own required fields
+  (topic / streamName / queueUrl). See schemas/sources.ts.
+}

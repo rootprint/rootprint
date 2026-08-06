@@ -1,0 +1,19 @@
+meta {
+  name: Global Summary
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/summary
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}
+
+docs {
+  window is one of 24h, 7d, 30d (defaults server-side when omitted).
+}

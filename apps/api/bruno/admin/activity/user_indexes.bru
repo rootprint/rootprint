@@ -1,0 +1,15 @@
+meta {
+  name: User Index Breakdown
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/users/{{userId}}/indexes
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

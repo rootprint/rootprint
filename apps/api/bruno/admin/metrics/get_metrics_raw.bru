@@ -1,0 +1,11 @@
+meta {
+  name: Get Raw Prometheus Metrics
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/metrics/raw
+  body: none
+  auth: none
+}

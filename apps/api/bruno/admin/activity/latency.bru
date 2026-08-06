@@ -1,0 +1,15 @@
+meta {
+  name: Global Latency
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/latency
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

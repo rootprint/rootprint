@@ -1,0 +1,16 @@
+meta {
+  name: Top Actors
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/top-actors
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+  ~limit: 10
+}

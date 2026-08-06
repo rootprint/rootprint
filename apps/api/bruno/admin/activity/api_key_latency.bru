@@ -1,0 +1,15 @@
+meta {
+  name: API Key Latency
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/api-keys/{{apiKeyId}}/latency
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

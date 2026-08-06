@@ -1,17 +1,11 @@
 meta {
-  name: Toggle Source
+  name: Get Source
   type: http
-  seq: 13
+  seq: 11
 }
 
-patch {
+get {
   url: {{baseUrl}}/api/indexes/{{indexId}}/sources/{{sourceId}}
-  body: json
+  body: none
   auth: none
-}
-
-body:json {
-  {
-    "enabled": false
-  }
 }

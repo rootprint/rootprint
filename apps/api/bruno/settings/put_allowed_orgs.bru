@@ -1,0 +1,17 @@
+meta {
+  name: Set GitHub Allowed Orgs
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/settings/auth/github/allowed-orgs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "allowedOrgs": ["my-org"]
+  }
+}

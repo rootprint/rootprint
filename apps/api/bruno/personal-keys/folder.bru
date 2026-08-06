@@ -12,5 +12,6 @@ docs {
 
   Keys are stamped { logs: ['read'] } server-side and can call only the
   read-only log-explorer + index-discovery endpoints (the same routes the web
-  UI uses). Admin oversight (list-all / revoke) lives in the api-keys folder.
+  UI uses). Personal keys have no admin oversight route — the api-keys folder
+  covers ingest keys and service-account keys instead.
 }
