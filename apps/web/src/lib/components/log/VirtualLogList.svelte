@@ -19,6 +19,7 @@
 		viewport,
 		lineWrap = false,
 		displayMode = 'table',
+		listEnd = 'more',
 		onToggleSort = () => {},
 		onRowClick = () => {}
 	}: {
@@ -30,6 +31,7 @@
 		viewport: HTMLElement | null;
 		lineWrap?: boolean;
 		displayMode?: DisplayMode;
+		listEnd?: 'more' | 'end' | 'capped';
 		onToggleSort?: () => void;
 		onRowClick?: (hit: LogHit) => void;
 	} = $props();
@@ -111,4 +113,15 @@
 			{/if}
 		{/each}
 	</div>
+	{#if listEnd !== 'more'}
+		<div
+			class="border-line text-base-content/40 sticky left-0 w-fit border-t px-3 py-4 text-[11px]"
+		>
+			{#if listEnd === 'capped'}
+				Showing the first 10,000 logs. Narrow the time range to see the rest.
+			{:else}
+				End of results
+			{/if}
+		</div>
+	{/if}
 </div>

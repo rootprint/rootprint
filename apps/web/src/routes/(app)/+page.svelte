@@ -174,6 +174,15 @@
 							<p class="text-base-content/40 text-[10px]">
 								Try adjusting your time range or query filters
 							</p>
+							{#if store.filters.length > 0}
+								<button
+									type="button"
+									class="btn btn-ghost btn-xs mt-2"
+									onclick={() => store.clearFilters()}
+								>
+									Clear filters
+								</button>
+							{/if}
 						</div>
 					{:else}
 						<VirtualLogList
@@ -185,6 +194,7 @@
 							{viewport}
 							lineWrap={store.lineWrap}
 							displayMode={store.displayMode}
+							listEnd={store.listEnd}
 							onToggleSort={() => store.toggleSort()}
 							onRowClick={openRow}
 						/>

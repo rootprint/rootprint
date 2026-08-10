@@ -67,6 +67,12 @@
 
 	const isValid = $derived(startSec !== null && endSec !== null && endSec > startSec);
 
+	const validationMessage = $derived.by(() => {
+		if (startSec === null || endSec === null) return 'Enter a date and a time as HH:MM';
+		if (endSec <= startSec) return 'End must be after start';
+		return '';
+	});
+
 	function apply() {
 		if (startSec === null || endSec === null || endSec <= startSec) return;
 		onChange({ type: 'absolute', start: startSec, end: endSec });
@@ -120,6 +126,7 @@
 				<input
 					type="date"
 					class="input input-sm flex-1 font-mono"
+					aria-describedby="time-range-error"
 					bind:value={dateStart}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') apply();
@@ -132,6 +139,7 @@
 					placeholder="HH:MM"
 					maxlength="5"
 					class="input input-sm w-20 font-mono"
+					aria-describedby="time-range-error"
 					bind:value={timeStart}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') apply();
@@ -144,6 +152,7 @@
 				<input
 					type="date"
 					class="input input-sm flex-1 font-mono"
+					aria-describedby="time-range-error"
 					bind:value={dateEnd}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') apply();
@@ -156,12 +165,17 @@
 					placeholder="HH:MM"
 					maxlength="5"
 					class="input input-sm w-20 font-mono"
+					aria-describedby="time-range-error"
 					bind:value={timeEnd}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') apply();
 					}}
 				/>
 			</div>
+
+			<p id="time-range-error" class="text-error mt-2 min-h-4 text-xs" aria-live="polite">
+				{validationMessage}
+			</p>
 
 			<div class="mt-auto flex justify-end gap-2 pt-3">
 				<button type="button" class="btn btn-ghost btn-sm" onclick={cancel}>Cancel</button>

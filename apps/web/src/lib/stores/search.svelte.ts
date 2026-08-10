@@ -47,7 +47,7 @@ export class SearchStore {
 	elapsedTimeMicros = $state(0);
 	loading = $state<'idle' | 'fresh' | 'appending'>('idle');
 	#prefetching = $state(false);
-	#lastBatchFull = false;
+	#lastBatchFull = $state(false);
 	searchError = $state<string | null>(null);
 	hasSearched = $state(false);
 
@@ -454,6 +454,12 @@ export class SearchStore {
 	maybeLoadMore(): void {
 		if (!this.#canFetchMore()) return;
 		void this.#runSearch('prefetch');
+	}
+
+	get listEnd(): 'more' | 'end' | 'capped' {
+		if (this.numHits !== null && this.rawHits.length >= this.numHits) return 'end';
+		if (this.rawHits.length >= MAX_OFFSET) return 'capped';
+		return this.#lastBatchFull ? 'more' : 'end';
 	}
 
 	async #fetchHistogram(timeWindow: { startTs?: number; endTs?: number }): Promise<void> {

@@ -17,7 +17,15 @@
 					: 'badge-neutral badge-soft'}"
 			>
 				<span class="max-w-[10rem] truncate" title={filter.field}>{filter.field}</span>
-				<span class="opacity-60">{filter.exclude ? '≠' : '='}</span>
+				<button
+					type="button"
+					class="hover:bg-base-content/10 cursor-pointer rounded px-0.5 opacity-60 hover:opacity-100"
+					aria-label="Invert filter"
+					title="Invert filter"
+					onclick={() => store.addFilter(filter.field, filter.value, !filter.exclude)}
+				>
+					{filter.exclude ? '≠' : '='}
+				</button>
 				<span class="max-w-[14rem] truncate" title={filter.value}>"{filter.value}"</span>
 				<button
 					type="button"
@@ -31,14 +39,12 @@
 			</span>
 		{/each}
 
-		{#if filters.length >= 2}
-			<button
-				type="button"
-				class="text-success ml-auto cursor-pointer text-xs font-medium hover:underline"
-				onclick={() => store.clearFilters()}
-			>
-				Clear all
-			</button>
-		{/if}
+		<button
+			type="button"
+			class="text-base-content/60 hover:text-base-content ml-auto cursor-pointer text-xs font-medium hover:underline"
+			onclick={() => store.clearFilters()}
+		>
+			Clear all
+		</button>
 	</div>
 {/if}

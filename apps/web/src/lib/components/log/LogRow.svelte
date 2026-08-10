@@ -50,12 +50,16 @@
 		class="my-[1px]"
 		style="background-color: var(--level-color);"
 	></span>
-	<span class="text-base-content/60 px-2 py-1">
+	<span class="text-base-content/60 px-2 py-1" title={hit.timestamp}>
 		{formatLogRowTimestamp(hit.timestamp)}
 	</span>
 	{#each columns as column (column)}
-		<span class="px-2 py-1 {column === messageField ? messageWrap : cellWrap}" title={column}>
-			{formatCell(getByPath(hit.raw, column))}
+		{@const cell = formatCell(getByPath(hit.raw, column))}
+		<span
+			class="px-2 py-1 {column === messageField ? messageWrap : cellWrap}"
+			title={column === messageField || lineWrap ? undefined : cell}
+		>
+			{cell}
 		</span>
 	{/each}
 </div>

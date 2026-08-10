@@ -26,12 +26,18 @@
 	let highlight = $state(-1);
 	let dismissed = $state(false);
 
+	const unrun = $derived(queryInput !== store.query);
+
 	const valueCache = new Map<string, LogFieldValueBucket[]>();
 	let valueState = $state<{ key: string; buckets: LogFieldValueBucket[] } | null>(null);
 	let valueAbort: AbortController | null = null;
 
+	let lastQuery: string | undefined;
 	$effect(() => {
-		if (!focused) queryInput = store.query;
+		const q = store.query;
+		if (q === lastQuery) return;
+		lastQuery = q;
+		queryInput = q;
 	});
 
 	function refreshToken() {
@@ -157,7 +163,7 @@
 
 	/**
 	 * A pasted trace id opens the trace instead of searching — it is an id, not a log query, and matches
-	 * no log field. Only on Enter or Run: blur also commits, and navigating away from a click would
+	 * no log field. Only on Enter or Run — blur no longer commits, and navigating away from a click would
 	 * surprise. `isTraceId` rejects the all-zeros id, so OTLP's null trace id still falls through.
 	 */
 	function openedTrace(): boolean {
@@ -203,7 +209,6 @@
 				focused = false;
 				token = null;
 				highlight = -1;
-				commitQuery();
 			}}
 			oninput={refreshToken}
 			onclick={refreshToken}
@@ -237,7 +242,7 @@
 		</button>
 		<button
 			type="button"
-			class="btn btn-sm btn-primary"
+			class="btn btn-sm {unrun ? 'btn-primary' : 'btn-ghost'}"
 			aria-label="Run query"
 			title="Run query"
 			onmousedown={(e) => {
