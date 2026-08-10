@@ -20,6 +20,7 @@ export async function getClusterDocumentStatus(
 	let firstError: unknown;
 	let hasError = false;
 	for (const index of indexes) {
+		if (index.indexId === config.traceIndexId) continue;
 		// Sequential by design: stop issuing Quickwit requests as soon as one index has data.
 		let stats: IndexStats;
 		try {
