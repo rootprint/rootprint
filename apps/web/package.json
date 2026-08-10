@@ -19,7 +19,7 @@
 		"api": "workspace:*",
 		"better-auth": "^1.6.25",
 		"date-fns": "^4.4.0",
-		"hono": "^4.12.32",
+		"hono": "^4.12.34",
 		"lucide-svelte": "^1.0.1",
 		"overlayscrollbars": "^2.14.0",
 		"overlayscrollbars-svelte": "^0.5.5",
