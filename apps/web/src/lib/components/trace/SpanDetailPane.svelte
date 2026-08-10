@@ -103,6 +103,8 @@
 
 	const selfDurationMicros = $derived(selfMicros(span));
 	const selfPct = $derived(percentOf(selfDurationMicros, span.durationMicros));
+	const childDurationMicros = $derived(Math.max(span.durationMicros - selfDurationMicros, 0));
+	const childPct = $derived(selfPct === null ? null : Math.max(100 - selfPct, 0));
 
 	const errorsBelow = $derived(subtree.filter((s) => s.isError));
 	// Single pass for one element: a failing dependency can make every descendant an error.
@@ -129,6 +131,7 @@
 
 	const dbTotalMicros = $derived(dbCalls.reduce((sum, s) => sum + s.durationMicros, 0));
 	const dbSharePct = $derived(percentOf(dbTotalMicros, span.durationMicros));
+	const dbBarPct = $derived(Math.min(dbSharePct ?? 0, 100));
 
 	const tabCounts: Partial<Record<SpanTab, number>> = $derived({
 		events: span.events.length
@@ -252,9 +255,9 @@
 		>
 			{#if activeTab === 'overview'}
 				<section>
-					<h3 class="eyebrow mb-2">Summary</h3>
-					<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
-						<div class="flex items-start gap-2.5 px-3 py-2.5">
+					<h3 class="eyebrow mb-2">Status</h3>
+					<div class="border-line rounded-md border px-3 py-2.5">
+						<div class="flex items-start gap-2.5">
 							<span
 								class={[
 									'mt-1.5 h-2 w-2 shrink-0 rounded-full',
@@ -284,8 +287,8 @@
 							</div>
 						</div>
 						{#if description}
-							<div class="px-3 py-2.5">
-								<p class="text-base-content/50 text-[11px] tracking-wide uppercase">
+							<div class="border-line mt-2 border-t pt-2">
+								<p class="text-base-content/50 text-[10px] tracking-wide uppercase">
 									{description.kind}
 								</p>
 								<p class="mt-0.5 font-mono text-xs leading-5 break-words">
@@ -298,48 +301,101 @@
 
 				<section>
 					<h3 class="eyebrow mb-2">Timing</h3>
-					<dl class="border-line divide-line grid grid-cols-2 overflow-hidden rounded-md border">
-						<div class="border-line border-b p-3">
-							<dt class="text-base-content/50 text-[11px]">Total</dt>
-							<dd class="mt-0.5 font-mono text-base leading-5 tabular-nums">{durationText}</dd>
-						</div>
-						<div class="border-line border-b border-l p-3">
-							<dt class="text-base-content/50 text-[11px]">Self</dt>
-							<dd class="mt-0.5 font-mono text-base leading-5 tabular-nums">
-								{formatSpanDuration(selfDurationMicros)}
-								{#if selfPct !== null}
-									<span class="text-base-content/40 ml-1 text-xs">{selfPct}%</span>
-								{/if}
-							</dd>
-						</div>
+					<div class="border-line overflow-hidden rounded-md border">
 						<div class="p-3">
-							<dt class="text-base-content/50 text-[11px]">Offset</dt>
-							<dd class="mt-0.5 font-mono text-xs tabular-nums">
-								{formatOffset(span.startOffsetMicros)}
-							</dd>
+							<p class="text-base-content/50 text-[11px]">Total duration</p>
+							<p class="mt-0.5 font-mono text-xl leading-6 tabular-nums">{durationText}</p>
+
+							<div
+								class="bg-base-300 mt-3 flex h-2 overflow-hidden rounded-sm"
+								role="img"
+								aria-label={`Self time ${selfPct ?? 0}%, child spans ${childPct ?? 0}%`}
+							>
+								<span class="bg-base-content h-full" style={`width:${selfPct ?? 0}%`}></span>
+								<span class="bg-base-content/20 h-full" style={`width:${childPct ?? 0}%`}></span>
+							</div>
+
+							<dl class="mt-2 grid grid-cols-2 gap-3">
+								<div>
+									<dt class="flex items-center gap-1.5 text-[11px]">
+										<span class="bg-base-content h-1.5 w-1.5 shrink-0 rounded-full"></span>
+										Self time
+									</dt>
+									<dd class="mt-0.5 font-mono text-xs tabular-nums">
+										{formatSpanDuration(selfDurationMicros)}
+										{#if selfPct !== null}
+											<span class="text-base-content/40 ml-1">{selfPct}%</span>
+										{/if}
+									</dd>
+								</div>
+								<div>
+									<dt class="flex items-center gap-1.5 text-[11px]">
+										<span class="bg-base-content/20 h-1.5 w-1.5 shrink-0 rounded-full"></span>
+										Child spans
+									</dt>
+									<dd class="mt-0.5 font-mono text-xs tabular-nums">
+										{formatSpanDuration(childDurationMicros)}
+										{#if childPct !== null}
+											<span class="text-base-content/40 ml-1">{childPct}%</span>
+										{/if}
+									</dd>
+								</div>
+							</dl>
 						</div>
-						<div class="border-line border-l p-3">
-							<dt class="text-base-content/50 text-[11px]">Started</dt>
-							<dd class="mt-0.5 truncate font-mono text-xs tabular-nums" title={startText}>
-								{formatSpanStart(traceStartMicros + span.startOffsetMicros)}
-							</dd>
-						</div>
-					</dl>
-					{#if dbCalls.length > 0}
-						<p class="text-base-content/60 mt-2 text-xs">
-							{pluralize(dbCalls.length, 'database operation')} ·
-							<span class="font-mono tabular-nums">{formatSpanDuration(dbTotalMicros)}</span>
-							cumulative{dbSharePct === null ? '' : ` · ${dbSharePct}% of span duration`}
-						</p>
-					{/if}
+
+						<dl
+							class="border-line divide-line grid grid-cols-[minmax(0,1fr)_auto] divide-x border-t"
+						>
+							<div class="min-w-0 px-3 py-2.5">
+								<dt class="text-base-content/50 text-[10px] tracking-wide uppercase">Started</dt>
+								<dd class="mt-0.5 truncate font-mono text-[11px] tabular-nums" title={startText}>
+									{formatSpanStart(traceStartMicros + span.startOffsetMicros)}
+								</dd>
+							</div>
+							<div class="px-3 py-2.5">
+								<dt class="text-base-content/50 text-[10px] tracking-wide uppercase">
+									Trace offset
+								</dt>
+								<dd class="mt-0.5 font-mono text-[11px] tabular-nums">
+									{formatOffset(span.startOffsetMicros)}
+								</dd>
+							</div>
+						</dl>
+
+						{#if dbCalls.length > 0}
+							<div class="border-line bg-base-200/50 border-t px-3 py-2.5">
+								<div class="flex items-baseline justify-between gap-3">
+									<p class="text-xs">
+										Database work
+										<span class="text-base-content/50 ml-1">
+											{pluralize(dbCalls.length, 'operation')}
+										</span>
+									</p>
+									<p class="shrink-0 font-mono text-xs tabular-nums">
+										{formatSpanDuration(dbTotalMicros)}
+										{#if dbSharePct !== null}
+											<span class="text-base-content/40 ml-1">{dbSharePct}%</span>
+										{/if}
+									</p>
+								</div>
+								<div
+									class="bg-base-300 mt-1.5 h-1 overflow-hidden rounded-sm"
+									role="img"
+									aria-label={`Cumulative database work ${dbSharePct ?? 0}% of span duration`}
+								>
+									<span class="bg-warning block h-full" style={`width:${dbBarPct}%`}></span>
+								</div>
+								<p class="text-base-content/40 mt-1 text-[10px]">
+									Cumulative span time; concurrent work may overlap
+								</p>
+							</div>
+						{/if}
+					</div>
 				</section>
 
 				{#if subtree.length > 0}
 					<section>
-						<div class="mb-2 flex items-baseline justify-between gap-3">
-							<h3 class="eyebrow">Top operations</h3>
-							<p class="text-base-content/40 text-[11px]">by total time</p>
-						</div>
+						<h3 class="eyebrow mb-2">Top operations</h3>
 						<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
 							{#each rollups as rollup (rollup.key)}
 								<button
@@ -379,32 +435,79 @@
 				{/if}
 			{:else if activeTab === 'events'}
 				{#if span.events.length > 0}
-					{#each span.events as event, i (i)}
-						{@const isException = event.name === 'exception'}
-						{@const stacktrace = isException ? event.fields['exception.stacktrace'] : ''}
-						{@const headline = isException ? exceptionHeadline(event.fields) : ''}
-						{@const fields = toFields(event.fields).filter(
-							(f) => !isException || !EXCEPTION_KEYS.includes(f.name)
-						)}
-						<div class={i > 0 ? 'border-line border-t pt-3' : ''}>
-							<p class="mb-1 flex items-baseline gap-2 font-mono text-xs">
-								<span class="text-base-content/60 shrink-0 tabular-nums">
-									{formatOffset(event.timeOffsetMicros - span.startOffsetMicros)}
-								</span>
-								<span class={['min-w-0 truncate', isException && 'text-error']}>{event.name}</span>
-								{#if headline}
-									<span class="text-error min-w-0 truncate" title={headline}>{headline}</span>
-								{/if}
-							</p>
-							{#if fields.length > 0}
-								{@render table(fields)}
-							{/if}
-							{#if stacktrace}
-								<pre
-									class="border-line text-base-content/70 mt-1.5 overflow-x-auto rounded-md border p-2 font-mono text-[11px] whitespace-pre">{stacktrace}</pre>
-							{/if}
-						</div>
-					{/each}
+					<section>
+						<h3 class="eyebrow mb-2">Event timeline</h3>
+
+						<ol>
+							{#each span.events as event, i (i)}
+								{@const isException = event.name === 'exception'}
+								{@const stacktrace = isException ? event.fields['exception.stacktrace'] : ''}
+								{@const headline = isException ? exceptionHeadline(event.fields) : ''}
+								{@const fields = toFields(event.fields).filter(
+									(f) => !isException || !EXCEPTION_KEYS.includes(f.name)
+								)}
+								<li class="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-2.5 pb-3 last:pb-0">
+									<div class="relative flex justify-center" aria-hidden="true">
+										{#if i < span.events.length - 1}
+											<span class="bg-line absolute top-5 bottom-[-2rem] w-px"></span>
+										{/if}
+										<span
+											class={[
+												'border-base-100 relative mt-4 h-2.5 w-2.5 rounded-full border-2',
+												isException ? 'bg-error' : 'bg-base-content'
+											]}
+										></span>
+									</div>
+
+									<article class="border-line overflow-hidden rounded-md border">
+										<header class="flex min-w-0 items-start justify-between gap-3 px-3 py-2.5">
+											<div class="min-w-0">
+												<h4
+													class={[
+														'truncate font-mono text-xs leading-5',
+														isException && 'text-error'
+													]}
+													title={event.name}
+												>
+													{event.name}
+												</h4>
+												{#if headline}
+													<p class="text-error/80 mt-0.5 text-xs leading-5 break-words">
+														{headline}
+													</p>
+												{/if}
+											</div>
+											<time
+												class="bg-base-200 shrink-0 rounded px-1.5 font-mono text-[10px] tabular-nums"
+											>
+												{formatOffset(event.timeOffsetMicros - span.startOffsetMicros)}
+											</time>
+										</header>
+
+										{#if fields.length > 0}
+											<div class="border-line border-t px-3 py-2.5">
+												<div class="mb-1.5 flex items-baseline justify-between gap-3">
+													<p class="eyebrow text-[10px]">Attributes</p>
+													<p class="text-base-content/40 text-[10px] tabular-nums">
+														{pluralize(fields.length, 'field')}
+													</p>
+												</div>
+												{@render table(fields)}
+											</div>
+										{/if}
+
+										{#if stacktrace}
+											<div class="border-line border-t px-3 py-2.5">
+												<p class="eyebrow mb-1.5 text-[10px]">Stack trace</p>
+												<pre
+													class="bg-base-200 text-base-content/70 max-h-80 overflow-auto rounded p-2 font-mono text-[11px] whitespace-pre">{stacktrace}</pre>
+											</div>
+										{/if}
+									</article>
+								</li>
+							{/each}
+						</ol>
+					</section>
 				{:else}
 					{@render empty('No events for this span')}
 				{/if}
