@@ -38,7 +38,7 @@ export async function fetchSpanLogCounts(
 	});
 
 	if (rawHits.length === MAX_TRACE_LOGS) {
-		// Degrades to "counts unavailable": no row icons, header's trace-wide link still works.
+		// Degrades to "counts unavailable": the log links stay, they just lose their numbers.
 		console.warn(
 			`Trace ${input.traceId} has at least ${MAX_TRACE_LOGS} logs, more than one request reaches; per-span log counts are unavailable.`
 		);

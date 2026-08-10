@@ -73,9 +73,11 @@
 			: traceLogsHref({ ...logsTarget, startOffsetMicros: 0, durationMicros: model.durationMicros })
 	);
 
-	const spanLogs = (span: SpanNode): { href: string; count: number } | null => {
-		const count = data.spanLogCounts?.counts?.get(span.spanId) ?? 0;
-		if (logsTarget === null || count === 0) return null;
+	const spanLogs = (span: SpanNode): { href: string; count: number | null } | null => {
+		const counts = data.spanLogCounts?.counts;
+		if (logsTarget === null || counts === undefined) return null;
+		const count = counts?.get(span.spanId) ?? 0;
+		if (counts !== null && count === 0) return null;
 		return {
 			// The trace's window, not the span's: that is what the count was taken over.
 			href: traceLogsHref({
@@ -84,7 +86,7 @@
 				durationMicros: model.durationMicros,
 				spanId: span.spanId
 			}),
-			count
+			count: counts === null ? null : count
 		};
 	};
 

@@ -28,7 +28,7 @@
 		onRetry?: () => void;
 		selectedSpanId?: string | null;
 		onSelectSpan?: (spanId: string) => void;
-		spanLogs?: (span: SpanNode) => { href: string; count: number } | null;
+		spanLogs?: (span: SpanNode) => { href: string; count: number | null } | null;
 	} = $props();
 
 	const TREE_LEFT_PX = 18;
@@ -202,11 +202,15 @@
 					target="_blank"
 					rel="noopener"
 					class="text-base-content/50 hover:text-base-content flex shrink-0 items-center gap-1 self-center pr-2"
-					aria-label={`View ${logs.count} ${logs.count === 1 ? 'log' : 'logs'} for ${node.name}`}
+					aria-label={logs.count === null
+						? `View logs for ${node.name}`
+						: `View ${logs.count} ${logs.count === 1 ? 'log' : 'logs'} for ${node.name}`}
 					onclick={(e) => e.stopPropagation()}
 				>
 					<ScrollText class="h-3.5 w-3.5" />
-					<span class="font-mono text-[10px] tabular-nums">{logs.count}</span>
+					{#if logs.count !== null}
+						<span class="font-mono text-[10px] tabular-nums">{logs.count}</span>
+					{/if}
 				</a>
 			{/if}
 		</div>
