@@ -121,11 +121,12 @@
 				id={`drawer-tab-${tab.id}`}
 				aria-selected={activeTab === tab.id}
 				aria-controls={`drawer-panel-${tab.id}`}
-				class={`shrink-0 border-b-2 px-4 py-3 text-xs whitespace-nowrap transition-colors ${
+				class={[
+					'tab-underline shrink-0 px-4 py-3 text-xs whitespace-nowrap transition-colors',
 					activeTab === tab.id
-						? 'border-base-content text-base-content font-medium'
-						: 'text-base-content/55 hover:text-base-content border-transparent'
-				}`}
+						? 'text-base-content font-medium'
+						: 'text-base-content/55 hover:text-base-content'
+				]}
 				onclick={() => onTabChange(tab.id)}
 			>
 				{tab.label}

@@ -223,11 +223,9 @@
 				tabindex={activeTab === tab.id ? 0 : -1}
 				aria-disabled={isDisabled(tab.id)}
 				class={[
-					'shrink-0 border-b-2 px-3 py-2.5 text-xs',
+					'tab-underline shrink-0 px-3 py-2.5 text-xs transition-colors',
 					isDisabled(tab.id) && 'text-base-content/30 cursor-not-allowed',
-					activeTab === tab.id
-						? 'border-primary text-base-content font-medium'
-						: 'text-base-content/60 border-transparent'
+					activeTab === tab.id ? 'text-base-content font-medium' : 'text-base-content/60'
 				]}
 				onclick={() => {
 					if (!isDisabled(tab.id)) activeTab = tab.id;

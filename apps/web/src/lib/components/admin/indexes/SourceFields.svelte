@@ -22,53 +22,33 @@
 		if (connectionHasError) activeTab = 'connection';
 		else if (transformHasError) activeTab = 'transform';
 	});
+
+	const tabs = $derived([
+		{ id: 'connection' as Tab, label: 'Connection', hasError: connectionHasError },
+		{ id: 'transform' as Tab, label: 'Transform (VRL)', hasError: transformHasError }
+	]);
 </script>
 
 <div role="tablist" aria-label="Source configuration sections" class="flex gap-1 px-4 pt-3">
-	<button
-		type="button"
-		role="tab"
-		id="src-tab-connection"
-		aria-controls="src-panel-connection"
-		aria-selected={activeTab === 'connection'}
-		onclick={() => (activeTab = 'connection')}
-		class={[
-			'relative flex h-9 items-center gap-1.5 px-3 text-xs transition-colors',
-			activeTab === 'connection'
-				? 'text-base-content'
-				: 'text-base-content/60 hover:text-base-content'
-		]}
-	>
-		Connection
-		{#if connectionHasError}
-			<span class="bg-error h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
-		{/if}
-		{#if activeTab === 'connection'}
-			<span class="bg-base-content absolute right-0 -bottom-px left-0 h-0.5"></span>
-		{/if}
-	</button>
-	<button
-		type="button"
-		role="tab"
-		id="src-tab-transform"
-		aria-controls="src-panel-transform"
-		aria-selected={activeTab === 'transform'}
-		onclick={() => (activeTab = 'transform')}
-		class={[
-			'relative flex h-9 items-center gap-1.5 px-3 text-xs transition-colors',
-			activeTab === 'transform'
-				? 'text-base-content'
-				: 'text-base-content/60 hover:text-base-content'
-		]}
-	>
-		Transform (VRL)
-		{#if transformHasError}
-			<span class="bg-error h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
-		{/if}
-		{#if activeTab === 'transform'}
-			<span class="bg-base-content absolute right-0 -bottom-px left-0 h-0.5"></span>
-		{/if}
-	</button>
+	{#each tabs as tab (tab.id)}
+		<button
+			type="button"
+			role="tab"
+			id="src-tab-{tab.id}"
+			aria-controls="src-panel-{tab.id}"
+			aria-selected={activeTab === tab.id}
+			onclick={() => (activeTab = tab.id)}
+			class={[
+				'tab-underline flex h-9 items-center gap-1.5 px-3 text-xs transition-colors',
+				activeTab === tab.id ? 'text-base-content' : 'text-base-content/60 hover:text-base-content'
+			]}
+		>
+			{tab.label}
+			{#if tab.hasError}
+				<span class="bg-error h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+			{/if}
+		</button>
+	{/each}
 </div>
 
 <div

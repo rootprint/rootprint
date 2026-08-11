@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { Search, UserPlus } from 'lucide-svelte';
-	import { crossfade } from 'svelte/transition';
-	import { cubicInOut } from 'svelte/easing';
 
 	import { refreshUsers, regenerateInvite, toggleUserRole } from './user-actions';
 	import CreateUserModal from '$lib/components/admin/users/CreateUserModal.svelte';
@@ -16,11 +14,6 @@
 	import { formatRelativeTime } from '$lib/utils/time';
 
 	type Filter = 'all' | 'admin' | 'pending';
-
-	const [send, receive] = crossfade({
-		duration: 200,
-		easing: cubicInOut
-	});
 
 	const filterOptions: { id: Filter; label: string }[] = [
 		{ id: 'all', label: 'All' },
@@ -79,19 +72,12 @@
 					type="button"
 					role="tab"
 					aria-selected={active}
-					class="relative flex h-full items-center text-sm transition-colors {active
+					class="tab-underline flex h-full items-center text-sm transition-colors {active
 						? 'text-base-content'
 						: 'text-base-content/50 hover:text-base-content'}"
 					onclick={() => (filter = opt.id)}
 				>
 					{opt.label}
-					{#if active}
-						<span
-							in:receive={{ key: 'users-filter-indicator' }}
-							out:send={{ key: 'users-filter-indicator' }}
-							class="bg-primary absolute right-0 -bottom-px left-0 h-px"
-						></span>
-					{/if}
 				</button>
 			{/each}
 		</div>

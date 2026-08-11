@@ -186,6 +186,32 @@
 	}
 }
 
+@utility tab-underline {
+	@apply relative;
+
+	&::after {
+		@apply bg-base-content absolute inset-x-0 bottom-0 h-0.5 opacity-0 transition-opacity duration-150;
+		content: '';
+	}
+
+	&[aria-selected='true']::after,
+	&[aria-current='page']::after {
+		@apply opacity-100;
+	}
+}
+
+@utility nav-rail {
+	@apply relative;
+
+	& > .nav-rail-bar {
+		@apply bg-primary absolute inset-y-1.5 left-0 w-0.5 rounded-full opacity-0 transition-opacity duration-150;
+	}
+
+	&[aria-current='page'] > .nav-rail-bar {
+		@apply opacity-100;
+	}
+}
+
 /* Chart colour ramp — referenced directly via var(--chart-N) by the uPlot charts.
    Semantic ordering: brand → accent → status (success/warning/error). */
 :root {
