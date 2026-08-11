@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { parseISO } from 'date-fns';
-	import { untrack } from 'svelte';
 	import type uPlotLib from 'uplot';
-	import 'uplot/dist/uPlot.min.css';
 
 	import { browser } from '$app/environment';
+	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
 	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '$lib/utils/chart-colors';
 	import { formatCount } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
@@ -40,86 +39,20 @@
 		return [entries.map(([t]) => Math.floor(t / 1000)), entries.map(([, c]) => c)];
 	});
 
-	const hasData = $derived(columnar !== null);
 	const barColor = $derived(browser ? cssVarColor('var(--chart-3)') : CANVAS_FALLBACK_COLOR);
 
-	let containerEl = $state<HTMLDivElement | null>(null);
-	let chartEl = $state<HTMLDivElement | null>(null);
-	let chartWidth = $state(400);
-	let chart: uPlotLib | null = null;
-	let uPlotCtor: typeof uPlotLib | null = null;
-	let chartBuildId = 0;
 	const HEIGHT = 288;
 
-	let tooltipVisible = $state(false);
-	let tooltipLeft = $state(0);
-	let tooltipTop = $state(0);
-	let tooltipIdx = $state<number | null>(null);
-	const TOOLTIP_WIDTH = 180;
-	const TOOLTIP_GAP = 12;
-
-	function destroyChart() {
-		if (chart) {
-			chart.destroy();
-			chart = null;
-		}
-	}
-
-	function updateTooltip(u: uPlotLib) {
-		const idx = u.cursor.idx;
-		if (idx == null) {
-			tooltipVisible = false;
-			tooltipIdx = null;
-			return;
-		}
-		tooltipIdx = idx;
-		const overRect = u.over.getBoundingClientRect();
-		const containerRect = containerEl?.getBoundingClientRect();
-		if (!containerRect) return;
-		const offsetLeft = overRect.left - containerRect.left;
-		const offsetTop = overRect.top - containerRect.top;
-		const cursorAbsLeft = offsetLeft + (u.cursor.left ?? 0);
-		if (cursorAbsLeft + TOOLTIP_WIDTH + TOOLTIP_GAP > containerRect.width) {
-			tooltipLeft = cursorAbsLeft - TOOLTIP_WIDTH - TOOLTIP_GAP;
-		} else {
-			tooltipLeft = cursorAbsLeft + TOOLTIP_GAP;
-		}
-		tooltipTop = offsetTop + (u.cursor.top ?? 0) - 10;
-		tooltipVisible = true;
-	}
-
-	async function buildChart() {
-		if (!browser || !chartEl || !columnar) return;
-		const buildId = ++chartBuildId;
-		destroyChart();
-		if (!uPlotCtor) {
-			const mod = await import('uplot');
-			uPlotCtor = mod.default;
-		}
-		if (!chartEl || !columnar || buildId !== chartBuildId) return;
-
-		const width = untrack(() => {
-			if (containerEl) {
-				const w = containerEl.clientWidth;
-				if (w > 0) chartWidth = w;
-			}
-			return chartWidth;
-		});
-
-		const UPlot = uPlotCtor;
-		const barPaths = UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? undefined;
-		const xs = columnar[0];
-		const bucketWidth = xs.length > 1 ? xs[1] - xs[0] : 1;
-		const halfBucket = bucketWidth / 2;
+	function makeOpts(UPlot: typeof uPlotLib): Omit<uPlotLib.Options, 'width' | 'height'> {
+		const xs = columnar?.[0] ?? [];
+		const halfBucket = (xs.length > 1 ? xs[1] - xs[0] : 1) / 2;
 		const axisStroke = baseContentAt(0.45);
 		const gridStroke = baseContentAt(0.1);
+		const span = dataSpanMs;
 
-		const opts: uPlotLib.Options = {
-			width,
-			height: HEIGHT,
+		return {
 			padding: [12, 8, 0, 0],
 			cursor: { drag: { x: false, y: false }, points: { show: false } },
-			legend: { show: false },
 			series: [
 				{ label: 'Time' },
 				{
@@ -127,7 +60,7 @@
 					fill: barColor,
 					stroke: barColor,
 					width: 0,
-					paths: barPaths,
+					paths: UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 }) ?? undefined,
 					points: { show: false }
 				}
 			],
@@ -135,7 +68,6 @@
 				x: { time: true, range: (_u, min, max) => [min - halfBucket, max + halfBucket] },
 				y: { range: (_u, _min, max) => [0, max || 1] }
 			},
-			hooks: { setCursor: [(u: uPlotLib) => updateTooltip(u)] },
 			axes: [
 				{
 					stroke: axisStroke,
@@ -144,7 +76,7 @@
 					gap: 4,
 					size: 28,
 					space: 80,
-					values: (_u, splits) => splits.map((s) => formatTickDate(s * 1000, dataSpanMs))
+					values: (_u, splits) => splits.map((s) => formatTickDate(s * 1000, span))
 				},
 				{
 					side: 1,
@@ -156,85 +88,34 @@
 				}
 			]
 		};
-
-		chart = new UPlot(opts, columnar as uPlotLib.AlignedData, chartEl);
 	}
-
-	$effect(() => {
-		if (!browser || !containerEl) return;
-		const ro = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				const w = entry.contentRect.width;
-				if (w > 0 && Math.abs(w - chartWidth) > 1) chartWidth = w;
-			}
-		});
-		ro.observe(containerEl);
-		return () => ro.disconnect();
-	});
-
-	$effect(() => {
-		void columnar;
-		void dataSpanMs;
-		if (browser && columnar && chartEl) buildChart();
-		return () => destroyChart();
-	});
-
-	$effect(() => {
-		if (chart && chartWidth > 0) chart.setSize({ width: chartWidth, height: HEIGHT });
-	});
-
-	$effect(() => {
-		if (!browser) return;
-		const handle = () => {
-			if (document.visibilityState === 'visible' && chart && containerEl) {
-				const w = containerEl.clientWidth;
-				if (w > 0 && Math.abs(w - chartWidth) > 1) chartWidth = w;
-			}
-		};
-		document.addEventListener('visibilitychange', handle);
-		return () => document.removeEventListener('visibilitychange', handle);
-	});
 </script>
 
 <div class="border-line rounded-box border p-4">
 	<header class="pb-3">
 		<p class="eyebrow">Volume over time</p>
 	</header>
-	{#if !hasData}
+	{#if !columnar}
 		<div class="text-base-content/40 flex h-72 items-center justify-center text-xs">
 			No searches in this window.
 		</div>
 	{:else}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			bind:this={containerEl}
-			class="relative w-full"
-			onmouseleave={() => {
-				tooltipVisible = false;
-				tooltipIdx = null;
-			}}
-		>
-			<div bind:this={chartEl}></div>
-			{#if tooltipVisible && tooltipIdx != null && columnar}
-				<div
-					class="border-base-300/50 bg-base-100 pointer-events-none absolute z-20 grid min-w-[9rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
-					style="left: {tooltipLeft}px; top: {tooltipTop}px;"
-				>
-					<div class="font-medium">{formatTooltipDate(columnar[0][tooltipIdx] * 1000)}</div>
-					<div class="flex items-center gap-2 leading-none">
-						<div
-							class="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-							style="background-color: {barColor};"
-						></div>
-						<div class="flex flex-1 items-center justify-between gap-4">
-							<span class="text-base-content/60">Searches</span>
-							<span class="text-base-content font-mono font-medium tabular-nums">
-								{columnar[1][tooltipIdx].toLocaleString()}
-							</span>
-						</div>
+		<UplotChart data={columnar} height={HEIGHT} {makeOpts}>
+			{#snippet tooltip(idx)}
+				<div class="font-medium">{formatTooltipDate(columnar[0][idx] * 1000)}</div>
+				<div class="flex items-center gap-2 leading-none">
+					<div
+						class="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+						style="background-color: {barColor};"
+					></div>
+					<div class="flex flex-1 items-center justify-between gap-4">
+						<span class="text-base-content/60">Searches</span>
+						<span class="text-base-content font-mono font-medium tabular-nums">
+							{columnar[1][idx].toLocaleString()}
+						</span>
 					</div>
 				</div>
-			{/if}
-		</div>
+			{/snippet}
+		</UplotChart>
 	{/if}
 </div>

@@ -2,13 +2,13 @@
 	import { parseISO } from 'date-fns';
 	import { untrack } from 'svelte';
 	import type uPlotLib from 'uplot';
-	import 'uplot/dist/uPlot.min.css';
 
 	import { browser } from '$app/environment';
+	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
+	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
 	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '$lib/utils/chart-colors';
 	import { formatDurationMs } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
-	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
 	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
 
 	type Bucket = {
@@ -48,94 +48,33 @@
 		}
 		return [xs, p50, p95, p99];
 	});
-	const hasData = $derived(columnar !== null);
-
 	// force the full-window x-range; otherwise the chart auto-zooms onto the only hour with activity
 	const xRange = $derived.by<[number, number]>(() => {
 		const end = Math.floor(Date.now() / 1000);
 		return [end - Math.floor(windowToSpanMs(window) / 1000), end];
 	});
 
-	let visible = $state<boolean[]>([true, true, true]);
-
-	let containerEl = $state<HTMLDivElement | null>(null);
-	let chartEl = $state<HTMLDivElement | null>(null);
-	let chartWidth = $state(400);
-	let chart: uPlotLib | null = null;
-	let uPlotCtor: typeof uPlotLib | null = null;
-	let chartBuildId = 0;
 	const HEIGHT = 248;
 
-	let tooltipVisible = $state(false);
-	let tooltipLeft = $state(0);
-	let tooltipTop = $state(0);
-	let tooltipIdx = $state<number | null>(null);
-	const TOOLTIP_WIDTH = 180;
-	const TOOLTIP_GAP = 12;
+	let visible = $state<boolean[]>([true, true, true]);
+	let chart: uPlotLib | null = null;
 
 	const legendItems = $derived(
 		SERIES.map((s, i) => ({ key: s.key, label: s.label, color: colors[i], visible: visible[i] }))
 	);
-
-	function destroyChart() {
-		if (chart) {
-			chart.destroy();
-			chart = null;
-		}
-	}
-
-	function updateTooltip(u: uPlotLib) {
-		const idx = u.cursor.idx;
-		if (idx == null) {
-			tooltipVisible = false;
-			tooltipIdx = null;
-			return;
-		}
-		tooltipIdx = idx;
-		const overRect = u.over.getBoundingClientRect();
-		const containerRect = containerEl?.getBoundingClientRect();
-		if (!containerRect) return;
-		const offsetLeft = overRect.left - containerRect.left;
-		const offsetTop = overRect.top - containerRect.top;
-		const cursorAbsLeft = offsetLeft + (u.cursor.left ?? 0);
-		if (cursorAbsLeft + TOOLTIP_WIDTH + TOOLTIP_GAP > containerRect.width) {
-			tooltipLeft = cursorAbsLeft - TOOLTIP_WIDTH - TOOLTIP_GAP;
-		} else {
-			tooltipLeft = cursorAbsLeft + TOOLTIP_GAP;
-		}
-		tooltipTop = offsetTop + (u.cursor.top ?? 0) - 10;
-		tooltipVisible = true;
-	}
 
 	function toggle(i: number) {
 		visible[i] = !visible[i];
 		chart?.setSeries(i + 1, { show: visible[i] });
 	}
 
-	async function buildChart() {
-		if (!browser || !chartEl || !columnar) return;
-		const buildId = ++chartBuildId;
-		destroyChart();
-		if (!uPlotCtor) {
-			const mod = await import('uplot');
-			uPlotCtor = mod.default;
-		}
-		if (!chartEl || !columnar || buildId !== chartBuildId) return;
-
-		// Measured after the await so a resize during the uplot chunk fetch can't build a stale width.
-		const width = untrack(() => {
-			if (containerEl) {
-				const w = containerEl.clientWidth;
-				if (w > 0) chartWidth = w;
-			}
-			return chartWidth;
-		});
-
-		const UPlot = uPlotCtor;
+	function makeOpts(UPlot: typeof uPlotLib): Omit<uPlotLib.Options, 'width' | 'height'> {
 		const splinePaths = UPlot.paths.spline?.();
 		const axisStroke = baseContentAt(0.45);
 		const gridStroke = baseContentAt(0.1);
 		const [r0, r1] = xRange;
+		const span = dataSpanMs;
+		// toggling a series goes through `setSeries` below, so it must not rebuild the chart
 		const vis = untrack(() => [...visible]);
 
 		const series: uPlotLib.Series[] = [{ label: 'Time' }];
@@ -150,18 +89,14 @@
 			});
 		});
 
-		const opts: uPlotLib.Options = {
-			width,
-			height: HEIGHT,
+		return {
 			padding: [12, 8, 0, 0],
 			cursor: { drag: { x: false, y: false }, points: { show: false } },
-			legend: { show: false },
 			series,
 			scales: {
 				x: { time: true, range: () => [r0, r1] },
 				y: { range: (_u, _min, max) => [0, max || 1] }
 			},
-			hooks: { setCursor: [(u: uPlotLib) => updateTooltip(u)] },
 			axes: [
 				{
 					stroke: axisStroke,
@@ -170,7 +105,7 @@
 					gap: 4,
 					size: 28,
 					space: 80,
-					values: (_u, splits) => splits.map((s) => formatTickDate(s * 1000, dataSpanMs))
+					values: (_u, splits) => splits.map((s) => formatTickDate(s * 1000, span))
 				},
 				{
 					side: 1,
@@ -182,93 +117,46 @@
 				}
 			]
 		};
-
-		chart = new UPlot(opts, columnar as uPlotLib.AlignedData, chartEl);
 	}
-
-	$effect(() => {
-		if (!browser || !containerEl) return;
-		const ro = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				const w = entry.contentRect.width;
-				if (w > 0 && Math.abs(w - chartWidth) > 1) chartWidth = w;
-			}
-		});
-		ro.observe(containerEl);
-		return () => ro.disconnect();
-	});
-
-	$effect(() => {
-		void columnar;
-		void xRange;
-		void dataSpanMs;
-		if (browser && columnar && chartEl) buildChart();
-		return () => destroyChart();
-	});
-
-	$effect(() => {
-		if (chart && chartWidth > 0) chart.setSize({ width: chartWidth, height: HEIGHT });
-	});
-
-	$effect(() => {
-		if (!browser) return;
-		const handle = () => {
-			if (document.visibilityState === 'visible' && chart && containerEl) {
-				const w = containerEl.clientWidth;
-				if (w > 0 && Math.abs(w - chartWidth) > 1) chartWidth = w;
-			}
-		};
-		document.addEventListener('visibilitychange', handle);
-		return () => document.removeEventListener('visibilitychange', handle);
-	});
 </script>
 
 <div class="border-line rounded-box border p-4">
 	<header class="pb-3">
 		<p class="eyebrow">Latency over time</p>
 	</header>
-	{#if !hasData}
+	{#if !columnar}
 		<div class="text-base-content/40 flex h-72 items-center justify-center text-xs">
 			No searches in this window.
 		</div>
 	{:else}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			bind:this={containerEl}
-			class="relative w-full"
-			onmouseleave={() => {
-				tooltipVisible = false;
-				tooltipIdx = null;
-			}}
+		<UplotChart
+			data={columnar}
+			height={HEIGHT}
+			{makeOpts}
+			onbuild={(instance) => (chart = instance)}
 		>
-			<div bind:this={chartEl}></div>
-			{#if tooltipVisible && tooltipIdx != null && columnar}
-				<div
-					class="border-base-300/50 bg-base-100 pointer-events-none absolute z-20 grid min-w-[9rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
-					style="left: {tooltipLeft}px; top: {tooltipTop}px;"
-				>
-					<div class="font-medium">{formatTooltipDate(columnar[0][tooltipIdx] * 1000)}</div>
-					<div class="grid gap-1.5">
-						{#each SERIES as s, i (s.key)}
-							{#if visible[i]}
-								<div class="flex items-center gap-2 leading-none">
-									<div
-										class="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-										style="background-color: {colors[i]};"
-									></div>
-									<div class="flex flex-1 items-center justify-between gap-4">
-										<span class="text-base-content/60">{s.label}</span>
-										<span class="text-base-content font-mono font-medium tabular-nums">
-											{formatDurationMs(columnar[i + 1][tooltipIdx])}
-										</span>
-									</div>
+			{#snippet tooltip(idx)}
+				<div class="font-medium">{formatTooltipDate(columnar[0][idx] * 1000)}</div>
+				<div class="grid gap-1.5">
+					{#each SERIES as s, i (s.key)}
+						{#if visible[i]}
+							<div class="flex items-center gap-2 leading-none">
+								<div
+									class="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+									style="background-color: {colors[i]};"
+								></div>
+								<div class="flex flex-1 items-center justify-between gap-4">
+									<span class="text-base-content/60">{s.label}</span>
+									<span class="text-base-content font-mono font-medium tabular-nums">
+										{formatDurationMs(columnar[i + 1][idx])}
+									</span>
 								</div>
-							{/if}
-						{/each}
-					</div>
+							</div>
+						{/if}
+					{/each}
 				</div>
-			{/if}
-		</div>
+			{/snippet}
+		</UplotChart>
 		<UplotLegend items={legendItems} onToggle={toggle} />
 	{/if}
 </div>
