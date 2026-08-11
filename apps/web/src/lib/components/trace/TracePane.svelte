@@ -305,19 +305,12 @@
 	{:else}
 		{@const m = model}
 		{#if minimap}
-			<!-- Same columns and padding as the axis row: a brush has to sit directly above the bars
-			     it selects. -->
-			<div class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-				<div></div>
-				<div class="pr-14">
-					<TraceMinimap
-						spans={m.byId}
-						durationMicros={m.durationMicros}
-						{view}
-						onChange={(next) => (view = next)}
-					/>
-				</div>
-			</div>
+			<TraceMinimap
+				spans={m.byId}
+				durationMicros={m.durationMicros}
+				{view}
+				onChange={(next) => (view = next)}
+			/>
 		{/if}
 		<div class="border-line grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b">
 			<div></div>
