@@ -100,10 +100,6 @@
 		void next.load();
 	});
 
-	const hasTrace = $derived(
-		(traceResource?.model?.spanCount ?? 0) > 0 || traceResource?.error != null
-	);
-
 	let searchOpen = $state(false);
 	let searchTerm = $state('');
 	let sharing = $state(false);
@@ -159,7 +155,7 @@
 	});
 
 	$effect(() => {
-		if (activeTab === 'trace' && !hasTrace) activeTab = 'parameters';
+		if (activeTab === 'trace' && traceId === null) activeTab = 'parameters';
 		else if (activeTab === 'traceback' && !hasTraceback) activeTab = 'parameters';
 	});
 
@@ -269,15 +265,13 @@
 			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
 			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
 		</button>
-		{#if hasTrace}
-			<a
-				href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
-				class="btn btn-xs btn-primary ml-auto"
-			>
-				<ExternalLink class="h-3 w-3" aria-hidden="true" />
-				Open trace page
-			</a>
-		{/if}
+		<a
+			href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
+			class="btn btn-xs btn-primary ml-auto"
+		>
+			<ExternalLink class="h-3 w-3" aria-hidden="true" />
+			Open trace page
+		</a>
 	{/if}
 {/snippet}
 
@@ -326,7 +320,7 @@
 			{activeTab}
 			{sharing}
 			{hasTraceback}
-			{hasTrace}
+			hasTrace={traceId !== null}
 			width={widthPx}
 			meta={traceSummary}
 			onTabChange={(t) => (activeTab = t)}
@@ -356,7 +350,7 @@
 				<ParametersPane {hit} {store} />
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
-			{:else if activeTab === 'trace' && hasTrace}
+			{:else if activeTab === 'trace'}
 				<TracePane
 					model={traceResource?.model ?? null}
 					loading={traceResource?.loading ?? true}
