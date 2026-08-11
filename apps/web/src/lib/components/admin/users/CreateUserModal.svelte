@@ -66,7 +66,14 @@
 	}
 </script>
 
-<Modal bind:open title="Create user" onclose={reset}>
+<Modal
+	bind:open
+	title="Create user"
+	onclose={reset}
+	oncancel={(e) => {
+		if (submitting) e.preventDefault();
+	}}
+>
 	{#if !inviteUrl}
 		<form id="create-user-form" class="space-y-3" {onsubmit}>
 			{#if formError}

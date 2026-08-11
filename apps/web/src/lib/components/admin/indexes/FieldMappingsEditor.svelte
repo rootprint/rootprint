@@ -50,7 +50,7 @@
 </script>
 
 <div class="divide-line flex flex-col divide-y">
-	{#each fields as field, i (i)}
+	{#each fields as field, i (field)}
 		{@const nameError = fieldErrors[`${errorPrefix}.${i}.name`]}
 		{@const descriptionError = fieldErrors[`${errorPrefix}.${i}.description`]}
 		<div class="flex flex-col gap-2.5 px-4 py-3">

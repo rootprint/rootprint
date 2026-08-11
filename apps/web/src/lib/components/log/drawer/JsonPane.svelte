@@ -20,9 +20,11 @@
 	$effect(() => {
 		let cancelled = false;
 		html = null;
-		highlightCode(pretty, 'json').then((result) => {
-			if (!cancelled) html = result;
-		});
+		highlightCode(pretty, 'json')
+			.then((result) => {
+				if (!cancelled) html = result;
+			})
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
