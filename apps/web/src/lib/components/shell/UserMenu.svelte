@@ -13,6 +13,8 @@
 	const initials = $derived(avatarInitials(user.name));
 	const color = $derived(avatarColor(user.id));
 
+	const dd = $props.id();
+
 	let signingOut = $state(false);
 
 	async function signOut() {
@@ -29,48 +31,49 @@
 	}
 </script>
 
-<div class="dropdown dropdown-right dropdown-end w-full">
-	<div
-		tabindex="0"
-		role="button"
-		aria-label="User menu"
-		class="hover:bg-base-200/60 flex w-full items-center rounded transition-colors {collapsed
-			? 'justify-center p-1'
-			: 'gap-2.5 px-2 py-1.5'}"
+<button
+	type="button"
+	popovertarget={dd}
+	style="anchor-name:--{dd}"
+	aria-label="User menu"
+	class="hover:bg-base-200/60 flex w-full items-center rounded transition-colors {collapsed
+		? 'justify-center p-1'
+		: 'gap-2.5 px-2 py-1.5'}"
+>
+	<span
+		class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs text-white"
+		style="background: {color}"
 	>
-		<span
-			class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs text-white"
-			style="background: {color}"
-		>
-			{initials}
+		{initials}
+	</span>
+	{#if !collapsed}
+		<span class="min-w-0 flex-1 text-left">
+			<span class="block truncate text-sm">{user.name ?? 'User'}</span>
+			<span class="text-base-content/60 block truncate font-mono text-[10px]">{user.email}</span>
 		</span>
-		{#if !collapsed}
-			<span class="min-w-0 flex-1 text-left">
-				<span class="block truncate text-sm">{user.name ?? 'User'}</span>
-				<span class="text-base-content/60 block truncate font-mono text-[10px]">{user.email}</span>
-			</span>
-			<ChevronsUpDown class="text-base-content/40 h-3.5 w-3.5 shrink-0" />
-		{/if}
+		<ChevronsUpDown class="text-base-content/40 h-3.5 w-3.5 shrink-0" />
+	{/if}
+</button>
+
+<div
+	popover
+	id={dd}
+	style="position-anchor:--{dd}"
+	class="dropdown dropdown-right dropdown-end border-line rounded-box bg-base-100 ml-2 w-64 border p-0"
+>
+	<div class="border-line border-b px-4 py-3">
+		<p class="text-sm">{user.name ?? 'User'}</p>
+		<p class="text-base-content/60 mt-0.5 font-mono text-xs">{user.email}</p>
 	</div>
-	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-	<div
-		tabindex="0"
-		class="dropdown-content border-line rounded-box bg-base-100 z-50 ml-2 w-64 border p-0"
-	>
-		<div class="border-line border-b px-4 py-3">
-			<p class="text-sm">{user.name ?? 'User'}</p>
-			<p class="text-base-content/60 mt-0.5 font-mono text-xs">{user.email}</p>
-		</div>
-		<div class="p-2">
-			<button
-				type="button"
-				class="btn btn-ghost btn-sm w-full justify-start"
-				onclick={signOut}
-				disabled={signingOut}
-			>
-				<LogOut class="h-3.5 w-3.5 opacity-70" />
-				{signingOut ? 'Signing out…' : 'Sign out'}
-			</button>
-		</div>
+	<div class="p-2">
+		<button
+			type="button"
+			class="btn btn-ghost btn-sm w-full justify-start"
+			onclick={signOut}
+			disabled={signingOut}
+		>
+			<LogOut class="h-3.5 w-3.5 opacity-70" />
+			{signingOut ? 'Signing out…' : 'Sign out'}
+		</button>
 	</div>
 </div>
