@@ -194,10 +194,12 @@
 		{/if}
 	</header>
 
-	{#if model.isPartial}
+	{#if model.orphanCount > 0 && !data.truncated}
 		<div class="border-line flex items-center gap-2 border-b px-4 py-1.5 text-xs">
 			<span class="text-warning">
-				Some parent spans are still being indexed — this trace may be incomplete.
+				{model.orphanCount}
+				{model.orphanCount === 1 ? 'span is' : 'spans are'} waiting on a parent that hasn't finished yet
+				— a span only arrives once it ends, so this trace fills in as they complete.
 			</span>
 			<button class="btn btn-ghost btn-xs" onclick={() => invalidateAll()}>Reload</button>
 		</div>
@@ -228,7 +230,7 @@
 	<div class="flex min-h-0 flex-1">
 		<div class="min-w-0 flex-1">
 			{#key data.traceId}
-				<TracePane {model} {filter} {selectedSpanId} onSelectSpan={selectSpan} {spanLogs} />
+				<TracePane {model} {filter} {selectedSpanId} onSelectSpan={selectSpan} {spanLogs} minimap />
 			{/key}
 		</div>
 

@@ -1,14 +1,11 @@
-import type { SpanNode, TraceModel } from '$lib/types';
+import type { SpanNode, TraceModel, ViewRange } from '$lib/types';
 import type { TraceResponse } from 'api/types';
 
-/** Spans of a few tens of microseconds are normal; without a floor their bar renders zero-width. */
-const MIN_WIDTH_PCT = 0.4;
-
-/** Shapes a flat span list into the waterfall tree, with geometry precomputed against the trace. */
+/** Shapes a flat span list into the waterfall tree. */
 export function buildTraceModel(trace: TraceResponse): TraceModel {
 	const byId = new Map<string, SpanNode>();
 	for (const s of trace.spans) {
-		byId.set(s.spanId, { ...s, depth: 0, offsetPct: 0, widthPct: 0, children: [] });
+		byId.set(s.spanId, { ...s, depth: 0, children: [] });
 	}
 
 	// Duplicate span ids collapse here, so spanCount is distinct ids rather than spans returned.
@@ -27,25 +24,21 @@ export function buildTraceModel(trace: TraceResponse): TraceModel {
 		.toSorted((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
 	const roots: SpanNode[] = [];
-	let isPartial = false;
+	let orphanCount = 0;
 	for (const node of nodes) {
 		const parent = node.parentSpanId ? byId.get(node.parentSpanId) : undefined;
 		if (parent && parent !== node) parent.children.push(node);
 		else {
 			// A long-running parent is only exported when it ends, so children can be searchable first.
-			if (node.parentSpanId && !parent) isPartial = true;
+			if (node.parentSpanId && !parent) orphanCount++;
 			roots.push(node);
 		}
 	}
 
-	const total = Math.max(durationMicros, 1);
 	const visited = new Set<string>();
 	const walk = (node: SpanNode, depth: number): void => {
 		visited.add(node.spanId);
 		node.depth = depth;
-		const rawOffsetPct = (node.startOffsetMicros / total) * 100;
-		node.widthPct = Math.max((node.durationMicros / total) * 100, MIN_WIDTH_PCT);
-		node.offsetPct = Math.min(rawOffsetPct, 100 - node.widthPct);
 		// Severs back-edges: a parent chain can loop, and walk() would recurse forever.
 		node.children = node.children.filter((child) => !visited.has(child.spanId));
 		node.children.sort((a, b) => a.startOffsetMicros - b.startOffsetMicros);
@@ -67,9 +60,13 @@ export function buildTraceModel(trace: TraceResponse): TraceModel {
 		durationMicros,
 		services,
 		errorCount,
-		isPartial,
+		orphanCount,
 		resources: trace.resources,
 		traceStartMicros: trace.traceStartMicros,
 		byId
 	};
 }
+
+export const fullView = (): ViewRange => ({ start: 0, end: 1 });
+
+export const MIN_VIEW_SPAN = 1e-6;

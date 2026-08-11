@@ -128,12 +128,17 @@ export interface QuerySuggestion {
 	insert: string;
 }
 
-/** One span in a rendered trace waterfall, with geometry precomputed against the whole trace. */
+/** One span in a rendered trace waterfall. Bar geometry depends on the timeline's current view
+ *  range, so it is computed at render time rather than stored here. */
 export interface SpanNode extends TraceSpan {
 	depth: number;
-	offsetPct: number;
-	widthPct: number;
 	children: SpanNode[];
+}
+
+/** The slice of the trace the timeline is drawn against, as fractions of the whole. */
+export interface ViewRange {
+	start: number;
+	end: number;
 }
 
 /** A trace shaped for rendering: the waterfall tree plus the header's summary figures. */
@@ -143,7 +148,9 @@ export interface TraceModel {
 	durationMicros: number;
 	services: { name: string; count: number }[];
 	errorCount: number;
-	isPartial: boolean;
+	/** Spans whose `parentSpanId` names a span the trace does not contain — usually a parent that has
+	 *  not finished, since a span is only exported once it ends. */
+	orphanCount: number;
 	resources: Record<string, Record<string, string>>;
 	traceStartMicros: number;
 	byId: ReadonlyMap<string, SpanNode>;

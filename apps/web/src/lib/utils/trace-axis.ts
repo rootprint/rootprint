@@ -11,30 +11,36 @@ function niceStep(raw: number): number {
 	return (frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 5 ? 5 : 10) * pow;
 }
 
-/** Decimals track the tick step: a 0.5ms step at 0 decimals renders "0ms 1ms 1ms 2ms". */
-function tickFormatter(totalMicros: number, stepMicros: number): (n: number) => string {
+/**
+ * Unit from the largest value a label carries, not the window width — zoomed into the tail of a long
+ * trace those differ by orders of magnitude, and sizing on the window renders "1333000000.0µs" where
+ * "1333.0002s" is meant. Decimals track the step, or a step finer than the unit renders every label
+ * identically.
+ */
+function tickFormatter(maxValueMicros: number, stepMicros: number): (n: number) => string {
 	let div = 1;
 	let suffix = 'µs';
-	if (totalMicros >= 1_000_000) {
+	if (maxValueMicros >= 1_000_000) {
 		div = 1_000_000;
 		suffix = 's';
-	} else if (totalMicros >= 1_000) {
+	} else if (maxValueMicros >= 1_000) {
 		div = 1_000;
 		suffix = 'ms';
 	}
 	const stepInUnit = stepMicros / div;
-	const decimals = Math.max(0, Math.min(2, Math.ceil(-Math.log10(stepInUnit))));
+	const decimals = Math.max(0, Math.min(9, Math.ceil(-Math.log10(stepInUnit))));
 	return (n) => `${(n / div).toFixed(decimals)}${suffix}`;
 }
 
-export function traceAxis(totalMicros: number): TraceAxis {
+/** `startMicros` offsets the labels only, so a zoomed view still reads in trace time. */
+export function traceAxis(totalMicros: number, startMicros = 0): TraceAxis {
 	if (totalMicros <= 0) return { ticks: [], gridStyle: '' };
 
 	const step = niceStep(totalMicros / TICK_TARGET);
-	const format = tickFormatter(totalMicros, step);
+	const format = tickFormatter(startMicros + totalMicros, step);
 	const ticks: { pct: number; label: string }[] = [];
 	for (let t = 0; t <= totalMicros; t += step) {
-		ticks.push({ pct: (t / totalMicros) * 100, label: format(t) });
+		ticks.push({ pct: (t / totalMicros) * 100, label: format(startMicros + t) });
 	}
 
 	// content-box origin and clip are load-bearing: ticks and bars are positioned in the content
