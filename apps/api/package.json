@@ -38,11 +38,11 @@
 		"proto:gen": "buf generate"
 	},
 	"dependencies": {
-		"@better-auth/api-key": "^1.6.25",
+		"@better-auth/api-key": "^1.6.26",
 		"@bufbuild/protobuf": "^2.13.0",
-		"@hono/standard-validator": "^0.3.0",
+		"@hono/standard-validator": "^0.4.0",
 		"@valibot/to-json-schema": "^1.7.1",
-		"better-auth": "^1.6.25",
+		"better-auth": "^1.6.26",
 		"dotenv": "^17.4.2",
 		"drizzle-orm": "^0.45.2",
 		"hono": "^4.12.34",
@@ -57,7 +57,7 @@
 		"@bufbuild/buf": "^1.72.0",
 		"@standard-schema/spec": "^1.1.0",
 		"@bufbuild/protoc-gen-es": "^2.13.0",
-		"@types/pg": "^8.20.0",
+		"@types/pg": "^8.21.0",
 		"bun-types": "^1.1.0",
 		"drizzle-kit": "^0.31.10"
 	}
