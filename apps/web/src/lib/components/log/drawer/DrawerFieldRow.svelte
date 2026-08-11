@@ -4,7 +4,7 @@
 
 	let {
 		field,
-		keyClass = 'w-56 max-w-[14rem]',
+		keyClass = 'w-[min(38%,14rem)]',
 		onFilterFor,
 		onFilterOut,
 		onCopy
@@ -29,14 +29,19 @@
 	>
 		{field.displayName}
 	</td>
-	<td class="text-base-content relative px-3 py-1.5 font-mono text-xs">
+	<td
+		class={[
+			'text-base-content relative px-3 py-1.5 font-mono text-xs',
+			hasActions && !field.isEmpty && 'pr-20'
+		]}
+	>
 		{#if field.isEmpty}
 			<span class="text-base-content/30">—</span>
 		{:else}
 			<span class="break-words whitespace-pre-wrap">{field.value}</span>
 			{#if hasActions}
 				<span
-					class="join absolute top-0.5 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+					class="join pointer-events-none absolute top-0.5 right-2 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
 				>
 					{#if onFilterFor}
 						<button

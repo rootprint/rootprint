@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown } from 'lucide-svelte';
+	import { ChevronDown, Copy } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import DrawerFieldRow from './DrawerFieldRow.svelte';
@@ -57,11 +57,28 @@
 	function copyValue(field: DrawerField) {
 		void copyWithToast(field.value, 'Value copied');
 	}
+
+	function copyMessage(): void {
+		void copyWithToast(grouped.message, 'Message copied');
+	}
 </script>
 
 <OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="h-full">
 	<div class="border-line border-b p-3">
-		<p class="eyebrow mb-1.5">{grouped.messageLabel}</p>
+		<div class="mb-1.5 flex items-center justify-between gap-3">
+			<p class="eyebrow">{grouped.messageLabel}</p>
+			{#if grouped.message !== ''}
+				<button
+					type="button"
+					class="btn btn-ghost btn-xs gap-1"
+					aria-label="Copy log message"
+					onclick={copyMessage}
+				>
+					<Copy class="h-3 w-3" aria-hidden="true" />
+					Copy
+				</button>
+			{/if}
+		</div>
 		<div
 			class="border-line rounded-md border p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap"
 		>
@@ -100,7 +117,7 @@
 								<ChevronDown class="text-base-content/50 h-3 w-3" />
 							</span>
 							<p class="eyebrow">{group.label}</p>
-							<span class="bg-primary text-primary-content rounded-sm px-1.5 py-0.5 text-[10px]"
+							<span class="bg-base-300 text-base-content/60 rounded-sm px-1.5 py-0.5 text-[10px]"
 								>{group.fields.length}</span
 							>
 						</button>

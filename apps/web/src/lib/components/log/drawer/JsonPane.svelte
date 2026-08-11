@@ -3,6 +3,7 @@
 
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { highlightCode } from '$lib/utils/code-highlight';
+	import { pluralize } from '$lib/utils/format';
 	import { resolveEmbeddedJson } from '$lib/utils/resolve-embedded-json';
 
 	let {
@@ -12,6 +13,7 @@
 	} = $props();
 
 	const pretty = $derived(JSON.stringify(resolveEmbeddedJson(raw), null, 2));
+	const lineCount = $derived(pretty.split('\n').length);
 
 	let html = $state<string | null>(null);
 
@@ -36,15 +38,21 @@
 		class="border-line bg-base-200/50 relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border"
 	>
 		<div class="border-line bg-base-200 flex items-center justify-between border-b px-3 py-1.5">
-			<span class="eyebrow text-[10px]">JSON</span>
+			<div class="flex items-center gap-2">
+				<span class="eyebrow text-[10px]">JSON</span>
+				<span class="text-base-content/40 text-[10px] tabular-nums">
+					{pluralize(lineCount, 'line')}
+				</span>
+			</div>
 			<button
 				type="button"
-				class="btn btn-ghost btn-xs"
+				class="btn btn-ghost btn-xs gap-1"
 				aria-label="Copy JSON"
 				title="Copy JSON"
 				onclick={copyAll}
 			>
-				<Copy class="h-3 w-3" />
+				<Copy class="h-3 w-3" aria-hidden="true" />
+				Copy
 			</button>
 		</div>
 		<div class="json-pane min-h-0 flex-1 overflow-auto px-3 py-2 text-xs leading-relaxed">

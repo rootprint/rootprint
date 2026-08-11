@@ -1,15 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import {
-		Braces,
-		Bug,
-		ChartNoAxesGantt,
-		Layers,
-		ListTree,
-		Search,
-		Share2,
-		X
-	} from 'lucide-svelte';
+	import { LoaderCircle, Search, Share2, X } from 'lucide-svelte';
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
@@ -20,10 +11,10 @@
 	let {
 		hit,
 		activeTab,
+		searchOpen = false,
 		sharing = false,
 		hasTraceback = false,
 		hasTrace = false,
-		width,
 		meta,
 		onTabChange,
 		onSearch,
@@ -32,10 +23,10 @@
 	}: {
 		hit: LogHit;
 		activeTab: DrawerTab;
+		searchOpen?: boolean;
 		sharing?: boolean;
 		hasTraceback?: boolean;
 		hasTrace?: boolean;
-		width: number;
 		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
 		onSearch: () => void;
@@ -43,110 +34,102 @@
 		onClose: () => void;
 	} = $props();
 
-	type TabDef = { id: DrawerTab; label: string; icon: typeof Layers };
+	type TabDef = { id: DrawerTab; label: string };
 	const TABS = $derived<TabDef[]>([
-		{ id: 'parameters' as DrawerTab, label: 'Parameters', icon: ListTree },
-		...(hasTraceback ? [{ id: 'traceback' as DrawerTab, label: 'Traceback', icon: Bug }] : []),
-		...(hasTrace ? [{ id: 'trace' as DrawerTab, label: 'Trace', icon: ChartNoAxesGantt }] : []),
-		{ id: 'json' as DrawerTab, label: 'JSON', icon: Braces },
-		{ id: 'context' as DrawerTab, label: 'Context', icon: Layers }
+		{ id: 'parameters' as DrawerTab, label: 'Parameters' },
+		...(hasTraceback ? [{ id: 'traceback' as DrawerTab, label: 'Traceback' }] : []),
+		...(hasTrace ? [{ id: 'trace' as DrawerTab, label: 'Trace' }] : []),
+		{ id: 'json' as DrawerTab, label: 'JSON' },
+		{ id: 'context' as DrawerTab, label: 'Context' }
 	]);
-
-	const compact = $derived(width > 0 && width < 560);
-
-	function handleTabKeydown(e: KeyboardEvent) {
-		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-		e.preventDefault();
-		const order = TABS.map((t) => t.id);
-		const idx = order.indexOf(activeTab);
-		const next =
-			e.key === 'ArrowRight'
-				? order[(idx + 1) % order.length]
-				: order[(idx - 1 + order.length) % order.length];
-		onTabChange(next);
-		document.getElementById(`drawer-tab-${next}`)?.focus();
-	}
 
 	const levelLabel = $derived(hit.level.toUpperCase() || 'UNKNOWN');
 	const levelHex = $derived(levelColor(hit.level));
 </script>
 
-<div class="border-line flex items-center justify-between gap-2 border-b px-3">
+<header class="border-line border-b">
+	<div class="px-4 pt-3 pb-2.5">
+		<div class="flex items-center justify-between gap-3">
+			<p id="log-detail-title" class="eyebrow">Log event</p>
+			<div class="flex items-center gap-1">
+				<button
+					type="button"
+					class={['btn btn-ghost btn-xs btn-square', searchOpen && 'bg-base-200 text-base-content']}
+					aria-label="Search within log"
+					aria-pressed={searchOpen}
+					title="Search within log"
+					onclick={onSearch}
+				>
+					<Search class="h-3.5 w-3.5" />
+				</button>
+				<button
+					type="button"
+					class="btn btn-ghost btn-xs btn-square"
+					aria-label={sharing ? 'Creating share link' : 'Copy share link'}
+					title="Copy share link"
+					disabled={sharing}
+					onclick={onShare}
+				>
+					{#if sharing}
+						<LoaderCircle class="h-3.5 w-3.5 animate-spin" />
+					{:else}
+						<Share2 class="h-3.5 w-3.5" />
+					{/if}
+				</button>
+				<button
+					type="button"
+					class="btn btn-ghost btn-xs btn-square"
+					aria-label="Close log details"
+					title="Close (Esc)"
+					onclick={onClose}
+				>
+					<X class="h-3.5 w-3.5" />
+				</button>
+			</div>
+		</div>
+
+		<div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+			<span
+				class="border-line bg-base-200/60 text-base-content/80 inline-flex h-7 items-center gap-1.5 rounded border px-2 font-mono"
+			>
+				<span
+					class="inline-block h-2 w-2 shrink-0 rounded-full"
+					style="background-color: {levelHex};"
+					aria-hidden="true"
+				></span>
+				{levelLabel}
+			</span>
+			<time
+				class="border-line bg-base-200/60 text-base-content/70 inline-flex h-7 items-center rounded border px-2 font-mono"
+				datetime={hit.timestamp}
+			>
+				{formatLogRowTimestamp(hit.timestamp)}
+			</time>
+			{@render meta?.()}
+		</div>
+	</div>
+
 	<div
-		class="flex min-w-0"
+		class="border-line flex min-w-0 overflow-x-auto border-t px-3"
 		role="tablist"
 		aria-label="Log detail tabs"
-		tabindex={-1}
-		onkeydown={handleTabKeydown}
 	>
 		{#each TABS as tab (tab.id)}
-			{@const Icon = tab.icon}
 			<button
 				type="button"
 				role="tab"
 				id={`drawer-tab-${tab.id}`}
 				aria-selected={activeTab === tab.id}
 				aria-controls={`drawer-panel-${tab.id}`}
-				tabindex={activeTab === tab.id ? 0 : -1}
-				class={`flex items-center gap-1.5 border-b-2 py-2.5 text-xs ${compact ? 'px-2.5' : 'px-3'} ${
+				class={`shrink-0 border-b-2 px-4 py-3 text-xs whitespace-nowrap transition-colors ${
 					activeTab === tab.id
-						? 'border-primary text-base-content'
-						: 'text-base-content/60 border-transparent'
+						? 'border-base-content text-base-content font-medium'
+						: 'text-base-content/55 hover:text-base-content border-transparent'
 				}`}
-				title={compact ? tab.label : undefined}
-				aria-label={compact ? tab.label : undefined}
 				onclick={() => onTabChange(tab.id)}
 			>
-				<Icon class="h-3.5 w-3.5 shrink-0" />
-				{#if !compact}{tab.label}{/if}
+				{tab.label}
 			</button>
 		{/each}
 	</div>
-
-	<div class="flex items-center gap-1">
-		<button
-			type="button"
-			class="btn btn-ghost btn-xs btn-square"
-			aria-label="Search within log"
-			title="Search within log"
-			onclick={onSearch}
-		>
-			<Search class="h-3.5 w-3.5" />
-		</button>
-		<button
-			type="button"
-			class="btn btn-ghost btn-xs btn-square"
-			aria-label="Copy share link"
-			title="Copy share link"
-			disabled={sharing}
-			onclick={onShare}
-		>
-			<Share2 class="h-3.5 w-3.5" />
-		</button>
-		<button
-			type="button"
-			class="btn btn-ghost btn-xs btn-square"
-			aria-label="Close"
-			title="Close (Esc)"
-			onclick={onClose}
-		>
-			<X class="h-3.5 w-3.5" />
-		</button>
-	</div>
-</div>
-
-<div class="border-line border-b px-4 py-3">
-	<div class="flex flex-wrap items-center gap-2 font-mono text-xs">
-		<span class="inline-flex items-center gap-1.5">
-			<span
-				class="inline-block h-2 w-2 shrink-0 rounded-full"
-				style="background-color: {levelHex};"
-				aria-hidden="true"
-			></span>
-			<span class="text-base-content/80">{levelLabel}</span>
-		</span>
-		<span class="text-base-content/30">·</span>
-		<span class="text-base-content/70">{formatLogRowTimestamp(hit.timestamp)}</span>
-		{@render meta?.()}
-	</div>
-</div>
+</header>

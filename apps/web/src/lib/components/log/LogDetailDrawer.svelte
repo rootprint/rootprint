@@ -29,8 +29,6 @@
 	const MIN_DRAWER_WIDTH = 400;
 	const MAX_DRAWER_WIDTH_FRACTION = 0.9;
 	const DEFAULT_DRAWER_FRACTION = 0.5;
-	const KEYBOARD_STEP_PX = 24;
-	const KEYBOARD_STEP_SHIFT_PX = 96;
 
 	function clampWidth(px: number, viewport: number): number {
 		// Never let the floor exceed the viewport itself — on narrow windows the
@@ -112,11 +110,6 @@
 	let dragStartX = 0;
 	let dragStartWidth = 0;
 
-	const ariaValueMin = $derived(Math.min(MIN_DRAWER_WIDTH, viewportWidth));
-	const ariaValueMax = $derived(
-		Math.max(ariaValueMin, Math.floor(viewportWidth * MAX_DRAWER_WIDTH_FRACTION))
-	);
-
 	$effect(() => {
 		const vw = window.innerWidth;
 		viewportWidth = vw;
@@ -139,6 +132,15 @@
 		document.body.classList.add('select-none', 'cursor-ew-resize');
 		return () => {
 			document.body.classList.remove('select-none', 'cursor-ew-resize');
+		};
+	});
+
+	$effect(() => {
+		if (!hit) return;
+		const alreadyLocked = document.body.classList.contains('overflow-hidden');
+		document.body.classList.add('overflow-hidden');
+		return () => {
+			if (!alreadyLocked) document.body.classList.remove('overflow-hidden');
 		};
 	});
 
@@ -165,13 +167,14 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (!hit) return;
-		if (e.key === 'Escape') {
-			const target = e.target as HTMLElement | null;
-			if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
-			e.preventDefault();
-			close();
-		}
+		if (!hit || e.key !== 'Escape') return;
+		e.preventDefault();
+		close();
+	}
+
+	function toggleSearch(): void {
+		searchOpen = !searchOpen;
+		if (!searchOpen) searchTerm = '';
 	}
 
 	async function shareLog() {
@@ -231,19 +234,6 @@
 		persistWidth(widthPx);
 	}
 
-	function handleHandleKeydown(e: KeyboardEvent): void {
-		const step = e.shiftKey ? KEYBOARD_STEP_SHIFT_PX : KEYBOARD_STEP_PX;
-		if (e.key === 'ArrowLeft') {
-			e.preventDefault();
-			widthPx = clampWidth(widthPx + step, viewportWidth);
-			persistWidth(widthPx);
-		} else if (e.key === 'ArrowRight') {
-			e.preventDefault();
-			widthPx = clampWidth(widthPx - step, viewportWidth);
-			persistWidth(widthPx);
-		}
-	}
-
 	function resetWidth(): void {
 		removeKey(DRAWER_WIDTH_KEY);
 		widthPx = clampWidth(viewportWidth * DEFAULT_DRAWER_FRACTION, viewportWidth);
@@ -255,15 +245,15 @@
 {#snippet traceSummary()}
 	{#if traceId}
 		{@const id = traceId}
-		<span class="text-base-content/30">·</span>
 		<button
 			type="button"
-			class="text-base-content/50 hover:text-base-content flex min-w-0 items-center gap-1"
-			title={id}
+			class="border-line bg-base-200/60 text-base-content/60 hover:bg-base-300 hover:text-base-content inline-flex h-7 items-center gap-1.5 rounded border px-2 text-[10px] tracking-wider uppercase transition-colors"
+			aria-label="Copy trace ID"
+			title={`Copy trace ID: ${id}`}
 			onclick={() => copyWithToast(id, 'Trace ID copied', 'Failed to copy trace ID')}
 		>
-			<span class="truncate">{id.slice(0, 8)}…{id.slice(-4)}</span>
-			<Copy class="h-3 w-3 shrink-0" aria-hidden="true" />
+			Trace ID
+			<Copy class="h-3 w-3" aria-hidden="true" />
 		</button>
 		<a
 			href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
@@ -290,16 +280,12 @@
 		style="width: {widthPx}px"
 		role="dialog"
 		aria-modal="true"
-		aria-label="Log detail"
+		aria-labelledby="log-detail-title"
 	>
-		<div
-			role="separator"
-			aria-orientation="vertical"
-			aria-label="Resize drawer"
-			aria-valuemin={ariaValueMin}
-			aria-valuemax={ariaValueMax}
-			aria-valuenow={widthPx}
-			tabindex="0"
+		<button
+			type="button"
+			tabindex="-1"
+			aria-hidden="true"
 			title="Drag to resize · double-click to reset"
 			class={[
 				'border-base-content/20 bg-base-100 text-base-content/60 hover:bg-base-200 hover:text-base-content absolute top-1/2 left-0 -ml-2 flex h-8 w-4 -translate-x-full -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-md border shadow-sm transition-colors',
@@ -310,21 +296,20 @@
 			onpointerup={handleHandlePointerUp}
 			onpointercancel={handleHandlePointerUp}
 			ondblclick={resetWidth}
-			onkeydown={handleHandleKeydown}
 		>
 			<GripVertical class="h-3 w-3" />
-		</div>
+		</button>
 
 		<DrawerHeader
 			{hit}
 			{activeTab}
+			{searchOpen}
 			{sharing}
 			{hasTraceback}
 			hasTrace={traceId !== null}
-			width={widthPx}
 			meta={traceSummary}
 			onTabChange={(t) => (activeTab = t)}
-			onSearch={() => (searchOpen = !searchOpen)}
+			onSearch={toggleSearch}
 			onShare={shareLog}
 			onClose={close}
 		/>

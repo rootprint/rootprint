@@ -14,17 +14,6 @@
 	$effect(() => {
 		inputEl?.focus();
 	});
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			if (value !== '') {
-				value = '';
-			} else {
-				onClose();
-			}
-		}
-	}
 </script>
 
 <div class="border-line bg-base-200/50 flex items-center gap-2 border-b px-3 py-1.5">
@@ -35,7 +24,6 @@
 		type="text"
 		placeholder="Search fields and values…"
 		class="input input-xs input-ghost min-w-0 flex-1 font-mono"
-		onkeydown={handleKeydown}
 	/>
 	<button
 		type="button"
