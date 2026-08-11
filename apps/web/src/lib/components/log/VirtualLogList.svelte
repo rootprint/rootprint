@@ -54,7 +54,14 @@
 	}
 
 	$effect(() => {
-		scrollMargin = headerEl?.offsetHeight ?? 0;
+		const el = headerEl;
+		if (el === null) {
+			scrollMargin = 0;
+			return;
+		}
+		const ro = new ResizeObserver(() => (scrollMargin = el.offsetHeight));
+		ro.observe(el);
+		return () => ro.disconnect();
 	});
 
 	$effect(() => {

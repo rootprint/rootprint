@@ -87,7 +87,7 @@
 	const countLabel = $derived(resolvedValues.length > 0 ? `(${resolvedValues.length})` : '');
 
 	function showMore() {
-		showCount = Math.min(showCount + FIELD_VALUES_SHOW_MORE_STEP, filteredValues.length);
+		showCount += FIELD_VALUES_SHOW_MORE_STEP;
 	}
 
 	function showLess() {

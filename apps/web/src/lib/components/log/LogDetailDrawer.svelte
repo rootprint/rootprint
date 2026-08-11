@@ -282,6 +282,7 @@
 		aria-modal="true"
 		aria-labelledby="log-detail-title"
 	>
+		<!-- Mouse-only affordance with no keyboard equivalent, so aria-hidden + tabindex="-1" is deliberate. -->
 		<button
 			type="button"
 			tabindex="-1"

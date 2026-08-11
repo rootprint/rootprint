@@ -37,6 +37,7 @@
 	function changeType(i: number, type: FieldType) {
 		const next = emptyFieldRow(type);
 		next.name = fields[i].name;
+		next.description = fields[i].description;
 		fields[i] = next;
 	}
 

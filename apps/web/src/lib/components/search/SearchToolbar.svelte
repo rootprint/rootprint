@@ -96,7 +96,10 @@
 					if (!ctl.signal.aborted) valueState = { key, buckets: [] };
 				});
 		}, 200);
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(timer);
+			valueAbort?.abort();
+		};
 	});
 
 	const suggestions = $derived.by<QuerySuggestion[]>(() => {
@@ -185,6 +188,7 @@
 
 	<select
 		class="select select-sm w-auto min-w-0 font-mono text-xs"
+		aria-label="Index"
 		value={store.selectedIndex}
 		onchange={(e) => store.handleIndexChange((e.currentTarget as HTMLSelectElement).value)}
 	>
@@ -249,7 +253,7 @@
 				e.preventDefault();
 			}}
 			onclick={() => {
-				if (!openedTrace()) store.runQuery(queryInput);
+				if (!openedTrace()) commitQuery();
 			}}
 		>
 			<Play class="h-3.5 w-3.5" />
