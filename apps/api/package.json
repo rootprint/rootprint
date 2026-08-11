@@ -27,7 +27,7 @@
 	},
 	"scripts": {
 		"dev": "bun --hot src/app.ts",
-		"build": "bun build src/app.ts --target=bun --outdir=dist",
+		"build": "bun build src/app.ts --target=bun --outdir=dist --production --sourcemap=external",
 		"check": "tsc -p tsconfig.json --noEmit",
 		"lint": "oxlint",
 		"start": "bun run dist/app.js",
