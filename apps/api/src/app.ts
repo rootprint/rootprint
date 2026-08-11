@@ -3,6 +3,7 @@ import type { Schema } from 'hono/types';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { ApplyGlobalResponse } from 'hono/client';
 import { cors } from 'hono/cors';
+import { compress } from 'hono/compress';
 import { serveStatic } from 'hono/bun';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -59,6 +60,7 @@ export const app = new Hono<AppEnv>();
 
 app.use('*', requestContext);
 app.use('*', requestLogging);
+app.use('*', compress());
 const allowedOrigins = new Set([
 	config.origin,
 	...(config.frontendUrl ? [config.frontendUrl] : [])
@@ -209,6 +211,8 @@ app.use('*', async (c, next) => {
 	await next();
 	if (c.req.path.startsWith('/_app/immutable/')) {
 		c.header('Cache-Control', 'public, max-age=31536000, immutable');
+	} else if (/\.(?:woff2?|png|ico|svg|webp)$/.test(c.req.path)) {
+		c.header('Cache-Control', 'public, max-age=604800');
 	} else {
 		c.header('Cache-Control', 'no-cache');
 	}

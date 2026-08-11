@@ -34,7 +34,10 @@
 
 	let createOpen = $state(false);
 
-	const segments = $derived(resolveBreadcrumbs(page.route.id, page.params));
+	const segments = $derived([
+		...resolveBreadcrumbs(page.route.id, page.params).slice(0, -1),
+		{ label: integration.label }
+	]);
 
 	function handleCreated(summary: ApiKeyView, secret: string) {
 		selectedApiKeyId = summary.id;

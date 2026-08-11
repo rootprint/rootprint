@@ -6,13 +6,16 @@ import { readString, writeString } from '$lib/utils/safe-storage';
 const HAS_SEEN_DOCUMENTS_KEY = 'rootprint:has-seen-documents';
 
 export const load = (async ({ parent }) => {
+	const indexesPromise = listIndexes();
+	void indexesPromise.catch(() => {});
+
 	const { session } = await parent();
 	const hasSeenDocuments = readString(HAS_SEEN_DOCUMENTS_KEY) === '1';
 	const documentStatusPromise =
 		session?.user.role === 'admin' && !hasSeenDocuments
 			? getClusterDocumentStatus().catch(() => null)
 			: Promise.resolve(null);
-	const [summaries, documentStatus] = await Promise.all([listIndexes(), documentStatusPromise]);
+	const [summaries, documentStatus] = await Promise.all([indexesPromise, documentStatusPromise]);
 	if (documentStatus?.hasDocuments === true) writeString(HAS_SEEN_DOCUMENTS_KEY, '1');
 
 	return {

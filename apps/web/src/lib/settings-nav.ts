@@ -9,7 +9,6 @@ import {
 	ShieldCheck,
 	UserRound
 } from 'lucide-svelte';
-import { integrationById } from '$lib/send-telemetry/integrations';
 import type { BreadcrumbSegment } from '$lib/types';
 
 export type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
@@ -93,7 +92,7 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	'/settings/send-telemetry/[integration]': (p) => [
 		ROOT,
 		SEND_TELEMETRY,
-		{ label: integrationById.get(p.integration ?? '')?.label ?? 'Integration' }
+		{ label: p.integration ?? 'Integration' }
 	],
 	'/settings/users': () => [ROOT, { label: 'Users' }],
 	'/settings/users/[userId]': () => [ROOT, USERS, { label: 'User' }],
