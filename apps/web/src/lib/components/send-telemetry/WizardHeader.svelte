@@ -42,7 +42,6 @@
 	function handleCreated(summary: ApiKeyView, secret: string) {
 		selectedApiKeyId = summary.id;
 		realApiKeyValue = secret;
-		createOpen = false;
 	}
 </script>
 
@@ -90,5 +89,6 @@
 	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
 	{traceIndexId}
 	invalidateKey={DEP.sendTelemetryApiKeys}
+	revealOnCreate={false}
 	onCreated={handleCreated}
 />

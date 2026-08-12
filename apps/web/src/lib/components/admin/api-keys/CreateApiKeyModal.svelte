@@ -1,12 +1,11 @@
 <script lang="ts">
-	import * as v from 'valibot';
 	import { invalidate } from '$app/navigation';
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
 	import { createApiKey, type ApiKeyView } from '$lib/api/api-keys';
 	import Field from '$lib/components/ui/Field.svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import OneTimeKeyReveal from '$lib/components/ui/OneTimeKeyReveal.svelte';
-	import { createApiKeySchema, type CreateApiKeyInput } from 'api/schemas';
+	import SelectField from '$lib/components/ui/SelectField.svelte';
+	import { createApiKeySchema } from 'api/schemas';
 	import type { IndexSummary } from 'api/types';
 
 	let {
@@ -15,6 +14,7 @@
 		defaultIndexId,
 		traceIndexId,
 		invalidateKey,
+		revealOnCreate = true,
 		onCreated
 	}: {
 		open?: boolean;
@@ -24,6 +24,7 @@
 		/** Null when the span store does not exist in Quickwit. */
 		traceIndexId: string | null;
 		invalidateKey?: string;
+		revealOnCreate?: boolean;
 		onCreated?: (summary: ApiKeyView, secret: string) => void;
 	} = $props();
 
@@ -34,133 +35,62 @@
 		return indexes.length === 1 ? indexes[0].indexId : '';
 	}
 
-	let phase = $state<'form' | 'reveal'>('form');
 	let name = $state('');
 	let indexId = $state(initialIndexId());
-	let submitting = $state(false);
-	let formError = $state<string | null>(null);
-	let fieldErrors = $state<Record<string, string>>({});
 	let revealedKey = $state('');
-
-	function reset() {
-		phase = 'form';
-		name = '';
-		indexId = initialIndexId();
-		submitting = false;
-		formError = null;
-		fieldErrors = {};
-		revealedKey = '';
-	}
-
-	async function onsubmit(e: SubmitEvent) {
-		e.preventDefault();
-		formError = null;
-		fieldErrors = {};
-
-		const parsed = v.safeParse(createApiKeySchema, { name, indexId });
-		if (!parsed.success) {
-			fieldErrors = issuesToFieldErrors(parsed.issues);
-			return;
-		}
-		const input: CreateApiKeyInput = parsed.output;
-
-		submitting = true;
-		try {
-			const result = await createApiKey(input);
-			if (invalidateKey) await invalidate(invalidateKey);
-			onCreated?.(result.summary, result.token);
-			if (!open) return;
-			revealedKey = result.token;
-			phase = 'reveal';
-		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				formError = err.body.error.message;
-				fieldErrors = toFieldErrors(err.body);
-			} else {
-				formError = err instanceof Error ? err.message : 'Failed to create API key';
-			}
-		} finally {
-			submitting = false;
-		}
-	}
 </script>
 
-<Modal
+{#snippet keyReveal()}
+	<OneTimeKeyReveal value={revealedKey} label="Ingest key" />
+{/snippet}
+
+<FormModal
 	bind:open
 	title="Create ingest key"
-	onclose={reset}
-	oncancel={(e) => {
-		if (submitting) e.preventDefault();
+	submitLabel="Create ingest key"
+	schema={createApiKeySchema}
+	values={() => ({ name, indexId })}
+	reveal={revealOnCreate ? keyReveal : undefined}
+	onclose={() => {
+		name = '';
+		indexId = initialIndexId();
+		revealedKey = '';
+	}}
+	submit={async (input) => {
+		const result = await createApiKey(input);
+		revealedKey = result.token;
+		// awaited so onCreated observers see the refreshed list — the send-telemetry wizard
+		// derives its index from it; caught so a failed refresh cannot strand the one-time token
+		if (invalidateKey) await invalidate(invalidateKey).catch(() => {});
+		onCreated?.(result.summary, result.token);
 	}}
 >
-	{#if phase === 'form'}
-		<form id="create-api-key-form" class="space-y-3" {onsubmit}>
-			{#if formError}
-				<div role="alert" class="alert alert-error text-sm">{formError}</div>
-			{/if}
+	{#snippet fields(errors)}
+		<Field
+			label="Name"
+			placeholder="production-shipper"
+			autocomplete="off"
+			bind:value={name}
+			error={errors.name}
+			required
+		/>
 
-			<Field
-				label="Name"
-				placeholder="production-shipper"
-				autocomplete="off"
-				bind:value={name}
-				error={fieldErrors.name}
-				required
-			/>
+		<SelectField
+			label="Index"
+			bind:value={indexId}
+			options={indexes.map((i) => ({ value: i.indexId, label: i.indexId }))}
+			placeholder="Select an index…"
+			error={errors.indexId}
+		/>
 
-			<Field label="Index" error={fieldErrors.indexId}>
-				{#snippet control({ id, invalid, describedBy })}
-					<select
-						{id}
-						bind:value={indexId}
-						aria-invalid={invalid ? 'true' : undefined}
-						aria-describedby={describedBy}
-						class="select w-full"
-						class:select-error={invalid}
-						required
-					>
-						<option value="" disabled>Select an index…</option>
-						{#each indexes as option (option.indexId)}
-							<option value={option.indexId}>{option.indexId}</option>
-						{/each}
-					</select>
-				{/snippet}
-			</Field>
-
-			{#if traceIndexId}
-				<p class="text-base-content/60 text-xs">
-					Spans from this key go to <span class="font-mono">{traceIndexId}</span>.
-				</p>
-			{:else}
-				<p class="text-warning text-xs">
-					No span store exists in Quickwit yet, so spans sent with this key have nowhere to land.
-				</p>
-			{/if}
-		</form>
-	{:else}
-		<OneTimeKeyReveal value={revealedKey} label="Ingest key" />
-	{/if}
-
-	{#snippet actions()}
-		{#if phase === 'form'}
-			<button
-				type="button"
-				class="btn btn-ghost"
-				disabled={submitting}
-				onclick={() => (open = false)}
-			>
-				Cancel
-			</button>
-			<button
-				form="create-api-key-form"
-				type="submit"
-				class="btn btn-primary"
-				disabled={submitting}
-			>
-				{submitting ? 'Creating…' : 'Create ingest key'}
-			</button>
+		{#if traceIndexId}
+			<p class="text-base-content/60 text-xs">
+				Spans from this key go to <span class="font-mono">{traceIndexId}</span>.
+			</p>
 		{:else}
-			<button type="button" class="btn btn-primary" onclick={() => (open = false)}>Done</button>
+			<p class="text-warning text-xs">
+				No span store exists in Quickwit yet, so spans sent with this key have nowhere to land.
+			</p>
 		{/if}
 	{/snippet}
-</Modal>
+</FormModal>

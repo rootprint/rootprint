@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
-	import { issuesToFieldErrors } from '$lib/api/errors';
 	import Field from '$lib/components/ui/Field.svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
+	import FormModal from '$lib/components/ui/FormModal.svelte';
 	import { authClient } from '$lib/auth-client';
 
 	const changePasswordSchema = v.pipe(
@@ -31,73 +30,37 @@
 	let currentPassword = $state('');
 	let newPassword = $state('');
 	let confirmPassword = $state('');
-	let submitting = $state(false);
-	let formError = $state<string | null>(null);
-	let fieldErrors = $state<Record<string, string>>({});
+</script>
 
-	function reset() {
+<FormModal
+	bind:open
+	title="Change password"
+	submitLabel="Change password"
+	busyLabel="Saving…"
+	schema={changePasswordSchema}
+	values={() => ({ currentPassword, newPassword, confirmPassword })}
+	onclose={() => {
 		currentPassword = '';
 		newPassword = '';
 		confirmPassword = '';
-		submitting = false;
-		formError = null;
-		fieldErrors = {};
-	}
-
-	async function onsubmit(e: SubmitEvent) {
-		e.preventDefault();
-		formError = null;
-		fieldErrors = {};
-
-		const parsed = v.safeParse(changePasswordSchema, {
-			currentPassword,
-			newPassword,
-			confirmPassword
+	}}
+	submit={async (input) => {
+		const result = await authClient.changePassword({
+			currentPassword: input.currentPassword,
+			newPassword: input.newPassword,
+			revokeOtherSessions: true
 		});
-		if (!parsed.success) {
-			fieldErrors = issuesToFieldErrors(parsed.issues);
-			return;
-		}
-
-		submitting = true;
-		try {
-			const result = await authClient.changePassword({
-				currentPassword: parsed.output.currentPassword,
-				newPassword: parsed.output.newPassword,
-				revokeOtherSessions: true
-			});
-			if (result?.error) {
-				formError = result.error.message ?? 'Failed to change password.';
-				return;
-			}
-			toast.success('Password changed');
-			open = false;
-		} catch (err) {
-			formError = err instanceof Error ? err.message : 'Failed to change password.';
-		} finally {
-			submitting = false;
-		}
-	}
-</script>
-
-<Modal
-	bind:open
-	title="Change password"
-	onclose={reset}
-	oncancel={(e) => {
-		if (submitting) e.preventDefault();
+		if (result?.error) throw new Error(result.error.message ?? 'Failed to change password.');
+		toast.success('Password changed');
 	}}
 >
-	<form id="change-password-form" class="flex flex-col gap-3" {onsubmit}>
-		{#if formError}
-			<div role="alert" class="alert alert-error text-sm">{formError}</div>
-		{/if}
+	{#snippet fields(errors)}
 		<Field
 			label="Current password"
 			type="password"
 			autocomplete="current-password"
 			bind:value={currentPassword}
-			error={fieldErrors.currentPassword}
+			error={errors.currentPassword}
 			required
 		/>
 		<Field
@@ -105,7 +68,7 @@
 			type="password"
 			autocomplete="new-password"
 			bind:value={newPassword}
-			error={fieldErrors.newPassword}
+			error={errors.newPassword}
 			required
 		/>
 		<Field
@@ -113,22 +76,8 @@
 			type="password"
 			autocomplete="new-password"
 			bind:value={confirmPassword}
-			error={fieldErrors.confirmPassword}
+			error={errors.confirmPassword}
 			required
 		/>
-	</form>
-
-	{#snippet actions()}
-		<button
-			type="button"
-			class="btn btn-ghost"
-			disabled={submitting}
-			onclick={() => (open = false)}
-		>
-			Cancel
-		</button>
-		<button type="submit" form="change-password-form" class="btn btn-primary" disabled={submitting}>
-			{submitting ? 'Saving…' : 'Change password'}
-		</button>
 	{/snippet}
-</Modal>
+</FormModal>
