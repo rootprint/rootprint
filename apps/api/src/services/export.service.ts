@@ -114,11 +114,26 @@ function buildFilename(indexId: string, format: 'json' | 'csv' | 'text'): string
 	return `rootprint-${safe}-${stamp}.${pickExtension(format)}`;
 }
 
+function formatBatch(
+	hits: Record<string, unknown>[],
+	cfg: IndexConfig,
+	format: 'json' | 'csv' | 'text'
+): Uint8Array {
+	switch (format) {
+		case 'json':
+			return formatNdjsonBatch(hits);
+		case 'csv':
+			return formatCsvBatch(hits);
+		case 'text':
+			return formatTextBatch(hits, cfg);
+	}
+}
+
 export async function buildExportBody(
 	qw: QuickwitClient,
 	indexConfig: IndexConfig,
 	q: ExportLogsQueryInput
-): Promise<Uint8Array> {
+): Promise<{ body: Uint8Array; total: number; filename: string; contentType: string }> {
 	const idx = qw.index(indexConfig.indexId);
 
 	const hits = await idx.searchHits(
@@ -129,14 +144,12 @@ export async function buildExportBody(
 			.timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs))
 	);
 
-	switch (q.format) {
-		case 'json':
-			return formatNdjsonBatch(hits);
-		case 'csv':
-			return formatCsvBatch(hits);
-		case 'text':
-			return formatTextBatch(hits, indexConfig);
-	}
+	return {
+		body: formatBatch(hits, indexConfig, q.format),
+		total: hits.length,
+		filename: buildFilename(indexConfig.indexId, q.format),
+		contentType: pickContentType(q.format)
+	};
 }
 
 export async function preflightExport(
@@ -148,13 +161,9 @@ export async function preflightExport(
 	const numHits = await idx.count(
 		idx.query(q.q || '*').timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs))
 	);
-	const total = Math.min(numHits, EXPORT_MAX_ROWS);
-	const capped = numHits > EXPORT_MAX_ROWS;
 	return {
-		total,
-		capped,
-		numHits,
-		filename: buildFilename(indexConfig.indexId, q.format),
-		contentType: pickContentType(q.format)
+		total: Math.min(numHits, EXPORT_MAX_ROWS),
+		capped: numHits > EXPORT_MAX_ROWS,
+		numHits
 	};
 }
