@@ -46,9 +46,6 @@ function resources(metrics: PromMetric[]): ResourceSnapshot {
 	);
 	return {
 		memoryResidentBytes,
-		memoryRssBytes: memoryResidentBytes,
-		fdsOpen: null,
-		fdsMax: null,
 		walDiskBytes: gaugeValue(findMetric(metrics, 'quickwit_ingest_wal_disk_used_bytes'))
 	};
 }
@@ -76,7 +73,6 @@ export async function getQuickwitMetrics(): Promise<QuickwitSnapshot> {
 	return {
 		fetchedAt: new Date(now).toISOString(),
 		build: buildInfo(metrics),
-		uptimeSeconds: null,
 		resources: resources(metrics),
 		saturation: saturation(metrics)
 	};
