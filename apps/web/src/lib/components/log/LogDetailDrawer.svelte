@@ -25,7 +25,7 @@
 
 	const MAX_SHARE_PAYLOAD_BYTES = 64 * 1024;
 
-	const DRAWER_WIDTH_KEY = 'rootprint.drawerWidth';
+	const DRAWER_WIDTH_KEY = 'rootprint:drawer-width';
 	const MIN_DRAWER_WIDTH = 400;
 	const MAX_DRAWER_WIDTH_FRACTION = 0.9;
 	const DEFAULT_DRAWER_FRACTION = 0.5;

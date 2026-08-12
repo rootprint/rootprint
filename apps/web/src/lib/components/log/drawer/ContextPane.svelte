@@ -35,7 +35,7 @@
 	let anchorVisible = $state(true);
 	let anchorAbove = $state(false);
 
-	const storageKey = (indexId: string) => `rootprint.contextFields.${indexId}`;
+	const storageKey = (indexId: string) => `rootprint:context-fields:${indexId}`;
 
 	function readStoredFields(indexId: string | null): string[] {
 		if (!indexId) return [];
