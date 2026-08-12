@@ -76,26 +76,17 @@
 		return isTraceId(v) ? v : null;
 	});
 	let traceResource = $state.raw<TraceResource | null>(null);
-	// Deliberately not reactive: the loader effect below assigns traceResource, and reading it there
-	// would retrigger that effect.
-	let requestedKey: string | null = null;
-
-	$effect(() => {
-		void traceId;
-		return () => {
-			traceResource?.dispose();
-			traceResource = null;
-			requestedKey = null;
-		};
-	});
 
 	$effect(() => {
 		const id = traceId;
-		if (id === null || requestedKey === id) return;
-		requestedKey = id;
-		const next = new TraceResource(id);
-		traceResource = next;
-		void next.load();
+		if (id === null) return;
+		const r = new TraceResource(id);
+		traceResource = r;
+		void r.load();
+		return () => {
+			r.dispose();
+			traceResource = null;
+		};
 	});
 
 	let searchOpen = $state(false);
