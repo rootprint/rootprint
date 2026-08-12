@@ -138,6 +138,8 @@ function signalHandler(signal: Signal): Handler<KeyedEnv> {
 			'content-type': CONTENT_TYPE_PROTOBUF,
 			[indexHeader]: destinationIndex
 		};
+		const contentLength = c.req.header('content-length');
+		if (contentLength) headers['content-length'] = contentLength;
 		const ce = c.req.header('content-encoding');
 		if (ce) headers['content-encoding'] = ce;
 
