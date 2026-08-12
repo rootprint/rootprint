@@ -1,6 +1,6 @@
 import { format, fromUnixTime, getUnixTime, isSameDay, isSameYear } from 'date-fns';
 
-import type { SearchInput, TimeRange } from '$lib/types';
+import type { TimeRange } from '$lib/types';
 
 export const PRESET_OPTIONS = [
 	'5m',
@@ -60,28 +60,6 @@ export function windowToSpanMs(window: Window): number {
 	return presetDurationSec(window) * 1000;
 }
 
-export function buildTimeParams(
-	range: TimeRange
-): Pick<SearchInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'> {
-	return range.type === 'relative'
-		? { timeRange: range.preset }
-		: { startTimestamp: range.start, endTimestamp: range.end };
-}
-
-export function resolveTimeRange(
-	input: Pick<SearchInput, 'timeRange' | 'startTimestamp' | 'endTimestamp'>
-): { startTs?: number; endTs?: number } {
-	if (input.timeRange !== undefined) {
-		if (!isPreset(input.timeRange)) return {};
-		return resolveWindow({ type: 'relative', preset: input.timeRange });
-	}
-	if (input.startTimestamp !== undefined && input.endTimestamp !== undefined) {
-		return { startTs: input.startTimestamp, endTs: input.endTimestamp };
-	}
-	return {};
-}
-
-/** Unlike `resolveTimeRange`, always resolves to a concrete window — both fields are non-optional. */
 export function resolveWindow(range: TimeRange): { startTs: number; endTs: number } {
 	if (range.type === 'absolute') return { startTs: range.start, endTs: range.end };
 	const endTs = getUnixTime(new Date());

@@ -3,7 +3,7 @@ import { composeQuery } from 'api/query';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
-import { buildTimeParams } from '$lib/utils/time-range';
+import { resolveWindow } from '$lib/utils/time-range';
 import {
 	SPAN_ID_FIELD,
 	traceLogsFilters,
@@ -34,7 +34,7 @@ export async function fetchSpanLogCounts(
 		limit: MAX_TRACE_LOGS,
 		offset: 0,
 		sortDirection: 'desc',
-		...buildTimeParams(traceLogsWindow(input))
+		...resolveWindow(traceLogsWindow(input))
 	});
 
 	if (rawHits.length === MAX_TRACE_LOGS) {

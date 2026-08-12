@@ -22,8 +22,8 @@ export async function searchLogs(
 				offset: String(input.offset),
 				sortOrder: input.sortDirection,
 				...(countAll && { countAll: 'true' }),
-				...(input.startTimestamp !== undefined && { startTs: String(input.startTimestamp) }),
-				...(input.endTimestamp !== undefined && { endTs: String(input.endTimestamp) })
+				...(input.startTs !== undefined && { startTs: String(input.startTs) }),
+				...(input.endTs !== undefined && { endTs: String(input.endTs) })
 			}
 		},
 		{ init: { signal } }
