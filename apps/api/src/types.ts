@@ -240,8 +240,6 @@ export type ExportPreflightResult = {
 	total: number;
 	capped: boolean;
 	numHits: number;
-	filename: string;
-	contentType: string;
 };
 
 // Index stats (index-stats.service.ts)

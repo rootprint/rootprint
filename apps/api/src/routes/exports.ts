@@ -56,18 +56,16 @@ export const exportsRouter = new Hono<IndexConfigEnv>()
 			const indexConfig = c.get('indexConfig');
 
 			if (q.dryRun) {
-				const result = await preflightExport(quickwit, indexConfig, q);
-				return c.json({
-					total: result.total,
-					capped: result.capped,
-					numHits: result.numHits
-				});
+				return c.json(await preflightExport(quickwit, indexConfig, q));
 			}
 
-			const { total, filename, contentType } = await preflightExport(quickwit, indexConfig, q);
+			const { body, total, filename, contentType } = await buildExportBody(
+				quickwit,
+				indexConfig,
+				q
+			);
 			if (total === 0) throw badRequest('No logs match in this time range');
 
-			const body = await buildExportBody(quickwit, indexConfig, q);
 			const gzipped = new Response(body as BodyInit).body!.pipeThrough(
 				new CompressionStream('gzip') as unknown as TransformStream<Uint8Array, Uint8Array>
 			);
