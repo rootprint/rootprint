@@ -5,10 +5,10 @@ import type { ApplyGlobalResponse } from 'hono/client';
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import { serveStatic } from 'hono/bun';
+import { HTTPException } from 'hono/http-exception';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QuickwitError } from 'quickwit-js';
-import { ValiError } from 'valibot';
 
 import { config } from './config.js';
 import type { AppEnv, AuthedEnv } from './env.js';
@@ -33,7 +33,7 @@ import { apiKeysRouter } from './routes/api-keys.js';
 import { tracesRouter } from './routes/traces.js';
 import { usersRouter } from './routes/users.js';
 import { serviceAccountsRouter } from './routes/service-accounts.js';
-import type { ApiErrorBody, ApiErrorDetail } from './types.js';
+import type { ApiErrorBody } from './types.js';
 import { HttpError } from './utils/http-error.js';
 import { quickwitErrorToHttp } from './utils/quickwit-error.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
@@ -78,6 +78,9 @@ app.onError((rawErr, c) => {
 	let err: Error = rawErr;
 	if (rawErr instanceof QuickwitError) {
 		err = quickwitErrorToHttp(rawErr);
+	} else if (rawErr instanceof HTTPException) {
+		// hono's own validator throws this for a malformed JSON body
+		err = new HttpError(rawErr.status, 'INVALID_JSON', rawErr.message);
 	}
 
 	const logMeta =
@@ -127,35 +130,6 @@ app.onError((rawErr, c) => {
 				...(!maskMessage && err.details ? { details: err.details } : {})
 			},
 			err.statusCode as ContentfulStatusCode
-		);
-	}
-
-	if (err instanceof ValiError) {
-		const details: ApiErrorDetail[] = err.issues.map((issue) => ({
-			path:
-				Array.isArray(issue.path) && issue.path.length > 0
-					? issue.path.map((p: { key: unknown }) => String(p.key)).join('.')
-					: '(root)',
-			message: issue.message
-		}));
-		return errorJson(
-			c,
-			{
-				code: 'VALIDATION_FAILED',
-				message: 'Request validation failed',
-				statusCode: 400,
-				requestId,
-				details
-			},
-			400
-		);
-	}
-
-	if (err instanceof SyntaxError) {
-		return errorJson(
-			c,
-			{ code: 'INVALID_JSON', message: 'Invalid JSON body', statusCode: 400, requestId },
-			400
 		);
 	}
 

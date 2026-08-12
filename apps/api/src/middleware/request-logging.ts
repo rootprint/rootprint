@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { QuickwitError } from 'quickwit-js';
-import { ValiError } from 'valibot';
 
 import type { AppEnv } from '../env.js';
 import { logger } from '../lib/logger.js';
@@ -19,8 +19,8 @@ function statusFromError(err: unknown, path: string): number {
 			? quickwitErrorToHttp(err).statusCode
 			: err instanceof HttpError
 				? err.statusCode
-				: err instanceof ValiError || err instanceof SyntaxError
-					? 400
+				: err instanceof HTTPException
+					? err.status
 					: 500;
 	if (path.startsWith('/v1/')) {
 		const isHttp = err instanceof HttpError || err instanceof QuickwitError;
