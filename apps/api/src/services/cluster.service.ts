@@ -35,21 +35,21 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 			sizeBytes: snap ? snap.sizeBytes : null,
 			uncompressedBytes: snap ? snap.uncompressedBytes : null,
 			numSplits: snap ? snap.numSplits : null,
-			capturedAt: snap ? snap.capturedAt.toISOString() : null
+			capturedAt: snap ? snap.capturedAt : null
 		};
 	});
 
 	let totalDocs = 0;
 	let totalSizeBytes = 0;
 	let totalSplits = 0;
-	let latest: Date | null = null;
+	// Fixed-width UTC ISO strings, so lexicographic max is chronological.
+	let latest: string | null = null;
 	for (const row of perIndex) {
 		if (row.numDocs !== null) totalDocs += row.numDocs;
 		if (row.sizeBytes !== null) totalSizeBytes += row.sizeBytes;
 		if (row.numSplits !== null) totalSplits += row.numSplits;
-		if (row.capturedAt !== null) {
-			const t = new Date(row.capturedAt);
-			if (latest === null || t > latest) latest = t;
+		if (row.capturedAt !== null && (latest === null || row.capturedAt > latest)) {
+			latest = row.capturedAt;
 		}
 	}
 
@@ -67,7 +67,7 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 			totalDocs,
 			totalSizeBytes,
 			totalSplits,
-			latestCapturedAt: latest ? latest.toISOString() : null
+			latestCapturedAt: latest
 		},
 		perIndex
 	};

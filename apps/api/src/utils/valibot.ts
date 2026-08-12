@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 
 /** A string query/path param coerced to a finite number. */
-export const toNum = v.pipe(v.string(), v.decimal(), v.transform(Number), v.number());
+export const toNum = v.pipe(v.string(), v.decimal(), v.transform(Number), v.finite());
 
 export const intParam = ({
 	min,

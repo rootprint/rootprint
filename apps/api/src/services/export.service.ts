@@ -17,9 +17,6 @@ function formatNdjsonBatch(rows: Record<string, unknown>[]): Uint8Array {
 	return TEXT_ENCODER.encode(out);
 }
 
-const TEXT_FIELDS_TO_EXCLUDE = (cfg: IndexConfig): Set<string> =>
-	new Set([cfg.timestampField, cfg.levelField, cfg.messageField]);
-
 function formatScalar(v: unknown): string {
 	if (v === null || v === undefined) return '';
 	if (typeof v === 'string') return v;
@@ -32,7 +29,7 @@ function formatScalar(v: unknown): string {
 }
 
 function formatTextBatch(rows: Record<string, unknown>[], cfg: IndexConfig): Uint8Array {
-	const exclude = TEXT_FIELDS_TO_EXCLUDE(cfg);
+	const exclude = new Set([cfg.timestampField, cfg.levelField, cfg.messageField]);
 	let out = '';
 	for (const row of rows) {
 		const ts = formatScalar(row[cfg.timestampField]);

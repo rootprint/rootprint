@@ -242,7 +242,7 @@ export type ExportPreflightResult = {
 // Index stats (index-stats.service.ts)
 export type LatestIndexSnapshot = {
 	indexId: string;
-	capturedAt: Date;
+	capturedAt: string;
 	numDocs: number;
 	sizeBytes: number;
 	uncompressedBytes: number;
