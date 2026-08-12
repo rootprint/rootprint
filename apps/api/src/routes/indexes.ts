@@ -12,8 +12,7 @@ import { requireUser } from '../middleware/require-user.js';
 import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { rejectTraceIndex } from '../middleware/reject-trace-index.js';
 import { readLimiter } from '../middleware/rate-limit.js';
-import { withIndexConfig } from '../middleware/with-index-config.js';
-import { withIndexMeta } from '../middleware/with-index-meta.js';
+import { withIndexConfig, withIndexMeta } from '../middleware/with-index.js';
 import {
 	createIndexSchema,
 	FieldParams,
