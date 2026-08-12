@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { quickwit } from '../lib/quickwit.js';
 import { requireUser } from '../middleware/require-user.js';
-import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index-config.js';
+import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index.js';
 import { ExportLogsQuery } from '../schemas/export.js';
 import { buildExportBody, preflightExport } from '../services/export.service.js';
 import { badRequest } from '../utils/http-error.js';
