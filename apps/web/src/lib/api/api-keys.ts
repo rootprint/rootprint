@@ -16,13 +16,13 @@ export type ServiceAccountKeyView = InferResponseType<
 export async function listApiKeys(): Promise<ApiKeyView[]> {
 	const res = await apiKeys.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load API keys');
-	return res.json() as Promise<ApiKeyView[]>;
+	return res.json();
 }
 
 export async function getApiKey(id: number): Promise<{ token: string }> {
 	const res = await apiKeys[':apiKeyId'].$get({ param: { apiKeyId: String(id) } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load API key');
-	return res.json() as Promise<{ token: string }>;
+	return res.json();
 }
 
 export async function createApiKey(
@@ -30,7 +30,7 @@ export async function createApiKey(
 ): Promise<{ summary: ApiKeyView; token: string }> {
 	const res = await apiKeys.$post({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to create API key');
-	return res.json() as Promise<{ summary: ApiKeyView; token: string }>;
+	return res.json();
 }
 
 export async function deleteApiKey(id: number): Promise<void> {
@@ -41,7 +41,7 @@ export async function deleteApiKey(id: number): Promise<void> {
 export async function listServiceAccountKeys(): Promise<ServiceAccountKeyView[]> {
 	const res = await serviceAccountApiKeys.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load service account keys');
-	return res.json() as Promise<ServiceAccountKeyView[]>;
+	return res.json();
 }
 
 export async function createServiceAccountKey(input: {
@@ -50,7 +50,7 @@ export async function createServiceAccountKey(input: {
 }): Promise<{ id: string; token: string }> {
 	const res = await serviceAccountApiKeys.$post({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to create service account key');
-	return res.json() as Promise<{ id: string; token: string }>;
+	return res.json();
 }
 
 export async function deleteServiceAccountKey(id: string): Promise<void> {

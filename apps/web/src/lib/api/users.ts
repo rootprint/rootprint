@@ -9,19 +9,19 @@ export type UserView = InferResponseType<typeof client.api.users.$get, 200>[numb
 export async function createUser(input: CreateUserInput): Promise<{ inviteUrl: string }> {
 	const res = await client.api.users.$post({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to create user');
-	return res.json() as Promise<{ inviteUrl: string }>;
+	return res.json();
 }
 
 export async function listUsers(): Promise<UserView[]> {
 	const res = await client.api.users.$get({});
 	if (!res.ok) throw await readApiError(res, 'Failed to load users');
-	return res.json() as Promise<UserView[]>;
+	return res.json();
 }
 
 export async function getUser(userId: string): Promise<UserView> {
 	const res = await client.api.users[':userId'].$get({ param: { userId } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user');
-	return res.json() as Promise<UserView>;
+	return res.json();
 }
 
 export async function setUserRole(userId: string, role: UserRole): Promise<void> {
@@ -42,5 +42,5 @@ export async function resetUserPassword(userId: string): Promise<{ inviteUrl: st
 		param: { userId }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to reset password');
-	return res.json() as Promise<{ inviteUrl: string }>;
+	return res.json();
 }

@@ -12,19 +12,19 @@ export type AdminMetrics = InferResponseType<typeof client.api.admin.metrics.$ge
 export async function getClusterOverview(): Promise<ClusterOverview> {
 	const res = await client.api.admin.cluster.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load cluster overview');
-	return res.json() as Promise<ClusterOverview>;
+	return res.json();
 }
 
 export async function getClusterDocumentStatus(): Promise<ClusterDocumentStatus> {
 	const res = await client.api.admin.cluster['document-status'].$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to check cluster document status');
-	return res.json() as Promise<ClusterDocumentStatus>;
+	return res.json();
 }
 
 export async function getAdminMetrics(): Promise<AdminMetrics> {
 	const res = await client.api.admin.metrics.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load metrics');
-	return res.json() as Promise<AdminMetrics>;
+	return res.json();
 }
 
 /** Returns plain-text Prometheus exposition format from `/api/admin/metrics/raw`. */

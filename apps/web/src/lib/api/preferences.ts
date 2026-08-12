@@ -7,7 +7,7 @@ export async function getPreferences(indexId: string): Promise<Preferences> {
 		param: { indexId }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load display preferences');
-	return res.json() as Promise<Preferences>;
+	return res.json();
 }
 
 export async function setPreferences(indexId: string, prefs: Preferences): Promise<Preferences> {
@@ -16,5 +16,5 @@ export async function setPreferences(indexId: string, prefs: Preferences): Promi
 		json: prefs
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to save display preferences');
-	return res.json() as Promise<Preferences>;
+	return res.json();
 }

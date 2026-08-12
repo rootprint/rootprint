@@ -21,43 +21,43 @@ export type RecentResult = InferResponseType<(typeof users)[':userId']['recent']
 export async function getSummary(window: Window): Promise<Summary> {
 	const res = await activity.summary.$get({ query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load summary');
-	return res.json() as Promise<Summary>;
+	return res.json();
 }
 
 export async function getLatency(window: Window): Promise<LatencyBuckets> {
 	const res = await activity.latency.$get({ query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load latency');
-	return res.json() as Promise<LatencyBuckets>;
+	return res.json();
 }
 
 export async function getTopActors(window: Window, limit = 10): Promise<TopActors> {
 	const res = await activity['top-actors'].$get({ query: { window, limit: String(limit) } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load top actors');
-	return res.json() as Promise<TopActors>;
+	return res.json();
 }
 
 export async function getUserSummary(userId: string, window: Window): Promise<ActorSummary> {
 	const res = await users[':userId'].summary.$get({ param: { userId }, query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user summary');
-	return res.json() as Promise<ActorSummary>;
+	return res.json();
 }
 
 export async function getUserVolume(userId: string, window: Window): Promise<VolumeBuckets> {
 	const res = await users[':userId'].volume.$get({ param: { userId }, query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user volume');
-	return res.json() as Promise<VolumeBuckets>;
+	return res.json();
 }
 
 export async function getUserLatency(userId: string, window: Window): Promise<LatencyBuckets> {
 	const res = await users[':userId'].latency.$get({ param: { userId }, query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user latency');
-	return res.json() as Promise<LatencyBuckets>;
+	return res.json();
 }
 
 export async function getUserIndexes(userId: string, window: Window): Promise<ActorIndexes> {
 	const res = await users[':userId'].indexes.$get({ param: { userId }, query: { window } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user indexes');
-	return res.json() as Promise<ActorIndexes>;
+	return res.json();
 }
 
 export async function getUserRecent(
@@ -70,7 +70,7 @@ export async function getUserRecent(
 	if (opts.limit !== undefined) query.limit = String(opts.limit);
 	const res = await users[':userId'].recent.$get({ param: { userId }, query });
 	if (!res.ok) throw await readApiError(res, 'Failed to load user activity');
-	return res.json() as Promise<RecentResult>;
+	return res.json();
 }
 
 export async function getApiKeySummary(id: string, window: Window): Promise<ActorSummary> {
@@ -79,7 +79,7 @@ export async function getApiKeySummary(id: string, window: Window): Promise<Acto
 		query: { window }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load API key summary');
-	return res.json() as Promise<ActorSummary>;
+	return res.json();
 }
 
 export async function getApiKeyVolume(id: string, window: Window): Promise<VolumeBuckets> {
@@ -88,7 +88,7 @@ export async function getApiKeyVolume(id: string, window: Window): Promise<Volum
 		query: { window }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load API key volume');
-	return res.json() as Promise<VolumeBuckets>;
+	return res.json();
 }
 
 export async function getApiKeyLatency(id: string, window: Window): Promise<LatencyBuckets> {
@@ -97,7 +97,7 @@ export async function getApiKeyLatency(id: string, window: Window): Promise<Late
 		query: { window }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load API key latency');
-	return res.json() as Promise<LatencyBuckets>;
+	return res.json();
 }
 
 export async function getApiKeyRecent(
@@ -113,5 +113,5 @@ export async function getApiKeyRecent(
 		query
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load API key activity');
-	return res.json() as Promise<RecentResult>;
+	return res.json();
 }

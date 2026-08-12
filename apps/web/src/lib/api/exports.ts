@@ -35,6 +35,7 @@ export async function preflightExport(
 	);
 
 	if (!res.ok) throw await readApiError(res, 'Export preflight failed');
+	// The route also streams a raw Response for real exports, so Hono types json() as unknown.
 	return (await res.json()) as ExportPreflightResult;
 }
 

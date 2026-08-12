@@ -20,13 +20,10 @@ export async function searchLogs(input: SearchInput, signal?: AbortSignal): Prom
 
 	if (!res.ok) throw await readApiError(res, 'Search failed');
 
-	const json = (await res.json()) as {
-		hits: Record<string, unknown>[];
-		elapsedTimeMicros: number;
-	};
+	const json = await res.json();
 
 	return {
-		rawHits: json.hits ?? [],
-		elapsedTimeMicros: json.elapsedTimeMicros ?? 0
+		rawHits: json.hits,
+		elapsedTimeMicros: json.elapsedTimeMicros
 	};
 }

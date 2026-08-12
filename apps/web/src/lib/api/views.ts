@@ -26,7 +26,7 @@ export async function listViews(indexId: string): Promise<SavedView[]> {
 		param: { indexId }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load views');
-	return (await res.json()) as unknown as SavedView[];
+	return res.json();
 }
 
 export async function createView(indexId: string, input: ViewCreateInput): Promise<SavedView> {
@@ -35,7 +35,7 @@ export async function createView(indexId: string, input: ViewCreateInput): Promi
 		json: input
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to save view');
-	return (await res.json()) as unknown as SavedView;
+	return res.json();
 }
 
 export async function updateView(
@@ -48,7 +48,7 @@ export async function updateView(
 		json: patch
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to update view');
-	return (await res.json()) as unknown as SavedView;
+	return res.json();
 }
 
 export async function deleteView(indexId: string, id: number): Promise<void> {
