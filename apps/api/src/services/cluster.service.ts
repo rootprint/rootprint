@@ -12,8 +12,10 @@ export async function getClusterDocumentStatus(
 	qw: QuickwitClient
 ): Promise<{ hasDocuments: boolean }> {
 	const indexes = (await listQuickwitIndexes(qw)).filter((i) => i.indexId !== config.traceIndexId);
-	const stats = await Promise.all(indexes.map((i) => qw.describeIndex(i.indexId)));
-	return { hasDocuments: stats.some((s) => s.num_published_docs > 0) };
+	const stats = await Promise.allSettled(indexes.map((i) => qw.describeIndex(i.indexId)));
+	return {
+		hasDocuments: stats.some((s) => s.status === 'fulfilled' && s.value.num_published_docs > 0)
+	};
 }
 
 export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<ClusterOverview> {

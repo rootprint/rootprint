@@ -75,8 +75,11 @@ app.onError((rawErr, c) => {
 	if (rawErr instanceof QuickwitError) {
 		err = quickwitErrorToHttp(rawErr);
 	} else if (rawErr instanceof HTTPException) {
-		// hono's own validator throws this for a malformed JSON body
-		err = new HttpError(rawErr.status, 'INVALID_JSON', rawErr.message);
+		const message = rawErr.message || 'Request failed';
+		err =
+			rawErr.status === 400
+				? new HttpError(400, 'INVALID_JSON', message)
+				: new HttpError(rawErr.status, 'HTTP_ERROR', message);
 	}
 
 	const logMeta =
