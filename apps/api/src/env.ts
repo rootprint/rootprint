@@ -1,17 +1,18 @@
-import type { Session } from './lib/auth.js';
 import type { VerifiedApiKey } from './types.js';
+
+export type RequestSession = { user: { id: string; role?: string | null } };
 
 export type AppEnv = {
 	Variables: {
 		requestId: string;
-		session?: Session;
+		session?: RequestSession;
 		apiKey?: VerifiedApiKey;
 		apiKeyActor?: { keyId: string };
 	};
 };
 
 export type AuthedEnv = {
-	Variables: AppEnv['Variables'] & { session: NonNullable<Session> };
+	Variables: AppEnv['Variables'] & { session: RequestSession };
 };
 
 export type KeyedEnv = {

@@ -3,7 +3,6 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { admin, openAPI } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
-import type { UserWithRole } from 'better-auth/plugins/admin';
 import { and, eq } from 'drizzle-orm';
 
 import { config } from '../config.js';
@@ -160,14 +159,6 @@ export async function reloadAuth(): Promise<void> {
 }
 
 export type AuthInstance = AuthInstanceInternal;
-type BaseSession = NonNullable<Awaited<ReturnType<AuthInstance['api']['getSession']>>>;
-export type Session =
-	| (Omit<BaseSession, 'user'> & {
-			user: BaseSession['user'] & Partial<Pick<UserWithRole, 'role' | 'banned'>>;
-	  })
-	| null;
-
-export const isAdmin = (session: Session | undefined): boolean => session?.user.role === 'admin';
 
 export async function authOpenAPISchema() {
 	const instance = betterAuth({
