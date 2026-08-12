@@ -113,6 +113,13 @@
 	}
 }
 
+/* Unlayered on purpose: a `flex`/`grid` utility on a popover root outranks the UA
+   `[popover]:not(:popover-open) { display: none }` rule, leaving the closed panel
+   laid out and invisible — but still swallowing clicks on whatever it covers. */
+[popover]:not(:popover-open) {
+	display: none;
+}
+
 @layer components {
 	.eyebrow {
 		font-family: var(--font-sans);
