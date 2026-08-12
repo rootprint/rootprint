@@ -10,13 +10,13 @@ export type ServiceAccountView = InferResponseType<typeof serviceAccounts.$get, 
 export async function listServiceAccounts(): Promise<ServiceAccountView[]> {
 	const res = await serviceAccounts.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load service accounts');
-	return res.json() as Promise<ServiceAccountView[]>;
+	return res.json();
 }
 
 export async function createServiceAccount(name: string): Promise<{ id: string }> {
 	const res = await serviceAccounts.$post({ json: { name } });
 	if (!res.ok) throw await readApiError(res, 'Failed to create service account');
-	return res.json() as Promise<{ id: string }>;
+	return res.json();
 }
 
 export async function deleteServiceAccount(userId: string): Promise<void> {

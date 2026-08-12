@@ -18,9 +18,7 @@
 		onOpenAsSearch: () => void;
 	} = $props();
 
-	const isAdmin = $derived(
-		(page.data.session?.user as { role?: string } | undefined)?.role === 'admin'
-	);
+	const isAdmin = $derived(page.data.session?.user?.role === 'admin');
 
 	function toggle(field: string): void {
 		onChange(selected.includes(field) ? selected.filter((f) => f !== field) : [...selected, field]);

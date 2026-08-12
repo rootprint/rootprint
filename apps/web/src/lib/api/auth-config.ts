@@ -16,7 +16,7 @@ export type GoogleAuthSettingsView = InferResponseType<
 export async function getGoogleAuth(): Promise<GoogleAuthSettingsView> {
 	const res = await client.api.settings.auth.google.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load Google auth settings');
-	return res.json() as Promise<GoogleAuthSettingsView>;
+	return res.json();
 }
 
 export async function saveGoogleCredentials(input: GoogleCredentialsInput): Promise<void> {
@@ -42,7 +42,7 @@ export type GitHubAuthSettingsView = InferResponseType<
 export async function getGitHubAuth(): Promise<GitHubAuthSettingsView> {
 	const res = await client.api.settings.auth.github.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load GitHub auth settings');
-	return res.json() as Promise<GitHubAuthSettingsView>;
+	return res.json();
 }
 
 export async function saveGitHubCredentials(input: GitHubCredentialsInput): Promise<void> {

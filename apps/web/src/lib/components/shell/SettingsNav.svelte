@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { navGroups } from '$lib/settings-nav';
 
-	const role = $derived((page.data.session?.user as { role?: string } | undefined)?.role);
+	const role = $derived(page.data.session?.user?.role);
 	const isAdmin = $derived(role === 'admin');
 	const visibleGroups = $derived(navGroups.filter((g) => !g.adminOnly || isAdmin));
 	const path = $derived(page.url.pathname);

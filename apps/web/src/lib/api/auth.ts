@@ -10,7 +10,7 @@ export type AuthBootstrap = {
 export async function getBootstrap(): Promise<AuthBootstrap> {
 	const res = await client.api.auth.bootstrap.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load auth bootstrap');
-	return res.json() as Promise<AuthBootstrap>;
+	return res.json();
 }
 
 export type VerifyInviteResult =
@@ -24,7 +24,7 @@ export async function verifyInvite(token: string): Promise<VerifyInviteResult> {
 		if (err.code === 'INVITE_INVALID') return { status: 'invalid' };
 		throw err;
 	}
-	const { email } = (await res.json()) as { email: string };
+	const { email } = await res.json();
 	return { status: 'valid', email };
 }
 
@@ -46,7 +46,7 @@ export async function listAuthProviders(): Promise<AuthProvidersInfo> {
 	try {
 		const res = await client.api.auth.providers.$get();
 		if (!res.ok) return fallback;
-		return (await res.json()) as AuthProvidersInfo;
+		return res.json();
 	} catch (e) {
 		console.warn('[auth] providers fetch failed; assuming no SSO', e);
 		return fallback;

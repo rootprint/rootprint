@@ -37,7 +37,7 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 export async function listIndexes(): Promise<IndexSummary[]> {
 	const res = await client.api.indexes.$get();
 	if (!res.ok) throw await readApiError(res, 'Failed to load indexes');
-	return res.json() as Promise<IndexSummary[]>;
+	return res.json();
 }
 
 export function toLogIndexOptions(summaries: IndexSummary[]): IndexOption[] {
@@ -49,7 +49,7 @@ export function toLogIndexOptions(summaries: IndexSummary[]): IndexOption[] {
 export async function getIndex(indexId: string): Promise<IndexDetail> {
 	const res = await client.api.indexes[':indexId'].$get({ param: { indexId } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load index');
-	return res.json() as Promise<IndexDetail>;
+	return res.json();
 }
 
 export async function saveIndexConfig(indexId: string, input: SaveIndexConfigInput): Promise<void> {
@@ -93,7 +93,7 @@ export async function createSource(
 		json: input
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to create source');
-	return res.json() as Promise<IndexSource>;
+	return res.json();
 }
 
 export async function getSource(indexId: string, sourceId: string): Promise<SourceDetail> {
@@ -101,7 +101,7 @@ export async function getSource(indexId: string, sourceId: string): Promise<Sour
 		param: { indexId, sourceId }
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load source');
-	return res.json() as Promise<SourceDetail>;
+	return res.json();
 }
 
 export async function updateSource(
@@ -114,13 +114,13 @@ export async function updateSource(
 		json: input
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to update source');
-	return res.json() as Promise<SourceDetail>;
+	return res.json();
 }
 
 export async function createIndex(input: CreateIndexInput): Promise<IndexSummary> {
 	const res = await client.api.indexes.$post({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to create index');
-	return res.json() as Promise<IndexSummary>;
+	return res.json();
 }
 
 export async function resetSourceCheckpoint(indexId: string, sourceId: string): Promise<void> {
@@ -143,7 +143,7 @@ export async function getIndexStats(
 		}
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load index stats');
-	return res.json() as Promise<IndexStatsResponse>;
+	return res.json();
 }
 
 export async function updateQuickwitConfig(
