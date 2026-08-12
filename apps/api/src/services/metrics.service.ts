@@ -6,7 +6,6 @@ import type {
 	ResourceSnapshot,
 	SaturationSnapshot
 } from '../types.js';
-import { fetchQuickwitBuildInfo } from '../lib/quickwit.js';
 import { fetchQuickwitMetrics } from '../lib/quickwit-metrics.js';
 
 function findMetric(metrics: PromMetric[], name: string): PromMetric | null {
@@ -28,7 +27,11 @@ function gaugeValue(m: PromMetric | null): number | null {
 }
 
 function buildInfo(metrics: PromMetric[]): QuickwitBuildInfo {
-	const labels = findMetric(metrics, 'quickwit_build_info')?.samples[0]?.labels ?? {};
+	// Quickwit emits an unlabelled `quickwit_build_info 0` alongside the labelled sample.
+	const labels =
+		findMetric(metrics, 'quickwit_build_info')?.samples.find(
+			(s) => Object.keys(s.labels).length > 0
+		)?.labels ?? {};
 	return {
 		version: labels.version ?? null,
 		commitHash: labels.commit_hash ?? null,
@@ -69,17 +72,10 @@ function saturation(metrics: PromMetric[]): SaturationSnapshot {
 export async function getQuickwitMetrics(): Promise<QuickwitSnapshot> {
 	const { metrics } = await fetchQuickwitMetrics();
 	const now = Date.now();
-	const metricBuildInfo = buildInfo(metrics);
-	const build =
-		metricBuildInfo.version !== null ||
-		metricBuildInfo.commitHash !== null ||
-		metricBuildInfo.buildDate !== null
-			? metricBuildInfo
-			: ((await fetchQuickwitBuildInfo()) ?? metricBuildInfo);
 
 	return {
 		fetchedAt: new Date(now).toISOString(),
-		build,
+		build: buildInfo(metrics),
 		uptimeSeconds: null,
 		resources: resources(metrics),
 		saturation: saturation(metrics)
