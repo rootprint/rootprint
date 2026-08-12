@@ -131,7 +131,7 @@ export async function getLatestSnapshotsByIndex(db: Db): Promise<LatestIndexSnap
 
 	return result.rows.map((r) => ({
 		indexId: r.index_id,
-		capturedAt: r.captured_at instanceof Date ? r.captured_at : new Date(r.captured_at),
+		capturedAt: new Date(r.captured_at).toISOString(),
 		numDocs: Number(r.num_docs),
 		sizeBytes: Number(r.size_bytes),
 		uncompressedBytes: Number(r.uncompressed_bytes),
