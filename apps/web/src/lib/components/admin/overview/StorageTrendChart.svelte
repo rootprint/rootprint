@@ -9,7 +9,7 @@
 	import { formatBytes } from '$lib/utils/format';
 	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 	import type { Window } from '$lib/utils/time-range';
-	import RangePicker from './RangePicker.svelte';
+	import TimeRangeTabs from '$lib/components/ui/TimeRangeTabs.svelte';
 
 	type IndexInfo = { indexId: string; displayName: string | null; sizeBytes: number | null };
 	type SeriesDef = { key: string; label: string; color: string };
@@ -158,7 +158,7 @@
 <div class="border-line bg-base-100 rounded-box flex w-full flex-col border">
 	<header class="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-3">
 		<p class="eyebrow">Storage by index</p>
-		<RangePicker value={range} onChange={onRangeChange} />
+		<TimeRangeTabs value={range} onChange={onRangeChange} />
 	</header>
 
 	<div class="relative px-2 pb-2">

@@ -11,7 +11,7 @@
 		computeColumnWidths,
 		computeFieldWidth
 	} from '$lib/utils/column-width';
-	import { readJSON, writeJSON } from '$lib/utils/safe-storage';
+	import { readStringArray, writeJSON } from '$lib/utils/safe-storage';
 	import type { LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -38,11 +38,7 @@
 	const storageKey = (indexId: string) => `rootprint:context-fields:${indexId}`;
 
 	function readStoredFields(indexId: string | null): string[] {
-		if (!indexId) return [];
-		// readJSON's generic is an unchecked cast — stored null/{}/42 parse fine, so guard the shape.
-		const stored = readJSON<unknown>(storageKey(indexId), []);
-		if (!Array.isArray(stored)) return [];
-		return stored.filter((f): f is string => typeof f === 'string');
+		return indexId ? readStringArray(storageKey(indexId)) : [];
 	}
 
 	/**

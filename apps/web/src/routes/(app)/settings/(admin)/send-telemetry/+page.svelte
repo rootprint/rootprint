@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { ExternalLink, Search } from 'lucide-svelte';
+	import { ExternalLink } from 'lucide-svelte';
 	import { page } from '$app/state';
 	import IntegrationCard from '$lib/components/send-telemetry/IntegrationCard.svelte';
 	import TabLinks from '$lib/components/send-telemetry/TabLinks.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import { integrations } from '$lib/send-telemetry/integrations';
 	import { ORIGINS } from '$lib/send-telemetry/origins';
 	import { SIGNAL_TABS, signalFromUrl } from '$lib/send-telemetry/signal';
@@ -51,15 +52,12 @@
 
 	<TabLinks items={SIGNAL_TABS} active={signal} param="signal" ariaLabel="Telemetry signal" />
 
-	<label class="input input-sm mt-8 w-full max-w-md">
-		<Search class="h-3.5 w-3.5 opacity-60" />
-		<input
-			type="search"
-			bind:value={query}
-			placeholder="Search integrations…"
-			aria-label="Search integrations"
-		/>
-	</label>
+	<SearchInput
+		bind:value={query}
+		placeholder="Search integrations…"
+		label="Search integrations"
+		class="mt-8 w-full max-w-md"
+	/>
 
 	{#if query.trim() !== ''}
 		<section class="mt-8 flex flex-col gap-3">

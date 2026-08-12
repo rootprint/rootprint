@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, UserPlus } from 'lucide-svelte';
+	import { UserPlus } from 'lucide-svelte';
 
 	import { refreshUsers, regenerateInvite, toggleUserRole } from './user-actions';
 	import CreateUserModal from '$lib/components/admin/users/CreateUserModal.svelte';
@@ -8,6 +8,7 @@
 	import ResetPasswordModal from '$lib/components/admin/users/ResetPasswordModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import type { UserView } from '$lib/api/users';
 	import { pluralize } from '$lib/utils/format';
@@ -82,15 +83,7 @@
 			{/each}
 		</div>
 
-		<label class="input input-sm flex-1">
-			<Search class="h-3.5 w-3.5 opacity-60" />
-			<input
-				type="search"
-				placeholder="Search name or email…"
-				aria-label="Search members"
-				bind:value={search}
-			/>
-		</label>
+		<SearchInput bind:value={search} placeholder="Search name or email…" label="Search members" />
 
 		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
 
