@@ -49,7 +49,11 @@ function num(x: string | null | undefined): number | null {
 	return x == null ? null : Number(x);
 }
 
-export async function getSummary(db: Db, window: ActivityWindow | undefined): Promise<SummaryRow> {
+export async function getSummary(
+	db: Db,
+	window: ActivityWindow | undefined,
+	actor?: ActorFilter
+): Promise<SummaryRow> {
 	const { interval } = resolveWindow(window);
 	const result = await db.execute<{
 		total: string;
@@ -64,6 +68,7 @@ export async function getSummary(db: Db, window: ActivityWindow | undefined): Pr
 			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+			${actor ? sql`AND ${actorPredicate(actor)}` : sql``}
 	`);
 	const r = result.rows[0];
 	if (!r) return { totalSearches: 0, errorCount: 0, p50: null, p95: null, p99: null };
@@ -202,35 +207,14 @@ export async function getActorSummary(
 	window: ActivityWindow | undefined,
 	actor: ActorFilter
 ): Promise<ActorSummaryRow> {
-	const { interval } = resolveWindow(window);
-	const [identity, result] = await Promise.all([
+	const [identity, summary] = await Promise.all([
 		resolveActorIdentity(db, actor),
-		db.execute<{
-			total: string;
-			errors: string;
-			p50: string | null;
-			p95: string | null;
-			p99: string | null;
-		}>(sql`
-			SELECT
-				COUNT(*)::text                                 AS total,
-				COUNT(*) FILTER (WHERE status = 'error')::text AS errors,
-				${PCTL}
-			FROM search_audit
-			WHERE executed_at >= ${sinceWindow(interval)}
-			  AND ${actorPredicate(actor)}
-		`)
+		getSummary(db, window, actor)
 	]);
-	const id = identity ?? { displayName: null, email: null };
-	const r = result.rows[0];
 	return {
-		totalSearches: r ? Number(r.total) : 0,
-		errorCount: r ? Number(r.errors) : 0,
-		p50: num(r?.p50),
-		p95: num(r?.p95),
-		p99: num(r?.p99),
-		displayName: id.displayName,
-		email: id.email
+		...summary,
+		displayName: identity?.displayName ?? null,
+		email: identity?.email ?? null
 	};
 }
 
