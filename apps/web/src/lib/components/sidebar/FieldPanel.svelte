@@ -8,6 +8,8 @@
 	import { fetchFieldValuesBulk } from '$lib/api/field-values';
 	import { filterKey } from '$lib/utils/query-params';
 
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import { readOpenFields, writeOpenFields } from '$lib/utils/field-open-state';
@@ -46,9 +48,9 @@
 	}
 
 	type CacheEntry = { key: string; values: LogFieldValueBucket[] };
-	let valuesByField = $state<Map<string, CacheEntry>>(new Map());
-	let loadingFields = $state<Set<string>>(new Set());
-	let errorByField = $state<Map<string, string>>(new Map());
+	const valuesByField = new SvelteMap<string, CacheEntry>();
+	const loadingFields = new SvelteSet<string>();
+	const errorByField = new SvelteMap<string, string>();
 	let abortCtl: AbortController | null = null;
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -76,36 +78,20 @@
 		const openList = [...openFields];
 		const desiredKeys = new Map(openList.map((f) => [f, fieldCacheKey(id, f)]));
 
-		const prunedValues = new Map<string, CacheEntry>();
 		for (const [f, entry] of valuesByField) {
-			if (openFields.has(f) && entry.key === desiredKeys.get(f)) {
-				prunedValues.set(f, entry);
-			}
+			if (!openFields.has(f) || entry.key !== desiredKeys.get(f)) valuesByField.delete(f);
 		}
-		const prunedErrors = new Map<string, string>();
-		for (const [f, msg] of errorByField) {
-			if (openFields.has(f) && !prunedValues.has(f)) {
-				prunedErrors.set(f, msg);
-			}
-		}
-		const prunedLoading = new Set<string>();
+		// A closed field's spinner is gone; an open one's outlives this run because only the
+		// fetch that set it may clear it.
 		for (const f of loadingFields) {
-			if (openFields.has(f)) prunedLoading.add(f);
+			if (!openFields.has(f)) loadingFields.delete(f);
 		}
+		// Every errored field lacks fresh values, so it is always pending below and retried.
+		errorByField.clear();
 
-		const pending = openList.filter((f) => !prunedValues.has(f));
-		if (pending.length === 0) {
-			valuesByField = prunedValues;
-			errorByField = prunedErrors;
-			loadingFields = prunedLoading;
-			return;
-		}
-
-		for (const f of pending) prunedErrors.delete(f);
-		for (const f of pending) prunedLoading.add(f);
-		valuesByField = prunedValues;
-		errorByField = prunedErrors;
-		loadingFields = prunedLoading;
+		const pending = openList.filter((f) => !valuesByField.has(f));
+		if (pending.length === 0) return;
+		for (const f of pending) loadingFields.add(f);
 
 		abortCtl?.abort();
 		const ctl = new AbortController();
@@ -121,29 +107,20 @@
 		})
 			.then((result) => {
 				if (ctl.signal.aborted) return;
-				const nextValues = new Map(valuesByField);
-				const nextErrors = new Map(errorByField);
 				for (const f of pending) {
+					errorByField.delete(f);
+					loadingFields.delete(f);
 					const k = desiredKeys.get(f);
-					if (k === undefined) continue;
-					nextValues.set(f, { key: k, values: result[f] ?? [] });
-					nextErrors.delete(f);
+					if (k !== undefined) valuesByField.set(f, { key: k, values: result[f] ?? [] });
 				}
-				valuesByField = nextValues;
-				errorByField = nextErrors;
-				const nl = new Set(loadingFields);
-				for (const f of pending) nl.delete(f);
-				loadingFields = nl;
 			})
 			.catch((err: unknown) => {
 				if (ctl.signal.aborted) return;
 				const msg = err instanceof Error ? err.message : 'Failed to load values';
-				const nextErrors = new Map(errorByField);
-				for (const f of pending) nextErrors.set(f, msg);
-				errorByField = nextErrors;
-				const nl = new Set(loadingFields);
-				for (const f of pending) nl.delete(f);
-				loadingFields = nl;
+				for (const f of pending) {
+					errorByField.set(f, msg);
+					loadingFields.delete(f);
+				}
 			});
 	}
 
