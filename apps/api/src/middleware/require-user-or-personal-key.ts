@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { MiddlewareHandler } from 'hono';
 import type { ApiKey } from '@better-auth/api-key';
 
-import { user } from '../db/auth.schema.js';
+import { user } from '../db/schema.js';
 import type { AuthedEnv } from '../env.js';
 import { auth, type Session } from '../lib/auth.js';
 import { db } from '../lib/db.js';
@@ -11,6 +11,8 @@ import type { Scope } from '../types.js';
 import { extractBearerToken } from '../utils/bearer.js';
 import { forbidden, internal, unauthorized } from '../utils/http-error.js';
 import { requireUser } from './require-user.js';
+
+export const LOGS_READ: Scope = { logs: ['read'] };
 
 type VerifyApiKeyFn = (opts: {
 	body: { key: string; permissions?: Record<string, string[]> };

@@ -4,13 +4,7 @@ import type { AuthedEnv } from '../../env.js';
 import { db } from '../../lib/db.js';
 import { describe, validator } from '../../lib/openapi/describe.js';
 import { requireAdmin } from '../../middleware/require-admin.js';
-import {
-	ApiKeyIdParam,
-	RecentQuery,
-	TopActorsQuery,
-	UserIdParam,
-	WindowQuery
-} from '../../schemas/admin-activity.js';
+import { RecentQuery, TopActorsQuery, WindowQuery } from '../../schemas/admin-activity.js';
 import {
 	ActorIndexesResponse,
 	ActorSummaryRowResponse,
@@ -29,6 +23,7 @@ import {
 	getTopActors,
 	getUserIndexes
 } from '../../services/search-activity.service.js';
+import { PersonalApiKeyIdParams, UserIdParams } from '../../utils/params.js';
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const adminActivityRouter = new Hono<AuthedEnv>()
@@ -79,7 +74,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get search activity summary for a user',
 			ok: ActorSummaryRowResponse
 		}),
-		validator('param', UserIdParam),
+		validator('param', UserIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { userId } = c.req.valid('param');
@@ -94,7 +89,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get volume time series for a user',
 			ok: VolumeBucketsResponse
 		}),
-		validator('param', UserIdParam),
+		validator('param', UserIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { userId } = c.req.valid('param');
@@ -109,7 +104,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get latency time series for a user',
 			ok: LatencyBucketsResponse
 		}),
-		validator('param', UserIdParam),
+		validator('param', UserIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { userId } = c.req.valid('param');
@@ -124,7 +119,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get per-index usage breakdown for a user',
 			ok: ActorIndexesResponse
 		}),
-		validator('param', UserIdParam),
+		validator('param', UserIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { userId } = c.req.valid('param');
@@ -139,7 +134,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get recent searches for a user',
 			ok: RecentResultResponse
 		}),
-		validator('param', UserIdParam),
+		validator('param', UserIdParams),
 		validator('query', RecentQuery),
 		async (c) => {
 			const { userId } = c.req.valid('param');
@@ -154,7 +149,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get search activity summary for an API key',
 			ok: ActorSummaryRowResponse
 		}),
-		validator('param', ApiKeyIdParam),
+		validator('param', PersonalApiKeyIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
@@ -169,7 +164,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get volume time series for an API key',
 			ok: VolumeBucketsResponse
 		}),
-		validator('param', ApiKeyIdParam),
+		validator('param', PersonalApiKeyIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
@@ -184,7 +179,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get latency time series for an API key',
 			ok: LatencyBucketsResponse
 		}),
-		validator('param', ApiKeyIdParam),
+		validator('param', PersonalApiKeyIdParams),
 		validator('query', WindowQuery),
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');
@@ -199,7 +194,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get recent searches for an API key',
 			ok: RecentResultResponse
 		}),
-		validator('param', ApiKeyIdParam),
+		validator('param', PersonalApiKeyIdParams),
 		validator('query', RecentQuery),
 		async (c) => {
 			const { apiKeyId } = c.req.valid('param');

@@ -1,8 +1,7 @@
 import { eq, inArray, sql } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
-import { user } from '../db/auth.schema.js';
-import { apikey } from '../db/schema.js';
+import { apikey, user } from '../db/schema.js';
 import type { ActivityWindow } from '../schemas/admin-activity.js';
 import type {
 	ActorIndexRow,

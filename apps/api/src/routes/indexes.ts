@@ -9,7 +9,7 @@ import { describe, validator } from '../lib/openapi/describe.js';
 import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import { requireUser } from '../middleware/require-user.js';
-import { requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
+import { LOGS_READ, requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { rejectTraceIndex } from '../middleware/reject-trace-index.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { withIndexConfig, withIndexMeta } from '../middleware/with-index.js';
@@ -69,10 +69,7 @@ import {
 } from '../services/log.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
 import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
-import type { Scope } from '../types.js';
 import { IndexIdParams } from '../utils/params.js';
-
-const LOGS_READ: Scope = { logs: ['read'] };
 
 export const indexesRouter = new Hono<AuthedEnv>()
 	.get(

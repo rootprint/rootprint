@@ -21,7 +21,4 @@ export const RecentQuery = v.object({
 	status: v.optional(v.picklist(['any', 'success', 'error']), 'any')
 });
 
-export const UserIdParam = v.object({ userId: v.pipe(v.string(), v.minLength(1)) });
-export const ApiKeyIdParam = v.object({ apiKeyId: v.pipe(v.string(), v.minLength(1)) });
-
 export type ActivityWindow = (typeof ActivityWindowValues)[number];
