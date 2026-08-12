@@ -7,13 +7,13 @@
 		Pencil,
 		Plus,
 		RefreshCw,
-		Search,
 		Trash2
 	} from 'lucide-svelte';
 	import * as v from 'valibot';
 	import { ApiError, issuesToFieldErrors } from '$lib/api/errors';
 	import { listViews, createView, updateView, deleteView } from '$lib/api/views';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { RequestGuard } from '$lib/stores/request-guard';
 	import { createViewSchema, patchViewSchema } from 'api/schemas';
@@ -293,10 +293,7 @@
 		</div>
 
 		<div class="border-line border-b px-3 py-2">
-			<label class="input input-sm flex items-center gap-2">
-				<Search class="h-3.5 w-3.5 opacity-60" />
-				<input type="text" class="grow" placeholder="Search views…" bind:value={filterText} />
-			</label>
+			<SearchInput bind:value={filterText} placeholder="Search views…" label="Search views" />
 		</div>
 
 		<div class="max-h-72 min-h-[6rem] flex-1 overflow-y-auto">
