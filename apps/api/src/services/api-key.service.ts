@@ -27,8 +27,9 @@ function generateApiKey(): string {
 	return `${INGEST_PREFIX}${randomBytes(API_KEY_RANDOM_BYTES).toString('hex')}`;
 }
 
-// Fire-and-forget refresh of the API key's lastUsedAt, throttled so a busy key
-// doesn't write on every request.
+// Fire-and-forget refresh of the API key's lastUsedAt. Fires once per cache entry;
+// the SQL predicate bounds the writes when a cache invalidation makes every in-flight
+// request re-resolve at once.
 function touchLastUsed(db: Db, id: number): void {
 	db.update(apiKey)
 		.set({ lastUsedAt: sql`now()` })
@@ -45,8 +46,7 @@ function touchLastUsed(db: Db, id: number): void {
 }
 
 type ApiKeyCacheEntry =
-	| { kind: 'miss'; expiresAt: number }
-	| { kind: 'hit'; row: VerifiedApiKey; lastTouchAt: number; expiresAt: number };
+	{ kind: 'miss'; expiresAt: number } | { kind: 'hit'; row: VerifiedApiKey; expiresAt: number };
 
 const POSITIVE_TTL_MS = 60_000;
 const NEGATIVE_TTL_MS = 10_000;
@@ -67,18 +67,6 @@ function setCacheEntry(token: string, entry: ApiKeyCacheEntry): void {
 		if (oldest !== undefined) apiKeyCache.delete(oldest);
 	}
 	apiKeyCache.set(token, entry);
-}
-
-function resolveHit(
-	db: Db,
-	entry: Extract<ApiKeyCacheEntry, { kind: 'hit' }>,
-	now: number
-): VerifyApiKeyResult {
-	if (now - entry.lastTouchAt > LAST_USED_THROTTLE_SECONDS * 1000) {
-		entry.lastTouchAt = now;
-		touchLastUsed(db, entry.row.id);
-	}
-	return { status: 'ok', key: entry.row };
 }
 
 function toApiKeySummary(
@@ -240,8 +228,7 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 
 	const cached = apiKeyCache.get(bearer);
 	if (cached && now < cached.expiresAt) {
-		if (cached.kind === 'miss') return { status: 'not-found' };
-		return resolveHit(db, cached, now);
+		return cached.kind === 'miss' ? { status: 'not-found' } : { status: 'ok', key: cached.row };
 	}
 
 	const [row] = await db
@@ -260,13 +247,7 @@ export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKey
 		return { status: 'not-found' };
 	}
 
-	// lastTouchAt: 0 forces the first resolveHit to fire the lastUsedAt write.
-	const entry: ApiKeyCacheEntry = {
-		kind: 'hit',
-		row,
-		lastTouchAt: 0,
-		expiresAt: now + POSITIVE_TTL_MS
-	};
-	setCacheEntry(bearer, entry);
-	return resolveHit(db, entry, now);
+	setCacheEntry(bearer, { kind: 'hit', row, expiresAt: now + POSITIVE_TTL_MS });
+	touchLastUsed(db, row.id);
+	return { status: 'ok', key: row };
 }
