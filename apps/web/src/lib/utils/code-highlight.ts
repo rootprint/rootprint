@@ -1,7 +1,7 @@
 import type { DecorationItem, HighlighterCore } from 'shiki/core';
 
 /** Every language the app ever highlights: `SnippetLang` plus the JSON pane. */
-export type HighlightLang = 'json' | 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
+type HighlightLang = 'json' | 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
 

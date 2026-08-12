@@ -162,7 +162,7 @@ export class ContextLoader {
 					startTs: this.#beforeWindowEnd - WINDOW_SECONDS,
 					endTs: this.#beforeWindowEnd
 				},
-				{ signal: this.#abort?.signal }
+				this.#abort?.signal
 			);
 			if (thisSeq !== this.#fetchSeq) return;
 			const fresh = this.#dedupe(result.rawHits);
@@ -192,7 +192,7 @@ export class ContextLoader {
 					startTs: this.#afterWindowStart,
 					endTs: this.#afterWindowStart + WINDOW_SECONDS
 				},
-				{ signal: this.#abort?.signal }
+				this.#abort?.signal
 			);
 			if (thisSeq !== this.#fetchSeq) return;
 			const fresh = this.#dedupe(result.rawHits);
@@ -251,7 +251,7 @@ export class ContextLoader {
 						startTs: this.anchorTs,
 						endTs: this.anchorTs + WINDOW_SECONDS
 					},
-					{ signal: this.#abort.signal }
+					this.#abort.signal
 				),
 				searchLogs(
 					{
@@ -263,7 +263,7 @@ export class ContextLoader {
 						startTs: this.anchorTs - WINDOW_SECONDS,
 						endTs: this.anchorTs
 					},
-					{ signal: this.#abort.signal }
+					this.#abort.signal
 				)
 			]);
 

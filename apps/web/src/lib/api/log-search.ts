@@ -2,17 +2,7 @@ import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { SearchInput, SearchResult } from '$lib/types';
 
-export interface SearchLogsOptions {
-	/** When true, ask Quickwit for the exact total hit count. Default false. */
-	countAll?: boolean;
-	signal?: AbortSignal;
-}
-
-export async function searchLogs(
-	input: SearchInput,
-	opts: SearchLogsOptions = {}
-): Promise<SearchResult> {
-	const { countAll = false, signal } = opts;
+export async function searchLogs(input: SearchInput, signal?: AbortSignal): Promise<SearchResult> {
 	const res = await client.api.indexes[':indexId'].logs.$get(
 		{
 			param: { indexId: input.indexId },
@@ -21,7 +11,6 @@ export async function searchLogs(
 				limit: String(input.limit),
 				offset: String(input.offset),
 				sortOrder: input.sortDirection,
-				...(countAll && { countAll: 'true' }),
 				...(input.startTs !== undefined && { startTs: String(input.startTs) }),
 				...(input.endTs !== undefined && { endTs: String(input.endTs) })
 			}
@@ -33,13 +22,11 @@ export async function searchLogs(
 
 	const json = (await res.json()) as {
 		hits: Record<string, unknown>[];
-		numHits: number;
 		elapsedTimeMicros: number;
 	};
 
 	return {
 		rawHits: json.hits ?? [],
-		numHits: json.numHits ?? 0,
 		elapsedTimeMicros: json.elapsedTimeMicros ?? 0
 	};
 }

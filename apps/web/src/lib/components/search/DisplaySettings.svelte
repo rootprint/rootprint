@@ -36,7 +36,8 @@
 
 	let searchInputEl = $state<HTMLInputElement | null>(null);
 
-	type DndItem = { id: string; name: string; label: string };
+	// `id` is the field name; svelte-dnd-action requires the key to be called `id`.
+	type DndItem = { id: string };
 
 	// svelte-dnd-action mutates the list during drag, so this must be writable
 	// $state, not $derived. We re-sync from `activeFields` via $effect.
@@ -45,13 +46,7 @@
 	const pinnedSet = $derived(new Set<string>(pinnedStart));
 
 	$effect(() => {
-		dndItems = activeFields
-			.filter((name) => !pinnedSet.has(name))
-			.map((name) => ({
-				id: name,
-				name,
-				label: name
-			}));
+		dndItems = activeFields.filter((name) => !pinnedSet.has(name)).map((name) => ({ id: name }));
 	});
 
 	function handleDndConsider(e: CustomEvent<{ items: DndItem[] }>) {
@@ -60,17 +55,17 @@
 
 	function handleDndFinalize(e: CustomEvent<{ items: DndItem[] }>) {
 		dndItems = e.detail.items;
-		onColumnsChange(dndItems.map((f) => f.name));
+		onColumnsChange(dndItems.map((f) => f.id));
 	}
 
 	// Source updates from dndItems so legacy pinned entries in activeFields
 	// get dropped on the next save instead of being preserved indefinitely.
 	function removeField(name: string) {
-		onColumnsChange(dndItems.map((f) => f.name).filter((f) => f !== name));
+		onColumnsChange(dndItems.map((f) => f.id).filter((f) => f !== name));
 	}
 
 	function addField(name: string) {
-		const names = dndItems.map((f) => f.name);
+		const names = dndItems.map((f) => f.id);
 		const messageIndex = messageField ? names.indexOf(messageField) : -1;
 		onColumnsChange(
 			messageIndex === -1
@@ -240,12 +235,12 @@
 							class="hover:bg-base-200 text-base-content flex items-center gap-1 rounded px-2 py-1.5 font-mono text-xs"
 						>
 							<GripVertical class="text-base-content/40 h-3 w-3 shrink-0 cursor-grab" />
-							<span class="flex-1 truncate" title={field.name}>{field.label}</span>
+							<span class="flex-1 truncate" title={field.id}>{field.id}</span>
 							<button
 								type="button"
 								class="btn btn-ghost btn-xs p-0"
 								aria-label="Remove column"
-								onclick={() => removeField(field.name)}
+								onclick={() => removeField(field.id)}
 							>
 								<X class="text-base-content/40 hover:text-base-content h-3 w-3" />
 							</button>

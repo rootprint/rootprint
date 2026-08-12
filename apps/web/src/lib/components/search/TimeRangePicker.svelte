@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { format, fromUnixTime, getUnixTime } from 'date-fns';
+	import { format, fromUnixTime } from 'date-fns';
 	import { ChevronDown } from 'lucide-svelte';
 
 	import {
 		formatTimeRangeLabel,
 		PRESET_LABELS,
 		PRESET_OPTIONS,
-		presetDurationSec,
+		resolveWindow,
 		type Preset
 	} from '$lib/utils/time-range';
 	import { parseLocalDateTime } from '$lib/utils/time';
@@ -40,15 +40,7 @@
 	let timeEnd = $state('');
 
 	function seedDraft(v: TimeRange) {
-		let startSec: number;
-		let endSec: number;
-		if (v.type === 'absolute') {
-			startSec = v.start;
-			endSec = v.end;
-		} else {
-			endSec = getUnixTime(new Date());
-			startSec = endSec - presetDurationSec(v.preset);
-		}
+		const { startTs: startSec, endTs: endSec } = resolveWindow(v);
 		dateStart = format(fromUnixTime(startSec), 'yyyy-MM-dd');
 		timeStart = format(fromUnixTime(startSec), 'HH:mm');
 		dateEnd = format(fromUnixTime(endSec), 'yyyy-MM-dd');

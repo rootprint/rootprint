@@ -84,7 +84,7 @@ export function topOperations(spans: SpanNode[]): OperationRollup[] {
 	return [...groups.values()].toSorted((a, b) => b.totalMicros - a.totalMicros).slice(0, 5);
 }
 
-export const dbSystem = (span: SpanNode): string => attr(span, DB_SYSTEM_KEYS);
+const dbSystem = (span: SpanNode): string => attr(span, DB_SYSTEM_KEYS);
 
 /** One definition of database-ness, so the Database tab and the Overview headline can't disagree. */
 const isDbSpan = (span: SpanNode): boolean =>
@@ -94,7 +94,7 @@ export function dbSpans(spans: SpanNode[]): SpanNode[] {
 	return spans.filter(isDbSpan);
 }
 
-export function dbStatement(span: SpanNode): string {
+function dbStatement(span: SpanNode): string {
 	return attr(span, DB_STATEMENT_KEYS) || span.name;
 }
 
