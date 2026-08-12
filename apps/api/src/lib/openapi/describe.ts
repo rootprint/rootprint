@@ -20,9 +20,9 @@ function named<S extends StandardSchemaV1>(ref: string, schema: S) {
 }
 
 /**
- * Thin wrapper over hono-openapi's `validator` that reproduces the app's 400
- * contract (mapping Standard Schema issues to `ApiErrorDetail[]` exactly as
- * `app.onError` does for ValiError) and forwards `typeMode: 'output'` to
+ * Thin wrapper over hono-openapi's `validator` that owns the app's 400
+ * validation contract (mapping Standard Schema issues to `ApiErrorDetail[]` and
+ * throwing them as an `HttpError`) and forwards `typeMode: 'output'` to
  * @valibot/to-json-schema.
  */
 function validator<
