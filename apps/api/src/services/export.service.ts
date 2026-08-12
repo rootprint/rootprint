@@ -1,4 +1,4 @@
-import type { ExportPreflightResult, FormatState, IndexConfig } from '../types.js';
+import type { ExportPreflightResult, IndexConfig } from '../types.js';
 
 import { type QuickwitClient } from 'quickwit-js';
 
@@ -9,12 +9,7 @@ import type { ExportLogsQueryInput } from '../schemas/export.js';
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();
 
-export function createFormatState(): FormatState {
-	return { preambleEmitted: false };
-}
-
 export function formatNdjsonBatch(rows: Record<string, unknown>[]): Uint8Array {
-	if (rows.length === 0) return new Uint8Array(0);
 	let out = '';
 	for (const row of rows) {
 		out += JSON.stringify(row) + NEWLINE;
@@ -37,7 +32,6 @@ function formatScalar(v: unknown): string {
 }
 
 export function formatTextBatch(rows: Record<string, unknown>[], cfg: IndexConfig): Uint8Array {
-	if (rows.length === 0) return new Uint8Array(0);
 	const exclude = TEXT_FIELDS_TO_EXCLUDE(cfg);
 	let out = '';
 	for (const row of rows) {
@@ -86,17 +80,9 @@ function buildCsvHeader(rows: Record<string, unknown>[]): string[] {
 	return [...priorityPresent, ...rest];
 }
 
-export function formatCsvBatch(rows: Record<string, unknown>[], state: FormatState): Uint8Array {
-	if (rows.length === 0 && state.preambleEmitted) return new Uint8Array(0);
-
-	let out = '';
-	if (!state.preambleEmitted) {
-		state.csvHeader = buildCsvHeader(rows);
-		out += CSV_BOM;
-		out += state.csvHeader.map(escapeCsvCell).join(',') + NEWLINE;
-		state.preambleEmitted = true;
-	}
-	const header = state.csvHeader!;
+export function formatCsvBatch(rows: Record<string, unknown>[]): Uint8Array {
+	const header = buildCsvHeader(rows);
+	let out = CSV_BOM + header.map(escapeCsvCell).join(',') + NEWLINE;
 	for (const row of rows) {
 		const cells = header.map((col) => escapeCsvCell(formatScalar(row[col])));
 		out += cells.join(',') + NEWLINE;
@@ -134,7 +120,6 @@ export async function buildExportBody(
 	q: ExportLogsQueryInput
 ): Promise<Uint8Array> {
 	const idx = qw.index(indexConfig.indexId);
-	const state = createFormatState();
 
 	const hits = await idx.searchHits(
 		idx
@@ -148,7 +133,7 @@ export async function buildExportBody(
 		case 'json':
 			return formatNdjsonBatch(hits);
 		case 'csv':
-			return formatCsvBatch(hits, state);
+			return formatCsvBatch(hits);
 		case 'text':
 			return formatTextBatch(hits, indexConfig);
 	}

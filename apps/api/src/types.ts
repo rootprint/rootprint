@@ -235,12 +235,7 @@ export type GoogleAuthCredentials = {
 
 export type GitHubAuthCredentials = v.InferOutput<typeof githubCredentialsSchema>;
 
-// Export streaming (export.service.ts)
-export type FormatState = {
-	csvHeader?: string[];
-	preambleEmitted: boolean;
-};
-
+// Export (export.service.ts)
 export type ExportPreflightResult = {
 	total: number;
 	capped: boolean;
