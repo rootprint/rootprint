@@ -4,7 +4,7 @@
 
 	import { goto, invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
 	import { createSource } from '$lib/api/indexes';
 	import { createSourceSchema } from 'api/schemas';
 	import type { IndexDetail } from 'api/types';
@@ -43,12 +43,9 @@
 			await invalidate(DEP.index(detail.indexId));
 			await goto(`/settings/indexes/${encodeURIComponent(detail.indexId)}?tab=sources`);
 		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				fieldErrors = toFieldErrors(err.body);
-				toast.error(err.message);
-			} else {
-				toast.error(err instanceof Error ? err.message : 'Failed to create source');
-			}
+			const formErrors = toFormErrors(err, 'Failed to create source');
+			fieldErrors = formErrors.fieldErrors;
+			toast.error(formErrors.message);
 		} finally {
 			submitting = false;
 		}

@@ -37,34 +37,16 @@
 	}
 
 	let resetOpen = $state(false);
-	let resetting = $state(false);
 	async function confirmReset() {
-		resetting = true;
-		try {
-			await resetSourceCheckpoint(indexId, source.sourceId);
-			toast.success('Checkpoint reset');
-			resetOpen = false;
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Failed to reset checkpoint');
-		} finally {
-			resetting = false;
-		}
+		await resetSourceCheckpoint(indexId, source.sourceId);
+		toast.success('Checkpoint reset');
 	}
 
 	let deleteOpen = $state(false);
-	let deleting = $state(false);
 	async function confirmDelete() {
-		deleting = true;
-		try {
-			await deleteSource(indexId, source.sourceId);
-			toast.success(`Source ${source.sourceId} deleted`);
-			deleteOpen = false;
-			await goto(`/settings/indexes/${indexId}?tab=sources`);
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Failed to delete source');
-		} finally {
-			deleting = false;
-		}
+		await deleteSource(indexId, source.sourceId);
+		toast.success(`Source ${source.sourceId} deleted`);
+		await goto(`/settings/indexes/${indexId}?tab=sources`);
 	}
 </script>
 
@@ -119,10 +101,10 @@
 
 <ConfirmModal
 	bind:open={resetOpen}
-	bind:loading={resetting}
 	title="Reset checkpoint"
 	confirmLabel="Reset"
 	confirmingLabel="Resetting…"
+	errorFallback="Failed to reset checkpoint"
 	onConfirm={confirmReset}
 >
 	{#snippet message()}
@@ -133,10 +115,10 @@
 
 <ConfirmModal
 	bind:open={deleteOpen}
-	bind:loading={deleting}
 	title="Delete source"
 	confirmLabel="Delete"
 	confirmingLabel="Deleting…"
+	errorFallback="Failed to delete source"
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}

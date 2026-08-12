@@ -4,7 +4,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
-	import { ApiError, toFieldErrors } from '$lib/api/errors';
+	import { toFormErrors } from '$lib/api/errors';
 	import type { OAuthProviderDescriptor } from '$lib/components/admin/authentication/oauth-providers';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import DisplayField from '$lib/components/ui/DisplayField.svelte';
@@ -106,24 +106,18 @@
 				try {
 					await provider.saveCredentials({ clientId: id, clientSecret: secret });
 				} catch (err) {
-					if (err instanceof ApiError && err.body) {
-						fieldErrors = { ...fieldErrors, ...toFieldErrors(err.body) };
-						formError = err.message;
-					} else {
-						formError = err instanceof Error ? err.message : 'Failed to save credentials';
-					}
+					const formErrors = toFormErrors(err, 'Failed to save credentials');
+					formError = formErrors.message;
+					fieldErrors = { ...fieldErrors, ...formErrors.fieldErrors };
 					return;
 				}
 			}
 			try {
 				await provider.items.saveItems(items);
 			} catch (err) {
-				if (err instanceof ApiError && err.body) {
-					fieldErrors = { ...fieldErrors, ...toFieldErrors(err.body) };
-					formError = err.message;
-				} else {
-					formError = err instanceof Error ? err.message : provider.items.saveFailedFallback;
-				}
+				const formErrors = toFormErrors(err, provider.items.saveFailedFallback);
+				formError = formErrors.message;
+				fieldErrors = { ...fieldErrors, ...formErrors.fieldErrors };
 				return;
 			}
 			toast.success(provider.successToast);

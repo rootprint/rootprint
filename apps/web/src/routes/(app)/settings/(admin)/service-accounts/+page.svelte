@@ -27,43 +27,38 @@
 
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<DeleteTarget | null>(null);
-	let deleting = $state(false);
 
 	const deleteLabels = $derived(
 		deleteTarget?.kind === 'key'
-			? { title: 'Revoke service account key', confirm: 'Revoke', confirming: 'Revoking…' }
-			: { title: 'Delete service account', confirm: 'Delete', confirming: 'Deleting…' }
+			? {
+					title: 'Revoke service account key',
+					confirm: 'Revoke',
+					confirming: 'Revoking…',
+					fallback: 'Failed to revoke service account key'
+				}
+			: {
+					title: 'Delete service account',
+					confirm: 'Delete',
+					confirming: 'Deleting…',
+					fallback: 'Failed to delete service account'
+				}
 	);
 
 	function openDelete(target: DeleteTarget) {
 		deleteTarget = target;
-		deleting = false;
 		deleteOpen = true;
 	}
 
 	async function confirmDelete() {
 		if (!deleteTarget) return;
-		const target = deleteTarget;
-		deleting = true;
-		try {
-			if (target.kind === 'key') {
-				await deleteServiceAccountKey(target.id);
-				toast.success('Service account key revoked');
-			} else {
-				await deleteServiceAccount(target.id);
-				toast.success('Service account deleted');
-			}
-			await invalidate(DEP.serviceAccountSettings);
-			deleteOpen = false;
-		} catch (e) {
-			const fallback =
-				target.kind === 'key'
-					? 'Failed to revoke service account key'
-					: 'Failed to delete service account';
-			toast.error(e instanceof Error ? e.message : fallback);
-		} finally {
-			deleting = false;
+		if (deleteTarget.kind === 'key') {
+			await deleteServiceAccountKey(deleteTarget.id);
+			toast.success('Service account key revoked');
+		} else {
+			await deleteServiceAccount(deleteTarget.id);
+			toast.success('Service account deleted');
 		}
+		await invalidate(DEP.serviceAccountSettings);
 	}
 
 	const accountColTracks = 'minmax(0,2fr) minmax(0,0.8fr) minmax(0,1fr) auto';
@@ -177,10 +172,10 @@
 
 <ConfirmModal
 	bind:open={deleteOpen}
-	bind:loading={deleting}
 	title={deleteLabels.title}
 	confirmLabel={deleteLabels.confirm}
 	confirmingLabel={deleteLabels.confirming}
+	errorFallback={deleteLabels.fallback}
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}

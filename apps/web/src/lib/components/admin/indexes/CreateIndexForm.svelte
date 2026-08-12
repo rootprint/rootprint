@@ -4,7 +4,7 @@
 
 	import { goto, invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { ApiError, issuesToPathErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToPathErrors, toFormErrors } from '$lib/api/errors';
 	import { createIndex } from '$lib/api/indexes';
 	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import { createIndexSchema, INDEX_MODES } from 'api/schemas';
@@ -45,12 +45,9 @@
 			await invalidate(DEP.indexes);
 			await goto(`/settings/indexes/${encodeURIComponent(created.indexId)}`);
 		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				fieldErrors = toFieldErrors(err.body);
-				toast.error(err.message);
-			} else {
-				toast.error(err instanceof Error ? err.message : 'Failed to create index');
-			}
+			const formErrors = toFormErrors(err, 'Failed to create index');
+			fieldErrors = formErrors.fieldErrors;
+			toast.error(formErrors.message);
 		} finally {
 			submitting = false;
 		}

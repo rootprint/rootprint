@@ -31,11 +31,9 @@
 
 	let toDelete = $state<SavedView | null>(null);
 	let deleteModalOpen = $state(false);
-	let deleting = $state(false);
 
 	let toOverwrite = $state<SavedView | null>(null);
 	let overwriteModalOpen = $state(false);
-	let overwriting = $state(false);
 
 	type Panel = 'list' | 'form';
 
@@ -202,18 +200,14 @@
 			overwriteModalOpen = false;
 			return;
 		}
-		overwriting = true;
 		error = null;
 		try {
 			const row = await updateView(indexId, item.id, currentSnapshot());
 			items = items.map((it) => (it.id === row.id ? row : it));
-			overwriteModalOpen = false;
 			toOverwrite = null;
 		} catch (e) {
+			// surfaced in the dropdown panel, not as a toast — the panel is already open
 			error = e instanceof Error ? e.message : 'Failed to update view';
-			overwriteModalOpen = false;
-		} finally {
-			overwriting = false;
 		}
 	}
 
@@ -231,18 +225,13 @@
 			deleteModalOpen = false;
 			return;
 		}
-		deleting = true;
 		error = null;
 		try {
 			await deleteView(indexId, item.id);
 			items = items.filter((it) => it.id !== item.id);
-			deleteModalOpen = false;
 			toDelete = null;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to delete view';
-			deleteModalOpen = false;
-		} finally {
-			deleting = false;
 		}
 	}
 
@@ -478,7 +467,6 @@
 	title="Delete view"
 	confirmLabel="Delete"
 	confirmingLabel="Deleting…"
-	bind:loading={deleting}
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}
@@ -491,7 +479,6 @@
 	title="Update view"
 	confirmLabel="Update"
 	confirmingLabel="Updating…"
-	bind:loading={overwriting}
 	onConfirm={confirmOverwrite}
 >
 	{#snippet message()}

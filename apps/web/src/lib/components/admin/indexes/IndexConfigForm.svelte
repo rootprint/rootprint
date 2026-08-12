@@ -4,7 +4,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
 	import { saveIndexConfig } from '$lib/api/indexes';
 	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import TagInput from '$lib/components/ui/TagInput.svelte';
@@ -51,12 +51,9 @@
 			toast.success('Index configuration saved');
 			await invalidate(DEP.index(detail.indexId));
 		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				fieldErrors = toFieldErrors(err.body);
-				toast.error(err.message);
-			} else {
-				toast.error(err instanceof Error ? err.message : 'Failed to save config');
-			}
+			const formErrors = toFormErrors(err, 'Failed to save config');
+			fieldErrors = formErrors.fieldErrors;
+			toast.error(formErrors.message);
 		} finally {
 			submitting = false;
 		}

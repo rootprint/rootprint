@@ -72,28 +72,18 @@
 
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<(typeof keys)[number] | null>(null);
-	let deleting = $state(false);
 
 	function openDelete(key: (typeof keys)[number]) {
 		deleteTarget = key;
-		deleting = false;
 		deleteOpen = true;
 	}
 
 	async function confirmDelete() {
 		if (!deleteTarget) return;
-		deleting = true;
-		try {
-			await deleteApiKey(deleteTarget.id);
-			toast.success('API key deleted');
-			await invalidate(DEP.apiKeys);
-			deleteOpen = false;
-			deleteTarget = null;
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Failed to delete API key');
-		} finally {
-			deleting = false;
-		}
+		await deleteApiKey(deleteTarget.id);
+		toast.success('API key deleted');
+		await invalidate(DEP.apiKeys);
+		deleteTarget = null;
 	}
 
 	const noIndexes = $derived(indexes.length === 0);
@@ -203,10 +193,10 @@
 
 <ConfirmModal
 	bind:open={deleteOpen}
-	bind:loading={deleting}
 	title="Delete API key"
 	confirmLabel="Delete"
 	confirmingLabel="Deleting..."
+	errorFallback="Failed to delete API key"
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}

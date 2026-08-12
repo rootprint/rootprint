@@ -41,20 +41,10 @@
 	const sourcesCountLabel = $derived(pluralize(filteredSources.length, 'source'));
 
 	let deleteOpen = $state(false);
-	let deleting = $state(false);
-
 	async function confirmDelete() {
-		deleting = true;
-		try {
-			await deleteIndex(detail.indexId);
-			toast.success(`Index ${detail.indexId} deleted`);
-			deleteOpen = false;
-			await goto('/settings/indexes');
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Failed to delete index');
-		} finally {
-			deleting = false;
-		}
+		await deleteIndex(detail.indexId);
+		toast.success(`Index ${detail.indexId} deleted`);
+		await goto('/settings/indexes');
 	}
 </script>
 
@@ -177,9 +167,9 @@
 
 <TypeToConfirmModal
 	bind:open={deleteOpen}
-	bind:loading={deleting}
 	title="Delete index"
 	confirmValue={detail.indexId}
+	errorFallback="Failed to delete index"
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}

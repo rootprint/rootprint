@@ -3,7 +3,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { setupAdmin } from '$lib/api/auth';
 	import { DEP } from '$lib/api/deps';
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
@@ -31,12 +31,9 @@
 			try {
 				await setupAdmin(input);
 			} catch (err) {
-				if (err instanceof ApiError && err.body) {
-					fieldErrors = toFieldErrors(err.body);
-					formError = err.message;
-				} else {
-					formError = err instanceof Error ? err.message : 'Failed to create admin';
-				}
+				const formErrors = toFormErrors(err, 'Failed to create admin');
+				formError = formErrors.message;
+				fieldErrors = formErrors.fieldErrors;
 				return;
 			}
 			await invalidate(DEP.session);

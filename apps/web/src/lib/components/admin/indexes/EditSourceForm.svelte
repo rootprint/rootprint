@@ -5,7 +5,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
 	import { updateSource } from '$lib/api/indexes';
 	import { updateSourceSchema } from 'api/schemas';
 	import type { SourceDetail } from 'api/types';
@@ -47,12 +47,9 @@
 			toast.success('Source updated');
 			await invalidate(DEP.index(indexId));
 		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				fieldErrors = toFieldErrors(err.body);
-				toast.error(err.message);
-			} else {
-				toast.error(err instanceof Error ? err.message : 'Failed to update source');
-			}
+			const formErrors = toFormErrors(err, 'Failed to update source');
+			fieldErrors = formErrors.fieldErrors;
+			toast.error(formErrors.message);
 		} finally {
 			submitting = false;
 		}

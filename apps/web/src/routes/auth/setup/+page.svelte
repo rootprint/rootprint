@@ -4,7 +4,7 @@
 
 	import { goto } from '$app/navigation';
 	import { setupPassword } from '$lib/api/auth';
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
 
@@ -31,12 +31,9 @@
 			try {
 				await setupPassword(parsed.output);
 			} catch (err) {
-				if (err instanceof ApiError && err.body) {
-					fieldErrors = toFieldErrors(err.body);
-					formError = err.message;
-				} else {
-					formError = err instanceof Error ? err.message : 'Failed to set password';
-				}
+				const formErrors = toFormErrors(err, 'Failed to set password');
+				formError = formErrors.message;
+				fieldErrors = formErrors.fieldErrors;
 				return;
 			}
 			await goto('/auth/sign-in');

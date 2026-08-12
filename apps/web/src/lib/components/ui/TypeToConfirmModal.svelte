@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	import Modal from './Modal.svelte';
 
@@ -9,7 +10,7 @@
 		confirmValue,
 		confirmLabel = 'Delete',
 		confirmingLabel = 'Deleting…',
-		loading = $bindable(false),
+		errorFallback = 'Something went wrong',
 		onConfirm,
 		message
 	}: {
@@ -18,15 +19,28 @@
 		confirmValue: string;
 		confirmLabel?: string;
 		confirmingLabel?: string;
-		loading?: boolean;
+		errorFallback?: string;
 		onConfirm: () => void | Promise<void>;
 		message: Snippet;
 	} = $props();
 
 	let typed = $state('');
+	let loading = $state(false);
 
 	const canConfirm = $derived(typed === confirmValue);
 	const inputId = $props.id();
+
+	async function confirm() {
+		loading = true;
+		try {
+			await onConfirm();
+			open = false;
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : errorFallback);
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <Modal
@@ -62,12 +76,7 @@
 		<button type="button" class="btn btn-ghost" disabled={loading} onclick={() => (open = false)}>
 			Cancel
 		</button>
-		<button
-			type="button"
-			class="btn btn-error"
-			disabled={!canConfirm || loading}
-			onclick={onConfirm}
-		>
+		<button type="button" class="btn btn-error" disabled={!canConfirm || loading} onclick={confirm}>
 			{loading ? confirmingLabel : confirmLabel}
 		</button>
 	{/snippet}
