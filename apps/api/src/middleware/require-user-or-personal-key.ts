@@ -4,7 +4,7 @@ import type { ApiKey } from '@better-auth/api-key';
 
 import { user } from '../db/schema.js';
 import type { AuthedEnv } from '../env.js';
-import { auth, type Session } from '../lib/auth.js';
+import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
 import type { Scope } from '../types.js';
@@ -56,31 +56,7 @@ export function requireUserOrPersonalKey(required: Scope): MiddlewareHandler<Aut
 		if (!owner) throw unauthorized('Invalid API key', 'PERSONAL_KEY_INVALID');
 		if (owner.banned) throw forbidden('API key owner is banned', 'PERSONAL_KEY_FORBIDDEN');
 
-		const session: NonNullable<Session> = {
-			session: {
-				id: `apikey:${result.key.id}`,
-				token: '',
-				userId: owner.id,
-				createdAt: result.key.createdAt,
-				updatedAt: result.key.updatedAt,
-				expiresAt: new Date(Date.now() + 60_000),
-				ipAddress: null,
-				userAgent: 'personal-api-key'
-			},
-			user: {
-				id: owner.id,
-				name: owner.name,
-				email: owner.email,
-				emailVerified: owner.emailVerified,
-				image: owner.image,
-				createdAt: owner.createdAt,
-				updatedAt: owner.updatedAt,
-				role: owner.role ?? undefined,
-				banned: owner.banned ?? undefined
-			} as NonNullable<Session>['user']
-		};
-		(session.user as Record<string, unknown>)['lastActive'] = owner.lastActive;
-		c.set('session', session);
+		c.set('session', { user: { id: owner.id, role: owner.role } });
 		c.set('apiKeyActor', { keyId: result.key.id });
 		await next();
 	};
