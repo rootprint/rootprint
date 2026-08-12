@@ -2,7 +2,7 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-08-12
 
 ### ⚠️ Breaking
 
@@ -18,6 +18,10 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 - **`GET /api/indexes` returns a smaller row.** `fieldCount`, `sourceCount`, `mode`, and `createTimestamp` are no longer included. `mode` moved to `GET /api/indexes/:indexId`, where `fieldCount` and `sourceCount` can be derived from `fields` and `sources`; note that endpoint is admin-only and cookie-authenticated, so it is not a substitute for callers using a personal API key. `createTimestamp` is removed with no replacement.
 
+- **`role` is gone from ingest keys.** The field no longer appears on the rows returned by `GET /api/api-keys`. It had been pinned to the single value `"ingest"` ever since 0.3.5 removed the search role, so nothing could branch on it; migration `0018` drops the column along with its index and check constraint. Like `0017` it is forward-only, and 0.3.6 selects the column it removes — rolling back after it runs breaks every API-key read.
+
+- **Quickwit metrics fields renamed and dropped in `GET /api/admin/metrics`.** `uptimeSeconds` is gone from the top level, `fdsOpen` and `fdsMax` are gone from `resources`, and `memoryRssBytes` is now `memoryResidentBytes`. Quickwit 0.9 stopped exporting the metrics behind the removed fields, so they had already been reporting `null`; they were marked deprecated before being dropped. The `build` block (`version`, `commitHash`, `buildDate`) is now read from the same metrics scrape rather than a separate version probe.
+
 ### Added
 
 - **Traces.** Ingest OTLP spans with `POST /v1/traces` using any existing ingest key, and open a trace from the log that belongs to it — the log detail drawer gains a **Trace** tab with an inline waterfall, and a full trace page at `/traces/:traceId` shows the waterfall with per-span attributes, events, and links back to correlated logs. Pasting a trace ID into the log search box opens that trace directly. Spans are stored in one configured index (`TRACE_INDEX_ID`, defaulting to `otel-traces-v0_9`).
@@ -28,11 +32,34 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 - **Per-index "Trace ID field" setting.** `traceIdField` on `PATCH /api/indexes/:indexId` and in the index config form names the path to a trace ID inside a log document. It is what links logs to traces in both directions, and it defaults to `trace_id`.
 
+- **Trace setup in the send-telemetry wizard.** **Settings → Send logs** is now **Settings → Send logs & traces**, and its route moved from `/settings/send-logs` to `/settings/send-telemetry`. Each integration has a traces variant (`?signal=traces`) alongside its logs snippets. Keys anchored to the span store are hidden from the wizard's key picker, since they cannot ship logs.
+
+- **Cluster identity and node counts in admin health.** The `health` block of `GET /api/admin/cluster` adds `clusterId`, `readyNodes`, `liveNodes`, and `deadNodes`, each nullable when the upstream does not report it.
+
+- **`isTraceIndex` on index rows.** Both `GET /api/indexes` and `GET /api/indexes/:indexId` flag the index that holds spans, so clients can tell it apart without knowing the value of `TRACE_INDEX_ID`.
+
+- **`information` recognized as a severity level.** It sorts next to `info` in the level facet and gets its own color, alongside the existing `warning`/`critical` aliases.
+
+- **Sourcemaps in production API builds,** so stack traces from the bundled `dist/app.js` map back to source.
+
 ### Changed
 
 - **Ingest keys can no longer be created against the span store.** `POST /api/api-keys` returns `400 INDEX_IS_TRACE_INDEX` for an index equal to `TRACE_INDEX_ID`, since a key anchored there would write log documents into the span index. An existing key anchored there keeps working for `POST /v1/traces`, but its log ingestion (`POST /v1/logs`, `POST /api/ingest`) is now rejected with the same error.
 - **`POST /v1/logs` now reports partial failures.** It forwards Quickwit's `partial_success.rejected_log_records` instead of always returning an empty success body, and upstream 4xx statuses pass through rather than collapsing to `400`. OTLP exporters that were receiving silent successes will start seeing rejections they were previously blind to.
 - **Filter values containing `<`, `>` or `=` are now quoted when composed into a query.** Saved views and shares whose filter values contain those characters produce a slightly different Quickwit query than before; results should be the same or more accurate, since previously those characters were passed through as query operators.
+- **New ingest keys carry an `rp_` prefix** instead of `lwit_`. The prefix is only applied when a key is minted and is not part of how a key is looked up, so keys issued by earlier versions keep working unchanged.
+- **Unmatched `/api/*` paths return a JSON 404** instead of falling through to the SPA's HTML shell. A typo in a client's path now surfaces as a parseable error rather than a page of markup.
+- **The empty-state onboarding screen is driven by a live document check.** `GET /api/admin/cluster/document-status` asks Quickwit directly instead of reading the periodic snapshot, so a fresh cluster leaves the getting-started screen as soon as the first document lands rather than at the next snapshot. The span store is excluded from the check — spans alone do not count as having logs.
+- **Menus and dropdowns use the browser's native popover API,** which replaces the hand-rolled open/close and outside-click handling.
+- **New logo mark** across the app and its favicon.
+- **Internal (api):** the index middlewares were consolidated into one implementation, log-scope and API-key parameter schemas were centralized, request logs now record the final response status, API-key `lastUsedAt` writes are throttled in SQL, and export batching and search totals were separated from result queries.
+- **Internal (web):** shared search and time-range controls, modal form handling, and form/confirmation error handling were centralized; the charts share one `UplotChart` component; and hand-written response casts gave way to the Hono RPC client's inferred types.
+- **Dependency updates,** including quickwit-js 0.4, Vite 8, `@sveltejs/vite-plugin-svelte` 7, Hono, and Better Auth 1.6.25.
+
+### Fixed
+
+- **Log list and search toolbar interaction edge cases,** including stale field keys in the field-mappings editor, a modal that ignored cancellation, and JSON pane rendering in the log drawer.
+- **Popovers no longer stay visible when closed** in cases where a display utility class fought the native `[popover]` state.
 
 ## [0.3.6] - 2026-07-21
 
