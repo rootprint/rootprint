@@ -55,9 +55,6 @@ export const sharesRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { code } = c.req.valid('param');
 			const row = await resolveShare(db, code);
-			assertNotTraceIndex(row.indexId);
-			// Asserts the index still exists.
-			await getIndexMeta(db, quickwit, row.indexId);
 			return c.json(row);
 		}
 	);
