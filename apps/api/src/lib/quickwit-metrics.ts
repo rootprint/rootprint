@@ -85,7 +85,7 @@ function parseSampleLine(
 	return { name, labels, value: parseValue(valueRaw) };
 }
 
-export function parsePromText(text: string): PromMetric[] {
+function parsePromText(text: string): PromMetric[] {
 	const byName = new Map<string, PromMetric>();
 
 	const ensure = (name: string): PromMetric => {

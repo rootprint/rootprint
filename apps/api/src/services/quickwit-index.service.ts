@@ -47,7 +47,7 @@ function normalizeRetention(
 	return { period: r.period, schedule: r.schedule ?? null };
 }
 
-export function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetadata {
+function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetadata {
 	const cfg = meta.index_config;
 	const doc = cfg.doc_mapping;
 	const sources: QuickwitSource[] = (meta.sources ?? []).map((s) => ({

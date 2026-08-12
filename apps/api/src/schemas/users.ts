@@ -14,4 +14,3 @@ export type CreateUserInput = v.InferOutput<typeof createUserSchema>;
 export const setUserRoleSchema = v.object({
 	role: v.picklist(userRoles)
 });
-export type SetUserRoleInput = v.InferOutput<typeof setUserRoleSchema>;

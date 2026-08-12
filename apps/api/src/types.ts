@@ -120,7 +120,6 @@ export type VerifiedApiKey = {
 	id: number;
 	name: string;
 	indexId: string;
-	role: 'ingest';
 };
 
 export type Scope = Record<string, string[]>;
@@ -176,8 +175,6 @@ export type IndexConfig = {
 	levelField: string;
 	timestampField: string;
 	messageField: string;
-	tracebackField: string | null;
-	contextFields: string[] | null;
 };
 
 export type QuickwitSource = {

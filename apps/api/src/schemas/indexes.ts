@@ -191,7 +191,7 @@ const dynamicMapping = v.object({
 	expandDots: v.boolean()
 });
 
-export const RESERVED_FIELD_NAMES = ['_source', '_dynamic', '_field_presence'];
+const RESERVED_FIELD_NAMES = new Set(['_source', '_dynamic', '_field_presence']);
 
 export const createIndexSchema = v.pipe(
 	v.object({
@@ -237,7 +237,7 @@ export const createIndexSchema = v.pipe(
 	),
 	v.forward(
 		v.check(
-			(input) => input.fieldMappings.every((f) => !RESERVED_FIELD_NAMES.includes(f.name)),
+			(input) => input.fieldMappings.every((f) => !RESERVED_FIELD_NAMES.has(f.name)),
 			'Field name is reserved by Quickwit.'
 		),
 		['fieldMappings']
@@ -277,7 +277,7 @@ export const updateQuickwitConfigSchema = v.pipe(
 	),
 	v.forward(
 		v.check(
-			(input) => input.newFieldMappings.every((f) => !RESERVED_FIELD_NAMES.includes(f.name)),
+			(input) => input.newFieldMappings.every((f) => !RESERVED_FIELD_NAMES.has(f.name)),
 			'Field name is reserved by Quickwit.'
 		),
 		['newFieldMappings']

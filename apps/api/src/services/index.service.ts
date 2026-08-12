@@ -70,7 +70,7 @@ function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings 
 	};
 }
 
-export async function getIndexSettings(db: Db, indexId: string): Promise<IndexSettings> {
+async function getIndexSettings(db: Db, indexId: string): Promise<IndexSettings> {
 	const [row] = await db
 		.select()
 		.from(indexSettings)
@@ -161,6 +161,8 @@ export async function getIndexConfig(
 	// A span schema has no level or message field, so the explorer would render an empty grid.
 	assertNotTraceIndex(indexId);
 	const meta = await getIndexMeta(db, qw, indexId);
+	// resolveLogFields also yields traceback/context fields for the view config; IndexConfig
+	// narrows them away because no log or export consumer reads them.
 	return { indexId, ...resolveLogFields(meta) };
 }
 

@@ -2,7 +2,6 @@ import * as v from 'valibot';
 
 import { named } from '../../lib/openapi/describe.js';
 import { isoTimestampString } from '../../utils/valibot.js';
-import { apiKeyRoleSchema } from '../api-keys.js';
 
 export const ApiKeyResponse = named(
 	'ApiKeyResponse',
@@ -10,7 +9,6 @@ export const ApiKeyResponse = named(
 		id: v.number(),
 		name: v.string(),
 		tokenPrefix: v.string(),
-		role: apiKeyRoleSchema,
 		indexId: v.string(),
 		lastUsedAt: v.nullable(isoTimestampString),
 		createdAt: isoTimestampString,

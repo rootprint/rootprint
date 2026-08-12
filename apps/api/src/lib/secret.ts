@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
 import { appSettings } from '../db/schema.js';
 
-export const BETTER_AUTH_SECRET_KEY = 'better_auth_secret';
+const BETTER_AUTH_SECRET_KEY = 'better_auth_secret';
 const MIN_SECRET_LENGTH = 32;
 
 function generateSecret(): string {
