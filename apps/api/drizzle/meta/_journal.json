@@ -127,6 +127,13 @@
       "when": 1785611508386,
       "tag": "0017_trace_id_field",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786539471299,
+      "tag": "0018_drop_api_key_role",
+      "breakpoints": true
     }
   ]
 }

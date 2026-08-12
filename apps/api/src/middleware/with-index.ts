@@ -7,7 +7,7 @@ import { getIndexConfig, getIndexMeta } from '../services/index.service.js';
 import type { IndexConfig, IndexMeta } from '../types.js';
 import { notFound } from '../utils/http-error.js';
 
-export type IndexMetaEnv = AuthedEnv & {
+type IndexMetaEnv = AuthedEnv & {
 	Variables: AuthedEnv['Variables'] & { indexMeta: IndexMeta };
 };
 

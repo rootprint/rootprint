@@ -79,7 +79,6 @@ export const apiKey = pgTable(
 		id: serial('id').primaryKey(),
 		name: text('name').notNull().unique(),
 		token: text('token').notNull().unique(),
-		role: text('role').$type<'ingest'>().notNull(),
 		indexId: text('index_id').notNull(),
 		lastUsedAt: timestamp('last_used_at'),
 		createdByUserId: text('created_by_user_id')
@@ -89,9 +88,7 @@ export const apiKey = pgTable(
 	},
 	(table) => [
 		index('api_key_created_by').on(table.createdByUserId),
-		index('api_key_index_id').on(table.indexId),
-		index('api_key_role').on(table.role),
-		check('api_key_role_check', sql`${table.role} in ('ingest')`)
+		index('api_key_index_id').on(table.indexId)
 	]
 );
 

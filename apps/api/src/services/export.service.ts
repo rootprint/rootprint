@@ -9,7 +9,7 @@ import type { ExportLogsQueryInput } from '../schemas/export.js';
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();
 
-export function formatNdjsonBatch(rows: Record<string, unknown>[]): Uint8Array {
+function formatNdjsonBatch(rows: Record<string, unknown>[]): Uint8Array {
 	let out = '';
 	for (const row of rows) {
 		out += JSON.stringify(row) + NEWLINE;
@@ -31,7 +31,7 @@ function formatScalar(v: unknown): string {
 	}
 }
 
-export function formatTextBatch(rows: Record<string, unknown>[], cfg: IndexConfig): Uint8Array {
+function formatTextBatch(rows: Record<string, unknown>[], cfg: IndexConfig): Uint8Array {
 	const exclude = TEXT_FIELDS_TO_EXCLUDE(cfg);
 	let out = '';
 	for (const row of rows) {
@@ -80,7 +80,7 @@ function buildCsvHeader(rows: Record<string, unknown>[]): string[] {
 	return [...priorityPresent, ...rest];
 }
 
-export function formatCsvBatch(rows: Record<string, unknown>[]): Uint8Array {
+function formatCsvBatch(rows: Record<string, unknown>[]): Uint8Array {
 	const header = buildCsvHeader(rows);
 	let out = CSV_BOM + header.map(escapeCsvCell).join(',') + NEWLINE;
 	for (const row of rows) {

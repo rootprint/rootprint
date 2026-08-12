@@ -356,12 +356,6 @@
 					"name": {
 						"type": "string"
 					},
-					"role": {
-						"enum": [
-							"ingest"
-						],
-						"type": "string"
-					},
 					"tokenPrefix": {
 						"type": "string"
 					}
@@ -370,7 +364,6 @@
 					"id",
 					"name",
 					"tokenPrefix",
-					"role",
 					"indexId",
 					"lastUsedAt",
 					"createdAt",
