@@ -42,10 +42,6 @@ export const PRESET_LABELS: Record<Preset, string> = {
 	'30d': 'Last 30 days'
 };
 
-export function presetDurationSec(preset: Preset): number {
-	return PRESET_SECONDS[preset];
-}
-
 export function isPreset(value: string): value is Preset {
 	return (PRESET_OPTIONS as readonly string[]).includes(value);
 }
@@ -57,13 +53,13 @@ export function parseWindow(raw: string | null): Window {
 }
 
 export function windowToSpanMs(window: Window): number {
-	return presetDurationSec(window) * 1000;
+	return PRESET_SECONDS[window] * 1000;
 }
 
 export function resolveWindow(range: TimeRange): { startTs: number; endTs: number } {
 	if (range.type === 'absolute') return { startTs: range.start, endTs: range.end };
 	const endTs = getUnixTime(new Date());
-	return { startTs: endTs - presetDurationSec(range.preset), endTs };
+	return { startTs: endTs - PRESET_SECONDS[range.preset], endTs };
 }
 
 export function formatTimeRangeLabel(r: TimeRange): string {

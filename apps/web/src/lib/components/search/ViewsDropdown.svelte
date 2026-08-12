@@ -191,24 +191,16 @@
 		overwriteModalOpen = true;
 	}
 
+	// Failures must toast: opening a modal dismisses this popover, so `error` — which only
+	// renders inside the panel — would never be seen.
 	async function confirmOverwrite() {
 		const item = toOverwrite;
 		if (!item) return;
 		const indexId = store.selectedIndex;
-		if (indexId === null) {
-			error = 'No index selected';
-			overwriteModalOpen = false;
-			return;
-		}
-		error = null;
-		try {
-			const row = await updateView(indexId, item.id, currentSnapshot());
-			items = items.map((it) => (it.id === row.id ? row : it));
-			toOverwrite = null;
-		} catch (e) {
-			// surfaced in the dropdown panel, not as a toast — the panel is already open
-			error = e instanceof Error ? e.message : 'Failed to update view';
-		}
+		if (indexId === null) throw new Error('No index selected');
+		const row = await updateView(indexId, item.id, currentSnapshot());
+		items = items.map((it) => (it.id === row.id ? row : it));
+		toOverwrite = null;
 	}
 
 	function openDeleteModal(item: SavedView) {
@@ -220,19 +212,10 @@
 		const item = toDelete;
 		if (!item) return;
 		const indexId = store.selectedIndex;
-		if (indexId === null) {
-			error = 'No index selected';
-			deleteModalOpen = false;
-			return;
-		}
-		error = null;
-		try {
-			await deleteView(indexId, item.id);
-			items = items.filter((it) => it.id !== item.id);
-			toDelete = null;
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to delete view';
-		}
+		if (indexId === null) throw new Error('No index selected');
+		await deleteView(indexId, item.id);
+		items = items.filter((it) => it.id !== item.id);
+		toDelete = null;
 	}
 
 	function close() {
@@ -464,6 +447,7 @@
 	title="Delete view"
 	confirmLabel="Delete"
 	confirmingLabel="Deleting…"
+	errorFallback="Failed to delete view"
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}
@@ -476,6 +460,7 @@
 	title="Update view"
 	confirmLabel="Update"
 	confirmingLabel="Updating…"
+	errorFallback="Failed to update view"
 	onConfirm={confirmOverwrite}
 >
 	{#snippet message()}

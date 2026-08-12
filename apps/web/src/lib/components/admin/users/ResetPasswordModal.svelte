@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import * as v from 'valibot';
 
 	import { resetUserPassword } from '$lib/api/users';
 	import CopyableField from '$lib/components/ui/CopyableField.svelte';
@@ -33,8 +32,6 @@
 	title="Reset password"
 	submitLabel="Reset password"
 	busyLabel="Resetting…"
-	schema={v.object({})}
-	values={() => ({})}
 	{submit}
 	onclose={() => (inviteUrl = null)}
 >

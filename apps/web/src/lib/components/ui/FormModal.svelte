@@ -10,8 +10,9 @@
 		title,
 		submitLabel,
 		busyLabel = 'Creating…',
-		schema,
-		values,
+		// a fieldless modal (confirm + reveal) validates nothing, so the cast has no output to widen
+		schema = v.object({}) as unknown as TSchema,
+		values = () => ({}),
 		submit,
 		onclose,
 		fields,
@@ -21,8 +22,8 @@
 		title: string;
 		submitLabel: string;
 		busyLabel?: string;
-		schema: TSchema;
-		values: () => unknown;
+		schema?: TSchema;
+		values?: () => unknown;
 		submit: (input: v.InferOutput<TSchema>) => Promise<void>;
 		onclose?: () => void;
 		fields: Snippet<[Record<string, string>]>;
