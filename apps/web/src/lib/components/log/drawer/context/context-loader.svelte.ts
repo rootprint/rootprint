@@ -159,8 +159,8 @@ export class ContextLoader {
 					limit: PAGE_SIZE,
 					offset: this.#beforeOffset,
 					sortDirection: 'desc',
-					startTimestamp: this.#beforeWindowEnd - WINDOW_SECONDS,
-					endTimestamp: this.#beforeWindowEnd
+					startTs: this.#beforeWindowEnd - WINDOW_SECONDS,
+					endTs: this.#beforeWindowEnd
 				},
 				{ signal: this.#abort?.signal }
 			);
@@ -189,8 +189,8 @@ export class ContextLoader {
 					limit: PAGE_SIZE,
 					offset: this.#afterOffset,
 					sortDirection: 'asc',
-					startTimestamp: this.#afterWindowStart,
-					endTimestamp: this.#afterWindowStart + WINDOW_SECONDS
+					startTs: this.#afterWindowStart,
+					endTs: this.#afterWindowStart + WINDOW_SECONDS
 				},
 				{ signal: this.#abort?.signal }
 			);
@@ -248,8 +248,8 @@ export class ContextLoader {
 						limit: PAGE_SIZE,
 						offset: 0,
 						sortDirection: 'asc',
-						startTimestamp: this.anchorTs,
-						endTimestamp: this.anchorTs + WINDOW_SECONDS
+						startTs: this.anchorTs,
+						endTs: this.anchorTs + WINDOW_SECONDS
 					},
 					{ signal: this.#abort.signal }
 				),
@@ -260,8 +260,8 @@ export class ContextLoader {
 						limit: PAGE_SIZE,
 						offset: 0,
 						sortDirection: 'desc',
-						startTimestamp: this.anchorTs - WINDOW_SECONDS,
-						endTimestamp: this.anchorTs
+						startTs: this.anchorTs - WINDOW_SECONDS,
+						endTs: this.anchorTs
 					},
 					{ signal: this.#abort.signal }
 				)

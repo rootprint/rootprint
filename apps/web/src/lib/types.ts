@@ -52,9 +52,8 @@ export interface HistogramBucket {
 export interface HistogramInput {
 	indexId: string;
 	query: string;
-	timeRange?: string;
-	startTimestamp?: number;
-	endTimestamp?: number;
+	startTs: number;
+	endTs: number;
 }
 
 export interface HistogramResult {
@@ -97,9 +96,8 @@ export interface ParsedQuery {
 export interface SearchInput {
 	indexId: string;
 	query: string;
-	timeRange?: string;
-	startTimestamp?: number;
-	endTimestamp?: number;
+	startTs?: number;
+	endTs?: number;
 	sortDirection: SortDirection;
 	limit: number;
 	offset: number;

@@ -1,7 +1,7 @@
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { Filter, LogFieldValueBucket, TimeRange } from '$lib/types';
-import { buildTimeParams, resolveTimeRange } from '$lib/utils/time-range';
+import { resolveWindow } from '$lib/utils/time-range';
 import { FIELD_VALUES_MAX } from 'api/constants';
 
 export type FetchFieldValuesBulkInput = {
@@ -18,7 +18,7 @@ export async function fetchFieldValuesBulk(
 	input: FetchFieldValuesBulkInput
 ): Promise<Record<string, LogFieldValueBucket[]>> {
 	const { indexId, fields, query, filters, timeRange, limit = FIELD_VALUES_MAX, signal } = input;
-	const { startTs, endTs } = resolveTimeRange(buildTimeParams(timeRange));
+	const { startTs, endTs } = resolveWindow(timeRange);
 
 	const res = await client.api.indexes[':indexId'].fields.values.$get(
 		{
@@ -28,8 +28,8 @@ export async function fetchFieldValuesBulk(
 				q: query,
 				...(filters.length > 0 && { filters: JSON.stringify(filters) }),
 				limit: String(limit),
-				...(startTs !== undefined && { startTs: String(startTs) }),
-				...(endTs !== undefined && { endTs: String(endTs) })
+				startTs: String(startTs),
+				endTs: String(endTs)
 			}
 		},
 		{ init: { signal } }

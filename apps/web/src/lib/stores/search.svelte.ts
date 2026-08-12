@@ -21,7 +21,7 @@ import { getPreferences, setPreferences } from '$lib/api/preferences';
 import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
-import { buildTimeParams, resolveTimeRange } from '$lib/utils/time-range';
+import { resolveWindow } from '$lib/utils/time-range';
 import { displayNameFor, extractJsonSubFields, serializeTimeRange } from '$lib/utils/fields';
 import { RequestGuard } from '$lib/stores/request-guard';
 import { isAbortError } from '$lib/api/errors';
@@ -338,7 +338,7 @@ export class SearchStore {
 				this.#loadActiveFields(active);
 			}
 
-			const timeWindow = resolveTimeRange(buildTimeParams(this.timeRange));
+			const timeWindow = resolveWindow(this.timeRange);
 			this.#runSearch('fresh', timeWindow);
 			this.#fetchHistogram(timeWindow);
 
@@ -360,7 +360,7 @@ export class SearchStore {
 
 	async #runSearch(
 		mode: 'fresh' | 'append' | 'prefetch' = 'fresh',
-		timeWindow?: { startTs?: number; endTs?: number }
+		timeWindow?: { startTs: number; endTs: number }
 	): Promise<void> {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
@@ -388,7 +388,7 @@ export class SearchStore {
 				startTs = this.#snapshotStartTs;
 				endTs = this.#snapshotEndTs;
 			} else {
-				const resolved = timeWindow ?? resolveTimeRange(buildTimeParams(this.timeRange));
+				const resolved = timeWindow ?? resolveWindow(this.timeRange);
 				startTs = resolved.startTs;
 				endTs = resolved.endTs;
 				this.#snapshotStartTs = startTs;
@@ -399,8 +399,8 @@ export class SearchStore {
 				{
 					indexId: this.selectedIndex,
 					query: this.composedQuery,
-					startTimestamp: startTs,
-					endTimestamp: endTs,
+					startTs,
+					endTs,
 					sortDirection: this.sortDirection,
 					limit: BATCH_SIZE,
 					offset: append ? this.rawHits.length : 0
@@ -462,7 +462,7 @@ export class SearchStore {
 		return this.#lastBatchFull ? 'more' : 'end';
 	}
 
-	async #fetchHistogram(timeWindow: { startTs?: number; endTs?: number }): Promise<void> {
+	async #fetchHistogram(timeWindow: { startTs: number; endTs: number }): Promise<void> {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
 
@@ -485,8 +485,7 @@ export class SearchStore {
 				{
 					indexId: this.selectedIndex,
 					query: this.composedQuery,
-					startTimestamp: timeWindow.startTs,
-					endTimestamp: timeWindow.endTs
+					...timeWindow
 				} satisfies HistogramInput,
 				controller.signal
 			);
