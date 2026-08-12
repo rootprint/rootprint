@@ -1562,24 +1562,11 @@
 					},
 					"saturation": {
 						"$ref": "#/components/schemas/SaturationSnapshotResponse"
-					},
-					"uptimeSeconds": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						],
-						"deprecated": true,
-						"description": "Deprecated; unavailable in Quickwit 0.9."
 					}
 				},
 				"required": [
 					"fetchedAt",
 					"build",
-					"uptimeSeconds",
 					"resources",
 					"saturation"
 				],
@@ -1665,30 +1652,6 @@
 			},
 			"ResourceSnapshotResponse": {
 				"properties": {
-					"fdsMax": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						],
-						"deprecated": true,
-						"description": "Deprecated; unavailable in Quickwit 0.9."
-					},
-					"fdsOpen": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						],
-						"deprecated": true,
-						"description": "Deprecated; unavailable in Quickwit 0.9."
-					},
 					"memoryResidentBytes": {
 						"anyOf": [
 							{
@@ -1698,18 +1661,6 @@
 								"type": "null"
 							}
 						]
-					},
-					"memoryRssBytes": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						],
-						"deprecated": true,
-						"description": "Deprecated compatibility alias for memoryResidentBytes."
 					},
 					"walDiskBytes": {
 						"anyOf": [
@@ -1724,9 +1675,6 @@
 				},
 				"required": [
 					"memoryResidentBytes",
-					"memoryRssBytes",
-					"fdsOpen",
-					"fdsMax",
 					"walDiskBytes"
 				],
 				"type": "object"
