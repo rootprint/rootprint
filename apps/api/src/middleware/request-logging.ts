@@ -7,7 +7,7 @@ import { logger } from '../lib/logger.js';
 import { HttpError } from '../utils/http-error.js';
 import { quickwitErrorToHttp } from '../utils/quickwit-error.js';
 
-function shouldLogPath(path: string): boolean {
+export function isApiPath(path: string): boolean {
 	return path === '/api' || path === '/v1' || path.startsWith('/api/') || path.startsWith('/v1/');
 }
 
@@ -30,7 +30,7 @@ function statusFromError(err: unknown, path: string): number {
 }
 
 export const requestLogging: MiddlewareHandler<AppEnv> = async (c, next) => {
-	if (!shouldLogPath(c.req.path)) {
+	if (!isApiPath(c.req.path)) {
 		await next();
 		return;
 	}

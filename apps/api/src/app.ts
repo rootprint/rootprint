@@ -17,7 +17,7 @@ import { connectDb, db, runMigrations } from './lib/db.js';
 import { logger } from './lib/logger.js';
 import { probeQuickwit, quickwit } from './lib/quickwit.js';
 import { requestContext } from './middleware/request-context.js';
-import { requestLogging } from './middleware/request-logging.js';
+import { isApiPath, requestLogging } from './middleware/request-logging.js';
 import { requireUser } from './middleware/require-user.js';
 import { adminActivityRouter } from './routes/admin/activity.js';
 import { clusterRouter } from './routes/admin/cluster.js';
@@ -43,10 +43,6 @@ import { buildSpec } from './lib/openapi/spec.js';
 
 // Resolves to apps/web/build from both src/app.ts (dev) and dist/app.js (prod): both are two segments deep in apps/api.
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/build');
-
-function isApiPath(p: string): boolean {
-	return p === '/api' || p === '/v1' || p.startsWith('/api/') || p.startsWith('/v1/');
-}
 
 function withAuth<E extends AuthedEnv, S extends Schema>(router: Hono<E, S, ''>) {
 	return new Hono<AppEnv>().use('*', requireUser).route('/', router);
@@ -96,13 +92,10 @@ app.onError((rawErr, c) => {
 
 	if (c.req.path.startsWith('/v1/')) {
 		if (err instanceof HttpError) {
-			if (err.retryAfter != null) {
-				logger.warn(logMeta, 'request failed');
-			} else if (err.statusCode >= 500) {
-				logger.error(logMeta, 'request failed');
-			} else {
-				logger.warn(logMeta, 'request failed');
-			}
+			logger[err.retryAfter == null && err.statusCode >= 500 ? 'error' : 'warn'](
+				logMeta,
+				'request failed'
+			);
 			return otlpErrorFromHttpError(err);
 		}
 		logger.error(logMeta, 'request failed');
@@ -179,9 +172,11 @@ app.get('/api/openapi.json', async (c) => {
 	return c.json(await openAPISpec);
 });
 
-// SPA static-file serving. Mounted AFTER `routes` so /api and /v1 keep their handlers and app.notFound still emits the JSON 404 contract; each handler bails on API paths via isApiPath().
+// SPA static-file serving. Mounted AFTER `routes`, so an API path reaching here matched no route:
+// send it to app.notFound()'s JSON 404 contract instead of the SPA handlers below.
+app.use('*', async (c, next) => (isApiPath(c.req.path) ? c.notFound() : next()));
+
 app.use('*', async (c, next) => {
-	if (isApiPath(c.req.path)) return next();
 	await next();
 	if (c.req.path.startsWith('/_app/immutable/')) {
 		c.header('Cache-Control', 'public, max-age=31536000, immutable');
@@ -192,16 +187,10 @@ app.use('*', async (c, next) => {
 	}
 });
 
-app.use('*', async (c, next) => {
-	if (isApiPath(c.req.path)) return next();
-	return serveStatic({ root: webRoot })(c, next);
-});
+app.use('*', serveStatic({ root: webRoot }));
 
 // SPA fallback: anything still unmatched gets index.html.
-app.get('*', async (c, next) => {
-	if (isApiPath(c.req.path)) return next();
-	return serveStatic({ path: 'index.html', root: webRoot })(c, next);
-});
+app.get('*', serveStatic({ path: 'index.html', root: webRoot }));
 
 async function main(): Promise<void> {
 	logger.info('booting api');
