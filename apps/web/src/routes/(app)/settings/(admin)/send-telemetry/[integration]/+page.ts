@@ -11,7 +11,7 @@ export const load: PageLoad = async ({ params, depends }) => {
 	depends(DEP.indexes);
 
 	if (!integrationById.has(params.integration)) {
-		error(404, 'Unknown integration');
+		throw error(404, 'Unknown integration');
 	}
 
 	try {
@@ -24,7 +24,7 @@ export const load: PageLoad = async ({ params, depends }) => {
 			traceIndexId
 		};
 	} catch (e) {
-		if (e instanceof ApiError) error(e.status, e.message);
+		if (e instanceof ApiError) throw error(e.status, e.message);
 		throw e;
 	}
 };
