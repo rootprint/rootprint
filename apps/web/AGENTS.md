@@ -35,7 +35,7 @@ bun --filter web lint             # oxlint
 | `src/lib/api/client.ts`              | Hono RPC client (`hc<AppType>`)                |
 | `src/lib/auth-client.ts`             | Better Auth client                             |
 | `src/lib/types.ts`                   | App-local types (pure types only)              |
-| `src/app.html`                       | HTML shell + boot loader + Google Fonts        |
+| `src/app.html`                       | HTML shell + boot loader                       |
 | `src/app.css`                        | Tailwind entry + DaisyUI theme + design tokens |
 | `svelte.config.js`, `vite.config.ts` | Tooling configs                                |
 
