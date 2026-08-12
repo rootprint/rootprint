@@ -99,7 +99,6 @@
 		{:then rec}
 			<ListCard
 				cols="auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)"
-				gap="gap-x-6"
 				empty={rec.rows.length === 0}
 				emptyMessage="No activity in this window."
 			>
