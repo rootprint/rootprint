@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Eye, Plus, Search, Trash2 } from 'lucide-svelte';
+	import { Eye, Plus, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
 	import { deleteApiKey, getApiKey } from '$lib/api/api-keys';
 	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import SecretReveal from '$lib/components/ui/SecretReveal.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
@@ -107,15 +108,7 @@
 	{/if}
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">
-		<label class="input input-sm flex-1">
-			<Search class="h-3.5 w-3.5 opacity-60" />
-			<input
-				type="search"
-				placeholder="Search API keys..."
-				aria-label="Search API keys"
-				bind:value={search}
-			/>
-		</label>
+		<SearchInput bind:value={search} placeholder="Search API keys..." label="Search API keys" />
 
 		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
 

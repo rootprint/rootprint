@@ -31,6 +31,13 @@ export function readJSON<T>(key: string, fallback: T): T {
 	}
 }
 
+// readJSON's generic is an unchecked cast — stored null/{}/42 parse fine, so guard the shape.
+export function readStringArray(key: string): string[] {
+	const parsed = readJSON<unknown>(key, []);
+	if (!Array.isArray(parsed)) return [];
+	return parsed.filter((v): v is string => typeof v === 'string');
+}
+
 export function writeJSON(key: string, value: unknown): void {
 	try {
 		writeString(key, JSON.stringify(value));

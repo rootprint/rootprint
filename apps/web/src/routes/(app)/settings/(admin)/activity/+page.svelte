@@ -3,7 +3,7 @@
 
 	import KpiStrip from '$lib/components/activity/KpiStrip.svelte';
 	import LatencyChart from '$lib/components/activity/LatencyChart.svelte';
-	import TimeRangeTabs from '$lib/components/activity/TimeRangeTabs.svelte';
+	import TimeRangeTabs from '$lib/components/ui/TimeRangeTabs.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';

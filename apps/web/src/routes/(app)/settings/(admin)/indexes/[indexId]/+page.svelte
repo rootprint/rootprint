@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-svelte';
+	import { ChevronRight, Pencil, Plus, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
@@ -11,6 +11,7 @@
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TypeToConfirmModal from '$lib/components/ui/TypeToConfirmModal.svelte';
 	import { pluralize } from '$lib/utils/format';
 	import type { IndexTabId } from '$lib/types';
@@ -81,15 +82,7 @@
 	{:else if activeTab === 'fields'}
 		<div class="flex flex-col gap-3">
 			<div class="flex flex-wrap items-center gap-4">
-				<label class="input input-sm flex-1">
-					<Search class="h-3.5 w-3.5 opacity-60" />
-					<input
-						type="search"
-						placeholder="Search fields…"
-						aria-label="Search fields"
-						bind:value={fieldFilter}
-					/>
-				</label>
+				<SearchInput bind:value={fieldFilter} placeholder="Search fields…" label="Search fields" />
 				<span class="text-base-content/60 text-xs">[{fieldsCountLabel}]</span>
 			</div>
 
@@ -127,15 +120,11 @@
 	{:else if activeTab === 'sources'}
 		<div class="flex flex-col gap-3">
 			<div class="flex flex-wrap items-center gap-4">
-				<label class="input input-sm flex-1">
-					<Search class="h-3.5 w-3.5 opacity-60" />
-					<input
-						type="search"
-						placeholder="Search sources…"
-						aria-label="Search sources"
-						bind:value={sourceFilter}
-					/>
-				</label>
+				<SearchInput
+					bind:value={sourceFilter}
+					placeholder="Search sources…"
+					label="Search sources"
+				/>
 				<span class="text-base-content/60 text-xs">[{sourcesCountLabel}]</span>
 				<a href="/settings/indexes/{detail.indexId}/sources/new" class="btn btn-primary btn-sm">
 					<Plus class="h-3.5 w-3.5" />
