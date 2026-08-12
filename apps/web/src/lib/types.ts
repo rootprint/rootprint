@@ -105,7 +105,6 @@ export interface SearchInput {
 
 export interface SearchResult {
 	rawHits: Record<string, unknown>[];
-	numHits: number;
 	elapsedTimeMicros: number;
 }
 

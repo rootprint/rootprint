@@ -45,7 +45,7 @@ export class SearchStore {
 	rawHits = $state.raw<Record<string, unknown>[]>([]);
 	numHits = $state<number | null>(null);
 	elapsedTimeMicros = $state(0);
-	loading = $state<'idle' | 'fresh' | 'appending'>('idle');
+	loading = $state<'idle' | 'fresh'>('idle');
 	#prefetching = $state(false);
 	#lastBatchFull = $state(false);
 	searchError = $state<string | null>(null);
@@ -339,7 +339,7 @@ export class SearchStore {
 			}
 
 			const timeWindow = resolveWindow(this.timeRange);
-			this.#runSearch('fresh', timeWindow);
+			this.#runSearch(false, timeWindow);
 			this.#fetchHistogram(timeWindow);
 
 			writeLastIndex(active);
@@ -359,24 +359,22 @@ export class SearchStore {
 	}
 
 	async #runSearch(
-		mode: 'fresh' | 'append' | 'prefetch' = 'fresh',
+		append: boolean,
 		timeWindow?: { startTs: number; endTs: number }
 	): Promise<void> {
 		if (this.#disposed) return;
 		if (this.selectedIndex === null) return;
-
-		const silent = mode === 'prefetch';
-		const append = mode !== 'fresh';
 
 		this.#searchAbort?.abort();
 		const controller = new AbortController();
 		this.#searchAbort = controller;
 		const requestId = this.#searchGuard.next();
 
-		if (silent) {
+		// Appending happens ahead of the viewport, so it stays silent.
+		if (append) {
 			this.#prefetching = true;
 		} else {
-			this.loading = append ? 'appending' : 'fresh';
+			this.loading = 'fresh';
 			this.searchError = null;
 		}
 
@@ -405,7 +403,7 @@ export class SearchStore {
 					limit: BATCH_SIZE,
 					offset: append ? this.rawHits.length : 0
 				},
-				{ signal: controller.signal }
+				controller.signal
 			);
 
 			if (!this.#searchGuard.isCurrent(requestId)) return;
@@ -418,7 +416,7 @@ export class SearchStore {
 				this.#onFreshSearch?.();
 			}
 			this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
-			if (mode === 'fresh') {
+			if (!append) {
 				this.elapsedTimeMicros = result.elapsedTimeMicros;
 			}
 
@@ -426,17 +424,15 @@ export class SearchStore {
 		} catch (e) {
 			if (isAbortError(e)) return;
 			if (!this.#searchGuard.isCurrent(requestId)) return;
-			if (silent) return;
+			if (append) return;
 			this.searchError = e instanceof Error ? e.message : 'Search failed';
-			if (mode === 'fresh') {
-				this.rawHits = [];
-				this.elapsedTimeMicros = 0;
-				this.#lastBatchFull = false;
-			}
+			this.rawHits = [];
+			this.elapsedTimeMicros = 0;
+			this.#lastBatchFull = false;
 		} finally {
 			if (this.#searchGuard.isCurrent(requestId)) {
 				this.#prefetching = false;
-				if (!silent) this.loading = 'idle';
+				if (!append) this.loading = 'idle';
 			}
 		}
 	}
@@ -453,7 +449,7 @@ export class SearchStore {
 
 	maybeLoadMore(): void {
 		if (!this.#canFetchMore()) return;
-		void this.#runSearch('prefetch');
+		void this.#runSearch(true);
 	}
 
 	get listEnd(): 'more' | 'end' | 'capped' {
