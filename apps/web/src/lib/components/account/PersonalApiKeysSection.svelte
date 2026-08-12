@@ -16,31 +16,18 @@
 
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<PersonalApiKey | null>(null);
-	let deleting = $state(false);
 
 	function openDelete(key: PersonalApiKey) {
 		deleteTarget = key;
-		deleting = false;
 		deleteOpen = true;
 	}
 
 	async function confirmDelete() {
 		if (!deleteTarget) return;
-		deleting = true;
-		try {
-			const result = await authClient.apiKey.delete({ keyId: deleteTarget.id });
-			if (result.error) {
-				toast.error(result.error.message ?? 'Failed to revoke API key');
-				return;
-			}
-			toast.success('API key revoked');
-			await invalidate(DEP.personalKeys);
-			deleteOpen = false;
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to revoke API key');
-		} finally {
-			deleting = false;
-		}
+		const result = await authClient.apiKey.delete({ keyId: deleteTarget.id });
+		if (result.error) throw new Error(result.error.message ?? 'Failed to revoke API key');
+		toast.success('API key revoked');
+		await invalidate(DEP.personalKeys);
 	}
 </script>
 
@@ -96,10 +83,10 @@
 
 <ConfirmModal
 	bind:open={deleteOpen}
-	bind:loading={deleting}
 	title="Revoke API key"
 	confirmLabel="Revoke"
 	confirmingLabel="Revoking…"
+	errorFallback="Failed to revoke API key"
 	onConfirm={confirmDelete}
 >
 	{#snippet message()}

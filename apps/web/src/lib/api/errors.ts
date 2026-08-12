@@ -32,6 +32,17 @@ export function toFieldErrors(body: ApiErrorBody): Record<string, string> {
 	return out;
 }
 
+/** Splits a failed submit into the message to surface and the per-field errors to attach. */
+export function toFormErrors(
+	err: unknown,
+	fallback: string
+): { message: string; fieldErrors: Record<string, string> } {
+	if (err instanceof ApiError && err.body) {
+		return { message: err.message, fieldErrors: toFieldErrors(err.body) };
+	}
+	return { message: err instanceof Error ? err.message : fallback, fieldErrors: {} };
+}
+
 /** Maps Valibot `safeParse` issues to a `{ field: message }` record keyed by top-level path. */
 export function issuesToFieldErrors(
 	issues: readonly v.BaseIssue<unknown>[]

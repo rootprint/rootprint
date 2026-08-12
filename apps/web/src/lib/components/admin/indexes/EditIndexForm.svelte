@@ -4,7 +4,7 @@
 
 	import { goto, invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
-	import { ApiError, issuesToPathErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToPathErrors, toFormErrors } from '$lib/api/errors';
 	import { updateQuickwitConfig } from '$lib/api/indexes';
 	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import TagInput from '$lib/components/ui/TagInput.svelte';
@@ -90,12 +90,9 @@
 			await invalidate(DEP.index(detail.indexId));
 			await goto(`/settings/indexes/${encodeURIComponent(detail.indexId)}`);
 		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				fieldErrors = toFieldErrors(err.body);
-				toast.error(err.message);
-			} else {
-				toast.error(err instanceof Error ? err.message : 'Failed to update index configuration');
-			}
+			const formErrors = toFormErrors(err, 'Failed to update index configuration');
+			fieldErrors = formErrors.fieldErrors;
+			toast.error(formErrors.message);
 		} finally {
 			submitting = false;
 		}

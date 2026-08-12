@@ -8,31 +8,19 @@
 	let { open = $bindable(false), provider }: { open: boolean; provider: OAuthProviderDescriptor } =
 		$props();
 
-	let loading = $state(false);
-
 	async function onConfirm() {
-		loading = true;
-		try {
-			await provider.removeCredentials();
-			toast.success(`${provider.name} authentication removed`);
-			open = false;
-			await goto(`/settings/authentication?saved=${provider.id}`, { invalidateAll: true });
-		} catch (e) {
-			toast.error(
-				e instanceof Error ? e.message : `Failed to remove ${provider.name} authentication`
-			);
-		} finally {
-			loading = false;
-		}
+		await provider.removeCredentials();
+		toast.success(`${provider.name} authentication removed`);
+		await goto(`/settings/authentication?saved=${provider.id}`, { invalidateAll: true });
 	}
 </script>
 
 <ConfirmModal
 	bind:open
-	bind:loading
 	title="Remove {provider.name} authentication"
 	confirmLabel="Remove"
 	confirmingLabel="Removing…"
+	errorFallback="Failed to remove {provider.name} authentication"
 	{onConfirm}
 >
 	{#snippet message()}

@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import * as v from 'valibot';
 
-	import { ApiError, issuesToFieldErrors, toFieldErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
 	import Modal from './Modal.svelte';
 
 	let {
@@ -71,12 +71,9 @@
 			done = true;
 			open = true; // re-open if dismissed mid-request — a one-time secret must be shown
 		} catch (err) {
-			if (err instanceof ApiError && err.body) {
-				formError = err.body.error.message;
-				fieldErrors = toFieldErrors(err.body);
-			} else {
-				formError = err instanceof Error ? err.message : 'Something went wrong';
-			}
+			const formErrors = toFormErrors(err, 'Something went wrong');
+			formError = formErrors.message;
+			fieldErrors = formErrors.fieldErrors;
 		} finally {
 			submitting = false;
 		}
