@@ -9,8 +9,8 @@
 
 Open-source, self-hosted log management with full-text search on object-storage-backed indexes.
 
-Rootprint gives engineering teams a focused log search UI, OpenTelemetry ingestion, team access
-control, and Quickwit-powered search without sending logs to a hosted SaaS.
+Rootprint gives engineering teams a focused log search UI, OpenTelemetry ingestion for logs and
+traces, team access control, and Quickwit-powered search without sending telemetry to a hosted SaaS.
 
 ![Rootprint screenshot](apps/web/static/hero-screenshot.png)
 
@@ -18,9 +18,10 @@ control, and Quickwit-powered search without sending logs to a hosted SaaS.
 
 - **Search on object storage** - Query indexes stored on S3, MinIO, R2,
   GCS, Azure Blob, or local disk.
-- **Open ingestion** - Send logs through OTLP Protobuf or NDJSON HTTP, with OpenTelemetry
+- **Open ingestion** - Send logs and traces through OTLP Protobuf or NDJSON HTTP, with OpenTelemetry
   Collector, Vector, Fluent Bit and other OTEL-compatible
   sources.
+- **Traces** - View OpenTelemetry traces alongside your logs.
 - **Incident-ready UI** - Use severity-aware rows, histograms, field filters, saved views,
   detail drawers, share links, and result exports.
 - **Team access** - Invite users, manage roles, create scoped ingest keys, add service accounts
@@ -46,7 +47,8 @@ Then:
 
 1. Create the first admin account.
 2. Create an ingest key in **Settings -> API keys**.
-3. Send logs to the bundled OpenTelemetry index (`otel-logs-v0_9`).
+3. Send logs to the bundled OpenTelemetry index (`otel-logs-v0_9`). The same key ships spans to
+   `POST /v1/traces`.
 4. Search them from the Rootprint UI.
 
 Full install guide: https://docs.rootprint.io/install/docker-compose
