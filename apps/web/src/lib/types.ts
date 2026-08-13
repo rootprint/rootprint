@@ -6,6 +6,14 @@ export type { Filter, SortDirection };
 /** One crumb in a breadcrumb trail. Ancestors set `href`; the current page omits it. */
 export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean };
 
+/** One key/value row in a field table — what `ui/FieldRow.svelte` renders. */
+export interface FieldRowData {
+	name: string;
+	displayName: string;
+	value: string;
+	isEmpty: boolean;
+}
+
 export interface PersonalApiKey {
 	id: string;
 	name: string | null;

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Copy, Minus, Plus } from 'lucide-svelte';
-	import type { DrawerField } from '$lib/utils/hit-fields';
+	import type { FieldRowData } from '$lib/types';
 
 	let {
 		field,
@@ -9,11 +9,11 @@
 		onFilterOut,
 		onCopy
 	}: {
-		field: DrawerField;
+		field: FieldRowData;
 		keyClass?: string;
-		onFilterFor?: (field: DrawerField) => void;
-		onFilterOut?: (field: DrawerField) => void;
-		onCopy?: (field: DrawerField) => void;
+		onFilterFor?: (field: FieldRowData) => void;
+		onFilterOut?: (field: FieldRowData) => void;
+		onCopy?: (field: FieldRowData) => void;
 	} = $props();
 
 	const hasActions = $derived(Boolean(onFilterFor || onFilterOut || onCopy));

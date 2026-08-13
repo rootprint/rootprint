@@ -2,12 +2,12 @@
 	import { ChevronDown, Copy } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
-	import DrawerFieldRow from './DrawerFieldRow.svelte';
-	import type { DrawerField, FieldGroup, FieldGroupId } from '$lib/utils/hit-fields';
+	import FieldRow from '$lib/components/ui/FieldRow.svelte';
+	import type { FieldGroup, FieldGroupId } from '$lib/utils/hit-fields';
 	import { groupHitFields } from '$lib/utils/hit-fields';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
-	import type { LogHit } from '$lib/types';
+	import type { FieldRowData, LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
 	let {
@@ -50,11 +50,11 @@
 		collapsed = { ...collapsed, [id]: !collapsed[id] };
 	}
 
-	function applyFilter(field: DrawerField, negate: boolean) {
+	function applyFilter(field: FieldRowData, negate: boolean) {
 		store.addFilter(field.name, field.value, negate);
 	}
 
-	function copyValue(field: DrawerField) {
+	function copyValue(field: FieldRowData) {
 		void copyWithToast(field.value, 'Value copied');
 	}
 
@@ -131,7 +131,7 @@
 							<table class="w-full table-fixed border-collapse">
 								<tbody>
 									{#each group.fields as field, i (i)}
-										<DrawerFieldRow
+										<FieldRow
 											{field}
 											onFilterFor={(f) => applyFilter(f, false)}
 											onFilterOut={(f) => applyFilter(f, true)}

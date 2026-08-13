@@ -1,19 +1,8 @@
-import type { FieldConfig } from '$lib/types';
+import type { FieldConfig, FieldRowData } from '$lib/types';
 import { formatCell } from './column-width';
 import { getByPath } from './get-by-path';
 import { stripOtelPrefix } from './fields';
 import { isPlainObject } from './object';
-
-export interface DrawerField {
-	/** Raw dotted path, e.g. "attributes.http.status_code". Used for filtering. */
-	name: string;
-	/** What FieldRow renders. Equals `name` unless the OTEL prefix was stripped. */
-	displayName: string;
-	/** Pre-formatted value string. Empty string when there is nothing meaningful to show. */
-	value: string;
-	/** True when the raw value is null, undefined, an empty string, or an empty object. */
-	isEmpty: boolean;
-}
 
 export type FieldGroupId = 'attributes' | 'resource_attributes' | 'other' | 'all';
 
@@ -21,7 +10,7 @@ export interface FieldGroup {
 	id: FieldGroupId;
 	/** Eyebrow label, e.g. "Attributes". `null` ⇒ render with no header (non-OTEL). */
 	label: string | null;
-	fields: DrawerField[];
+	fields: FieldRowData[];
 }
 
 export interface GroupedHit {
@@ -33,7 +22,7 @@ export interface GroupedHit {
 	groups: FieldGroup[];
 }
 
-function leafField(name: string, displayName: string, rawValue: unknown): DrawerField {
+function leafField(name: string, displayName: string, rawValue: unknown): FieldRowData {
 	const value = formatCell(rawValue);
 	return {
 		name,
@@ -52,7 +41,7 @@ function leafField(name: string, displayName: string, rawValue: unknown): Drawer
 function expandValue(
 	path: string,
 	value: unknown,
-	out: DrawerField[],
+	out: FieldRowData[],
 	toDisplayName: (name: string) => string
 ): void {
 	if (!isPlainObject(value)) {
@@ -71,7 +60,7 @@ function expandValue(
 
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
-function sortByDisplayName(fields: DrawerField[]): DrawerField[] {
+function sortByDisplayName(fields: FieldRowData[]): FieldRowData[] {
 	return fields.toSorted((a, b) => nameCollator.compare(a.displayName, b.displayName));
 }
 
@@ -85,7 +74,7 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 	const message = formatCell(messageRaw);
 
 	if (!fieldConfig.isOtel) {
-		const collected: DrawerField[] = [];
+		const collected: FieldRowData[] = [];
 		for (const [key, value] of Object.entries(raw)) {
 			if (isPlainObject(value)) {
 				expandValue(key, value, collected, identity);
@@ -101,9 +90,9 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 		};
 	}
 
-	const rawAttributes: DrawerField[] = [];
-	const rawResourceAttributes: DrawerField[] = [];
-	const rawOther: DrawerField[] = [];
+	const rawAttributes: FieldRowData[] = [];
+	const rawResourceAttributes: FieldRowData[] = [];
+	const rawOther: FieldRowData[] = [];
 
 	for (const [key, value] of Object.entries(raw)) {
 		if (key === 'attributes' && isPlainObject(value)) {

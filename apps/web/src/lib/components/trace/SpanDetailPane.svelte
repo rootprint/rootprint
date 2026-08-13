@@ -2,7 +2,7 @@
 	import { ScrollText, X } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
-	import DrawerFieldRow from '$lib/components/log/drawer/DrawerFieldRow.svelte';
+	import FieldRow from '$lib/components/ui/FieldRow.svelte';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { pluralize } from '$lib/utils/format';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
@@ -16,8 +16,7 @@
 		topOperations
 	} from '$lib/utils/span-stats';
 	import { formatSpanDuration, formatSpanStart } from '$lib/utils/time';
-	import type { SpanNode } from '$lib/types';
-	import type { DrawerField } from '$lib/utils/hit-fields';
+	import type { FieldRowData, SpanNode } from '$lib/types';
 
 	type SpanTab = 'overview' | 'parameters' | 'events';
 
@@ -71,14 +70,14 @@
 	const formatOffset = (micros: number): string =>
 		micros === 0 ? '+0µs' : `${micros < 0 ? '-' : '+'}${formatSpanDuration(Math.abs(micros))}`;
 
-	const field = (name: string, value: string): DrawerField => ({
+	const field = (name: string, value: string): FieldRowData => ({
 		name,
 		displayName: name,
 		value,
 		isEmpty: value === ''
 	});
 
-	const toFields = (attrs: Record<string, string>): DrawerField[] =>
+	const toFields = (attrs: Record<string, string>): FieldRowData[] =>
 		Object.entries(attrs).map(([key, value]) => field(key, value));
 
 	const percentOf = (part: number, whole: number): number | null =>
@@ -143,22 +142,22 @@
 		if (isDisabled(activeTab)) activeTab = 'overview';
 	});
 
-	const copyValue = (f: DrawerField): void => void copyWithToast(f.value, 'Value copied');
+	const copyValue = (f: FieldRowData): void => void copyWithToast(f.value, 'Value copied');
 </script>
 
-{#snippet table(fields: DrawerField[])}
+{#snippet table(fields: FieldRowData[])}
 	<div class="border-line overflow-hidden rounded-md border">
 		<table class="w-full table-fixed border-collapse">
 			<tbody>
 				{#each fields as f (f.name)}
-					<DrawerFieldRow field={f} keyClass="w-40 max-w-40" onCopy={copyValue} />
+					<FieldRow field={f} keyClass="w-40 max-w-40" onCopy={copyValue} />
 				{/each}
 			</tbody>
 		</table>
 	</div>
 {/snippet}
 
-{#snippet group(label: string, fields: DrawerField[], emptyMessage = 'None')}
+{#snippet group(label: string, fields: FieldRowData[], emptyMessage = 'None')}
 	<section>
 		<h3 class="eyebrow mb-1.5">{label}</h3>
 		{#if fields.length > 0}
