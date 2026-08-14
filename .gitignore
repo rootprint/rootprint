@@ -34,3 +34,6 @@ vite.config.ts.timestamp-*
 .superpowers/
 .planning/
 deploy.sh
+
+.claude/
+.agents/

@@ -19,7 +19,6 @@ Rootprint is a Bun-workspace monorepo. Workspaces live under `apps/`. The Hono b
 - Formatting: `.prettierrc`.
 - TS base config: `tsconfig.base.json` (every workspace extends it).
 - CI: `.github/workflows/ci.yml`.
-- Team-wide rules: `CLAUDE.md`.
 - Stack-specific rules: each workspace's `AGENTS.md`.
 
 ## Install and Run
@@ -39,7 +38,7 @@ Root convenience scripts: `dev:api`, `build:api`, `start:api`, `check`, `lint`, 
 - Bun only. Engine-strict (`bun >= 1.0.0`). Do not use npm/pnpm/yarn.
 - TypeScript is strict. Every workspace extends `tsconfig.base.json`. Avoid `any` unless unavoidable.
 - Prettier config is at the repo root: tabs, single quotes, no trailing commas, line width ~100.
-- No automated tests in any workspace: no unit, integration, or end-to-end tests.
+- No automated tests in any workspace: no unit, integration, or end-to-end tests. Skip test authoring unless explicitly requested.
 - For stack-specific rules (Hono routing, Svelte 5 patterns), see the relevant workspace's `AGENTS.md`.
 
 ## CI Parity Before Merge
@@ -75,7 +74,9 @@ bun --filter api db:studio       # open Drizzle Studio
 - Export explicit input/output types for shared helpers/services.
 - Use `import type` for type-only imports.
 - Use Valibot for runtime validation; infer types from schemas where possible.
+- Shared backend types live in `apps/api/src/types.ts`; app-local frontend types in `apps/web/src/lib/types.ts`.
 - Cross-workspace types: import from `api/types` (re-exported via `exports['./types']` in `apps/api/package.json`).
+- `types.ts` files hold pure types only — no runtime exports.
 
 ## Import Conventions
 

@@ -41,12 +41,13 @@ bun --filter web lint             # oxlint
 
 ## Data Loading
 
-`apps/web` is an SPA. There is no server runtime — see the root `CLAUDE.md` "Data Loading" table.
+`apps/web` is an SPA built with `adapter-static`. There is no server runtime — `apps/api` is the only backend.
 
 - All data loading lives in `+page.ts` / `+layout.ts`.
 - Do **not** add `+page.server.ts` or `hooks.server.ts` — `adapter-static` has no server.
 - Auth: `authClient` from `$lib/auth-client`.
 - API: `api` from `$lib/api/client` (typed Hono RPC).
+- Cookies are same-origin in both dev (Vite proxy → api) and prod (api serves the SPA).
 
 ### Error handling
 
