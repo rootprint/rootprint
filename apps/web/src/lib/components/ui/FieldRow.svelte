@@ -19,7 +19,7 @@
 	const hasActions = $derived(Boolean(onFilterFor || onFilterOut || onCopy));
 </script>
 
-<tr class="group border-line border-b align-top">
+<tr class="group border-line border-b align-top last:border-b-0">
 	<td
 		class={[
 			'border-line text-base-content/70 truncate border-r px-3 py-1.5 font-mono text-xs',
