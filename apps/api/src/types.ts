@@ -16,6 +16,12 @@ import type {
 	PreferencesResponse as PreferencesResponseSchema,
 	SourceDetailSchema as SourceDetailResponseSchema
 } from './schemas/responses/indexes.js';
+import type {
+	MonitoringBucketSchema,
+	MonitoringEndpointSchema,
+	MonitoringServiceLatencySchema,
+	ServiceHealthResponseSchema
+} from './schemas/responses/monitoring.js';
 import type { TraceResponseSchema, TraceSpanSchema } from './schemas/responses/traces.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
@@ -289,3 +295,11 @@ export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;
 export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
 
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
+
+export type MonitoringBucket = v.InferOutput<typeof MonitoringBucketSchema>;
+
+export type MonitoringEndpoint = v.InferOutput<typeof MonitoringEndpointSchema>;
+
+export type MonitoringServiceLatency = v.InferOutput<typeof MonitoringServiceLatencySchema>;
+
+export type ServiceHealthResponse = v.InferOutput<typeof ServiceHealthResponseSchema>;

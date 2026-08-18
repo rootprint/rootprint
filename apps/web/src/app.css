@@ -237,6 +237,8 @@
 	--trace-service-6: #eab308;
 	--trace-service-7: #f97316;
 	--trace-service-8: #ec4899;
+	--trace-service-9: #6366f1;
+	--trace-service-10: #a855f7;
 }
 
 ::highlight(rootprint-drawer-search) {

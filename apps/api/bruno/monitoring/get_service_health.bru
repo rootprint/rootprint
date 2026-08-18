@@ -1,0 +1,23 @@
+meta {
+  name: Get Service Health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/monitoring/services
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1723989600
+  endTs: 1723990500
+  interval: 10s
+  ~service: api
+  ~endpointLimit: 10
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

@@ -8,15 +8,20 @@ export function baseContentAt(alpha: number): string {
 	return `color-mix(in oklab, ${v} ${Math.round(alpha * 100)}%, transparent)`;
 }
 
+const resolvedColors = new Map<string, string>();
+
 export function cssVarColor(value: string): string {
 	if (typeof document === 'undefined') return value;
+	const cached = resolvedColors.get(value);
+	if (cached !== undefined) return cached;
 	const probe = document.createElement('span');
 	probe.style.color = value;
 	probe.style.position = 'absolute';
 	probe.style.opacity = '0';
 	probe.style.pointerEvents = 'none';
 	document.body.appendChild(probe);
-	const resolved = getComputedStyle(probe).color;
+	const resolved = getComputedStyle(probe).color || value;
 	probe.remove();
-	return resolved || value;
+	resolvedColors.set(value, resolved);
+	return resolved;
 }
