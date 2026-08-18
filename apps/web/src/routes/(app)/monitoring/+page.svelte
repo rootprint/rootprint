@@ -70,7 +70,7 @@
 			{
 				key: 'requests',
 				label: 'Requests / min',
-				cssVar: 'var(--chart-1)',
+				cssVar: 'var(--color-success)',
 				values: buckets.map((bucket) => {
 					const bucketStart = bucket.keyMs / 1000;
 					const coveredSeconds =

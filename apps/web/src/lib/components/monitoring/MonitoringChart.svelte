@@ -114,7 +114,7 @@
 	<header class="pb-3">
 		<div class="flex items-start justify-between gap-4">
 			<div>
-				<h2 class="eyebrow">{title}</h2>
+				<h2 class="eyebrow font-medium">{title}</h2>
 				<p class="text-base-content/50 mt-1 text-xs">{description}</p>
 			</div>
 			{#if summary}
