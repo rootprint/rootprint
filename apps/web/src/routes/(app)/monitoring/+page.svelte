@@ -257,7 +257,9 @@
 						<div class="border-line rounded-box overflow-x-auto border">
 							<table class="table-xs table min-w-[680px]">
 								<thead>
-									<tr class="text-base-content/50 text-[10px] tracking-wide uppercase">
+									<tr
+										class="bg-base-200/70 text-base-content/60 text-[10px] font-medium tracking-wide uppercase"
+									>
 										<th scope="col" class="w-10 text-right" aria-label="Rank">#</th>
 										<th scope="col">Endpoint</th>
 										<th scope="col" class="text-right">Requests</th>
@@ -268,7 +270,7 @@
 								</thead>
 								<tbody>
 									{#each health.endpoints as endpoint, index (`${endpoint.service}:${endpoint.id}`)}
-										<tr>
+										<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
 											<td class="w-10 text-right font-mono text-xs tabular-nums">
 												{index + 1}
 											</td>
