@@ -45,6 +45,10 @@
 		});
 	}
 
+	function brushRange(startTs: number, endTs: number) {
+		setRange({ type: 'absolute', start: startTs, end: endTs });
+	}
+
 	function setEndpointLimit(value: number) {
 		navigate((params) => {
 			if (value === 10) params.delete('endpointLimit');
@@ -174,6 +178,7 @@
 						services={health.serviceLatencies}
 						keysMs={health.latencyKeysMs}
 						{xRange}
+						onBrush={brushRange}
 					/>
 				{/if}
 
@@ -192,6 +197,7 @@
 						)}
 						formatValue={formatRate}
 						showLegend={false}
+						onBrush={brushRange}
 					/>
 					<MonitoringChart
 						title="Error rate"
@@ -202,6 +208,7 @@
 						series={errorRateSeries(health.buckets)}
 						formatValue={formatPercent}
 						showLegend={false}
+						onBrush={brushRange}
 					/>
 				</div>
 
@@ -214,6 +221,7 @@
 						{xRange}
 						series={latencySeries(health.buckets)}
 						formatValue={formatDurationMs}
+						onBrush={brushRange}
 					/>
 				{/if}
 

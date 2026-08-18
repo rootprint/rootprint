@@ -9,9 +9,10 @@
 		services: ServiceLatency[];
 		keysMs: number[];
 		xRange: [number, number];
+		onBrush: (startTs: number, endTs: number) => void;
 	};
 
-	let { services, keysMs, xRange }: Props = $props();
+	let { services, keysMs, xRange, onBrush }: Props = $props();
 
 	const xs = $derived(keysMs.map((ms) => Math.floor(ms / 1000)));
 	const series = $derived<ChartSeries[]>(
@@ -31,4 +32,5 @@
 	{xRange}
 	{series}
 	formatValue={formatDurationMs}
+	{onBrush}
 />

@@ -26,6 +26,7 @@
 		series: ChartSeries[];
 		formatValue: (value: number) => string;
 		showLegend?: boolean;
+		onBrush: (startTs: number, endTs: number) => void;
 	};
 
 	let {
@@ -36,7 +37,8 @@
 		xRange,
 		series,
 		formatValue,
-		showLegend = true
+		showLegend = true,
+		onBrush
 	}: Props = $props();
 
 	const HEIGHT = 200;
@@ -88,9 +90,23 @@
 		return {
 			padding: [12, 8, 0, 0],
 			cursor: {
-				drag: { x: false, y: false },
+				drag: { x: true, y: false, setScale: false },
 				points: { show: false },
 				sync: { key: 'service-health', setSeries: false, scales: ['x', null] }
+			},
+			select: { show: true, left: 0, top: 0, width: 0, height: 0 },
+			hooks: {
+				setSelect: [
+					(u: uPlotLib) => {
+						const { left, width } = u.select;
+						if (width > 2 && u.cursor.event != null) {
+							const startTs = Math.floor(u.posToVal(left, 'x'));
+							const endTs = Math.max(startTs + 1, Math.ceil(u.posToVal(left + width, 'x')));
+							onBrush(startTs, endTs);
+						}
+						u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+					}
+				]
 			},
 			series: uplotSeries,
 			scales: {
