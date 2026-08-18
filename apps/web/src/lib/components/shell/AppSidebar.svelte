@@ -22,8 +22,8 @@
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
 	const onMonitoring = $derived(path.startsWith('/monitoring'));
-	// A trace is only ever reached from a log, so the trace page keeps Search lit.
-	const onSearch = $derived(!onSettings && !onMonitoring);
+	// Traces and shared searches are only ever reached from a log, so they keep Search lit.
+	const onSearch = $derived(path === '/' || path.startsWith('/traces') || path.startsWith('/s/'));
 </script>
 
 <aside

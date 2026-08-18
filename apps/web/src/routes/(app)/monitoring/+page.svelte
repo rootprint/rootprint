@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
@@ -11,6 +13,7 @@
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
+	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	let { data } = $props();
 
@@ -91,17 +94,32 @@
 	}
 </script>
 
-<div class="min-h-0 w-full flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+<OverlayScrollbarsComponent
+	options={OS_SCROLLBAR_OPTIONS}
+	defer
+	class="min-h-0 w-full flex-1 px-4 py-8 sm:px-8 lg:px-12 lg:py-12"
+>
 	{#await data.health}
-		<div class="space-y-4" role="status" aria-label="Loading service health">
+		<div class="flex flex-col gap-4" role="status" aria-label="Loading service health">
 			<div class="flex flex-wrap items-end justify-between gap-4">
-				<div class="bg-base-200 h-12 w-72 animate-pulse rounded motion-reduce:animate-none"></div>
-				<TimeRangePicker value={data.timeRange} onChange={setRange} />
+				<div class="skeleton h-12 w-72"></div>
+				<div class="skeleton h-8 w-36"></div>
 			</div>
+
+			{#if data.service === null}
+				<div class="skeleton h-72 w-full"></div>
+			{/if}
+
 			<div class="grid gap-4 lg:grid-cols-2">
-				<div class="bg-base-200 rounded-box h-64 animate-pulse motion-reduce:animate-none"></div>
-				<div class="bg-base-200 rounded-box h-64 animate-pulse motion-reduce:animate-none"></div>
+				<div class="skeleton h-72"></div>
+				<div class="skeleton h-72"></div>
 			</div>
+
+			{#if data.service !== null}
+				<div class="skeleton h-72 w-full"></div>
+			{/if}
+
+			<div class="skeleton h-40 w-full"></div>
 			<span class="sr-only">Loading service health</span>
 		</div>
 	{:then health}
@@ -138,11 +156,17 @@
 				</section>
 			{:else}
 				{#if health.servicesTruncated}
-					<p class="text-warning text-xs">Showing the 100 most active services.</p>
+					<p class="text-warning text-xs">
+						Showing the {health.services.length} most active services.
+					</p>
 				{/if}
 
 				{#if data.service === null}
-					<ServiceLatencyChart services={health.serviceLatencies} {xRange} />
+					<ServiceLatencyChart
+						services={health.serviceLatencies}
+						keysMs={health.latencyKeysMs}
+						{xRange}
+					/>
 				{/if}
 
 				<div class="grid gap-4 lg:grid-cols-2">
@@ -260,4 +284,4 @@
 			<PanelError message="Couldn't load service health" {error} />
 		</div>
 	{/await}
-</div>
+</OverlayScrollbarsComponent>

@@ -28,22 +28,12 @@ export const MonitoringEndpointSchema = named(
 	})
 );
 
-export const MonitoringServiceLatencyBucketSchema = named(
-	'MonitoringServiceLatencyBucket',
-	v.object({
-		keyMs: v.number(),
-		p95: v.nullable(v.number())
-	})
-);
-
 export const MonitoringServiceLatencySchema = named(
 	'MonitoringServiceLatency',
 	v.object({
 		name: v.string(),
-		requests: v.number(),
-		p50: v.nullable(v.number()),
-		p95: v.nullable(v.number()),
-		buckets: v.array(MonitoringServiceLatencyBucketSchema)
+		/** One entry per `latencyKeysMs` timestamp. */
+		p95: v.array(v.nullable(v.number()))
 	})
 );
 
@@ -66,6 +56,8 @@ export const ServiceHealthResponseSchema = named(
 		intervalSeconds: v.number(),
 		summary: MonitoringSummarySchema,
 		buckets: v.array(MonitoringBucketSchema),
+		/** Shared histogram grid for every entry in `serviceLatencies`. */
+		latencyKeysMs: v.array(v.number()),
 		serviceLatencies: v.array(MonitoringServiceLatencySchema),
 		endpoints: v.array(MonitoringEndpointSchema)
 	})

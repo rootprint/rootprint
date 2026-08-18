@@ -1,5 +1,5 @@
 /** Must match the number of `--trace-service-*` custom properties declared in app.css. */
-const PALETTE_SIZE = 10;
+export const PALETTE_SIZE = 10;
 
 export function serviceColor(serviceName: string): string {
 	let hash = 2166136261;

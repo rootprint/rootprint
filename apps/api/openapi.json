@@ -1498,66 +1498,25 @@
 			},
 			"MonitoringServiceLatency": {
 				"properties": {
-					"buckets": {
-						"items": {
-							"$ref": "#/components/schemas/MonitoringServiceLatencyBucket"
-						},
-						"type": "array"
-					},
 					"name": {
 						"type": "string"
 					},
-					"p50": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"p95": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"requests": {
-						"type": "number"
+						"items": {
+							"anyOf": [
+								{
+									"type": "number"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"type": "array"
 					}
 				},
 				"required": [
 					"name",
-					"requests",
-					"p50",
-					"p95",
-					"buckets"
-				],
-				"type": "object"
-			},
-			"MonitoringServiceLatencyBucket": {
-				"properties": {
-					"keyMs": {
-						"type": "number"
-					},
-					"p95": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					}
-				},
-				"required": [
-					"keyMs",
 					"p95"
 				],
 				"type": "object"
@@ -2114,6 +2073,12 @@
 					"intervalSeconds": {
 						"type": "number"
 					},
+					"latencyKeysMs": {
+						"items": {
+							"type": "number"
+						},
+						"type": "array"
+					},
 					"serviceLatencies": {
 						"items": {
 							"$ref": "#/components/schemas/MonitoringServiceLatency"
@@ -2147,6 +2112,7 @@
 					"intervalSeconds",
 					"summary",
 					"buckets",
+					"latencyKeysMs",
 					"serviceLatencies",
 					"endpoints"
 				],
