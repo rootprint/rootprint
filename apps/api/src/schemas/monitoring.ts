@@ -10,7 +10,7 @@ const interval = v.pipe(
 	v.regex(/^[1-9]\d*[smhd]$/, 'interval must use seconds, minutes, hours, or days')
 );
 
-function intervalSeconds(value: string): number {
+export function intervalSeconds(value: string): number {
 	const amount = Number(value.slice(0, -1));
 	const unit = value.at(-1);
 	if (unit === 'd') return amount * 86_400;

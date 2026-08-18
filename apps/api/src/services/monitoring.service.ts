@@ -10,7 +10,7 @@ import type {
 import { logger } from '../lib/logger.js';
 import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import { escapeFilterValue } from '../lib/query/compose-query.js';
-import type { ServiceHealthInput } from '../schemas/monitoring.js';
+import { intervalSeconds, type ServiceHealthInput } from '../schemas/monitoring.js';
 import type {
 	MonitoringBucket,
 	MonitoringEndpoint,
@@ -35,8 +35,8 @@ const HTTP_TARGET_FIELD = 'span_attributes.http.target';
 const ENDPOINT_SOURCES = [
 	{ key: 'endpoint_routes', field: HTTP_ROUTE_FIELD },
 	{ key: 'endpoint_paths', field: URL_PATH_FIELD },
-	{ key: 'endpoint_targets', field: HTTP_TARGET_FIELD },
-	{ key: 'endpoint_names', field: NAME_FIELD }
+	{ key: 'endpoint_names', field: NAME_FIELD },
+	{ key: 'endpoint_targets', field: HTTP_TARGET_FIELD }
 ] as const;
 
 const ENDPOINT_LIMIT = 20;
@@ -71,15 +71,6 @@ const summaryPercentile = (
 const metric = (bucket: AggregationBucket, name: string): number | null =>
 	finite((bucket[name] as { value?: unknown } | undefined)?.value);
 
-function intervalSeconds(interval: string): number {
-	const amount = Number(interval.slice(0, -1));
-	const unit = interval.at(-1);
-	if (unit === 'd') return amount * 86_400;
-	if (unit === 'h') return amount * 3_600;
-	if (unit === 'm') return amount * 60;
-	return amount;
-}
-
 function mergeTimeBuckets(
 	totals: AggregationBucket[],
 	errors: AggregationBucket[]
@@ -88,7 +79,7 @@ function mergeTimeBuckets(
 	return totals.map((bucket) => ({
 		keyMs: Number(bucket.key),
 		requests: bucket.doc_count,
-		errors: errorCounts.get(Number(bucket.key)) ?? 0,
+		errors: Math.min(bucket.doc_count, errorCounts.get(Number(bucket.key)) ?? 0),
 		p50: percentile(bucket, P50),
 		p95: percentile(bucket, P95),
 		avg: metric(bucket, 'avg')
@@ -103,6 +94,25 @@ function endpointMetrics() {
 }
 
 function endpointAggregation(field: string, acrossServices: boolean) {
+	if (field === NAME_FIELD) {
+		return AggregationBuilder.terms(field, {
+			size: ENDPOINT_CANDIDATE_LIMIT,
+			shardSize: ENDPOINT_CANDIDATE_LIMIT,
+			order: { total: 'desc' },
+			aggs: acrossServices
+				? {
+						total: AggregationBuilder.sum(DURATION_FIELD),
+						services: AggregationBuilder.terms(SERVICE_FIELD, {
+							size: ENDPOINT_SERVICE_LIMIT,
+							shardSize: ENDPOINT_SERVICE_LIMIT,
+							order: { total: 'desc' },
+							aggs: endpointMetrics()
+						})
+					}
+				: endpointMetrics()
+		});
+	}
+
 	const names = AggregationBuilder.terms(NAME_FIELD, {
 		size: NAMES_PER_ENDPOINT_LIMIT,
 		shardSize: NAMES_PER_ENDPOINT_LIMIT,
@@ -139,14 +149,15 @@ function endpointRow(
 	service: string,
 	field: string,
 	value: string,
+	spanName: string,
 	nameBucket: AggregationBucket
 ): MonitoringEndpoint {
-	const spanName = String(nameBucket.key);
 	return {
 		id: JSON.stringify([field, value, spanName]),
 		service,
 		name: endpointLabel(field, value, spanName),
-		routeAvailable: field !== NAME_FIELD || !isHttpMethod(spanName),
+		routeAvailable:
+			field !== HTTP_TARGET_FIELD && (field !== NAME_FIELD || !isHttpMethod(spanName)),
 		requests: nameBucket.doc_count,
 		totalMillis: metric(nameBucket, 'total') ?? 0,
 		p50: percentile(nameBucket, P50),
@@ -159,9 +170,14 @@ function endpointsOf(
 	field: string,
 	buckets: AggregationBucket[]
 ): MonitoringEndpoint[] {
+	if (field === NAME_FIELD) {
+		return buckets.map((endpoint) =>
+			endpointRow(service, field, String(endpoint.key), String(endpoint.key), endpoint)
+		);
+	}
 	return buckets.flatMap((endpoint) =>
 		asBuckets(endpoint['names'] as BucketAggregationResult | undefined).map((name) =>
-			endpointRow(service, field, String(endpoint.key), name)
+			endpointRow(service, field, String(endpoint.key), String(name.key), name)
 		)
 	);
 }
@@ -170,43 +186,50 @@ function endpointsAcrossServices(
 	field: string,
 	buckets: AggregationBucket[]
 ): MonitoringEndpoint[] {
+	if (field === NAME_FIELD) {
+		return buckets.flatMap((endpoint) =>
+			asBuckets(endpoint['services'] as BucketAggregationResult | undefined).map((service) =>
+				endpointRow(String(service.key), field, String(endpoint.key), String(endpoint.key), service)
+			)
+		);
+	}
 	return buckets.flatMap((endpoint) =>
 		asBuckets(endpoint['services'] as BucketAggregationResult | undefined).flatMap((service) =>
 			asBuckets(service['names'] as BucketAggregationResult | undefined).map((name) =>
-				endpointRow(String(service.key), field, String(endpoint.key), name)
+				endpointRow(String(service.key), field, String(endpoint.key), String(name.key), name)
 			)
 		)
 	);
 }
 
 function preferredEndpoints(
-	responses: SearchResponse[],
+	response: SearchResponse,
 	service: string | undefined
 ): MonitoringEndpoint[] {
-	const rows: MonitoringEndpoint[] = [];
-	for (const [index, source] of ENDPOINT_SOURCES.entries()) {
+	const rowsByService = new Map<string, MonitoringEndpoint[]>();
+	for (const source of ENDPOINT_SOURCES) {
 		const buckets = asBuckets(
-			responses[index]?.aggregations?.['endpoints'] as BucketAggregationResult | undefined
+			response.aggregations?.[source.key] as BucketAggregationResult | undefined
 		);
-		rows.push(
-			...(service === undefined
+		const sourceRows =
+			service === undefined
 				? endpointsAcrossServices(source.field, buckets)
-				: endpointsOf(service, source.field, buckets))
-		);
+				: endpointsOf(service, source.field, buckets);
+		const sourceRowsByService = new Map<string, MonitoringEndpoint[]>();
+		for (const row of sourceRows) {
+			const rows = sourceRowsByService.get(row.service) ?? [];
+			rows.push(row);
+			sourceRowsByService.set(row.service, rows);
+		}
+		for (const [serviceName, rows] of sourceRowsByService) {
+			if (!rowsByService.has(serviceName)) rowsByService.set(serviceName, rows);
+		}
 	}
-	return rows
+	return [...rowsByService.values()]
+		.flat()
 		.filter((endpoint) => endpoint.service !== '' && endpoint.name !== '')
 		.toSorted((a, b) => b.totalMillis - a.totalMillis)
 		.slice(0, ENDPOINT_LIMIT);
-}
-
-function endpointSourceQuery(scope: string, sourceIndex: number): string {
-	const source = ENDPOINT_SOURCES[sourceIndex];
-	if (source === undefined) return scope;
-	const exclusions = ENDPOINT_SOURCES.slice(0, sourceIndex).map(
-		(previous) => `NOT ${previous.field}:*`
-	);
-	return [scope, ...exclusions, `${source.field}:*`].join(' AND ');
 }
 
 function serviceLatenciesOf(services: AggregationBucket[]): MonitoringServiceLatency[] {
@@ -274,11 +297,12 @@ export async function getServiceHealth(
 			'services',
 			AggregationBuilder.terms(SERVICE_FIELD, {
 				size: SERVICE_LIMIT,
-				shardSize: SERVICE_LIMIT,
-				aggs: durations
+				shardSize: SERVICE_LIMIT
 			})
 		)
-		.agg(
+		.timeRange(...timeRange);
+	if (service === undefined) {
+		servicesQuery.agg(
 			'service_time',
 			AggregationBuilder.terms(SERVICE_FIELD, {
 				size: SERVICE_CHART_LIMIT,
@@ -291,8 +315,8 @@ export async function getServiceHealth(
 					})
 				}
 			})
-		)
-		.timeRange(...timeRange);
+		);
+	}
 	const totalsQuery = idx
 		.query(scope)
 		.limit(0)
@@ -310,19 +334,24 @@ export async function getServiceHealth(
 		.limit(0)
 		.agg('time', AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, histogramBounds))
 		.timeRange(...timeRange);
-	const endpointQueries = ENDPOINT_SOURCES.map((source, index) =>
-		idx
-			.query(endpointSourceQuery(scope, index))
-			.limit(0)
-			.agg('endpoints', endpointAggregation(source.field, service === undefined))
-			.timeRange(...timeRange)
-	);
+	const endpointQuery = idx
+		.query(scope)
+		.limit(0)
+		.timeRange(...timeRange);
+	for (const source of ENDPOINT_SOURCES) {
+		endpointQuery.agg(source.key, endpointAggregation(source.field, service === undefined));
+	}
 
-	let responses: [[SearchResponse, SearchResponse, SearchResponse], SearchResponse[]];
+	let responses: [SearchResponse, SearchResponse, [SearchResponse, SearchResponse]];
 	try {
 		responses = await Promise.all([
-			Promise.all([idx.search(servicesQuery), idx.search(totalsQuery), idx.search(errorsQuery)]),
-			Promise.all(endpointQueries.map((query) => idx.search(query)))
+			idx.search(servicesQuery),
+			idx.search(endpointQuery),
+			(async (): Promise<[SearchResponse, SearchResponse]> => {
+				const errorsResponse = await idx.search(errorsQuery);
+				const totalsResponse = await idx.search(totalsQuery);
+				return [errorsResponse, totalsResponse];
+			})()
 		]);
 	} catch (error) {
 		if (error instanceof QuickwitError && error.code === QuickwitErrorCode.NOT_FOUND) {
@@ -332,7 +361,7 @@ export async function getServiceHealth(
 		return translateQuickwitError(error);
 	}
 
-	const [[servicesResponse, totalsResponse, errorsResponse], endpointResponses] = responses;
+	const [servicesResponse, endpointResponse, [errorsResponse, totalsResponse]] = responses;
 	const servicesAgg = servicesResponse.aggregations?.['services'] as
 		BucketAggregationResult | undefined;
 	const totalBuckets = asBuckets(
@@ -341,6 +370,7 @@ export async function getServiceHealth(
 	const errorBuckets = asBuckets(
 		errorsResponse.aggregations?.['time'] as BucketAggregationResult | undefined
 	);
+	const buckets = mergeTimeBuckets(totalBuckets, errorBuckets);
 	const summary = totalsResponse.aggregations?.['summary'] as
 		PercentilesAggregationResult | undefined;
 	const services = asBuckets(servicesAgg);
@@ -356,13 +386,13 @@ export async function getServiceHealth(
 		servicesTruncated: (servicesAgg?.sum_other_doc_count ?? 0) > 0,
 		intervalSeconds: intervalSec,
 		summary: {
-			requests: totalBuckets.reduce((sum, bucket) => sum + bucket.doc_count, 0),
-			errors: errorBuckets.reduce((sum, bucket) => sum + bucket.doc_count, 0),
+			requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
+			errors: buckets.reduce((sum, bucket) => sum + bucket.errors, 0),
 			p50: summaryPercentile(summary, P50),
 			p95: summaryPercentile(summary, P95)
 		},
-		buckets: mergeTimeBuckets(totalBuckets, errorBuckets),
+		buckets,
 		serviceLatencies,
-		endpoints: preferredEndpoints(endpointResponses, service)
+		endpoints: preferredEndpoints(endpointResponse, service)
 	};
 }

@@ -24,7 +24,10 @@ export function formatDurationMs(ms: number | null | undefined): string {
 	if (ms === 0) return '0 ms';
 	if (ms < 1) return '<1 ms';
 	if (ms < 1000) return `${Math.round(ms)} ms`;
-	return `${(ms / 1000).toFixed(2)} s`;
+	if (ms < 60_000) return `${(ms / 1000).toFixed(2)} s`;
+	if (ms < 3_600_000) return `${(ms / 60_000).toFixed(2)} min`;
+	if (ms < 86_400_000) return `${(ms / 3_600_000).toFixed(2)} h`;
+	return `${(ms / 86_400_000).toFixed(2)} d`;
 }
 
 export function formatCount(n: number): string {

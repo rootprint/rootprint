@@ -7,7 +7,7 @@ import { resolveWindow } from '$lib/utils/time-range';
 export const load: PageLoad = ({ url }) => {
 	const { timeRange } = deserialize(url.searchParams);
 	const { startTs, endTs } = resolveWindow(timeRange);
-	const service = url.searchParams.get('service');
+	const service = url.searchParams.get('service')?.trim() || null;
 
 	return {
 		timeRange,

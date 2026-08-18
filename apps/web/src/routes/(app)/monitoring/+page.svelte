@@ -59,14 +59,21 @@
 
 	function requestRateSeries(
 		buckets: ServiceHealthBucket[],
-		intervalSeconds: number
+		intervalSeconds: number,
+		startTs: number,
+		endTs: number
 	): ChartSeries[] {
 		return [
 			{
 				key: 'requests',
 				label: 'Requests / min',
 				cssVar: 'var(--chart-1)',
-				values: buckets.map((bucket) => (bucket.requests / intervalSeconds) * 60)
+				values: buckets.map((bucket) => {
+					const bucketStart = bucket.keyMs / 1000;
+					const coveredSeconds =
+						Math.min(bucketStart + intervalSeconds, endTs) - Math.max(bucketStart, startTs);
+					return coveredSeconds > 0 ? (bucket.requests / coveredSeconds) * 60 : null;
+				})
 			}
 		];
 	}
@@ -84,7 +91,7 @@
 	}
 </script>
 
-<div class="w-full px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+<div class="min-h-0 w-full flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
 	{#await data.health}
 		<div class="space-y-4" role="status" aria-label="Loading service health">
 			<div class="flex flex-wrap items-end justify-between gap-4">
@@ -145,7 +152,12 @@
 						summary={`avg ${formatRate(averageRequestRate)}`}
 						{xs}
 						{xRange}
-						series={requestRateSeries(health.buckets, health.intervalSeconds)}
+						series={requestRateSeries(
+							health.buckets,
+							health.intervalSeconds,
+							data.startTs,
+							data.endTs
+						)}
 						formatValue={formatRate}
 					/>
 					<MonitoringChart

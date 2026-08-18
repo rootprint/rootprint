@@ -25,19 +25,9 @@
 		xRange: [number, number];
 		series: ChartSeries[];
 		formatValue: (value: number) => string;
-		bars?: boolean;
 	};
 
-	let {
-		title,
-		description,
-		summary,
-		xs,
-		xRange,
-		series,
-		formatValue,
-		bars = false
-	}: Props = $props();
+	let { title, description, summary, xs, xRange, series, formatValue }: Props = $props();
 
 	const HEIGHT = 200;
 
@@ -63,10 +53,7 @@
 	}
 
 	function makeOpts(UPlot: typeof uPlotLib): Omit<uPlotLib.Options, 'width' | 'height'> {
-		const barPaths = bars
-			? UPlot.paths.bars?.({ size: [0.9, 32, 1], align: 0, gap: 1 })
-			: undefined;
-		const linePaths = bars ? undefined : UPlot.paths.linear?.();
+		const linePaths = UPlot.paths.linear?.();
 		const axisStroke = baseContentAt(0.45);
 		const gridStroke = baseContentAt(0.1);
 		const [r0, r1] = xRange;
@@ -80,10 +67,9 @@
 			uplotSeries.push({
 				label: s.label,
 				stroke: colors[i],
-				fill: bars ? colors[i] : undefined,
-				width: bars ? 0 : 1.5,
-				paths: barPaths ?? linePaths,
-				spanGaps: !bars,
+				width: 1.5,
+				paths: linePaths,
+				spanGaps: true,
 				points: { show: showPoint },
 				show: vis[i]
 			});
