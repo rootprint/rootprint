@@ -80,7 +80,7 @@
 			cursor: {
 				drag: { x: false, y: false },
 				points: { show: false },
-				sync: { key: 'service-health', setSeries: false }
+				sync: { key: 'service-health', setSeries: false, scales: ['x', null] }
 			},
 			series: uplotSeries,
 			scales: {
