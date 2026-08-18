@@ -183,6 +183,7 @@
 							data.endTs
 						)}
 						formatValue={formatRate}
+						showLegend={false}
 					/>
 					<MonitoringChart
 						title="Error rate"
@@ -192,6 +193,7 @@
 						{xRange}
 						series={errorRateSeries(health.buckets)}
 						formatValue={formatPercent}
+						showLegend={false}
 					/>
 				</div>
 

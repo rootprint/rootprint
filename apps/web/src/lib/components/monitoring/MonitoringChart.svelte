@@ -25,9 +25,19 @@
 		xRange: [number, number];
 		series: ChartSeries[];
 		formatValue: (value: number) => string;
+		showLegend?: boolean;
 	};
 
-	let { title, description, summary, xs, xRange, series, formatValue }: Props = $props();
+	let {
+		title,
+		description,
+		summary,
+		xs,
+		xRange,
+		series,
+		formatValue,
+		showLegend = true
+	}: Props = $props();
 
 	const HEIGHT = 200;
 
@@ -153,6 +163,8 @@
 				{/snippet}
 			</UplotChart>
 		</div>
-		<UplotLegend items={legendItems} onToggle={toggle} />
+		{#if showLegend}
+			<UplotLegend items={legendItems} onToggle={toggle} />
+		{/if}
 	{/if}
 </section>
