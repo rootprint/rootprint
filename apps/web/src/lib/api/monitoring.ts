@@ -14,13 +14,15 @@ export async function getServiceHealth(input: {
 	service: string | null;
 	startTs: number;
 	endTs: number;
+	endpointLimit: 10 | 20 | 30;
 }): Promise<ServiceHealth> {
 	const res = await monitoring.services.$get({
 		query: {
 			service: input.service ?? undefined,
 			startTs: String(input.startTs),
 			endTs: String(input.endTs),
-			interval: formatInterval(computeHistogramIntervalSeconds(input.endTs - input.startTs))
+			interval: formatInterval(computeHistogramIntervalSeconds(input.endTs - input.startTs)),
+			endpointLimit: String(input.endpointLimit)
 		}
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load service health');

@@ -38,7 +38,6 @@ const ENDPOINT_SOURCES = [
 	{ key: 'endpoint_names', field: NAME_FIELD }
 ] as const;
 
-const ENDPOINT_LIMIT = 20;
 const ENDPOINT_CANDIDATE_LIMIT = 100;
 const ENDPOINT_SERVICE_LIMIT = 10;
 const NAMES_PER_ENDPOINT_LIMIT = 3;
@@ -177,7 +176,8 @@ function endpointRows(
 
 function preferredEndpoints(
 	response: SearchResponse,
-	service: string | undefined
+	service: string | undefined,
+	limit: number
 ): MonitoringEndpoint[] {
 	const claimed = new Set<string>();
 	const rows: MonitoringEndpoint[] = [];
@@ -193,7 +193,7 @@ function preferredEndpoints(
 	return rows
 		.filter((endpoint) => endpoint.service !== '' && endpoint.name !== '')
 		.toSorted((a, b) => b.totalMillis - a.totalMillis)
-		.slice(0, ENDPOINT_LIMIT);
+		.slice(0, limit);
 }
 
 function serviceLatenciesOf(services: AggregationBucket[]): MonitoringServiceLatency[] {
@@ -349,6 +349,6 @@ export async function getServiceHealth(
 			serviceTimeBuckets[0]?.['time'] as BucketAggregationResult | undefined
 		).map((bucket) => Number(bucket.key)),
 		serviceLatencies: serviceLatenciesOf(serviceTimeBuckets),
-		endpoints: preferredEndpoints(endpointResponse, service)
+		endpoints: preferredEndpoints(endpointResponse, service, params.endpointLimit)
 	};
 }

@@ -24,7 +24,14 @@ export const ServiceHealthQuery = v.pipe(
 		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
 		startTs: toNum,
 		endTs: toNum,
-		interval
+		interval,
+		endpointLimit: v.optional(
+			v.pipe(
+				toNum,
+				v.check((value) => value === 10 || value === 20 || value === 30, 'Invalid endpoint limit')
+			),
+			'10'
+		)
 	}),
 	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
 	v.check(

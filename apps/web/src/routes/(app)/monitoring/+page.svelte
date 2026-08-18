@@ -17,6 +17,7 @@
 
 	let { data } = $props();
 
+	const ENDPOINT_LIMITS = [10, 20, 30] as const;
 	const xRange = $derived<[number, number]>([data.startTs, data.endTs]);
 
 	function navigate(mutate: (params: URLSearchParams) => void) {
@@ -41,6 +42,13 @@
 		navigate((params) => {
 			if (value === '') params.delete('service');
 			else params.set('service', value);
+		});
+	}
+
+	function setEndpointLimit(value: number) {
+		navigate((params) => {
+			if (value === 10) params.delete('endpointLimit');
+			else params.set('endpointLimit', String(value));
 		});
 	}
 
@@ -210,11 +218,31 @@
 				{/if}
 
 				<section class="flex flex-col gap-2" aria-labelledby="endpoint-heading">
-					<div>
-						<h2 id="endpoint-heading" class="eyebrow">Highest-impact endpoints</h2>
-						<p class="text-base-content/50 mt-1 text-xs">
-							Ranked by total time spent handling requests in the selected range.
-						</p>
+					<div class="flex flex-wrap items-end justify-between gap-3">
+						<div>
+							<h2 id="endpoint-heading" class="eyebrow">Highest-impact endpoints</h2>
+							<p class="text-base-content/50 mt-1 text-xs">
+								Ranked by total time spent handling requests in the selected range.
+							</p>
+						</div>
+						<div class="flex items-center gap-2" aria-label="Rows per page">
+							<span class="text-base-content/50 text-[10px] tracking-wide uppercase">Rows</span>
+							<div class="border-line divide-line flex divide-x overflow-hidden rounded border">
+								{#each ENDPOINT_LIMITS as limit}
+									<button
+										type="button"
+										class="h-7 min-w-9 px-2 text-xs tabular-nums transition-colors {data.endpointLimit ===
+										limit
+											? 'bg-base-content text-base-100'
+											: 'text-base-content/60 hover:bg-base-200 hover:text-base-content'}"
+										aria-pressed={data.endpointLimit === limit}
+										onclick={() => setEndpointLimit(limit)}
+									>
+										{limit}
+									</button>
+								{/each}
+							</div>
+						</div>
 					</div>
 					{#if health.endpoints.length === 0}
 						<div
@@ -227,26 +255,24 @@
 						</div>
 					{:else}
 						<div class="border-line rounded-box overflow-x-auto border">
-							<table class="table-sm table min-w-[760px]">
+							<table class="table-xs table min-w-[680px]">
 								<thead>
 									<tr class="text-base-content/50 text-[10px] tracking-wide uppercase">
-										{#if data.service === null}<th>Service</th>{/if}
-										<th>Endpoint</th>
-										<th class="text-right">Requests</th>
-										<th class="text-right">p50</th>
-										<th class="text-right">p95</th>
-										<th class="text-right">Total time</th>
+										<th scope="col" class="w-10 text-right" aria-label="Rank">#</th>
+										<th scope="col">Endpoint</th>
+										<th scope="col" class="text-right">Requests</th>
+										<th scope="col" class="text-right">p50 latency</th>
+										<th scope="col" class="text-right">p95 latency</th>
+										<th scope="col" class="text-right">Total time</th>
 									</tr>
 								</thead>
 								<tbody>
-									{#each health.endpoints as endpoint (`${endpoint.service}:${endpoint.id}`)}
+									{#each health.endpoints as endpoint, index (`${endpoint.service}:${endpoint.id}`)}
 										<tr>
-											{#if data.service === null}
-												<td class="max-w-48 truncate font-mono text-xs" title={endpoint.service}>
-													{endpoint.service}
-												</td>
-											{/if}
-											<td class="max-w-md font-mono text-xs">
+											<td class="w-10 text-right font-mono text-xs tabular-nums">
+												{index + 1}
+											</td>
+											<td class="max-w-md py-2 font-mono text-xs">
 												<div class="flex min-w-0 items-center gap-2" title={endpoint.name}>
 													<span class="truncate">{endpoint.name}</span>
 													{#if !endpoint.routeAvailable}
@@ -258,6 +284,14 @@
 														</span>
 													{/if}
 												</div>
+												{#if data.service === null}
+													<div
+														class="text-base-content/40 mt-0.5 truncate text-[10px]"
+														title={endpoint.service}
+													>
+														{endpoint.service}
+													</div>
+												{/if}
 											</td>
 											<td class="text-right tabular-nums">{endpoint.requests.toLocaleString()}</td>
 											<td class="text-right whitespace-nowrap tabular-nums">
@@ -266,7 +300,7 @@
 											<td class="text-right whitespace-nowrap tabular-nums">
 												{formatDurationMs(endpoint.p95)}
 											</td>
-											<td class="text-right whitespace-nowrap tabular-nums">
+											<td class="text-right font-medium whitespace-nowrap tabular-nums">
 												{formatDurationMs(endpoint.totalMillis)}
 											</td>
 										</tr>
