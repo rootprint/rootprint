@@ -16655,7 +16655,9 @@
 						"name": "startTs",
 						"required": true,
 						"schema": {
-							"type": "number"
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
 						}
 					},
 					{
@@ -16663,7 +16665,9 @@
 						"name": "endTs",
 						"required": true,
 						"schema": {
-							"type": "number"
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
 						}
 					},
 					{
@@ -16673,6 +16677,14 @@
 						"schema": {
 							"pattern": "^[1-9]\\d*[smhd]$",
 							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endpointLimit",
+						"schema": {
+							"default": "10",
+							"type": "number"
 						}
 					}
 				],
