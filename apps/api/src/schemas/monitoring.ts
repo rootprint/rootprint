@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { toNum } from '../utils/valibot.js';
+import { intParam, toNum } from '../utils/valibot.js';
 
 const MAX_RANGE_SECONDS = 30 * 24 * 60 * 60;
 const MAX_BUCKETS = 2_000;
@@ -22,8 +22,8 @@ export function intervalSeconds(value: string): number {
 export const ServiceHealthQuery = v.pipe(
 	v.object({
 		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
-		startTs: toNum,
-		endTs: toNum,
+		startTs: intParam({ min: 0, label: 'startTs' }),
+		endTs: intParam({ min: 0, label: 'endTs' }),
 		interval,
 		endpointLimit: v.optional(
 			v.pipe(
