@@ -44,6 +44,7 @@ const ENDPOINT_SOURCES = [
 const ENDPOINT_CANDIDATE_LIMIT = 100;
 const ENDPOINT_SERVICE_LIMIT = 10;
 const NAMES_PER_ENDPOINT_LIMIT = 3;
+/** Each series gets its own color, so raising this past the web's `--trace-service-*` palette size repeats colors. */
 const SERVICE_CHART_LIMIT = 10;
 const SERVICE_LIMIT = 100;
 
@@ -141,7 +142,7 @@ function endpointRow(
 	nameBucket: AggregationBucket
 ): MonitoringEndpoint {
 	return {
-		id: JSON.stringify([field, value, spanName]),
+		id: JSON.stringify([service, field, value, spanName]),
 		service,
 		name: endpointLabel(field, value, spanName),
 		routeAvailable: field !== NAME_FIELD || !isHttpMethod(spanName),

@@ -9,8 +9,8 @@
 	import type { ChartSeries } from '$lib/components/monitoring/MonitoringChart.svelte';
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
 	import ServiceLatencyChart from '$lib/components/monitoring/ServiceLatencyChart.svelte';
-	import TimeRangePicker from '$lib/components/search/TimeRangePicker.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
+	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
@@ -51,7 +51,7 @@
 
 	function setEndpointLimit(value: number) {
 		navigate((params) => {
-			if (value === 10) params.delete('endpointLimit');
+			if (value === ENDPOINT_LIMITS[0]) params.delete('endpointLimit');
 			else params.set('endpointLimit', String(value));
 		});
 	}
@@ -111,6 +111,11 @@
 	defer
 	class="min-h-0 w-full flex-1 px-4 py-8 sm:px-8 lg:px-12 lg:py-12"
 >
+	<header class="mb-6">
+		<p class="eyebrow">Monitoring</p>
+		<h1 class="mt-1 text-3xl tracking-tight">Services</h1>
+	</header>
+
 	{#await data.health}
 		<div class="flex flex-col gap-4" role="status" aria-label="Loading service health">
 			<div class="flex flex-wrap items-end justify-between gap-4">
@@ -277,7 +282,7 @@
 									</tr>
 								</thead>
 								<tbody>
-									{#each health.endpoints as endpoint, index (`${endpoint.service}:${endpoint.id}`)}
+									{#each health.endpoints as endpoint, index (endpoint.id)}
 										<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
 											<td class="w-10 text-right font-mono text-xs tabular-nums">
 												{index + 1}

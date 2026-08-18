@@ -17,6 +17,7 @@ export const MonitoringBucketSchema = named(
 export const MonitoringEndpointSchema = named(
 	'MonitoringEndpoint',
 	v.object({
+		/** Unique across the whole list — service included — so clients can key rows on it alone. */
 		id: v.string(),
 		service: v.string(),
 		name: v.string(),

@@ -14,7 +14,7 @@ export async function getServiceHealth(input: {
 	service: string | null;
 	startTs: number;
 	endTs: number;
-	endpointLimit: 10 | 20 | 30;
+	endpointLimit: number;
 }): Promise<ServiceHealth> {
 	const res = await monitoring.services.$get({
 		query: {

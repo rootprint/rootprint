@@ -1,10 +1,13 @@
 import * as v from 'valibot';
 
-import { intParam, toNum } from '../utils/valibot.js';
+import { intParam } from '../utils/valibot.js';
 
 const MAX_RANGE_SECONDS = 30 * 24 * 60 * 60;
 const MAX_BUCKETS = 2_000;
+const MAX_ENDPOINT_LIMIT = 100;
 
+// Narrower than the log histogram's interval (which also takes w, M, y): the bucket-count check
+// below needs a fixed second count, and weeks/months/years don't have one.
 const interval = v.pipe(
 	v.string(),
 	v.regex(/^[1-9]\d*[smhd]$/, 'interval must use seconds, minutes, hours, or days')
@@ -26,10 +29,7 @@ export const ServiceHealthQuery = v.pipe(
 		endTs: intParam({ min: 0, label: 'endTs' }),
 		interval,
 		endpointLimit: v.optional(
-			v.pipe(
-				toNum,
-				v.check((value) => value === 10 || value === 20 || value === 30, 'Invalid endpoint limit')
-			),
+			intParam({ min: 1, max: MAX_ENDPOINT_LIMIT, label: 'endpointLimit' }),
 			'10'
 		)
 	}),

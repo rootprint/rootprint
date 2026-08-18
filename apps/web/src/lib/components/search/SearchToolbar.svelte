@@ -5,7 +5,7 @@
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
 	import { traceDetailHref } from '$lib/utils/trace-params';
-	import TimeRangePicker from './TimeRangePicker.svelte';
+	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';

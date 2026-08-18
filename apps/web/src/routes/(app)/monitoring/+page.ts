@@ -8,9 +8,9 @@ export const load: PageLoad = ({ url }) => {
 	const { timeRange } = deserialize(url.searchParams);
 	const { startTs, endTs } = resolveWindow(timeRange);
 	const service = url.searchParams.get('service')?.trim() || null;
-	const requestedEndpointLimit = Number(url.searchParams.get('endpointLimit'));
-	const endpointLimit =
-		requestedEndpointLimit === 20 || requestedEndpointLimit === 30 ? requestedEndpointLimit : 10;
+	// Any positive count is passed through — the API caps it. The row buttons just show none active.
+	const requested = Number(url.searchParams.get('endpointLimit'));
+	const endpointLimit = Number.isInteger(requested) && requested > 0 ? requested : 10;
 
 	return {
 		timeRange,

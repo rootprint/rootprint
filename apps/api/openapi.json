@@ -16684,7 +16684,10 @@
 						"name": "endpointLimit",
 						"schema": {
 							"default": "10",
-							"type": "number"
+							"maximum": 100,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
 						}
 					}
 				],
