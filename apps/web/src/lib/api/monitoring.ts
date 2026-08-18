@@ -8,6 +8,8 @@ const monitoring = client.api.monitoring;
 
 export type ServiceHealth = InferResponseType<typeof monitoring.services.$get, 200>;
 export type ServiceHealthBucket = ServiceHealth['buckets'][number];
+export type ServiceHealthSummary = ServiceHealth['summary'];
+export type ServiceHealthEndpoint = ServiceHealth['endpoints'][number];
 export type ServiceLatency = ServiceHealth['serviceLatencies'][number];
 
 export async function getServiceHealth(input: {

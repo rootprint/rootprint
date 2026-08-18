@@ -18,15 +18,21 @@
 
 	type Props = {
 		title: string;
-		description: string;
+		description?: string;
 		summary?: string;
 		/** Bucket start times, in seconds. */
 		xs: number[];
 		xRange: [number, number];
 		series: ChartSeries[];
 		formatValue: (value: number) => string;
+		height?: number;
+		curve?: 'linear' | 'spline';
 		showLegend?: boolean;
-		onBrush: (startTs: number, endTs: number) => void;
+		emptyMessage?: string;
+		/** Shared cursor across every panel using the same key. */
+		syncKey?: string;
+		/** Drag-to-select is enabled only when a handler is passed. */
+		onBrush?: (startTs: number, endTs: number) => void;
 	};
 
 	let {
@@ -37,11 +43,13 @@
 		xRange,
 		series,
 		formatValue,
+		height = 200,
+		curve = 'linear',
 		showLegend = true,
+		emptyMessage = 'No data in this time range.',
+		syncKey,
 		onBrush
 	}: Props = $props();
-
-	const HEIGHT = 200;
 
 	const colors = $derived(
 		browser ? series.map((s) => cssVarColor(s.cssVar)) : series.map(() => CANVAS_FALLBACK_COLOR)
@@ -51,7 +59,7 @@
 		xs.length === 0 ? null : [xs, ...series.map((s) => s.values)]
 	);
 
-	// Each chart passes a fixed set of series, so the visibility flags never need to resize.
+	// Each panel passes a fixed set of series, so the visibility flags never need to resize.
 	let visible = $state<boolean[]>(untrack(() => series).map(() => true));
 	let chart: uPlotLib | null = null;
 
@@ -65,11 +73,12 @@
 	}
 
 	function makeOpts(UPlot: typeof uPlotLib): Omit<uPlotLib.Options, 'width' | 'height'> {
-		const linePaths = UPlot.paths.linear?.();
+		const paths = curve === 'spline' ? UPlot.paths.spline?.() : UPlot.paths.linear?.();
 		const axisStroke = baseContentAt(0.45);
 		const gridStroke = baseContentAt(0.1);
 		const [r0, r1] = xRange;
 		const spanMs = (r1 - r0) * 1000;
+		const brush = onBrush;
 		// toggling a series goes through `setSeries`, so it must not rebuild the chart
 		const vis = untrack(() => [...visible]);
 
@@ -80,7 +89,7 @@
 				label: s.label,
 				stroke: colors[i],
 				width: 1.5,
-				paths: linePaths,
+				paths,
 				spanGaps: true,
 				points: { show: showPoint },
 				show: vis[i]
@@ -90,24 +99,29 @@
 		return {
 			padding: [12, 8, 0, 0],
 			cursor: {
-				drag: { x: true, y: false, setScale: false },
+				drag: { x: brush !== undefined, y: false, setScale: false },
 				points: { show: false },
-				sync: { key: 'service-health', setSeries: false, scales: ['x', null] }
+				...(syncKey === undefined
+					? {}
+					: { sync: { key: syncKey, setSeries: false, scales: ['x', null] as [string, null] } })
 			},
-			select: { show: true, left: 0, top: 0, width: 0, height: 0 },
-			hooks: {
-				setSelect: [
-					(u: uPlotLib) => {
-						const { left, width } = u.select;
-						if (width > 2 && u.cursor.event != null) {
-							const startTs = Math.floor(u.posToVal(left, 'x'));
-							const endTs = Math.max(startTs + 1, Math.ceil(u.posToVal(left + width, 'x')));
-							onBrush(startTs, endTs);
-						}
-						u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
-					}
-				]
-			},
+			select: { show: brush !== undefined, left: 0, top: 0, width: 0, height: 0 },
+			hooks:
+				brush === undefined
+					? {}
+					: {
+							setSelect: [
+								(u: uPlotLib) => {
+									const { left, width } = u.select;
+									if (width > 2 && u.cursor.event != null) {
+										const startTs = Math.floor(u.posToVal(left, 'x'));
+										const endTs = Math.max(startTs + 1, Math.ceil(u.posToVal(left + width, 'x')));
+										brush(startTs, endTs);
+									}
+									u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+								}
+							]
+						},
 			series: uplotSeries,
 			scales: {
 				x: { time: true, range: () => [r0, r1] },
@@ -140,8 +154,10 @@
 	<header class="pb-3">
 		<div class="flex items-start justify-between gap-4">
 			<div>
-				<h2 class="eyebrow font-medium">{title}</h2>
-				<p class="text-base-content/50 mt-1 text-xs">{description}</p>
+				<h2 class="eyebrow">{title}</h2>
+				{#if description}
+					<p class="text-base-content/50 mt-1 text-xs">{description}</p>
+				{/if}
 			</div>
 			{#if summary}
 				<p class="font-mono text-sm tabular-nums">{summary}</p>
@@ -149,12 +165,15 @@
 		</div>
 	</header>
 	{#if !data}
-		<div class="text-base-content/40 flex h-[200px] items-center justify-center text-xs">
-			No spans in this time range.
+		<div
+			class="text-base-content/40 flex items-center justify-center text-xs"
+			style="height: {height}px"
+		>
+			{emptyMessage}
 		</div>
 	{:else}
-		<div role="img" aria-label={`${title}. ${summary ? `${summary}. ` : ''}${description}`}>
-			<UplotChart {data} height={HEIGHT} {makeOpts} onbuild={(instance) => (chart = instance)}>
+		<div role="img" aria-label={`${title}. ${summary ? `${summary}. ` : ''}${description ?? ''}`}>
+			<UplotChart {data} {height} {makeOpts} onbuild={(instance) => (chart = instance)}>
 				{#snippet tooltip(idx)}
 					<div class="font-medium">{formatTooltipDate(xs[idx] * 1000)}</div>
 					<div class="grid gap-1.5">
