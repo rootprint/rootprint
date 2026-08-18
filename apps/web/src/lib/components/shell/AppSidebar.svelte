@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { browser } from '$app/environment';
-	import { PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-svelte';
+	import { Activity, PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-svelte';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
@@ -21,8 +21,9 @@
 
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
+	const onMonitoring = $derived(path.startsWith('/monitoring'));
 	// A trace is only ever reached from a log, so the trace page keeps Search lit.
-	const onSearch = $derived(!onSettings);
+	const onSearch = $derived(!onSettings && !onMonitoring);
 </script>
 
 <aside
@@ -41,6 +42,13 @@
 
 	<nav aria-label="Primary" class="flex flex-1 flex-col gap-0.5 px-2 py-3">
 		<SidebarNavItem href="/" label="Search" icon={Search} active={onSearch} {collapsed} />
+		<SidebarNavItem
+			href="/monitoring"
+			label="Services"
+			icon={Activity}
+			active={onMonitoring}
+			{collapsed}
+		/>
 	</nav>
 
 	<div class="border-line border-t px-2 py-3">
