@@ -1,7 +1,7 @@
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type { SavedView } from 'api/types';
-import type { Filter, SortDirection } from '$lib/types';
+import type { Filter, SortDirection, TimeRange } from '$lib/types';
 
 export type ViewCreateInput = {
 	name: string;
@@ -9,6 +9,7 @@ export type ViewCreateInput = {
 	filters: Filter[];
 	sortDirection: SortDirection;
 	columns: string[] | null;
+	timeRange: TimeRange | null;
 };
 
 export type ViewPatch = {
@@ -17,6 +18,7 @@ export type ViewPatch = {
 	filters?: Filter[];
 	sortDirection?: SortDirection;
 	columns?: string[] | null;
+	timeRange?: TimeRange | null;
 };
 
 export async function listViews(indexId: string): Promise<SavedView[]> {

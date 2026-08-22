@@ -77,8 +77,10 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 	const fromNum = from !== null && from !== '' ? Number(from) : NaN;
 	const toNum = to !== null && to !== '' ? Number(to) : NaN;
 
+	// Floored, not rejected: the API's TimeRangeSchema requires integer epoch seconds, but a
+	// fractional bookmark should still search its intended window.
 	if (Number.isFinite(fromNum) && Number.isFinite(toNum) && fromNum >= 0 && fromNum < toNum) {
-		timeRange = { type: 'absolute', start: fromNum, end: toNum };
+		timeRange = { type: 'absolute', start: Math.floor(fromNum), end: Math.ceil(toNum) };
 	} else if (from !== null && isPreset(from)) {
 		timeRange = { type: 'relative', preset: from };
 	} else {

@@ -214,7 +214,8 @@
 		@apply bg-primary absolute inset-y-1.5 left-0 w-0.5 rounded-full opacity-0 transition-opacity duration-150;
 	}
 
-	&[aria-current='page'] > .nav-rail-bar {
+	&[aria-current='page'] > .nav-rail-bar,
+	&[aria-current='true'] > .nav-rail-bar {
 		@apply opacity-100;
 	}
 }

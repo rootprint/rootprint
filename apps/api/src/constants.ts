@@ -20,3 +20,18 @@ export const FIELD_VALUES_MAX = 65_000;
 
 /** Fallback `limit` for the field-values endpoint when the caller doesn't pass one. */
 export const FIELD_VALUES_DEFAULT = 100;
+
+// Time ranges
+export const PRESET_OPTIONS = [
+	'5m',
+	'15m',
+	'30m',
+	'1h',
+	'3h',
+	'6h',
+	'24h',
+	'3d',
+	'7d',
+	'30d'
+] as const;
+export type Preset = (typeof PRESET_OPTIONS)[number];

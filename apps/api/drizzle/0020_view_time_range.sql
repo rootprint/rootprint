@@ -1,0 +1,1 @@
+ALTER TABLE "view" ADD COLUMN "time_range" jsonb;

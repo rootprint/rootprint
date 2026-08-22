@@ -2,7 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
 import { view } from '../db/schema.js';
-import type { Filter, SavedView, SortDirection } from '../types.js';
+import type { Filter, SavedView, SortDirection, TimeRange } from '../types.js';
 import { internal, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 
@@ -20,6 +20,7 @@ function toPublic(row: ViewRow): SavedView {
 		filters: row.filters,
 		sortDirection: row.sortDirection,
 		columns: row.columns,
+		timeRange: row.timeRange,
 		createdAt: row.createdAt.toISOString(),
 		updatedAt: row.updatedAt.toISOString()
 	};
@@ -44,6 +45,7 @@ export async function createView(
 		filters?: Filter[];
 		sortDirection?: SortDirection;
 		columns?: string[] | null;
+		timeRange?: TimeRange | null;
 	}
 ): Promise<SavedView> {
 	// Omitted optional fields fall back to the column defaults in db/schema.ts.
@@ -68,6 +70,7 @@ export async function updateOwnedView(
 		filters?: Filter[];
 		sortDirection?: SortDirection;
 		columns?: string[] | null;
+		timeRange?: TimeRange | null;
 	}
 ): Promise<SavedView> {
 	// Callers guarantee at least one field; drizzle's .set() drops undefined keys.
