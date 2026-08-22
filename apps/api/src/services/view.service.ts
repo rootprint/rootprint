@@ -16,7 +16,6 @@ function toPublic(row: ViewRow): SavedView {
 		id: row.id,
 		indexId: row.indexId,
 		name: row.name,
-		description: row.description,
 		query: row.query,
 		filters: row.filters,
 		sortDirection: row.sortDirection,
@@ -41,7 +40,6 @@ export async function createView(
 	input: {
 		indexId: string;
 		name: string;
-		description?: string;
 		query: string;
 		filters?: Filter[];
 		sortDirection?: SortDirection;
@@ -66,7 +64,6 @@ export async function updateOwnedView(
 	indexId: string,
 	patch: {
 		name?: string;
-		description?: string | null;
 		query?: string;
 		filters?: Filter[];
 		sortDirection?: SortDirection;

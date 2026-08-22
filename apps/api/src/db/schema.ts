@@ -101,7 +101,6 @@ export const view = pgTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		indexId: text('index_id').notNull(),
 		name: text('name').notNull(),
-		description: text('description'),
 		query: text('query').notNull().default(''),
 		filters: jsonb('filters').$type<Filter[]>().notNull().default([]),
 		sortDirection: text('sort_direction').$type<'asc' | 'desc'>().notNull().default('desc'),

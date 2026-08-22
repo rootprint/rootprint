@@ -5,7 +5,6 @@ import type { Filter, SortDirection } from '$lib/types';
 
 export type ViewCreateInput = {
 	name: string;
-	description?: string;
 	query: string;
 	filters: Filter[];
 	sortDirection: SortDirection;
@@ -14,7 +13,6 @@ export type ViewCreateInput = {
 
 export type ViewPatch = {
 	name?: string;
-	description?: string | null;
 	query?: string;
 	filters?: Filter[];
 	sortDirection?: SortDirection;

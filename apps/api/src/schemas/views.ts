@@ -6,7 +6,6 @@ import { positiveInt } from '../utils/valibot.js';
 
 export const createViewSchema = v.object({
 	name: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
-	description: v.optional(v.string()),
 	query: v.string(),
 	filters: v.optional(v.array(FilterSchema)),
 	sortDirection: v.optional(SortDirectionSchema),
@@ -16,7 +15,6 @@ export const createViewSchema = v.object({
 export const patchViewSchema = v.pipe(
 	v.object({
 		name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200))),
-		description: v.optional(v.nullable(v.string())),
 		query: v.optional(v.string()),
 		filters: v.optional(v.array(FilterSchema)),
 		sortDirection: v.optional(SortDirectionSchema),

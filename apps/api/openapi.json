@@ -1876,16 +1876,6 @@
 						"format": "date-time",
 						"type": "string"
 					},
-					"description": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"filters": {
 						"items": {
 							"properties": {
@@ -1938,7 +1928,6 @@
 					"id",
 					"indexId",
 					"name",
-					"description",
 					"query",
 					"filters",
 					"sortDirection",
@@ -16299,9 +16288,6 @@
 											}
 										]
 									},
-									"description": {
-										"type": "string"
-									},
 									"filters": {
 										"items": {
 											"properties": {
@@ -16478,16 +16464,6 @@
 													"type": "string"
 												},
 												"type": "array"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"description": {
-										"anyOf": [
-											{
-												"type": "string"
 											},
 											{
 												"type": "null"

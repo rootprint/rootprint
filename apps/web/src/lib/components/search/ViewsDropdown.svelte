@@ -1,8 +1,8 @@
 <script lang="ts">
 	import {
 		ArrowLeft,
+		Check,
 		ChevronDown,
-		Eye,
 		Layers,
 		Pencil,
 		Plus,
@@ -40,7 +40,6 @@
 	let panel = $state<Panel>('list');
 	let editing = $state<SavedView | null>(null);
 	let formName = $state('');
-	let formDescription = $state('');
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 	let formSubmitting = $state(false);
@@ -52,6 +51,16 @@
 			sortDirection: store.sortDirection,
 			columns: [...store.activeFields]
 		};
+	}
+
+	function isApplied(item: SavedView) {
+		if (item.query !== store.query || item.sortDirection !== store.sortDirection) return false;
+		const current = store.filters;
+		if (item.filters.length !== current.length) return false;
+		return item.filters.every((f, i) => {
+			const g = current[i];
+			return g.field === f.field && g.value === f.value && g.exclude === f.exclude;
+		});
 	}
 
 	const refreshGuard = new RequestGuard();
@@ -91,7 +100,6 @@
 	function openNewForm(prefillName = '') {
 		editing = null;
 		formName = prefillName;
-		formDescription = '';
 		formError = null;
 		fieldErrors = {};
 		panel = 'form';
@@ -100,7 +108,6 @@
 	function openEditForm(item: SavedView) {
 		editing = item;
 		formName = item.name;
-		formDescription = item.description ?? '';
 		formError = null;
 		fieldErrors = {};
 		panel = 'form';
@@ -117,10 +124,7 @@
 		if (formSubmitting) return false;
 		const name = formName.trim();
 		if (name.length === 0) return false;
-		if (!editing) return true;
-		const nameChanged = name !== editing.name;
-		const descChanged = formDescription !== (editing.description ?? '');
-		return nameChanged || descChanged;
+		return !editing || name !== editing.name;
 	});
 
 	async function onsubmit(e: SubmitEvent) {
@@ -138,11 +142,7 @@
 		let save: () => Promise<void>;
 		if (editing) {
 			const editingView = editing;
-			const patch: { name?: string; description?: string | null } = {};
-			if (name !== editingView.name) patch.name = name;
-			if (formDescription !== (editingView.description ?? '')) {
-				patch.description = formDescription === '' ? null : formDescription;
-			}
+			const patch = { name };
 			const parsed = v.safeParse(patchViewSchema, patch);
 			if (!parsed.success) {
 				fieldErrors = issuesToFieldErrors(parsed.issues);
@@ -153,11 +153,7 @@
 				items = items.map((it) => (it.id === row.id ? row : it));
 			};
 		} else {
-			const input = {
-				name,
-				description: formDescription === '' ? undefined : formDescription,
-				...currentSnapshot()
-			};
+			const input = { name, ...currentSnapshot() };
 			const parsed = v.safeParse(createViewSchema, input);
 			if (!parsed.success) {
 				fieldErrors = issuesToFieldErrors(parsed.issues);
@@ -235,11 +231,7 @@
 	const filtered = $derived.by(() => {
 		const q = filterText.trim().toLowerCase();
 		if (!q) return items;
-		return items.filter((item) => {
-			const name = item.name.toLowerCase();
-			const desc = (item.description ?? '').toLowerCase();
-			return name.includes(q) || desc.includes(q);
-		});
+		return items.filter((item) => item.name.toLowerCase().includes(q));
 	});
 
 	let lastIndex: string | null | undefined;
@@ -268,15 +260,20 @@
 	id={dd}
 	style="position-anchor:--{dd}"
 	ontoggle={onToggle}
-	class="dropdown border-line rounded-box bg-base-100 mt-1 flex w-80 flex-col border"
+	class="dropdown border-line bg-base-100 mt-1 flex w-80 flex-col rounded-lg border shadow-lg"
 >
 	{#if panel === 'list'}
-		<div class="border-line border-b px-3 pt-3 pb-2">
-			<p class="eyebrow">Views</p>
-		</div>
-
-		<div class="border-line border-b px-3 py-2">
+		<div class="border-line flex items-center gap-2 border-b p-2">
 			<SearchInput bind:value={filterText} placeholder="Search views…" label="Search views" />
+			<button
+				type="button"
+				class="btn btn-ghost btn-sm btn-square shrink-0"
+				aria-label="Save current search as view"
+				title="Save current search as view"
+				onclick={() => openNewForm()}
+			>
+				<Plus class="h-4 w-4" />
+			</button>
 		</div>
 
 		<div class="max-h-72 min-h-[6rem] flex-1 overflow-y-auto">
@@ -296,8 +293,12 @@
 					</button>
 				</div>
 			{:else if items.length === 0}
-				<div class="flex h-full items-center justify-center p-3">
+				<div class="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
 					<p class="text-base-content/60 text-xs">No views yet</p>
+					<button type="button" class="btn btn-ghost btn-xs" onclick={() => openNewForm()}>
+						<Plus class="h-3.5 w-3.5" />
+						Save current search
+					</button>
 				</div>
 			{:else if filtered.length === 0}
 				<div class="flex h-full flex-col items-center justify-center gap-2 p-3 text-center">
@@ -312,25 +313,23 @@
 					</button>
 				</div>
 			{:else}
-				<ul class="py-1">
+				<ul class="p-1">
 					{#each filtered as item (item.id)}
+						{@const applied = isApplied(item)}
 						<li>
-							<div class="group hover:bg-base-200 flex items-center">
+							<div class="group hover:bg-base-200 flex items-center rounded">
 								<button
 									type="button"
-									class="flex min-w-0 flex-1 items-center gap-2 px-3 py-1.5 text-left"
+									class="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left"
 									onclick={() => applyView(item)}
-									title={item.description ?? item.query}
+									title={item.query || 'Empty query'}
 								>
-									<Eye class="h-3.5 w-3.5 shrink-0 opacity-60" />
-									<span class="flex min-w-0 flex-col">
-										<span class="truncate text-xs">{item.name}</span>
-										{#if item.description}
-											<span class="text-base-content/60 truncate text-[10px]">
-												{item.description}
-											</span>
+									<span class="flex w-3.5 shrink-0 justify-center">
+										{#if applied}
+											<Check class="text-primary h-3.5 w-3.5" />
 										{/if}
 									</span>
+									<span class="truncate text-xs" class:font-medium={applied}>{item.name}</span>
 								</button>
 								<div
 									class="flex shrink-0 items-center gap-0.5 pr-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100"
@@ -369,19 +368,8 @@
 				</ul>
 			{/if}
 		</div>
-
-		<div class="border-line border-t px-3 py-2">
-			<button
-				type="button"
-				class="btn btn-ghost btn-xs w-full justify-start"
-				onclick={() => openNewForm()}
-			>
-				<Plus class="h-3.5 w-3.5" />
-				Save current search as view
-			</button>
-		</div>
 	{:else}
-		<div class="border-line flex items-center gap-2 border-b px-3 pt-3 pb-2">
+		<div class="border-line flex items-center gap-2 border-b p-2">
 			<button
 				type="button"
 				class="btn btn-ghost btn-xs btn-square"
@@ -391,36 +379,24 @@
 				<ArrowLeft class="h-3.5 w-3.5" />
 			</button>
 			<p class="eyebrow truncate">
-				{editing ? `Edit "${editing.name}"` : 'New view'}
+				{editing ? 'Rename view' : 'New view'}
 			</p>
 		</div>
 
-		<form id="view-form" class="flex flex-col gap-3 p-3" {onsubmit}>
-			<div class="flex flex-col gap-1">
-				<p class="eyebrow">Name</p>
-				<input
-					type="text"
-					class="input input-sm"
-					class:input-error={fieldErrors.name}
-					placeholder="My view"
-					bind:value={formName}
-					aria-invalid={fieldErrors.name ? 'true' : undefined}
-					aria-describedby={fieldErrors.name ? 'view-form-name-msg' : undefined}
-				/>
-				{#if fieldErrors.name}
-					<p id="view-form-name-msg" class="text-error text-xs">{fieldErrors.name}</p>
-				{/if}
-			</div>
-
-			<div class="flex flex-col gap-1">
-				<p class="eyebrow">Description (optional)</p>
-				<input
-					type="text"
-					class="input input-sm"
-					placeholder="What does this view show?"
-					bind:value={formDescription}
-				/>
-			</div>
+		<form id="view-form" class="flex flex-col gap-2 p-3" {onsubmit}>
+			<input
+				type="text"
+				class="input input-sm w-full"
+				class:input-error={fieldErrors.name}
+				placeholder="View name"
+				aria-label="View name"
+				bind:value={formName}
+				aria-invalid={fieldErrors.name ? 'true' : undefined}
+				aria-describedby={fieldErrors.name ? 'view-form-name-msg' : undefined}
+			/>
+			{#if fieldErrors.name}
+				<p id="view-form-name-msg" class="text-error text-xs">{fieldErrors.name}</p>
+			{/if}
 
 			{#if !editing}
 				<p class="text-base-content/60 text-xs">
@@ -433,10 +409,10 @@
 			{/if}
 		</form>
 
-		<div class="border-line flex justify-end gap-2 border-t px-3 py-2">
+		<div class="border-line flex justify-end gap-2 border-t p-2">
 			<button type="button" class="btn btn-ghost btn-sm" onclick={backToList}>Cancel</button>
 			<button type="submit" form="view-form" class="btn btn-primary btn-sm" disabled={!formCanSave}>
-				{editing ? 'Save' : 'Save view'}
+				Save
 			</button>
 		</div>
 	{/if}

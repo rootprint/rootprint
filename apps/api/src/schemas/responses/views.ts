@@ -10,7 +10,6 @@ export const SavedViewResponse = named(
 		id: v.number(),
 		indexId: v.string(),
 		name: v.string(),
-		description: v.nullable(v.string()),
 		query: v.string(),
 		filters: v.array(FilterSchema),
 		sortDirection: SortDirectionSchema,
