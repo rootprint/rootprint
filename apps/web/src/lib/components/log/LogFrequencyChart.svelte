@@ -8,7 +8,7 @@
 	import { levelColor } from '$lib/constants/level-colors';
 	import type { HistogramBucket } from '$lib/types';
 	import { baseContentAt } from '$lib/utils/chart-colors';
-	import { formatInterval } from '$lib/utils/histogram';
+	import { formatInterval, UNKNOWN_LEVEL, unknownInBucket } from '$lib/utils/histogram';
 	import { sortBySeverity } from '$lib/utils/severity';
 	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
 
@@ -30,14 +30,24 @@
 		return formatInterval(buckets[1].timestamp - buckets[0].timestamp);
 	});
 
+	const upperBuckets = $derived.by<Record<string, number>[]>(() =>
+		buckets.map((b) => {
+			const out: Record<string, number> = {};
+			for (const k of Object.keys(b.levels)) {
+				if (k !== '') out[k.toUpperCase()] = b.levels[k];
+			}
+			const unknown = unknownInBucket(b);
+			if (unknown > 0) out[UNKNOWN_LEVEL] = (out[UNKNOWN_LEVEL] ?? 0) + unknown;
+			return out;
+		})
+	);
+
 	const levels = $derived.by<string[]>(() => {
 		const seen = new Set<string>();
-		for (const b of buckets) {
-			for (const k of Object.keys(b.levels)) {
-				seen.add(k.toUpperCase());
-			}
+		for (const u of upperBuckets) {
+			for (const k of Object.keys(u)) seen.add(k);
 		}
-		if (seen.size === 0 && buckets.length > 0) return ['UNKNOWN'];
+		if (seen.size === 0 && buckets.length > 0) return [UNKNOWN_LEVEL];
 		return sortBySeverity([...seen]);
 	});
 
@@ -51,18 +61,7 @@
 		if (buckets.length === 0) return null;
 
 		const timestamps: number[] = buckets.map((b) => b.timestamp);
-
-		const upperBuckets: Record<string, number>[] = buckets.map((b) => {
-			const out: Record<string, number> = {};
-			for (const k of Object.keys(b.levels)) out[k.toUpperCase()] = b.levels[k];
-			return out;
-		});
-
-		const isSyntheticUnknown = levels.length === 1 && levels[0] === 'UNKNOWN';
-
-		const rawSeries: number[][] = isSyntheticUnknown
-			? [buckets.map((b) => b.count)]
-			: levels.map((level) => upperBuckets.map((u) => u[level] ?? 0));
+		const rawSeries: number[][] = levels.map((level) => upperBuckets.map((u) => u[level] ?? 0));
 
 		const stackedSeries: number[][] = [];
 		for (let i = 0; i < rawSeries.length; i++) {

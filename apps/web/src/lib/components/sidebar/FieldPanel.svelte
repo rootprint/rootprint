@@ -3,6 +3,7 @@
 	import type { LevelBucket, LogField, LogFieldValueBucket } from '$lib/types';
 	import { isOtelAttr, isOtelResourceAttr, serializeTimeRange } from '$lib/utils/fields';
 	import { sortBySeverity } from '$lib/utils/severity';
+	import { UNKNOWN_LEVEL } from '$lib/utils/histogram';
 	import { levelColor } from '$lib/constants/level-colors';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { fetchFieldValuesBulk } from '$lib/api/field-values';
@@ -266,7 +267,7 @@
 										class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-left font-mono text-xs transition-colors duration-150 disabled:cursor-not-allowed"
 										role="checkbox"
 										aria-checked={isActive}
-										disabled={levelField === null}
+										disabled={levelField === null || level.name === UNKNOWN_LEVEL}
 										onclick={() => store.toggleLevelFilter(level.name)}
 									>
 										{#if showFull}
