@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 
 import { FilterSchema, SortDirectionSchema } from './filters.js';
+import { TimeRangeSchema } from './time-range.js';
 import { IndexIdParams } from '../utils/params.js';
 import { positiveInt } from '../utils/valibot.js';
 
@@ -9,7 +10,8 @@ export const createViewSchema = v.object({
 	query: v.string(),
 	filters: v.optional(v.array(FilterSchema)),
 	sortDirection: v.optional(SortDirectionSchema),
-	columns: v.optional(v.nullable(v.array(v.string())))
+	columns: v.optional(v.nullable(v.array(v.string()))),
+	timeRange: v.optional(v.nullable(TimeRangeSchema))
 });
 
 export const patchViewSchema = v.pipe(
@@ -18,7 +20,8 @@ export const patchViewSchema = v.pipe(
 		query: v.optional(v.string()),
 		filters: v.optional(v.array(FilterSchema)),
 		sortDirection: v.optional(SortDirectionSchema),
-		columns: v.optional(v.nullable(v.array(v.string())))
+		columns: v.optional(v.nullable(v.array(v.string()))),
+		timeRange: v.optional(v.nullable(TimeRangeSchema))
 	}),
 	v.check((b) => Object.keys(b).length > 0, 'at least one field is required')
 );

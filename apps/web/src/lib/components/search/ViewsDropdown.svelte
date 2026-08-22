@@ -1,14 +1,5 @@
 <script lang="ts">
-	import {
-		ArrowLeft,
-		Check,
-		ChevronDown,
-		Layers,
-		Pencil,
-		Plus,
-		RefreshCw,
-		Trash2
-	} from 'lucide-svelte';
+	import { ArrowLeft, ChevronDown, Layers, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-svelte';
 	import * as v from 'valibot';
 	import { ApiError, issuesToFieldErrors } from '$lib/api/errors';
 	import { listViews, createView, updateView, deleteView } from '$lib/api/views';
@@ -16,12 +7,14 @@
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { RequestGuard } from '$lib/stores/request-guard';
+	import { formatTimeRangeLabel } from '$lib/utils/time-range';
 	import { createViewSchema, patchViewSchema } from 'api/schemas';
 	import type { SavedView } from 'api/types';
 
 	let { store }: { store: SearchStore } = $props();
 
 	let items = $state<SavedView[]>([]);
+	let appliedId = $state<number | null>(null);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -40,27 +33,20 @@
 	let panel = $state<Panel>('list');
 	let editing = $state<SavedView | null>(null);
 	let formName = $state('');
+	let saveTime = $state(true);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 	let formSubmitting = $state(false);
 
-	function currentSnapshot() {
+	function currentSnapshot(opts: { withTime: boolean; withColumns: boolean }) {
 		return {
 			query: store.query,
 			filters: store.filters,
 			sortDirection: store.sortDirection,
-			columns: [...store.activeFields]
+			// Empty means display preferences haven't resolved yet, not "no columns".
+			columns: opts.withColumns && store.activeFields.length > 0 ? [...store.activeFields] : null,
+			timeRange: opts.withTime ? store.timeRange : null
 		};
-	}
-
-	function isApplied(item: SavedView) {
-		if (item.query !== store.query || item.sortDirection !== store.sortDirection) return false;
-		const current = store.filters;
-		if (item.filters.length !== current.length) return false;
-		return item.filters.every((f, i) => {
-			const g = current[i];
-			return g.field === f.field && g.value === f.value && g.exclude === f.exclude;
-		});
 	}
 
 	const refreshGuard = new RequestGuard();
@@ -89,8 +75,11 @@
 	}
 
 	function applyView(item: SavedView) {
+		appliedId = item.id;
+		// A view saved without a time range leaves the current one alone.
+		const timeRange = item.timeRange ?? store.timeRange;
 		store.navigateQuery(
-			{ query: item.query, filters: item.filters, sortDirection: item.sortDirection },
+			{ query: item.query, filters: item.filters, sortDirection: item.sortDirection, timeRange },
 			{ push: true }
 		);
 		if (item.columns !== null) store.setActiveFields([...item.columns]);
@@ -100,6 +89,7 @@
 	function openNewForm(prefillName = '') {
 		editing = null;
 		formName = prefillName;
+		saveTime = true;
 		formError = null;
 		fieldErrors = {};
 		panel = 'form';
@@ -153,7 +143,7 @@
 				items = items.map((it) => (it.id === row.id ? row : it));
 			};
 		} else {
-			const input = { name, ...currentSnapshot() };
+			const input = { name, ...currentSnapshot({ withTime: saveTime, withColumns: true }) };
 			const parsed = v.safeParse(createViewSchema, input);
 			if (!parsed.success) {
 				fieldErrors = issuesToFieldErrors(parsed.issues);
@@ -162,6 +152,7 @@
 			save = async () => {
 				const row = await createView(indexId, input);
 				items = [row, ...items];
+				appliedId = row.id;
 			};
 		}
 
@@ -194,8 +185,13 @@
 		if (!item) return;
 		const indexId = store.selectedIndex;
 		if (indexId === null) throw new Error('No index selected');
-		const row = await updateView(indexId, item.id, currentSnapshot());
+		const row = await updateView(
+			indexId,
+			item.id,
+			currentSnapshot({ withTime: item.timeRange !== null, withColumns: item.columns !== null })
+		);
 		items = items.map((it) => (it.id === row.id ? row : it));
+		appliedId = row.id;
 		toOverwrite = null;
 	}
 
@@ -211,6 +207,7 @@
 		if (indexId === null) throw new Error('No index selected');
 		await deleteView(indexId, item.id);
 		items = items.filter((it) => it.id !== item.id);
+		if (appliedId === item.id) appliedId = null;
 		toDelete = null;
 	}
 
@@ -237,7 +234,10 @@
 	let lastIndex: string | null | undefined;
 	$effect(() => {
 		const current = store.selectedIndex;
-		if (lastIndex !== undefined && current !== lastIndex) close();
+		if (lastIndex !== undefined && current !== lastIndex) {
+			appliedId = null;
+			close();
+		}
 		lastIndex = current;
 	});
 </script>
@@ -276,7 +276,7 @@
 			</button>
 		</div>
 
-		<div class="max-h-72 min-h-[6rem] flex-1 overflow-y-auto">
+		<div class="max-h-[28rem] min-h-[12rem] flex-1 overflow-y-auto">
 			{#if error && items.length > 0}
 				<p class="text-error border-line border-b px-3 py-2 text-xs">{error}</p>
 			{/if}
@@ -315,20 +315,20 @@
 			{:else}
 				<ul class="p-1">
 					{#each filtered as item (item.id)}
-						{@const applied = isApplied(item)}
+						{@const applied = item.id === appliedId}
 						<li>
-							<div class="group hover:bg-base-200 flex items-center rounded">
+							<div
+								class="group hover:bg-base-200/60 flex items-center rounded"
+								class:bg-base-200={applied}
+							>
 								<button
 									type="button"
-									class="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left"
+									aria-current={applied ? 'true' : undefined}
+									class="nav-rail flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left"
 									onclick={() => applyView(item)}
 									title={item.query || 'Empty query'}
 								>
-									<span class="flex w-3.5 shrink-0 justify-center">
-										{#if applied}
-											<Check class="text-primary h-3.5 w-3.5" />
-										{/if}
-									</span>
+									<span class="nav-rail-bar"></span>
 									<span class="truncate text-xs" class:font-medium={applied}>{item.name}</span>
 								</button>
 								<div
@@ -402,6 +402,10 @@
 				<p class="text-base-content/60 text-xs">
 					Saves the current query, filters, sort direction, and columns.
 				</p>
+				<label class="flex items-center gap-1.5 text-xs">
+					<input type="checkbox" class="checkbox checkbox-xs" bind:checked={saveTime} />
+					Save time range ({formatTimeRangeLabel(store.timeRange)})
+				</label>
 			{/if}
 
 			{#if formError}
@@ -441,6 +445,6 @@
 >
 	{#snippet message()}
 		Overwrite <span class="font-semibold">{toOverwrite?.name}</span> with the current search? Its saved
-		query, filters, sort direction, and columns will be replaced.
+		settings will be replaced.
 	{/snippet}
 </ConfirmModal>

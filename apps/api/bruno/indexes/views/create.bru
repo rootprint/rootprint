@@ -13,12 +13,12 @@ post {
 body:json {
   {
     "name": "Errors last 24h",
-    "description": "Quick triage filter",
     "query": "level:error",
     "filters": [
       { "field": "service", "value": "api", "exclude": false }
     ],
     "sortDirection": "desc",
-    "columns": ["timestamp", "message"]
+    "columns": ["timestamp", "message"],
+    "timeRange": { "type": "relative", "preset": "24h" }
   }
 }

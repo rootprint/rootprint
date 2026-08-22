@@ -1,7 +1,6 @@
-import type { Preset } from '$lib/utils/time-range';
-import type { Filter, SortDirection, TraceSpan } from 'api/types';
+import type { Filter, SortDirection, TimeRange, TraceSpan } from 'api/types';
 
-export type { Filter, SortDirection };
+export type { Filter, SortDirection, TimeRange };
 
 /** One crumb in a breadcrumb trail. Ancestors set `href`; the current page omits it. */
 export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean };
@@ -89,9 +88,6 @@ export interface LogFieldValueBucket {
 	value: string;
 	count: number;
 }
-
-export type TimeRange =
-	{ type: 'relative'; preset: Preset } | { type: 'absolute'; start: number; end: number };
 
 export interface ParsedQuery {
 	index: string | null;

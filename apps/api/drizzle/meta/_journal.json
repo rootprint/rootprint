@@ -141,6 +141,13 @@
       "when": 1787388021618,
       "tag": "0019_drop_view_description",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1787390335352,
+      "tag": "0020_view_time_range",
+      "breakpoints": true
     }
   ]
 }

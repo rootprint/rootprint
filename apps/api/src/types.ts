@@ -1,4 +1,8 @@
 import type * as v from 'valibot';
+
+import type { Preset } from './constants.js';
+
+export type { Preset };
 import type {
 	DynamicMappingSchema,
 	FieldValueEntrySchema,
@@ -106,6 +110,9 @@ export type Filter = {
 };
 
 export type SortDirection = 'asc' | 'desc';
+
+export type TimeRange =
+	{ type: 'relative'; preset: Preset } | { type: 'absolute'; start: number; end: number };
 
 export type FieldValuesBulkResponse = v.InferOutput<typeof FieldValuesBulkResponseSchema>;
 

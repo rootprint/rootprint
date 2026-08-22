@@ -14,7 +14,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 
-import type { DisplayMode, Filter } from '../types.js';
+import type { DisplayMode, Filter, TimeRange } from '../types.js';
 
 import { user } from './auth.schema.js';
 
@@ -105,6 +105,7 @@ export const view = pgTable(
 		filters: jsonb('filters').$type<Filter[]>().notNull().default([]),
 		sortDirection: text('sort_direction').$type<'asc' | 'desc'>().notNull().default('desc'),
 		columns: jsonb('columns').$type<string[]>(),
+		timeRange: jsonb('time_range').$type<TimeRange>(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
 			.defaultNow()

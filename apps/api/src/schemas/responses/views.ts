@@ -3,6 +3,7 @@ import * as v from 'valibot';
 import { named } from '../../lib/openapi/describe.js';
 import { isoTimestampString } from '../../utils/valibot.js';
 import { FilterSchema, SortDirectionSchema } from '../filters.js';
+import { TimeRangeSchema } from '../time-range.js';
 
 export const SavedViewResponse = named(
 	'SavedViewResponse',
@@ -14,6 +15,7 @@ export const SavedViewResponse = named(
 		filters: v.array(FilterSchema),
 		sortDirection: SortDirectionSchema,
 		columns: v.nullable(v.array(v.string())),
+		timeRange: v.nullable(TimeRangeSchema),
 		createdAt: isoTimestampString,
 		updatedAt: isoTimestampString
 	})

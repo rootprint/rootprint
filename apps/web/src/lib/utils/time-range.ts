@@ -1,20 +1,11 @@
 import { format, fromUnixTime, getUnixTime, isSameDay, isSameYear } from 'date-fns';
 
 import type { TimeRange } from '$lib/types';
+import { PRESET_OPTIONS } from 'api/constants';
+import type { Preset } from 'api/types';
 
-export const PRESET_OPTIONS = [
-	'5m',
-	'15m',
-	'30m',
-	'1h',
-	'3h',
-	'6h',
-	'24h',
-	'3d',
-	'7d',
-	'30d'
-] as const;
-export type Preset = (typeof PRESET_OPTIONS)[number];
+export { PRESET_OPTIONS };
+export type { Preset };
 
 const PRESET_SECONDS: Record<Preset, number> = {
 	'5m': 5 * 60,
