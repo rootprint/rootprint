@@ -7,12 +7,18 @@
 [![Release](https://img.shields.io/github/v/release/rootprint/rootprint)](https://github.com/rootprint/rootprint/releases)
 [![License](https://img.shields.io/github/license/rootprint/rootprint)](LICENSE)
 
+### [Live demo](https://demo.rootprint.io) &nbsp;·&nbsp; [Quick start](#quick-start) &nbsp;·&nbsp; [Docs](https://docs.rootprint.io) &nbsp;·&nbsp; [Contributing](CONTRIBUTING.md) &nbsp;·&nbsp; [Changelog](CHANGELOG.md)
+
 Open-source, self-hosted log management with full-text search on object-storage-backed indexes.
 
 Rootprint gives engineering teams a focused log search UI, OpenTelemetry ingestion for logs and
 traces, team access control, and Quickwit-powered search without sending telemetry to a hosted SaaS.
 
-![Rootprint screenshot](apps/web/static/hero-screenshot.png)
+> [!TIP]
+> **Try it now at [demo.rootprint.io](https://demo.rootprint.io)** - live OpenTelemetry logs and
+> traces from a running demo cluster. Read-only, no signup, nothing to install.
+
+[![Rootprint screenshot](apps/web/static/hero-screenshot.png)](https://demo.rootprint.io)
 
 ## What You Get
 
@@ -55,6 +61,7 @@ Full install guide: https://docs.rootprint.io/install/docker-compose
 
 ## Documentation
 
+- Live demo: https://demo.rootprint.io
 - Docs: https://docs.rootprint.io
 - Quickstart: https://docs.rootprint.io/quickstart
 - Send logs: https://docs.rootprint.io/send-logs/overview
