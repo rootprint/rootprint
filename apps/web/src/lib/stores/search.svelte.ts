@@ -22,7 +22,7 @@ import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
 import { resolveWindow } from '$lib/utils/time-range';
-import { UNKNOWN_LEVEL, unknownInBucket } from '$lib/utils/histogram';
+import { UNKNOWN_LEVEL } from '$lib/constants/level-colors';
 import { displayNameFor, extractJsonSubFields, serializeTimeRange } from '$lib/utils/fields';
 import { RequestGuard } from '$lib/stores/request-guard';
 import { isAbortError } from '$lib/api/errors';
@@ -685,15 +685,11 @@ export class SearchStore {
 
 	#computeLevelTotals(buckets: HistogramBucket[]): LevelBucket[] {
 		const totals: Record<string, number> = {};
-		let unknown = 0;
 		for (const b of buckets) {
 			for (const [name, count] of Object.entries(b.levels)) {
-				if (name === '') continue;
 				totals[name] = (totals[name] ?? 0) + count;
 			}
-			unknown += unknownInBucket(b);
 		}
-		if (unknown > 0) totals[UNKNOWN_LEVEL] = (totals[UNKNOWN_LEVEL] ?? 0) + unknown;
 		return Object.entries(totals).map(([name, count]) => ({ name, count }));
 	}
 

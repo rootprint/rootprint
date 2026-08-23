@@ -3,8 +3,7 @@
 	import type { LevelBucket, LogField, LogFieldValueBucket } from '$lib/types';
 	import { isOtelAttr, isOtelResourceAttr, serializeTimeRange } from '$lib/utils/fields';
 	import { sortBySeverity } from '$lib/utils/severity';
-	import { UNKNOWN_LEVEL } from '$lib/utils/histogram';
-	import { levelColor } from '$lib/constants/level-colors';
+	import { levelColor, UNKNOWN_LEVEL } from '$lib/constants/level-colors';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import { fetchFieldValuesBulk } from '$lib/api/field-values';
 	import { filterKey } from '$lib/utils/query-params';

@@ -68,15 +68,3 @@ export function padHistogramBuckets(
 
 	return buckets;
 }
-
-export const UNKNOWN_LEVEL = 'UNKNOWN';
-
-/** Docs with an absent or empty level field never appear in the terms agg, but the
- *  bucket total still counts them. Empty-string keys fold in as unknown too. */
-export function unknownInBucket(b: HistogramBucket): number {
-	let known = 0;
-	for (const [name, count] of Object.entries(b.levels)) {
-		if (name !== '') known += count;
-	}
-	return Math.max(0, b.count - known);
-}

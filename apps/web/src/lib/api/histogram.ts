@@ -1,4 +1,5 @@
 import { client } from '$lib/api/client';
+import { UNKNOWN_LEVEL } from '$lib/constants/level-colors';
 import { readApiError } from '$lib/api/errors';
 import type { HistogramBucket, HistogramInput, HistogramResult } from '$lib/types';
 import {
@@ -34,7 +35,19 @@ export async function fetchHistogram(
 	const bucketMap = new Map<number, { levels: Record<string, number>; count: number }>();
 	let totalDocCount = 0;
 	for (const b of json.buckets) {
-		bucketMap.set(Math.floor(b.key / 1000), { levels: b.levels, count: b.docCount });
+		// Docs whose level field is absent or blank never reach the terms agg, but the
+		// bucket total still counts them; the remainder is UNKNOWN.
+		const levels: Record<string, number> = {};
+		let known = 0;
+		for (const [name, count] of Object.entries(b.levels)) {
+			if (name === '') continue;
+			levels[name] = count;
+			known += count;
+		}
+		const unknown = b.docCount - known;
+		if (unknown > 0) levels[UNKNOWN_LEVEL] = (levels[UNKNOWN_LEVEL] ?? 0) + unknown;
+
+		bucketMap.set(Math.floor(b.key / 1000), { levels, count: b.docCount });
 		totalDocCount += b.docCount;
 	}
 
