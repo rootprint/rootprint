@@ -17,6 +17,9 @@ const LEVEL_COLORS: Record<string, string> = {
 	unknown: '#8B8D98'
 };
 
+/** Synthetic level for docs whose level field is absent or blank. */
+export const UNKNOWN_LEVEL = 'UNKNOWN';
+
 export function levelColor(name: string): string {
 	return LEVEL_COLORS[name.toLowerCase()] ?? LEVEL_COLORS.unknown;
 }

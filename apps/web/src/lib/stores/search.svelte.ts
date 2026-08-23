@@ -22,6 +22,7 @@ import { buildQueryUrl } from '$lib/utils/query-params';
 import { normalizeHit } from '$lib/utils/normalize-hit';
 import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
 import { resolveWindow } from '$lib/utils/time-range';
+import { UNKNOWN_LEVEL } from '$lib/constants/level-colors';
 import { displayNameFor, extractJsonSubFields, serializeTimeRange } from '$lib/utils/fields';
 import { RequestGuard } from '$lib/stores/request-guard';
 import { isAbortError } from '$lib/api/errors';
@@ -249,7 +250,8 @@ export class SearchStore {
 			return;
 		}
 
-		const known = this.#levelsRoster.map((l) => l.name);
+		// UNKNOWN is display-only, so it never counts toward "every level is selected".
+		const known = this.#levelsRoster.map((l) => l.name).filter((n) => n !== UNKNOWN_LEVEL);
 		if (known.length >= 2 && this.#wouldSelectAllLevels(known, levelField, value)) {
 			this.#clearLevelFilters(levelField);
 			return;

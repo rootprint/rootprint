@@ -5,7 +5,7 @@
 	import { slide } from 'svelte/transition';
 
 	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
-	import { levelColor } from '$lib/constants/level-colors';
+	import { levelColor, UNKNOWN_LEVEL } from '$lib/constants/level-colors';
 	import type { HistogramBucket } from '$lib/types';
 	import { baseContentAt } from '$lib/utils/chart-colors';
 	import { formatInterval } from '$lib/utils/histogram';
@@ -37,7 +37,7 @@
 				seen.add(k.toUpperCase());
 			}
 		}
-		if (seen.size === 0 && buckets.length > 0) return ['UNKNOWN'];
+		if (seen.size === 0 && buckets.length > 0) return [UNKNOWN_LEVEL];
 		return sortBySeverity([...seen]);
 	});
 
@@ -58,11 +58,7 @@
 			return out;
 		});
 
-		const isSyntheticUnknown = levels.length === 1 && levels[0] === 'UNKNOWN';
-
-		const rawSeries: number[][] = isSyntheticUnknown
-			? [buckets.map((b) => b.count)]
-			: levels.map((level) => upperBuckets.map((u) => u[level] ?? 0));
+		const rawSeries: number[][] = levels.map((level) => upperBuckets.map((u) => u[level] ?? 0));
 
 		const stackedSeries: number[][] = [];
 		for (let i = 0; i < rawSeries.length; i++) {

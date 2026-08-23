@@ -50,7 +50,8 @@ export interface LogHit {
 export interface HistogramBucket {
 	/** Seconds since epoch at the start of the bucket. */
 	timestamp: number;
-	/** Per-level doc counts within this bucket, keyed by raw level value. */
+	/** Per-level doc counts within this bucket, keyed by raw level value. Docs with no
+	 *  level are folded into an `UNKNOWN` key. */
 	levels: Record<string, number>;
 	/** Total hit count for the bucket (sum across levels). */
 	count: number;
