@@ -95,7 +95,8 @@ export async function histogramLogs(
 				key: Number(b.key),
 				keyAsString: b.key_as_string ?? String(b.key),
 				docCount: b.doc_count,
-				levels
+				levels,
+				omittedCount: levelsAgg?.sum_other_doc_count ?? 0
 			};
 		})
 	};

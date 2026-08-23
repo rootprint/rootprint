@@ -36,7 +36,6 @@ export async function fetchHistogram(
 	let totalDocCount = 0;
 	for (const b of json.buckets) {
 		// Docs whose level field is absent or blank never reach the terms agg, but the
-		// bucket total still counts them; the remainder is UNKNOWN.
 		const levels: Record<string, number> = {};
 		let known = 0;
 		for (const [name, count] of Object.entries(b.levels)) {
@@ -44,7 +43,7 @@ export async function fetchHistogram(
 			levels[name] = count;
 			known += count;
 		}
-		const unknown = b.docCount - known;
+		const unknown = b.docCount - known - b.omittedCount;
 		if (unknown > 0) levels[UNKNOWN_LEVEL] = (levels[UNKNOWN_LEVEL] ?? 0) + unknown;
 
 		bucketMap.set(Math.floor(b.key / 1000), { levels, count: b.docCount });
