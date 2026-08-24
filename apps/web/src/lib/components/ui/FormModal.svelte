@@ -81,14 +81,7 @@
 	}
 </script>
 
-<Modal
-	bind:open
-	{title}
-	onclose={handleClose}
-	oncancel={(e) => {
-		if (submitting) e.preventDefault();
-	}}
->
+<Modal bind:open {title} busy={submitting} onclose={handleClose}>
 	{#if done && reveal}
 		<!-- the phase swap destroys the focused submit button; move focus onto the revealed
 		     content so assistive tech announces it rather than dropping to <body> -->

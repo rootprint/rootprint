@@ -37,13 +37,7 @@
 	}
 </script>
 
-<Modal
-	bind:open
-	{title}
-	oncancel={(e) => {
-		if (loading) e.preventDefault();
-	}}
->
+<Modal bind:open {title} busy={loading}>
 	<p class="text-base-content/70 text-sm">
 		{@render message()}
 	</p>

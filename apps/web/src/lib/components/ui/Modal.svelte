@@ -4,17 +4,17 @@
 	let {
 		open = $bindable(false),
 		title,
+		busy = false,
 		actions,
 		children,
-		onclose,
-		oncancel
+		onclose
 	}: {
 		open?: boolean;
 		title: string;
+		busy?: boolean;
 		actions?: Snippet;
 		children: Snippet;
 		onclose?: () => void;
-		oncancel?: (e: Event) => void;
 	} = $props();
 
 	const uid = $props.id();
@@ -34,7 +34,15 @@
 	}
 </script>
 
-<dialog bind:this={dialog} class="modal" aria-labelledby={titleId} onclose={handleClose} {oncancel}>
+<dialog
+	bind:this={dialog}
+	class="modal"
+	aria-labelledby={titleId}
+	onclose={handleClose}
+	oncancel={(e) => {
+		if (busy) e.preventDefault();
+	}}
+>
 	<div
 		class="modal-box border-line rounded-box bg-base-100 max-w-lg overflow-x-hidden border shadow-none"
 	>
@@ -49,6 +57,6 @@
 		{/if}
 	</div>
 	<form method="dialog" class="modal-backdrop">
-		<button aria-label="Close">close</button>
+		<button aria-label="Close" disabled={busy}>close</button>
 	</form>
 </dialog>

@@ -43,14 +43,7 @@
 	}
 </script>
 
-<Modal
-	bind:open
-	{title}
-	onclose={() => (typed = '')}
-	oncancel={(e) => {
-		if (loading) e.preventDefault();
-	}}
->
+<Modal bind:open {title} busy={loading} onclose={() => (typed = '')}>
 	<div class="flex flex-col gap-4">
 		<p class="text-base-content/60 text-sm">
 			{@render message()}
