@@ -8,19 +8,17 @@ import {
 	LAST_USED_THROTTLE_SECONDS
 } from '../constants.js';
 import type { Db } from '../db/index.js';
-import { auth } from '../lib/auth.js';
 import { config } from '../config.js';
-// apiKey = custom ingest-key table; personalApiKey = Better Auth plugin table.
-import { apiKey, apikey as personalApiKey, user } from '../db/schema.js';
+// apiKey = the custom ingest-key table, not Better Auth's own apikey table.
+import { apiKey } from '../db/schema.js';
 import type {
 	ApiKeySummary,
 	ApiKeyValue,
 	CreateApiKeyInput,
-	ServiceAccountApiKeySummary,
 	VerifiedApiKey,
 	VerifyApiKeyResult
 } from '../types.js';
-import { badRequest, fromAuthApiError, internal, notFound } from '../utils/http-error.js';
+import { badRequest, internal, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 
 function generateApiKey(): string {
@@ -147,77 +145,6 @@ export async function deleteApiKey(db: Db, id: number): Promise<void> {
 		throw notFound('API key not found');
 	}
 	invalidateApiKeyCache();
-}
-
-export async function listServiceAccountKeys(db: Db): Promise<ServiceAccountApiKeySummary[]> {
-	const rows = await db
-		.select({
-			id: personalApiKey.id,
-			name: personalApiKey.name,
-			start: personalApiKey.start,
-			userId: personalApiKey.referenceId,
-			userName: user.name,
-			lastRequest: personalApiKey.lastRequest,
-			createdAt: personalApiKey.createdAt
-		})
-		.from(personalApiKey)
-		// Admin keys page surfaces service-account keys only; humans manage their own.
-		.innerJoin(user, eq(personalApiKey.referenceId, user.id))
-		.where(eq(user.isServiceAccount, true))
-		.orderBy(desc(personalApiKey.createdAt));
-	return rows.map((r) => ({
-		id: r.id,
-		name: r.name,
-		start: r.start,
-		userId: r.userId,
-		userName: r.userName,
-		lastRequest: r.lastRequest?.toISOString() ?? null,
-		createdAt: r.createdAt.toISOString()
-	}));
-}
-
-type CreateApiKeyFn = (opts: {
-	body: { name: string; userId: string };
-}) => Promise<{ id: string; key: string }>;
-
-export async function createServiceAccountKey(
-	db: Db,
-	name: string,
-	userId: string
-): Promise<{ id: string; token: string }> {
-	const [owner] = await db
-		.select({ id: user.id })
-		.from(user)
-		.where(and(eq(user.id, userId), eq(user.isServiceAccount, true)))
-		.limit(1);
-	if (!owner) throw notFound('Service account not found');
-	const createKey = (auth().api as unknown as { createApiKey: CreateApiKeyFn }).createApiKey;
-	try {
-		const key = await createKey({ body: { name, userId } });
-		return { id: key.id, token: key.key };
-	} catch (err) {
-		throw fromAuthApiError(err, 'Failed to create service account key');
-	}
-}
-
-export async function deleteServiceAccountKey(db: Db, id: string): Promise<void> {
-	const [key] = await db
-		.select({ id: personalApiKey.id })
-		.from(personalApiKey)
-		.innerJoin(user, eq(personalApiKey.referenceId, user.id))
-		.where(and(eq(personalApiKey.id, id), eq(user.isServiceAccount, true)))
-		.limit(1);
-	if (!key) {
-		throw notFound('Service account API key not found');
-	}
-
-	const result = await db
-		.delete(personalApiKey)
-		.where(eq(personalApiKey.id, key.id))
-		.returning({ id: personalApiKey.id });
-	if (result.length === 0) {
-		throw notFound('Service account API key not found');
-	}
 }
 
 export async function verifyApiKey(db: Db, bearer: string): Promise<VerifyApiKeyResult> {

@@ -18,13 +18,15 @@ import {
 } from '../schemas/responses/api-keys.js';
 import {
 	createApiKey,
-	createServiceAccountKey,
 	deleteApiKey,
-	deleteServiceAccountKey,
 	getApiKeyValue,
-	listApiKeys,
-	listServiceAccountKeys
+	listApiKeys
 } from '../services/api-key.service.js';
+import {
+	createServiceAccountKey,
+	deleteServiceAccountKey,
+	listServiceAccountKeys
+} from '../services/service-account.service.js';
 import { ApiKeyIdParams } from '../utils/params.js';
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
