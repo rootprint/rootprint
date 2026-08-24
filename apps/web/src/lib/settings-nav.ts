@@ -75,6 +75,12 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 		INDEXES,
 		{ label: p.indexId ?? 'Index', mono: true }
 	],
+	'/settings/indexes/[indexId]/edit': (p) => [
+		ROOT,
+		INDEXES,
+		{ label: p.indexId ?? 'Index', href: `/settings/indexes/${p.indexId}`, mono: true },
+		{ label: 'Edit' }
+	],
 	'/settings/indexes/[indexId]/sources/new': (p) => [
 		ROOT,
 		INDEXES,
@@ -98,6 +104,7 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	'/settings/users/[userId]': () => [ROOT, USERS, { label: 'User' }],
 	'/settings/service-accounts': () => [ROOT, { label: 'Service accounts' }],
 	'/settings/authentication': () => [ROOT, { label: 'Authentication' }],
+	'/settings/authentication/github': () => [ROOT, AUTH, { label: 'GitHub' }],
 	'/settings/authentication/google': () => [ROOT, AUTH, { label: 'Google' }]
 };
 

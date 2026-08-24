@@ -2,7 +2,7 @@
 
 ## About
 
-Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static`, a fully prerendered SPA with no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
+Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static`, a client-rendered SPA (`index.html` fallback, no SSR or prerendering) with no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
 
 For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see [Svelte 5 Patterns](#svelte-5-patterns) below.
 
