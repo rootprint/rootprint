@@ -7,14 +7,14 @@ import { DEP } from '$lib/api/deps';
 export const ssr = false;
 export const prerender = false;
 
-export const load: LayoutLoad = async ({ url, depends }) => {
+export const load: LayoutLoad = async ({ url, untrack, depends }) => {
 	depends(DEP.session);
 
 	const [bootstrap, sessionRes] = await Promise.all([getBootstrap(), authClient.getSession()]);
 
 	const session = sessionRes?.data ?? null;
 
-	const isOnSetupAdmin = url.pathname.startsWith('/auth/setup-admin');
+	const isOnSetupAdmin = untrack(() => url.pathname.startsWith('/auth/setup-admin'));
 	if (bootstrap.needsSetupAdmin && !isOnSetupAdmin) {
 		throw redirect(303, '/auth/setup-admin');
 	}
@@ -22,5 +22,5 @@ export const load: LayoutLoad = async ({ url, depends }) => {
 		throw redirect(303, '/auth/sign-in');
 	}
 
-	return { bootstrap, session };
+	return { session };
 };
