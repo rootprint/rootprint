@@ -270,7 +270,6 @@
 		class="border-line bg-base-100 fixed top-0 right-0 z-50 flex h-full max-w-full flex-col border-l shadow-2xl outline-none"
 		style="width: {widthPx}px"
 		role="dialog"
-		aria-modal="true"
 		aria-labelledby="log-detail-title"
 	>
 		<!-- Mouse-only affordance with no keyboard equivalent, so aria-hidden + tabindex="-1" is deliberate. -->
