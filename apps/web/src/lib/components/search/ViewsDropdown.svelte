@@ -235,6 +235,8 @@
 	$effect(() => {
 		const current = store.selectedIndex;
 		if (lastIndex !== undefined && current !== lastIndex) {
+			refreshGuard.next();
+			items = [];
 			appliedId = null;
 			close();
 		}
