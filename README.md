@@ -18,7 +18,7 @@ traces, team access control, and Quickwit-powered search without sending telemet
 > **Try it now at [demo.rootprint.io](https://demo.rootprint.io)** - live OpenTelemetry logs and
 > traces from a running demo cluster. Read-only, no signup, nothing to install.
 
-[![Rootprint screenshot](apps/web/static/hero-screenshot.png)](https://demo.rootprint.io)
+[![Rootprint screenshot](.github/assets/hero-screenshot.png)](https://demo.rootprint.io)
 
 ## What You Get
 
