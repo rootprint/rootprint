@@ -33,12 +33,17 @@ export function optionalUrlEnv(name: string): string | null {
 	return value;
 }
 
-export function intEnv(name: string, fallback: number): number {
+export function intEnv(name: string, fallback: number, options: { min?: number } = {}): number {
 	const raw = process.env[name];
-	if (raw === undefined || raw.trim() === '') return fallback;
-	const parsed = Number.parseInt(raw, 10);
-	if (Number.isNaN(parsed)) {
-		throw new Error(`Environment variable ${name} is not a valid integer: ${raw}`);
+	let value = fallback;
+	if (raw !== undefined && raw.trim() !== '') {
+		value = Number.parseInt(raw, 10);
+		if (Number.isNaN(value)) {
+			throw new Error(`Environment variable ${name} is not a valid integer: ${raw}`);
+		}
 	}
-	return parsed;
+	if (options.min !== undefined && value < options.min) {
+		throw new Error(`Environment variable ${name} must be at least ${options.min}: ${value}`);
+	}
+	return value;
 }

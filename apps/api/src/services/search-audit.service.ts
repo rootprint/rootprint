@@ -1,9 +1,17 @@
+import { sql } from 'drizzle-orm';
+
 import type { Db } from '../db/index.js';
 import { searchAudit } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 import { HttpError } from '../utils/http-error.js';
 
 const MAX_MSG = 500;
+
+export async function pruneSearchAudit(db: Db, retentionDays: number): Promise<void> {
+	await db
+		.delete(searchAudit)
+		.where(sql`${searchAudit.executedAt} < now() - make_interval(days => ${retentionDays})`);
+}
 
 function extractAuditError(err: unknown): { code: string; message: string } {
 	if (err instanceof HttpError) {

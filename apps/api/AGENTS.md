@@ -134,12 +134,13 @@ Required:
 
 Optional:
 
-| Var                  | Purpose                                                        |
-| -------------------- | -------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET` | Override the auto-generated Better Auth signing secret         |
-| `FRONTEND_URL`       | Additional allowed CORS origin for split SPA + API deployments |
-| `PORT`               | Override the HTTP listen port (default `8282`)                 |
-| `TRACE_INDEX_ID`     | Quickwit index holding spans (default `otel-traces-v0_9`)      |
+| Var                           | Purpose                                                        |
+| ----------------------------- | -------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`          | Override the auto-generated Better Auth signing secret         |
+| `FRONTEND_URL`                | Additional allowed CORS origin for split SPA + API deployments |
+| `PORT`                        | Override the HTTP listen port (default `8282`)                 |
+| `TRACE_INDEX_ID`              | Quickwit index holding spans (default `otel-traces-v0_9`)      |
+| `SEARCH_AUDIT_RETENTION_DAYS` | Search audit retention in days (minimum/default `30`)          |
 
 Defaults and examples live in the root `.env.example`.
 

@@ -1,13 +1,16 @@
 import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
 import { QuickwitError, type QuickwitClient } from 'quickwit-js';
 
+import { config } from '../config.js';
 import type { Db } from '../db/index.js';
 import { indexStatsSnapshot } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 import type { IndexStatsPoint, LatestIndexSnapshot } from '../types.js';
 import { listIndexes } from './quickwit-index.service.js';
+import { pruneSearchAudit } from './search-audit.service.js';
 
 const INDEX_STATS_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+const INDEX_STATS_CONCURRENCY = 8;
 
 type SnapshotInsert = typeof indexStatsSnapshot.$inferInsert;
 
@@ -24,26 +27,40 @@ async function captureSnapshots(
 	const rows: SnapshotInsert[] = [];
 	let failed = 0;
 
-	for (const meta of indexes) {
-		const indexId = meta.indexId;
-		try {
-			const stats = await qw.describeIndex(indexId);
-			rows.push({
-				indexId,
-				capturedAt: now,
-				numDocs: stats.num_published_docs,
-				sizeBytes: stats.size_published_splits,
-				uncompressedBytes: stats.size_published_docs_uncompressed,
-				numSplits: stats.num_published_splits,
-				minTimestamp: stats.min_timestamp ?? null,
-				maxTimestamp: stats.max_timestamp ?? null
-			});
-		} catch (err) {
-			failed += 1;
-			const code = err instanceof QuickwitError ? err.code : 'UNKNOWN';
-			logger.warn({ err, indexId, code }, 'index stats describe failed');
+	// Batches are intentionally serial to cap pressure on Quickwit.
+	/* oxlint-disable no-await-in-loop */
+	for (let offset = 0; offset < indexes.length; offset += INDEX_STATS_CONCURRENCY) {
+		const batch = indexes.slice(offset, offset + INDEX_STATS_CONCURRENCY);
+		const results = await Promise.all(
+			batch.map(async ({ indexId }) => {
+				try {
+					return { indexId, stats: await qw.describeIndex(indexId), err: null };
+				} catch (err) {
+					return { indexId, stats: null, err };
+				}
+			})
+		);
+
+		for (const { indexId, stats, err } of results) {
+			if (stats) {
+				rows.push({
+					indexId,
+					capturedAt: now,
+					numDocs: stats.num_published_docs,
+					sizeBytes: stats.size_published_splits,
+					uncompressedBytes: stats.size_published_docs_uncompressed,
+					numSplits: stats.num_published_splits,
+					minTimestamp: stats.min_timestamp ?? null,
+					maxTimestamp: stats.max_timestamp ?? null
+				});
+			} else {
+				failed += 1;
+				const code = err instanceof QuickwitError ? err.code : 'UNKNOWN';
+				logger.warn({ err, indexId, code }, 'index stats describe failed');
+			}
 		}
 	}
+	/* oxlint-enable no-await-in-loop */
 
 	if (rows.length > 0) {
 		await db.insert(indexStatsSnapshot).values(rows);
@@ -58,11 +75,22 @@ export function startStatsCollector(db: Db, qw: QuickwitClient): { stop: () => v
 
 	const tick = async () => {
 		try {
-			const result = await captureSnapshots(db, qw);
-			if (result.failed > 0) logger.warn(result, 'index stats snapshot partially failed');
+			const [snapshots, retention] = await Promise.allSettled([
+				captureSnapshots(db, qw),
+				pruneSearchAudit(db, config.searchAuditRetentionDays)
+			]);
+			if (snapshots.status === 'fulfilled') {
+				if (snapshots.value.failed > 0) {
+					logger.warn(snapshots.value, 'index stats snapshot partially failed');
+				}
+			} else {
+				logger.warn({ err: snapshots.reason }, 'index stats snapshot failed');
+			}
+			if (retention.status === 'rejected') {
+				logger.warn({ err: retention.reason }, 'search audit retention failed');
+			}
 		} catch (err) {
-			logger.warn({ err }, 'index stats snapshot failed');
-			// Swallow so the schedule keeps running on transient failures.
+			logger.warn({ err }, 'stats collector tick failed');
 		} finally {
 			if (!stopped) {
 				timeout = setTimeout(() => void tick(), INDEX_STATS_INTERVAL_MS);
