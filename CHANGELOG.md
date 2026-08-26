@@ -2,6 +2,35 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-08-26
+
+### ⚠️ Breaking
+
+- **Saved view `description` removed** from the create/patch bodies and responses of `/api/indexes/{indexId}/views`. Migration `0019` drops the column, deleting the text; 0.4.0 still selects it, so rolling back breaks every saved-view read. Read it out first if you need it: `SELECT id, index_id, name, description FROM "view" WHERE description IS NOT NULL;`
+
+### Added
+
+- **Service health dashboard** at `/monitoring`: request rate, error rate, latency, per-service p95, and endpoints ranked by total time.
+- **`GET /api/monitoring/services`** — `startTs`, `endTs`, `interval`, optional `service` and `endpointLimit`; max 30-day range and 2000 buckets. Needs `logs:read` (session cookie or personal key) and is recorded in the search audit.
+- **`timeRange` on saved views** — a relative preset (`5m`–`30d`) or an absolute epoch-second window, opt-in when saving. Views saved without one leave the current range alone.
+- **`SEARCH_AUDIT_RETENTION_DAYS`** prunes search audit rows on the hourly stats tick. Default and minimum 30 days; lower values fail at boot.
+- **`omittedCount` on histogram buckets** — how many documents the bucket's returned level terms left out. The web derives an `UNKNOWN` level from it for documents with no level field; being synthetic, it cannot be filtered on.
+
+### Changed
+
+- **GitHub org membership** is read from one paginated `GET /user/memberships/orgs` (≤10 pages of 100) and matched case-insensitively, instead of one probe per configured org. 5s timeout, redirects refused, failures logged with GitHub's rate-limit headers. Failure still denies access; an error raised during the check now denies the sign-in instead of failing the request.
+- **Durations over a minute** format as minutes, hours, or days.
+- **README** leads with the live demo at [demo.rootprint.io](https://demo.rootprint.io).
+- **Internal (web):** the root layout no longer re-fetches session and bootstrap state on client-side navigation, endpoint row-count buttons filter locally, modal busy state and the field row and time-range picker were centralized, and the Geist fonts are preloaded.
+
+### Fixed
+
+- Switching indexes clears the views dropdown instead of leaving the previous index's views on screen.
+- Saving a view no longer stores an empty column set before display preferences resolve.
+- The log detail drawer dropped `aria-modal`; it never trapped focus or blocked the page.
+- Page titles and breadcrumbs for the index edit and GitHub authentication pages.
+- A field table's last row no longer draws a border against the container's own.
+
 ## [0.4.0] - 2026-08-12
 
 ### ⚠️ Breaking
