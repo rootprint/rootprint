@@ -51,13 +51,6 @@
 	function brushRange(startTs: number, endTs: number) {
 		setRange({ type: 'absolute', start: startTs, end: endTs });
 	}
-
-	function setEndpointLimit(value: number) {
-		navigate((params) => {
-			if (value === 10) params.delete('endpointLimit');
-			else params.set('endpointLimit', String(value));
-		});
-	}
 </script>
 
 <OverlayScrollbarsComponent
@@ -160,12 +153,7 @@
 					/>
 				{/if}
 
-				<EndpointTable
-					endpoints={health.endpoints}
-					limit={data.endpointLimit}
-					showService={data.service === null}
-					onLimitChange={setEndpointLimit}
-				/>
+				<EndpointTable endpoints={health.endpoints} showService={data.service === null} />
 			{/if}
 		</div>
 	{:catch error}

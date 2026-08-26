@@ -4,16 +4,18 @@
 	import { formatDurationMs } from '$lib/utils/format';
 
 	type Props = {
+		/** Already ranked and capped at `LIMITS`' largest entry by the API. */
 		endpoints: ServiceHealthEndpoint[];
-		limit: number;
 		/** Off when the view is already scoped to one service. */
 		showService: boolean;
-		onLimitChange: (limit: number) => void;
 	};
 
-	let { endpoints, limit, showService, onLimitChange }: Props = $props();
+	let { endpoints, showService }: Props = $props();
 
 	const LIMITS = [10, 20, 30] as const;
+
+	let limit = $state<number>(LIMITS[0]);
+	const rows = $derived(endpoints.slice(0, limit));
 </script>
 
 <section class="flex flex-col gap-2" aria-labelledby="endpoint-heading">
@@ -34,7 +36,7 @@
 							? 'bg-base-content text-base-100'
 							: 'text-base-content/60 hover:bg-base-200 hover:text-base-content'}"
 						aria-pressed={limit === option}
-						onclick={() => onLimitChange(option)}
+						onclick={() => (limit = option)}
 					>
 						{option}
 					</button>
@@ -62,7 +64,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each endpoints as endpoint, index (endpoint.id)}
+					{#each rows as endpoint, index (endpoint.id)}
 						<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
 							<td class="w-10 text-right font-mono text-xs tabular-nums">
 								{index + 1}
