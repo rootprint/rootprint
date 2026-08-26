@@ -6,6 +6,7 @@ import { INVITE_EXPIRY_HOURS } from '../constants.js';
 import type { Db } from '../db/index.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
+import { logger } from '../lib/logger.js';
 import { badRequest, conflict } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 import { GITHUB_ALLOWED_ORGS, GOOGLE_ALLOWED_DOMAINS, parseDomains } from './settings.service.js';
@@ -223,16 +224,23 @@ export async function userRetainsOAuthAccess(db: Db, userId: string): Promise<bo
 		.from(account)
 		.where(eq(account.userId, userId));
 
-	const governed = accounts.filter((a) => a.providerId === 'google' || a.providerId === 'github');
-	if (governed.length === 0) return true; // credential-only user — not governed by OAuth membership
+	const hasGoogle = accounts.some((acct) => acct.providerId === 'google');
+	const github = accounts.find((acct) => acct.providerId === 'github');
+	if (!hasGoogle && !github) return true; // credential-only user — not governed by OAuth membership
 
-	for (const acct of governed) {
-		if (acct.providerId === 'google' && row?.email && (await googleEmailIsAllowed(db, row.email))) {
-			return true;
-		}
-		if (acct.providerId === 'github' && (await githubTokenIsAllowed(db, acct.accessToken))) {
-			return true;
+	if (hasGoogle && row?.email) {
+		try {
+			if (await googleEmailIsAllowed(db, row.email)) return true;
+		} catch (err) {
+			logger.error({ err, userId, provider: 'google' }, 'oauth access check failed');
 		}
 	}
-	return false;
+
+	if (!github) return false;
+	try {
+		return await githubTokenIsAllowed(db, github.accessToken);
+	} catch (err) {
+		logger.error({ err, userId, provider: 'github' }, 'oauth access check failed');
+		return false;
+	}
 }
