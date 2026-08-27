@@ -15,7 +15,9 @@ export class ApiError extends Error {
 	}
 }
 
-export async function readApiError(res: Response, fallback: string): Promise<ApiError> {
+type ErrorResponse = { status: number; json(): Promise<unknown> };
+
+export async function readApiError(res: ErrorResponse, fallback: string): Promise<ApiError> {
 	const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
 	return new ApiError(
 		body?.error.message ?? `${fallback} (${res.status})`,
