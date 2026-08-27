@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      - run: bun audit --audit-level=high
       - run: bun run check
       - run: bun run lint
       - run: bun run format:check

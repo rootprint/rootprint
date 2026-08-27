@@ -20,7 +20,7 @@
 		"observability"
 	],
 	"engines": {
-		"bun": ">=1.0.0"
+		"bun": ">=1.4.0"
 	},
 	"workspaces": [
 		"apps/*"
@@ -52,5 +52,5 @@
 	"overrides": {
 		"vite": "^8.1.4"
 	},
-	"packageManager": "bun@1.3.11"
+	"packageManager": "bun@1.4.0"
 }
