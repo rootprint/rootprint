@@ -1447,6 +1447,54 @@
 				],
 				"type": "object"
 			},
+			"MonitoringDependency": {
+				"properties": {
+					"calls": {
+						"type": "number"
+					},
+					"name": {
+						"type": "string"
+					},
+					"p50": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p95": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"peers": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"totalMillis": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"name",
+					"peers",
+					"calls",
+					"totalMillis",
+					"p50",
+					"p95"
+				],
+				"type": "object"
+			},
 			"MonitoringEndpoint": {
 				"properties": {
 					"id": {
@@ -1500,6 +1548,25 @@
 				],
 				"type": "object"
 			},
+			"MonitoringFailingOperation": {
+				"properties": {
+					"errors": {
+						"type": "number"
+					},
+					"name": {
+						"type": "string"
+					},
+					"service": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"service",
+					"errors"
+				],
+				"type": "object"
+			},
 			"MonitoringServiceLatency": {
 				"properties": {
 					"name": {
@@ -1521,6 +1588,47 @@
 				},
 				"required": [
 					"name",
+					"p95"
+				],
+				"type": "object"
+			},
+			"MonitoringServiceRow": {
+				"properties": {
+					"errors": {
+						"type": "number"
+					},
+					"name": {
+						"type": "string"
+					},
+					"p50": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"p95": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"requests": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"name",
+					"requests",
+					"errors",
+					"p50",
 					"p95"
 				],
 				"type": "object"
@@ -2117,9 +2225,21 @@
 						},
 						"type": "array"
 					},
+					"dependencies": {
+						"items": {
+							"$ref": "#/components/schemas/MonitoringDependency"
+						},
+						"type": "array"
+					},
 					"endpoints": {
 						"items": {
 							"$ref": "#/components/schemas/MonitoringEndpoint"
+						},
+						"type": "array"
+					},
+					"failingOperations": {
+						"items": {
+							"$ref": "#/components/schemas/MonitoringFailingOperation"
 						},
 						"type": "array"
 					},
@@ -2138,9 +2258,15 @@
 						},
 						"type": "array"
 					},
-					"services": {
+					"serviceNames": {
 						"items": {
 							"type": "string"
+						},
+						"type": "array"
+					},
+					"services": {
+						"items": {
+							"$ref": "#/components/schemas/MonitoringServiceRow"
 						},
 						"type": "array"
 					},
@@ -2161,13 +2287,16 @@
 				"required": [
 					"telemetryStatus",
 					"services",
+					"serviceNames",
 					"servicesTruncated",
 					"intervalSeconds",
 					"summary",
 					"buckets",
 					"latencyKeysMs",
 					"serviceLatencies",
-					"endpoints"
+					"endpoints",
+					"failingOperations",
+					"dependencies"
 				],
 				"type": "object"
 			},

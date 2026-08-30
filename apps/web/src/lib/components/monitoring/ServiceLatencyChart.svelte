@@ -11,9 +11,10 @@
 		xRange: [number, number];
 		syncKey: string;
 		onBrush: (startTs: number, endTs: number) => void;
+		height?: number;
 	};
 
-	let { services, keysMs, xRange, syncKey, onBrush }: Props = $props();
+	let { services, keysMs, xRange, syncKey, onBrush, height }: Props = $props();
 
 	const xs = $derived(keysMs.map((ms) => Math.floor(ms / 1000)));
 	// Positional, not `serviceColor(name)`: no two lines in one chart may share a color, which a name
@@ -36,6 +37,7 @@
 	{series}
 	formatValue={formatDurationMs}
 	emptyMessage="No spans in this time range."
+	{height}
 	{syncKey}
 	{onBrush}
 />

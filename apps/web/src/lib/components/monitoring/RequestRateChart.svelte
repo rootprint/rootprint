@@ -11,9 +11,10 @@
 		xRange: [number, number];
 		syncKey: string;
 		onBrush: (startTs: number, endTs: number) => void;
+		height?: number;
 	};
 
-	let { buckets, summary, intervalSeconds, xRange, syncKey, onBrush }: Props = $props();
+	let { buckets, summary, intervalSeconds, xRange, syncKey, onBrush, height }: Props = $props();
 
 	function formatRate(value: number): string {
 		return value > 0 && value < 1 ? `${value.toFixed(1)}/min` : `${formatCount(value)}/min`;
@@ -48,6 +49,7 @@
 	formatValue={formatRate}
 	showLegend={false}
 	emptyMessage="No spans in this time range."
+	{height}
 	{syncKey}
 	{onBrush}
 />

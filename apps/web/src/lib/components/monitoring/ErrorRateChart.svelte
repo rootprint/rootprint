@@ -10,9 +10,10 @@
 		xRange: [number, number];
 		syncKey: string;
 		onBrush: (startTs: number, endTs: number) => void;
+		height?: number;
 	};
 
-	let { buckets, summary, xRange, syncKey, onBrush }: Props = $props();
+	let { buckets, summary, xRange, syncKey, onBrush, height }: Props = $props();
 
 	const xs = $derived(buckets.map((bucket) => Math.floor(bucket.keyMs / 1000)));
 	const errorRate = $derived(summary.requests === 0 ? 0 : summary.errors / summary.requests);
@@ -38,6 +39,7 @@
 	formatValue={formatPercent}
 	showLegend={false}
 	emptyMessage="No spans in this time range."
+	{height}
 	{syncKey}
 	{onBrush}
 />

@@ -11,6 +11,9 @@ export type ServiceHealthBucket = ServiceHealth['buckets'][number];
 export type ServiceHealthSummary = ServiceHealth['summary'];
 export type ServiceHealthEndpoint = ServiceHealth['endpoints'][number];
 export type ServiceLatency = ServiceHealth['serviceLatencies'][number];
+export type ServiceHealthServiceRow = ServiceHealth['services'][number];
+export type ServiceHealthFailingOperation = ServiceHealth['failingOperations'][number];
+export type ServiceHealthDependency = ServiceHealth['dependencies'][number];
 
 export async function getServiceHealth(input: {
 	service: string | null;

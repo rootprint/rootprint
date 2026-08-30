@@ -4,16 +4,22 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
+	import type { ServiceHealth } from '$lib/api/monitoring';
+	import ApmSummary from '$lib/components/monitoring/ApmSummary.svelte';
+	import DependencyTable from '$lib/components/monitoring/DependencyTable.svelte';
 	import EndpointTable from '$lib/components/monitoring/EndpointTable.svelte';
 	import ErrorRateChart from '$lib/components/monitoring/ErrorRateChart.svelte';
+	import FailingOperations from '$lib/components/monitoring/FailingOperations.svelte';
 	import RequestLatencyChart from '$lib/components/monitoring/RequestLatencyChart.svelte';
 	import RequestRateChart from '$lib/components/monitoring/RequestRateChart.svelte';
 	import ServiceLatencyChart from '$lib/components/monitoring/ServiceLatencyChart.svelte';
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
+	import ServiceTable from '$lib/components/monitoring/ServiceTable.svelte';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
+	import { formatCount } from '$lib/utils/format';
 	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	let { data } = $props();
@@ -22,6 +28,44 @@
 	const SYNC_KEY = 'service-health';
 
 	const xRange = $derived<[number, number]>([data.startTs, data.endTs]);
+	type DetailView = 'overview' | 'services' | 'endpoints' | 'dependencies' | 'errors';
+	type DetailTab = { id: DetailView; label: string; count?: string; error?: boolean };
+	let activeView = $state<DetailView>('overview');
+	const tabsetId = $props.id();
+	const panelId = `${tabsetId}-panel`;
+
+	function detailTabs(service: string | null, health: ServiceHealth): DetailTab[] {
+		const tabs: DetailTab[] = [{ id: 'overview', label: 'Overview' }];
+		if (service === null) {
+			tabs.push({
+				id: 'services',
+				label: 'Services',
+				count: `${health.services.length}${health.servicesTruncated ? '+' : ''}`
+			});
+		}
+		tabs.push({ id: 'endpoints', label: 'Endpoints' });
+		if (service !== null && health.dependencies.length > 0) {
+			tabs.push({ id: 'dependencies', label: 'Dependencies' });
+		}
+		if (health.failingOperations.length > 0) {
+			tabs.push({
+				id: 'errors',
+				label: 'Errors',
+				count: formatCount(health.summary.errors),
+				error: true
+			});
+		}
+		return tabs;
+	}
+
+	$effect(() => {
+		if (
+			(activeView === 'services' && data.service !== null) ||
+			(activeView === 'dependencies' && data.service === null)
+		) {
+			activeView = 'overview';
+		}
+	});
 
 	function navigate(mutate: (params: URLSearchParams) => void) {
 		const url = new URL(page.url);
@@ -30,6 +74,7 @@
 	}
 
 	function setRange(next: TimeRange) {
+		activeView = 'overview';
 		navigate((params) => {
 			params.delete('to');
 			if (next.type === 'relative') {
@@ -42,6 +87,7 @@
 	}
 
 	function setService(value: string) {
+		activeView = 'overview';
 		navigate((params) => {
 			if (value === '') params.delete('service');
 			else params.set('service', value);
@@ -51,54 +97,72 @@
 	function brushRange(startTs: number, endTs: number) {
 		setRange({ type: 'absolute', start: startTs, end: endTs });
 	}
+
+	function handleTabKeydown(event: KeyboardEvent) {
+		if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+		const tablist = event.currentTarget as HTMLElement;
+		const buttons = Array.from(tablist.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+		const current = (event.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
+		const index = current === null ? -1 : buttons.indexOf(current);
+		if (index < 0) return;
+		event.preventDefault();
+		const nextIndex =
+			event.key === 'Home'
+				? 0
+				: event.key === 'End'
+					? buttons.length - 1
+					: event.key === 'ArrowRight'
+						? (index + 1) % buttons.length
+						: (index - 1 + buttons.length) % buttons.length;
+		const next = buttons[nextIndex];
+		activeView = next.dataset.view as DetailView;
+		next.focus();
+	}
 </script>
+
+{#snippet pageHeader(serviceNames: string[] | null)}
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="min-w-0">
+			<p class="text-base-content/45 text-[10px] tracking-widest uppercase">Services</p>
+			<h1 class="mt-0.5 truncate text-2xl tracking-tight" title={data.service ?? 'All services'}>
+				{data.service ?? 'All services'}
+			</h1>
+		</div>
+		<div class="flex flex-wrap items-end gap-3">
+			{#if serviceNames !== null}
+				<ServicePicker services={serviceNames} value={data.service} onChange={setService} />
+			{/if}
+			<TimeRangePicker value={data.timeRange} onChange={setRange} />
+		</div>
+	</header>
+{/snippet}
 
 <OverlayScrollbarsComponent
 	options={OS_SCROLLBAR_OPTIONS}
 	defer
-	class="min-h-0 w-full flex-1 px-4 py-8 sm:px-8 lg:px-12 lg:py-12"
+	class="min-h-0 w-full flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
 >
-	<header class="mb-6">
-		<p class="eyebrow">Monitoring</p>
-		<h1 class="mt-1 text-3xl tracking-tight">Services</h1>
-	</header>
-
 	{#await data.health}
-		<div class="flex flex-col gap-4" role="status" aria-label="Loading service health">
-			<div class="flex flex-wrap items-end justify-between gap-4">
-				<div class="skeleton h-12 w-72"></div>
-				<div class="skeleton h-8 w-36"></div>
-			</div>
-
-			{#if data.service === null}
-				<div class="skeleton h-72 w-full"></div>
-			{/if}
-
+		<div class="flex flex-col gap-5" role="status" aria-label="Loading service health">
+			{@render pageHeader(null)}
+			<div class="skeleton h-24 w-full"></div>
+			<div class="skeleton h-9 w-full"></div>
 			<div class="grid gap-4 lg:grid-cols-2">
-				<div class="skeleton h-72"></div>
-				<div class="skeleton h-72"></div>
+				<div class="skeleton h-64"></div>
+				<div class="skeleton h-64"></div>
 			</div>
-
-			{#if data.service !== null}
-				<div class="skeleton h-72 w-full"></div>
-			{/if}
-
-			<div class="skeleton h-40 w-full"></div>
 			<span class="sr-only">Loading service health</span>
 		</div>
 	{:then health}
-		<div class="flex flex-col gap-4">
-			<div class="flex flex-wrap items-end justify-between gap-4">
-				<ServicePicker services={health.services} value={data.service} onChange={setService} />
-				<TimeRangePicker value={data.timeRange} onChange={setRange} />
-			</div>
+		<div class="flex flex-col gap-5">
+			{@render pageHeader(health.serviceNames)}
 
 			{#if health.telemetryStatus === 'span_store_missing'}
 				<EmptyPanel title="Trace telemetry unavailable">
 					The configured span store could not be found. Check trace storage configuration and
 					ingestion.
 				</EmptyPanel>
-			{:else if health.summary.requests === 0}
+			{:else if health.summary.requests === 0 && health.dependencies.length === 0}
 				<EmptyPanel title="No request traffic">
 					{#if data.service === null}
 						No server spans were received in this time range. Try a wider range or verify trace
@@ -109,58 +173,131 @@
 					{/if}
 				</EmptyPanel>
 			{:else}
-				{#if health.servicesTruncated}
-					<p class="text-warning text-xs">
+				{@const tabs = detailTabs(data.service, health)}
+				{@const currentView = tabs.some((tab) => tab.id === activeView) ? activeView : 'overview'}
+				<ApmSummary
+					service={data.service}
+					services={health.services}
+					servicesTruncated={health.servicesTruncated}
+					summary={health.summary}
+					{xRange}
+				/>
+
+				{#if data.service === null && health.servicesTruncated}
+					<p class="text-warning -mt-3 text-xs">
 						Showing the {health.services.length} most active services.
 					</p>
 				{/if}
 
-				{#if data.service === null}
-					<ServiceLatencyChart
-						services={health.serviceLatencies}
-						keysMs={health.latencyKeysMs}
-						{xRange}
-						syncKey={SYNC_KEY}
-						onBrush={brushRange}
-					/>
-				{/if}
-
-				<div class="grid gap-4 lg:grid-cols-2">
-					<RequestRateChart
-						buckets={health.buckets}
-						summary={health.summary}
-						intervalSeconds={health.intervalSeconds}
-						{xRange}
-						syncKey={SYNC_KEY}
-						onBrush={brushRange}
-					/>
-					<ErrorRateChart
-						buckets={health.buckets}
-						summary={health.summary}
-						{xRange}
-						syncKey={SYNC_KEY}
-						onBrush={brushRange}
-					/>
+				<div
+					class="border-b-line flex min-w-0 overflow-x-auto border-b"
+					role="tablist"
+					aria-label="Service details"
+					tabindex={-1}
+					onkeydown={handleTabKeydown}
+				>
+					{#each tabs as tab (tab.id)}
+						<button
+							type="button"
+							role="tab"
+							id={`${tabsetId}-${tab.id}`}
+							data-view={tab.id}
+							aria-controls={panelId}
+							aria-selected={currentView === tab.id}
+							tabindex={currentView === tab.id ? 0 : -1}
+							class="tab-underline h-9 shrink-0 px-3 text-xs"
+							onclick={() => (activeView = tab.id)}
+						>
+							{tab.label}
+							{#if tab.count !== undefined}
+								<span
+									class={['ml-1 tabular-nums', tab.error ? 'text-error' : 'text-base-content/40']}
+									>{tab.count}</span
+								>
+							{/if}
+						</button>
+					{/each}
 				</div>
 
-				{#if data.service !== null}
-					<RequestLatencyChart
-						buckets={health.buckets}
-						summary={health.summary}
-						{xRange}
-						syncKey={SYNC_KEY}
-						onBrush={brushRange}
-					/>
-				{/if}
-
-				<EndpointTable endpoints={health.endpoints} showService={data.service === null} />
+				<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${currentView}`}>
+					{#if currentView === 'overview'}
+						{#if data.service === null}
+							<div class="flex flex-col gap-4">
+								<ServiceLatencyChart
+									services={health.serviceLatencies}
+									keysMs={health.latencyKeysMs}
+									{xRange}
+									syncKey={SYNC_KEY}
+									onBrush={brushRange}
+									height={190}
+								/>
+								<div class="grid gap-4 lg:grid-cols-2">
+									<RequestRateChart
+										buckets={health.buckets}
+										summary={health.summary}
+										intervalSeconds={health.intervalSeconds}
+										{xRange}
+										syncKey={SYNC_KEY}
+										onBrush={brushRange}
+										height={180}
+									/>
+									<ErrorRateChart
+										buckets={health.buckets}
+										summary={health.summary}
+										{xRange}
+										syncKey={SYNC_KEY}
+										onBrush={brushRange}
+										height={180}
+									/>
+								</div>
+							</div>
+						{:else}
+							<div class="grid gap-4 xl:grid-cols-3">
+								<RequestRateChart
+									buckets={health.buckets}
+									summary={health.summary}
+									intervalSeconds={health.intervalSeconds}
+									{xRange}
+									syncKey={SYNC_KEY}
+									onBrush={brushRange}
+									height={190}
+								/>
+								<ErrorRateChart
+									buckets={health.buckets}
+									summary={health.summary}
+									{xRange}
+									syncKey={SYNC_KEY}
+									onBrush={brushRange}
+									height={190}
+								/>
+								<RequestLatencyChart
+									buckets={health.buckets}
+									summary={health.summary}
+									{xRange}
+									syncKey={SYNC_KEY}
+									onBrush={brushRange}
+									height={190}
+								/>
+							</div>
+						{/if}
+					{:else if currentView === 'services' && data.service === null}
+						<ServiceTable services={health.services} onSelect={setService} />
+					{:else if currentView === 'endpoints'}
+						<EndpointTable endpoints={health.endpoints} showService={data.service === null} />
+					{:else if currentView === 'dependencies' && data.service !== null}
+						<DependencyTable dependencies={health.dependencies} service={data.service} />
+					{:else if currentView === 'errors'}
+						<FailingOperations
+							operations={health.failingOperations}
+							showService={data.service === null}
+						/>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	{:catch error}
-		<div class="flex justify-end">
-			<TimeRangePicker value={data.timeRange} onChange={setRange} />
-		</div>
-		<div class="mt-4">
+		{@render pageHeader(null)}
+		<div class="mt-5">
 			<PanelError message="Couldn't load service health" {error} />
 		</div>
 	{/await}

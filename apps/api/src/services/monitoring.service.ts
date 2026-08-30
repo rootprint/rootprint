@@ -13,8 +13,11 @@ import { escapeFilterValue } from '../lib/query/compose-query.js';
 import { intervalSeconds, type ServiceHealthInput } from '../schemas/monitoring.js';
 import type {
 	MonitoringBucket,
+	MonitoringDependency,
 	MonitoringEndpoint,
+	MonitoringFailingOperation,
 	MonitoringServiceLatency,
+	MonitoringServiceRow,
 	ServiceHealthResponse
 } from '../types.js';
 import { asBuckets, termsAgg } from '../utils/aggregations.js';
@@ -22,6 +25,7 @@ import { translateQuickwitError } from '../utils/quickwit-error.js';
 
 /** SpanKind 2 is SERVER: one span per inbound request. */
 const SERVER_SPANS = 'span_kind:2';
+const DEPENDENCY_SPANS = 'span_kind:IN [3 4]';
 const ERROR_SPANS = 'span_status.code:error';
 
 const TIMESTAMP_FIELD = 'span_start_timestamp_nanos';
@@ -32,6 +36,7 @@ const HTTP_ROUTE_FIELD = 'span_attributes.http.route';
 const URL_PATH_FIELD = 'span_attributes.url.path';
 const HTTP_TARGET_FIELD = 'span_attributes.http.target';
 const URL_FULL_FIELD = 'span_attributes.url.full';
+const PEER_FIELD = 'span_attributes.server.address';
 
 const ENDPOINT_SOURCES = [
 	{ key: 'endpoint_routes', field: HTTP_ROUTE_FIELD },
@@ -47,6 +52,9 @@ const NAMES_PER_ENDPOINT_LIMIT = 3;
 /** Each series gets its own color, so raising this past the web's `--trace-service-*` palette size repeats colors. */
 const SERVICE_CHART_LIMIT = 10;
 const SERVICE_LIMIT = 100;
+const FAILING_OP_LIMIT = 20;
+const DEPENDENCY_LIMIT = 20;
+const PEERS_PER_DEPENDENCY = 3;
 
 const PERCENTS = [50, 95];
 const P50 = '50.0';
@@ -205,6 +213,55 @@ function endpointSourceQuery(scope: string, sourceIndex: number): string {
 	return higherPriorityExclusions === '' ? scope : `${scope} AND ${higherPriorityExclusions}`;
 }
 
+function serviceRowsOf(
+	services: AggregationBucket[],
+	errors: AggregationBucket[]
+): MonitoringServiceRow[] {
+	const errorCounts = new Map(errors.map((bucket) => [String(bucket.key), bucket.doc_count]));
+	return services
+		.map((bucket) => {
+			const name = String(bucket.key);
+			return {
+				name,
+				requests: bucket.doc_count,
+				errors: Math.min(bucket.doc_count, errorCounts.get(name) ?? 0),
+				p50: percentile(bucket, P50),
+				p95: percentile(bucket, P95)
+			};
+		})
+		.filter((row) => row.name !== '');
+}
+
+function failingOperationsOf(
+	operations: AggregationBucket[],
+	service: string | undefined
+): MonitoringFailingOperation[] {
+	return operations
+		.map((bucket) => ({
+			name: String(bucket.key),
+			service:
+				service ??
+				String(asBuckets(bucket['services'] as BucketAggregationResult | undefined)[0]?.key ?? ''),
+			errors: bucket.doc_count
+		}))
+		.filter((operation) => operation.name !== '');
+}
+
+function dependenciesOf(calls: AggregationBucket[]): MonitoringDependency[] {
+	return calls
+		.map((bucket) => ({
+			name: String(bucket.key),
+			peers: asBuckets(bucket['peers'] as BucketAggregationResult | undefined)
+				.map((peer) => String(peer.key))
+				.filter((peer) => peer !== ''),
+			calls: bucket.doc_count,
+			totalMillis: metric(bucket, 'total') ?? 0,
+			p50: percentile(bucket, P50),
+			p95: percentile(bucket, P95)
+		}))
+		.filter((dependency) => dependency.name !== '');
+}
+
 function serviceLatenciesOf(services: AggregationBucket[]): MonitoringServiceLatency[] {
 	return services
 		.map((bucket) => ({
@@ -243,10 +300,25 @@ export async function getServiceHealth(
 	};
 
 	const servicesQuery = idx
-		.query(SERVER_SPANS)
+		.query(scope)
 		.limit(0)
-		.agg('services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
+		.agg(
+			'services',
+			AggregationBuilder.terms(SERVICE_FIELD, {
+				size: SERVICE_LIMIT,
+				shardSize: SERVICE_LIMIT,
+				aggs: durations
+			})
+		)
 		.timeRange(...timeRange);
+	const serviceNamesQuery =
+		service === undefined
+			? undefined
+			: idx
+					.query(SERVER_SPANS)
+					.limit(0)
+					.agg('service_names', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
+					.timeRange(...timeRange);
 	if (service === undefined) {
 		servicesQuery.agg(
 			'service_time',
@@ -290,7 +362,45 @@ export async function getServiceHealth(
 		.query(errorScope)
 		.limit(0)
 		.agg('time', AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, histogramBounds))
+		.agg(
+			'error_ops',
+			AggregationBuilder.terms(NAME_FIELD, {
+				size: FAILING_OP_LIMIT,
+				shardSize: FAILING_OP_LIMIT,
+				...(service === undefined
+					? {
+							aggs: {
+								services: AggregationBuilder.terms(SERVICE_FIELD, {
+									size: 1,
+									shardSize: SERVICE_LIMIT
+								})
+							}
+						}
+					: {})
+			})
+		)
+		.agg('error_services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
 		.timeRange(...timeRange);
+	const dependencyQuery =
+		service === undefined
+			? undefined
+			: idx
+					.query(`${SERVICE_FIELD}:${escapeFilterValue(service)} AND ${DEPENDENCY_SPANS}`)
+					.limit(0)
+					.agg(
+						'dependencies',
+						AggregationBuilder.terms(NAME_FIELD, {
+							size: DEPENDENCY_LIMIT,
+							shardSize: DEPENDENCY_LIMIT,
+							order: { total: 'desc' },
+							aggs: {
+								total: AggregationBuilder.sum(DURATION_FIELD),
+								pct: AggregationBuilder.percentiles(DURATION_FIELD, { percents: PERCENTS }),
+								peers: termsAgg(PEER_FIELD, PEERS_PER_DEPENDENCY)
+							}
+						})
+					)
+					.timeRange(...timeRange);
 	const endpointQueries = ENDPOINT_SOURCES.map((source, index) =>
 		idx
 			.query(endpointSourceQuery(scope, index))
@@ -299,13 +409,22 @@ export async function getServiceHealth(
 			.timeRange(...timeRange)
 	);
 
-	let responses: [SearchResponse, SearchResponse[], SearchResponse, SearchResponse];
+	let responses: [
+		SearchResponse,
+		SearchResponse | undefined,
+		SearchResponse[],
+		SearchResponse,
+		SearchResponse,
+		SearchResponse | undefined
+	];
 	try {
 		responses = await Promise.all([
 			idx.search(servicesQuery),
+			serviceNamesQuery === undefined ? undefined : idx.search(serviceNamesQuery),
 			Promise.all(endpointQueries.map((query) => idx.search(query))),
 			idx.search(errorsQuery),
-			idx.search(totalsQuery)
+			idx.search(totalsQuery),
+			dependencyQuery === undefined ? undefined : idx.search(dependencyQuery)
 		]);
 	} catch (error) {
 		if (error instanceof QuickwitError && error.code === QuickwitErrorCode.NOT_FOUND) {
@@ -313,21 +432,36 @@ export async function getServiceHealth(
 			return {
 				telemetryStatus: 'span_store_missing',
 				services: [],
+				serviceNames: [],
 				servicesTruncated: false,
 				intervalSeconds: intervalSec,
 				summary: { requests: 0, errors: 0, p50: null, p95: null },
 				buckets: [],
 				latencyKeysMs: [],
 				serviceLatencies: [],
-				endpoints: []
+				endpoints: [],
+				failingOperations: [],
+				dependencies: []
 			};
 		}
 		return translateQuickwitError(error);
 	}
 
-	const [servicesResponse, endpointResponses, errorsResponse, totalsResponse] = responses;
+	const [
+		servicesResponse,
+		serviceNamesResponse,
+		endpointResponses,
+		errorsResponse,
+		totalsResponse,
+		dependencyResponse
+	] = responses;
 	const servicesAgg = servicesResponse.aggregations?.['services'] as
 		BucketAggregationResult | undefined;
+	const serviceNamesAgg =
+		service === undefined
+			? servicesAgg
+			: (serviceNamesResponse?.aggregations?.['service_names'] as
+					BucketAggregationResult | undefined);
 	const totalBuckets = asBuckets(
 		totalsResponse.aggregations?.['time'] as BucketAggregationResult | undefined
 	);
@@ -344,8 +478,16 @@ export async function getServiceHealth(
 
 	return {
 		telemetryStatus: 'available',
-		services: services.map((entry) => String(entry.key)).filter((name) => name !== ''),
-		servicesTruncated: (servicesAgg?.sum_other_doc_count ?? 0) > 0,
+		services: serviceRowsOf(
+			services,
+			asBuckets(
+				errorsResponse.aggregations?.['error_services'] as BucketAggregationResult | undefined
+			)
+		),
+		serviceNames: asBuckets(serviceNamesAgg)
+			.map((entry) => String(entry.key))
+			.filter((name) => name !== ''),
+		servicesTruncated: (serviceNamesAgg?.sum_other_doc_count ?? 0) > 0,
 		intervalSeconds: intervalSec,
 		summary: {
 			requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
@@ -358,6 +500,15 @@ export async function getServiceHealth(
 			serviceTimeBuckets[0]?.['time'] as BucketAggregationResult | undefined
 		).map((bucket) => Number(bucket.key)),
 		serviceLatencies: serviceLatenciesOf(serviceTimeBuckets),
-		endpoints: preferredEndpoints(endpointResponses, service, params.endpointLimit)
+		endpoints: preferredEndpoints(endpointResponses, service, params.endpointLimit),
+		failingOperations: failingOperationsOf(
+			asBuckets(errorsResponse.aggregations?.['error_ops'] as BucketAggregationResult | undefined),
+			service
+		),
+		dependencies: dependenciesOf(
+			asBuckets(
+				dependencyResponse?.aggregations?.['dependencies'] as BucketAggregationResult | undefined
+			)
+		)
 	};
 }

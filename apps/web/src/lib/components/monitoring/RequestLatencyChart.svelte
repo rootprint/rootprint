@@ -10,9 +10,10 @@
 		xRange: [number, number];
 		syncKey: string;
 		onBrush: (startTs: number, endTs: number) => void;
+		height?: number;
 	};
 
-	let { buckets, summary, xRange, syncKey, onBrush }: Props = $props();
+	let { buckets, summary, xRange, syncKey, onBrush, height }: Props = $props();
 
 	const xs = $derived(buckets.map((bucket) => Math.floor(bucket.keyMs / 1000)));
 	const series = $derived<ChartSeries[]>([
@@ -31,6 +32,7 @@
 	{series}
 	formatValue={formatDurationMs}
 	emptyMessage="No spans in this time range."
+	{height}
 	{syncKey}
 	{onBrush}
 />
