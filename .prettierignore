@@ -7,6 +7,7 @@ bun.lockb
 
 # AI
 docs/
+graphify-out/
 
 # Generated and static content
 apps/api/drizzle/

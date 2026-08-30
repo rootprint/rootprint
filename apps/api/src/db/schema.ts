@@ -14,7 +14,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 
-import type { DisplayMode, Filter, TimeRange } from '../types.js';
+import type { AlertCondition, DisplayMode, Filter, TimeRange } from '../types.js';
 
 import { user } from './auth.schema.js';
 
@@ -115,6 +115,34 @@ export const view = pgTable(
 	(table) => [
 		uniqueIndex('view_user_index_name_unique').on(table.userId, table.indexId, table.name),
 		index('view_index_id').on(table.indexId)
+	]
+);
+
+export const alertRule = pgTable(
+	'alert_rule',
+	{
+		id: serial('id').primaryKey(),
+		indexId: text('index_id').notNull(),
+		name: text('name').notNull(),
+		query: text('query').notNull().default(''),
+		filters: jsonb('filters').$type<Filter[]>().notNull().default([]),
+		condition: jsonb('condition').$type<AlertCondition>().notNull(),
+		windowSeconds: integer('window_seconds').notNull(),
+		evaluationIntervalSeconds: integer('evaluation_interval_seconds').notNull(),
+		enabled: boolean('enabled').notNull().default(true),
+		createdByUserId: text('created_by_user_id').references(() => user.id, {
+			onDelete: 'set null'
+		}),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.notNull()
+			.$onUpdate(() => new Date())
+	},
+	(table) => [
+		uniqueIndex('alert_rule_index_name_unique').on(table.indexId, table.name),
+		check('alert_rule_window_positive', sql`${table.windowSeconds} > 0`),
+		check('alert_rule_evaluation_interval_positive', sql`${table.evaluationIntervalSeconds} > 0`)
 	]
 );
 

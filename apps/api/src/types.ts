@@ -27,6 +27,7 @@ import type {
 	ServiceHealthResponseSchema
 } from './schemas/responses/monitoring.js';
 import type { TraceResponseSchema, TraceSpanSchema } from './schemas/responses/traces.js';
+import type { AlertRuleResponse as AlertRuleResponseSchema } from './schemas/responses/alerts.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,
@@ -138,7 +139,14 @@ export type VerifiedApiKey = {
 export type Scope = Record<string, string[]>;
 
 export type { CreateApiKeyInput } from './schemas/api-keys.js';
+export type { CreateAlertRuleInput, PatchAlertRuleInput } from './schemas/alerts.js';
 export type { ShareCreateInput } from './schemas/shares.js';
+
+export type AlertCondition = v.InferOutput<
+	typeof import('./schemas/alerts.js').AlertConditionSchema
+>;
+
+export type AlertRule = v.InferOutput<typeof AlertRuleResponseSchema>;
 
 export type SavedView = v.InferOutput<typeof SavedViewResponseSchema>;
 

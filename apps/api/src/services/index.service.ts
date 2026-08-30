@@ -13,6 +13,7 @@ import { NotFoundError, QuickwitError, QuickwitErrorCode, type QuickwitClient } 
 
 import type { Db } from '../db/index.js';
 import {
+	alertRule,
 	apiKey,
 	indexSettings,
 	indexStatsSnapshot,
@@ -204,6 +205,7 @@ export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): 
 		await tx.delete(indexSettings).where(eq(indexSettings.indexId, indexId));
 		await tx.delete(indexStatsSnapshot).where(eq(indexStatsSnapshot.indexId, indexId));
 		await tx.delete(userPreference).where(eq(userPreference.indexId, indexId));
+		await tx.delete(alertRule).where(eq(alertRule.indexId, indexId));
 		await tx.delete(viewTable).where(eq(viewTable.indexId, indexId));
 		await tx.delete(share).where(eq(share.indexId, indexId));
 		await tx.delete(apiKey).where(eq(apiKey.indexId, indexId));

@@ -1,4 +1,5 @@
 export * from './api-keys.js';
+export * from './alerts.js';
 export * from './auth.js';
 export {
 	saveIndexConfigSchema,

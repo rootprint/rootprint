@@ -38,3 +38,4 @@ deploy/*
 
 .claude/
 .agents/
+graphify-out/

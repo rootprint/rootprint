@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 
+import { alertsRouter } from './alerts.js';
 import { exportsRouter } from './exports.js';
 import { viewsRouter } from './views.js';
 
@@ -472,4 +473,5 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		}
 	)
 	.route('/:indexId/logs/export', exportsRouter)
+	.route('/:indexId/alerts', alertsRouter)
 	.route('/:indexId/views', viewsRouter);

@@ -263,6 +263,114 @@
 				],
 				"type": "object"
 			},
+			"AlertRuleResponse": {
+				"properties": {
+					"condition": {
+						"properties": {
+							"operator": {
+								"enum": [
+									"gt",
+									"gte",
+									"lt",
+									"lte"
+								],
+								"type": "string"
+							},
+							"threshold": {
+								"minimum": 0,
+								"type": "integer"
+							},
+							"type": {
+								"const": "count"
+							}
+						},
+						"required": [
+							"type",
+							"operator",
+							"threshold"
+						],
+						"type": "object"
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"createdByUserId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"evaluationIntervalSeconds": {
+						"type": "number"
+					},
+					"filters": {
+						"items": {
+							"properties": {
+								"exclude": {
+									"type": "boolean"
+								},
+								"field": {
+									"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+									"type": "string"
+								},
+								"value": {
+									"minLength": 1,
+									"type": "string"
+								}
+							},
+							"required": [
+								"field",
+								"value",
+								"exclude"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"id": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"query": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"windowSeconds": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"id",
+					"indexId",
+					"name",
+					"query",
+					"filters",
+					"condition",
+					"windowSeconds",
+					"evaluationIntervalSeconds",
+					"enabled",
+					"createdByUserId",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object"
+			},
 			"ApiErrorBody": {
 				"properties": {
 					"error": {
@@ -14190,6 +14298,452 @@
 				"summary": "Update index configuration",
 				"tags": [
 					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/alerts": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdAlerts",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AlertRuleResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "List alert rules",
+				"tags": [
+					"Alerts"
+				]
+			},
+			"post": {
+				"operationId": "postApiIndexesByIndexIdAlerts",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"condition": {
+										"properties": {
+											"operator": {
+												"enum": [
+													"gt",
+													"gte",
+													"lt",
+													"lte"
+												],
+												"type": "string"
+											},
+											"threshold": {
+												"minimum": 0,
+												"type": "integer"
+											},
+											"type": {
+												"const": "count"
+											}
+										},
+										"required": [
+											"type",
+											"operator",
+											"threshold"
+										],
+										"type": "object"
+									},
+									"enabled": {
+										"type": "boolean"
+									},
+									"evaluationIntervalSeconds": {
+										"minimum": 1,
+										"type": "integer"
+									},
+									"filters": {
+										"items": {
+											"properties": {
+												"exclude": {
+													"type": "boolean"
+												},
+												"field": {
+													"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+													"type": "string"
+												},
+												"value": {
+													"minLength": 1,
+													"type": "string"
+												}
+											},
+											"required": [
+												"field",
+												"value",
+												"exclude"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"name": {
+										"maxLength": 200,
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									},
+									"windowSeconds": {
+										"minimum": 1,
+										"type": "integer"
+									}
+								},
+								"required": [
+									"name",
+									"query",
+									"condition",
+									"windowSeconds",
+									"evaluationIntervalSeconds"
+								],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AlertRuleResponse"
+								}
+							}
+						},
+						"description": "Alert rule created"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Create alert rule",
+				"tags": [
+					"Alerts"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/alerts/{alertRuleId}": {
+			"delete": {
+				"operationId": "deleteApiIndexesByIndexIdAlertsByAlertRuleId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "alertRuleId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Alert rule deleted"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Delete alert rule",
+				"tags": [
+					"Alerts"
+				]
+			},
+			"get": {
+				"operationId": "getApiIndexesByIndexIdAlertsByAlertRuleId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "alertRuleId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AlertRuleResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get alert rule",
+				"tags": [
+					"Alerts"
+				]
+			},
+			"patch": {
+				"operationId": "patchApiIndexesByIndexIdAlertsByAlertRuleId",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "alertRuleId",
+						"required": true,
+						"schema": {
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"condition": {
+										"properties": {
+											"operator": {
+												"enum": [
+													"gt",
+													"gte",
+													"lt",
+													"lte"
+												],
+												"type": "string"
+											},
+											"threshold": {
+												"minimum": 0,
+												"type": "integer"
+											},
+											"type": {
+												"const": "count"
+											}
+										},
+										"required": [
+											"type",
+											"operator",
+											"threshold"
+										],
+										"type": "object"
+									},
+									"enabled": {
+										"type": "boolean"
+									},
+									"evaluationIntervalSeconds": {
+										"minimum": 1,
+										"type": "integer"
+									},
+									"filters": {
+										"items": {
+											"properties": {
+												"exclude": {
+													"type": "boolean"
+												},
+												"field": {
+													"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+													"type": "string"
+												},
+												"value": {
+													"minLength": 1,
+													"type": "string"
+												}
+											},
+											"required": [
+												"field",
+												"value",
+												"exclude"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"name": {
+										"maxLength": 200,
+										"minLength": 1,
+										"type": "string"
+									},
+									"query": {
+										"type": "string"
+									},
+									"windowSeconds": {
+										"minimum": 1,
+										"type": "integer"
+									}
+								},
+								"required": [],
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AlertRuleResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Update alert rule",
+				"tags": [
+					"Alerts"
 				]
 			}
 		},

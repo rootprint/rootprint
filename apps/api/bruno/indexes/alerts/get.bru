@@ -1,0 +1,11 @@
+meta {
+  name: Get Alert Rule
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/alerts/{{alertRuleId}}
+  body: none
+  auth: none
+}

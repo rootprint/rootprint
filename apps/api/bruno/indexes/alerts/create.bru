@@ -1,0 +1,27 @@
+meta {
+  name: Create Alert Rule
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/alerts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "High error volume",
+    "query": "severity_text:ERROR",
+    "filters": [],
+    "condition": {
+      "type": "count",
+      "operator": "gte",
+      "threshold": 10
+    },
+    "windowSeconds": 300,
+    "evaluationIntervalSeconds": 60,
+    "enabled": true
+  }
+}

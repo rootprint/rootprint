@@ -1,0 +1,11 @@
+meta {
+  name: Delete Alert Rule
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/indexes/{{indexId}}/alerts/{{alertRuleId}}
+  body: none
+  auth: none
+}
