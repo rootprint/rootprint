@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleX, ExternalLink, Send } from 'lucide-svelte';
+	import { CircleX, ExternalLink, SearchX, Send } from 'lucide-svelte';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import type { OverlayScrollbars } from 'overlayscrollbars';
 	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
@@ -153,15 +153,20 @@
 					class="bg-base-200/30 h-full w-full"
 				>
 					{#if displayState === 'loading'}
-						<div class="flex h-full items-center justify-center">
-							<div class="text-base-content/60 flex items-center gap-2 text-xs">
+						<div class="flex h-full items-center justify-center p-6" role="status">
+							<div
+								class="border-line bg-base-100 rounded-box flex min-w-52 items-center gap-3 border px-4 py-3"
+							>
 								<span class="loading loading-spinner loading-sm"></span>
-								Loading…
+								<div>
+									<p class="text-sm">Searching logs</p>
+									<p class="text-base-content/45 text-xs">Fetching the latest results…</p>
+								</div>
 							</div>
 						</div>
 					{:else if displayState === 'error'}
-						<div class="flex h-full items-center justify-center">
-							<div class="alert alert-error max-w-md">
+						<div class="flex h-full items-center justify-center p-6">
+							<div class="alert alert-error max-w-md" role="alert">
 								<CircleX class="h-4 w-4 shrink-0" />
 								<span class="text-xs"
 									>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
@@ -169,20 +174,29 @@
 							</div>
 						</div>
 					{:else if displayState === 'empty'}
-						<div class="flex h-full flex-col items-center justify-center gap-1">
-							<p class="text-base-content/60 text-xs">No logs found</p>
-							<p class="text-base-content/40 text-[10px]">
-								Try adjusting your time range or query filters
-							</p>
-							{#if store.filters.length > 0}
-								<button
-									type="button"
-									class="btn btn-ghost btn-xs mt-2"
-									onclick={() => store.clearFilters()}
+						<div class="flex h-full items-center justify-center p-6">
+							<section
+								class="border-line bg-base-100 rounded-box w-full max-w-sm border px-6 py-8 text-center"
+							>
+								<div
+									class="bg-base-200 text-base-content/45 mx-auto flex h-10 w-10 items-center justify-center rounded"
 								>
-									Clear filters
-								</button>
-							{/if}
+									<SearchX class="h-5 w-5" aria-hidden="true" />
+								</div>
+								<h2 class="mt-4 text-base">No logs match this search</h2>
+								<p class="text-base-content/50 mx-auto mt-1 max-w-xs text-xs leading-5">
+									Try widening the time range or updating your query and filters.
+								</p>
+								{#if store.filters.length > 0}
+									<button
+										type="button"
+										class="btn btn-ghost btn-xs mt-4"
+										onclick={() => store.clearFilters()}
+									>
+										Clear filters
+									</button>
+								{/if}
+							</section>
 						</div>
 					{:else}
 						<VirtualLogList
