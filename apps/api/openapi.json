@@ -1548,6 +1548,63 @@
 				],
 				"type": "object"
 			},
+			"MonitoringErrorRow": {
+				"properties": {
+					"durationMillis": {
+						"type": "number"
+					},
+					"httpStatus": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"kind": {
+						"enum": [
+							"server",
+							"client",
+							"producer",
+							"consumer",
+							"internal"
+						],
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"operation": {
+						"type": "string"
+					},
+					"service": {
+						"type": "string"
+					},
+					"spanId": {
+						"type": "string"
+					},
+					"timestampMs": {
+						"type": "number"
+					},
+					"traceId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"traceId",
+					"spanId",
+					"timestampMs",
+					"service",
+					"operation",
+					"kind",
+					"message",
+					"httpStatus",
+					"durationMillis"
+				],
+				"type": "object"
+			},
 			"MonitoringFailingOperation": {
 				"properties": {
 					"errors": {
@@ -1555,14 +1612,10 @@
 					},
 					"name": {
 						"type": "string"
-					},
-					"service": {
-						"type": "string"
 					}
 				},
 				"required": [
 					"name",
-					"service",
 					"errors"
 				],
 				"type": "object"
@@ -1635,6 +1688,9 @@
 			},
 			"MonitoringSummary": {
 				"properties": {
+					"errorSpans": {
+						"type": "number"
+					},
 					"errors": {
 						"type": "number"
 					},
@@ -1665,6 +1721,7 @@
 				"required": [
 					"requests",
 					"errors",
+					"errorSpans",
 					"p50",
 					"p95"
 				],
@@ -2214,6 +2271,24 @@
 					"name",
 					"createdAt",
 					"keyCount"
+				],
+				"type": "object"
+			},
+			"ServiceErrorsResponse": {
+				"properties": {
+					"hasMore": {
+						"type": "boolean"
+					},
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/MonitoringErrorRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"rows",
+					"hasMore"
 				],
 				"type": "object"
 			},
@@ -16921,6 +16996,144 @@
 				"summary": "Ingest NDJSON log documents",
 				"tags": [
 					"Log ingest"
+				]
+			}
+		},
+		"/api/monitoring/errors": {
+			"get": {
+				"operationId": "getApiMonitoringErrors",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "service",
+						"schema": {
+							"maxLength": 200,
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "operation",
+						"schema": {
+							"maxLength": 500,
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "kind",
+						"schema": {
+							"enum": [
+								"server",
+								"client",
+								"producer",
+								"consumer",
+								"internal"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "httpStatus",
+						"schema": {
+							"enum": [
+								"4xx",
+								"5xx",
+								"none"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"default": "50",
+							"maximum": 100,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"schema": {
+							"default": "0",
+							"maximum": 5000,
+							"minimum": 0,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServiceErrorsResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"429": {
+						"$ref": "#/components/responses/TooManyRequests"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"security": [
+					{
+						"personalBearer": []
+					},
+					{
+						"cookieAuth": []
+					}
+				],
+				"summary": "List failing spans",
+				"tags": [
+					"Monitoring"
 				]
 			}
 		},

@@ -74,3 +74,8 @@ export function formatSpanDuration(micros: number): string {
 export function formatSpanStart(micros: number): string {
 	return format(new Date(micros / 1000), 'yyyy-MM-dd HH:mm:ss.SSS');
 }
+
+/** "YYYY-MM-DD HH:MM:SS" — epoch milliseconds, second precision, used in the failing-spans list. */
+export function formatEpochMillis(ms: number): string {
+	return format(ms, 'yyyy-MM-dd HH:mm:ss');
+}

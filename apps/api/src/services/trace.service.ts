@@ -11,7 +11,7 @@ const MAX_TRACE_SPANS = 2_000;
 const REDUNDANT_ATTRIBUTES = ['otel.status_code', 'error'];
 
 /** OTel SpanKind → Jaeger's `span.kind` tag. 0 and 1 emit no tag, per the OTel-to-Jaeger spec. */
-const SPAN_KIND_TAGS: Record<number, string> = {
+export const SPAN_KIND_TAGS: Record<number, 'server' | 'client' | 'producer' | 'consumer'> = {
 	2: 'server',
 	3: 'client',
 	4: 'producer',
@@ -46,7 +46,7 @@ function flattenAttributes(
 	return out;
 }
 
-const asRecord = (value: unknown): Record<string, unknown> =>
+export const asRecord = (value: unknown): Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value)
 		? (value as Record<string, unknown>)
 		: {};
@@ -79,7 +79,7 @@ interface RawSpanHit {
 const toMicros = (v: unknown): number | null =>
 	typeof v === 'number' && Number.isFinite(v) ? Math.round(v / NANOS_PER_MICRO) : null;
 
-const asText = (v: unknown, fallback: string): string =>
+export const asText = (v: unknown, fallback: string): string =>
 	typeof v === 'string' && v !== '' ? v : fallback;
 
 const emptyTrace = (truncated = false): TraceResponse => ({

@@ -10,18 +10,25 @@ import type {
 import { logger } from '../lib/logger.js';
 import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import { escapeFilterValue } from '../lib/query/compose-query.js';
-import { intervalSeconds, type ServiceHealthInput } from '../schemas/monitoring.js';
+import {
+	intervalSeconds,
+	type ServiceErrorsInput,
+	type ServiceHealthInput
+} from '../schemas/monitoring.js';
 import type {
 	MonitoringBucket,
 	MonitoringDependency,
 	MonitoringEndpoint,
+	MonitoringErrorRow,
 	MonitoringFailingOperation,
 	MonitoringServiceLatency,
 	MonitoringServiceRow,
+	ServiceErrorsResponse,
 	ServiceHealthResponse
 } from '../types.js';
 import { asBuckets, termsAgg } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
+import { asRecord, asText, SPAN_KIND_TAGS } from './trace.service.js';
 
 /** SpanKind 2 is SERVER: one span per inbound request. */
 const SERVER_SPANS = 'span_kind:2';
@@ -37,6 +44,73 @@ const URL_PATH_FIELD = 'span_attributes.url.path';
 const HTTP_TARGET_FIELD = 'span_attributes.http.target';
 const URL_FULL_FIELD = 'span_attributes.url.full';
 const PEER_FIELD = 'span_attributes.server.address';
+const HTTP_RESPONSE_STATUS_FIELD = 'span_attributes.http.response.status_code';
+const HTTP_STATUS_FIELD = 'span_attributes.http.status_code';
+const ERROR_KIND_QUERIES: Record<NonNullable<ServiceErrorsInput['kind']>, string> = {
+	server: '2',
+	client: '3',
+	producer: '4',
+	consumer: '5',
+	internal: 'IN [0 1]'
+};
+
+const MESSAGE_MAX_CHARS = 300;
+const NANOS_PER_MILLI = 1_000_000;
+
+/** The first event carrying exception data, so `message` never mixes two events. */
+function exceptionAttributes(events: unknown): Record<string, unknown> {
+	if (!Array.isArray(events)) return {};
+	for (const raw of events) {
+		const attributes = asRecord(asRecord(raw)['event_attributes']);
+		if (
+			attributes['exception.message'] !== undefined ||
+			attributes['exception.type'] !== undefined
+		) {
+			return attributes;
+		}
+	}
+	return {};
+}
+
+function coerceStatus(raw: unknown): number | null {
+	if (typeof raw !== 'number' && (typeof raw !== 'string' || raw === '')) return null;
+	const status = Number(raw);
+	return Number.isFinite(status) ? status : null;
+}
+
+/** Modern OTel SDKs emit `http.response.status_code`; older ones emit `http.status_code`. */
+function httpStatusOf(attributes: Record<string, unknown>): number | null {
+	return (
+		coerceStatus(attributes['http.response.status_code']) ??
+		coerceStatus(attributes['http.status_code'])
+	);
+}
+
+export function toErrorRow(hit: Record<string, unknown>): MonitoringErrorRow | null {
+	const traceId = asText(hit['trace_id'], '');
+	const spanId = asText(hit['span_id'], '');
+	if (traceId === '' || spanId === '') return null;
+
+	const exception = exceptionAttributes(hit['events']);
+	const message = asText(
+		asRecord(hit['span_status'])['message'],
+		asText(exception['exception.message'], asText(exception['exception.type'], ''))
+	);
+	const startNanos = hit['span_start_timestamp_nanos'];
+	const duration = hit['span_duration_millis'];
+
+	return {
+		traceId,
+		spanId,
+		timestampMs: typeof startNanos === 'number' ? Math.round(startNanos / NANOS_PER_MILLI) : 0,
+		service: asText(hit['service_name'], ''),
+		operation: asText(hit['span_name'], ''),
+		kind: SPAN_KIND_TAGS[Number(hit['span_kind'])] ?? 'internal',
+		message: message.slice(0, MESSAGE_MAX_CHARS),
+		httpStatus: httpStatusOf(asRecord(hit['span_attributes'])),
+		durationMillis: typeof duration === 'number' ? duration : 0
+	};
+}
 
 const ENDPOINT_SOURCES = [
 	{ key: 'endpoint_routes', field: HTTP_ROUTE_FIELD },
@@ -232,18 +306,9 @@ function serviceRowsOf(
 		.filter((row) => row.name !== '');
 }
 
-function failingOperationsOf(
-	operations: AggregationBucket[],
-	service: string | undefined
-): MonitoringFailingOperation[] {
+function failingOperationsOf(operations: AggregationBucket[]): MonitoringFailingOperation[] {
 	return operations
-		.map((bucket) => ({
-			name: String(bucket.key),
-			service:
-				service ??
-				String(asBuckets(bucket['services'] as BucketAggregationResult | undefined)[0]?.key ?? ''),
-			errors: bucket.doc_count
-		}))
+		.map((bucket) => ({ name: String(bucket.key), errors: bucket.doc_count }))
 		.filter((operation) => operation.name !== '');
 }
 
@@ -278,6 +343,51 @@ export function serviceHealthQuery(service: string | undefined): string {
 	return service === undefined
 		? SERVER_SPANS
 		: `${SERVER_SPANS} AND ${SERVICE_FIELD}:${escapeFilterValue(service)}`;
+}
+
+export function serviceErrorsQuery(
+	filters: Pick<ServiceErrorsInput, 'service' | 'operation' | 'kind' | 'httpStatus'>
+): string {
+	const { service, operation, kind, httpStatus } = filters;
+	const clauses = [ERROR_SPANS];
+	if (service !== undefined) clauses.push(`${SERVICE_FIELD}:${escapeFilterValue(service)}`);
+	if (operation !== undefined) clauses.push(`${NAME_FIELD}:${escapeFilterValue(operation)}`);
+	if (kind !== undefined) {
+		clauses.push(`span_kind:${ERROR_KIND_QUERIES[kind]}`);
+	}
+	if (httpStatus !== undefined) {
+		if (httpStatus === 'none') {
+			clauses.push(`NOT (${HTTP_RESPONSE_STATUS_FIELD}:* OR ${HTTP_STATUS_FIELD}:*)`);
+		} else {
+			const lower = httpStatus === '4xx' ? 400 : 500;
+			const upper = lower + 99;
+			clauses.push(
+				`(${HTTP_RESPONSE_STATUS_FIELD}:[${lower} TO ${upper}] OR ${HTTP_STATUS_FIELD}:[${lower} TO ${upper}])`
+			);
+		}
+	}
+	return clauses.join(' AND ');
+}
+
+export async function getServiceErrors(
+	qw: QuickwitClient,
+	traceIndexId: string,
+	params: ServiceErrorsInput
+): Promise<ServiceErrorsResponse> {
+	const idx = qw.index(traceIndexId);
+	const builder = idx
+		.query(serviceErrorsQuery(params))
+		.limit(params.limit)
+		.offset(params.offset)
+		.sortBy(TIMESTAMP_FIELD, 'desc')
+		.timeRange(toQuickwitTimestamp(params.startTs), toQuickwitTimestamp(params.endTs));
+	const response = await idx.search(builder).catch(translateQuickwitError);
+	return {
+		rows: response.hits
+			.map((hit) => toErrorRow(hit as Record<string, unknown>))
+			.filter((row) => row !== null),
+		hasMore: response.hits.length === params.limit
+	};
 }
 
 export async function getServiceHealth(
@@ -362,24 +472,16 @@ export async function getServiceHealth(
 		.query(errorScope)
 		.limit(0)
 		.agg('time', AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, histogramBounds))
-		.agg(
-			'error_ops',
-			AggregationBuilder.terms(NAME_FIELD, {
-				size: FAILING_OP_LIMIT,
-				shardSize: FAILING_OP_LIMIT,
-				...(service === undefined
-					? {
-							aggs: {
-								services: AggregationBuilder.terms(SERVICE_FIELD, {
-									size: 1,
-									shardSize: SERVICE_LIMIT
-								})
-							}
-						}
-					: {})
-			})
-		)
 		.agg('error_services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
+		.timeRange(...timeRange);
+	// Shares serviceErrorsQuery so this count can never scope differently from what /errors lists.
+	// why: num_hits becomes summary.errorSpans, which gates the Errors tab's badge and empty state,
+	// so it must be exact rather than a count-based estimate.
+	const allErrorsQuery = idx
+		.query(serviceErrorsQuery({ service }))
+		.limit(0)
+		.countAll()
+		.agg('error_ops', termsAgg(NAME_FIELD, FAILING_OP_LIMIT))
 		.timeRange(...timeRange);
 	const dependencyQuery =
 		service === undefined
@@ -415,7 +517,8 @@ export async function getServiceHealth(
 		SearchResponse[],
 		SearchResponse,
 		SearchResponse,
-		SearchResponse | undefined
+		SearchResponse | undefined,
+		SearchResponse
 	];
 	try {
 		responses = await Promise.all([
@@ -424,7 +527,8 @@ export async function getServiceHealth(
 			Promise.all(endpointQueries.map((query) => idx.search(query))),
 			idx.search(errorsQuery),
 			idx.search(totalsQuery),
-			dependencyQuery === undefined ? undefined : idx.search(dependencyQuery)
+			dependencyQuery === undefined ? undefined : idx.search(dependencyQuery),
+			idx.search(allErrorsQuery)
 		]);
 	} catch (error) {
 		if (error instanceof QuickwitError && error.code === QuickwitErrorCode.NOT_FOUND) {
@@ -435,7 +539,7 @@ export async function getServiceHealth(
 				serviceNames: [],
 				servicesTruncated: false,
 				intervalSeconds: intervalSec,
-				summary: { requests: 0, errors: 0, p50: null, p95: null },
+				summary: { requests: 0, errors: 0, errorSpans: 0, p50: null, p95: null },
 				buckets: [],
 				latencyKeysMs: [],
 				serviceLatencies: [],
@@ -453,7 +557,8 @@ export async function getServiceHealth(
 		endpointResponses,
 		errorsResponse,
 		totalsResponse,
-		dependencyResponse
+		dependencyResponse,
+		allErrorsResponse
 	] = responses;
 	const servicesAgg = servicesResponse.aggregations?.['services'] as
 		BucketAggregationResult | undefined;
@@ -492,6 +597,7 @@ export async function getServiceHealth(
 		summary: {
 			requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
 			errors: buckets.reduce((sum, bucket) => sum + bucket.errors, 0),
+			errorSpans: allErrorsResponse.num_hits,
 			p50: summaryPercentile(summary, P50),
 			p95: summaryPercentile(summary, P95)
 		},
@@ -502,8 +608,9 @@ export async function getServiceHealth(
 		serviceLatencies: serviceLatenciesOf(serviceTimeBuckets),
 		endpoints: preferredEndpoints(endpointResponses, service, params.endpointLimit),
 		failingOperations: failingOperationsOf(
-			asBuckets(errorsResponse.aggregations?.['error_ops'] as BucketAggregationResult | undefined),
-			service
+			asBuckets(
+				allErrorsResponse.aggregations?.['error_ops'] as BucketAggregationResult | undefined
+			)
 		),
 		dependencies: dependenciesOf(
 			asBuckets(

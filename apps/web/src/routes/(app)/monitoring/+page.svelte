@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ERROR_HTTP_STATUSES, SPAN_KINDS } from 'api/constants';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import { goto } from '$app/navigation';
@@ -8,8 +9,8 @@
 	import ApmSummary from '$lib/components/monitoring/ApmSummary.svelte';
 	import DependencyTable from '$lib/components/monitoring/DependencyTable.svelte';
 	import EndpointTable from '$lib/components/monitoring/EndpointTable.svelte';
+	import ErrorList from '$lib/components/monitoring/ErrorList.svelte';
 	import ErrorRateChart from '$lib/components/monitoring/ErrorRateChart.svelte';
-	import FailingOperations from '$lib/components/monitoring/FailingOperations.svelte';
 	import RequestLatencyChart from '$lib/components/monitoring/RequestLatencyChart.svelte';
 	import RequestRateChart from '$lib/components/monitoring/RequestRateChart.svelte';
 	import ServiceLatencyChart from '$lib/components/monitoring/ServiceLatencyChart.svelte';
@@ -30,7 +31,21 @@
 	const xRange = $derived<[number, number]>([data.startTs, data.endTs]);
 	type DetailView = 'overview' | 'services' | 'endpoints' | 'dependencies' | 'errors';
 	type DetailTab = { id: DetailView; label: string; count?: string; error?: boolean };
-	let activeView = $state<DetailView>('overview');
+
+	const DETAIL_VIEWS = ['services', 'endpoints', 'dependencies', 'errors'] as const;
+
+	function paramOneOf<T extends string>(value: string | null, options: readonly T[]): T | null {
+		return options.includes(value as T) ? (value as T) : null;
+	}
+
+	const activeView = $derived(
+		paramOneOf(page.url.searchParams.get('view'), DETAIL_VIEWS) ?? 'overview'
+	);
+	const errorOperation = $derived(page.url.searchParams.get('operation')?.trim() || null);
+	const errorKind = $derived(paramOneOf(page.url.searchParams.get('kind'), SPAN_KINDS));
+	const errorHttpStatus = $derived(
+		paramOneOf(page.url.searchParams.get('httpStatus'), ERROR_HTTP_STATUSES)
+	);
 	const tabsetId = $props.id();
 	const panelId = `${tabsetId}-panel`;
 
@@ -47,34 +62,22 @@
 		if (service !== null && health.dependencies.length > 0) {
 			tabs.push({ id: 'dependencies', label: 'Dependencies' });
 		}
-		if (health.failingOperations.length > 0) {
-			tabs.push({
-				id: 'errors',
-				label: 'Errors',
-				count: formatCount(health.summary.errors),
-				error: true
-			});
-		}
+		tabs.push({
+			id: 'errors',
+			label: 'Errors',
+			count: formatCount(health.summary.errorSpans),
+			error: health.summary.errorSpans > 0
+		});
 		return tabs;
 	}
 
-	$effect(() => {
-		if (
-			(activeView === 'services' && data.service !== null) ||
-			(activeView === 'dependencies' && data.service === null)
-		) {
-			activeView = 'overview';
-		}
-	});
-
-	function navigate(mutate: (params: URLSearchParams) => void) {
+	function navigate(mutate: (params: URLSearchParams) => void, replaceState = false) {
 		const url = new URL(page.url);
 		mutate(url.searchParams);
-		goto(url, { keepFocus: true, noScroll: true });
+		goto(url, { keepFocus: true, noScroll: true, replaceState });
 	}
 
 	function setRange(next: TimeRange) {
-		activeView = 'overview';
 		navigate((params) => {
 			params.delete('to');
 			if (next.type === 'relative') {
@@ -87,11 +90,31 @@
 	}
 
 	function setService(value: string) {
-		activeView = 'overview';
 		navigate((params) => {
 			if (value === '') params.delete('service');
 			else params.set('service', value);
+			params.delete('operation');
+			if (
+				(activeView === 'services' && value !== '') ||
+				(activeView === 'dependencies' && value === '')
+			) {
+				params.delete('view');
+			}
 		});
+	}
+
+	function setView(view: DetailView) {
+		navigate((params) => {
+			if (view === 'overview') params.delete('view');
+			else params.set('view', view);
+		}, true);
+	}
+
+	function setErrorFilter(name: 'operation' | 'kind' | 'httpStatus', value: string | null) {
+		navigate((params) => {
+			if (value === null) params.delete(name);
+			else params.set(name, value);
+		}, true);
 	}
 
 	function brushRange(startTs: number, endTs: number) {
@@ -115,7 +138,7 @@
 						? (index + 1) % buttons.length
 						: (index - 1 + buttons.length) % buttons.length;
 		const next = buttons[nextIndex];
-		activeView = next.dataset.view as DetailView;
+		setView(next.dataset.view as DetailView);
 		next.focus();
 	}
 </script>
@@ -162,23 +185,16 @@
 					The configured span store could not be found. Check trace storage configuration and
 					ingestion.
 				</EmptyPanel>
-			{:else if health.summary.requests === 0 && health.dependencies.length === 0}
-				<EmptyPanel title="No request traffic">
-					{#if data.service === null}
-						No server spans were received in this time range. Try a wider range or verify trace
-						ingestion.
-					{:else}
-						No server spans were received for <span class="font-mono">{data.service}</span> in this time
-						range.
-					{/if}
-				</EmptyPanel>
 			{:else}
+				{@const noTraffic =
+					health.summary.requests === 0 &&
+					health.dependencies.length === 0 &&
+					health.summary.errorSpans === 0}
 				{@const tabs = detailTabs(data.service, health)}
 				{@const currentView = tabs.some((tab) => tab.id === activeView) ? activeView : 'overview'}
 				<ApmSummary
 					service={data.service}
 					services={health.services}
-					servicesTruncated={health.servicesTruncated}
 					summary={health.summary}
 					{xRange}
 				/>
@@ -206,7 +222,7 @@
 							aria-selected={currentView === tab.id}
 							tabindex={currentView === tab.id ? 0 : -1}
 							class="tab-underline h-9 shrink-0 px-3 text-xs"
-							onclick={() => (activeView = tab.id)}
+							onclick={() => setView(tab.id)}
 						>
 							{tab.label}
 							{#if tab.count !== undefined}
@@ -221,7 +237,17 @@
 
 				<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${currentView}`}>
 					{#if currentView === 'overview'}
-						{#if data.service === null}
+						{#if noTraffic}
+							<EmptyPanel title="No request traffic">
+								{#if data.service === null}
+									No server spans were received in this time range. Try a wider range or verify
+									trace ingestion.
+								{:else}
+									No server spans were received for <span class="font-mono">{data.service}</span> in this
+									time range.
+								{/if}
+							</EmptyPanel>
+						{:else if data.service === null}
 							<div class="flex flex-col gap-4">
 								<ServiceLatencyChart
 									services={health.serviceLatencies}
@@ -287,9 +313,16 @@
 					{:else if currentView === 'dependencies' && data.service !== null}
 						<DependencyTable dependencies={health.dependencies} service={data.service} />
 					{:else if currentView === 'errors'}
-						<FailingOperations
+						<ErrorList
 							operations={health.failingOperations}
+							service={data.service}
+							startTs={data.startTs}
+							endTs={data.endTs}
 							showService={data.service === null}
+							operation={errorOperation}
+							kind={errorKind}
+							httpStatus={errorHttpStatus}
+							onFilterChange={setErrorFilter}
 						/>
 					{/if}
 				</div>

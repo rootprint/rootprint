@@ -5,12 +5,11 @@
 	type Props = {
 		service: string | null;
 		services: ServiceHealthServiceRow[];
-		servicesTruncated: boolean;
 		summary: ServiceHealthSummary;
 		xRange: [number, number];
 	};
 
-	let { service, services, servicesTruncated, summary, xRange }: Props = $props();
+	let { service, services, summary, xRange }: Props = $props();
 
 	const rangeMinutes = $derived(Math.max((xRange[1] - xRange[0]) / 60, 1 / 60));
 	const requestRate = $derived(summary.requests / rangeMinutes);
@@ -39,21 +38,14 @@
 	class="border-line rounded-box grid grid-cols-2 border md:grid-cols-5"
 	aria-label="Performance summary"
 >
-	<div class="col-span-2 flex items-center gap-3 px-3 py-3 md:col-span-1 md:px-4">
-		<span
-			class="size-2.5 shrink-0 rounded-full {summary.errors > 0 ? 'bg-warning' : 'bg-success'}"
-			aria-hidden="true"
-		></span>
-		<div class="min-w-0">
-			<p class="truncate text-xs font-medium">
-				{summary.errors > 0 ? 'Errors observed' : 'No span errors'}
-			</p>
-			<p class="text-base-content/45 truncate text-[10px]">
-				{service === null
-					? `${services.length}${servicesTruncated ? '+' : ''} instrumented services`
-					: service}
-			</p>
-		</div>
+	<div class="col-span-2 px-3 py-2.5 md:col-span-1 md:px-4">
+		<p class="text-base-content/45 text-[10px] tracking-wide uppercase">Error spans</p>
+		<p
+			class:text-warning={summary.errorSpans > 0}
+			class="mt-0.5 text-xl tracking-tight tabular-nums"
+		>
+			{formatCount(summary.errorSpans)}
+		</p>
 	</div>
 
 	<div

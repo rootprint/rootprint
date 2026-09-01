@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 
+import { SPAN_KINDS } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
 
 export const MonitoringBucketSchema = named(
@@ -44,8 +45,23 @@ export const MonitoringFailingOperationSchema = named(
 	'MonitoringFailingOperation',
 	v.object({
 		name: v.string(),
-		service: v.string(),
 		errors: v.number()
+	})
+);
+
+export const MonitoringErrorRowSchema = named(
+	'MonitoringErrorRow',
+	v.object({
+		traceId: v.string(),
+		spanId: v.string(),
+		timestampMs: v.number(),
+		service: v.string(),
+		operation: v.string(),
+		kind: v.picklist(SPAN_KINDS),
+		/** Empty when the span carried neither a status message nor an exception event. */
+		message: v.string(),
+		httpStatus: v.nullable(v.number()),
+		durationMillis: v.number()
 	})
 );
 
@@ -75,8 +91,18 @@ export const MonitoringSummarySchema = named(
 	v.object({
 		requests: v.number(),
 		errors: v.number(),
+		errorSpans: v.number(),
 		p50: v.nullable(v.number()),
 		p95: v.nullable(v.number())
+	})
+);
+
+export const ServiceErrorsResponseSchema = named(
+	'ServiceErrorsResponse',
+	v.object({
+		rows: v.array(MonitoringErrorRowSchema),
+		/** True when the raw hit count (before dropping rows with no ids) equals the requested limit. */
+		hasMore: v.boolean()
 	})
 );
 
