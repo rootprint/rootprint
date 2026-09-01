@@ -195,7 +195,6 @@
 				<ApmSummary
 					service={data.service}
 					services={health.services}
-					servicesTruncated={health.servicesTruncated}
 					summary={health.summary}
 					{xRange}
 				/>
