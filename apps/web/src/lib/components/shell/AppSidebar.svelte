@@ -67,9 +67,9 @@
 			type="button"
 			onclick={() => (collapsed = !collapsed)}
 			aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-			data-tip={collapsed ? 'Expand' : undefined}
-			class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 relative flex items-center rounded text-sm transition-colors {collapsed
-				? 'tooltip tooltip-right h-10 w-10 justify-center'
+			data-tip={collapsed ? 'Expand' : ''}
+			class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
+				? 'h-10 w-10 justify-center'
 				: 'h-9 gap-2.5 px-3'}"
 		>
 			{#if collapsed}

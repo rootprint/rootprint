@@ -22,9 +22,9 @@
 	popovertarget={dd}
 	style="anchor-name:--{dd}"
 	aria-label="Help"
-	data-tip={collapsed ? 'Help' : undefined}
-	class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 flex items-center rounded text-sm transition-colors {collapsed
-		? 'tooltip tooltip-right h-10 w-10 justify-center'
+	data-tip={collapsed ? 'Help' : ''}
+	class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right flex items-center rounded text-sm transition-colors {collapsed
+		? 'h-10 w-10 justify-center'
 		: 'h-9 gap-2.5 px-3'}"
 >
 	<CircleHelp class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
