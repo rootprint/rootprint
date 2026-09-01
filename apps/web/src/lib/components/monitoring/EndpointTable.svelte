@@ -2,6 +2,7 @@
 	import type { ServiceHealthEndpoint } from '$lib/api/monitoring';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import { formatDurationMs } from '$lib/utils/format';
+	import { readString, writeString } from '$lib/utils/safe-storage';
 
 	type Props = {
 		/** Already ranked and capped at `LIMITS`' largest entry by the API. */
@@ -13,8 +14,11 @@
 	let { endpoints, showService }: Props = $props();
 
 	const LIMITS = [10, 20, 30] as const;
+	const STORAGE_KEY = 'rootprint:endpoint-rows';
 
-	let limit = $state<number>(LIMITS[0]);
+	let limit = $state<number>(
+		LIMITS.find((l) => String(l) === readString(STORAGE_KEY)) ?? LIMITS[0]
+	);
 	const rows = $derived(endpoints.slice(0, limit));
 </script>
 
@@ -36,7 +40,10 @@
 							? 'bg-base-content text-base-100'
 							: 'text-base-content/60 hover:bg-base-200 hover:text-base-content'}"
 						aria-pressed={limit === option}
-						onclick={() => (limit = option)}
+						onclick={() => {
+							limit = option;
+							writeString(STORAGE_KEY, String(option));
+						}}
 					>
 						{option}
 					</button>
