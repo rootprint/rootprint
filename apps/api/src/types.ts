@@ -24,9 +24,11 @@ import type {
 	MonitoringBucketSchema,
 	MonitoringDependencySchema,
 	MonitoringEndpointSchema,
+	MonitoringErrorRowSchema,
 	MonitoringFailingOperationSchema,
 	MonitoringServiceLatencySchema,
 	MonitoringServiceRowSchema,
+	ServiceErrorsResponseSchema,
 	ServiceHealthResponseSchema
 } from './schemas/responses/monitoring.js';
 import type { TraceResponseSchema, TraceSpanSchema } from './schemas/responses/traces.js';
@@ -316,6 +318,10 @@ export type MonitoringServiceRow = v.InferOutput<typeof MonitoringServiceRowSche
 
 export type MonitoringFailingOperation = v.InferOutput<typeof MonitoringFailingOperationSchema>;
 
+export type MonitoringErrorRow = v.InferOutput<typeof MonitoringErrorRowSchema>;
+
 export type MonitoringDependency = v.InferOutput<typeof MonitoringDependencySchema>;
 
 export type ServiceHealthResponse = v.InferOutput<typeof ServiceHealthResponseSchema>;
+
+export type ServiceErrorsResponse = v.InferOutput<typeof ServiceErrorsResponseSchema>;

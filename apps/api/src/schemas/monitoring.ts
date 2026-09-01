@@ -1,5 +1,12 @@
 import * as v from 'valibot';
 
+import {
+	ERROR_HTTP_STATUSES,
+	ERROR_PAGE_SIZE,
+	MAX_ERROR_LIMIT,
+	MAX_ERROR_OFFSET,
+	SPAN_KINDS
+} from '../constants.js';
 import { intParam } from '../utils/valibot.js';
 
 const MAX_RANGE_SECONDS = 30 * 24 * 60 * 60;
@@ -45,3 +52,26 @@ export const ServiceHealthQuery = v.pipe(
 );
 
 export type ServiceHealthInput = v.InferOutput<typeof ServiceHealthQuery>;
+
+export const ServiceErrorsQuery = v.pipe(
+	v.object({
+		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
+		startTs: intParam({ min: 0, label: 'startTs' }),
+		endTs: intParam({ min: 0, label: 'endTs' }),
+		operation: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(500))),
+		kind: v.optional(v.picklist(SPAN_KINDS)),
+		httpStatus: v.optional(v.picklist(ERROR_HTTP_STATUSES)),
+		limit: v.optional(
+			intParam({ min: 1, max: MAX_ERROR_LIMIT, label: 'limit' }),
+			String(ERROR_PAGE_SIZE)
+		),
+		offset: v.optional(intParam({ min: 0, max: MAX_ERROR_OFFSET, label: 'offset' }), '0')
+	}),
+	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
+	v.check(
+		(input) => input.endTs - input.startTs <= MAX_RANGE_SECONDS,
+		'Monitoring range cannot exceed 30 days'
+	)
+);
+
+export type ServiceErrorsInput = v.InferOutput<typeof ServiceErrorsQuery>;

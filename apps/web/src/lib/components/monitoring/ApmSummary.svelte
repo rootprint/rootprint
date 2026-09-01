@@ -41,12 +41,14 @@
 >
 	<div class="col-span-2 flex items-center gap-3 px-3 py-3 md:col-span-1 md:px-4">
 		<span
-			class="size-2.5 shrink-0 rounded-full {summary.errors > 0 ? 'bg-warning' : 'bg-success'}"
+			class="size-2.5 shrink-0 rounded-full {summary.errorSpans > 0 ? 'bg-warning' : 'bg-success'}"
 			aria-hidden="true"
 		></span>
 		<div class="min-w-0">
 			<p class="truncate text-xs font-medium">
-				{summary.errors > 0 ? 'Errors observed' : 'No span errors'}
+				{summary.errorSpans > 0
+					? `${formatCount(summary.errorSpans)} error spans`
+					: 'No span errors'}
 			</p>
 			<p class="text-base-content/45 truncate text-[10px]">
 				{service === null

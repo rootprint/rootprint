@@ -1,0 +1,26 @@
+meta {
+  name: Get Service Errors
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/monitoring/errors
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1723989600
+  endTs: 1723990500
+  ~service: api
+  ~operation: GET /api/users
+  ~kind: server
+  ~httpStatus: 5xx
+  limit: 50
+  offset: 0
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

@@ -1,3 +1,4 @@
+import type { ERROR_HTTP_STATUSES } from 'api/constants';
 import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
@@ -31,5 +32,40 @@ export async function getServiceHealth(input: {
 		}
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load service health');
+	return res.json();
+}
+
+export type ServiceErrors = InferResponseType<typeof monitoring.errors.$get, 200>;
+export type ServiceErrorRow = ServiceErrors['rows'][number];
+export type ServiceErrorKind = ServiceErrorRow['kind'];
+export type ServiceErrorHttpStatus = (typeof ERROR_HTTP_STATUSES)[number];
+
+export async function getServiceErrors(input: {
+	service: string | null;
+	startTs: number;
+	endTs: number;
+	operation: string | null;
+	kind: ServiceErrorKind | null;
+	httpStatus: ServiceErrorHttpStatus | null;
+	limit: number;
+	offset: number;
+	signal?: AbortSignal;
+}): Promise<ServiceErrors> {
+	const res = await monitoring.errors.$get(
+		{
+			query: {
+				service: input.service ?? undefined,
+				startTs: String(input.startTs),
+				endTs: String(input.endTs),
+				operation: input.operation ?? undefined,
+				kind: input.kind ?? undefined,
+				httpStatus: input.httpStatus ?? undefined,
+				limit: String(input.limit),
+				offset: String(input.offset)
+			}
+		},
+		{ init: { signal: input.signal } }
+	);
+	if (!res.ok) throw await readApiError(res, 'Failed to load errors');
 	return res.json();
 }

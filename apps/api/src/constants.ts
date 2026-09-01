@@ -21,6 +21,16 @@ export const FIELD_VALUES_MAX = 65_000;
 /** Fallback `limit` for the field-values endpoint when the caller doesn't pass one. */
 export const FIELD_VALUES_DEFAULT = 100;
 
+// Monitoring errors
+export const SPAN_KINDS = ['server', 'client', 'producer', 'consumer', 'internal'] as const;
+export type SpanKind = (typeof SPAN_KINDS)[number];
+export const ERROR_HTTP_STATUSES = ['4xx', '5xx', 'none'] as const;
+export const ERROR_PAGE_SIZE = 50;
+export const MAX_ERROR_LIMIT = 100;
+
+/** The web list stops paginating here, so both sides must read the same ceiling. */
+export const MAX_ERROR_OFFSET = 5_000;
+
 // Time ranges
 export const PRESET_OPTIONS = [
 	'5m',
