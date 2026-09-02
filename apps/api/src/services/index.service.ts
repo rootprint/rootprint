@@ -11,7 +11,7 @@ import type {
 } from '../types.js';
 import { NotFoundError, QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import {
 	apiKey,
 	indexSettings,

@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { generateId } from 'better-auth';
 import { and, desc, eq, sql } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 // apikey = Better Auth API key plugin table; referenceId is the owning user id.
 import { apikey as personalApiKey, user } from '../db/schema.js';
 import { auth } from '../lib/auth.js';

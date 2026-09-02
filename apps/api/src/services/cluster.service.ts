@@ -1,7 +1,7 @@
 import type { QuickwitClient } from 'quickwit-js';
 
 import { config } from '../config.js';
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import type { ClusterOverview, PerIndexOverview } from '../types.js';
 import { getLatestSnapshotsByIndex } from './index-stats.service.js';
 import { listIndexes } from './index.service.js';

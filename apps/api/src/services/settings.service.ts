@@ -1,6 +1,6 @@
 import { inArray } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { appSettings } from '../db/schema.js';
 import type {
 	GitHubAuthCredentials,

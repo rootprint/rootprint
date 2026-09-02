@@ -1,6 +1,6 @@
 import { eq, inArray, sql } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { apikey, user } from '../db/schema.js';
 import type { ActivityWindow } from '../schemas/admin-activity.js';
 import type {

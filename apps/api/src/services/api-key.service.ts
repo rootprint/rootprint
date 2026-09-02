@@ -7,7 +7,7 @@ import {
 	INGEST_PREFIX,
 	LAST_USED_THROTTLE_SECONDS
 } from '../constants.js';
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { config } from '../config.js';
 // apiKey = the custom ingest-key table, not Better Auth's own apikey table.
 import { apiKey } from '../db/schema.js';

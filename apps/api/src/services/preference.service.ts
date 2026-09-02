@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { userPreference } from '../db/schema.js';
 import type { Preferences } from '../types.js';
 import { internal } from '../utils/http-error.js';

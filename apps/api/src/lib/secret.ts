@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from './db.js';
 import { appSettings } from '../db/schema.js';
 
 const BETTER_AUTH_SECRET_KEY = 'better_auth_secret';

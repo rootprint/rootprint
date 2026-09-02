@@ -1,15 +1,18 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import pg from 'pg';
 
 import { config } from '../config.js';
-import { createDb, type Db } from '../db/index.js';
+import * as schema from '../db/schema.js';
 
 const CONNECT_RETRY_COUNT = 10;
 const CONNECT_RETRY_DELAY_MS = 2000;
 
-export const db: Db = createDb(config.databaseUrl);
+export const db = drizzle(new pg.Pool({ connectionString: config.databaseUrl }), { schema });
+export type Db = typeof db;
 
 export async function connectDb(): Promise<void> {
 	let lastError: unknown;

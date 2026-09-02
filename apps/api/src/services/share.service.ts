@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { eq } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { share } from '../db/schema.js';
 import type { ShareCreateInput, ShareView } from '../types.js';
 import { internal, notFound } from '../utils/http-error.js';

@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { view } from '../db/schema.js';
 import type { Filter, SavedView, SortDirection, TimeRange } from '../types.js';
 import { internal, notFound } from '../utils/http-error.js';

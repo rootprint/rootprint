@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { searchAudit } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 import { HttpError } from '../utils/http-error.js';

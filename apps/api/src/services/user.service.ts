@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import type { User, UserRole, UserStatus } from '../types.js';
 
 import { config } from '../config.js';
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { account, inviteToken, user } from '../db/schema.js';
 import {
 	createAdminUser,

@@ -2,7 +2,7 @@ import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
 import { QuickwitError, type QuickwitClient } from 'quickwit-js';
 
 import { config } from '../config.js';
-import type { Db } from '../db/index.js';
+import type { Db } from '../lib/db.js';
 import { indexStatsSnapshot } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
 import type { IndexStatsPoint, LatestIndexSnapshot } from '../types.js';
