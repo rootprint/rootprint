@@ -50,13 +50,11 @@ export type IntegrationContext = {
 
 export type Signal = 'logs' | 'traces';
 
-/** A tab in a `TabLinks` bar. `Flavor` is the same shape under its domain name. */
+/** A tab in a `TabLinks` bar. */
 export type TabItem = { id: string; label: string };
 
-export type Flavor = TabItem;
-
 export type SignalSetup = {
-	flavors?: Flavor[];
+	flavors?: TabItem[];
 	defaultFlavor?: string;
 	buildSteps: (ctx: IntegrationContext) => Step[];
 };
