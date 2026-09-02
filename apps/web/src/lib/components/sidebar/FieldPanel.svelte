@@ -10,7 +10,7 @@
 
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-	import { readOpenFields, writeOpenFields } from '$lib/utils/field-open-state';
+	import { readStringArray, writeJSON } from '$lib/utils/safe-storage';
 	import SidebarFieldRow from './SidebarFieldRow.svelte';
 
 	let { store }: { store: SearchStore } = $props();
@@ -25,17 +25,19 @@
 		resource_attributes: false
 	});
 
+	const storageKey = (indexId: string) => `rootprint:fields-open:${indexId}`;
+
 	let openFields = $state<Set<string>>(new Set());
 
 	$effect(() => {
 		const id = store.selectedIndex;
-		openFields = id ? readOpenFields(id) : new Set();
+		openFields = id ? new Set(readStringArray(storageKey(id))) : new Set();
 	});
 
 	$effect(() => {
 		const id = store.selectedIndex;
 		if (!id) return;
-		writeOpenFields(id, openFields);
+		writeJSON(storageKey(id), [...openFields]);
 	});
 
 	function toggleOpen(name: string): void {
