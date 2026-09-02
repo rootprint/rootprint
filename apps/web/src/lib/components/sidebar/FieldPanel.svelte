@@ -10,8 +10,6 @@
 
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import { readOpenFields, writeOpenFields } from '$lib/utils/field-open-state';
 	import SidebarFieldRow from './SidebarFieldRow.svelte';
 
@@ -225,7 +223,7 @@
 		</label>
 	</div>
 
-	<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="min-h-0 flex-1">
+	<div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
 		{#if store.fieldsError}
 			<div class="flex flex-col items-center gap-2 p-6 text-center">
 				<p class="text-error text-xs">{store.fieldsError}</p>
@@ -355,5 +353,5 @@
 				{/each}
 			{/if}
 		{/if}
-	</OverlayScrollbarsComponent>
+	</div>
 </div>

@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { ChevronDown, Copy } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
 	import type { FieldGroup, FieldGroupId } from '$lib/utils/hit-fields';
 	import { groupHitFields } from '$lib/utils/hit-fields';
 	import { copyWithToast } from '$lib/utils/clipboard';
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import type { FieldRowData, LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -63,7 +61,7 @@
 	}
 </script>
 
-<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="h-full">
+<div class="h-full overflow-x-hidden overflow-y-auto">
 	<div class="border-line border-b p-3">
 		<div class="mb-1.5 flex items-center justify-between gap-3">
 			<p class="eyebrow">{grouped.messageLabel}</p>
@@ -146,4 +144,4 @@
 			{/each}
 		</div>
 	{/if}
-</OverlayScrollbarsComponent>
+</div>

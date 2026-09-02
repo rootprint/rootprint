@@ -1,8 +1,5 @@
 <script lang="ts">
 	import { CircleX, ExternalLink, SearchX, Send } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
-	import type { OverlayScrollbars } from 'overlayscrollbars';
-	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
 
 	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
 	import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
@@ -26,14 +23,13 @@
 	const SCROLL_TRIGGER_PX = 1500;
 
 	let { data } = $props();
-	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
 	let viewport = $state<HTMLElement | null>(null);
 
 	// Reactive closure so the store sees live URL state: page.url is reactive in Svelte 5, so reading it inside the $effect-tracked closure re-runs on URL change.
 	const store = new SearchStore({
 		parsedQuery: () => deserialize(page.url.searchParams),
 		indexes: () => data.indexes,
-		onFreshSearch: () => osRef?.osInstance()?.elements().viewport.scrollTo(0, 0)
+		onFreshSearch: () => viewport?.scrollTo(0, 0)
 	});
 
 	store.setupAutoSearch();
@@ -79,9 +75,9 @@
 		selectedLog = hit;
 	}
 
-	function handleOsScroll(os: OverlayScrollbars) {
-		const v = os.elements().viewport;
-		if (v.scrollHeight - v.scrollTop - v.clientHeight < SCROLL_TRIGGER_PX) {
+	function handleScroll() {
+		const v = viewport;
+		if (v && v.scrollHeight - v.scrollTop - v.clientHeight < SCROLL_TRIGGER_PX) {
 			store.maybeLoadMore();
 		}
 	}
@@ -140,17 +136,10 @@
 			<ResultsBar {store} />
 
 			<div class="min-h-0 flex-1">
-				<OverlayScrollbarsComponent
-					bind:this={osRef}
-					options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
-					events={{
-						scroll: handleOsScroll,
-						initialized: (instance) => {
-							viewport = instance.elements().viewport;
-						}
-					}}
-					defer
-					class="bg-base-200/30 h-full w-full"
+				<div
+					bind:this={viewport}
+					onscroll={handleScroll}
+					class="bg-base-200/30 h-full w-full overflow-auto"
 				>
 					{#if displayState === 'loading'}
 						<div class="flex h-full items-center justify-center p-6" role="status">
@@ -213,7 +202,7 @@
 							onRowClick={openRow}
 						/>
 					{/if}
-				</OverlayScrollbarsComponent>
+				</div>
 			</div>
 		</div>
 	</div>

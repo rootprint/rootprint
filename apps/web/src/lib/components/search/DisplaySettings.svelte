@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { ChevronLeft, GripVertical, Plus, Settings, X } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { dndzone } from 'svelte-dnd-action';
 
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import type { LogField } from '$lib/types';
 	import type { DisplayMode } from 'api/types';
 
@@ -144,7 +142,7 @@
 				bind:value={searchTerm}
 			/>
 		</div>
-		<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="max-h-64">
+		<div class="max-h-64 overflow-x-hidden overflow-y-auto">
 			<div class="px-1 py-1">
 				{#each availableFields as field (field.name)}
 					<button
@@ -162,7 +160,7 @@
 					</p>
 				{/if}
 			</div>
-		</OverlayScrollbarsComponent>
+		</div>
 	{:else}
 		<div class="border-line border-b px-3 py-2">
 			<div class="text-base-content/60 mb-1.5 text-[10px] font-medium tracking-wider uppercase">

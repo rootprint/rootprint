@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { Tag, Text } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import type { QuerySuggestion } from '$lib/types';
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	let {
 		items,
@@ -40,7 +38,7 @@
 	use:keepInputFocus
 	class="border-line bg-base-100 rounded-box absolute top-full right-0 left-0 z-50 mt-1 w-full border shadow-lg"
 >
-	<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="max-h-72">
+	<div class="max-h-72 overflow-x-hidden overflow-y-auto">
 		<ul bind:this={listEl} class="menu w-full flex-nowrap p-1">
 			{#each items as item, i (item.insert)}
 				<li>
@@ -67,5 +65,5 @@
 				</li>
 			{/each}
 		</ul>
-	</OverlayScrollbarsComponent>
+	</div>
 </div>

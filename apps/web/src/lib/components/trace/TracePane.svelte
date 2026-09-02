@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { RotateCw, ScrollText, TriangleAlert } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { tick } from 'svelte';
 
 	import { SvelteSet } from 'svelte/reactivity';
 
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { formatSpanDuration } from '$lib/utils/time';
 	import { traceAxis } from '$lib/utils/trace-axis';
@@ -320,15 +318,10 @@
 				</div>
 			</div>
 		</div>
-		<OverlayScrollbarsComponent options={OS_SCROLLBAR_OPTIONS} defer class="min-h-0 flex-1">
-			<!-- role="list" has to sit on the element that directly owns the rows: OverlayScrollbars
-			     reparents children into its own viewport wrapper, so a role on the component never
-			     reaches them. -->
-			<div role="list">
-				{#each m.roots as root (root.spanId)}
-					{@render spanRow(root, [], true, null)}
-				{/each}
-			</div>
-		</OverlayScrollbarsComponent>
+		<div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto" role="list">
+			{#each m.roots as root (root.spanId)}
+				{@render spanRow(root, [], true, null)}
+			{/each}
+		</div>
 	{/if}
 </div>

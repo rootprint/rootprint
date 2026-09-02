@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { Copy } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { pluralize } from '$lib/utils/format';
-	import { OS_SCROLLBAR_BOTH_AXES_OPTIONS } from '$lib/utils/scrollbars';
 
 	let { value }: { value: unknown } = $props();
 
@@ -42,12 +40,8 @@
 				Copy
 			</button>
 		</div>
-		<OverlayScrollbarsComponent
-			options={OS_SCROLLBAR_BOTH_AXES_OPTIONS}
-			defer
-			class="min-h-0 flex-1"
-		>
+		<div class="min-h-0 flex-1 overflow-auto">
 			<pre class="p-3 text-xs leading-relaxed whitespace-pre">{text}</pre>
-		</OverlayScrollbarsComponent>
+		</div>
 	</div>
 </div>

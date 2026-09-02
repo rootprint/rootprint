@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { ScrollText, X } from 'lucide-svelte';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { pluralize } from '$lib/utils/format';
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 	import { serviceColor } from '$lib/utils/service-color';
 	import {
 		dbSpans,
@@ -46,12 +44,12 @@
 	const EXCEPTION_KEYS = ['exception.type', 'exception.message', 'exception.stacktrace'];
 
 	let activeTab = $state<SpanTab>('overview');
-	let osRef = $state<InstanceType<typeof OverlayScrollbarsComponent> | null>(null);
+	let scrollEl = $state<HTMLElement | null>(null);
 
 	const spanId = $derived(span.spanId);
 
 	$effect(() => {
-		if (spanId) osRef?.osInstance()?.elements().viewport.scrollTo(0, 0);
+		if (spanId) scrollEl?.scrollTo(0, 0);
 	});
 
 	function handleTabKeydown(e: KeyboardEvent): void {
@@ -238,12 +236,7 @@
 		{/each}
 	</div>
 
-	<OverlayScrollbarsComponent
-		bind:this={osRef}
-		options={OS_SCROLLBAR_OPTIONS}
-		defer
-		class="min-h-0 flex-1"
-	>
+	<div bind:this={scrollEl} class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
 		<div
 			class="flex flex-col gap-5 px-4 py-4"
 			role="tabpanel"
@@ -510,5 +503,5 @@
 				{/if}
 			{/if}
 		</div>
-	</OverlayScrollbarsComponent>
+	</div>
 </div>

@@ -21,8 +21,6 @@
 		"date-fns": "^4.4.0",
 		"hono": "^4.13.2",
 		"lucide-svelte": "^1.0.1",
-		"overlayscrollbars": "^2.14.0",
-		"overlayscrollbars-svelte": "^0.5.5",
 		"shiki": "^4.4.3",
 		"svelte-dnd-action": "^0.9.78",
 		"svelte-sonner": "^1.2.1",

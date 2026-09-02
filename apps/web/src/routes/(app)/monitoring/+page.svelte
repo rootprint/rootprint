@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { ERROR_HTTP_STATUSES, SPAN_KINDS } from 'api/constants';
-	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -21,7 +20,6 @@
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { formatCount } from '$lib/utils/format';
-	import { OS_SCROLLBAR_OPTIONS } from '$lib/utils/scrollbars';
 
 	let { data } = $props();
 
@@ -160,10 +158,8 @@
 	</header>
 {/snippet}
 
-<OverlayScrollbarsComponent
-	options={OS_SCROLLBAR_OPTIONS}
-	defer
-	class="min-h-0 w-full flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
+<div
+	class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
 >
 	{#await data.health}
 		<div class="flex flex-col gap-5" role="status" aria-label="Loading service health">
@@ -334,4 +330,4 @@
 			<PanelError message="Couldn't load service health" {error} />
 		</div>
 	{/await}
-</OverlayScrollbarsComponent>
+</div>

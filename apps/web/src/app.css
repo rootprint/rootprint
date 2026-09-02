@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'overlayscrollbars/overlayscrollbars.css';
 
 @font-face {
 	font-family: 'Geist';
@@ -86,6 +85,11 @@
 }
 
 @layer base {
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in oklab, var(--color-base-content) 22%, transparent) transparent;
+	}
+
 	html {
 		font-family: var(--font-sans);
 	}
