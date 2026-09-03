@@ -6,6 +6,7 @@ import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import { serveStatic } from 'hono/bun';
 import { HTTPException } from 'hono/http-exception';
+import { requestId as requestIdMiddleware } from 'hono/request-id';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QuickwitError } from 'quickwit-js';
@@ -16,7 +17,6 @@ import { initAuth } from './lib/auth.js';
 import { connectDb, db, runMigrations } from './lib/db.js';
 import { logger } from './lib/logger.js';
 import { probeQuickwit, quickwit } from './lib/quickwit.js';
-import { requestContext } from './middleware/request-context.js';
 import { isApiPath, requestLogging } from './middleware/request-logging.js';
 import { requireUser } from './middleware/require-user.js';
 import { adminActivityRouter } from './routes/admin/activity.js';
@@ -55,7 +55,7 @@ function errorJson(c: Context, body: ApiErrorBody['error'], status: ContentfulSt
 
 export const app = new Hono<AppEnv>();
 
-app.use('*', requestContext);
+app.use('*', requestIdMiddleware());
 app.use('*', requestLogging);
 app.use('*', compress());
 const allowedOrigins = new Set([
