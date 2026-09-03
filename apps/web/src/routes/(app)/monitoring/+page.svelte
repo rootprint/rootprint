@@ -115,6 +115,14 @@
 		}, true);
 	}
 
+	function clearErrorFilters() {
+		navigate((params) => {
+			params.delete('operation');
+			params.delete('kind');
+			params.delete('httpStatus');
+		}, true);
+	}
+
 	function brushRange(startTs: number, endTs: number) {
 		setRange({ type: 'absolute', start: startTs, end: endTs });
 	}
@@ -319,6 +327,7 @@
 							kind={errorKind}
 							httpStatus={errorHttpStatus}
 							onFilterChange={setErrorFilter}
+							onClearFilters={clearErrorFilters}
 						/>
 					{/if}
 				</div>

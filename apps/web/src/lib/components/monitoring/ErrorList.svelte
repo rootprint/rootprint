@@ -27,6 +27,7 @@
 		kind: ServiceErrorKind | null;
 		httpStatus: ServiceErrorHttpStatus | null;
 		onFilterChange: (name: 'operation' | 'kind' | 'httpStatus', value: string | null) => void;
+		onClearFilters: () => void;
 	};
 
 	let {
@@ -38,7 +39,8 @@
 		operation,
 		kind,
 		httpStatus,
-		onFilterChange
+		onFilterChange,
+		onClearFilters
 	}: Props = $props();
 
 	const KIND_LABELS: Record<ServiceErrorRow['kind'], string> = {
@@ -224,8 +226,16 @@
 	{:else if loading}
 		<div class="skeleton h-64 w-full" role="status" aria-label="Loading errors"></div>
 	{:else if rows.length === 0 && atEnd}
+		{@const filtered = operation !== null || kind !== null || httpStatus !== null}
 		<EmptyPanel title="No failing spans">
-			No spans reported an error status in this time range.
+			{filtered
+				? 'No error spans match the active filters in this time range.'
+				: 'No spans reported an error status in this time range.'}
+			{#if filtered}
+				<button type="button" class="btn btn-ghost btn-xs mt-4" onclick={onClearFilters}>
+					Clear filters
+				</button>
+			{/if}
 		</EmptyPanel>
 	{:else}
 		<div class="border-line rounded-box overflow-x-auto border">

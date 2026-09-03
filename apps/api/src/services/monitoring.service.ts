@@ -474,7 +474,8 @@ export async function getServiceHealth(
 		.agg('time', AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, histogramBounds))
 		.agg('error_services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
 		.timeRange(...timeRange);
-	// Shares serviceErrorsQuery so this count can never scope differently from what /errors lists.
+	// Deliberately service-scoped only: this is the unfiltered total the Errors tab narrows down
+	// from, so it must not follow the tab's own kind/httpStatus/operation filters.
 	// why: num_hits becomes summary.errorSpans, which gates the Errors tab's badge and empty state,
 	// so it must be exact rather than a count-based estimate.
 	const allErrorsQuery = idx
