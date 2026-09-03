@@ -94,6 +94,7 @@
 
 	async function fetchPage(pageOffset: number, filters = scope) {
 		const token = guard.next();
+		failure = null;
 		inflight?.abort();
 		const controller = new AbortController();
 		inflight = controller;
@@ -107,8 +108,7 @@
 			if (!guard.isCurrent(token)) return;
 			appendRows(result.rows);
 			offset = pageOffset + ERROR_PAGE_SIZE;
-			atEnd = !result.hasMore || offset >= MAX_ERROR_OFFSET;
-			failure = null;
+			atEnd = !result.hasMore || offset > MAX_ERROR_OFFSET;
 		} catch (error) {
 			if (!guard.isCurrent(token)) return;
 			failure = error;

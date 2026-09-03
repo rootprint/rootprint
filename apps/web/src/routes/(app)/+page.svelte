@@ -163,7 +163,7 @@
 							</div>
 						</div>
 					{:else if displayState === 'empty'}
-						<div class="flex h-full items-center justify-center p-6">
+						<div class="flex h-full items-center justify-center p-6" role="status">
 							<section
 								class="border-line bg-base-100 rounded-box w-full max-w-sm border px-6 py-8 text-center"
 							>
