@@ -57,7 +57,7 @@ function errorJson(c: Context, body: ApiErrorBody['error'], status: ContentfulSt
 export const app = new Hono<AppEnv>();
 
 app.use('*', requestIdMiddleware());
-app.use('*', secureHeaders());
+app.use('*', secureHeaders({ strictTransportSecurity: false }));
 app.use('*', requestLogging);
 app.use('*', compress());
 const allowedOrigins = new Set([
