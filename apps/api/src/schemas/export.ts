@@ -1,16 +1,14 @@
 import * as v from 'valibot';
 
-import { toNum } from '../utils/valibot.js';
+import { tsParam } from '../utils/valibot.js';
 
 export const ExportFormatSchema = v.picklist(['json', 'csv', 'text']);
-
-const ExportTimestamp = v.pipe(toNum, v.minValue(0));
 
 export const ExportLogsQuery = v.pipe(
 	v.object({
 		q: v.optional(v.string()),
-		startTs: ExportTimestamp,
-		endTs: ExportTimestamp,
+		startTs: tsParam,
+		endTs: tsParam,
 		format: ExportFormatSchema,
 		dryRun: v.optional(
 			v.pipe(

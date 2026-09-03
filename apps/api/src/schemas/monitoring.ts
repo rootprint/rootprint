@@ -7,7 +7,7 @@ import {
 	MAX_ERROR_OFFSET,
 	SPAN_KINDS
 } from '../constants.js';
-import { intParam } from '../utils/valibot.js';
+import { EPOCH_SECONDS, intParam } from '../utils/valibot.js';
 
 const MAX_RANGE_SECONDS = 30 * 24 * 60 * 60;
 const MAX_BUCKETS = 2_000;
@@ -32,8 +32,8 @@ export function intervalSeconds(value: string): number {
 export const ServiceHealthQuery = v.pipe(
 	v.object({
 		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
-		startTs: intParam({ min: 0, label: 'startTs' }),
-		endTs: intParam({ min: 0, label: 'endTs' }),
+		startTs: v.pipe(intParam({ min: 0, label: 'startTs' }), v.description(EPOCH_SECONDS)),
+		endTs: v.pipe(intParam({ min: 0, label: 'endTs' }), v.description(EPOCH_SECONDS)),
 		interval,
 		endpointLimit: v.optional(
 			intParam({ min: 1, max: MAX_ENDPOINT_LIMIT, label: 'endpointLimit' }),
@@ -56,8 +56,8 @@ export type ServiceHealthInput = v.InferOutput<typeof ServiceHealthQuery>;
 export const ServiceErrorsQuery = v.pipe(
 	v.object({
 		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
-		startTs: intParam({ min: 0, label: 'startTs' }),
-		endTs: intParam({ min: 0, label: 'endTs' }),
+		startTs: v.pipe(intParam({ min: 0, label: 'startTs' }), v.description(EPOCH_SECONDS)),
+		endTs: v.pipe(intParam({ min: 0, label: 'endTs' }), v.description(EPOCH_SECONDS)),
 		operation: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(500))),
 		kind: v.optional(v.picklist(SPAN_KINDS)),
 		httpStatus: v.optional(v.picklist(ERROR_HTTP_STATUSES)),

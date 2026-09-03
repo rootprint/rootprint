@@ -2,8 +2,7 @@ import * as v from 'valibot';
 
 import { PRESET_OPTIONS } from '../constants.js';
 import type { TimeRange } from '../types.js';
-
-const epochSeconds = v.pipe(v.number(), v.integer(), v.minValue(0));
+import { epochSeconds } from '../utils/valibot.js';
 
 export const TimeRangeSchema: v.GenericSchema<TimeRange> = v.variant('type', [
 	v.object({

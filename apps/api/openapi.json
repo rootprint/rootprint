@@ -2122,10 +2122,12 @@
 									{
 										"properties": {
 											"end": {
+												"description": "Unix timestamp in seconds",
 												"minimum": 0,
 												"type": "integer"
 											},
 											"start": {
+												"description": "Unix timestamp in seconds",
 												"minimum": 0,
 												"type": "integer"
 											},
@@ -14565,16 +14567,20 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
@@ -14674,16 +14680,20 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
@@ -14776,16 +14786,20 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
@@ -14885,6 +14899,7 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"required": true,
@@ -14894,6 +14909,7 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"required": true,
@@ -15000,16 +15016,20 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
@@ -16412,16 +16432,20 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
-						"name": "from",
+						"name": "startTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
-						"name": "to",
+						"name": "endTs",
 						"schema": {
+							"minimum": 0,
 							"type": "number"
 						}
 					},
@@ -16629,10 +16653,12 @@
 													{
 														"properties": {
 															"end": {
+																"description": "Unix timestamp in seconds",
 																"minimum": 0,
 																"type": "integer"
 															},
 															"start": {
+																"description": "Unix timestamp in seconds",
 																"minimum": 0,
 																"type": "integer"
 															},
@@ -16870,10 +16896,12 @@
 													{
 														"properties": {
 															"end": {
+																"description": "Unix timestamp in seconds",
 																"minimum": 0,
 																"type": "integer"
 															},
 															"start": {
+																"description": "Unix timestamp in seconds",
 																"minimum": 0,
 																"type": "integer"
 															},
@@ -17013,6 +17041,7 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"required": true,
@@ -17023,6 +17052,7 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"required": true,
@@ -17151,6 +17181,7 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "startTs",
 						"required": true,
@@ -17161,6 +17192,7 @@
 						}
 					},
 					{
+						"description": "Unix timestamp in seconds",
 						"in": "query",
 						"name": "endTs",
 						"required": true,
@@ -17749,6 +17781,7 @@
 							"schema": {
 								"properties": {
 									"endTime": {
+										"description": "Unix timestamp in seconds",
 										"minimum": 0,
 										"type": "integer"
 									},
@@ -17792,6 +17825,7 @@
 										"type": "string"
 									},
 									"startTime": {
+										"description": "Unix timestamp in seconds",
 										"minimum": 0,
 										"type": "integer"
 									}

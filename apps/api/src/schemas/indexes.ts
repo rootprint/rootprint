@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import { FIELD_VALUES_MAX } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
 import { IndexIdParams } from '../utils/params.js';
-import { intParam, toNum } from '../utils/valibot.js';
+import { intParam, tsParam } from '../utils/valibot.js';
 
 const dedupedStrings = v.pipe(
 	v.array(v.pipe(v.string(), v.minLength(1))),
@@ -35,8 +35,8 @@ export const FieldParams = v.object({
 
 export const HistogramQuery = v.object({
 	q: v.optional(v.string()),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
+	startTs: v.optional(tsParam),
+	endTs: v.optional(tsParam),
 	interval: v.pipe(
 		v.string(),
 		v.regex(
@@ -48,8 +48,8 @@ export const HistogramQuery = v.object({
 
 export const FieldValuesQuery = v.object({
 	q: v.optional(v.string()),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
+	startTs: v.optional(tsParam),
+	endTs: v.optional(tsParam),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
 
@@ -68,14 +68,14 @@ export const FieldValuesBulkQuery = v.object({
 	),
 	q: v.optional(v.string()),
 	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
-	startTs: v.optional(toNum),
-	endTs: v.optional(toNum),
+	startTs: v.optional(tsParam),
+	endTs: v.optional(tsParam),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
 
 export const StatsQuery = v.object({
-	from: v.optional(toNum),
-	to: v.optional(toNum),
+	startTs: v.optional(tsParam),
+	endTs: v.optional(tsParam),
 	limit: v.optional(intParam({ min: 1, max: 10000, label: 'limit' }), '5000')
 });
 

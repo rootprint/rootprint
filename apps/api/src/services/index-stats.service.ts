@@ -112,14 +112,14 @@ export function startStatsCollector(db: Db, qw: QuickwitClient): { stop: () => v
 export async function getStatsHistory(
 	db: Db,
 	indexId: string,
-	opts: { from?: number; to?: number; limit: number }
+	opts: { startTs?: number; endTs?: number; limit: number }
 ): Promise<IndexStatsPoint[]> {
 	const conditions = [eq(indexStatsSnapshot.indexId, indexId)];
-	if (opts.from !== undefined) {
-		conditions.push(gte(indexStatsSnapshot.capturedAt, new Date(opts.from)));
+	if (opts.startTs !== undefined) {
+		conditions.push(gte(indexStatsSnapshot.capturedAt, new Date(opts.startTs * 1000)));
 	}
-	if (opts.to !== undefined) {
-		conditions.push(lt(indexStatsSnapshot.capturedAt, new Date(opts.to)));
+	if (opts.endTs !== undefined) {
+		conditions.push(lt(indexStatsSnapshot.capturedAt, new Date(opts.endTs * 1000)));
 	}
 
 	const rows = await db

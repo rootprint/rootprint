@@ -28,3 +28,16 @@ export const intParam = ({
 export const positiveInt = (label = 'value') => intParam({ min: 1, label });
 
 export const isoTimestampString = v.pipe(v.string(), v.isoTimestamp());
+
+export const EPOCH_SECONDS = 'Unix timestamp in seconds';
+
+/** Query-param timestamp: numeric string in, epoch seconds out. */
+export const tsParam = v.pipe(toNum, v.minValue(0), v.description(EPOCH_SECONDS));
+
+/** JSON-body timestamp in epoch seconds. */
+export const epochSeconds = v.pipe(
+	v.number(),
+	v.integer(),
+	v.minValue(0),
+	v.description(EPOCH_SECONDS)
+);

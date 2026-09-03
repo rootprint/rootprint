@@ -46,14 +46,13 @@
 		const token = ++historiesToken;
 		historiesLoading = true;
 		const newErrors: Record<string, string> = {};
-		const span = windowToSpanMs(range);
-		const to = Date.now();
-		const from = to - span;
+		const endTs = Math.floor(Date.now() / 1000);
+		const startTs = endTs - windowToSpanMs(range) / 1000;
 		const next: Record<string, StatsPoint[]> = {};
 		await Promise.all(
 			cluster.perIndex.map(async (i) => {
 				try {
-					const body = await getIndexStats(i.indexId, { from, to, limit: 10000 });
+					const body = await getIndexStats(i.indexId, { startTs, endTs, limit: 10000 });
 					next[i.indexId] = body.points;
 				} catch (err) {
 					newErrors[i.indexId] = err instanceof Error ? err.message : String(err);
