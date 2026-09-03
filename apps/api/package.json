@@ -58,7 +58,7 @@
 		"@standard-schema/spec": "^1.1.0",
 		"@bufbuild/protoc-gen-es": "^2.14.0",
 		"@types/pg": "^8.21.0",
-		"bun-types": "^1.1.0",
+		"bun-types": "^1.4.0",
 		"drizzle-kit": "^0.31.10"
 	}
 }
