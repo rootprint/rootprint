@@ -2,6 +2,35 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-09-03
+
+### ⚠️ Breaking
+
+- **`GET /api/indexes/{indexId}/stats` range parameters.** `from`/`to` in milliseconds are now `startTs`/`endTs` in epoch seconds.
+- **`services` in `GET /api/monitoring/services` is now a list of objects** — `{ name, requests, errors, p50, p95 }`. The plain name list lives on as `serviceNames`, and `summary` gains `errorSpans`.
+- **Security headers on every response**, from Hono's `secureHeaders()`: `X-Frame-Options: SAMEORIGIN`, COOP and CORP `same-origin`, `Referrer-Policy: no-referrer` and `nosniff`. Embedding the UI cross-origin stops working.
+
+### Added
+
+- **`GET /api/monitoring/errors`** — the failing spans behind the error rate, newest first. Filters: `service`, `operation`, `kind` (`server`, `client`, `producer`, `consumer`, `internal`), `httpStatus` (`4xx`, `5xx`, `none`), `startTs`/`endTs`, `limit` (max 100) and `offset` (max 5000). Rows carry `traceId`, `spanId`, `timestampMs`, `service`, `operation`, `kind`, `message`, `httpStatus` and `durationMillis`, alongside `hasMore`. Needs `logs:read` (session cookie, personal key or service-account key) and is recorded in the search audit.
+- **APM detail on `/monitoring`** — tabs for services, endpoints, dependencies and errors. Services rank by request volume with failure share and p50/p95; dependencies list each service's outbound peers with call count, total time and p50/p95; errors is a filterable span list, each row linking to its trace.
+- **`failingOperations` and `dependencies` on `GET /api/monitoring/services`** — operations ranked by error count, and per-service outbound call volume and latency.
+- **Monitoring state lives in the URL** — the active tab (`view`), the scoped service, and the error filters (`operation`, `kind`, `httpStatus`), so a filtered view can be linked or bookmarked.
+- **Pagination on the service and endpoint tables**, with the rows-per-page choice remembered.
+
+### Changed
+
+- **Request IDs come from Hono's own middleware.** An inbound `x-request-id` that isn't a short, plain token is replaced with a fresh UUID instead of being echoed into the request's log lines and error body.
+- **Native scrollbars everywhere.** The `overlayscrollbars` and `overlayscrollbars-svelte` dependencies are gone.
+- **Bun 1.4.0** in the image, in `engines` and in `bun-types`; CI now runs `bun audit --audit-level=high`.
+- **Log search and monitoring-error empty states** say what happened, announce themselves to screen readers, and offer "Clear filters" when filters explain the empty result.
+- **Internal:** request logs carry the matched `route` next to `path`, database initialization moved to `lib/db`, timestamp query parameters share one validator carrying their unit, and unused Quickwit index metadata fields were dropped.
+
+### Fixed
+
+- Tooltips on the collapsed sidebar — nav items, **Help**, and the collapse toggle — never appeared.
+- A JSON error response that isn't a Rootprint payload (a proxy 502, say) surfaced a `TypeError` instead of the real failure.
+
 ## [0.4.1] - 2026-08-26
 
 ### ⚠️ Breaking
