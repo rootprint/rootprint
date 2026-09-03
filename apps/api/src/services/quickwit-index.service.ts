@@ -62,10 +62,7 @@ function normalizeIndexMetadata(meta: IndexMetadata): QuickwitIndexMetadata {
 
 	return {
 		indexId: cfg.index_id,
-		indexUid: meta.index_uid ?? null,
 		indexUri: cfg.index_uri ?? null,
-		version: cfg.version ?? null,
-		createTimestamp: meta.create_timestamp ?? null,
 		mode: doc.mode ?? null,
 		partitionKey: doc.partition_key ?? null,
 		maxNumPartitions: doc.max_num_partitions ?? null,

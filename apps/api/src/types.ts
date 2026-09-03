@@ -207,10 +207,7 @@ export type QuickwitSource = {
 
 export type QuickwitIndexMetadata = {
 	indexId: string;
-	indexUid: string | null;
 	indexUri: string | null;
-	version: string | null;
-	createTimestamp: number | null;
 	mode: string | null;
 	partitionKey: string | null;
 	maxNumPartitions: number | null;
