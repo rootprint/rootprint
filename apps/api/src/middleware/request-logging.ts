@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
+import { routePath } from 'hono/route';
 
 import type { AppEnv } from '../env.js';
 import { logger } from '../lib/logger.js';
@@ -28,6 +29,7 @@ export const requestLogging: MiddlewareHandler<AppEnv> = async (c, next) => {
 			{
 				requestId: c.get('requestId'),
 				method: c.req.method,
+				route: routePath(c),
 				path: c.req.path,
 				statusCode,
 				durationMs: Math.round(performance.now() - startedAt),

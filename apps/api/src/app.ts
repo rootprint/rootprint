@@ -7,6 +7,7 @@ import { compress } from 'hono/compress';
 import { serveStatic } from 'hono/bun';
 import { HTTPException } from 'hono/http-exception';
 import { requestId as requestIdMiddleware } from 'hono/request-id';
+import { secureHeaders } from 'hono/secure-headers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QuickwitError } from 'quickwit-js';
@@ -56,6 +57,7 @@ function errorJson(c: Context, body: ApiErrorBody['error'], status: ContentfulSt
 export const app = new Hono<AppEnv>();
 
 app.use('*', requestIdMiddleware());
+app.use('*', secureHeaders());
 app.use('*', requestLogging);
 app.use('*', compress());
 const allowedOrigins = new Set([
