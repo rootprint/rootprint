@@ -11,7 +11,7 @@ export class ApiError extends Error {
 		this.name = 'ApiError';
 		this.status = status;
 		this.body = body;
-		this.code = body?.error.code;
+		this.code = body?.error?.code;
 	}
 }
 
@@ -20,7 +20,7 @@ type ErrorResponse = { status: number; json(): Promise<unknown> };
 export async function readApiError(res: ErrorResponse, fallback: string): Promise<ApiError> {
 	const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
 	return new ApiError(
-		body?.error.message ?? `${fallback} (${res.status})`,
+		body?.error?.message ?? `${fallback} (${res.status})`,
 		res.status,
 		body ?? undefined
 	);
@@ -28,7 +28,7 @@ export async function readApiError(res: ErrorResponse, fallback: string): Promis
 
 export function toFieldErrors(body: ApiErrorBody): Record<string, string> {
 	const out: Record<string, string> = {};
-	for (const d of body.error.details ?? []) {
+	for (const d of body.error?.details ?? []) {
 		if (d.path && d.path !== '(root)') out[d.path] = d.message;
 	}
 	return out;
