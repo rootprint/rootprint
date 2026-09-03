@@ -53,6 +53,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Extract changelog section
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {f=1; next} f && /^## \[/ {exit} f' CHANGELOG.md > notes.md
+          echo "📋 [Full changelog](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md)" >> notes.md
+
       - uses: softprops/action-gh-release@v3
         with:
+          body_path: notes.md
           generate_release_notes: true
