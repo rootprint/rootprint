@@ -65,7 +65,7 @@
 	// Open the drawer on the hit embedded in page state by /s/[code].
 	// Must wait for fieldConfig to be loaded so we can normalize the hit.
 	$effect(() => {
-		const openHit = (page.state as { openHit?: Record<string, unknown> }).openHit;
+		const openHit = page.state.openHit;
 		if (!openHit || !store.fieldConfig) return;
 		selectedLog = normalizeHit(openHit, 0, store.fieldConfig);
 		replaceState('', { ...page.state, openHit: undefined });
