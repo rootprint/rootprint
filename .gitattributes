@@ -10,3 +10,5 @@ apps/api/scripts/** linguist-vendored
 apps/api/src/gen/** linguist-generated=true
 apps/api/openapi.json linguist-generated=true
 bun.lock linguist-generated=true
+
+*.svelte.ts linguist-language=Svelte
