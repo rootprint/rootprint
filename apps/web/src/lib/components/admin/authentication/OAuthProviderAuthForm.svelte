@@ -11,6 +11,8 @@
 	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import TagInput from '$lib/components/ui/TagInput.svelte';
 
+	type CredKey = 'clientId' | 'clientSecret';
+
 	let {
 		provider,
 		configured,
@@ -23,42 +25,38 @@
 		origin: string;
 	} = $props();
 
-	let clientId = $state('');
-	let clientSecret = $state('');
+	let creds = $state({ clientId: '', clientSecret: '' });
+	let credInputs = $state<Record<CredKey, HTMLInputElement | null>>({
+		clientId: null,
+		clientSecret: null
+	});
 	let items = $state<string[]>(untrack(() => [...initialItems]));
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
 	let editingCredentials = $state(false);
-	let clientIdInput = $state<HTMLInputElement | null>(null);
-	let clientSecretInput = $state<HTMLInputElement | null>(null);
 
 	const callbackUrl = $derived(`${origin}/api/auth/callback/${provider.id}`);
+	const locked = $derived(configured && !editingCredentials);
 
-	const clientIdHint = $derived.by(() => {
-		if (!configured) return provider.clientIdHint;
+	function credentialHint(unconfiguredHint: string): string {
+		if (!configured) return unconfiguredHint;
 		if (editingCredentials) return 'Both fields are required when rotating credentials.';
 		return 'Stored — use the edit icon to rotate.';
-	});
+	}
 
-	const clientSecretHint = $derived.by(() => {
-		if (!configured) return provider.clientSecretHint;
-		if (editingCredentials) return 'Both fields are required when rotating credentials.';
-		return 'Stored — use the edit icon to rotate.';
-	});
-
-	async function startEditCredentials(focus: 'id' | 'secret') {
+	async function startEditCredentials(focus: CredKey) {
 		editingCredentials = true;
-		clientId = '';
-		clientSecret = '';
+		creds.clientId = '';
+		creds.clientSecret = '';
 		await tick();
-		(focus === 'id' ? clientIdInput : clientSecretInput)?.focus();
+		credInputs[focus]?.focus();
 	}
 
 	function cancelEditCredentials() {
 		editingCredentials = false;
-		clientId = '';
-		clientSecret = '';
+		creds.clientId = '';
+		creds.clientSecret = '';
 		delete fieldErrors.clientId;
 		delete fieldErrors.clientSecret;
 	}
@@ -76,8 +74,8 @@
 		formError = null;
 		fieldErrors = {};
 
-		const id = clientId.trim();
-		const secret = clientSecret.trim();
+		const id = creds.clientId.trim();
+		const secret = creds.clientSecret.trim();
 		const hasCredentialChange = id !== '' || secret !== '';
 
 		if (!configured && !hasCredentialChange) {
@@ -128,6 +126,62 @@
 	}
 </script>
 
+{#snippet credentialRow(
+	key: CredKey,
+	label: string,
+	unconfiguredHint: string,
+	placeholder: string,
+	type: 'text' | 'password'
+)}
+	<SettingsRow
+		plain={locked}
+		id="cfg-{provider.id}-{key}"
+		{label}
+		hint={credentialHint(unconfiguredHint)}
+		error={fieldErrors[key]}
+	>
+		{#snippet children({ id, invalid, describedBy })}
+			{#if locked}
+				<DisplayField value="•••••••••••••••••" ariaLabel="{label} (configured)">
+					{#snippet action()}
+						<button
+							type="button"
+							class="badge badge-ghost badge-sm cursor-pointer"
+							aria-label="Edit {label}"
+							onclick={() => startEditCredentials(key)}
+						>
+							<Pencil class="h-3 w-3" />
+						</button>
+					{/snippet}
+				</DisplayField>
+			{:else}
+				<label class="input input-sm w-full" class:input-error={invalid}>
+					<input
+						{id}
+						{type}
+						{placeholder}
+						bind:this={credInputs[key]}
+						bind:value={creds[key]}
+						autocomplete="off"
+						aria-invalid={invalid ? 'true' : undefined}
+						aria-describedby={describedBy}
+					/>
+					{#if configured}
+						<button
+							type="button"
+							class="badge badge-ghost badge-sm cursor-pointer"
+							aria-label="Cancel editing credentials"
+							onclick={cancelEditCredentials}
+						>
+							<X class="h-3 w-3" />
+						</button>
+					{/if}
+				</label>
+			{/if}
+		{/snippet}
+	</SettingsRow>
+{/snippet}
+
 <form
 	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
@@ -151,100 +205,20 @@
 		</div>
 	</SettingsRow>
 
-	<SettingsRow
-		plain={configured && !editingCredentials}
-		id="cfg-{provider.id}-client-id"
-		label="Client ID"
-		hint={clientIdHint}
-		error={fieldErrors.clientId}
-	>
-		{#snippet children({ id, invalid, describedBy })}
-			{#if configured && !editingCredentials}
-				<DisplayField value="•••••••••••••••••" ariaLabel="Client ID (configured)">
-					{#snippet action()}
-						<button
-							type="button"
-							class="badge badge-ghost badge-sm cursor-pointer"
-							aria-label="Edit Client ID"
-							onclick={() => startEditCredentials('id')}
-						>
-							<Pencil class="h-3 w-3" />
-						</button>
-					{/snippet}
-				</DisplayField>
-			{:else}
-				<label class="input input-sm w-full" class:input-error={invalid}>
-					<input
-						{id}
-						bind:this={clientIdInput}
-						bind:value={clientId}
-						placeholder={provider.clientIdPlaceholder}
-						autocomplete="off"
-						aria-invalid={invalid ? 'true' : undefined}
-						aria-describedby={describedBy}
-					/>
-					{#if configured}
-						<button
-							type="button"
-							class="badge badge-ghost badge-sm cursor-pointer"
-							aria-label="Cancel editing credentials"
-							onclick={cancelEditCredentials}
-						>
-							<X class="h-3 w-3" />
-						</button>
-					{/if}
-				</label>
-			{/if}
-		{/snippet}
-	</SettingsRow>
-
-	<SettingsRow
-		plain={configured && !editingCredentials}
-		id="cfg-{provider.id}-client-secret"
-		label="Client Secret"
-		hint={clientSecretHint}
-		error={fieldErrors.clientSecret}
-	>
-		{#snippet children({ id, invalid, describedBy })}
-			{#if configured && !editingCredentials}
-				<DisplayField value="•••••••••••••••••" ariaLabel="Client Secret (configured)">
-					{#snippet action()}
-						<button
-							type="button"
-							class="badge badge-ghost badge-sm cursor-pointer"
-							aria-label="Edit Client Secret"
-							onclick={() => startEditCredentials('secret')}
-						>
-							<Pencil class="h-3 w-3" />
-						</button>
-					{/snippet}
-				</DisplayField>
-			{:else}
-				<label class="input input-sm w-full" class:input-error={invalid}>
-					<input
-						{id}
-						bind:this={clientSecretInput}
-						bind:value={clientSecret}
-						type="password"
-						placeholder="Client secret"
-						autocomplete="off"
-						aria-invalid={invalid ? 'true' : undefined}
-						aria-describedby={describedBy}
-					/>
-					{#if configured}
-						<button
-							type="button"
-							class="badge badge-ghost badge-sm cursor-pointer"
-							aria-label="Cancel editing credentials"
-							onclick={cancelEditCredentials}
-						>
-							<X class="h-3 w-3" />
-						</button>
-					{/if}
-				</label>
-			{/if}
-		{/snippet}
-	</SettingsRow>
+	{@render credentialRow(
+		'clientId',
+		'Client ID',
+		provider.clientIdHint,
+		provider.clientIdPlaceholder,
+		'text'
+	)}
+	{@render credentialRow(
+		'clientSecret',
+		'Client Secret',
+		provider.clientSecretHint,
+		'Client secret',
+		'password'
+	)}
 
 	<SettingsRow
 		plain
