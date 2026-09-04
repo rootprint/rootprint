@@ -94,7 +94,7 @@
 		{#each $virtualizer.getVirtualItems() as item (logs[item.index]?.key ?? item.index)}
 			{#if logs[item.index]}
 				<div
-					use:measure
+					{@attach measure}
 					data-index={item.index}
 					class="absolute top-0 left-0 w-full"
 					style="transform: translateY({item.start - scrollMargin}px);"

@@ -15,7 +15,7 @@
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
-	import { searchHighlight } from '$lib/utils/dom-highlight';
+	import { searchHighlight } from '$lib/utils/dom-highlight.svelte';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import { traceDetailHref } from '$lib/utils/trace-params';
@@ -316,7 +316,7 @@
 		{/if}
 
 		<div
-			use:searchHighlight={searchTerm}
+			{@attach searchHighlight(() => searchTerm)}
 			class="min-h-0 flex-1"
 			role="tabpanel"
 			id={`drawer-panel-${activeTab}`}

@@ -23,9 +23,7 @@
 
 	function keepInputFocus(node: HTMLElement) {
 		node.addEventListener('mousedown', preventMouseDown);
-		return {
-			destroy: () => node.removeEventListener('mousedown', preventMouseDown)
-		};
+		return () => node.removeEventListener('mousedown', preventMouseDown);
 	}
 
 	$effect(() => {
@@ -35,7 +33,7 @@
 </script>
 
 <div
-	use:keepInputFocus
+	{@attach keepInputFocus}
 	class="border-line bg-base-100 rounded-box absolute top-full right-0 left-0 z-50 mt-1 w-full border shadow-lg"
 >
 	<div class="max-h-72 overflow-x-hidden overflow-y-auto">

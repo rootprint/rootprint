@@ -1,10 +1,9 @@
-import type { Action } from 'svelte/action';
+import type { Attachment } from 'svelte/attachments';
 
 const HIGHLIGHT_NAME = 'rootprint-drawer-search';
 
 interface TextSpan {
 	node: Text;
-	/** Global offset of this node's first character within the concatenated text. */
 	start: number;
 }
 
@@ -57,44 +56,43 @@ function collectHighlightRanges(root: Node, term: string): Range[] {
 	return ranges;
 }
 
-export const searchHighlight: Action<HTMLElement, string> = (node, term) => {
-	const supported =
-		typeof CSS !== 'undefined' && 'highlights' in CSS && typeof Highlight !== 'undefined';
-	if (!supported) return;
+export function searchHighlight(getTerm: () => string): Attachment<HTMLElement> {
+	return (node) => {
+		const supported =
+			typeof CSS !== 'undefined' && 'highlights' in CSS && typeof Highlight !== 'undefined';
+		if (!supported) return;
 
-	let current = term;
-	let frame = 0;
+		let frame = 0;
 
-	function apply(): void {
-		const ranges = collectHighlightRanges(node, current);
-		if (ranges.length > 0) {
-			CSS.highlights.set(HIGHLIGHT_NAME, new Highlight(...ranges));
-		} else {
-			CSS.highlights.delete(HIGHLIGHT_NAME);
+		function apply(): void {
+			const ranges = collectHighlightRanges(node, getTerm());
+			if (ranges.length > 0) {
+				CSS.highlights.set(HIGHLIGHT_NAME, new Highlight(...ranges));
+			} else {
+				CSS.highlights.delete(HIGHLIGHT_NAME);
+			}
 		}
-	}
 
-	function schedule(): void {
-		if (frame !== 0) return;
-		frame = requestAnimationFrame(() => {
-			frame = 0;
-			apply();
-		});
-	}
+		function schedule(): void {
+			if (frame !== 0) return;
+			frame = requestAnimationFrame(() => {
+				frame = 0;
+				apply();
+			});
+		}
 
-	const observer = new MutationObserver(schedule);
-	observer.observe(node, { subtree: true, childList: true, characterData: true });
-	schedule(); // initial paint (e.g. reopened drawer with a term already set)
+		const observer = new MutationObserver(schedule);
+		observer.observe(node, { subtree: true, childList: true, characterData: true });
 
-	return {
-		update(next: string): void {
-			current = next;
+		$effect(() => {
+			getTerm();
 			schedule();
-		},
-		destroy(): void {
+		});
+
+		return () => {
 			observer.disconnect();
 			if (frame !== 0) cancelAnimationFrame(frame);
 			CSS.highlights.delete(HIGHLIGHT_NAME);
-		}
+		};
 	};
-};
+}
