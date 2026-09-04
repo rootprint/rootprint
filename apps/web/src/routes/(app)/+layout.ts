@@ -6,6 +6,6 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 
 	if (!session) {
 		const returnTo = encodeURIComponent(url.pathname + url.search);
-		throw redirect(303, `/auth/sign-in?returnTo=${returnTo}`);
+		redirect(303, `/auth/sign-in?returnTo=${returnTo}`);
 	}
 };

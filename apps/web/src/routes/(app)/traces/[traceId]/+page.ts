@@ -10,7 +10,7 @@ import { buildTraceModel } from '$lib/components/trace/trace-model';
 import { safeReturnTo } from '$lib/return-to';
 
 export const load: PageLoad = async ({ params, url }) => {
-	if (!isTraceId(params.traceId)) throw error(400, 'Not a valid trace id');
+	if (!isTraceId(params.traceId)) error(400, 'Not a valid trace id');
 
 	const logIndexId = url.searchParams.get('index');
 
@@ -47,7 +47,7 @@ export const load: PageLoad = async ({ params, url }) => {
 				: null
 		};
 	} catch (e) {
-		if (e instanceof ApiError) throw error(e.status, e.message);
+		if (e instanceof ApiError) error(e.status, e.message);
 		throw e;
 	}
 };
