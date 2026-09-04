@@ -115,7 +115,8 @@
 	});
 
 	$effect(() => {
-		if (chart && chartWidth > 0) chart.setSize({ width: chartWidth, height });
+		const size = { width: chartWidth, height };
+		if (chart && size.width > 0) chart.setSize(size);
 	});
 
 	$effect(() => {
