@@ -2,6 +2,7 @@
 	import { ChevronDown, Copy } from 'lucide-svelte';
 
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import type { FieldGroup, FieldGroupId } from '$lib/utils/hit-fields';
 	import { groupHitFields } from '$lib/utils/hit-fields';
 	import { copyWithToast } from '$lib/utils/clipboard';
@@ -18,12 +19,14 @@
 
 	let showEmpty = $state(false);
 	let collapsed = $state<Partial<Record<FieldGroupId, boolean>>>({});
+	let query = $state('');
 	let previousHitKey: LogHit['key'] | null = null;
 
 	$effect(() => {
 		if (hit.key === previousHitKey) return;
 		previousHitKey = hit.key;
 		collapsed = {};
+		query = '';
 	});
 
 	const grouped = $derived.by(() => {
@@ -32,12 +35,21 @@
 		return groupHitFields(hit.raw, cfg);
 	});
 
+	const needle = $derived(query.trim().toLowerCase());
+
 	const visibleGroups = $derived.by(() => {
 		const result: FieldGroup[] = [];
 		for (const group of grouped.groups) {
-			const filtered = showEmpty ? group.fields : group.fields.filter((f) => !f.isEmpty);
-			if (filtered.length === 0) continue;
-			result.push({ ...group, fields: filtered });
+			const fields = group.fields.filter(
+				(f) =>
+					(showEmpty || !f.isEmpty) &&
+					(needle === '' ||
+						f.name.toLowerCase().includes(needle) ||
+						f.displayName.toLowerCase().includes(needle) ||
+						f.value.toLowerCase().includes(needle))
+			);
+			if (fields.length === 0) continue;
+			result.push({ ...group, fields });
 		}
 		return result;
 	});
@@ -88,16 +100,23 @@
 		</div>
 	</div>
 
-	<div class="border-line flex items-center justify-between border-b px-3 py-2">
-		<label class="text-base-content/70 flex cursor-pointer items-center gap-2 text-xs">
+	<div class="border-line flex items-center gap-3 border-b px-3 py-2">
+		<SearchInput
+			bind:value={query}
+			placeholder="Search properties…"
+			label="Search properties by key or value"
+		/>
+		<label class="text-base-content/70 flex shrink-0 cursor-pointer items-center gap-2 text-xs">
 			<input type="checkbox" class="checkbox checkbox-xs" bind:checked={showEmpty} />
 			Show empty values
 		</label>
-		<span class="text-base-content/40 text-[10px]">{totalRows} fields</span>
+		<span class="text-base-content/40 shrink-0 text-[10px]">{totalRows} fields</span>
 	</div>
 
 	{#if visibleGroups.length === 0}
-		<p class="text-base-content/40 p-6 text-center text-xs">No fields to display</p>
+		<p class="text-base-content/40 p-6 text-center text-xs">
+			{needle === '' ? 'No fields to display' : 'No matching fields'}
+		</p>
 	{:else}
 		<div class="flex flex-col gap-3 p-3">
 			{#each visibleGroups as group (group.id)}
@@ -128,7 +147,7 @@
 						>
 							<table class="w-full table-fixed border-collapse">
 								<tbody>
-									{#each group.fields as field, i (i)}
+									{#each group.fields as field (field.name)}
 										<FieldRow
 											{field}
 											onFilterFor={(f) => applyFilter(f, false)}

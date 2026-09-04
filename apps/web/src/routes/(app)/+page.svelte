@@ -115,7 +115,7 @@
 		</section>
 	</div>
 {:else}
-	<div class="flex h-full min-h-0 w-full">
+	<div class="flex h-full min-h-0 w-full" inert={selectedLog !== null}>
 		<aside class="border-line w-64 shrink-0 border-r">
 			<FieldPanel {store} />
 		</aside>

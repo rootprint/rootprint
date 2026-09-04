@@ -5,7 +5,6 @@
 	import { page } from '$app/state';
 
 	import DrawerHeader, { type DrawerTab } from './drawer/DrawerHeader.svelte';
-	import DrawerSearchBox from './drawer/DrawerSearchBox.svelte';
 	import ContextPane from './drawer/ContextPane.svelte';
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
@@ -15,7 +14,6 @@
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
-	import { searchHighlight } from '$lib/utils/dom-highlight.svelte';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import { traceDetailHref } from '$lib/utils/trace-params';
@@ -89,8 +87,6 @@
 		};
 	});
 
-	let searchOpen = $state(false);
-	let searchTerm = $state('');
 	let sharing = $state(false);
 	let dialogRef: HTMLDivElement | null = $state(null);
 	let previousFocus: HTMLElement | null = null;
@@ -141,8 +137,6 @@
 		prevHit = hit;
 		if (!opened) return;
 		activeTab = 'parameters';
-		searchOpen = false;
-		searchTerm = '';
 		previousFocus = document.activeElement as HTMLElement | null;
 		queueMicrotask(() => dialogRef?.focus());
 	});
@@ -161,11 +155,6 @@
 		if (!hit || e.key !== 'Escape') return;
 		e.preventDefault();
 		close();
-	}
-
-	function toggleSearch(): void {
-		searchOpen = !searchOpen;
-		if (!searchOpen) searchTerm = '';
 	}
 
 	async function shareLog() {
@@ -294,29 +283,16 @@
 		<DrawerHeader
 			{hit}
 			{activeTab}
-			{searchOpen}
 			{sharing}
 			{hasTraceback}
 			hasTrace={traceId !== null}
 			meta={traceSummary}
 			onTabChange={(t) => (activeTab = t)}
-			onSearch={toggleSearch}
 			onShare={shareLog}
 			onClose={close}
 		/>
 
-		{#if searchOpen}
-			<DrawerSearchBox
-				bind:value={searchTerm}
-				onClose={() => {
-					searchOpen = false;
-					searchTerm = '';
-				}}
-			/>
-		{/if}
-
 		<div
-			{@attach searchHighlight(() => searchTerm)}
 			class="min-h-0 flex-1"
 			role="tabpanel"
 			id={`drawer-panel-${activeTab}`}

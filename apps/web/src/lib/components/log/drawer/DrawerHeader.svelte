@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { LoaderCircle, Search, Share2, X } from 'lucide-svelte';
+	import { LoaderCircle, Share2, X } from 'lucide-svelte';
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
@@ -11,25 +11,21 @@
 	let {
 		hit,
 		activeTab,
-		searchOpen = false,
 		sharing = false,
 		hasTraceback = false,
 		hasTrace = false,
 		meta,
 		onTabChange,
-		onSearch,
 		onShare,
 		onClose
 	}: {
 		hit: LogHit;
 		activeTab: DrawerTab;
-		searchOpen?: boolean;
 		sharing?: boolean;
 		hasTraceback?: boolean;
 		hasTrace?: boolean;
 		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
-		onSearch: () => void;
 		onShare: () => void;
 		onClose: () => void;
 	} = $props();
@@ -52,16 +48,6 @@
 		<div class="flex items-center justify-between gap-3">
 			<p id="log-detail-title" class="eyebrow">Log event</p>
 			<div class="flex items-center gap-1">
-				<button
-					type="button"
-					class={['btn btn-ghost btn-xs btn-square', searchOpen && 'bg-base-200 text-base-content']}
-					aria-label="Search within log"
-					aria-pressed={searchOpen}
-					title="Search within log"
-					onclick={onSearch}
-				>
-					<Search class="h-3.5 w-3.5" />
-				</button>
 				<button
 					type="button"
 					class="btn btn-ghost btn-xs btn-square"

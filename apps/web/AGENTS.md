@@ -65,7 +65,7 @@ Do not add `try/catch` to a loader unless it implements one of the two non-defau
 - Use runes: `$props`, `$state`, `$derived`, `$effect`, `$bindable`.
 - `<script lang="ts">` everywhere.
 - Use `{@attach ...}`, not `use:`, for your own DOM behaviour. `use:` is reserved for third-party actions that ship no attachment (currently only `svelte-dnd-action`). Shared attachments go in `$lib/attachments/`; one-offs stay local to the component.
-- Attachments are fully reactive — `{@attach foo(bar)}` tears down and re-runs whenever `bar` changes. When the value changes often (a keystroke) or the caller passes a fresh closure each render (a virtualised row), take a **getter** and read it inside the attachment instead: `{@attach foo(() => bar)}`. See `$lib/attachments/row-activate.ts` and `$lib/utils/dom-highlight.svelte.ts`.
+- Attachments are fully reactive — `{@attach foo(bar)}` tears down and re-runs whenever `bar` changes. When the value changes often (a keystroke) or the caller passes a fresh closure each render (a virtualised row), take a **getter** and read it inside the attachment instead: `{@attach foo(() => bar)}`. See `$lib/attachments/row-activate.ts`.
 - For deeper Svelte 5 / SvelteKit guidance, use the Svelte MCP server: call `list-sections` first, then `get-documentation` for every section whose `use_cases` match the task.
 
 ## Design System
