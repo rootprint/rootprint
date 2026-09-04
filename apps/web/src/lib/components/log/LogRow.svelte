@@ -4,7 +4,7 @@
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { formatCell } from '$lib/utils/column-width';
-	import { rowActivate } from '$lib/actions/row-activate';
+	import { rowActivate } from '$lib/attachments/row-activate';
 
 	let {
 		hit,
@@ -42,7 +42,7 @@
 		isAnchor && 'bg-[color-mix(in_oklab,var(--level-color)_10%,transparent)]'
 	]}
 	style="grid-template-columns: {gridTemplate}; --level-color: {levelColor(hit.level)};"
-	use:rowActivate={onActivate}
+	{@attach rowActivate(() => onActivate)}
 >
 	<span
 		aria-hidden="true"
