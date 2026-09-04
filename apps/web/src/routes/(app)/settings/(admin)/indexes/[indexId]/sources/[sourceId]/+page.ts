@@ -10,8 +10,8 @@ export const load: PageLoad = async ({ params, depends }) => {
 		const source = await getSource(params.indexId, params.sourceId);
 		return { indexId: params.indexId, source };
 	} catch (e) {
-		if (e instanceof ApiError && e.status === 404) throw error(404, 'Source not found');
-		if (e instanceof ApiError) throw error(e.status, e.message);
+		if (e instanceof ApiError && e.status === 404) error(404, 'Source not found');
+		if (e instanceof ApiError) error(e.status, e.message);
 		throw e;
 	}
 };

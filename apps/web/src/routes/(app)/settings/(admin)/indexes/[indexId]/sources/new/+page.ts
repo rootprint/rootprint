@@ -11,8 +11,8 @@ export const load: PageLoad = async ({ params, depends }) => {
 		const detail = await getIndex(params.indexId);
 		return { detail };
 	} catch (e) {
-		if (e instanceof ApiError && e.status === 404) throw error(404, 'Index not found');
-		if (e instanceof ApiError) throw error(e.status, e.message);
+		if (e instanceof ApiError && e.status === 404) error(404, 'Index not found');
+		if (e instanceof ApiError) error(e.status, e.message);
 		throw e;
 	}
 };

@@ -5,7 +5,7 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 	const { session } = await parent();
 
 	if (session && url.pathname.startsWith('/auth/sign-in')) {
-		throw redirect(303, '/');
+		redirect(303, '/');
 	}
 
 	return {};

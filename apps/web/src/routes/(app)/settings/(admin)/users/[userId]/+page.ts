@@ -49,8 +49,8 @@ export const load: PageLoad = async ({ url, params, depends, parent }) => {
 		// This path won't return the streamed promises; attach no-op catch handlers so
 		// their eventual rejection doesn't surface as an unhandled promise rejection.
 		for (const p of [summary, volume, latency, indexes, recent]) p.catch(() => {});
-		if (e instanceof ApiError && e.status === 404) throw error(404, 'User not found');
-		if (e instanceof ApiError) throw error(e.status, e.message);
+		if (e instanceof ApiError && e.status === 404) error(404, 'User not found');
+		if (e instanceof ApiError) error(e.status, e.message);
 		throw e;
 	}
 };

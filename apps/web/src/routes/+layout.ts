@@ -16,10 +16,10 @@ export const load: LayoutLoad = async ({ url, untrack, depends }) => {
 
 	const isOnSetupAdmin = untrack(() => url.pathname.startsWith('/auth/setup-admin'));
 	if (bootstrap.needsSetupAdmin && !isOnSetupAdmin) {
-		throw redirect(303, '/auth/setup-admin');
+		redirect(303, '/auth/setup-admin');
 	}
 	if (!bootstrap.needsSetupAdmin && isOnSetupAdmin) {
-		throw redirect(303, '/auth/sign-in');
+		redirect(303, '/auth/sign-in');
 	}
 
 	return { session };
