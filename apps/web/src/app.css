@@ -246,11 +246,6 @@
 	--trace-service-10: #a855f7;
 }
 
-::highlight(rootprint-drawer-search) {
-	background-color: color-mix(in oklab, var(--color-warning) 40%, transparent);
-	color: var(--color-base-content);
-}
-
 @theme inline {
 	/* Canonical hairline: 1px line at 10% base-content. Generates border-line,
 	   border-b-line, divide-line, etc. — the single source for all hairlines. */

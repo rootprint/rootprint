@@ -84,7 +84,7 @@
 	const needle = $derived(filter.trim().toLowerCase());
 
 	const matches = (node: SpanNode): boolean =>
-		`${node.serviceName} ${node.name}`.toLowerCase().includes(needle);
+		node.serviceName.toLowerCase().includes(needle) || node.name.toLowerCase().includes(needle);
 
 	const forcedOpen = $derived.by(() => {
 		if (needle === '' || !model) return null;
