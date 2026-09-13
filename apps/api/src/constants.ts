@@ -8,6 +8,8 @@ export const LAST_USED_THROTTLE_SECONDS = 60;
 export const INVITE_EXPIRY_HOURS = 48;
 export const LAST_ACTIVE_THROTTLE_MS = 300_000;
 
+export const OAUTH_RECHECK_MS = 300_000;
+
 // Export
 export const EXPORT_MAX_ROWS = 10_000;
 

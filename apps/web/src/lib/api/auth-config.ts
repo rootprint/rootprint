@@ -2,10 +2,9 @@ import type { InferResponseType } from 'hono/client';
 import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import type {
-	GoogleAllowedDomainsInput,
-	GoogleCredentialsInput,
 	GitHubAllowedOrgsInput,
-	GitHubCredentialsInput
+	GoogleAllowedDomainsInput,
+	OAuthCredentialsInput
 } from 'api/schemas';
 
 export type GoogleAuthSettingsView = InferResponseType<
@@ -19,7 +18,7 @@ export async function getGoogleAuth(): Promise<GoogleAuthSettingsView> {
 	return res.json();
 }
 
-export async function saveGoogleCredentials(input: GoogleCredentialsInput): Promise<void> {
+export async function saveGoogleCredentials(input: OAuthCredentialsInput): Promise<void> {
 	const res = await client.api.settings.auth.google.credentials.$put({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to save Google credentials');
 }
@@ -45,7 +44,7 @@ export async function getGitHubAuth(): Promise<GitHubAuthSettingsView> {
 	return res.json();
 }
 
-export async function saveGitHubCredentials(input: GitHubCredentialsInput): Promise<void> {
+export async function saveGitHubCredentials(input: OAuthCredentialsInput): Promise<void> {
 	const res = await client.api.settings.auth.github.credentials.$put({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to save GitHub credentials');
 }

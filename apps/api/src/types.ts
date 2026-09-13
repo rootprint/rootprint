@@ -62,7 +62,7 @@ import type {
 	TopActorRowResponse as TopActorRowResponseSchema,
 	VolumeBucketResponse as VolumeBucketResponseSchema
 } from './schemas/responses/admin.js';
-import type { githubCredentialsSchema } from './schemas/settings.js';
+import type { oauthCredentialsSchema } from './schemas/settings.js';
 
 export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
 
@@ -245,7 +245,7 @@ export type GoogleAuthCredentials = {
 	allowedDomains: string[];
 };
 
-export type GitHubAuthCredentials = v.InferOutput<typeof githubCredentialsSchema>;
+export type GitHubAuthCredentials = v.InferOutput<typeof oauthCredentialsSchema>;
 
 // Export (export.service.ts)
 export type ExportPreflightResult = {

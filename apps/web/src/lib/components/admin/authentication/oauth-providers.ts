@@ -1,9 +1,8 @@
 import * as v from 'valibot';
 import {
 	githubAllowedOrgsSchema,
-	githubCredentialsSchema,
 	googleAllowedDomainsSchema,
-	googleCredentialsSchema
+	oauthCredentialsSchema
 } from 'api/schemas';
 
 import {
@@ -71,13 +70,14 @@ export const githubProvider: OAuthProviderDescriptor = {
 	clientIdHint: 'From your GitHub OAuth App.',
 	clientSecretHint: 'Server-side secret from your GitHub OAuth App.',
 	successToast: 'GitHub authentication settings saved',
-	validateCredentials: (input) => schemaErrors(githubCredentialsSchema, input),
+	validateCredentials: (input) => schemaErrors(oauthCredentialsSchema, input),
 	saveCredentials: saveGitHubCredentials,
 	removeCredentials: removeGitHubCredentials,
 	items: {
 		fieldKey: 'allowedOrgs',
 		label: 'Allowed organizations',
-		description: 'Only members of these GitHub organizations can sign in.',
+		description:
+			'Only members of these GitHub organizations can sign in. Removing an organization also signs out its members within a few minutes.',
 		placeholderEmpty: 'my-org  (press Enter to add)',
 		addLabel: 'Add organization',
 		normalize: (raw) => raw.toLowerCase(),
@@ -99,13 +99,14 @@ export const googleProvider: OAuthProviderDescriptor = {
 	clientIdHint: 'From Google Cloud Console.',
 	clientSecretHint: 'Server-side secret from Google Cloud Console.',
 	successToast: 'Google authentication settings saved',
-	validateCredentials: (input) => schemaErrors(googleCredentialsSchema, input),
+	validateCredentials: (input) => schemaErrors(oauthCredentialsSchema, input),
 	saveCredentials: saveGoogleCredentials,
 	removeCredentials: removeGoogleCredentials,
 	items: {
 		fieldKey: 'allowedDomains',
 		label: 'Allowed domains',
-		description: 'Only users with an email from these domains can sign in.',
+		description:
+			'Only users with an email from these domains can sign in. Removing a domain also signs out its users within a few minutes.',
 		placeholderEmpty: 'company.com  (press Enter to add)',
 		addLabel: 'Add domain',
 		normalize: (raw) => raw.toLowerCase(),
