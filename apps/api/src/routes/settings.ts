@@ -6,10 +6,9 @@ import { reloadAuth } from '../lib/auth.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { requireAdmin } from '../middleware/require-admin.js';
 import {
-	googleAllowedDomainsSchema,
-	googleCredentialsSchema,
 	githubAllowedOrgsSchema,
-	githubCredentialsSchema
+	googleAllowedDomainsSchema,
+	oauthCredentialsSchema
 } from '../schemas/settings.js';
 import {
 	GoogleAuthSettingsResponse,
@@ -47,7 +46,7 @@ export const settingsRouter = new Hono<AuthedEnv>()
 				'204': { description: 'Credentials saved' }
 			}
 		}),
-		validator('json', googleCredentialsSchema),
+		validator('json', oauthCredentialsSchema),
 		async (c) => {
 			await putGoogleAuthCredentials(db, c.req.valid('json'));
 			await reloadAuth();
@@ -100,7 +99,7 @@ export const settingsRouter = new Hono<AuthedEnv>()
 			summary: 'Set GitHub OAuth credentials',
 			rawResponses: { '204': { description: 'Credentials saved' } }
 		}),
-		validator('json', githubCredentialsSchema),
+		validator('json', oauthCredentialsSchema),
 		async (c) => {
 			await putGitHubAuthCredentials(db, c.req.valid('json'));
 			await reloadAuth();

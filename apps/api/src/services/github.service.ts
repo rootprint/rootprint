@@ -36,7 +36,10 @@ export async function userIsInAllowedOrg(
 				redirect: 'error',
 				signal
 			});
-			if (res.status === 401 || res.status === 404) return false;
+			if (res.status === 401) return false;
+			if (res.status === 404) {
+				throw new Error('github org membership check returned 404');
+			}
 			if (res.status === 403) {
 				logger.warn(
 					{
@@ -49,14 +52,14 @@ export async function userIsInAllowedOrg(
 					},
 					'github org membership check forbidden'
 				);
-				return false;
+				throw new Error('github org membership check forbidden');
 			}
 			if (!res.ok) {
 				logger.error(
 					{ statusCode: res.status, page, allowedOrgCount: allowed.size },
 					'github org membership list failed'
 				);
-				return false;
+				throw new Error(`github org membership list failed (HTTP ${res.status})`);
 			}
 
 			const memberships = (await res.json()) as GitHubMembership[];
@@ -70,11 +73,7 @@ export async function userIsInAllowedOrg(
 			}
 			if (memberships.length < GITHUB_MEMBERSHIPS_PER_PAGE) return false;
 		} catch (err) {
-			logger.error(
-				{ err, page, allowedOrgCount: allowed.size },
-				'github org membership list failed'
-			);
-			return false;
+			throw err instanceof Error ? err : new Error('github org membership list failed');
 		}
 	}
 	/* oxlint-enable no-await-in-loop */
@@ -83,5 +82,5 @@ export async function userIsInAllowedOrg(
 		{ maxPages: GITHUB_MEMBERSHIPS_MAX_PAGES, allowedOrgCount: allowed.size },
 		'github org membership page limit reached'
 	);
-	return false;
+	throw new Error('github org membership page limit reached');
 }

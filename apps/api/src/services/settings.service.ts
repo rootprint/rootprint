@@ -17,39 +17,8 @@ const GITHUB_CLIENT_ID = 'github_client_id';
 const GITHUB_CLIENT_SECRET = 'github_client_secret';
 export const GITHUB_ALLOWED_ORGS = 'github_allowed_orgs';
 
-async function loadGoogleSettingsByKey(db: Db): Promise<Map<string, string>> {
-	const rows = await db
-		.select({ key: appSettings.key, value: appSettings.value })
-		.from(appSettings)
-		.where(
-			inArray(appSettings.key, [GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_ALLOWED_DOMAINS])
-		);
-	return new Map(rows.map((r) => [r.key, r.value]));
-}
-
-export async function getGoogleAuthStatus(db: Db): Promise<GoogleAuthSettings> {
-	const byKey = await loadGoogleSettingsByKey(db);
-	return {
-		configured: byKey.has(GOOGLE_CLIENT_ID) && byKey.has(GOOGLE_CLIENT_SECRET),
-		allowedDomains: parseDomains(byKey.get(GOOGLE_ALLOWED_DOMAINS) ?? null)
-	};
-}
-
-export async function loadGoogleAuthForBetterAuth(
-	db: Db
-): Promise<GoogleAuthCredentials | undefined> {
-	const byKey = await loadGoogleSettingsByKey(db);
-	const clientId = byKey.get(GOOGLE_CLIENT_ID);
-	const clientSecret = byKey.get(GOOGLE_CLIENT_SECRET);
-	if (!clientId || !clientSecret) return undefined;
-	return {
-		clientId,
-		clientSecret,
-		allowedDomains: parseDomains(byKey.get(GOOGLE_ALLOWED_DOMAINS) ?? null)
-	};
-}
-
-export function parseDomains(raw: string | null): string[] {
+/** Parses a JSON `string[]` settings value — used for both domains and org logins. */
+export function parseStringList(raw: string | null): string[] {
 	if (!raw) return [];
 	try {
 		const parsed: unknown = JSON.parse(raw);
@@ -59,25 +28,72 @@ export function parseDomains(raw: string | null): string[] {
 	}
 }
 
+async function loadSettings(db: Db, keys: string[]): Promise<Map<string, string>> {
+	const rows = await db
+		.select({ key: appSettings.key, value: appSettings.value })
+		.from(appSettings)
+		.where(inArray(appSettings.key, keys));
+	return new Map(rows.map((r) => [r.key, r.value]));
+}
+
+/** Upserts every entry in one transaction, so a credential pair never lands half-written. */
+async function putValues(db: Db, values: Record<string, string>): Promise<void> {
+	await db.transaction(async (tx) => {
+		for (const [key, value] of Object.entries(values)) {
+			await tx
+				.insert(appSettings)
+				.values({ key, value })
+				.onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: new Date() } });
+		}
+	});
+}
+
+const GOOGLE_KEYS = [GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_ALLOWED_DOMAINS];
+const GITHUB_KEYS = [GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_ALLOWED_ORGS];
+
+/** Providers whose client id and secret are both still stored. */
+export async function configuredOAuthProviders(db: Db): Promise<Set<string>> {
+	const byKey = await loadSettings(db, [
+		GOOGLE_CLIENT_ID,
+		GOOGLE_CLIENT_SECRET,
+		GITHUB_CLIENT_ID,
+		GITHUB_CLIENT_SECRET
+	]);
+	const configured = new Set<string>();
+	if (byKey.has(GOOGLE_CLIENT_ID) && byKey.has(GOOGLE_CLIENT_SECRET)) configured.add('google');
+	if (byKey.has(GITHUB_CLIENT_ID) && byKey.has(GITHUB_CLIENT_SECRET)) configured.add('github');
+	return configured;
+}
+
+export async function getGoogleAuthStatus(db: Db): Promise<GoogleAuthSettings> {
+	const byKey = await loadSettings(db, GOOGLE_KEYS);
+	return {
+		configured: byKey.has(GOOGLE_CLIENT_ID) && byKey.has(GOOGLE_CLIENT_SECRET),
+		allowedDomains: parseStringList(byKey.get(GOOGLE_ALLOWED_DOMAINS) ?? null)
+	};
+}
+
+export async function loadGoogleAuthForBetterAuth(
+	db: Db
+): Promise<GoogleAuthCredentials | undefined> {
+	const byKey = await loadSettings(db, GOOGLE_KEYS);
+	const clientId = byKey.get(GOOGLE_CLIENT_ID);
+	const clientSecret = byKey.get(GOOGLE_CLIENT_SECRET);
+	if (!clientId || !clientSecret) return undefined;
+	return {
+		clientId,
+		clientSecret,
+		allowedDomains: parseStringList(byKey.get(GOOGLE_ALLOWED_DOMAINS) ?? null)
+	};
+}
+
 export async function putGoogleAuthCredentials(
 	db: Db,
 	input: { clientId: string; clientSecret: string }
 ): Promise<void> {
-	await db.transaction(async (tx) => {
-		await tx
-			.insert(appSettings)
-			.values({ key: GOOGLE_CLIENT_ID, value: input.clientId })
-			.onConflictDoUpdate({
-				target: appSettings.key,
-				set: { value: input.clientId, updatedAt: new Date() }
-			});
-		await tx
-			.insert(appSettings)
-			.values({ key: GOOGLE_CLIENT_SECRET, value: input.clientSecret })
-			.onConflictDoUpdate({
-				target: appSettings.key,
-				set: { value: input.clientSecret, updatedAt: new Date() }
-			});
+	await putValues(db, {
+		[GOOGLE_CLIENT_ID]: input.clientId,
+		[GOOGLE_CLIENT_SECRET]: input.clientSecret
 	});
 }
 
@@ -91,42 +107,21 @@ export async function putGoogleAuthAllowedDomains(
 	db: Db,
 	input: { allowedDomains: string[] }
 ): Promise<void> {
-	await db
-		.insert(appSettings)
-		.values({
-			key: GOOGLE_ALLOWED_DOMAINS,
-			value: JSON.stringify(input.allowedDomains)
-		})
-		.onConflictDoUpdate({
-			target: appSettings.key,
-			set: {
-				value: JSON.stringify(input.allowedDomains),
-				updatedAt: new Date()
-			}
-		});
-}
-
-async function loadGitHubSettingsByKey(db: Db): Promise<Map<string, string>> {
-	const rows = await db
-		.select({ key: appSettings.key, value: appSettings.value })
-		.from(appSettings)
-		.where(inArray(appSettings.key, [GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_ALLOWED_ORGS]));
-	return new Map(rows.map((r) => [r.key, r.value]));
+	await putValues(db, { [GOOGLE_ALLOWED_DOMAINS]: JSON.stringify(input.allowedDomains) });
 }
 
 export async function getGitHubAuthStatus(db: Db): Promise<GitHubAuthSettings> {
-	const byKey = await loadGitHubSettingsByKey(db);
+	const byKey = await loadSettings(db, GITHUB_KEYS);
 	return {
 		configured: byKey.has(GITHUB_CLIENT_ID) && byKey.has(GITHUB_CLIENT_SECRET),
-		// parseDomains is a generic JSON string[] parser; reused for org logins.
-		allowedOrgs: parseDomains(byKey.get(GITHUB_ALLOWED_ORGS) ?? null)
+		allowedOrgs: parseStringList(byKey.get(GITHUB_ALLOWED_ORGS) ?? null)
 	};
 }
 
 export async function loadGitHubAuthForBetterAuth(
 	db: Db
 ): Promise<GitHubAuthCredentials | undefined> {
-	const byKey = await loadGitHubSettingsByKey(db);
+	const byKey = await loadSettings(db, GITHUB_KEYS);
 	const clientId = byKey.get(GITHUB_CLIENT_ID);
 	const clientSecret = byKey.get(GITHUB_CLIENT_SECRET);
 	if (!clientId || !clientSecret) return undefined;
@@ -137,21 +132,9 @@ export async function putGitHubAuthCredentials(
 	db: Db,
 	input: { clientId: string; clientSecret: string }
 ): Promise<void> {
-	await db.transaction(async (tx) => {
-		await tx
-			.insert(appSettings)
-			.values({ key: GITHUB_CLIENT_ID, value: input.clientId })
-			.onConflictDoUpdate({
-				target: appSettings.key,
-				set: { value: input.clientId, updatedAt: new Date() }
-			});
-		await tx
-			.insert(appSettings)
-			.values({ key: GITHUB_CLIENT_SECRET, value: input.clientSecret })
-			.onConflictDoUpdate({
-				target: appSettings.key,
-				set: { value: input.clientSecret, updatedAt: new Date() }
-			});
+	await putValues(db, {
+		[GITHUB_CLIENT_ID]: input.clientId,
+		[GITHUB_CLIENT_SECRET]: input.clientSecret
 	});
 }
 
@@ -165,11 +148,5 @@ export async function putGitHubAuthAllowedOrgs(
 	db: Db,
 	input: { allowedOrgs: string[] }
 ): Promise<void> {
-	await db
-		.insert(appSettings)
-		.values({ key: GITHUB_ALLOWED_ORGS, value: JSON.stringify(input.allowedOrgs) })
-		.onConflictDoUpdate({
-			target: appSettings.key,
-			set: { value: JSON.stringify(input.allowedOrgs), updatedAt: new Date() }
-		});
+	await putValues(db, { [GITHUB_ALLOWED_ORGS]: JSON.stringify(input.allowedOrgs) });
 }

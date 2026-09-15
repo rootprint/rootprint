@@ -44,6 +44,10 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 		session: { cookieCache: { enabled: true } },
 		rateLimit: { enabled: true },
 		advanced: { ipAddress: { ipAddressHeaders: ['x-rootprint-client-ip'] } },
+		// Every OAuth failure path falls back to this, so no per-flow
+		// errorCallbackURL is needed. Absolute because the API also serves the SPA
+		// at its own origin, which a relative path would strand split deployments on.
+		onAPIError: { errorURL: `${config.frontendUrl ?? config.origin}/auth/sign-in` },
 		emailAndPassword: { enabled: true, disableSignUp: true },
 		user: {
 			additionalFields: {
@@ -66,7 +70,13 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 							return;
 						}
 						if (acct.providerId === 'github') {
-							if (!(await githubTokenIsAllowed(db, acct.accessToken))) {
+							let allowed = false;
+							try {
+								allowed = await githubTokenIsAllowed(db, acct.accessToken);
+							} catch (err) {
+								logger.error({ err, userId: acct.userId }, 'github org check unavailable');
+							}
+							if (!allowed) {
 								throw new APIError('FORBIDDEN', { message: 'org_not_allowed' });
 							}
 							return;
@@ -136,8 +146,10 @@ export async function initAuth(secret: string): Promise<void> {
 	if (holder.instance !== null) {
 		throw new Error('initAuth has already been called');
 	}
-	const google = await loadGoogleAuthForBetterAuth(db);
-	const github = await loadGitHubAuthForBetterAuth(db);
+	const [google, github] = await Promise.all([
+		loadGoogleAuthForBetterAuth(db),
+		loadGitHubAuthForBetterAuth(db)
+	]);
 	holder.secret = secret;
 	holder.instance = buildAuth(secret, google, github);
 }
@@ -153,8 +165,10 @@ export async function reloadAuth(): Promise<void> {
 	if (holder.secret === null) {
 		throw new Error('reloadAuth called before initAuth');
 	}
-	const google = await loadGoogleAuthForBetterAuth(db);
-	const github = await loadGitHubAuthForBetterAuth(db);
+	const [google, github] = await Promise.all([
+		loadGoogleAuthForBetterAuth(db),
+		loadGitHubAuthForBetterAuth(db)
+	]);
 	holder.instance = buildAuth(holder.secret, google, github);
 }
 

@@ -22,23 +22,41 @@
 
 	const returnTo = $derived(safeReturnTo(page.url.searchParams.get('returnTo')));
 
-	async function signInWithGoogle() {
-		await authClient.signIn.social({
-			provider: 'google',
-			callbackURL: returnTo
-		});
-	}
+	const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+		domain_not_allowed: 'Your email domain is not allowed on this instance.',
+		org_not_allowed: 'Your GitHub organization is not allowed on this instance.',
+		account_not_linked:
+			'That account is not linked yet. Complete your invitation first, or contact an admin.',
+		unable_to_link_account:
+			'That account could not be linked. It may already belong to another user, or its email domain may not be on this instance’s allow-list.',
+		email_not_found: 'The provider did not share an email address for that account.',
+		signup_disabled: 'This instance does not allow self sign-up. Ask an admin for an invitation.',
+		unable_to_create_user: 'Your account could not be created on this instance.',
+		// The reason is not carried through here, so do not claim revocation.
+		unable_to_create_session: 'Sign-in was refused. Contact an administrator.',
+		access_denied: 'Sign-in was cancelled.'
+	};
 
-	async function signInWithGitHub() {
-		await authClient.signIn.social({
-			provider: 'github',
-			callbackURL: returnTo
-		});
+	let interactedSinceOauthError = $state(false);
+
+	const oauthError = $derived.by(() => {
+		if (interactedSinceOauthError) return null;
+		const code = page.url.searchParams.get('error');
+		if (!code) return null;
+		return OAUTH_ERROR_MESSAGES[code] ?? 'Sign-in failed. Please try again or contact an admin.';
+	});
+
+	async function signInWithProvider(provider: 'google' | 'github') {
+		formError = null;
+		interactedSinceOauthError = true;
+		const res = await authClient.signIn.social({ provider, callbackURL: returnTo });
+		if (res?.error) formError = res.error.message ?? 'Sign-in failed';
 	}
 
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		formError = null;
+		interactedSinceOauthError = true;
 		fieldErrors = {};
 		submitting = true;
 		try {
@@ -69,19 +87,27 @@
 
 <AuthHeader eyebrow="Sign in" title="Welcome back" divider />
 
-{#if formError}
-	<div role="alert" class="alert alert-error mt-4 text-sm">{formError}</div>
+{#if formError || oauthError}
+	<div role="alert" class="alert alert-error mt-4 text-sm">{formError ?? oauthError}</div>
 {/if}
 
 {#if data.providers.google.enabled}
-	<button type="button" class="btn btn-outline mt-4 w-full gap-2" onclick={signInWithGoogle}>
+	<button
+		type="button"
+		class="btn btn-outline mt-4 w-full gap-2"
+		onclick={() => signInWithProvider('google')}
+	>
 		<GoogleIcon class="h-4 w-4" />
 		Continue with Google
 	</button>
 {/if}
 
 {#if data.providers.github.enabled}
-	<button type="button" class="btn btn-outline mt-4 w-full gap-2" onclick={signInWithGitHub}>
+	<button
+		type="button"
+		class="btn btn-outline mt-4 w-full gap-2"
+		onclick={() => signInWithProvider('github')}
+	>
 		<GitHubIcon class="h-4 w-4" />
 		Continue with GitHub
 	</button>
