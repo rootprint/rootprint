@@ -229,6 +229,7 @@
 	}
 
 	&[aria-selected='true']::after,
+	&[aria-pressed='true']::after,
 	&[aria-current='page']::after {
 		@apply opacity-100;
 	}
