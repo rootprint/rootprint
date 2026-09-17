@@ -3144,7 +3144,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.4.2"
+		"version": "0.4.3"
 	},
 	"openapi": "3.1.0",
 	"paths": {
@@ -4479,6 +4479,26 @@
 								"schema": {
 									"additionalProperties": false,
 									"properties": {
+										"account": {
+											"additionalProperties": false,
+											"properties": {
+												"accountId": {
+													"type": "string"
+												},
+												"id": {
+													"type": "string"
+												},
+												"providerId": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"id",
+												"providerId",
+												"accountId"
+											],
+											"type": "object"
+										},
 										"data": {
 											"additionalProperties": true,
 											"properties": {},
@@ -4487,13 +4507,11 @@
 										"user": {
 											"properties": {
 												"email": {
+													"nullable": true,
 													"type": "string"
 												},
 												"emailVerified": {
 													"type": "boolean"
-												},
-												"id": {
-													"type": "string"
 												},
 												"image": {
 													"type": "string"
@@ -4503,7 +4521,6 @@
 												}
 											},
 											"required": [
-												"id",
 												"emailVerified"
 											],
 											"type": "object"
@@ -4511,7 +4528,8 @@
 									},
 									"required": [
 										"user",
-										"data"
+										"data",
+										"account"
 									],
 									"type": "object"
 								}
@@ -8522,6 +8540,9 @@
 									"error_description": {
 										"type": "string"
 									},
+									"iss": {
+										"type": "string"
+									},
 									"state": {
 										"type": "string"
 									},
@@ -9474,24 +9495,42 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {
-									"accountId": {
-										"description": "The account ID associated with the refresh token",
-										"type": "string"
+								"anyOf": [
+									{
+										"properties": {
+											"accountId": {
+												"description": "The Better Auth account ID",
+												"type": "string"
+											},
+											"userId": {
+												"description": "The user ID associated with the account",
+												"type": "string"
+											}
+										},
+										"required": [
+											"accountId"
+										],
+										"type": "object"
 									},
-									"providerId": {
-										"description": "The provider ID for the OAuth provider",
-										"type": "string"
-									},
-									"userId": {
-										"description": "The user ID associated with the account",
-										"type": "string"
+									{
+										"properties": {
+											"useAccountCookie": {
+												"description": "Select the current OAuth account from its signed cookie",
+												"enum": [
+													true
+												]
+											},
+											"userId": {
+												"description": "The user ID associated with the account",
+												"type": "string"
+											}
+										},
+										"required": [
+											"useAccountCookie"
+										],
+										"type": "object"
 									}
-								},
-								"required": [
-									"providerId"
-								],
-								"type": "object"
+								]
 							}
 						}
 					},
@@ -9919,6 +9958,16 @@
 										},
 										"type": "object"
 									},
+									"additionalParams": {
+										"additionalProperties": {
+											"type": "string"
+										},
+										"description": "Extra query parameters to append to the provider authorization URL (e.g. Cognito identity_provider, Google hd).",
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
+									},
 									"callbackURL": {
 										"description": "The URL to redirect to after the user has signed in",
 										"type": "string"
@@ -9942,12 +9991,6 @@
 											"refreshToken": {
 												"type": "string"
 											},
-											"scopes": {
-												"items": {
-													"type": "string"
-												},
-												"type": "array"
-											},
 											"token": {
 												"type": "string"
 											}
@@ -9957,12 +10000,17 @@
 										],
 										"type": "object"
 									},
+									"loginHint": {
+										"description": "The login hint to use for the authorization code request",
+										"type": "string"
+									},
 									"provider": {
 										"anyOf": [
 											{
 												"enum": [
 													"apple",
 													"atlassian",
+													"cloudflare",
 													"cognito",
 													"discord",
 													"facebook",
@@ -10631,24 +10679,42 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {
-									"accountId": {
-										"description": "The account ID associated with the refresh token",
-										"type": "string"
+								"anyOf": [
+									{
+										"properties": {
+											"accountId": {
+												"description": "The Better Auth account ID",
+												"type": "string"
+											},
+											"userId": {
+												"description": "The user ID associated with the account",
+												"type": "string"
+											}
+										},
+										"required": [
+											"accountId"
+										],
+										"type": "object"
 									},
-									"providerId": {
-										"description": "The provider ID for the OAuth provider",
-										"type": "string"
-									},
-									"userId": {
-										"description": "The user ID associated with the account",
-										"type": "string"
+									{
+										"properties": {
+											"useAccountCookie": {
+												"description": "Select the current OAuth account from its signed cookie",
+												"enum": [
+													true
+												]
+											},
+											"userId": {
+												"description": "The user ID associated with the account",
+												"type": "string"
+											}
+										},
+										"required": [
+											"useAccountCookie"
+										],
+										"type": "object"
 									}
-								},
-								"required": [
-									"providerId"
-								],
-								"type": "object"
+								]
 							}
 						}
 					},
@@ -12165,6 +12231,16 @@
 										},
 										"type": "object"
 									},
+									"additionalParams": {
+										"additionalProperties": {
+											"type": "string"
+										},
+										"description": "Extra query parameters to append to the provider authorization URL (e.g. Cognito identity_provider, Google hd).",
+										"propertyNames": {
+											"type": "string"
+										},
+										"type": "object"
+									},
 									"callbackURL": {
 										"description": "Callback URL to redirect to after the user has signed in",
 										"type": "string"
@@ -12238,6 +12314,7 @@
 												"enum": [
 													"apple",
 													"atlassian",
+													"cloudflare",
 													"cognito",
 													"discord",
 													"facebook",
@@ -12447,11 +12524,25 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {},
+								"properties": {
+									"callbackURL": {
+										"description": "The URL to redirect to after provider logout",
+										"type": "string"
+									},
+									"disableRedirect": {
+										"description": "Return the provider logout URL without redirecting",
+										"type": "boolean"
+									},
+									"state": {
+										"description": "State to pass to the provider logout endpoint",
+										"type": "string"
+									}
+								},
 								"type": "object"
 							}
 						}
-					}
+					},
+					"required": false
 				},
 				"responses": {
 					"200": {
@@ -12459,8 +12550,16 @@
 							"application/json": {
 								"schema": {
 									"properties": {
+										"redirect": {
+											"description": "Whether the client should redirect to the provider logout URL",
+											"type": "boolean"
+										},
 										"success": {
 											"type": "boolean"
+										},
+										"url": {
+											"description": "Provider logout URL when RP-initiated logout is available",
+											"type": "string"
 										}
 									},
 									"type": "object"
@@ -12822,14 +12921,12 @@
 							"schema": {
 								"properties": {
 									"accountId": {
-										"type": "string"
-									},
-									"providerId": {
+										"description": "The Better Auth account ID to unlink",
 										"type": "string"
 									}
 								},
 								"required": [
-									"providerId"
+									"accountId"
 								],
 								"type": "object"
 							}
@@ -14468,6 +14565,26 @@
 						"schema": {
 							"minLength": 1,
 							"type": "string"
+						}
+					},
+					{
+						"description": "Unix timestamp in seconds",
+						"in": "query",
+						"name": "startTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Unix timestamp in seconds",
+						"in": "query",
+						"name": "endTs",
+						"required": true,
+						"schema": {
+							"minimum": 0,
+							"type": "number"
 						}
 					}
 				],

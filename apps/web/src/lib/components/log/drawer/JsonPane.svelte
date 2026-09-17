@@ -41,8 +41,8 @@
 	>
 		<div class="border-line bg-base-200 flex items-center justify-between border-b px-3 py-1.5">
 			<div class="flex items-center gap-2">
-				<span class="eyebrow text-[10px]">JSON</span>
-				<span class="text-base-content/40 text-[10px] tabular-nums">
+				<span class="section-label">JSON</span>
+				<span class="text-subtle text-xs tabular-nums">
 					{pluralize(lineCount, 'line')}
 				</span>
 			</div>

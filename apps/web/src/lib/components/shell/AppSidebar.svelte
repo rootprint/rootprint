@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { browser } from '$app/environment';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { Activity, PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-svelte';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
@@ -13,11 +13,9 @@
 
 	const STORAGE_KEY = 'rootprint:sidebar-collapsed';
 
-	let collapsed = $state(browser && readString(STORAGE_KEY) === '1');
-
-	$effect(() => {
-		if (browser) writeString(STORAGE_KEY, collapsed ? '1' : '0');
-	});
+	const wide = new MediaQuery('(min-width: 80rem)');
+	const savedPreference = readString(STORAGE_KEY);
+	let collapsed = $state(savedPreference === null ? !wide.current : savedPreference === '1');
 
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
@@ -27,11 +25,15 @@
 </script>
 
 <aside
-	class="border-line bg-base-100 flex shrink-0 flex-col border-r transition-[width] duration-150 {collapsed
+	class="border-line bg-base-100 flex min-h-0 shrink-0 flex-col overflow-y-auto border-r transition-[width] duration-150 {collapsed
 		? 'w-14'
 		: 'w-60'}"
 >
-	<div class="border-line flex h-12 items-center border-b {collapsed ? 'justify-center' : 'px-4'}">
+	<div
+		class="border-line flex h-12 shrink-0 items-center border-b {collapsed
+			? 'justify-center'
+			: 'px-4'}"
+	>
 		<a href="/" class="flex items-center gap-2 hover:opacity-80" aria-label="Rootprint home">
 			<img src="/logo.png" alt="" class="h-6 w-6 object-contain" />
 			{#if !collapsed}
@@ -51,7 +53,7 @@
 		/>
 	</nav>
 
-	<div class="border-line border-t px-2 py-3">
+	<div class="border-line shrink-0 border-t px-2 py-3">
 		<div class="flex flex-col gap-0.5">
 			<HelpMenu {collapsed} />
 			<SidebarNavItem
@@ -65,7 +67,10 @@
 		<div class="border-line my-2 border-t"></div>
 		<button
 			type="button"
-			onclick={() => (collapsed = !collapsed)}
+			onclick={() => {
+				collapsed = !collapsed;
+				writeString(STORAGE_KEY, collapsed ? '1' : '0');
+			}}
 			aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
 			data-tip={collapsed ? 'Expand' : ''}
 			class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed

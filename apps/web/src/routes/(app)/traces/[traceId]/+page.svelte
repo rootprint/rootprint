@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { ArrowLeft, Check, Copy, ScrollText, Search } from 'lucide-svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { slide } from 'svelte/transition';
 
 	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
@@ -15,6 +16,7 @@
 	import type { SpanNode } from '$lib/types';
 
 	let { data } = $props();
+	const sideBySide = new MediaQuery('(min-width: 80rem)');
 
 	/** Rewrites `?index=`, which the load reads — so this refetches the field config and span log counts. */
 	function selectLogIndex(id: string | null): void {
@@ -132,7 +134,7 @@
 			</div>
 		</div>
 
-		<div class="mt-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+		<div class="mt-3 flex min-w-0 items-end justify-between gap-3">
 			<div class="min-w-0">
 				<p class="eyebrow">Operation</p>
 				<div class="mt-0.5 flex min-w-0 items-baseline gap-3">
@@ -147,11 +149,11 @@
 				</div>
 			</div>
 
-			<div class="min-w-0 sm:max-w-[min(48vw,36rem)] sm:text-right">
-				<p class="eyebrow">Trace ID</p>
+			<div class="max-w-[min(48vw,36rem)] min-w-0 text-right">
+				<p class="section-label">Trace ID</p>
 				<CopyButton
 					text={data.traceId}
-					class="text-base-content/50 hover:text-base-content mt-0.5 flex w-full min-w-0 items-center gap-1.5 sm:justify-end"
+					class="text-subtle hover:text-base-content mt-0.5 flex w-full min-w-0 items-center justify-end gap-1.5"
 					ariaLabel="Copy trace ID"
 				>
 					{#snippet children({ copied }: { copied: boolean })}
@@ -170,7 +172,7 @@
 			<div
 				class="border-line mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-xs"
 			>
-				<span class="eyebrow mr-1">Services</span>
+				<span class="text-muted mr-1 text-xs">Services</span>
 				{#each model.services as service (service.name)}
 					<span class="flex min-w-0 items-center gap-1.5">
 						<span
@@ -178,10 +180,10 @@
 							style={`background-color:${serviceColor(service.name)}`}
 						></span>
 						<span class="truncate">{service.name}</span>
-						<span class="text-base-content/50 tabular-nums">{service.count}</span>
+						<span class="text-subtle tabular-nums">{service.count}</span>
 					</span>
 				{/each}
-				<span class="bg-line hidden h-3 w-px sm:block"></span>
+				<span class="bg-line h-3 w-px"></span>
 				<span class="text-base-content/60 font-mono tabular-nums">
 					{model.spanCount} span{model.spanCount === 1 ? '' : 's'}
 				</span>
@@ -196,7 +198,7 @@
 
 	{#if model.orphanCount > 0 && !data.truncated}
 		<div class="border-line flex items-center gap-2 border-b px-4 py-1.5 text-xs">
-			<span class="text-warning">
+			<span class="text-warning-ink">
 				{model.orphanCount}
 				{model.orphanCount === 1 ? 'span is' : 'spans are'} waiting on a parent that hasn't finished yet
 				— a span only arrives once it ends, so this trace fills in as they complete.
@@ -207,7 +209,7 @@
 
 	{#if data.truncated}
 		<div class="border-line flex items-center gap-2 border-b px-4 py-1.5 text-xs">
-			<span class="text-warning">
+			<span class="text-warning-ink">
 				This trace is too large to display in full — some spans are not shown.
 			</span>
 		</div>
@@ -227,8 +229,8 @@
 		</div>
 	{/if}
 
-	<div class="flex min-h-0 flex-1">
-		<div class="min-w-0 flex-1">
+	<div class="flex min-h-0 flex-1 flex-col xl:flex-row">
+		<div class="min-h-0 min-w-0 flex-1">
 			{#key data.traceId}
 				<TracePane {model} {filter} {selectedSpanId} onSelectSpan={selectSpan} {spanLogs} minimap />
 			{/key}
@@ -236,9 +238,12 @@
 
 		{#if selectedSpan}
 			<aside
-				class="border-line w-[clamp(22rem,42vw,34rem)] shrink-0 overflow-hidden border-l"
+				class="border-line h-1/2 w-full shrink-0 overflow-hidden border-t xl:h-auto xl:w-[clamp(22rem,36vw,34rem)] xl:border-t-0 xl:border-l"
 				aria-label="Span detail"
-				transition:slide={{ axis: 'x', duration: prefersReducedMotion.current ? 0 : 200 }}
+				transition:slide={{
+					axis: sideBySide.current ? 'x' : 'y',
+					duration: prefersReducedMotion.current ? 0 : 200
+				}}
 			>
 				<SpanDetailPane
 					span={selectedSpan}

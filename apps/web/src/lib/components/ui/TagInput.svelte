@@ -85,7 +85,7 @@
 		placeholder={tags.length === 0 ? placeholderEmpty : placeholderMore}
 		autocomplete="off"
 		aria-label={addLabel}
-		class="placeholder:text-base-content/40 min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
+		class="placeholder:text-subtle min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
 		onkeydown={handleKeydown}
 	/>
 </div>

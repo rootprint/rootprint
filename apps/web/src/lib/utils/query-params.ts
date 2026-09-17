@@ -101,10 +101,16 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 }
 
 /** Merge a partial query update into existing URL params, returning the new search string. */
-export function buildQueryUrl(current: URLSearchParams, partial: Partial<ParsedQuery>): string {
+export function buildQueryUrl(
+	current: URLSearchParams,
+	partial: Partial<ParsedQuery>,
+	fold: boolean = current.get('fold') === '1'
+): string {
 	const prev = deserialize(current);
 	const merged: ParsedQuery = { ...prev, ...partial };
 	const params = serialize(merged);
+	// `fold` is display-only and is not part of ParsedQuery; keep it across navigations.
+	if (fold) params.set('fold', '1');
 	const str = params.toString();
 	return str ? `?${str}` : '?';
 }

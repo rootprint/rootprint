@@ -16,6 +16,8 @@
 	import { fetchFieldValuesBulk } from '$lib/api/field-values';
 	import { escapeFilterValue } from 'api/query';
 
+	const SUGGEST_LIMIT = 50;
+
 	let { store }: { store: SearchStore } = $props();
 
 	let queryInput = $state(store.query);
@@ -29,6 +31,7 @@
 	const unrun = $derived(queryInput !== store.query);
 
 	const valueCache = new Map<string, LogFieldValueBucket[]>();
+	let valueCacheRevision = -1;
 	let valueState = $state<{ key: string; buckets: LogFieldValueBucket[] } | null>(null);
 	let valueAbort: AbortController | null = null;
 
@@ -57,10 +60,16 @@
 		const t = token;
 		const id = store.selectedIndex;
 		if (t === null || t.kind !== 'value' || id === null) return null;
-		return `${id}|${t.field}|${store.composedQuery}|${serializeTimeRange(store.timeRange)}`;
+		return `${id}|${t.field}|${store.composedQuery}|${serializeTimeRange(store.timeRange)}|${store.refreshRevision}`;
 	});
 
 	$effect(() => {
+		const revision = store.refreshRevision;
+		if (revision !== valueCacheRevision) {
+			valueCache.clear();
+			valueCacheRevision = revision;
+		}
+		if (dismissed) return;
 		const key = valueFetchKey;
 		const t = token;
 		const id = store.selectedIndex;
@@ -102,24 +111,44 @@
 		};
 	});
 
-	const suggestions = $derived.by<QuerySuggestion[]>(() => {
+	function prefixFirst(items: QuerySuggestion[], q: string): QuerySuggestion[] {
+		if (q === '') return items;
+		const head: QuerySuggestion[] = [];
+		const tail: QuerySuggestion[] = [];
+		for (const s of items) {
+			const hit = s.label.toLowerCase().startsWith(q) || s.insert.toLowerCase().startsWith(q);
+			(hit ? head : tail).push(s);
+		}
+		return [...head, ...tail];
+	}
+
+	const matched = $derived.by<QuerySuggestion[]>(() => {
 		const t = token;
 		if (t === null || dismissed) return [];
 		const q = t.prefix.toLowerCase();
 		if (t.kind === 'field') {
-			return store.fields
+			const fields = store.fields
 				.filter((f) => f.name.toLowerCase().includes(q) || f.displayName.toLowerCase().includes(q))
 				.map((f) => ({
 					label: f.displayName,
 					detail: f.name === f.displayName ? f.type : f.name,
 					insert: f.name
 				}));
+			return prefixFirst(fields, q);
 		}
 		if (valueState === null || valueState.key !== valueFetchKey) return [];
-		return valueState.buckets
+		const values = valueState.buckets
 			.filter((b) => b.value.toLowerCase().includes(q))
 			.map((b) => ({ label: b.value, detail: b.count.toLocaleString(), insert: b.value }));
+		return prefixFirst(values, q);
 	});
+
+	const suggestions = $derived(matched.slice(0, SUGGEST_LIMIT));
+	const hiddenCount = $derived(matched.length - suggestions.length);
+	const suggestOpen = $derived(token !== null && !dismissed);
+	const valuesPending = $derived(
+		token?.kind === 'value' && (valueState === null || valueState.key !== valueFetchKey)
+	);
 
 	async function accept(i: number) {
 		const t = token;
@@ -150,17 +179,10 @@
 			e.preventDefault();
 			void accept(highlight);
 		} else if (e.key === 'Enter') {
-			if (!openedTrace()) commitQuery();
-		} else if (e.key === 'Escape' && open) {
+			runQuery();
+		} else if (e.key === 'Escape' && suggestOpen) {
 			e.stopPropagation();
 			dismissed = true;
-		}
-	}
-
-	function commitQuery() {
-		dismissed = true;
-		if (queryInput !== store.query) {
-			store.runQuery(queryInput);
 		}
 	}
 
@@ -169,13 +191,15 @@
 	 * no log field. Only on Enter or Run — blur no longer commits, and navigating away from a click would
 	 * surprise. `isTraceId` rejects the all-zeros id, so OTLP's null trace id still falls through.
 	 */
-	function openedTrace(): boolean {
+	function runQuery() {
 		const raw = queryInput.trim().toLowerCase();
-		if (!isTraceId(raw)) return false;
-		queryInput = '';
 		dismissed = true;
-		void goto(traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url }));
-		return true;
+		if (isTraceId(raw)) {
+			queryInput = '';
+			void goto(traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url }));
+			return;
+		}
+		store.runQuery(queryInput);
 	}
 
 	function shareLink() {
@@ -183,11 +207,11 @@
 	}
 </script>
 
-<div class="border-line bg-base-100 flex h-12 items-center gap-2 border-b px-3">
+<div class="border-line bg-base-100 flex h-12 shrink-0 items-center gap-2 border-b px-3">
 	<ViewsDropdown {store} />
 
 	<select
-		class="select select-sm w-auto min-w-0 font-mono text-xs"
+		class="select select-sm text-ui w-auto max-w-36 min-w-0"
 		aria-label="Index"
 		value={store.selectedIndex}
 		onchange={(e) => store.handleIndexChange((e.currentTarget as HTMLSelectElement).value)}
@@ -200,7 +224,8 @@
 	<div class="relative min-w-0 flex-1">
 		<input
 			type="text"
-			class="input input-sm w-full font-mono"
+			class="input input-sm w-full font-mono text-xs placeholder:font-sans"
+			aria-label="Search logs"
 			placeholder="Search logs… (or paste a trace ID)"
 			title={'Search logs with a Quickwit query. A bare 32-character hex trace ID opens that trace instead — wrap it in quotes to search for it as text.'}
 			bind:this={inputEl}
@@ -219,10 +244,12 @@
 			onkeyup={refreshToken}
 			onkeydown={handleKeydown}
 		/>
-		{#if suggestions.length > 0}
+		{#if suggestOpen}
 			<QuerySuggestDropdown
 				items={suggestions}
 				kind={token?.kind ?? 'field'}
+				hidden={hiddenCount}
+				pending={valuesPending}
 				{highlight}
 				onPick={(i) => void accept(i)}
 			/>
@@ -252,9 +279,7 @@
 			onmousedown={(e) => {
 				e.preventDefault();
 			}}
-			onclick={() => {
-				if (!openedTrace()) commitQuery();
-			}}
+			onclick={runQuery}
 		>
 			<Play class="h-3.5 w-3.5" />
 			Run

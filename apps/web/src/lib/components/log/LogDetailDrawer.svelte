@@ -227,7 +227,7 @@
 		{@const id = traceId}
 		<button
 			type="button"
-			class="border-line bg-base-200/60 text-base-content/60 hover:bg-base-300 hover:text-base-content inline-flex h-7 items-center gap-1.5 rounded border px-2 text-[10px] tracking-wider uppercase transition-colors"
+			class="border-line bg-base-200/60 text-muted hover:bg-base-300 hover:text-base-content inline-flex h-7 items-center gap-1.5 rounded border px-2 text-xs transition-colors"
 			aria-label="Copy trace ID"
 			title={`Copy trace ID: ${id}`}
 			onclick={() => copyWithToast(id, 'Trace ID copied', 'Failed to copy trace ID')}

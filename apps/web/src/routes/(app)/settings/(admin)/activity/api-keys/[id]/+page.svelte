@@ -6,10 +6,10 @@
 	let { data } = $props();
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader>
 		{#await data.summary}
-			<h1 class="text-h1 text-base-content/40 mt-3">Loading…</h1>
+			<h1 class="text-h1 text-muted mt-3">Loading…</h1>
 		{:then s}
 			<h1 class="text-h1 mt-3">{s.displayName ?? `API key #${data.apiKeyId}`}</h1>
 			<p class="text-base-content/60 mt-2 font-mono text-xs">#{data.apiKeyId}</p>

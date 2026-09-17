@@ -23,7 +23,7 @@
 	);
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader title="Indexes" description="Manage index lifecycle and configuration." />
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">

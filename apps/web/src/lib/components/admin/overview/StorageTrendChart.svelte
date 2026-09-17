@@ -157,7 +157,7 @@
 
 <div class="border-line bg-base-100 rounded-box flex w-full flex-col border">
 	<header class="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-3">
-		<p class="eyebrow">Storage by index</p>
+		<p class="section-label">Storage by index</p>
 		<TimeRangeTabs value={range} onChange={onRangeChange} />
 	</header>
 
@@ -168,7 +168,7 @@
 			</div>
 		{/if}
 		{#if !columnar || series.length === 0}
-			<div class="text-base-content/40 flex h-80 items-center justify-center text-xs">
+			<div class="text-muted flex h-80 items-center justify-center text-xs">
 				{series.length === 0
 					? 'No indexes available.'
 					: 'No snapshots yet in this window — waiting for the next sweep.'}

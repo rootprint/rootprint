@@ -50,7 +50,7 @@
 	}
 </script>
 
-<div class="mx-auto flex max-w-7xl flex-col gap-6 px-12 py-12">
+<div class="settings-page flex flex-col gap-6">
 	<PageHeader
 		description={`Configure how this ${sourceTypeLabel(source.sourceType)} source ingests into ${indexId}.`}
 		actions={managed ? undefined : sourceActions}

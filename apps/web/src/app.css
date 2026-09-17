@@ -42,7 +42,7 @@
 	--color-neutral: #151515;
 	--color-neutral-content: #f6f7f9;
 
-	/* Status — code-palette derived, tuned for legibility on white. */
+	/* Status fills; use the ink variants for foregrounds on light surfaces. */
 	--color-info: #00c1ff;
 	--color-info-content: #001a26;
 	--color-success: #008060;
@@ -66,6 +66,13 @@
 @theme {
 	--font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+	--color-muted: #595e68;
+	--color-subtle: #626975;
+	--color-info-ink: #006d91;
+	--color-warning-ink: #a3440a;
+
+	--text-ui: 0.8125rem;
+	--text-ui--line-height: 1.25rem;
 
 	--text-display: 4rem;
 	--text-display--line-height: 4.5rem;
@@ -131,22 +138,25 @@
 		line-height: 1.25rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+		color: var(--color-muted);
 	}
 
-	.auth-grid {
-		background-image:
-			linear-gradient(
-				color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px,
-				transparent 1px
-			),
-			linear-gradient(
-				90deg,
-				color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px,
-				transparent 1px
-			);
-		background-size: 40px 40px;
-		background-position: calc(50% + 20px) calc(50% + 20px);
+	.section-label {
+		font-family: var(--font-sans);
+		font-size: var(--text-xs);
+		line-height: 1.125rem;
+		font-weight: 500;
+		letter-spacing: normal;
+		color: var(--color-muted);
+	}
+
+	/* The container is the viewport minus the app sidebar, so it can be narrower than the
+	   48rem desktop gate; 2rem is the floor. */
+	.settings-page {
+		@apply mx-auto max-w-7xl p-8;
+		@container settings (min-width: 64rem) {
+			padding: 3rem;
+		}
 	}
 
 	/* Stacked form-field label. Single source for both <label> (Field) and
@@ -154,11 +164,10 @@
 	.field-label {
 		display: block;
 		font-family: var(--font-sans);
-		font-size: 0.6875rem;
+		font-size: var(--text-ui);
+		line-height: var(--text-ui--line-height);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+		color: var(--color-muted);
 	}
 
 	/* Used by CodeBlock to highlight the API key value substituted by the send-logs wizard. */
@@ -177,23 +186,22 @@
 		padding-left: 0.25rem;
 		padding-right: 0.25rem;
 	}
+}
 
-	/* Flatten DaisyUI's default 2px offset focus ring on inputs:
-	   shift the 1px border to base-content instead. Same footprint, no jump. */
-	.input:focus-within,
-	.input:focus,
-	.select:focus-within,
-	.select:focus,
-	.textarea:focus-within,
-	.textarea:focus {
-		outline: none;
-		box-shadow: none;
-		border-color: var(--color-base-content);
-	}
-
-	.input.input-error:focus-within,
-	.input.input-error:focus {
-		border-color: var(--color-error);
+/* Unlayered to override DaisyUI's utility-layer focus styles, including invalid fields.
+   A border-color change keeps the flat treatment without shifting the control. */
+.input:focus-within,
+.input:focus,
+.select:focus-within,
+.select:focus,
+.textarea:focus-within,
+.textarea:focus {
+	outline: none;
+	box-shadow: none;
+	border-color: var(--color-base-content);
+	@media (forced-colors: active) {
+		outline: 2px solid Highlight;
+		outline-offset: 2px;
 	}
 }
 
@@ -206,6 +214,7 @@
 	}
 
 	&[aria-selected='true']::after,
+	&[aria-pressed='true']::after,
 	&[aria-current='page']::after {
 		@apply opacity-100;
 	}
@@ -225,12 +234,13 @@
 }
 
 /* Chart colour ramp — referenced directly via var(--chart-N) by the uPlot charts.
-   Semantic ordering: brand → accent → status (success/warning/error). */
+   Ordering: brand → info → status (success/warning/error), using the ink variants
+   so strokes stay legible on the light canvas. */
 :root {
-	--chart-1: var(--color-primary);
-	--chart-2: var(--color-accent);
+	--chart-1: var(--color-secondary);
+	--chart-2: var(--color-info-ink);
 	--chart-3: var(--color-success);
-	--chart-4: var(--color-warning);
+	--chart-4: var(--color-warning-ink);
 	--chart-5: var(--color-error);
 
 	/* Categorical trace palette. Service names hash into this ramp; red stays reserved for errors. */
@@ -250,5 +260,4 @@
 	/* Canonical hairline: 1px line at 10% base-content. Generates border-line,
 	   border-b-line, divide-line, etc. — the single source for all hairlines. */
 	--color-line: color-mix(in oklab, var(--color-base-content) 10%, transparent);
-	--color-auth-card: color-mix(in oklab, var(--color-base-200) 50%, var(--color-base-300) 50%);
 }

@@ -65,7 +65,10 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 								.where(eq(user.id, acct.userId))
 								.limit(1);
 							if (!row?.email || !(await googleEmailIsAllowed(db, row.email))) {
-								throw new APIError('FORBIDDEN', { message: 'domain_not_allowed' });
+								throw new APIError('FORBIDDEN', {
+									code: 'domain_not_allowed',
+									message: 'Email domain not allowed'
+								});
 							}
 							return;
 						}
@@ -77,7 +80,10 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 								logger.error({ err, userId: acct.userId }, 'github org check unavailable');
 							}
 							if (!allowed) {
-								throw new APIError('FORBIDDEN', { message: 'org_not_allowed' });
+								throw new APIError('FORBIDDEN', {
+									code: 'org_not_allowed',
+									message: 'GitHub organization not allowed'
+								});
 							}
 							return;
 						}
@@ -96,7 +102,13 @@ function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitH
 			session: {
 				create: {
 					before: async (session) => {
-						if (await userRetainsOAuthAccess(db, session.userId)) return;
+						let retained = false;
+						try {
+							retained = await userRetainsOAuthAccess(db, session.userId);
+						} catch (err) {
+							logger.error({ err, userId: session.userId }, 'oauth access check unavailable');
+						}
+						if (retained) return;
 						logger.warn({ userId: session.userId }, 'oauth access blocked');
 						return false;
 					}

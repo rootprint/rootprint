@@ -34,7 +34,7 @@
 </script>
 
 <div class="border-line bg-base-100 flex flex-wrap items-center gap-1.5 border-b px-3 py-2">
-	<span class="text-base-content/40 shrink-0 text-[10px] tracking-wider uppercase">Scope</span>
+	<span class="text-muted shrink-0 text-xs">Scope</span>
 
 	<button
 		type="button"

@@ -1,3 +1,5 @@
+import { getUnixTime, isValid, parseISO } from 'date-fns';
+
 import type { FieldConfig, LogHit } from '$lib/types';
 import { getByPath } from './get-by-path';
 
@@ -9,6 +11,12 @@ export function normalizeHit(raw: Record<string, unknown>, index: number, fc: Fi
 		message: String(getByPath(raw, fc.messageField) ?? ''),
 		raw
 	};
+}
+
+/** A raw hit's timestamp as epoch seconds; NaN when missing or unparseable. */
+export function hitTimestampSeconds(raw: Record<string, unknown>, fc: FieldConfig): number {
+	const parsed = parseISO(coerceIso(getByPath(raw, fc.timestampField)));
+	return isValid(parsed) ? getUnixTime(parsed) : NaN;
 }
 
 function coerceIso(value: unknown): string {

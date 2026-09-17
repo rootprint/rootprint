@@ -61,7 +61,7 @@
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
 	{#if source.hasUnsupportedConfig}
-		<div class="text-warning flex items-start gap-2 px-4 py-3 text-xs">
+		<div class="text-warning-ink flex items-start gap-2 px-4 py-3 text-xs">
 			<TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
 			<p>
 				This source has connection settings Rootprint can't display (for example, multiple

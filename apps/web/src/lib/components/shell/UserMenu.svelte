@@ -49,7 +49,7 @@
 	{#if !collapsed}
 		<span class="min-w-0 flex-1 text-left">
 			<span class="block truncate text-sm">{user.name ?? 'User'}</span>
-			<span class="text-base-content/60 block truncate font-mono text-[10px]">{user.email}</span>
+			<span class="text-subtle block truncate text-xs">{user.email}</span>
 		</span>
 		<ChevronsUpDown class="text-base-content/40 h-3.5 w-3.5 shrink-0" />
 	{/if}

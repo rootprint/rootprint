@@ -12,18 +12,16 @@
 
 <section class="flex flex-col gap-2" aria-labelledby="dependency-heading">
 	<div>
-		<h2 id="dependency-heading" class="eyebrow">Downstream calls</h2>
-		<p class="text-base-content/50 mt-1 text-xs">
+		<h2 id="dependency-heading" class="section-label">Downstream calls</h2>
+		<p class="text-muted mt-1 text-xs">
 			Outbound client and producer spans emitted by
 			<span class="font-mono">{service}</span>, ranked by total time.
 		</p>
 	</div>
 	<div class="border-line rounded-box overflow-x-auto border">
-		<table class="table-xs table min-w-[600px]">
+		<table class="table-xs table min-w-[600px] text-xs">
 			<thead>
-				<tr
-					class="bg-base-200/70 text-base-content/60 text-[10px] font-medium tracking-wide uppercase"
-				>
+				<tr class="bg-base-200/70 text-muted font-medium">
 					<th scope="col">Call</th>
 					<th scope="col" class="text-right">Calls</th>
 					<th scope="col" class="text-right">p50 latency</th>
@@ -34,13 +32,10 @@
 			<tbody>
 				{#each dependencies as dependency (dependency.name)}
 					<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
-						<td class="max-w-md py-2 font-mono text-xs">
+						<td class="max-w-md py-2 font-mono">
 							<div class="truncate" title={dependency.name}>{dependency.name}</div>
 							{#if dependency.peers.length > 0}
-								<div
-									class="text-base-content/40 mt-0.5 truncate text-[10px]"
-									title={dependency.peers.join(', ')}
-								>
+								<div class="text-subtle mt-0.5 truncate" title={dependency.peers.join(', ')}>
 									{dependency.peers.join(', ')}
 								</div>
 							{/if}

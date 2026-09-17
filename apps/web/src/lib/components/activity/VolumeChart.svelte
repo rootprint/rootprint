@@ -96,7 +96,7 @@
 		<p class="eyebrow">Volume over time</p>
 	</header>
 	{#if !columnar}
-		<div class="text-base-content/40 flex h-72 items-center justify-center text-xs">
+		<div class="text-subtle flex h-72 items-center justify-center text-xs">
 			No searches in this window.
 		</div>
 	{:else}

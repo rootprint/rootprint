@@ -76,7 +76,7 @@
 <div class="h-full overflow-x-hidden overflow-y-auto">
 	<div class="border-line border-b p-3">
 		<div class="mb-1.5 flex items-center justify-between gap-3">
-			<p class="eyebrow">{grouped.messageLabel}</p>
+			<p class="section-label">{grouped.messageLabel}</p>
 			{#if grouped.message !== ''}
 				<button
 					type="button"
@@ -93,7 +93,7 @@
 			class="border-line rounded-md border p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap"
 		>
 			{#if grouped.message === ''}
-				<span class="text-base-content/40">(no message)</span>
+				<span class="text-subtle font-sans text-xs">(no message)</span>
 			{:else}
 				{grouped.message}
 			{/if}
@@ -106,15 +106,15 @@
 			placeholder="Search properties…"
 			label="Search properties by key or value"
 		/>
-		<label class="text-base-content/70 flex shrink-0 cursor-pointer items-center gap-2 text-xs">
+		<label class="text-muted flex shrink-0 cursor-pointer items-center gap-2 text-xs">
 			<input type="checkbox" class="checkbox checkbox-xs" bind:checked={showEmpty} />
 			Show empty values
 		</label>
-		<span class="text-base-content/40 shrink-0 text-[10px]">{totalRows} fields</span>
+		<span class="text-subtle shrink-0 text-xs tabular-nums">{totalRows} fields</span>
 	</div>
 
 	{#if visibleGroups.length === 0}
-		<p class="text-base-content/40 p-6 text-center text-xs">
+		<p class="text-muted p-6 text-center text-xs">
 			{needle === '' ? 'No fields to display' : 'No matching fields'}
 		</p>
 	{:else}
@@ -133,8 +133,8 @@
 							<span class="inline-flex transition-transform" class:-rotate-90={isCollapsed}>
 								<ChevronDown class="text-base-content/50 h-3 w-3" />
 							</span>
-							<p class="eyebrow">{group.label}</p>
-							<span class="bg-base-300 text-base-content/60 rounded-sm px-1.5 py-0.5 text-[10px]"
+							<p class="section-label">{group.label}</p>
+							<span class="bg-base-300 text-muted rounded-sm px-1.5 py-0.5 text-xs tabular-nums"
 								>{group.fields.length}</span
 							>
 						</button>
@@ -147,7 +147,7 @@
 						>
 							<table class="w-full table-fixed border-collapse">
 								<tbody>
-									{#each group.fields as field (field.name)}
+									{#each group.fields as field}
 										<FieldRow
 											{field}
 											onFilterFor={(f) => applyFilter(f, false)}

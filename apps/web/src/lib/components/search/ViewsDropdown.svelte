@@ -380,7 +380,7 @@
 			>
 				<ArrowLeft class="h-3.5 w-3.5" />
 			</button>
-			<p class="eyebrow truncate">
+			<p class="section-label truncate">
 				{editing ? 'Rename view' : 'New view'}
 			</p>
 		</div>
@@ -404,7 +404,7 @@
 				<p class="text-base-content/60 text-xs">
 					Saves the current query, filters, sort direction, and columns.
 				</p>
-				<label class="flex items-center gap-1.5 text-xs">
+				<label class="text-muted flex items-center gap-1.5 text-xs">
 					<input type="checkbox" class="checkbox checkbox-xs" bind:checked={saveTime} />
 					Save time range ({formatTimeRangeLabel(store.timeRange)})
 				</label>

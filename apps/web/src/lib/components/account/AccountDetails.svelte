@@ -40,20 +40,20 @@
 	<!-- Read-only facts shown as compact chips so they're legible at a glance. -->
 	<dl class="flex flex-wrap items-center gap-2 text-xs">
 		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
-			<dt class="text-base-content/50">Joined</dt>
+			<dt class="text-muted">Joined</dt>
 			<dd class="text-base-content/90 font-medium">{joined}</dd>
 		</div>
 		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
-			<dt class="text-base-content/50">Auth</dt>
+			<dt class="text-muted">Auth</dt>
 			<dd class="text-base-content/90 font-medium">{authMethod}</dd>
 		</div>
 		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
-			<dt class="text-base-content/50">Last active</dt>
+			<dt class="text-muted">Last active</dt>
 			<dd class="text-base-content/90 font-medium">{lastActiveLabel}</dd>
 		</div>
 		{#if status}
 			<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
-				<dt class="text-base-content/50">Status</dt>
+				<dt class="text-muted">Status</dt>
 				<dd class="flex items-center gap-1.5 font-medium {statusUi.text}">
 					<span class="h-1.5 w-1.5 rounded-full {statusUi.dot}" aria-hidden="true"></span>
 					{statusUi.label}
@@ -64,7 +64,7 @@
 
 	{#if showInvite}
 		<div class="border-line rounded-box flex flex-col gap-2 border p-4">
-			<p class="text-base-content/50 text-xs">
+			<p class="text-muted text-xs">
 				Invite link{expiresLabel ? ` · expires ${expiresLabel}` : ''}
 			</p>
 			<CopyableField value={inviteUrl!} ariaLabel="Invite link" />

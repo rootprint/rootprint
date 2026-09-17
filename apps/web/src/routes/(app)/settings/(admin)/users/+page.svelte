@@ -62,20 +62,19 @@
 	}
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader title="Users" description="Create users, manage roles, and revoke access." />
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">
-		<div role="tablist" class="flex h-8 items-center gap-5">
+		<div role="group" aria-label="Filter members" class="flex h-8 shrink-0 items-center gap-5">
 			{#each filterOptions as opt (opt.id)}
 				{@const active = filter === opt.id}
 				<button
 					type="button"
-					role="tab"
-					aria-selected={active}
+					aria-pressed={active}
 					class="tab-underline flex h-full items-center text-sm transition-colors {active
 						? 'text-base-content'
-						: 'text-base-content/50 hover:text-base-content'}"
+						: 'text-muted hover:text-base-content'}"
 					onclick={() => (filter = opt.id)}
 				>
 					{opt.label}
@@ -83,9 +82,14 @@
 			{/each}
 		</div>
 
-		<SearchInput bind:value={search} placeholder="Search name or email…" label="Search members" />
+		<SearchInput
+			bind:value={search}
+			placeholder="Search name or email…"
+			label="Search members"
+			class="min-w-48 flex-1"
+		/>
 
-		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
+		<span role="status" class="text-subtle text-xs tabular-nums">[{countLabel}]</span>
 
 		<button class="btn btn-primary btn-sm" onclick={() => (createUserOpen = true)}>
 			<UserPlus class="h-3.5 w-3.5" />
@@ -93,72 +97,68 @@
 		</button>
 	</div>
 
-	<div class="mt-4">
-		<ListCard
-			cols="minmax(0,2.5fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) auto"
-			empty={filtered.length === 0}
-			{emptyMessage}
-		>
-			<div
-				class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
+	<div class="mt-4 overflow-x-auto">
+		<div class="min-w-[40rem]">
+			<ListCard
+				cols="minmax(0,2.5fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) auto"
+				empty={filtered.length === 0}
+				{emptyMessage}
 			>
-				<span>User</span>
-				<span>Role</span>
-				<span>Status</span>
-				<span>Last active</span>
-				<span></span>
-			</div>
-			{#each filtered as user (user.id)}
-				<div class="col-span-full grid min-h-14 grid-cols-subgrid items-center px-4 py-3">
-					<div class="min-w-0">
-						<UserIdentity
-							id={user.id}
-							name={user.name}
-							email={user.email}
-							size="sm"
-							href={`/settings/users/${user.id}`}
-						/>
-					</div>
-
-					<div>
-						{#if user.role === 'admin'}
-							<span
-								class="badge badge-sm badge-soft badge-neutral text-[10px] tracking-wide uppercase"
-							>
-								Admin
-							</span>
-						{:else}
-							<span class="text-base-content/50 text-xs">Member</span>
-						{/if}
-					</div>
-
-					<div>
-						{#if user.status === 'expired'}
-							<span class="text-error text-xs">Invite expired</span>
-						{:else if user.status === 'pending'}
-							<span class="text-base-content/60 text-xs">Invite pending</span>
-						{:else}
-							<span class="text-base-content/70 text-xs">Active</span>
-						{/if}
-					</div>
-
-					<div class="text-base-content/50 text-xs">
-						{user.lastActive ? formatRelativeTime(user.lastActive) : 'Never'}
-					</div>
-
-					<div class="flex justify-end">
-						<MemberActionsMenu
-							{user}
-							{currentUserId}
-							onRegenerate={regenerateInvite}
-							onToggleRole={toggleUserRole}
-							onResetPassword={openReset}
-							onRemove={openRemove}
-						/>
-					</div>
+				<div class="section-label col-span-full grid grid-cols-subgrid items-center px-4 py-2.5">
+					<span>User</span>
+					<span>Role</span>
+					<span>Status</span>
+					<span>Last active</span>
+					<span></span>
 				</div>
-			{/each}
-		</ListCard>
+				{#each filtered as user (user.id)}
+					<div class="col-span-full grid min-h-14 grid-cols-subgrid items-center px-4 py-3">
+						<div class="min-w-0">
+							<UserIdentity
+								id={user.id}
+								name={user.name}
+								email={user.email}
+								size="sm"
+								href={`/settings/users/${user.id}`}
+							/>
+						</div>
+
+						<div>
+							{#if user.role === 'admin'}
+								<span class="badge badge-sm badge-soft badge-neutral text-xs"> Admin </span>
+							{:else}
+								<span class="text-muted text-xs">Member</span>
+							{/if}
+						</div>
+
+						<div>
+							{#if user.status === 'expired'}
+								<span class="text-error text-xs">Invite expired</span>
+							{:else if user.status === 'pending'}
+								<span class="text-muted text-xs">Invite pending</span>
+							{:else}
+								<span class="text-muted text-xs">Active</span>
+							{/if}
+						</div>
+
+						<div class="text-subtle text-xs">
+							{user.lastActive ? formatRelativeTime(user.lastActive) : 'Never'}
+						</div>
+
+						<div class="flex justify-end">
+							<MemberActionsMenu
+								{user}
+								{currentUserId}
+								onRegenerate={regenerateInvite}
+								onToggleRole={toggleUserRole}
+								onResetPassword={openReset}
+								onRemove={openRemove}
+							/>
+						</div>
+					</div>
+				{/each}
+			</ListCard>
+		</div>
 	</div>
 </div>
 

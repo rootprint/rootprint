@@ -10,7 +10,7 @@
 	let removeOpen = $state(false);
 </script>
 
-<div class="mx-auto flex max-w-7xl flex-col gap-6 px-12 py-12">
+<div class="settings-page flex flex-col gap-6">
 	<PageHeader
 		description="Configure GitHub OAuth so members of approved organizations can sign in."
 	>

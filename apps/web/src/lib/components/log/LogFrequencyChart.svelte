@@ -101,7 +101,7 @@
 		const useDate = span > SECONDS_PER_DAY;
 		const halfBucket = (timestamps.length > 1 ? timestamps[1] - timestamps[0] : 1) / 2;
 
-		const axisStroke = baseContentAt(0.45);
+		const axisStroke = baseContentAt(0.65);
 		const gridStroke = baseContentAt(0.1);
 
 		return {
@@ -151,19 +151,20 @@
 
 <div class="border-line">
 	<div class="flex items-center px-3 py-1.5">
-		<button class="flex flex-1 items-center gap-1.5" onclick={() => (collapsed = !collapsed)}>
+		<button
+			type="button"
+			class="flex flex-1 items-center gap-1.5"
+			aria-expanded={!collapsed}
+			onclick={() => (collapsed = !collapsed)}
+		>
 			{#if collapsed}
 				<ChevronRight class="text-base-content/40 h-2.5 w-2.5" />
 			{:else}
 				<ChevronDown class="text-base-content/40 h-2.5 w-2.5" />
 			{/if}
-			<span class="text-base-content/50 text-left text-[14px] tracking-wider uppercase">
-				Frequency
-			</span>
+			<span class="section-label text-left"> Frequency </span>
 		</button>
-		<div
-			class="text-base-content/50 flex items-center gap-1.5 text-[12px] tracking-wider uppercase"
-		>
+		<div class="text-subtle flex items-center gap-1.5 text-xs tabular-nums">
 			{#if loading}
 				<span class="loading loading-spinner loading-xs mr-1"></span>
 			{/if}
@@ -188,17 +189,13 @@
 					</div>
 				{:else if !columnarData}
 					<div class="flex h-[150px] flex-col items-center justify-center gap-1">
-						<p class="text-base-content/50 text-[10px] tracking-wider uppercase">
-							No frequency data
-						</p>
-						<p class="text-base-content/40 text-xs">
-							Try adjusting your time range or query filters
-						</p>
+						<p class="text-muted text-xs">No frequency data</p>
+						<p class="text-subtle text-xs">Try adjusting your time range or query filters</p>
 					</div>
 				{:else}
 					<UplotChart data={columnarData.uplot} height={HEIGHT} {makeOpts}>
 						{#snippet tooltip(idx)}
-							<div class="text-base-content/60 mb-1 font-mono text-[11px]">
+							<div class="text-muted mb-1 text-xs tabular-nums">
 								{formatChartTooltip(columnarData.uplot[0][idx])}
 							</div>
 							{#each levels as level, i (level)}

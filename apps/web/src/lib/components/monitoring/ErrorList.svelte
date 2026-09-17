@@ -143,14 +143,14 @@
 <section class="flex flex-col gap-2" aria-labelledby="error-list-heading">
 	<div class="flex flex-wrap items-start justify-between gap-3">
 		<div>
-			<h2 id="error-list-heading" class="eyebrow">Failing spans</h2>
-			<p class="text-base-content/50 mt-1 text-xs">
+			<h2 id="error-list-heading" class="section-label">Failing spans</h2>
+			<p class="text-subtle mt-1 text-xs">
 				Newest first across all span kinds. Error rate measures inbound server spans only.
 			</p>
 		</div>
 		<div class="flex flex-wrap items-center gap-3">
 			<label class="flex items-center gap-1.5">
-				<span class="text-base-content/50 text-[10px] tracking-wide uppercase">Kind</span>
+				<span class="text-muted text-xs">Kind</span>
 				<select
 					class="select select-xs w-auto min-w-28 text-xs"
 					value={kind ?? ''}
@@ -163,7 +163,7 @@
 				</select>
 			</label>
 			<label class="flex items-center gap-1.5">
-				<span class="text-base-content/50 text-[10px] tracking-wide uppercase">HTTP</span>
+				<span class="text-muted text-xs">HTTP</span>
 				<select
 					class="select select-xs w-auto min-w-36 text-xs"
 					value={httpStatus ?? ''}
@@ -180,11 +180,10 @@
 
 	{#if operations.length > 0 || operation !== null}
 		<div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by operation">
-			<p class="text-base-content/50 mr-0.5 text-[10px] tracking-wide uppercase">Top operations</p>
+			<p class="text-muted mr-0.5 text-xs">Top operations</p>
 			<button
 				type="button"
-				class="border-line rounded border px-2 py-0.5 text-[11px] transition-colors {operation ===
-				null
+				class="border-line rounded border px-2 py-0.5 text-xs transition-colors {operation === null
 					? 'bg-base-content text-base-100'
 					: 'text-base-content/70 hover:bg-base-200'}"
 				aria-pressed={operation === null}
@@ -195,7 +194,7 @@
 			{#if !operationInTop && operation !== null}
 				<button
 					type="button"
-					class="bg-base-content text-base-100 border-line inline-flex max-w-48 items-center rounded border px-2 py-0.5 font-mono text-[11px]"
+					class="bg-base-content text-base-100 border-line inline-flex max-w-48 items-center rounded border px-2 py-0.5 font-mono text-xs"
 					aria-pressed="true"
 					title={operation}
 					onclick={() => onFilterChange('operation', null)}
@@ -206,7 +205,7 @@
 			{#each operations as op (op.name)}
 				<button
 					type="button"
-					class="border-line inline-flex max-w-48 items-center rounded border px-2 py-0.5 font-mono text-[11px] transition-colors {operation ===
+					class="border-line inline-flex max-w-48 items-center rounded border px-2 py-0.5 font-mono text-xs transition-colors {operation ===
 					op.name
 						? 'bg-base-content text-base-100'
 						: 'text-base-content/70 hover:bg-base-200'}"
@@ -240,9 +239,7 @@
 	{:else}
 		<div class="border-line rounded-box overflow-x-auto border">
 			<div class="divide-line divide-y {minWidth}">
-				<div
-					class="bg-base-200/70 text-base-content/60 grid {columns} gap-3 px-4 py-2 text-[10px] tracking-wide uppercase"
-				>
+				<div class="bg-base-200/70 section-label grid {columns} gap-3 px-4 py-2">
 					<span>Time</span>
 					{#if showService}<span>Service</span>{/if}
 					<span>Operation / message</span>
@@ -259,16 +256,16 @@
 						rel="noopener"
 						class="hover:bg-base-200/60 grid {columns} items-center gap-3 px-4 py-2 transition-colors"
 					>
-						<span class="text-base-content/60 font-mono text-[11px] tabular-nums"
+						<span class="text-muted font-mono text-xs tabular-nums"
 							>{formatEpochMillis(row.timestampMs)}</span
 						>
 						{#if showService}
-							<span class="truncate font-mono text-[11px]" title={row.service}>{row.service}</span>
+							<span class="truncate font-mono text-xs" title={row.service}>{row.service}</span>
 						{/if}
 						<span class="min-w-0">
 							<span class="flex min-w-0 items-center gap-1.5">
 								<span
-									class="border-line text-base-content/50 shrink-0 rounded border px-1 text-[9px]"
+									class="border-line text-muted shrink-0 rounded border px-1 text-xs"
 									title={KIND_NAMES[row.kind]}
 									aria-hidden="true">{KIND_LABELS[row.kind]}</span
 								>
@@ -276,17 +273,16 @@
 								<span class="truncate font-mono text-xs" title={row.operation}>{row.operation}</span
 								>
 							</span>
-							<span
-								class="text-base-content/45 mt-0.5 block truncate text-[11px]"
-								title={row.message}>{row.message === '' ? '—' : row.message}</span
+							<span class="text-subtle mt-0.5 block truncate text-xs" title={row.message}
+								>{row.message === '' ? '—' : row.message}</span
 							>
 						</span>
 						<span
-							class="text-right font-mono text-[11px] tabular-nums"
+							class="text-right text-xs tabular-nums"
 							class:text-error={row.httpStatus !== null && row.httpStatus >= 500}
 							>{row.httpStatus ?? '—'}</span
 						>
-						<span class="text-right font-mono text-[11px] tabular-nums"
+						<span class="text-right text-xs tabular-nums"
 							>{formatDurationMs(row.durationMillis)}</span
 						>
 						<ExternalLink class="text-base-content/30 h-3 w-3" aria-hidden="true" />

@@ -66,14 +66,14 @@
 	const row = 'col-span-full grid grid-cols-subgrid items-center px-4';
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader
 		title="Service accounts"
 		description="Create non-human accounts for integrations and issue API keys that can query logs on their behalf."
 	/>
 
 	<div class="mt-8 flex flex-wrap items-center justify-between gap-4">
-		<h2 class="text-sm font-medium">Accounts</h2>
+		<h2 class="text-base">Accounts</h2>
 		<button class="btn btn-primary btn-sm" onclick={() => (saCreateOpen = true)}>
 			<Plus class="h-3.5 w-3.5" />
 			Create service account
@@ -87,7 +87,7 @@
 				empty={serviceAccounts.length === 0}
 				emptyMessage="No service accounts yet."
 			>
-				<div class="{row} text-base-content/50 py-2.5 text-[10px] tracking-wide uppercase">
+				<div class="{row} section-label py-2.5">
 					<span>Name</span>
 					<span>Keys</span>
 					<span>Created</span>
@@ -95,9 +95,9 @@
 				</div>
 				{#each serviceAccounts as sa (sa.id)}
 					<div class="{row} min-h-14 py-3">
-						<div class="truncate text-sm">{sa.name}</div>
-						<div class="text-base-content/60 text-xs">{pluralize(sa.keyCount, 'key')}</div>
-						<div class="text-base-content/50 text-xs">{formatRelativeTime(sa.createdAt)}</div>
+						<div class="truncate text-sm" title={sa.name}>{sa.name}</div>
+						<div class="text-muted text-xs tabular-nums">{pluralize(sa.keyCount, 'key')}</div>
+						<div class="text-subtle text-xs">{formatRelativeTime(sa.createdAt)}</div>
 						<div class="flex justify-end">
 							<button
 								type="button"
@@ -115,16 +115,25 @@
 	</div>
 
 	<div class="mt-12 flex flex-wrap items-center justify-between gap-4">
-		<h2 class="text-sm font-medium">Service account keys</h2>
+		<h2 class="text-base">Service account keys</h2>
 		<button
 			class="btn btn-primary btn-sm"
 			onclick={() => (keyCreateOpen = true)}
 			disabled={serviceAccounts.length === 0}
+			aria-describedby={serviceAccounts.length === 0
+				? 'service-account-key-prerequisite'
+				: undefined}
 		>
 			<Plus class="h-3.5 w-3.5" />
 			Create key
 		</button>
 	</div>
+
+	{#if serviceAccounts.length === 0}
+		<p id="service-account-key-prerequisite" class="text-muted mt-2 text-sm">
+			Create a service account before issuing its first key.
+		</p>
+	{/if}
 
 	<div class="mt-4 overflow-x-auto">
 		<div class="min-w-[44rem]">
@@ -133,7 +142,7 @@
 				empty={serviceAccountKeys.length === 0}
 				emptyMessage="No service account keys yet."
 			>
-				<div class="{row} text-base-content/50 py-2.5 text-[10px] tracking-wide uppercase">
+				<div class="{row} section-label py-2.5">
 					<span>Name</span>
 					<span>Account</span>
 					<span>Token</span>
@@ -142,12 +151,12 @@
 				</div>
 				{#each serviceAccountKeys as key (key.id)}
 					<div class="{row} min-h-14 py-3">
-						<div class="truncate text-sm">{key.name ?? '-'}</div>
-						<div class="text-base-content/70 truncate text-xs">{key.userName}</div>
-						<div class="text-base-content/60 font-mono text-xs">
+						<div class="truncate text-sm" title={key.name ?? undefined}>{key.name ?? '—'}</div>
+						<div class="text-muted truncate text-xs" title={key.userName}>{key.userName}</div>
+						<div class="text-muted font-mono text-xs">
 							{key.start != null ? `${key.start}…` : '—'}
 						</div>
-						<div class="text-base-content/50 text-xs">
+						<div class="text-subtle text-xs">
 							{key.lastRequest ? formatRelativeTime(key.lastRequest) : 'Never'}
 						</div>
 						<div class="flex justify-end">

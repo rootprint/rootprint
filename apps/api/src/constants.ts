@@ -9,6 +9,7 @@ export const INVITE_EXPIRY_HOURS = 48;
 export const LAST_ACTIVE_THROTTLE_MS = 300_000;
 
 export const OAUTH_RECHECK_MS = 300_000;
+export const OAUTH_GRACE_MS = 3_600_000;
 
 // Export
 export const EXPORT_MAX_ROWS = 10_000;

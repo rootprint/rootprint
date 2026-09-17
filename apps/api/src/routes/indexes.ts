@@ -19,6 +19,7 @@ import {
 	FieldValuesBulkQuery,
 	FieldValuesQuery,
 	HistogramQuery,
+	IndexFieldsQuery,
 	PutPreferencesBody,
 	saveIndexConfigSchema,
 	SourceParams,
@@ -49,6 +50,7 @@ import {
 	getIndexDetail,
 	getIndexViewConfig,
 	listIndexes,
+	listIndexFields,
 	saveIndexConfig,
 	updateIndexConfig
 } from '../services/index.service.js';
@@ -115,9 +117,9 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		rejectTraceIndex,
 		withIndexMeta,
 		validator('param', IndexIdParams),
+		validator('query', IndexFieldsQuery),
 		async (c) => {
-			const indexMeta = c.get('indexMeta');
-			return c.json({ fields: indexMeta.index.fields });
+			return c.json(await listIndexFields(c.get('indexMeta'), c.req.valid('query')));
 		}
 	)
 	.get(

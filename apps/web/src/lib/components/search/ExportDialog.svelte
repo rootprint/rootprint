@@ -136,9 +136,7 @@
 <Modal bind:open title="Export Logs">
 	<div class="flex flex-col gap-3">
 		<div>
-			<div class="text-base-content/50 mb-1 text-xs font-semibold tracking-wider uppercase">
-				Format
-			</div>
+			<div class="text-muted mb-1 text-xs">Format</div>
 			<div class="join w-full">
 				{#each FORMATS as opt (opt.value)}
 					<button
@@ -162,7 +160,7 @@
 			<div
 				class="border-warning/60 bg-base-200/60 text-base-content/80 flex items-center gap-2 rounded-r border-l-2 px-3 py-2 text-xs"
 			>
-				<Info class="text-warning h-3.5 w-3.5 shrink-0" />
+				<Info class="text-warning-ink h-3.5 w-3.5 shrink-0" />
 				Only the first {EXPORT_MAX_ROWS.toLocaleString()} logs will be exported
 			</div>
 		{/if}

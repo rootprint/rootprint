@@ -158,7 +158,7 @@ export const authRouter = new Hono<AppEnv>()
 		// Better Auth's endpoints never pass through requireUser
 		if (!isSessionEstablishingPath(c.req.path)) {
 			const session = await auth().api.getSession({ headers: req.headers });
-			if (session && !(await retainsOAuthAccess(session.user.id))) {
+			if (session && !(await retainsOAuthAccess(session.user.id, session.session.createdAt))) {
 				logger.warn({ userId: session.user.id, path: c.req.path }, 'oauth access revoked');
 				throw unauthorized('Unauthorized');
 			}

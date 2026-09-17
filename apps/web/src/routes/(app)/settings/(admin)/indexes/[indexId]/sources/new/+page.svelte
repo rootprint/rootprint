@@ -6,7 +6,7 @@
 	const detail = $derived(data.detail);
 </script>
 
-<div class="mx-auto flex max-w-7xl flex-col gap-6 px-12 py-12">
+<div class="settings-page flex flex-col gap-6">
 	<PageHeader
 		title="Create source"
 		description={`Add a new source to ${detail.displayName ?? detail.indexId}.`}

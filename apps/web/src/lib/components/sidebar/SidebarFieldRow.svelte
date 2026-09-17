@@ -1,13 +1,17 @@
+<script module lang="ts">
+	/** Initial count of values shown collapsed before the user expands the row. */
+	export const FIELD_VALUES_INITIAL_SHOW = 10;
+</script>
+
 <script lang="ts">
-	import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-svelte';
+	import { ChevronDown, ChevronRight, Minus, Pin, Plus } from 'lucide-svelte';
 	import type { LogField, LogFieldValueBucket } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
-	/** Initial count of values shown collapsed before the user expands the row. */
-	const FIELD_VALUES_INITIAL_SHOW = 10;
 
 	/** Rows revealed per "Show more" click after the initial collapsed view. */
 	const FIELD_VALUES_SHOW_MORE_STEP = 50;
 
+	// Virtualization unmounts off-screen rows, so the parent owns `valueSearch`/`showCount` by name.
 	let {
 		field,
 		store,
@@ -16,7 +20,14 @@
 		values,
 		loading,
 		error,
-		indented = false
+		indented = false,
+		label = field.displayName,
+		sampleCount = 0,
+		sampleTotal = 0,
+		pinned,
+		onPin,
+		valueSearch = $bindable(''),
+		showCount = $bindable(FIELD_VALUES_INITIAL_SHOW)
 	}: {
 		field: LogField;
 		store: SearchStore;
@@ -26,10 +37,15 @@
 		loading: boolean;
 		error: string | null;
 		indented?: boolean;
+		label?: string;
+		/** Sampled hits carrying this field, and the size of that sample. */
+		sampleCount?: number;
+		sampleTotal?: number;
+		pinned: boolean;
+		onPin: () => void;
+		valueSearch?: string;
+		showCount?: number;
 	} = $props();
-
-	let valueSearch = $state('');
-	let showCount = $state(FIELD_VALUES_INITIAL_SHOW);
 
 	const resolvedValues = $derived(values ?? []);
 
@@ -84,7 +100,27 @@
 		normalizedValueSearch ? 0 : Math.max(0, unpinnedFiltered.length - showCount)
 	);
 
-	const countLabel = $derived(resolvedValues.length > 0 ? `(${resolvedValues.length})` : '');
+	// Clamped off both ends: a rounded extreme would claim more than the sample can support.
+	const sampleShare = $derived.by(() => {
+		if (sampleTotal === 0 || sampleCount === 0) return null;
+		if (sampleCount === sampleTotal) return 100;
+		return Math.min(99, Math.max(1, Math.round((sampleCount / sampleTotal) * 100)));
+	});
+
+	// Closed: the share of the sampled page carrying the field, not a doc count. Open: how many
+	// values loaded below, and nothing until they land.
+	const countLabel = $derived(
+		open
+			? resolvedValues.length > 0
+				? `(${resolvedValues.length})`
+				: ''
+			: sampleShare === null
+				? ''
+				: `${sampleShare}%`
+	);
+	const countTitle = $derived(
+		open || sampleShare === null ? undefined : `In ${sampleCount} of ${sampleTotal} sampled results`
+	);
 
 	function showMore() {
 		showCount += FIELD_VALUES_SHOW_MORE_STEP;
@@ -103,35 +139,53 @@
 	}
 </script>
 
-<div class="border-line border-y [&+div]:border-t-0">
-	<button
-		type="button"
-		class="flex w-full items-center gap-1 py-1.5 {indented ? 'pr-3 pl-6' : 'px-3'}"
-		aria-expanded={open}
-		onclick={onToggle}
-	>
-		{#if open}
-			<ChevronDown class="text-base-content/60 h-3 w-3 shrink-0" />
-		{:else}
-			<ChevronRight class="text-base-content/60 h-3 w-3 shrink-0" />
-		{/if}
-		<span class="min-w-0 flex-1 truncate text-left text-xs" title={field.name}>
-			{field.displayName}
-		</span>
-		{#if countLabel}
-			<span class="text-base-content/40 text-[10px] leading-4">{countLabel}</span>
-		{/if}
-	</button>
+<div class="border-line {open ? 'border-b' : ''}">
+	<div class="flex items-center pr-2 {indented ? 'pl-5' : 'pl-3'}">
+		<button
+			type="button"
+			class="flex min-w-0 flex-1 items-center gap-1 py-1.5"
+			aria-expanded={open}
+			aria-label={field.name}
+			onclick={onToggle}
+		>
+			{#if open}
+				<ChevronDown class="text-base-content/60 h-3 w-3 shrink-0" />
+			{:else}
+				<ChevronRight class="text-base-content/60 h-3 w-3 shrink-0" />
+			{/if}
+			<span class="min-w-0 flex-1 truncate text-left text-xs" title={field.name}>
+				{label}
+			</span>
+			{#if countLabel}
+				<span class="text-subtle shrink-0 text-xs tabular-nums" title={countTitle}
+					>{countLabel}</span
+				>
+			{/if}
+		</button>
+		<button
+			type="button"
+			class="hover:bg-base-200 ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded {pinned
+				? 'text-base-content'
+				: 'text-subtle'}"
+			aria-label={`${pinned ? 'Unpin' : 'Pin'} ${field.name}`}
+			aria-pressed={pinned}
+			title={pinned ? 'Unpin field' : 'Pin field'}
+			onclick={onPin}
+		>
+			<Pin class="h-3 w-3 {pinned ? 'fill-current' : ''}" />
+		</button>
+	</div>
 
 	{#if open}
-		<div class="pb-3 {indented ? 'pr-3 pl-6' : 'px-3'}">
-			{#if loading && resolvedValues.length === 0}
-				<div class="text-base-content/50 flex items-center gap-2 py-1 text-xs">
+		<div class="pr-3 pb-3 {indented ? 'pl-5' : 'pl-3'}">
+			<!-- `values === null` is "not fetched yet"; only an empty array means "no values". -->
+			{#if error}
+				<p class="text-error py-1 text-xs [overflow-wrap:anywhere]">{error}</p>
+			{:else if (loading || values === null) && resolvedValues.length === 0}
+				<div class="text-subtle flex items-center gap-2 py-1 text-xs">
 					<span class="loading loading-spinner loading-xs"></span>
 					Loading…
 				</div>
-			{:else if error}
-				<p class="text-error py-1 text-xs">{error}</p>
 			{:else}
 				{#if resolvedValues.length > FIELD_VALUES_INITIAL_SHOW}
 					<input
@@ -144,7 +198,7 @@
 				{/if}
 
 				{#if pinnedVisible.length === 0 && unpinnedVisible.length === 0}
-					<p class="text-base-content/50 py-1 text-xs">
+					<p class="text-subtle py-1 text-xs">
 						{normalizedValueSearch ? 'No matching values' : 'No values found'}
 					</p>
 				{:else}
@@ -192,7 +246,7 @@
 								{bucket.value}
 							</button>
 							<span
-								class="text-base-content/50 shrink-0 text-right text-[10px] tabular-nums transition-opacity duration-150 group-focus-within:opacity-0 group-hover:opacity-0"
+								class="text-subtle shrink-0 text-right font-sans text-xs tabular-nums transition-opacity duration-150 group-focus-within:opacity-0 group-hover:opacity-0"
 							>
 								{isGhost || isExcluded ? '—' : bucket.count.toLocaleString()}
 							</span>

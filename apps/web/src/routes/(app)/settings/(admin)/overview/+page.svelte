@@ -126,7 +126,7 @@
 	}
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader title="Overview" description="Live process and cluster health for Quickwit.">
 		{#snippet actions()}
 			<button class="text-base-content/60 hover:text-base-content text-xs" onclick={refresh}>
@@ -194,9 +194,9 @@
 		<summary
 			class="text-base-content/70 hover:text-base-content flex cursor-pointer items-center justify-between text-xs"
 		>
-			<span class="eyebrow">Raw metrics</span>
-			<span class="text-base-content/40 text-[10px] group-open:hidden">expand</span>
-			<span class="text-base-content/40 hidden text-[10px] group-open:inline">collapse</span>
+			<span class="section-label">Raw metrics</span>
+			<span class="text-muted text-xs group-open:hidden">expand</span>
+			<span class="text-muted hidden text-xs group-open:inline">collapse</span>
 		</summary>
 		<div class="mt-4 flex flex-col gap-3">
 			<div class="flex items-center gap-3">
@@ -228,7 +228,7 @@
 					Raw metrics unavailable: {rawError}
 				</div>
 			{:else if rawLoading && rawText === null}
-				<div class="text-base-content/40 px-4 py-6 text-center text-xs">Loading raw metrics…</div>
+				<div class="text-muted px-4 py-6 text-center text-xs">Loading raw metrics…</div>
 			{:else if rawText !== null}
 				<pre
 					class="border-line rounded-box max-h-[60vh] overflow-auto border p-4 font-mono text-xs leading-relaxed">{filteredRaw(

@@ -14,10 +14,16 @@ export function rowActivate(getOnActivate: () => () => void): Attachment<HTMLEle
 
 		function handleClick(event: MouseEvent) {
 			if (Math.hypot(event.clientX - downX, event.clientY - downY) >= MOVE_THRESHOLD) return;
+			const target = event.target;
+			if (target instanceof Element) {
+				const nested = target.closest('button, a, input, textarea, select');
+				if (nested !== null && nested !== node) return;
+			}
 			getOnActivate()();
 		}
 
 		function handleKeyDown(event: KeyboardEvent) {
+			if (event.target !== node) return;
 			if (event.key === 'Enter' || event.key === ' ') {
 				event.preventDefault();
 				getOnActivate()();

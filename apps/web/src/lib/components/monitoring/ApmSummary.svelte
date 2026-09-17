@@ -34,48 +34,47 @@
 	}
 </script>
 
-<section
-	class="border-line rounded-box grid grid-cols-2 border md:grid-cols-5"
-	aria-label="Performance summary"
->
-	<div class="col-span-2 px-3 py-2.5 md:col-span-1 md:px-4">
-		<p class="text-base-content/45 text-[10px] tracking-wide uppercase">Error spans</p>
+<section class="border-line rounded-box grid grid-cols-5 border" aria-label="Performance summary">
+	<div class="px-4 py-2.5">
+		<p class="section-label">Error spans</p>
 		<p
-			class:text-warning={summary.errorSpans > 0}
+			class:text-warning-ink={summary.errorSpans > 0}
 			class="mt-0.5 text-xl tracking-tight tabular-nums"
 		>
 			{formatCount(summary.errorSpans)}
 		</p>
 	</div>
 
-	<div
-		class="border-line col-span-2 grid grid-cols-2 border-t md:col-span-4 md:grid-cols-4 md:border-t-0"
-	>
-		<div class="border-line px-3 py-2.5 md:border-l md:px-4">
-			<p class="text-base-content/45 text-[10px] tracking-wide uppercase">Requests</p>
+	<div class="border-line col-span-4 grid grid-cols-4">
+		<div class="border-line border-l px-4 py-2.5">
+			<p class="section-label">Requests</p>
 			<p class="mt-0.5 text-xl tracking-tight tabular-nums">{formatCount(summary.requests)}</p>
 		</div>
-		<div class="border-line border-l px-3 py-2.5 md:px-4">
-			<p class="text-base-content/45 text-[10px] tracking-wide uppercase">Throughput</p>
+		<div class="border-line border-l px-4 py-2.5">
+			<p class="section-label">Throughput</p>
 			<p class="mt-0.5 text-xl tracking-tight tabular-nums">
-				{formatRate(requestRate)}<span class="text-base-content/45 ml-0.5 text-xs">/min</span>
+				{formatRate(requestRate)}<span class="text-muted ml-0.5 text-xs">/min</span>
 			</p>
 		</div>
-		<div class="border-line border-t px-3 py-2.5 md:border-t-0 md:border-l md:px-4">
-			<p class="text-base-content/45 text-[10px] tracking-wide uppercase">Error rate</p>
+		<div class="border-line border-l px-4 py-2.5">
+			<p class="section-label">Error rate</p>
 			<p class:text-error={summary.errors > 0} class="mt-0.5 text-xl tracking-tight tabular-nums">
 				{formatPercent(errorRate)}
 			</p>
 		</div>
-		<div class="border-line border-t border-l px-3 py-2.5 md:border-t-0 md:px-4">
-			<p class="text-base-content/45 text-[10px] tracking-wide uppercase">
+		<div class="border-line border-l px-4 py-2.5">
+			<p class="section-label">
 				{service === null ? 'Slowest p95' : 'p95 latency'}
 			</p>
 			<div class="flex min-w-0 items-baseline gap-2">
 				<p class="mt-0.5 shrink-0 text-xl tracking-tight tabular-nums">
 					{formatDurationMs(latency)}
 				</p>
-				<p class="text-base-content/40 truncate text-[10px]" title={latencyContext ?? undefined}>
+				<p
+					class="text-subtle truncate text-xs"
+					class:font-mono={service === null}
+					title={latencyContext ?? undefined}
+				>
 					{latencyContext}
 				</p>
 			</div>

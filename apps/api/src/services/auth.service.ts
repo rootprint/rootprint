@@ -6,7 +6,6 @@ import { INVITE_EXPIRY_HOURS } from '../constants.js';
 import type { Db } from '../lib/db.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
-import { logger } from '../lib/logger.js';
 import { badRequest, conflict } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 import {
@@ -199,7 +198,7 @@ export async function googleEmailIsAllowed(db: Db, email: string): Promise<boole
 
 /**
  * Whether a GitHub access token still resolves to membership in an allowed org.
- * Fail-closed: a missing token or any API error counts as "not a member".
+ * False for a missing or rejected token; throws when GitHub could not answer.
  */
 export async function githubTokenIsAllowed(
 	db: Db,
@@ -225,17 +224,11 @@ export async function githubTokenIsAllowed(
  *    link has gone stale would fall through the exemption and be let in.
  *  - An empty allow-list allows nobody.
  *
- * `onCheckError` picks what an *indeterminate* check means — an outage,
- * rate-limit or database error, as opposed to a definitive "not a member":
- * `'deny'` for the login gate, where a retry is natural, and `'allow'` for
- * mid-session re-validation, where failing closed would turn one GitHub blip
- * into a sign-out of every linked user.
+ * Throws when the answer is indeterminate (outage, rate limit, database error)
+ * rather than a definitive "not a member", so each caller picks its own policy:
+ * the login gate denies, mid-session re-validation applies a bounded grace.
  */
-export async function userRetainsOAuthAccess(
-	db: Db,
-	userId: string,
-	{ onCheckError = 'deny' }: { onCheckError?: 'deny' | 'allow' } = {}
-): Promise<boolean> {
+export async function userRetainsOAuthAccess(db: Db, userId: string): Promise<boolean> {
 	const [row] = await db
 		.select({ email: user.email })
 		.from(user)
@@ -253,19 +246,9 @@ export async function userRetainsOAuthAccess(
 	const configured = await configuredOAuthProviders(db);
 
 	if (hasGoogle && configured.has('google') && row?.email) {
-		try {
-			if (await googleEmailIsAllowed(db, row.email)) return true;
-		} catch (err) {
-			logger.error({ err, userId, provider: 'google' }, 'oauth access check failed');
-			if (onCheckError === 'allow') return true;
-		}
+		if (await googleEmailIsAllowed(db, row.email)) return true;
 	}
 
 	if (!github || !configured.has('github')) return false;
-	try {
-		return await githubTokenIsAllowed(db, github.accessToken);
-	} catch (err) {
-		logger.error({ err, userId, provider: 'github' }, 'oauth access check failed');
-		return onCheckError === 'allow';
-	}
+	return githubTokenIsAllowed(db, github.accessToken);
 }

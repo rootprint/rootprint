@@ -46,7 +46,7 @@
 <header class="border-line border-b">
 	<div class="px-4 pt-3 pb-2.5">
 		<div class="flex items-center justify-between gap-3">
-			<p id="log-detail-title" class="eyebrow">Log event</p>
+			<p id="log-detail-title" class="section-label">Log event</p>
 			<div class="flex items-center gap-1">
 				<button
 					type="button"

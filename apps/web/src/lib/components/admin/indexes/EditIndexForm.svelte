@@ -314,7 +314,7 @@
 					<div class="flex min-w-0 flex-col">
 						<span class="break-all">{field.name}</span>
 						{#if field.description}
-							<span class="text-base-content/50 break-all">{field.description}</span>
+							<span class="text-subtle font-sans text-xs break-all">{field.description}</span>
 						{/if}
 					</div>
 					<span class="text-base-content/60">{field.type}</span>

@@ -17,6 +17,7 @@
 
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
+		if (submitting) return;
 		formError = null;
 		fieldErrors = {};
 		submitting = true;
@@ -37,22 +38,22 @@
 				return;
 			}
 			await invalidate(DEP.session);
-			await goto('/auth/sign-in');
+			await goto('/auth/sign-in?created=admin');
 		} finally {
 			submitting = false;
 		}
 	}
 </script>
 
-<AuthHeader eyebrow="First-time setup" title="Create administrator" divider>
-	This is the first account. It will have admin privileges.
+<AuthHeader eyebrow="First-time setup" title="Create administrator">
+	This first account will have admin privileges. After creating it, sign in to configure Rootprint.
 </AuthHeader>
 
 {#if formError}
 	<div role="alert" class="alert alert-error mt-4 text-sm">{formError}</div>
 {/if}
 
-<form class="mt-4 space-y-3" {onsubmit}>
+<form class="mt-6 space-y-4" {onsubmit} aria-busy={submitting}>
 	<Field
 		label="Name"
 		autocomplete="name"
@@ -79,11 +80,11 @@
 		minlength={8}
 		bind:value={password}
 		error={fieldErrors.password}
-		hint="min 8 chars"
+		hint="At least 8 characters."
 		required
 	/>
 
-	<button class="btn btn-primary mt-4 w-full" type="submit" disabled={submitting}>
+	<button class="btn btn-primary mt-2 w-full" type="submit" disabled={submitting}>
 		{submitting ? 'Creating…' : 'Create administrator'}
 	</button>
 </form>

@@ -5,13 +5,14 @@
 	import LogRow from './LogRow.svelte';
 	import InlineLogRow from './InlineLogRow.svelte';
 	import type { FieldConfig, LogHit, SortDirection } from '$lib/types';
+	import type { LogListRow } from '$lib/utils/fold-hits';
 	import type { DisplayMode } from 'api/types';
 
 	const ROW_ESTIMATE = 25;
 	const OVERSCAN = 8;
 
 	let {
-		logs,
+		rows,
 		activeFields,
 		gridTemplate,
 		fieldConfig,
@@ -19,11 +20,15 @@
 		viewport,
 		lineWrap = false,
 		displayMode = 'table',
+		foldGutter = false,
 		listEnd = 'more',
+		loadingMore = false,
 		onToggleSort = () => {},
-		onRowClick = () => {}
+		onRowClick = () => {},
+		onToggleFold = () => {},
+		onLoadMore = () => {}
 	}: {
-		logs: LogHit[];
+		rows: LogListRow[];
 		activeFields: string[];
 		gridTemplate: string;
 		fieldConfig: FieldConfig | null;
@@ -31,26 +36,43 @@
 		viewport: HTMLElement | null;
 		lineWrap?: boolean;
 		displayMode?: DisplayMode;
+		foldGutter?: boolean;
 		listEnd?: 'more' | 'end' | 'capped';
+		loadingMore?: boolean;
 		onToggleSort?: () => void;
 		onRowClick?: (hit: LogHit) => void;
+		onToggleFold?: (id: string) => void;
+		onLoadMore?: () => void;
 	} = $props();
 
 	let headerEl = $state<HTMLElement | null>(null);
 	let scrollMargin = $state(0);
 
 	const virtualizer = createVirtualizer<HTMLElement, HTMLElement>({
-		count: logs.length,
+		count: rows.length,
 		getScrollElement: () => viewport,
 		estimateSize: () => ROW_ESTIMATE,
+		getItemKey: (index) => rowKey(rows[index], index),
 		overscan: OVERSCAN,
 		scrollMargin: 0
 	});
 
 	const messageField = $derived(fieldConfig?.messageField);
+	const foldGutterWidth = $derived.by(() => {
+		let digits = 1;
+		for (const row of rows) {
+			if (row.kind === 'fold') digits = Math.max(digits, String(row.count).length);
+		}
+		return `calc(${digits}ch + 1.5rem)`;
+	});
 
 	function measure(node: HTMLElement) {
 		get(virtualizer).measureElement(node);
+	}
+
+	function rowKey(row: LogListRow | undefined, index: number): string {
+		if (!row) return String(index);
+		return row.kind === 'fold' ? `fold:${row.id}` : `hit:${row.hit.key}`;
 	}
 
 	$effect(() => {
@@ -64,21 +86,23 @@
 		return () => ro.disconnect();
 	});
 
-	$effect(() => {
-		const count = logs.length;
+	$effect.pre(() => {
+		const currentRows = rows;
 		const margin = scrollMargin;
 		const el = viewport;
 		const v = get(virtualizer);
 		v.setOptions({
-			count,
+			count: currentRows.length,
 			scrollMargin: margin,
 			getScrollElement: () => el,
-			estimateSize: () => ROW_ESTIMATE
+			estimateSize: () => ROW_ESTIMATE,
+			getItemKey: (index) => rowKey(currentRows[index], index),
+			overscan: OVERSCAN
 		});
 	});
 </script>
 
-<div class="w-fit min-w-full">
+<div class="w-fit min-w-full" style="--fold-gutter-width: {foldGutterWidth};">
 	{#if displayMode === 'table'}
 		<LogHeader
 			bind:el={headerEl}
@@ -87,12 +111,17 @@
 			{gridTemplate}
 			{sortDirection}
 			{lineWrap}
+			{foldGutter}
 			{onToggleSort}
 		/>
 	{/if}
 	<div class="relative w-full" style="height: {$virtualizer.getTotalSize()}px;">
-		{#each $virtualizer.getVirtualItems() as item (logs[item.index]?.key ?? item.index)}
-			{#if logs[item.index]}
+		{#each $virtualizer.getVirtualItems() as item (rowKey(rows[item.index], item.index))}
+			{#if rows[item.index]}
+				{@const row = rows[item.index]}
+				{@const fold = row.kind === 'fold' ? row : null}
+				{@const foldChild = row.kind === 'hit' && row.foldChild === true}
+				{@const toggleFold = () => fold && onToggleFold(fold.id)}
 				<div
 					{@attach measure}
 					data-index={item.index}
@@ -101,29 +130,50 @@
 				>
 					{#if displayMode === 'inline'}
 						<InlineLogRow
-							hit={logs[item.index]}
+							hit={row.hit}
 							columns={activeFields}
 							{lineWrap}
-							onActivate={() => onRowClick(logs[item.index])}
+							{foldChild}
+							{fold}
+							onActivate={() => onRowClick(row.hit)}
+							onToggleFold={toggleFold}
 						/>
 					{:else}
 						<LogRow
-							hit={logs[item.index]}
+							hit={row.hit}
 							columns={activeFields}
 							{gridTemplate}
 							{messageField}
 							{lineWrap}
-							onActivate={() => onRowClick(logs[item.index])}
+							{foldGutter}
+							{foldChild}
+							{fold}
+							onActivate={() => onRowClick(row.hit)}
+							onToggleFold={toggleFold}
 						/>
 					{/if}
 				</div>
 			{/if}
 		{/each}
 	</div>
-	{#if listEnd !== 'more'}
-		<div
-			class="border-line text-base-content/40 sticky left-0 w-fit border-t px-3 py-4 text-[11px]"
-		>
+	{#if listEnd === 'more'}
+		<div class="border-line sticky left-0 w-fit border-t px-3 py-3">
+			<button
+				type="button"
+				class="btn btn-ghost btn-xs"
+				disabled={loadingMore}
+				onclick={onLoadMore}
+			>
+				{#if loadingMore}
+					<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+					Loading more
+				{:else}
+					Load more
+				{/if}
+			</button>
+		</div>
+	{:else}
+		<div class="border-line text-muted sticky left-0 w-fit border-t px-3 py-4 text-xs">
 			{#if listEnd === 'capped'}
 				Showing the first 10,000 logs. Narrow the time range to see the rest.
 			{:else}

@@ -46,7 +46,7 @@
 	const steps = $derived(setup.buildSteps(ctx));
 </script>
 
-<div class="mx-auto flex max-w-7xl flex-col gap-2 px-12 py-12">
+<div class="settings-page flex flex-col gap-2">
 	<WizardHeader
 		{integration}
 		{signal}

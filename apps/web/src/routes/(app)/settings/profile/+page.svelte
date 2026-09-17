@@ -13,7 +13,7 @@
 	let passwordOpen = $state(false);
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader title="Profile" description="Your account details." />
 
 	<div class="mt-8 flex flex-col gap-4">
@@ -29,7 +29,9 @@
 		<PersonalApiKeysSection keys={data.personalKeys} />
 
 		{#if data.hasPassword === true}
-			<div class="border-line rounded-box flex items-center justify-between border p-6">
+			<div
+				class="border-line rounded-box flex flex-wrap items-center justify-between gap-4 border p-6"
+			>
 				<div>
 					<p class="text-sm">Password</p>
 					<p class="text-base-content/60 text-xs">Change the password you use to sign in.</p>

@@ -155,7 +155,7 @@
 					</button>
 				{/each}
 				{#if availableFields.length === 0}
-					<p class="text-base-content/50 px-2 py-2 text-xs">
+					<p class="text-subtle px-2 py-2 text-xs">
 						{searchTerm.trim() ? 'No matching fields' : 'All fields added'}
 					</p>
 				{/if}
@@ -163,9 +163,7 @@
 		</div>
 	{:else}
 		<div class="border-line border-b px-3 py-2">
-			<div class="text-base-content/60 mb-1.5 text-[10px] font-medium tracking-wider uppercase">
-				Display
-			</div>
+			<div class="section-label mb-1.5">Display</div>
 			<label class="flex cursor-pointer items-center justify-between">
 				<span class="text-base-content text-xs">Line wrap</span>
 				<input
@@ -178,9 +176,7 @@
 		</div>
 
 		<div class="border-line border-b px-3 py-2">
-			<div class="text-base-content/60 mb-1.5 text-[10px] font-medium tracking-wider uppercase">
-				Mode
-			</div>
+			<div class="section-label mb-1.5">Mode</div>
 			<div class="join w-full">
 				<button
 					type="button"
@@ -199,14 +195,10 @@
 			</div>
 		</div>
 
-		<div class="text-base-content/60 px-3 pt-2 text-[10px] font-medium tracking-wider uppercase">
-			Columns
-		</div>
+		<div class="section-label px-3 pt-2">Columns</div>
 
 		{#snippet pinnedRow(field: string)}
-			<div
-				class="text-base-content/40 flex items-center gap-1 rounded px-2 py-1.5 font-mono text-xs"
-			>
+			<div class="text-subtle flex items-center gap-1 rounded px-2 py-1.5 font-mono text-xs">
 				<span class="w-3 shrink-0"></span>
 				<span class="flex-1 truncate">{field}</span>
 			</div>

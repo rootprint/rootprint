@@ -49,9 +49,9 @@
 	}
 </script>
 
-<div class="mx-auto flex max-w-7xl flex-col gap-6 px-12 py-12">
+<div class="settings-page flex flex-col gap-6">
 	<PageHeader>
-		<header class="mt-3 flex items-start justify-between gap-4">
+		<header class="mt-3 flex flex-wrap items-start justify-between gap-4">
 			<h1 class="text-h1 font-mono break-all">{detail.indexId}</h1>
 			<div class="flex shrink-0 gap-2">
 				<a
@@ -83,7 +83,7 @@
 		<div class="flex flex-col gap-3">
 			<div class="flex flex-wrap items-center gap-4">
 				<SearchInput bind:value={fieldFilter} placeholder="Search fields…" label="Search fields" />
-				<span class="text-base-content/60 text-xs">[{fieldsCountLabel}]</span>
+				<span class="text-subtle text-xs tabular-nums">[{fieldsCountLabel}]</span>
 			</div>
 
 			<ListCard
@@ -93,9 +93,7 @@
 					? 'No fields match your search.'
 					: 'No fields defined.'}
 			>
-				<div
-					class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
-				>
+				<div class="section-label col-span-full grid grid-cols-subgrid items-center px-4 py-2.5">
 					<span>Name</span>
 					<span>Type</span>
 					<span class="text-center">Fast</span>
@@ -110,7 +108,7 @@
 							{#if field.fast}
 								<span class="text-success">✓</span>
 							{:else}
-								<span class="text-base-content/50">—</span>
+								<span class="text-subtle">—</span>
 							{/if}
 						</span>
 					</div>
@@ -125,7 +123,7 @@
 					placeholder="Search sources…"
 					label="Search sources"
 				/>
-				<span class="text-base-content/60 text-xs">[{sourcesCountLabel}]</span>
+				<span class="text-subtle text-xs tabular-nums">[{sourcesCountLabel}]</span>
 				<a href="/settings/indexes/{detail.indexId}/sources/new" class="btn btn-primary btn-sm">
 					<Plus class="h-3.5 w-3.5" />
 					Create source

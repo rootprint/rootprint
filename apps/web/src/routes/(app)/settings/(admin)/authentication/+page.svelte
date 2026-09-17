@@ -41,7 +41,7 @@
 	]);
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader
 		title="Authentication"
 		description="Configure sign-in methods available on this instance."

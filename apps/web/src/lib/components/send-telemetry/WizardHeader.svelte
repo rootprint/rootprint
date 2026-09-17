@@ -66,7 +66,7 @@
 				not the key’s index.
 			</p>
 		{:else}
-			<p class="text-warning text-xs">
+			<p class="text-warning-ink text-xs">
 				No span store exists in Quickwit yet, so spans sent with this key have nowhere to land.
 			</p>
 		{/if}

@@ -1,17 +1,27 @@
-import { getUnixTime, isValid, parseISO } from 'date-fns';
-
 import { searchLogs } from '$lib/api/log-search';
 import { isAbortError } from '$lib/api/errors';
 import { getByPath } from '$lib/utils/get-by-path';
 import { escapeFilterValue } from 'api/query';
-import { normalizeHit } from '$lib/utils/normalize-hit';
-import type { ContextChip, ContextEntry, FieldConfig, LogHit } from '$lib/types';
+import { hitTimestampSeconds, normalizeHit } from '$lib/utils/normalize-hit';
+import type { ContextChip, ContextEntry, FieldConfig, LogHit, SearchInput } from '$lib/types';
 
 const PAGE_SIZE = 200;
-const WINDOW_HALF_SECONDS = 15 * 60;
 const WINDOW_SECONDS = 15 * 60;
 /** After this many consecutive fully-empty slides in one direction, stop walking. */
 const MAX_EMPTY_SLIDES = 3;
+const MAX_OFFSET = 10_000;
+
+type Dir = 'before' | 'after';
+const SIGN = { before: -1, after: 1 } as const;
+
+function createDirectionState(): {
+	loading: boolean;
+	noMore: boolean;
+	limited: boolean;
+	error: unknown;
+} {
+	return { loading: false, noMore: false, limited: false, error: null };
+}
 
 export function seedChipsFromIndex(
 	anchor: Record<string, unknown>,
@@ -43,21 +53,17 @@ export class ContextLoader {
 	entries = $state.raw<ContextEntry[]>([]);
 
 	loadingInitial = $state(false);
-	loadingMoreBefore = $state(false);
-	loadingMoreAfter = $state(false);
-	noMoreBefore = $state(false);
-	noMoreAfter = $state(false);
+	before = $state(createDirectionState());
+	after = $state(createDirectionState());
 	error = $state<string | null>(null);
-	/** Bumps every time an initial fetch completes successfully. Pane watches this to scroll to the anchor row. */
+	/** Pane watches this to scroll to the anchor after initial results or a failure. */
 	initEpoch = $state(0);
 
-	// Sliding-window pagination: each direction owns a 15-min slice + offset that slides outward (resetting offset) once a slice returns < PAGE_SIZE rows, letting Quickwit prune to one time partition per request.
-	#beforeWindowEnd = 0; // upper bound of the current 'before' slice (seconds)
-	#beforeOffset = 0;
-	#beforeEmptySlides = 0;
-	#afterWindowStart = 0; // lower bound of the current 'after' slice (seconds)
-	#afterOffset = 0;
-	#afterEmptySlides = 0;
+	// Each direction searches a 15-minute window; offset counts consumed hits in its boundary second.
+	#win = {
+		before: { bound: 0, offset: 0, empty: 0 },
+		after: { bound: 0, offset: 0, empty: 0 }
+	};
 	#seenKeys = new Set<string>();
 	#abort: AbortController | null = null;
 	#fetchSeq = 0;
@@ -73,240 +79,144 @@ export class ContextLoader {
 		this.anchor = anchor;
 		this.indexId = indexId;
 		this.fieldConfig = fieldConfig;
-		// anchor.timestamp is ISO; convert to seconds for Quickwit time bounds.
-		// NaN when the timestamp is missing/unparseable — #fetchInitial bails out then.
-		const parsed = parseISO(anchor.timestamp);
-		this.anchorTs = isValid(parsed) ? getUnixTime(parsed) : NaN;
-		this.#beforeWindowEnd = this.anchorTs;
-		this.#afterWindowStart = this.anchorTs;
+		this.anchorTs = hitTimestampSeconds(anchor.raw, fieldConfig);
 		this.#anchorKey = hitKey(anchor.raw);
 		this.chips = initialChips;
 	}
 
-	/** Post-page bookkeeping for the 'after' direction, given the pre-dedup row count: full page bumps offset; partial slides the slice outward; empty slides count toward MAX_EMPTY_SLIDES before declaring noMore. */
-	#advanceAfter(rowCount: number): void {
-		if (rowCount >= PAGE_SIZE) {
-			this.#afterOffset += PAGE_SIZE;
-			this.#afterEmptySlides = 0;
-			return;
-		}
-		this.#afterWindowStart += WINDOW_SECONDS;
-		this.#afterOffset = 0;
-		if (rowCount === 0) {
-			this.#afterEmptySlides += 1;
-			if (this.#afterEmptySlides >= MAX_EMPTY_SLIDES) this.noMoreAfter = true;
-		} else {
-			this.#afterEmptySlides = 0;
-		}
+	#request(dir: Dir): SearchInput {
+		const { bound, offset } = this.#win[dir];
+		const desc = dir === 'before';
+		return {
+			indexId: this.indexId,
+			query: this.composedQuery,
+			limit: PAGE_SIZE,
+			offset,
+			sortDirection: desc ? 'desc' : 'asc',
+			startTs: desc ? bound - WINDOW_SECONDS : bound,
+			endTs: desc ? bound : bound + WINDOW_SECONDS
+		};
 	}
 
-	#advanceBefore(rowCount: number): void {
+	#advance(dir: Dir, hits: Record<string, unknown>[]): void {
+		const w = this.#win[dir];
+		const rowCount = hits.length;
+		w.empty = rowCount === 0 ? w.empty + 1 : 0;
 		if (rowCount >= PAGE_SIZE) {
-			this.#beforeOffset += PAGE_SIZE;
-			this.#beforeEmptySlides = 0;
+			const boundaryTs = hitTimestampSeconds(hits[rowCount - 1], this.fieldConfig);
+			const bound = boundaryTs + (dir === 'before' ? 1 : 0);
+			let offset = bound === w.bound ? w.offset + 1 : 1;
+			for (let i = rowCount - 2; i >= 0; i--) {
+				if (hitTimestampSeconds(hits[i], this.fieldConfig) !== boundaryTs) break;
+				offset++;
+			}
+			// A saturated second cannot be traversed safely without a tie-aware cursor.
+			if (!Number.isFinite(bound) || SIGN[dir] * (bound - w.bound) < 0 || offset > MAX_OFFSET) {
+				this[dir].limited = true;
+				return;
+			}
+			w.bound = bound;
+			w.offset = offset;
 			return;
 		}
-		this.#beforeWindowEnd -= WINDOW_SECONDS;
-		this.#beforeOffset = 0;
-		if (rowCount === 0) {
-			this.#beforeEmptySlides += 1;
-			if (this.#beforeEmptySlides >= MAX_EMPTY_SLIDES) this.noMoreBefore = true;
-		} else {
-			this.#beforeEmptySlides = 0;
-		}
+		w.bound += SIGN[dir] * WINDOW_SECONDS;
+		w.offset = 0;
+		this[dir].noMore = w.empty >= MAX_EMPTY_SLIDES;
 	}
 
 	/** AND-joined chip query used by internal fetches; '*' when no chips. */
 	get composedQuery(): string {
-		const clause = this.#buildChipClause();
-		return clause === '' ? '*' : clause;
+		return this.#buildChipClause() || '*';
 	}
 
 	#buildChipClause(): string {
-		if (this.chips.length === 0) return '';
 		return this.chips.map((c) => `${c.field}:${escapeFilterValue(String(c.value))}`).join(' AND ');
 	}
 
 	async init(): Promise<void> {
-		await this.#fetchInitial();
+		this.#abort?.abort();
+		this.#abort = new AbortController();
+		const thisSeq = ++this.#fetchSeq;
+		for (const dir of ['before', 'after'] as const) {
+			this[dir] = createDirectionState();
+			this.#win[dir] = { bound: this.anchorTs, offset: 0, empty: 0 };
+		}
+		this.error = null;
+		this.entries = [this.#toEntry(this.anchor.raw, true)];
+		this.#seenKeys = new Set([this.#anchorKey]);
+		if (!Number.isFinite(this.anchorTs)) {
+			this.error = 'This log has an invalid timestamp; surrounding context cannot be loaded.';
+			this.initEpoch++;
+			return;
+		}
+		this.loadingInitial = true;
+		await Promise.all([this.#loadPage('after'), this.#loadPage('before')]);
+		if (thisSeq !== this.#fetchSeq) return;
+		this.loadingInitial = false;
+		this.initEpoch++;
 	}
 
 	async setChips(chips: ContextChip[]): Promise<void> {
 		if (this.#abort === null) return; // disposed or not yet initialized
 		this.chips = chips;
-		await this.#fetchInitial();
+		await this.init();
 	}
 
 	/** Search-page handoff: chip clause + the ±15-minute absolute window centered on the anchor. */
 	getSearchHandoff(): { query: string; start: number; end: number } {
 		return {
 			query: this.#buildChipClause(),
-			start: this.anchorTs - WINDOW_HALF_SECONDS,
-			end: this.anchorTs + WINDOW_HALF_SECONDS
+			start: this.anchorTs - WINDOW_SECONDS,
+			end: this.anchorTs + WINDOW_SECONDS
 		};
 	}
 
-	async loadMoreBefore(): Promise<void> {
-		if (this.#abort === null) return; // disposed
-		if (this.loadingMoreBefore || this.noMoreBefore || this.loadingInitial) return;
-		this.loadingMoreBefore = true;
-		const thisSeq = this.#fetchSeq;
-		try {
-			const result = await searchLogs(
-				{
-					indexId: this.indexId,
-					query: this.composedQuery,
-					limit: PAGE_SIZE,
-					offset: this.#beforeOffset,
-					sortDirection: 'desc',
-					startTs: this.#beforeWindowEnd - WINDOW_SECONDS,
-					endTs: this.#beforeWindowEnd
-				},
-				this.#abort?.signal
-			);
-			if (thisSeq !== this.#fetchSeq) return;
-			const fresh = this.#dedupe(result.rawHits);
-			// 'desc' returns newest-first; append at the end of the list (which is also newest-first).
-			this.entries = [...this.entries, ...this.#toEntries(fresh)];
-			this.#advanceBefore(result.rawHits.length);
-		} catch (e) {
-			if (isAbortError(e)) return;
-		} finally {
-			this.loadingMoreBefore = false;
-		}
+	async loadMore(dir: Dir, retry = false): Promise<void> {
+		if (this.#abort === null || this.loadingInitial || this.error) return;
+		const state = this[dir];
+		if (state.loading || state.noMore || state.limited) return;
+		if (state.error && !retry) return;
+		await this.#loadPage(dir);
 	}
 
-	async loadMoreAfter(): Promise<void> {
-		if (this.#abort === null) return; // disposed
-		if (this.loadingMoreAfter || this.noMoreAfter || this.loadingInitial) return;
-		this.loadingMoreAfter = true;
+	async #loadPage(dir: Dir): Promise<void> {
+		const state = this[dir];
+		state.loading = true;
+		state.error = null;
 		const thisSeq = this.#fetchSeq;
 		try {
-			const result = await searchLogs(
-				{
-					indexId: this.indexId,
-					query: this.composedQuery,
-					limit: PAGE_SIZE,
-					offset: this.#afterOffset,
-					sortDirection: 'asc',
-					startTs: this.#afterWindowStart,
-					endTs: this.#afterWindowStart + WINDOW_SECONDS
-				},
-				this.#abort?.signal
-			);
+			const result = await searchLogs(this.#request(dir), this.#abort?.signal);
 			if (thisSeq !== this.#fetchSeq) return;
-			const fresh = this.#dedupe(result.rawHits);
-			// 'asc' returns oldest-first; reverse so newest-first, then prepend to the list.
-			this.entries = [...this.#toEntries(fresh.toReversed()), ...this.entries];
-			this.#advanceAfter(result.rawHits.length);
+			const fresh = this.#toEntries(result.rawHits);
+			if (fresh.length > 0) {
+				this.entries =
+					dir === 'before' ? [...this.entries, ...fresh] : [...fresh.toReversed(), ...this.entries];
+			}
+			this.#advance(dir, result.rawHits);
 		} catch (e) {
 			if (isAbortError(e)) return;
+			if (thisSeq !== this.#fetchSeq) return;
+			state.error = e;
 		} finally {
-			this.loadingMoreAfter = false;
+			if (thisSeq === this.#fetchSeq) state.loading = false;
 		}
 	}
 
 	dispose(): void {
+		this.#fetchSeq++;
 		this.#abort?.abort();
 		this.#abort = null;
 	}
 
-	async #fetchInitial(): Promise<void> {
-		this.#abort?.abort();
-		this.#abort = new AbortController();
-		if (!Number.isFinite(this.anchorTs)) {
-			this.error = 'This log has an invalid timestamp; surrounding context cannot be loaded.';
-			this.entries = [this.#toEntry(this.anchor.raw, true)];
-			this.noMoreBefore = true;
-			this.noMoreAfter = true;
-			this.initEpoch++;
-			return;
-		}
-		const thisSeq = ++this.#fetchSeq;
-		this.loadingInitial = true;
-		this.error = null;
-		this.entries = [];
-		this.#seenKeys = new Set<string>([this.#anchorKey]);
-		this.#beforeWindowEnd = this.anchorTs;
-		this.#beforeOffset = 0;
-		this.#beforeEmptySlides = 0;
-		this.#afterWindowStart = this.anchorTs;
-		this.#afterOffset = 0;
-		this.#afterEmptySlides = 0;
-		this.noMoreBefore = false;
-		this.noMoreAfter = false;
-		// Clear any leftover load-more flags from an aborted previous round.
-		this.loadingMoreBefore = false;
-		this.loadingMoreAfter = false;
-
-		try {
-			const [afterRes, beforeRes] = await Promise.all([
-				searchLogs(
-					{
-						indexId: this.indexId,
-						query: this.composedQuery,
-						limit: PAGE_SIZE,
-						offset: 0,
-						sortDirection: 'asc',
-						startTs: this.anchorTs,
-						endTs: this.anchorTs + WINDOW_SECONDS
-					},
-					this.#abort.signal
-				),
-				searchLogs(
-					{
-						indexId: this.indexId,
-						query: this.composedQuery,
-						limit: PAGE_SIZE,
-						offset: 0,
-						sortDirection: 'desc',
-						startTs: this.anchorTs - WINDOW_SECONDS,
-						endTs: this.anchorTs
-					},
-					this.#abort.signal
-				)
-			]);
-
-			if (thisSeq !== this.#fetchSeq) return;
-
-			const afterFresh = this.#dedupe(afterRes.rawHits);
-			const beforeFresh = this.#dedupe(beforeRes.rawHits);
-
-			// Final order: newest first. 'asc' results reversed → newest; anchor in middle; 'desc' results → older.
-			const merged: ContextEntry[] = [
-				...this.#toEntries(afterFresh.toReversed()),
-				this.#toEntry(this.anchor.raw, true),
-				...this.#toEntries(beforeFresh)
-			];
-			this.entries = merged;
-			this.initEpoch++;
-
-			this.#advanceAfter(afterRes.rawHits.length);
-			this.#advanceBefore(beforeRes.rawHits.length);
-		} catch (e) {
-			if (isAbortError(e)) return;
-			if (thisSeq !== this.#fetchSeq) return;
-			this.error = 'Failed to fetch log context. Check your connection and try again.';
-			this.entries = [this.#toEntry(this.anchor.raw, true)];
-			this.initEpoch++;
-		} finally {
-			if (thisSeq === this.#fetchSeq) this.loadingInitial = false;
-		}
-	}
-
-	#dedupe(hits: Record<string, unknown>[]): Record<string, unknown>[] {
-		const out: Record<string, unknown>[] = [];
+	#toEntries(hits: Record<string, unknown>[]): ContextEntry[] {
+		const out: ContextEntry[] = [];
 		for (const h of hits) {
 			const k = hitKey(h);
 			if (this.#seenKeys.has(k)) continue;
 			this.#seenKeys.add(k);
-			out.push(h);
+			out.push(this.#toEntry(h, false));
 		}
 		return out;
-	}
-
-	#toEntries(hits: Record<string, unknown>[]): ContextEntry[] {
-		return hits.map((h) => this.#toEntry(h, false));
 	}
 
 	#toEntry(hit: Record<string, unknown>, isAnchor: boolean): ContextEntry {

@@ -12,6 +12,7 @@ import type {
 import { NotFoundError, QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
 
 import type { Db } from '../lib/db.js';
+import { fetchFieldCaps } from '../lib/quickwit-field-caps.js';
 import {
 	apiKey,
 	indexSettings,
@@ -194,6 +195,23 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 			sourceType: source.sourceType,
 			enabled: source.enabled
 		}))
+	};
+}
+
+export async function listIndexFields(
+	meta: IndexMeta,
+	range: { startTs: number; endTs: number }
+): Promise<{ fields: IndexField[] }> {
+	const caps = await fetchFieldCaps(meta.index.indexId, range);
+	if (caps === null) return { fields: meta.index.fields };
+
+	const known = new Set(meta.index.fields.map((f) => f.name));
+	const aggregatable = new Set(caps.map((f) => f.name));
+	return {
+		fields: [
+			...meta.index.fields.map((f) => (aggregatable.has(f.name) ? { ...f, fast: true } : f)),
+			...caps.filter((f) => !known.has(f.name))
+		]
 	};
 }
 

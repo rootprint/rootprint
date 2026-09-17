@@ -11,12 +11,12 @@
 	let { totalSearches, p50, p95, p99 }: Props = $props();
 
 	const cellClass = 'flex flex-col gap-1 px-4 py-3';
-	const seamClass = 'md:border-l md:border-line';
-	const labelClass = 'text-base-content/60 text-[10px] uppercase tracking-wide';
+	const seamClass = 'border-line border-l';
+	const labelClass = 'section-label';
 	const valueClass = 'text-xl tabular-nums whitespace-nowrap';
 </script>
 
-<div class="border-line rounded-box grid grid-cols-2 overflow-hidden border md:grid-cols-4">
+<div class="border-line rounded-box grid grid-cols-4 overflow-hidden border">
 	<div class={cellClass}>
 		<span class={labelClass}>Searches</span>
 		<span class={valueClass}>{totalSearches.toLocaleString()}</span>

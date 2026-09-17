@@ -37,6 +37,6 @@
 	{#if error}
 		<p id={msgId} class="text-error text-xs">{error}</p>
 	{:else if hint}
-		<p id={msgId} class="text-base-content/50 text-xs">{hint}</p>
+		<p id={msgId} class="text-subtle text-xs">{hint}</p>
 	{/if}
 </div>

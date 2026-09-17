@@ -34,7 +34,7 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
 	}
 	if (!session) throw unauthorized('Unauthorized');
 
-	if (!(await retainsOAuthAccess(session.user.id))) {
+	if (!(await retainsOAuthAccess(session.user.id, session.session.createdAt))) {
 		logger.warn({ userId: session.user.id }, 'oauth access revoked mid-session');
 		throw unauthorized('Unauthorized');
 	}

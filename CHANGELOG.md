@@ -2,6 +2,39 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Optional fold mode on the log explorer: consecutive rows that match on every visible column except timestamp collapse behind a count badge (`fold=1` in the URL). Display-only; histogram, hit count, and the search query are unchanged.
+
+## [0.4.3] - 2026-09-10
+
+### ⚠️ Breaking
+
+- `GET /api/indexes/{indexId}/fields` now requires `startTs` and `endTs` in epoch seconds.
+
+### Added
+
+- Range-scoped discovery of dynamic and nested JSON fields, with static-schema fallback.
+- Field pinning, collapsible OpenTelemetry attribute groups, and virtualized field lists.
+- Autocomplete loading and empty states, prefix-match priority, and a 50-suggestion limit with an overflow count.
+
+### Changed
+
+- Log drawer search moved to the properties pane, filtering by name or value.
+- Updated typography, colors, spacing, and responsive layouts.
+- GitHub releases include the matching changelog section.
+- Updated dependencies, including Bun 1.4.2 and Better Auth 1.7.3. Migration `0021` adds nullable `session.impersonated_by`.
+- Internal: migrated DOM behaviors to Svelte attachments and refactored OAuth forms and route error handling.
+
+### Fixed
+
+- Field discovery retries and value refresh after discovery errors.
+- Duplicate field-value counts and boolean filter values.
+- Duplicate row-key errors in log drawer properties.
+- Chart resizing after initialization.
+
 ## [0.4.2] - 2026-09-03
 
 ### ⚠️ Breaking

@@ -94,8 +94,12 @@ Use semantic DaisyUI classes (`bg-base-100`, `text-base-content`, `btn-primary`,
 | `success`      | Confirmation                                           |
 | `warning`      | Caution                                                |
 | `error`        | Field/form errors                                      |
+| `muted`        | Secondary labels and supporting text on light surfaces |
+| `subtle`       | Tertiary metadata on light surfaces, not disabled text |
+| `info-ink`     | Blue text and chart strokes on light surfaces          |
+| `warning-ink`  | Warning text and chart strokes on light surfaces       |
 
-The brand-green is the visual signature. Use it for one primary CTA per surface, not for decoration.
+The brand-green is the visual signature. Use it for one primary CTA per surface, not for decoration. `info`, `accent`, and `warning` are fills — use the `-ink` variants for text on light surfaces and the `--chart-N` ramp for chart strokes.
 
 ### Typography
 
@@ -103,19 +107,22 @@ The brand-green is the visual signature. Use it for one primary CTA per surface,
 - Body is `0.875rem / 1.5rem` (14px / 24px), small and data-dense by default.
 - Headings are **regular weight (400)** with **tight tracking** at large sizes. Do not use `font-bold` on headings. The size carries the hierarchy, not the weight. The base layer in `app.css` already sets `font-weight: 400` and `letter-spacing: -0.02em` on `h1–h4`; don't override it.
 - Tokens `text-display`, `text-h1`, `text-h2`, `text-h3` are available via Tailwind v4's `@theme` for arbitrary headings outside the HTML hierarchy.
-- Mono text is for: code, IDs, timestamps, small metadata labels. Not for body prose.
+- Use `text-ui` (13px / 20px) for compact controls, `text-xs` (12px / 16px) for metadata, and `.section-label` (12px / 18px, medium) for workspace section and table labels. Standard `text-sm` remains appropriate for navigation, forms, and body copy.
+- Mono text is for code, queries, IDs, timestamps, and log payloads — sans everywhere else. Use `tabular-nums` for aligned numbers rather than making their labels monospace.
 
 ### Material — Flat
 
 - No shadows on in-page surfaces (cards, panels, tables, forms). Elevation is implied by `base-200` surfaces and `border-line` hairlines, not by drop shadow. One exception: floating overlays **without a backdrop dim** (chart tooltips, popovers, the log drawer) may carry a shadow to separate from the content beneath. Modals get a dimmed backdrop and must stay `shadow-none` (see `ui/Modal`).
-- Small radii: `rounded` (4px) for fields and controls, `rounded-box` (8px) for cards. Avoid `rounded-xl`/`rounded-2xl`/`rounded-full` except for genuine pill/avatar shapes.
+- Small radii: `rounded` and `rounded-box` (4px) for fields, controls, and panels. Avoid `rounded-xl`/`rounded-2xl`/`rounded-full` except for genuine pill/avatar shapes.
 - `--depth: 0` and `--noise: 0` are set on the theme. Don't override them.
 
 ### Reusable Component Classes
 
 Defined in `src/app.css` under `@layer components`:
 
-- `.eyebrow` — uppercase sans micro-label used **above** a heading (also the title style for chart panels). Use it instead of `<small>` or a second `<p>` to introduce the page/section.
+- `.eyebrow` — uppercase sans micro-label used **above** a page heading. Reserve it for page introductions, not chart titles or result metadata.
+- `.section-label` — sentence-case sans label for workspace sections, chart titles, and table headings.
+- `.settings-page` — centered settings content with padding based on the named `settings` container width. Use it instead of fixed `px-12 py-12` page shells.
 
 Hairlines are not a class but a color token: `--color-line` (1px-intent line at 10% of `base-content`, defined in `app.css` under `@theme inline`). It generates `border-line`, `border-b-line`, `divide-line`, etc. Use it to frame cards, panels, dividers on the light canvas — it replaces `shadow-*` for elevation. Compose with Tailwind utilities, e.g. `class="border-line rounded-box border p-8"`.
 
@@ -132,7 +139,8 @@ Recurring patterns to reach for before inventing new ones:
 
 - **Eyebrow + Heading + Body** — `<p class="eyebrow">…</p>` then `<h1 class="text-3xl tracking-tight">…</h1>` then body. This is the default page-header shape.
 - **Hairline panel** — `<div class="border-line rounded-box border p-8">…</div>` on `base-200` for any framed content. The auth card and the home session panel both use this.
-- **Mono metadata grid** — when listing key/value metadata (emails, IDs, timestamps), use a `grid` of `<dt class="text-base-content/50 text-xs uppercase tracking-wider">` + `<dd class="font-mono text-sm">`. See `routes/(app)/+page.svelte`.
+- **Metadata grid** — use sentence-case `<dt class="text-muted text-xs">` labels and sans values, reserving `<dd class="font-mono text-sm">` for IDs, timestamps, and code.
+- The app is desktop-only: below `48rem` the root layout renders a desktop-size notice instead of route content. That is exactly Tailwind's `md` breakpoint, so **`sm:` and `md:` variants never apply** inside the app — their unprefixed values are dead code. Reach for `lg:`/`xl:` or a container query when a surface really needs to reflow.
 
 ### What Not to Do
 

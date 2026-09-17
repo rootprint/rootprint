@@ -157,7 +157,7 @@
 
 {#snippet group(label: string, fields: FieldRowData[], emptyMessage = 'None')}
 	<section>
-		<h3 class="eyebrow mb-1.5">{label}</h3>
+		<h3 class="section-label mb-1.5">{label}</h3>
 		{#if fields.length > 0}
 			{@render table(fields)}
 		{:else}
@@ -167,7 +167,7 @@
 {/snippet}
 
 {#snippet empty(message: string)}
-	<p class="text-base-content/50 text-xs">{message}</p>
+	<p class="text-subtle text-xs">{message}</p>
 {/snippet}
 
 <div class="flex h-full min-h-0 flex-col">
@@ -180,7 +180,7 @@
 				></span>
 				<span class="truncate">{span.serviceName}</span>
 				{#if span.isError}
-					<span class="text-error shrink-0 text-[10px] tracking-wide uppercase">Failed</span>
+					<span class="text-error shrink-0 text-xs">Failed</span>
 				{/if}
 			</div>
 			<h2 class="mt-1 truncate font-mono text-base leading-5" title={span.name}>{span.name}</h2>
@@ -230,7 +230,7 @@
 			>
 				{tab.label}
 				{#if tabCounts[tab.id]}
-					<span class="text-base-content/50 ml-1 tabular-nums">{tabCounts[tab.id]}</span>
+					<span class="text-subtle ml-1 tabular-nums">{tabCounts[tab.id]}</span>
 				{/if}
 			</button>
 		{/each}
@@ -245,7 +245,7 @@
 		>
 			{#if activeTab === 'overview'}
 				<section>
-					<h3 class="eyebrow mb-2">Status</h3>
+					<h3 class="section-label mb-2">Status</h3>
 					<div class="border-line rounded-md border px-3 py-2.5">
 						<div class="flex items-start gap-2.5">
 							<span
@@ -278,7 +278,7 @@
 						</div>
 						{#if description}
 							<div class="border-line mt-2 border-t pt-2">
-								<p class="text-base-content/50 text-[10px] tracking-wide uppercase">
+								<p class="section-label">
 									{description.kind}
 								</p>
 								<p class="mt-0.5 font-mono text-xs leading-5 break-words">
@@ -290,10 +290,10 @@
 				</section>
 
 				<section>
-					<h3 class="eyebrow mb-2">Timing</h3>
+					<h3 class="section-label mb-2">Timing</h3>
 					<div class="border-line overflow-hidden rounded-md border">
 						<div class="p-3">
-							<p class="text-base-content/50 text-[11px]">Total duration</p>
+							<p class="text-subtle text-xs">Total duration</p>
 							<p class="mt-0.5 font-mono text-xl leading-6 tabular-nums">{durationText}</p>
 
 							<div
@@ -307,26 +307,26 @@
 
 							<dl class="mt-2 grid grid-cols-2 gap-3">
 								<div>
-									<dt class="flex items-center gap-1.5 text-[11px]">
+									<dt class="flex items-center gap-1.5 text-xs">
 										<span class="bg-base-content h-1.5 w-1.5 shrink-0 rounded-full"></span>
 										Self time
 									</dt>
 									<dd class="mt-0.5 font-mono text-xs tabular-nums">
 										{formatSpanDuration(selfDurationMicros)}
 										{#if selfPct !== null}
-											<span class="text-base-content/40 ml-1">{selfPct}%</span>
+											<span class="text-subtle ml-1">{selfPct}%</span>
 										{/if}
 									</dd>
 								</div>
 								<div>
-									<dt class="flex items-center gap-1.5 text-[11px]">
+									<dt class="flex items-center gap-1.5 text-xs">
 										<span class="bg-base-content/20 h-1.5 w-1.5 shrink-0 rounded-full"></span>
 										Child spans
 									</dt>
 									<dd class="mt-0.5 font-mono text-xs tabular-nums">
 										{formatSpanDuration(childDurationMicros)}
 										{#if childPct !== null}
-											<span class="text-base-content/40 ml-1">{childPct}%</span>
+											<span class="text-subtle ml-1">{childPct}%</span>
 										{/if}
 									</dd>
 								</div>
@@ -337,16 +337,14 @@
 							class="border-line divide-line grid grid-cols-[minmax(0,1fr)_auto] divide-x border-t"
 						>
 							<div class="min-w-0 px-3 py-2.5">
-								<dt class="text-base-content/50 text-[10px] tracking-wide uppercase">Started</dt>
-								<dd class="mt-0.5 truncate font-mono text-[11px] tabular-nums" title={startText}>
+								<dt class="section-label">Started</dt>
+								<dd class="mt-0.5 truncate font-mono text-xs tabular-nums" title={startText}>
 									{formatSpanStart(traceStartMicros + span.startOffsetMicros)}
 								</dd>
 							</div>
 							<div class="px-3 py-2.5">
-								<dt class="text-base-content/50 text-[10px] tracking-wide uppercase">
-									Trace offset
-								</dt>
-								<dd class="mt-0.5 font-mono text-[11px] tabular-nums">
+								<dt class="section-label">Trace offset</dt>
+								<dd class="mt-0.5 font-mono text-xs tabular-nums">
 									{formatOffset(span.startOffsetMicros)}
 								</dd>
 							</div>
@@ -357,14 +355,14 @@
 								<div class="flex items-baseline justify-between gap-3">
 									<p class="text-xs">
 										Database work
-										<span class="text-base-content/50 ml-1">
+										<span class="text-subtle ml-1">
 											{pluralize(dbCalls.length, 'operation')}
 										</span>
 									</p>
 									<p class="shrink-0 font-mono text-xs tabular-nums">
 										{formatSpanDuration(dbTotalMicros)}
 										{#if dbSharePct !== null}
-											<span class="text-base-content/40 ml-1">{dbSharePct}%</span>
+											<span class="text-subtle ml-1">{dbSharePct}%</span>
 										{/if}
 									</p>
 								</div>
@@ -375,7 +373,7 @@
 								>
 									<span class="bg-warning block h-full" style={`width:${dbBarPct}%`}></span>
 								</div>
-								<p class="text-base-content/40 mt-1 text-[10px]">
+								<p class="text-subtle mt-1 text-xs">
 									Cumulative span time; concurrent work may overlap
 								</p>
 							</div>
@@ -385,7 +383,7 @@
 
 				{#if subtree.length > 0}
 					<section>
-						<h3 class="eyebrow mb-2">Top operations</h3>
+						<h3 class="section-label mb-2">Top operations</h3>
 						<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
 							{#each rollups as rollup (rollup.key)}
 								<button
@@ -405,10 +403,10 @@
 											class="h-1.5 w-1.5 shrink-0 rounded-full"
 											style={`background-color:${serviceColor(rollup.serviceName)}`}
 										></span>
-										<span class="text-base-content/50 min-w-0 truncate text-[11px]">
+										<span class="text-subtle min-w-0 truncate text-xs">
 											{rollup.serviceName}
 										</span>
-										<span class="text-base-content/40 shrink-0 text-[10px] tabular-nums">
+										<span class="text-subtle shrink-0 text-xs tabular-nums">
 											×{rollup.count}
 										</span>
 									</span>
@@ -426,7 +424,7 @@
 			{:else if activeTab === 'events'}
 				{#if span.events.length > 0}
 					<section>
-						<h3 class="eyebrow mb-2">Event timeline</h3>
+						<h3 class="section-label mb-2">Event timeline</h3>
 
 						<ol>
 							{#each span.events as event, i (i)}
@@ -468,7 +466,7 @@
 												{/if}
 											</div>
 											<time
-												class="bg-base-200 shrink-0 rounded px-1.5 font-mono text-[10px] tabular-nums"
+												class="bg-base-200 shrink-0 rounded px-1.5 font-mono text-xs tabular-nums"
 											>
 												{formatOffset(event.timeOffsetMicros - span.startOffsetMicros)}
 											</time>
@@ -477,8 +475,8 @@
 										{#if fields.length > 0}
 											<div class="border-line border-t px-3 py-2.5">
 												<div class="mb-1.5 flex items-baseline justify-between gap-3">
-													<p class="eyebrow text-[10px]">Attributes</p>
-													<p class="text-base-content/40 text-[10px] tabular-nums">
+													<p class="section-label">Attributes</p>
+													<p class="text-subtle text-xs tabular-nums">
 														{pluralize(fields.length, 'field')}
 													</p>
 												</div>
@@ -488,9 +486,9 @@
 
 										{#if stacktrace}
 											<div class="border-line border-t px-3 py-2.5">
-												<p class="eyebrow mb-1.5 text-[10px]">Stack trace</p>
+												<p class="section-label mb-1.5">Stack trace</p>
 												<pre
-													class="bg-base-200 text-base-content/70 max-h-80 overflow-auto rounded p-2 font-mono text-[11px] whitespace-pre">{stacktrace}</pre>
+													class="bg-base-200 text-base-content/70 max-h-80 overflow-auto rounded p-2 font-mono text-xs whitespace-pre">{stacktrace}</pre>
 											</div>
 										{/if}
 									</article>

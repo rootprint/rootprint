@@ -106,7 +106,7 @@
 
 {#snippet spanLabel(node: SpanNode)}
 	<span class="shrink-0 font-medium whitespace-nowrap">{node.serviceName}</span>
-	<span class="text-base-content/50 min-w-0 truncate">{node.name}</span>
+	<span class="text-subtle min-w-0 truncate">{node.name}</span>
 	{#if node.isError}
 		<TriangleAlert
 			class="text-error h-3 w-3 shrink-0"
@@ -230,7 +230,7 @@
 					href={logs.href}
 					target="_blank"
 					rel="noopener"
-					class="text-base-content/50 hover:text-base-content flex shrink-0 items-center gap-1 self-center pr-2"
+					class="text-subtle hover:text-base-content flex shrink-0 items-center gap-1 self-center pr-2"
 					aria-label={logs.count === null
 						? `View logs for ${node.name}`
 						: `View ${logs.count} ${logs.count === 1 ? 'log' : 'logs'} for ${node.name}`}
@@ -238,7 +238,7 @@
 				>
 					<ScrollText class="h-3.5 w-3.5" />
 					{#if logs.count !== null}
-						<span class="font-mono text-[10px] tabular-nums">{logs.count}</span>
+						<span class="font-mono text-xs tabular-nums">{logs.count}</span>
 					{/if}
 				</a>
 			{/if}
@@ -279,7 +279,7 @@
 			role="alert"
 			class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
 		>
-			<p class="text-warning text-sm">{error}</p>
+			<p class="text-warning-ink text-sm">{error}</p>
 			{#if onRetry}
 				<button type="button" class="btn btn-sm btn-ghost gap-1.5" onclick={onRetry}>
 					<RotateCw class="h-3.5 w-3.5" />

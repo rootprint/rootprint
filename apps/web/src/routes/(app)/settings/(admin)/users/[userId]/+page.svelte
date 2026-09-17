@@ -19,7 +19,7 @@
 	let removeOpen = $state(false);
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader description={user.email}>
 		{#snippet actions()}
 			<MemberActionsMenu
@@ -34,9 +34,7 @@
 		<div class="mt-3 flex items-center gap-2">
 			<h1 class="text-h1">{user.name}</h1>
 			{#if user.role === 'admin'}
-				<span class="badge badge-sm badge-soft badge-neutral text-[10px] tracking-wide uppercase">
-					Admin
-				</span>
+				<span class="badge badge-sm badge-soft badge-neutral text-xs"> Admin </span>
 			{/if}
 		</div>
 	</PageHeader>

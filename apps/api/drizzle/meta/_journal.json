@@ -148,6 +148,13 @@
       "when": 1787390335352,
       "tag": "0020_view_time_range",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789039650041,
+      "tag": "0021_session_impersonated_by",
+      "breakpoints": true
     }
   ]
 }

@@ -3,10 +3,15 @@ const SEVERITY_ORDER = [
 	'debug',
 	'info',
 	'information',
+	'notice',
 	'warn',
 	'warning',
+	'err',
 	'error',
+	'crit',
 	'critical',
+	'alert',
+	'emerg',
 	'fatal'
 ] as const;
 

@@ -50,9 +50,10 @@ export function buildGridTemplate(
 	columnWidths: Record<string, number>,
 	wideField: string | undefined,
 	wideWidth: number,
-	lineWrap = false
+	lineWrap = false,
+	foldGutter = false
 ): string {
-	const prefix = `3px calc(${TIMESTAMP_COLUMN_WIDTH}ch + 1rem)`;
+	const prefix = `3px ${foldGutter ? 'var(--fold-gutter-width) ' : ''}calc(${TIMESTAMP_COLUMN_WIDTH}ch + 1rem)`;
 	if (columns.length === 0) return `${prefix} ${lineWrap ? 'minmax(0, 1fr)' : '1fr'}`;
 	const tracks = columns
 		.map((c) => {

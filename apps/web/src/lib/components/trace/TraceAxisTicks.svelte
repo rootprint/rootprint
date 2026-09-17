@@ -6,10 +6,7 @@
 
 {#each ticks as tick (tick.pct)}
 	<span
-		class={[
-			'text-base-content/50 absolute top-0 font-mono text-[10px]',
-			tick.pct > 0 && '-translate-x-1/2'
-		]}
+		class={['text-subtle absolute top-0 font-mono text-[10px]', tick.pct > 0 && '-translate-x-1/2']}
 		style={`left:${tick.pct}%`}
 	>
 		{tick.label}

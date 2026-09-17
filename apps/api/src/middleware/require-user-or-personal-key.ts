@@ -56,7 +56,7 @@ export function requireUserOrPersonalKey(required: Scope): MiddlewareHandler<Aut
 			.limit(1);
 		if (!owner) throw unauthorized('Invalid API key', 'PERSONAL_KEY_INVALID');
 		if (owner.banned) throw forbidden('API key owner is banned', 'PERSONAL_KEY_FORBIDDEN');
-		if (!(await retainsOAuthAccess(owner.id))) {
+		if (!(await retainsOAuthAccess(owner.id, result.key.createdAt))) {
 			logger.warn({ userId: owner.id }, 'oauth access revoked; personal api key rejected');
 			throw forbidden('API key owner is no longer allowed', 'PERSONAL_KEY_FORBIDDEN');
 		}

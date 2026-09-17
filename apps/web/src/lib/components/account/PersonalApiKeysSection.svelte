@@ -32,7 +32,7 @@
 </script>
 
 <div class="border-line rounded-box bg-base-100 border p-6">
-	<div class="border-line flex items-start justify-between gap-4 border-b pb-4">
+	<div class="border-line flex flex-wrap items-start justify-between gap-4 border-b pb-4">
 		<div>
 			<p class="text-sm">API keys</p>
 			<p class="text-base-content/60 text-xs">
@@ -54,15 +54,15 @@
 	{:else}
 		<ul class="divide-line mt-4 divide-y">
 			{#each keys as key (key.id)}
-				<li class="flex items-center gap-4 py-2">
+				<li class="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
 					<span class="min-w-0 flex-1 truncate text-sm">{key.name ?? '—'}</span>
 					<span class="text-base-content/60 font-mono text-xs">
 						{key.start != null ? `${key.start}…` : '—'}
 					</span>
-					<span class="text-base-content/50 text-xs">
+					<span class="text-subtle text-xs">
 						created {formatRelativeTime(key.createdAt)}
 					</span>
-					<span class="text-base-content/50 text-xs">
+					<span class="text-subtle text-xs">
 						{key.lastRequest ? `used ${formatRelativeTime(key.lastRequest)}` : 'never used'}
 					</span>
 					<button

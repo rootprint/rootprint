@@ -4,6 +4,7 @@
 
 	import ContextScopeBar from './context/ContextScopeBar.svelte';
 	import LogRow from '../LogRow.svelte';
+	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import { ContextLoader, seedChipsFromIndex } from './context/context-loader.svelte';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import {
@@ -128,7 +129,7 @@
 					if (entry.target === topSentinel) {
 						void runLoadMoreAfterWith(localLoader);
 					} else if (entry.target === bottomSentinel) {
-						void localLoader.loadMoreBefore();
+						void localLoader.loadMore('before');
 					}
 				}
 			},
@@ -176,10 +177,10 @@
 	});
 
 	/** Prepending newer rows shifts scrollHeight; restore visual scroll position. */
-	async function runLoadMoreAfterWith(l: ContextLoader): Promise<void> {
+	async function runLoadMoreAfterWith(l: ContextLoader, retry = false): Promise<void> {
 		if (!scrollEl) return;
 		const before = { top: scrollEl.scrollTop, height: scrollEl.scrollHeight };
-		await l.loadMoreAfter();
+		await l.loadMore('after', retry);
 		await tick();
 		if (!scrollEl) return;
 		const delta = scrollEl.scrollHeight - before.height;
@@ -219,7 +220,7 @@
 		/>
 
 		{#if l.error}
-			<p class="text-warning px-3 py-2 text-sm">{l.error}</p>
+			<p class="text-warning-ink px-3 py-2 text-sm">{l.error}</p>
 		{/if}
 
 		{#if l.loadingInitial}
@@ -231,14 +232,24 @@
 				<div bind:this={scrollEl} class="absolute inset-0 overflow-x-auto overflow-y-auto">
 					<!-- Top sentinel: newer side -->
 					<div bind:this={topSentinel}>
-						{#if l.loadingMoreAfter}
+						{#if l.after.loading}
 							<div class="flex items-center justify-center py-2">
 								<span class="loading loading-spinner loading-xs"></span>
 							</div>
-						{:else if l.noMoreAfter}
-							<p
-								class="border-line text-base-content/40 border-b border-dashed py-2 text-center text-[10px]"
-							>
+						{:else if l.after.error}
+							<div class="px-3 py-2">
+								<PanelError
+									message="Couldn't load newer logs"
+									error={l.after.error}
+									retry={() => runLoadMoreAfterWith(l, true)}
+								/>
+							</div>
+						{:else if l.after.limited}
+							<p class="text-warning-ink px-3 py-2 text-center text-xs">
+								Newer context reached the pagination limit. Narrow the scope to see more logs.
+							</p>
+						{:else if l.after.noMore}
+							<p class="border-line text-subtle border-b border-dashed py-2 text-center text-xs">
 								No newer logs
 							</p>
 						{/if}
@@ -258,14 +269,25 @@
 
 					<!-- Bottom sentinel: older side -->
 					<div bind:this={bottomSentinel}>
-						{#if l.loadingMoreBefore}
+						{#if l.before.loading}
 							<div class="flex items-center justify-center py-2">
 								<span class="loading loading-spinner loading-xs"></span>
 							</div>
-						{:else if l.noMoreBefore}
-							<p
-								class="border-line text-base-content/40 border-t border-dashed py-2 text-center text-[10px]"
-							>
+						{:else if l.before.error}
+							<!-- pb-16 keeps the Retry button clear of the floating "Back to hit" pill, which sits in this same bottom-right corner. -->
+							<div class="px-3 pt-2 pb-16">
+								<PanelError
+									message="Couldn't load older logs"
+									error={l.before.error}
+									retry={() => void l.loadMore('before', true)}
+								/>
+							</div>
+						{:else if l.before.limited}
+							<p class="text-warning-ink px-3 pt-2 pb-16 text-center text-xs">
+								Older context reached the pagination limit. Narrow the scope to see more logs.
+							</p>
+						{:else if l.before.noMore}
+							<p class="border-line text-subtle border-t border-dashed py-2 text-center text-xs">
 								No older logs
 							</p>
 						{/if}

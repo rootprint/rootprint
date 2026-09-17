@@ -1,6 +1,6 @@
 {
 	"name": "rootprint",
-	"version": "0.4.2",
+	"version": "0.4.3",
 	"description": "Open-source, self-hosted log management platform with full-text search directly on object storage.",
 	"type": "module",
 	"private": true,
@@ -41,9 +41,9 @@
 		"*.{ts,js,svelte,json,css,md}": "prettier --write"
 	},
 	"devDependencies": {
-		"@types/node": "^26.2.0",
-		"lint-staged": "^17.3.0",
-		"oxlint": "^1.78.0",
+		"@types/node": "^26.4.1",
+		"lint-staged": "^17.5.0",
+		"oxlint": "^1.81.0",
 		"prettier": "^3.9.6",
 		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.8.1",

@@ -73,10 +73,11 @@
 	type="button"
 	popovertarget={dd}
 	style="anchor-name:--{dd}"
-	class="border-base-content/20 bg-base-100 hover:bg-base-200 flex h-8 cursor-pointer items-center gap-2 rounded border px-2 text-xs select-none focus:outline-none"
+	title={label}
+	class="border-base-content/20 bg-base-100 hover:bg-base-200 text-ui focus-visible:border-base-content flex h-8 max-w-48 min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded border px-2 select-none"
 >
-	<span>{label}</span>
-	<ChevronDown class="h-3 w-3 opacity-60" />
+	<span class="truncate">{label}</span>
+	<ChevronDown class="h-3 w-3 shrink-0 opacity-60" />
 </button>
 
 <div
@@ -88,7 +89,7 @@
 	class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 flex border"
 >
 	<div class="border-line flex w-44 flex-col border-r p-3">
-		<p class="eyebrow mb-2">Ranges</p>
+		<p class="section-label mb-2">Ranges</p>
 		{#each PRESET_OPTIONS as preset (preset)}
 			{@const active = value.type === 'relative' && value.preset === preset}
 			<button
@@ -105,9 +106,9 @@
 	</div>
 
 	<div class="flex w-72 flex-col p-3">
-		<p class="eyebrow mb-2">Absolute range</p>
+		<p class="section-label mb-2">Absolute range</p>
 
-		<p class="eyebrow mb-1">From</p>
+		<p class="text-muted mb-1 text-xs">From</p>
 		<div class="flex gap-2">
 			<input
 				type="date"
@@ -133,7 +134,7 @@
 			/>
 		</div>
 
-		<p class="eyebrow mt-2 mb-1">To</p>
+		<p class="text-muted mt-2 mb-1 text-xs">To</p>
 		<div class="flex gap-2">
 			<input
 				type="date"

@@ -33,6 +33,12 @@ export const FieldParams = v.object({
 	field: v.pipe(v.string(), v.minLength(1))
 });
 
+/** Required: field discovery is range-scoped, an unbounded `_field_caps` scans every split. */
+export const IndexFieldsQuery = v.object({
+	startTs: tsParam,
+	endTs: tsParam
+});
+
 export const HistogramQuery = v.object({
 	q: v.optional(v.string()),
 	startTs: v.optional(tsParam),

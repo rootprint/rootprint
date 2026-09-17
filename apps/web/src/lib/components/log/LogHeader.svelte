@@ -8,6 +8,7 @@
 		gridTemplate,
 		sortDirection,
 		lineWrap = false,
+		foldGutter = false,
 		onToggleSort = () => {},
 		el = $bindable(null)
 	}: {
@@ -16,26 +17,27 @@
 		gridTemplate: string;
 		sortDirection: SortDirection;
 		lineWrap?: boolean;
+		foldGutter?: boolean;
 		onToggleSort?: () => void;
 		el?: HTMLElement | null;
 	} = $props();
 
-	const timestampLabel = $derived(fieldConfig?.timestampField ?? 'timestamp');
 	const rowWidth = $derived(lineWrap ? 'w-full' : 'w-max min-w-full');
 </script>
 
 <div
 	bind:this={el}
-	class="border-line text-base-content sticky top-0 z-10 grid items-center border-b font-mono text-xs font-medium tracking-wider {rowWidth}"
+	class="border-line text-muted sticky top-0 z-10 grid items-center border-b font-mono text-xs font-medium {rowWidth}"
 	style="grid-template-columns: {gridTemplate}; background-color: color-mix(in oklab, var(--color-base-200) 30%, var(--color-base-100));"
 >
 	<span aria-hidden="true"></span>
+	{#if foldGutter}<span aria-hidden="true"></span>{/if}
 	<button
 		type="button"
-		class="hover:text-base-content flex items-center gap-1 px-2 py-1.5 text-left font-sans text-[13px]"
+		class="hover:text-base-content text-ui flex items-center gap-1 px-2 py-1.5 text-left font-sans"
 		onclick={onToggleSort}
 	>
-		{timestampLabel}
+		{fieldConfig?.timestampField ?? 'timestamp'}
 		{#if sortDirection === 'desc'}
 			<ArrowDown class="h-3 w-3" />
 		{:else}
@@ -43,6 +45,8 @@
 		{/if}
 	</button>
 	{#each columns as column (column)}
-		<span class="truncate px-2 py-1.5 font-sans text-[13px]" title={column}>{column}</span>
+		<span class="text-ui truncate px-2 py-1.5 font-sans" title={column}>
+			{column}
+		</span>
 	{/each}
 </div>

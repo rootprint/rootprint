@@ -74,7 +74,7 @@
 
 	function makeOpts(UPlot: typeof uPlotLib): Omit<uPlotLib.Options, 'width' | 'height'> {
 		const paths = curve === 'spline' ? UPlot.paths.spline?.() : UPlot.paths.linear?.();
-		const axisStroke = baseContentAt(0.45);
+		const axisStroke = baseContentAt(0.65);
 		const gridStroke = baseContentAt(0.1);
 		const [r0, r1] = xRange;
 		const spanMs = (r1 - r0) * 1000;
@@ -154,21 +154,18 @@
 	<header class="pb-3">
 		<div class="flex items-start justify-between gap-4">
 			<div>
-				<h2 class="eyebrow">{title}</h2>
+				<h2 class="section-label">{title}</h2>
 				{#if description}
-					<p class="text-base-content/50 mt-1 text-xs">{description}</p>
+					<p class="text-subtle mt-1 text-xs">{description}</p>
 				{/if}
 			</div>
 			{#if summary}
-				<p class="font-mono text-sm tabular-nums">{summary}</p>
+				<p class="text-ui tabular-nums">{summary}</p>
 			{/if}
 		</div>
 	</header>
 	{#if !data}
-		<div
-			class="text-base-content/40 flex items-center justify-center text-xs"
-			style="height: {height}px"
-		>
+		<div class="text-subtle flex items-center justify-center text-xs" style="height: {height}px">
 			{emptyMessage}
 		</div>
 	{:else}

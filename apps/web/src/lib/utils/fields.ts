@@ -33,36 +33,37 @@ export function serializeTimeRange(range: TimeRange): string {
 	return range.type === 'relative' ? `r:${range.preset}` : `a:${range.start}-${range.end}`;
 }
 
-const JSON_SUBFIELD_MAX_DEPTH = 10;
+/** Leaf path -> how many of the sampled hits carry it, plus the size of that sample. */
+export type FieldSample = { counts: ReadonlyMap<string, number>; total: number };
 
-export function extractJsonSubFields(
-	hits: ReadonlyArray<Record<string, unknown>>,
-	jsonFieldNames: ReadonlyArray<string>
-): Set<string> {
-	const discovered = new Set<string>();
-	if (jsonFieldNames.length === 0 || hits.length === 0) return discovered;
-
-	function walk(obj: unknown, prefix: string, depth: number): void {
-		if (depth > JSON_SUBFIELD_MAX_DEPTH) return;
-		if (!isPlainObject(obj)) return;
-		for (const [key, value] of Object.entries(obj)) {
-			const fullPath = `${prefix}.${key}`;
-			if (isPlainObject(value)) {
-				walk(value, fullPath, depth + 1);
-			} else {
-				discovered.add(fullPath);
-			}
-		}
+function collect(value: unknown, path: string, seen: Set<string>): void {
+	// Arrays are transparent: Quickwit flattens them, so an array of objects indexes leaves here.
+	if (Array.isArray(value)) {
+		for (const item of value) collect(item, path, seen);
+		return;
 	}
+	if (isPlainObject(value)) {
+		for (const [key, child] of Object.entries(value)) {
+			collect(child, path === '' ? key : `${path}.${key}`, seen);
+		}
+		return;
+	}
+	seen.add(path);
+}
+
+/**
+ * Every leaf path the given hits carry, top-level columns and JSON leaves alike, with how many of
+ * them carry it. Covers leaves too fresh for `_field_caps`, which answers per published split.
+ */
+export function countFieldPaths(hits: ReadonlyArray<Record<string, unknown>>): FieldSample {
+	const counts = new Map<string, number>();
 
 	for (const hit of hits) {
-		for (const name of jsonFieldNames) {
-			const value = hit[name];
-			if (isPlainObject(value)) {
-				walk(value, name, 0);
-			}
-		}
+		// Deduplicated per hit, so a 20-element array does not count its leaves 20 times.
+		const seen = new Set<string>();
+		collect(hit, '', seen);
+		for (const path of seen) counts.set(path, (counts.get(path) ?? 0) + 1);
 	}
 
-	return discovered;
+	return { counts, total: hits.length };
 }

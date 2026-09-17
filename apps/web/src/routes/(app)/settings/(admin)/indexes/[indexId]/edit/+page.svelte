@@ -5,7 +5,7 @@
 	let { data } = $props();
 </script>
 
-<div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-12 md:px-12">
+<div class="settings-page flex flex-col gap-6">
 	<PageHeader
 		title="Edit index"
 		description="Update the Quickwit configuration for {data.detail.indexId}."

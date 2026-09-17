@@ -8,13 +8,17 @@
 	{#each items as item, i (item.key)}
 		<button
 			type="button"
-			class="flex items-center gap-1.5 text-xs transition-opacity"
-			class:opacity-40={!item.visible}
+			class="text-muted flex items-center gap-1.5 text-xs"
+			class:line-through={!item.visible}
 			aria-pressed={item.visible}
 			onclick={() => onToggle(i)}
 		>
-			<span class="size-2.5 shrink-0 rounded-[2px]" style="background-color: {item.color};"></span>
-			<span class="text-base-content/60">{item.label}</span>
+			<span
+				class="size-2.5 shrink-0 rounded-[2px]"
+				class:opacity-40={!item.visible}
+				style="background-color: {item.color};"
+			></span>
+			<span>{item.label}</span>
 		</button>
 	{/each}
 </div>

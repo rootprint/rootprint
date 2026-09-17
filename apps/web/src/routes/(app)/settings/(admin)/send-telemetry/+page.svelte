@@ -32,7 +32,7 @@
 	});
 </script>
 
-<div class="mx-auto max-w-7xl px-12 py-12">
+<div class="settings-page">
 	<PageHeader
 		title={'Send logs & traces'}
 		description="Pick where your logs and traces come from to get step-by-step setup instructions."

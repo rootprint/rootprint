@@ -45,7 +45,7 @@
 		<PanelError message="Couldn't load the summary" error={e} />
 	{/await}
 
-	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+	<div class="grid grid-cols-2 gap-4">
 		{#await volume then buckets}
 			<VolumeChart {buckets} {window} />
 		{:catch e}
@@ -62,15 +62,13 @@
 	{#if indexes}
 		{#await indexes then rows}
 			<div class="flex flex-col gap-2">
-				<p class="eyebrow">Indexes hit</p>
+				<p class="section-label">Indexes hit</p>
 				<ListCard
 					cols="minmax(0,1fr) auto auto"
 					empty={rows.length === 0}
 					emptyMessage="No index activity in this window."
 				>
-					<div
-						class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
-					>
+					<div class="section-label col-span-full grid grid-cols-subgrid items-center px-4 py-2.5">
 						<span>Index</span>
 						<span class="text-right">Searches</span>
 						<span class="text-right">Avg duration</span>
@@ -92,7 +90,7 @@
 	{/if}
 
 	<div class="flex flex-col gap-2">
-		<p class="eyebrow">Recent activity</p>
+		<p class="section-label">Recent activity</p>
 
 		{#await recent}
 			<div class="bg-base-200 rounded-box h-24 animate-pulse"></div>
@@ -102,9 +100,7 @@
 				empty={rec.rows.length === 0}
 				emptyMessage="No activity in this window."
 			>
-				<div
-					class="text-base-content/50 col-span-full grid grid-cols-subgrid items-center px-4 py-2.5 text-[10px] tracking-wide uppercase"
-				>
+				<div class="section-label col-span-full grid grid-cols-subgrid items-center px-4 py-2.5">
 					<span>Time</span>
 					<span class="text-center">Index</span>
 					<span class="text-right">Duration</span>

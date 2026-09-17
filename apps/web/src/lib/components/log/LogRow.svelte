@@ -5,6 +5,8 @@
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { formatCell } from '$lib/utils/column-width';
 	import { rowActivate } from '$lib/attachments/row-activate';
+	import type { FoldSummaryRow } from '$lib/utils/fold-hits';
+	import FoldGutter from './FoldGutter.svelte';
 
 	let {
 		hit,
@@ -13,7 +15,11 @@
 		messageField,
 		lineWrap = false,
 		isAnchor = false,
-		onActivate = () => {}
+		foldGutter = false,
+		foldChild = false,
+		fold = null,
+		onActivate = () => {},
+		onToggleFold = () => {}
 	}: {
 		hit: LogHit;
 		columns: string[];
@@ -21,7 +27,11 @@
 		messageField?: string;
 		lineWrap?: boolean;
 		isAnchor?: boolean;
+		foldGutter?: boolean;
+		foldChild?: boolean;
+		fold?: FoldSummaryRow | null;
 		onActivate?: () => void;
+		onToggleFold?: () => void;
 	} = $props();
 
 	const cellWrap = $derived(
@@ -39,18 +49,23 @@
 	class={[
 		'border-line grid min-h-[25px] items-stretch border-b text-left font-mono text-xs hover:bg-[color-mix(in_oklab,var(--level-color)_14%,transparent)]',
 		rowWidth,
-		isAnchor && 'bg-[color-mix(in_oklab,var(--level-color)_10%,transparent)]'
+		isAnchor && 'bg-[color-mix(in_oklab,var(--level-color)_10%,transparent)]',
+		fold?.expanded && 'bg-base-200/70',
+		foldChild && 'bg-base-200/30'
 	]}
 	style="grid-template-columns: {gridTemplate}; --level-color: {levelColor(hit.level)};"
 	{@attach rowActivate(() => onActivate)}
 >
 	<span
-		aria-hidden="true"
-		title={hit.level.toUpperCase()}
+		title={hit.level.trim().toUpperCase() || 'UNKNOWN'}
 		class="my-[1px]"
 		style="background-color: var(--level-color);"
-	></span>
-	<span class="text-base-content/60 px-2 py-1" title={hit.timestamp}>
+		><span class="sr-only">Severity: {hit.level.trim() || 'unknown'}. </span></span
+	>
+	{#if foldGutter}
+		<FoldGutter {fold} child={foldChild} onToggle={onToggleFold} />
+	{/if}
+	<span class="text-muted px-2 py-1" title={hit.timestamp}>
 		{formatLogRowTimestamp(hit.timestamp)}
 	</span>
 	{#each columns as column (column)}
