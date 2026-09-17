@@ -6,6 +6,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%234169E1.svg?logo=postgresql&logoColor=white)](#)
 [![Release](https://img.shields.io/github/v/release/rootprint/rootprint)](https://github.com/rootprint/rootprint/releases)
 [![License](https://img.shields.io/github/license/rootprint/rootprint)](LICENSE)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/rootprint?referralCode=ca9X8b&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ### [Live demo](https://demo.rootprint.io) &nbsp;·&nbsp; [Quick start](#quick-start) &nbsp;·&nbsp; [Docs](https://docs.rootprint.io) &nbsp;·&nbsp; [Contributing](CONTRIBUTING.md) &nbsp;·&nbsp; [Changelog](CHANGELOG.md)
 
