@@ -25,7 +25,7 @@
 			<MemberActionsMenu
 				{user}
 				{currentUserId}
-				passwordEnabled={data.passwordEnabled}
+				passwordEnabled={data.providers.password.enabled}
 				onRegenerate={regenerateInvite}
 				onToggleRole={toggleUserRole}
 				onResetPassword={(_u: UserView) => (resetOpen = true)}
@@ -44,7 +44,6 @@
 		<AccountDetails
 			createdAt={user.createdAt}
 			lastActive={user.lastActive}
-			hasCredentialAccount={user.hasCredentialAccount}
 			status={user.status}
 			inviteUrl={user.inviteUrl}
 			inviteExpiresAt={user.inviteExpiresAt}

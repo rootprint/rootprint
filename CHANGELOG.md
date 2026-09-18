@@ -20,6 +20,7 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 - Admins can reset the password of, or reissue an invite to, any user, including users who first signed in through a provider.
 - OAuth access and refresh tokens are stored encrypted with `BETTER_AUTH_SECRET`.
 - Better Auth's admin endpoints under `/api/auth/admin` are closed; user management goes through `/api/users`.
+- The users API no longer returns `hasCredentialAccount`, and the user page drops its "Auth" chip. Users can keep a password while linking an external provider, so the binary label was misleading.
 
 ### Fixed
 

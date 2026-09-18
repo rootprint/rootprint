@@ -1,13 +1,11 @@
 import type { PageLoad } from './$types';
-import { listAuthProviders } from '$lib/api/auth';
 import { getGoogleAuth, getGitHubAuth, getOidcAuth } from '$lib/api/auth-config';
 
 export const load: PageLoad = async () => {
-	const [google, github, oidc, providers] = await Promise.all([
+	const [google, github, oidc] = await Promise.all([
 		getGoogleAuth(),
 		getGitHubAuth(),
-		getOidcAuth(),
-		listAuthProviders()
+		getOidcAuth()
 	]);
-	return { google, github, oidc, providers };
+	return { google, github, oidc };
 };

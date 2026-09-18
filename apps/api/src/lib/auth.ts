@@ -1,6 +1,6 @@
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin, genericOAuth, openAPI } from 'better-auth/plugins';
+import { genericOAuth, openAPI } from 'better-auth/plugins';
 import { github } from 'better-auth/social-providers';
 import { apiKey } from '@better-auth/api-key';
 import { eq } from 'drizzle-orm';
@@ -26,9 +26,15 @@ const apiKeyPluginConfig = {
 	permissions: { defaultPermissions: { logs: ['read'] } }
 } satisfies Parameters<typeof apiKey>[0];
 
-// /api/users is the only user-management HTTP surface. Disabled paths 404 over HTTP
-// and drop out of the OpenAPI schema; server-side auth().api.* calls bypass the check.
-const ADMIN_PATHS = Object.values(admin().endpoints).map((e) => e.path);
+const userAdditionalFields = {
+	role: {
+		type: 'string' as const,
+		required: false,
+		defaultValue: 'user',
+		input: false
+	},
+	lastActive: { type: 'date' as const, required: false, returned: true }
+};
 
 function buildAuth(secret: string, cfg: AuthConfig) {
 	const oidc = cfg.oidc;
@@ -37,7 +43,6 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 	const opts: BetterAuthOptions = {
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
 		plugins: [
-			admin(),
 			apiKey(apiKeyPluginConfig),
 			...(oidc
 				? [
@@ -68,7 +73,7 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 					]
 				: [])
 		],
-		disabledPaths: [...ADMIN_PATHS, ...(cfg.passwordSignInDisabled ? ['/sign-in/email'] : [])],
+		disabledPaths: cfg.passwordSignInDisabled ? ['/sign-in/email'] : [],
 		trustedOrigins,
 		secret,
 		baseURL: config.origin,
@@ -80,11 +85,8 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 		onAPIError: { errorURL: `${config.frontendUrl ?? config.origin}/auth/sign-in` },
 		emailAndPassword: { enabled: true, disableSignUp: true },
 		user: {
-			additionalFields: {
-				lastActive: { type: 'date', required: false, returned: true }
-			},
+			additionalFields: userAdditionalFields,
 			// Runs for every OAuth create, link, and repeat sign-in, before any row is written.
-			// Admin-created users arrive with method "admin" and pass through.
 			validateUserInfo: async ({ user, source }) => {
 				if (source.method !== 'oauth' || !source.oauth) return;
 				if (source.oauth.providerId === 'google') {
@@ -250,11 +252,13 @@ export type AuthInstance = AuthInstanceInternal;
 export async function authOpenAPISchema() {
 	const instance = betterAuth({
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-		plugins: [admin(), apiKey(apiKeyPluginConfig), openAPI()],
-		disabledPaths: ADMIN_PATHS,
+		plugins: [apiKey(apiKeyPluginConfig), openAPI()],
 		baseURL: config.origin,
 		secret: 'openapi-schema-generation-only',
-		emailAndPassword: { enabled: true, disableSignUp: true }
+		emailAndPassword: { enabled: true, disableSignUp: true },
+		user: {
+			additionalFields: userAdditionalFields
+		}
 	});
 	return instance.api.generateOpenAPISchema();
 }

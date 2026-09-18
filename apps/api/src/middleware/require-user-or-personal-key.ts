@@ -54,7 +54,6 @@ export function requireUserOrPersonalKey(required: Scope): MiddlewareHandler<Aut
 			.where(eq(user.id, result.key.referenceId))
 			.limit(1);
 		if (!owner) throw unauthorized('Invalid API key', 'PERSONAL_KEY_INVALID');
-		if (owner.banned) throw forbidden('API key owner is banned', 'PERSONAL_KEY_FORBIDDEN');
 
 		c.set('session', { user: { id: owner.id, role: owner.role } });
 		c.set('apiKeyActor', { keyId: result.key.id });

@@ -149,7 +149,7 @@
 							<MemberActionsMenu
 								{user}
 								{currentUserId}
-								passwordEnabled={data.passwordEnabled}
+								passwordEnabled={data.providers.password.enabled}
 								onRegenerate={regenerateInvite}
 								onToggleRole={toggleUserRole}
 								onResetPassword={openReset}

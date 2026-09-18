@@ -63,7 +63,8 @@ export const usersRouter = new Hono<AuthedEnv>()
 		validator('param', UserIdParams),
 		async (c) => {
 			const { userId } = c.req.valid('param');
-			await userService.removeUser(db, userId, c.req.raw.headers);
+			const adminId = c.get('session').user.id;
+			await userService.removeUser(db, adminId, userId);
 			return c.body(null, 204);
 		}
 	)
@@ -83,7 +84,7 @@ export const usersRouter = new Hono<AuthedEnv>()
 			const { userId } = c.req.valid('param');
 			const { role } = c.req.valid('json');
 			const adminId = c.get('session').user.id;
-			await userService.setUserRole(db, adminId, userId, role, c.req.raw.headers);
+			await userService.setUserRole(db, adminId, userId, role);
 			return c.body(null, 204);
 		}
 	)
@@ -99,7 +100,7 @@ export const usersRouter = new Hono<AuthedEnv>()
 		async (c) => {
 			const { userId } = c.req.valid('param');
 			const adminId = c.get('session').user.id;
-			return c.json(await userService.resetPassword(db, adminId, userId, c.req.raw.headers));
+			return c.json(await userService.resetPassword(db, adminId, userId));
 		}
 	)
 	.post(

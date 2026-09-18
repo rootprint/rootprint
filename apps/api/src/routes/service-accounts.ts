@@ -54,7 +54,7 @@ export const serviceAccountsRouter = new Hono<AuthedEnv>()
 		validator('param', UserIdParams),
 		async (c) => {
 			const { userId } = c.req.valid('param');
-			await removeServiceAccount(db, userId, c.req.raw.headers);
+			await removeServiceAccount(db, userId);
 			return c.body(null, 204);
 		}
 	);

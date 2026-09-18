@@ -1,29 +1,21 @@
-import { randomBytes } from 'node:crypto';
+import { generateId } from 'better-auth';
 import { and, eq } from 'drizzle-orm';
 
 import type { User, UserRole, UserStatus } from '../types.js';
 
 import { config } from '../config.js';
 import type { Db } from '../lib/db.js';
-import { account, inviteToken, user } from '../db/schema.js';
-import {
-	createAdminUser,
-	removeAdminUser,
-	revokeAdminUserSessions,
-	setAdminUserRole
-} from '../lib/auth-admin.js';
-import { createInviteToken, hasCredentialAccount } from './auth.service.js';
+import { account, inviteToken, session, user } from '../db/schema.js';
+import { userRoles } from '../schemas/users.js';
+import { createInviteToken, replaceInviteToken } from './auth.service.js';
 import { badRequest, notFound } from '../utils/http-error.js';
+import { withUniqueViolation } from '../utils/db.js';
 
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 
 type InviteInfo = { url: string; expiresAt: Date };
 
-function toUser(
-	u: typeof user.$inferSelect,
-	invite: InviteInfo | undefined,
-	hasCredential: boolean
-): User {
+function toUser(u: typeof user.$inferSelect, invite: InviteInfo | undefined): User {
 	const status: UserStatus = !invite
 		? 'active'
 		: invite.expiresAt.getTime() < Date.now()
@@ -38,26 +30,22 @@ function toUser(
 		lastActive: u.lastActive?.toISOString() ?? null,
 		createdAt: u.createdAt.toISOString(),
 		status,
-		hasCredentialAccount: hasCredential,
 		inviteUrl: invite?.url ?? null,
 		inviteExpiresAt: invite?.expiresAt.toISOString() ?? null
 	};
 }
 
 export async function listUsers(db: Db): Promise<User[]> {
-	const [users, invites, credentialAccounts] = await Promise.all([
+	const [users, invites] = await Promise.all([
 		db.select().from(user).where(eq(user.isServiceAccount, false)).orderBy(user.createdAt),
-		db.select().from(inviteToken),
-		db.select({ userId: account.userId }).from(account).where(eq(account.providerId, 'credential'))
+		db.select().from(inviteToken)
 	]);
 
 	const inviteMap = new Map(
 		invites.map((inv) => [inv.userId, { url: buildInviteUrl(inv.token), expiresAt: inv.expiresAt }])
 	);
 
-	const credentialUserIds = new Set(credentialAccounts.map((a) => a.userId));
-
-	return users.map((u) => toUser(u, inviteMap.get(u.id), credentialUserIds.has(u.id)));
+	return users.map((u) => toUser(u, inviteMap.get(u.id)));
 }
 
 export async function getUser(db: Db, userId: string): Promise<User> {
@@ -68,16 +56,13 @@ export async function getUser(db: Db, userId: string): Promise<User> {
 		.limit(1);
 	if (!u) throw notFound('User not found');
 
-	const [invites, hasCred] = await Promise.all([
-		db.select().from(inviteToken).where(eq(inviteToken.userId, userId)),
-		hasCredentialAccount(db, userId)
-	]);
+	const invites = await db.select().from(inviteToken).where(eq(inviteToken.userId, userId));
 
 	const invite = invites[0]
 		? { url: buildInviteUrl(invites[0].token), expiresAt: invites[0].expiresAt }
 		: undefined;
 
-	return toUser(u, invite, hasCred);
+	return toUser(u, invite);
 }
 
 async function ensureHumanUser(db: Db, userId: string): Promise<void> {
@@ -89,17 +74,31 @@ async function ensureHumanUser(db: Db, userId: string): Promise<void> {
 	if (!row) throw notFound('User not found');
 }
 
+function validateRole(role: UserRole): void {
+	if (!userRoles.some((validRole) => validRole === role)) {
+		throw badRequest('Invalid role');
+	}
+}
+
 export async function createUser(
 	db: Db,
 	data: { email: string; name: string; role: UserRole }
 ): Promise<{ inviteUrl: string }> {
-	const result = await createAdminUser({
-		email: data.email,
-		name: data.name,
-		password: randomBytes(32).toString('base64url'),
-		role: data.role
-	});
-	const token = await createInviteToken(db, result.user.id);
+	validateRole(data.role);
+	const userId = generateId();
+	const email = data.email.toLowerCase();
+
+	const token = await withUniqueViolation('Email already in use', 'CONFLICT', () =>
+		db.transaction(async (tx) => {
+			await tx.insert(user).values({
+				id: userId,
+				email,
+				name: data.name,
+				role: data.role
+			});
+			return replaceInviteToken(tx, userId);
+		})
+	);
 	return { inviteUrl: buildInviteUrl(token) };
 }
 
@@ -109,42 +108,57 @@ export async function reissueInvite(db: Db, userId: string): Promise<{ inviteUrl
 	return { inviteUrl: buildInviteUrl(token) };
 }
 
-export async function removeUser(db: Db, userId: string, headers: Headers): Promise<void> {
-	await ensureHumanUser(db, userId);
-	await removeAdminUser(userId, headers);
+export async function removeUser(db: Db, adminId: string, userId: string): Promise<void> {
+	if (userId === adminId) {
+		throw badRequest('Cannot delete your own account');
+	}
+	const deleted = await db
+		.delete(user)
+		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
+		.returning({ id: user.id });
+	if (deleted.length === 0) throw notFound('User not found');
 }
 
 export async function setUserRole(
 	db: Db,
 	adminId: string,
 	userId: string,
-	role: UserRole,
-	headers: Headers
+	role: UserRole
 ): Promise<void> {
 	if (userId === adminId) {
 		throw badRequest('Cannot change your own role');
 	}
-	await ensureHumanUser(db, userId);
-	await setAdminUserRole(userId, role, headers);
+	validateRole(role);
+	const updated = await db
+		.update(user)
+		.set({ role, updatedAt: new Date() })
+		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
+		.returning({ id: user.id });
+	if (updated.length === 0) throw notFound('User not found');
 }
 
 export async function resetPassword(
 	db: Db,
 	adminId: string,
-	userId: string,
-	headers: Headers
+	userId: string
 ): Promise<{ inviteUrl: string }> {
 	if (userId === adminId) {
 		throw badRequest('Cannot reset your own password');
 	}
-	await ensureHumanUser(db, userId);
-	await revokeAdminUserSessions(userId, headers);
+	const token = await db.transaction(async (tx) => {
+		const [target] = await tx
+			.select({ id: user.id })
+			.from(user)
+			.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
+			.limit(1);
+		if (!target) throw notFound('User not found');
 
-	await db
-		.update(account)
-		.set({ password: null, updatedAt: new Date() })
-		.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
-
-	const token = await createInviteToken(db, userId);
+		await tx.delete(session).where(eq(session.userId, userId));
+		await tx
+			.update(account)
+			.set({ password: null, updatedAt: new Date() })
+			.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+		return replaceInviteToken(tx, userId);
+	});
 	return { inviteUrl: buildInviteUrl(token) };
 }

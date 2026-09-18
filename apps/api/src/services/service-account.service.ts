@@ -6,7 +6,6 @@ import type { Db } from '../lib/db.js';
 // apikey = Better Auth API key plugin table; referenceId is the owning user id.
 import { apikey as personalApiKey, user } from '../db/schema.js';
 import { auth } from '../lib/auth.js';
-import { removeAdminUser } from '../lib/auth-admin.js';
 import type { ServiceAccountApiKeySummary, ServiceAccountSummary } from '../types.js';
 import { fromAuthApiError, notFound } from '../utils/http-error.js';
 
@@ -45,18 +44,12 @@ export async function createServiceAccount(db: Db, name: string): Promise<{ id: 
 	return { id };
 }
 
-export async function removeServiceAccount(
-	db: Db,
-	userId: string,
-	headers: Headers
-): Promise<void> {
-	const [row] = await db
-		.select({ isServiceAccount: user.isServiceAccount })
-		.from(user)
-		.where(eq(user.id, userId))
-		.limit(1);
-	if (!row || !row.isServiceAccount) throw notFound('Service account not found');
-	await removeAdminUser(userId, headers);
+export async function removeServiceAccount(db: Db, userId: string): Promise<void> {
+	const deleted = await db
+		.delete(user)
+		.where(and(eq(user.id, userId), eq(user.isServiceAccount, true)))
+		.returning({ id: user.id });
+	if (deleted.length === 0) throw notFound('Service account not found');
 }
 
 export async function listServiceAccountKeys(db: Db): Promise<ServiceAccountApiKeySummary[]> {

@@ -17,7 +17,6 @@ export const UserResponse = named(
 		lastActive: v.nullable(isoTimestampString),
 		createdAt: isoTimestampString,
 		status: userStatusSchema,
-		hasCredentialAccount: v.boolean(),
 		inviteUrl: v.nullable(v.string()),
 		inviteExpiresAt: v.nullable(isoTimestampString)
 	})

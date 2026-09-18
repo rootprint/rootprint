@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
-import { getBootstrap } from '$lib/api/auth';
+import { getBootstrap, listAuthProviders } from '$lib/api/auth';
 import { authClient } from '$lib/auth-client';
 import { DEP } from '$lib/api/deps';
 
@@ -10,7 +10,11 @@ export const prerender = false;
 export const load: LayoutLoad = async ({ url, untrack, depends }) => {
 	depends(DEP.session);
 
-	const [bootstrap, sessionRes] = await Promise.all([getBootstrap(), authClient.getSession()]);
+	const [bootstrap, sessionRes, providers] = await Promise.all([
+		getBootstrap(),
+		authClient.getSession(),
+		listAuthProviders()
+	]);
 
 	const session = sessionRes?.data ?? null;
 
@@ -22,5 +26,5 @@ export const load: LayoutLoad = async ({ url, untrack, depends }) => {
 		redirect(303, '/auth/sign-in');
 	}
 
-	return { session };
+	return { session, providers };
 };

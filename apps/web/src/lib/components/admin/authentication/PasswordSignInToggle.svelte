@@ -41,8 +41,8 @@
 		<div class="min-w-0 flex-1">
 			<div class="text-sm">Password sign-in</div>
 			<div class="text-base-content/60 text-xs">
-				Turn off to require an external provider for every sign-in. Invitations and admin password
-				resets keep working.
+				Turn off to require an external provider for every sign-in. Invite and password-reset links
+				do not provide a sign-in path while disabled.
 			</div>
 		</div>
 		<input

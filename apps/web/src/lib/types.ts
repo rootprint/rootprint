@@ -1,6 +1,11 @@
+import type { Component, ComponentType } from 'svelte';
 import type { Filter, SortDirection, TimeRange, TraceSpan } from 'api/types';
 
 export type { Filter, SortDirection, TimeRange };
+
+// `@iconify-svelte/logos` and `lucide-svelte` export legacy class components,
+// while Svelte 5's `Component` is the function-component type. Accept either.
+export type IconComponent = Component<Record<string, unknown>> | ComponentType;
 
 /** One crumb in a breadcrumb trail. Ancestors set `href`; the current page omits it. */
 export type BreadcrumbSegment = { label: string; href?: string; mono?: boolean };

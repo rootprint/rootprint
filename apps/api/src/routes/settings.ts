@@ -186,7 +186,7 @@ export const settingsRouter = new Hono<AuthedEnv>()
 			tag: 'Auth settings',
 			summary: 'Enable or disable email/password sign-in',
 			description:
-				'Invitations and admin password resets keep working while disabled. Nothing checks that an external provider is usable first.',
+				'Invite and password-reset links do not provide a sign-in path while disabled. Nothing checks that an external provider is usable first.',
 			rawResponses: { '204': { description: 'Saved' } }
 		}),
 		validator('json', passwordSignInSchema),

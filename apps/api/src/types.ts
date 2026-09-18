@@ -235,14 +235,6 @@ export type IndexMeta = {
 
 export type VerifyApiKeyResult = { status: 'ok'; key: VerifiedApiKey } | { status: 'not-found' };
 
-// User administration (lib/auth-admin.ts)
-export type AdminCreateUserInput = {
-	email: string;
-	name: string;
-	password: string;
-	role: UserRole;
-};
-
 // Settings (settings.service.ts)
 export type OAuthCredentials = v.InferOutput<typeof oauthCredentialsSchema>;
 

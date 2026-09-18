@@ -2437,10 +2437,6 @@
 						"readOnly": true,
 						"type": "string"
 					},
-					"impersonatedBy": {
-						"readOnly": true,
-						"type": "string"
-					},
 					"ipAddress": {
 						"type": "string"
 					},
@@ -2950,20 +2946,6 @@
 			},
 			"User": {
 				"properties": {
-					"banExpires": {
-						"format": "date-time",
-						"readOnly": true,
-						"type": "string"
-					},
-					"banReason": {
-						"readOnly": true,
-						"type": "string"
-					},
-					"banned": {
-						"default": false,
-						"readOnly": true,
-						"type": "boolean"
-					},
 					"createdAt": {
 						"format": "date-time",
 						"type": "string"
@@ -2983,10 +2965,15 @@
 					"image": {
 						"type": "string"
 					},
+					"lastActive": {
+						"format": "date-time",
+						"type": "string"
+					},
 					"name": {
 						"type": "string"
 					},
 					"role": {
+						"default": "user",
 						"readOnly": true,
 						"type": "string"
 					},
@@ -3013,9 +3000,6 @@
 					},
 					"email": {
 						"type": "string"
-					},
-					"hasCredentialAccount": {
-						"type": "boolean"
 					},
 					"id": {
 						"type": "string"
@@ -3086,7 +3070,6 @@
 					"lastActive",
 					"createdAt",
 					"status",
-					"hasCredentialAccount",
 					"inviteUrl",
 					"inviteExpiresAt"
 				],
@@ -10340,6 +10323,10 @@
 										"description": "The profile image URL of the user",
 										"type": "string"
 									},
+									"lastActive": {
+										"format": "date-time",
+										"type": "string"
+									},
 									"name": {
 										"description": "The name of the user",
 										"type": "string"
@@ -10858,6 +10845,10 @@
 									"image": {
 										"description": "The image of the user",
 										"nullable": true,
+										"type": "string"
+									},
+									"lastActive": {
+										"format": "date-time",
 										"type": "string"
 									},
 									"name": {
@@ -15664,7 +15655,7 @@
 		},
 		"/api/settings/auth/password": {
 			"put": {
-				"description": "Invitations and admin password resets keep working while disabled. Nothing checks that an external provider is usable first.",
+				"description": "Invite and password-reset links do not provide a sign-in path while disabled. Nothing checks that an external provider is usable first.",
 				"operationId": "putApiSettingsAuthPassword",
 				"requestBody": {
 					"content": {

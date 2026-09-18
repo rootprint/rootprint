@@ -67,23 +67,16 @@ export async function createFirstAdmin(
 	return { id: userId, email: input.email, name: input.name };
 }
 
-export async function hasCredentialAccount(db: Db, userId: string): Promise<boolean> {
-	const rows = await db
-		.select({ id: account.id })
-		.from(account)
-		.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')))
-		.limit(1);
-	return rows.length > 0;
+export async function createInviteToken(db: Db, userId: string): Promise<string> {
+	return db.transaction((tx) => replaceInviteToken(tx, userId));
 }
 
-export async function createInviteToken(db: Db, userId: string): Promise<string> {
+export async function replaceInviteToken(tx: Tx, userId: string): Promise<string> {
 	const token = randomBytes(32).toString('hex');
 	const expiresAt = new Date(Date.now() + INVITE_EXPIRY_HOURS * 60 * 60 * 1000);
 
-	await db.transaction(async (tx) => {
-		await tx.delete(inviteToken).where(eq(inviteToken.userId, userId));
-		await tx.insert(inviteToken).values({ userId, token, expiresAt });
-	});
+	await tx.delete(inviteToken).where(eq(inviteToken.userId, userId));
+	await tx.insert(inviteToken).values({ userId, token, expiresAt });
 
 	return token;
 }
@@ -135,28 +128,18 @@ export async function setupPassword(
 
 		const userId = consumed.userId;
 
-		const existing = await tx
-			.select({ id: account.id })
-			.from(account)
-			.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')))
-			.limit(1);
-
-		if (existing.length) {
-			await tx
-				.update(account)
-				.set({ password: hashedPassword, updatedAt: new Date() })
-				.where(eq(account.id, existing[0]!.id));
-		} else {
-			await tx.insert(account).values({
-				id: generateId(),
-				accountId: userId,
-				providerId: 'credential',
-				userId,
-				password: hashedPassword,
-				createdAt: new Date(),
-				updatedAt: new Date()
-			});
-		}
+		await tx
+			.delete(account)
+			.where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+		await tx.insert(account).values({
+			id: generateId(),
+			accountId: userId,
+			providerId: 'credential',
+			userId,
+			password: hashedPassword,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
 
 		await tx
 			.update(user)

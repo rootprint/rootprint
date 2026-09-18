@@ -44,7 +44,7 @@
 </script>
 
 {#if data.tokenStatus === 'valid'}
-	{#if data.passwordEnabled}
+	{#if data.providers.password.enabled}
 		<AuthHeader eyebrow="Set your password" title="Welcome to Rootprint" divider>
 			Setting up the account for <span class="font-mono">{data.email}</span>.
 		</AuthHeader>

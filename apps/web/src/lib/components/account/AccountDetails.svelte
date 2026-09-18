@@ -6,24 +6,15 @@
 	type Props = {
 		createdAt: string | Date | null;
 		lastActive: string | Date | null;
-		hasCredentialAccount: boolean;
 		status?: UserStatus;
 		inviteUrl?: string | null;
 		inviteExpiresAt?: string | Date | null;
 	};
 
-	let {
-		createdAt,
-		lastActive,
-		hasCredentialAccount,
-		status,
-		inviteUrl = null,
-		inviteExpiresAt = null
-	}: Props = $props();
+	let { createdAt, lastActive, status, inviteUrl = null, inviteExpiresAt = null }: Props = $props();
 
 	const joined = $derived(createdAt ? formatDate(createdAt) : 'Unknown');
 	const lastActiveLabel = $derived(lastActive ? formatRelativeTime(lastActive) : 'Never');
-	const authMethod = $derived(hasCredentialAccount ? 'Password' : 'Single sign-on');
 	const expiresLabel = $derived(inviteExpiresAt ? formatDateTime(inviteExpiresAt) : null);
 	const showInvite = $derived(!!inviteUrl && (status === 'pending' || status === 'expired'));
 
@@ -42,10 +33,6 @@
 		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
 			<dt class="text-muted">Joined</dt>
 			<dd class="text-base-content/90 font-medium">{joined}</dd>
-		</div>
-		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
-			<dt class="text-muted">Auth</dt>
-			<dd class="text-base-content/90 font-medium">{authMethod}</dd>
 		</div>
 		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
 			<dt class="text-muted">Last active</dt>

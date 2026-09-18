@@ -13,7 +13,7 @@
 	import type { ExternalProviderId } from 'api/types';
 	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
 	import Field from '$lib/components/ui/Field.svelte';
-	import type { IconComponent } from '$lib/send-telemetry/types';
+	import type { IconComponent } from '$lib/types';
 
 	let { data } = $props();
 

@@ -68,41 +68,6 @@ Then:
 
 Full install guide: https://docs.rootprint.io/install/docker-compose
 
-## Single Sign-On (OpenID Connect)
-
-Any OpenID Connect provider (Keycloak, Authentik, Okta, Google) can be configured under
-Settings → Authentication with its issuer URL, client ID, and client secret. The redirect URI to
-register at the provider is `<origin>/api/auth/callback/oidc`. Once an external provider is
-configured, an admin can turn off email/password sign-in on the same page.
-
-Limitations:
-
-- The provider must echo the `nonce`, support PKCE, and publish a JWKS — ID token signatures are
-  verified. Whatever email the provider asserts is trusted, so any account it will issue a token
-  for can sign in; scope that at the provider.
-- Turning off password sign-in is not interlocked with anything. If no external provider works
-  afterwards, nobody can sign in — see Recovery below.
-- Deactivating a user at the provider does not end an existing Rootprint session. Removing the
-  provider in Rootprint signs out every user with a linked account; allow-list changes apply at
-  the next sign-in. Personal API keys stay valid until the user is deleted.
-- Changing the OpenID Connect issuer URL or client ID unlinks every OpenID Connect account,
-  including the saving admin's, and signs those users out. They re-link by email at their next
-  sign-in, or an admin issues a password reset. Do it with password sign-in on, or from an admin
-  account that has another sign-in method.
-- Discovery is fetched when the API builds its auth instance (at start and after an
-  authentication settings change) with a 5 second limit. If the issuer is unreachable then,
-  OpenID Connect sign-in and its button stay off until the next settings change or restart.
-
-### Recovery
-
-When password sign-in is off and no external provider works, run against the database:
-
-1. `DELETE FROM app_settings WHERE key = 'password_sign_in_disabled';`
-2. Restart the API so the password form returns.
-3. If the admin has no `credential` row, insert an `invite_token` row for their `user_id` with a
-   random 64-character hex `token` and a future `expires_at`, then open
-   `/auth/setup?token=<token>` to set a password.
-
 ## Documentation
 
 - Live demo: https://demo.rootprint.io

@@ -1,8 +1,4 @@
-import type { Component, ComponentType } from 'svelte';
-
-// `@iconify-svelte/logos` and `lucide-svelte` export legacy class components,
-// while Svelte 5's `Component` is the function-component type. Accept either.
-export type IconComponent = Component<Record<string, unknown>> | ComponentType;
+import type { IconComponent } from '$lib/types';
 
 export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
 
