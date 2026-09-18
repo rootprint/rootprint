@@ -90,7 +90,17 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 			validateUserInfo: async ({ user, source }) => {
 				if (source.method !== 'oauth' || !source.oauth) return;
 				if (source.oauth.providerId === 'google') {
-					if (!user.email || !(await googleEmailIsAllowed(db, user.email))) {
+					let allowed: boolean;
+					try {
+						allowed = !!user.email && (await googleEmailIsAllowed(db, user.email));
+					} catch (err) {
+						logger.error({ err }, 'google domain check unavailable');
+						return {
+							error: 'oauth_check_unavailable',
+							errorDescription: 'Could not verify OAuth access right now'
+						};
+					}
+					if (!allowed) {
 						return { error: 'domain_not_allowed', errorDescription: 'Email domain not allowed' };
 					}
 					return;
@@ -171,6 +181,19 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 	return betterAuth(opts);
 }
 
+const OIDC_RETRY_MS = 60_000;
+let oidcRetry: ReturnType<typeof setTimeout> | null = null;
+
+/** A transient IdP outage at boot must not leave SSO off until someone re-saves settings. */
+function scheduleOidcRetry(): void {
+	if (oidcRetry) clearTimeout(oidcRetry);
+	oidcRetry = setTimeout(() => {
+		oidcRetry = null;
+		void reloadAuth().catch((err: unknown) => logger.error({ err }, 'oidc retry reload failed'));
+	}, OIDC_RETRY_MS);
+	oidcRetry.unref();
+}
+
 /**
  * The plugin fetches discovery at init with no timeout, and every request awaits
  * init, so an unreachable issuer would stall the whole auth path. Probe it with
@@ -181,12 +204,15 @@ async function loadReachableAuthConfig(): Promise<AuthConfig> {
 	if (!cfg.oidc) return cfg;
 	try {
 		await verifyOidcIssuer(cfg.oidc.issuerUrl);
+		if (oidcRetry) clearTimeout(oidcRetry);
+		oidcRetry = null;
 		return cfg;
 	} catch (err) {
 		logger.warn(
-			{ err, issuerUrl: cfg.oidc.issuerUrl },
-			'oidc discovery unreachable; provider disabled until the next auth reload'
+			{ err, issuerUrl: cfg.oidc.issuerUrl, retryInMs: OIDC_RETRY_MS },
+			'oidc discovery unreachable; provider disabled until the retry succeeds'
 		);
+		scheduleOidcRetry();
 		return { ...cfg, oidc: undefined };
 	}
 }

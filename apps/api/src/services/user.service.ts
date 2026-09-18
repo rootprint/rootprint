@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import type { User, UserRole, UserStatus } from '../types.js';
 
 import { config } from '../config.js';
+import { authConfig } from '../lib/auth.js';
 import type { Db } from '../lib/db.js';
 import { account, inviteToken, session, user } from '../db/schema.js';
 import { userRoles } from '../schemas/users.js';
@@ -144,6 +145,10 @@ export async function resetPassword(
 ): Promise<{ inviteUrl: string }> {
 	if (userId === adminId) {
 		throw badRequest('Cannot reset your own password');
+	}
+	// The UI hides the action; the API must not revoke sessions for an invite nobody can redeem.
+	if (authConfig().passwordSignInDisabled) {
+		throw badRequest('Password sign-in is disabled', 'PASSWORD_SIGN_IN_DISABLED');
 	}
 	const token = await db.transaction(async (tx) => {
 		const [target] = await tx
