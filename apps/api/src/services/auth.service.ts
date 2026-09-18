@@ -8,12 +8,7 @@ import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
 import { badRequest, conflict } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
-import {
-	GITHUB_ALLOWED_ORGS,
-	GOOGLE_ALLOWED_DOMAINS,
-	configuredOAuthProviders,
-	parseStringList
-} from './settings.service.js';
+import { getGitHubAuthStatus, getGoogleAuthStatus } from './settings.service.js';
 import { userIsInAllowedOrg } from './github.service.js';
 
 export const FIRST_ADMIN_CLAIMED_KEY = 'first_admin_claimed';
@@ -136,10 +131,9 @@ export async function setupPassword(
 		const [consumed] = await tx
 			.delete(inviteToken)
 			.where(eq(inviteToken.token, token))
-			.returning({ userId: inviteToken.userId, expiresAt: inviteToken.expiresAt });
+			.returning({ userId: inviteToken.userId });
 
 		if (!consumed) throw badRequest('Invalid invite token', 'INVITE_INVALID');
-		if (consumed.expiresAt < new Date()) throw badRequest('Invite token expired', 'INVITE_EXPIRED');
 
 		const userId = consumed.userId;
 
@@ -175,14 +169,9 @@ export async function setupPassword(
 	});
 }
 
-async function allowedList(db: Db, settingsKey: string): Promise<string[]> {
-	const rows = await db
-		.select({ value: appSettings.value })
-		.from(appSettings)
-		.where(eq(appSettings.key, settingsKey))
-		.limit(1);
-	if (rows.length === 0) return [];
-	return parseStringList(rows[0]!.value);
+function emailDomainAllowed(email: string, domains: string[]): boolean {
+	const domain = email.split('@')[1]?.toLowerCase();
+	return !!domain && domains.includes(domain);
 }
 
 /**
@@ -191,9 +180,7 @@ async function allowedList(db: Db, settingsKey: string): Promise<string[]> {
  * Fail-closed: an empty list allows nobody.
  */
 export async function googleEmailIsAllowed(db: Db, email: string): Promise<boolean> {
-	const domains = await allowedList(db, GOOGLE_ALLOWED_DOMAINS);
-	const domain = email.split('@')[1]?.toLowerCase();
-	return !!domain && domains.includes(domain);
+	return emailDomainAllowed(email, (await getGoogleAuthStatus(db)).allowedDomains);
 }
 
 /**
@@ -205,8 +192,7 @@ export async function githubTokenIsAllowed(
 	accessToken: string | null | undefined
 ): Promise<boolean> {
 	if (!accessToken) return false;
-	const orgs = await allowedList(db, GITHUB_ALLOWED_ORGS);
-	return userIsInAllowedOrg(accessToken, orgs);
+	return userIsInAllowedOrg(accessToken, (await getGitHubAuthStatus(db)).allowedOrgs);
 }
 
 /**
@@ -243,12 +229,13 @@ export async function userRetainsOAuthAccess(db: Db, userId: string): Promise<bo
 	const github = accounts.find((acct) => acct.providerId === 'github');
 	if (!hasGoogle && !github) return true;
 
-	const configured = await configuredOAuthProviders(db);
-
-	if (hasGoogle && configured.has('google') && row?.email) {
-		if (await googleEmailIsAllowed(db, row.email)) return true;
+	if (hasGoogle && row?.email) {
+		const google = await getGoogleAuthStatus(db);
+		if (google.configured && emailDomainAllowed(row.email, google.allowedDomains)) return true;
 	}
 
-	if (!github || !configured.has('github')) return false;
-	return githubTokenIsAllowed(db, github.accessToken);
+	if (!github?.accessToken) return false;
+	const gh = await getGitHubAuthStatus(db);
+	if (!gh.configured) return false;
+	return userIsInAllowedOrg(github.accessToken, gh.allowedOrgs);
 }

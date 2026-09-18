@@ -239,13 +239,7 @@ export type AdminCreateUserInput = {
 };
 
 // Settings (settings.service.ts)
-export type GoogleAuthCredentials = {
-	clientId: string;
-	clientSecret: string;
-	allowedDomains: string[];
-};
-
-export type GitHubAuthCredentials = v.InferOutput<typeof oauthCredentialsSchema>;
+export type OAuthCredentials = v.InferOutput<typeof oauthCredentialsSchema>;
 
 // Export (export.service.ts)
 export type ExportPreflightResult = {

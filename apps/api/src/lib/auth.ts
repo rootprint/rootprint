@@ -13,11 +13,8 @@ import {
 	googleEmailIsAllowed,
 	userRetainsOAuthAccess
 } from '../services/auth.service.js';
-import {
-	loadGitHubAuthForBetterAuth,
-	loadGoogleAuthForBetterAuth
-} from '../services/settings.service.js';
-import type { GitHubAuthCredentials, GoogleAuthCredentials } from '../types.js';
+import { loadOAuthProviders } from '../services/settings.service.js';
+import type { OAuthCredentials } from '../types.js';
 import { db } from './db.js';
 import { logger } from './logger.js';
 
@@ -32,7 +29,7 @@ const apiKeyPluginConfig = {
 	permissions: { defaultPermissions: { logs: ['read'] } }
 } satisfies Parameters<typeof apiKey>[0];
 
-function buildAuth(secret: string, google?: GoogleAuthCredentials, github?: GitHubAuthCredentials) {
+function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCredentials) {
 	const trustedOrigins = [config.origin, ...(config.frontendUrl ? [config.frontendUrl] : [])];
 
 	const opts: BetterAuthOptions = {
@@ -158,10 +155,7 @@ export async function initAuth(secret: string): Promise<void> {
 	if (holder.instance !== null) {
 		throw new Error('initAuth has already been called');
 	}
-	const [google, github] = await Promise.all([
-		loadGoogleAuthForBetterAuth(db),
-		loadGitHubAuthForBetterAuth(db)
-	]);
+	const [google, github] = await loadOAuthProviders(db);
 	holder.secret = secret;
 	holder.instance = buildAuth(secret, google, github);
 }
@@ -177,10 +171,7 @@ export async function reloadAuth(): Promise<void> {
 	if (holder.secret === null) {
 		throw new Error('reloadAuth called before initAuth');
 	}
-	const [google, github] = await Promise.all([
-		loadGoogleAuthForBetterAuth(db),
-		loadGitHubAuthForBetterAuth(db)
-	]);
+	const [google, github] = await loadOAuthProviders(db);
 	holder.instance = buildAuth(holder.secret, google, github);
 }
 
