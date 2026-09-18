@@ -14,7 +14,8 @@ const discoverySchema = v.object({
 	token_endpoint: endpoint,
 	jwks_uri: endpoint,
 	// Optional in discovery, but the plugin sends the bearer token there when present.
-	userinfo_endpoint: v.nullish(endpoint)
+	userinfo_endpoint: v.nullish(endpoint),
+	code_challenge_methods_supported: v.nullish(v.array(v.string()))
 });
 
 /** `issuerUrl` is already normalized by `oidcCredentialsSchema`. */
@@ -55,5 +56,10 @@ export async function verifyOidcIssuer(issuerUrl: string): Promise<void> {
 	}
 	if (stripTrailingSlash(parsed.output.issuer) !== issuerUrl) {
 		throw discoveryFailed('OpenID configuration issuer does not match the Issuer URL');
+	}
+	// Better Auth always sends code_challenge_method=S256; an omitted list proves nothing.
+	const methods = parsed.output.code_challenge_methods_supported;
+	if (methods && !methods.includes('S256')) {
+		throw discoveryFailed('OpenID provider does not support PKCE with S256');
 	}
 }

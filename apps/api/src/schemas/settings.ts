@@ -56,7 +56,11 @@ export function isHttpsOrLoopback(raw: string): boolean {
 	);
 }
 
-export const stripTrailingSlash = (value: string): string => value.replace(/\/+$/, '');
+export function stripTrailingSlash(value: string): string {
+	let end = value.length;
+	while (end > 0 && value[end - 1] === '/') end--;
+	return value.slice(0, end);
+}
 
 export const oidcCredentialsSchema = v.object({
 	...oauthCredentialsSchema.entries,
