@@ -18,7 +18,7 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 - Linking Google, GitHub, or OpenID Connect to a user no longer deletes their password.
 - Changing the OpenID Connect issuer URL or client ID unlinks every OpenID Connect account and signs those users out; they re-link by email on their next sign-in, or an admin resets their password.
 - Admins can reset the password of, or reissue an invite to, any user, including users who first signed in through a provider.
-- OAuth access and refresh tokens are stored encrypted with `BETTER_AUTH_SECRET`. During a multi-replica rolling upgrade from a release that still runs the mid-session access re-check, users signed in through GitHub may be signed out repeatedly until every replica runs the new release. Single-replica deployments are unaffected.
+- OAuth access and refresh tokens are stored encrypted with `BETTER_AUTH_SECRET`.
 - Better Auth's admin endpoints under `/api/auth/admin` are closed; user management goes through `/api/users`.
 
 ### Fixed
