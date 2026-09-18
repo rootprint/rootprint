@@ -26,7 +26,7 @@ export async function retainsOAuthAccess(userId: string, provenAt: Date): Promis
 	const withinGrace = now - passedAt <= OAUTH_GRACE_MS;
 	if (now - mark.checkedAt <= OAUTH_RECHECK_MS) return withinGrace;
 
-	// Stamped before awaiting so concurrent requests share one check.
+	// Stamped before awaiting so concurrent requests skip the check instead of starting their own.
 	marks.set(userId, { checkedAt: now, passedAt });
 	let retained: boolean;
 	try {

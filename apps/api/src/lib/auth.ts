@@ -29,6 +29,13 @@ const apiKeyPluginConfig = {
 	permissions: { defaultPermissions: { logs: ['read'] } }
 } satisfies Parameters<typeof apiKey>[0];
 
+function oauthCheckUnavailable(): APIError {
+	return new APIError('SERVICE_UNAVAILABLE', {
+		code: 'oauth_check_unavailable',
+		message: 'Could not verify OAuth access right now'
+	});
+}
+
 function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCredentials) {
 	const trustedOrigins = [config.origin, ...(config.frontendUrl ? [config.frontendUrl] : [])];
 
@@ -70,11 +77,12 @@ function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCred
 							return;
 						}
 						if (acct.providerId === 'github') {
-							let allowed = false;
+							let allowed: boolean;
 							try {
 								allowed = await githubTokenIsAllowed(db, acct.accessToken);
 							} catch (err) {
 								logger.error({ err, userId: acct.userId }, 'github org check unavailable');
+								throw oauthCheckUnavailable();
 							}
 							if (!allowed) {
 								throw new APIError('FORBIDDEN', {
@@ -99,11 +107,12 @@ function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCred
 			session: {
 				create: {
 					before: async (session) => {
-						let retained = false;
+						let retained: boolean;
 						try {
 							retained = await userRetainsOAuthAccess(db, session.userId);
 						} catch (err) {
 							logger.error({ err, userId: session.userId }, 'oauth access check unavailable');
+							throw oauthCheckUnavailable();
 						}
 						if (retained) return;
 						logger.warn({ userId: session.userId }, 'oauth access blocked');

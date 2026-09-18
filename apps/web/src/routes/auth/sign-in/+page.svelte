@@ -37,6 +37,8 @@
 		unable_to_create_user: 'Your account could not be created on this instance.',
 		// The reason is not carried through here, so do not claim revocation.
 		unable_to_create_session: 'Sign-in was refused. Contact an administrator.',
+		oauth_check_unavailable:
+			'Could not verify your access with the provider. Try again in a minute.',
 		access_denied: 'Sign-in was cancelled.'
 	};
 
