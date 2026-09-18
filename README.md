@@ -34,8 +34,7 @@ telemetry to a hosted SaaS.
 - **Service health** - Request rate, error rate, and p95 latency per service, endpoints ranked by
   time spent, outbound dependencies, and a filterable list of failing spans.
 - **Team access** - Invite users, manage roles, create scoped ingest keys, service accounts, and
-  personal API keys, and enable Google, GitHub, or any OpenID Connect provider for SSO, optionally
-  turning off password sign-in.
+  personal API keys, and enable Google, GitHub, or any OpenID Connect provider for SSO
 - **Admin controls** - Manage indexes, sources, field configuration, activity, and Quickwit.
 - **Open source** - Apache-2.0 licensed.
 
