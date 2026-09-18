@@ -30,7 +30,6 @@
 			});
 			return;
 		}
-		// Keep the switch on until the admin confirms in the modal.
 		el.checked = true;
 		confirmOpen = true;
 	}

@@ -4,7 +4,7 @@ export const API_KEY_RANDOM_BYTES = 24;
 export const API_KEY_DISPLAY_PREFIX_LENGTH = 12;
 export const LAST_USED_THROTTLE_SECONDS = 60;
 
-// Auth: Better Auth user fields declared once for the server instance and the web client.
+// Auth
 export const USER_ADDITIONAL_FIELDS = {
 	role: { type: 'string', required: false, defaultValue: 'user', input: false },
 	lastActive: { type: 'date', required: false, returned: true }

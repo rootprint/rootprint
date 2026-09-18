@@ -34,7 +34,6 @@ export type OAuthProviderDescriptor = {
 	/** Unconfigured-state hint under "Client Secret". */
 	clientSecretHint: string;
 	successToast: string;
-	/** Present for providers configured by issuer URL; renders a row above Client ID. */
 	issuer?: { hint: string; placeholder: string };
 	/** Returns `fieldErrors` on schema failure, null when valid. */
 	validateCredentials: (input: CredentialInput) => Record<string, string> | null;

@@ -100,7 +100,6 @@ function credentialsFrom(
 	return clientId && clientSecret ? { clientId, clientSecret } : undefined;
 }
 
-/** Runtime auth configuration: everything Better Auth is built from. */
 export async function loadAuthConfig(db: Db): Promise<AuthConfig> {
 	const byKey = await loadSettings(db, AUTH_KEYS);
 	const oidcCredentials = credentialsFrom(byKey, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET);
@@ -188,7 +187,6 @@ export async function getOidcAuthStatus(db: Db): Promise<OidcAuthSettings> {
 	return { configured: !!oidc, issuerUrl: oidc?.issuerUrl ?? null };
 }
 
-/** OIDC subjects are scoped to an issuer and, on some IdPs, to a client. */
 async function unlinkOidc(tx: Tx): Promise<void> {
 	await revokeSessionsLinkedTo(tx, 'oidc');
 	await tx.delete(account).where(eq(account.providerId, 'oidc'));

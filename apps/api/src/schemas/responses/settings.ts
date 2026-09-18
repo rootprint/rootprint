@@ -20,7 +20,6 @@ export const GitHubAuthSettingsResponse = named(
 	})
 );
 
-// Redacted OIDC status: whether the connection is configured, plus its issuer (no secret).
 export const OidcAuthSettingsResponse = named(
 	'OidcAuthSettingsResponse',
 	v.object({
