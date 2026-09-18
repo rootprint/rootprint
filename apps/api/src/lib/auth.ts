@@ -6,6 +6,7 @@ import { apiKey } from '@better-auth/api-key';
 import { eq } from 'drizzle-orm';
 
 import { config } from '../config.js';
+import { USER_ADDITIONAL_FIELDS } from '../constants.js';
 import * as authSchema from '../db/auth.schema.js';
 import { inviteToken } from '../db/schema.js';
 import { githubTokenIsAllowed, googleEmailIsAllowed } from '../services/auth.service.js';
@@ -26,14 +27,9 @@ const apiKeyPluginConfig = {
 	permissions: { defaultPermissions: { logs: ['read'] } }
 } satisfies Parameters<typeof apiKey>[0];
 
-const userAdditionalFields = {
-	role: {
-		type: 'string' as const,
-		required: false,
-		defaultValue: 'user',
-		input: false
-	},
-	lastActive: { type: 'date' as const, required: false, returned: true }
+const unavailable = {
+	error: 'oauth_check_unavailable',
+	errorDescription: 'Could not verify OAuth access right now'
 };
 
 function buildAuth(secret: string, cfg: AuthConfig) {
@@ -85,7 +81,7 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 		onAPIError: { errorURL: `${config.frontendUrl ?? config.origin}/auth/sign-in` },
 		emailAndPassword: { enabled: true, disableSignUp: true },
 		user: {
-			additionalFields: userAdditionalFields,
+			additionalFields: USER_ADDITIONAL_FIELDS,
 			// Runs for every OAuth create, link, and repeat sign-in, before any row is written.
 			validateUserInfo: async ({ user, source }) => {
 				if (source.method !== 'oauth' || !source.oauth) return;
@@ -95,10 +91,7 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 						allowed = !!user.email && (await googleEmailIsAllowed(db, user.email));
 					} catch (err) {
 						logger.error({ err }, 'google domain check unavailable');
-						return {
-							error: 'oauth_check_unavailable',
-							errorDescription: 'Could not verify OAuth access right now'
-						};
+						return unavailable;
 					}
 					if (!allowed) {
 						return { error: 'domain_not_allowed', errorDescription: 'Email domain not allowed' };
@@ -108,12 +101,7 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 				if (source.oauth.providerId === 'github') {
 					const profile = source.oauth.profile as { orgAllowed?: boolean | null } | undefined;
 					const orgAllowed = profile?.orgAllowed;
-					if (orgAllowed === null) {
-						return {
-							error: 'oauth_check_unavailable',
-							errorDescription: 'Could not verify OAuth access right now'
-						};
-					}
+					if (orgAllowed === null) return unavailable;
 					if (!orgAllowed) {
 						return {
 							error: 'org_not_allowed',
@@ -137,13 +125,11 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 		}
 	};
 	const socialProviders: NonNullable<BetterAuthOptions['socialProviders']> = {};
-	const trustedProviders: string[] = [];
 	if (cfg.google) {
 		socialProviders.google = {
 			clientId: cfg.google.clientId,
 			clientSecret: cfg.google.clientSecret
 		};
-		trustedProviders.push('google');
 	}
 	if (cfg.github) {
 		const creds = { clientId: cfg.github.clientId, clientSecret: cfg.github.clientSecret };
@@ -167,12 +153,11 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 				return { ...info, data: { ...info.data, orgAllowed } as typeof info.data };
 			}
 		};
-		trustedProviders.push('github');
 	}
 	if (cfg.google || cfg.github) opts.socialProviders = socialProviders;
 	// The admin's own IdP is trusted like Google and GitHub: many providers (Entra ID
 	// among them) never send email_verified, and untrusted linking requires it.
-	if (oidc) trustedProviders.push('oidc');
+	const trustedProviders = (['google', 'github', 'oidc'] as const).filter((id) => cfg[id]);
 	opts.account = {
 		encryptOAuthTokens: true,
 		// Local verification is relaxed because only admins create users here.
@@ -184,9 +169,14 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 const OIDC_RETRY_MS = 60_000;
 let oidcRetry: ReturnType<typeof setTimeout> | null = null;
 
+function clearOidcRetry(): void {
+	if (oidcRetry) clearTimeout(oidcRetry);
+	oidcRetry = null;
+}
+
 /** A transient IdP outage at boot must not leave SSO off until someone re-saves settings. */
 function scheduleOidcRetry(): void {
-	if (oidcRetry) clearTimeout(oidcRetry);
+	clearOidcRetry();
 	oidcRetry = setTimeout(() => {
 		oidcRetry = null;
 		void reloadAuth().catch((err: unknown) => logger.error({ err }, 'oidc retry reload failed'));
@@ -201,11 +191,10 @@ function scheduleOidcRetry(): void {
  */
 async function loadReachableAuthConfig(): Promise<AuthConfig> {
 	const cfg = await loadAuthConfig(db);
+	clearOidcRetry();
 	if (!cfg.oidc) return cfg;
 	try {
 		await verifyOidcIssuer(cfg.oidc.issuerUrl);
-		if (oidcRetry) clearTimeout(oidcRetry);
-		oidcRetry = null;
 		return cfg;
 	} catch (err) {
 		logger.warn(
@@ -283,7 +272,7 @@ export async function authOpenAPISchema() {
 		secret: 'openapi-schema-generation-only',
 		emailAndPassword: { enabled: true, disableSignUp: true },
 		user: {
-			additionalFields: userAdditionalFields
+			additionalFields: USER_ADDITIONAL_FIELDS
 		}
 	});
 	return instance.api.generateOpenAPISchema();

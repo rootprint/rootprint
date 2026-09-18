@@ -5,14 +5,15 @@ import type { User, UserRole, UserStatus } from '../types.js';
 
 import { config } from '../config.js';
 import { authConfig } from '../lib/auth.js';
-import type { Db } from '../lib/db.js';
+import type { Db, Tx } from '../lib/db.js';
 import { account, inviteToken, session, user } from '../db/schema.js';
-import { userRoles } from '../schemas/users.js';
 import { createInviteToken, replaceInviteToken } from './auth.service.js';
 import { badRequest, notFound } from '../utils/http-error.js';
 import { withUniqueViolation } from '../utils/db.js';
 
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
+
+const humanUser = (userId: string) => and(eq(user.id, userId), eq(user.isServiceAccount, false));
 
 type InviteInfo = { url: string; expiresAt: Date };
 
@@ -50,14 +51,14 @@ export async function listUsers(db: Db): Promise<User[]> {
 }
 
 export async function getUser(db: Db, userId: string): Promise<User> {
-	const [u] = await db
-		.select()
-		.from(user)
-		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
-		.limit(1);
+	const [u] = await db.select().from(user).where(humanUser(userId)).limit(1);
 	if (!u) throw notFound('User not found');
 
-	const invites = await db.select().from(inviteToken).where(eq(inviteToken.userId, userId));
+	const invites = await db
+		.select()
+		.from(inviteToken)
+		.where(eq(inviteToken.userId, userId))
+		.limit(1);
 
 	const invite = invites[0]
 		? { url: buildInviteUrl(invites[0].token), expiresAt: invites[0].expiresAt }
@@ -66,34 +67,22 @@ export async function getUser(db: Db, userId: string): Promise<User> {
 	return toUser(u, invite);
 }
 
-async function ensureHumanUser(db: Db, userId: string): Promise<void> {
-	const [row] = await db
-		.select({ id: user.id })
-		.from(user)
-		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
-		.limit(1);
+async function ensureHumanUser(db: Db | Tx, userId: string): Promise<void> {
+	const [row] = await db.select({ id: user.id }).from(user).where(humanUser(userId)).limit(1);
 	if (!row) throw notFound('User not found');
-}
-
-function validateRole(role: UserRole): void {
-	if (!userRoles.some((validRole) => validRole === role)) {
-		throw badRequest('Invalid role');
-	}
 }
 
 export async function createUser(
 	db: Db,
 	data: { email: string; name: string; role: UserRole }
 ): Promise<{ inviteUrl: string }> {
-	validateRole(data.role);
 	const userId = generateId();
-	const email = data.email.toLowerCase();
 
 	const token = await withUniqueViolation('Email already in use', 'CONFLICT', () =>
 		db.transaction(async (tx) => {
 			await tx.insert(user).values({
 				id: userId,
-				email,
+				email: data.email,
 				name: data.name,
 				role: data.role
 			});
@@ -113,10 +102,7 @@ export async function removeUser(db: Db, adminId: string, userId: string): Promi
 	if (userId === adminId) {
 		throw badRequest('Cannot delete your own account');
 	}
-	const deleted = await db
-		.delete(user)
-		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
-		.returning({ id: user.id });
+	const deleted = await db.delete(user).where(humanUser(userId)).returning({ id: user.id });
 	if (deleted.length === 0) throw notFound('User not found');
 }
 
@@ -129,11 +115,10 @@ export async function setUserRole(
 	if (userId === adminId) {
 		throw badRequest('Cannot change your own role');
 	}
-	validateRole(role);
 	const updated = await db
 		.update(user)
 		.set({ role, updatedAt: new Date() })
-		.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
+		.where(humanUser(userId))
 		.returning({ id: user.id });
 	if (updated.length === 0) throw notFound('User not found');
 }
@@ -151,13 +136,7 @@ export async function resetPassword(
 		throw badRequest('Password sign-in is disabled', 'PASSWORD_SIGN_IN_DISABLED');
 	}
 	const token = await db.transaction(async (tx) => {
-		const [target] = await tx
-			.select({ id: user.id })
-			.from(user)
-			.where(and(eq(user.id, userId), eq(user.isServiceAccount, false)))
-			.limit(1);
-		if (!target) throw notFound('User not found');
-
+		await ensureHumanUser(tx, userId);
 		await tx.delete(session).where(eq(session.userId, userId));
 		await tx
 			.update(account)

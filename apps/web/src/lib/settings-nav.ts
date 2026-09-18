@@ -105,7 +105,8 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	'/settings/service-accounts': () => [ROOT, { label: 'Service accounts' }],
 	'/settings/authentication': () => [ROOT, { label: 'Authentication' }],
 	'/settings/authentication/github': () => [ROOT, AUTH, { label: 'GitHub' }],
-	'/settings/authentication/google': () => [ROOT, AUTH, { label: 'Google' }]
+	'/settings/authentication/google': () => [ROOT, AUTH, { label: 'Google' }],
+	'/settings/authentication/oidc': () => [ROOT, AUTH, { label: 'OpenID Connect' }]
 };
 
 export function routeKey(routeId: string): string {

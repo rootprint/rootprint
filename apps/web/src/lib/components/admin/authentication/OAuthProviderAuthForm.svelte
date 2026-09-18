@@ -27,7 +27,8 @@
 		origin: string;
 	} = $props();
 
-	let creds = $state({ issuerUrl: '', clientId: '', clientSecret: '' });
+	const emptyCreds = () => ({ issuerUrl: '', clientId: '', clientSecret: '' });
+	let creds = $state(emptyCreds());
 	let credInputs = $state<Record<CredKey, HTMLInputElement | null>>({
 		issuerUrl: null,
 		clientId: null,
@@ -54,14 +55,14 @@
 
 	async function startEditCredentials(focus: CredKey) {
 		editingCredentials = true;
-		creds = { issuerUrl: '', clientId: '', clientSecret: '' };
+		creds = emptyCreds();
 		await tick();
 		credInputs[focus]?.focus();
 	}
 
 	function cancelEditCredentials() {
 		editingCredentials = false;
-		creds = { issuerUrl: '', clientId: '', clientSecret: '' };
+		creds = emptyCreds();
 		delete fieldErrors.issuerUrl;
 		delete fieldErrors.clientId;
 		delete fieldErrors.clientSecret;
