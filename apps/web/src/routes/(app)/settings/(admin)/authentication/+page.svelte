@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AuthProviderRow from '$lib/components/admin/authentication/AuthProviderRow.svelte';
+	import PasswordSignInToggle from '$lib/components/admin/authentication/PasswordSignInToggle.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { pluralize } from '$lib/utils/format';
@@ -8,6 +9,7 @@
 
 	const google = $derived(data.google);
 	const github = $derived(data.github);
+	const oidc = $derived(data.oidc);
 
 	const googleStatus = $derived.by(() => {
 		if (!google.configured) return null;
@@ -20,6 +22,8 @@
 		const n = github.allowedOrgs.length;
 		return `Allowed ${pluralize(n, 'organization')}: ${github.allowedOrgs.join(', ')}`;
 	});
+
+	const oidcStatus = $derived(oidc.issuerUrl ? `Issuer: ${new URL(oidc.issuerUrl).host}` : null);
 
 	const providers = $derived([
 		{
@@ -37,6 +41,14 @@
 			configured: github.configured,
 			statusLine: githubStatus,
 			editHref: '/settings/authentication/github'
+		},
+		{
+			id: 'oidc' as const,
+			name: 'OpenID Connect',
+			description: 'Sign in with SSO through your own OpenID Connect identity provider.',
+			configured: oidc.configured,
+			statusLine: oidcStatus,
+			editHref: '/settings/authentication/oidc'
 		}
 	]);
 </script>
@@ -48,6 +60,10 @@
 	/>
 
 	<div class="mt-8">
+		<PasswordSignInToggle enabled={data.providers.password.enabled} />
+	</div>
+
+	<div class="mt-6">
 		<ListCard>
 			{#each providers as provider (provider.id)}
 				<AuthProviderRow {provider} />

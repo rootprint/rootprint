@@ -7,6 +7,25 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 ### Added
 
 - Optional fold mode on the log explorer: consecutive rows that match on every visible column except timestamp collapse behind a count badge (`fold=1` in the URL). Display-only; histogram, hit count, and the search query are unchanged.
+- Generic OpenID Connect SSO: configure one provider by issuer URL, client ID, and client secret under Settings → Authentication. ID token signatures are verified against the issuer's JWKS; new users are created with the `user` role and same-email accounts are linked.
+- Password sign-in toggle: admins can turn off email/password sign-in. Invitations and admin password resets keep working. Nothing stops you disabling it without a working external provider — see the recovery steps in the README.
+
+### Changed
+
+- Invited users can now complete onboarding by signing in through Google, GitHub, or OpenID Connect without first setting a password.
+- The sign-in page no longer assumes password sign-in when the providers request fails; it shows an error instead.
+- Google domain and GitHub organization allow-lists are enforced when a user signs in and are no longer re-checked during a session. Removing a provider signs its users out immediately; allow-list edits apply at the next sign-in.
+- Linking Google, GitHub, or OpenID Connect to a user no longer deletes their password.
+- Changing the OpenID Connect issuer URL or client ID unlinks every OpenID Connect account and signs those users out; they re-link by email on their next sign-in, or an admin resets their password.
+- Admins can reset the password of, or reissue an invite to, any user, including users who first signed in through a provider.
+- OAuth access and refresh tokens are stored encrypted with `BETTER_AUTH_SECRET`. During a multi-replica rolling upgrade from a release that still runs the mid-session access re-check, users signed in through GitHub may be signed out repeatedly until every replica runs the new release. Single-replica deployments are unaffected.
+- Better Auth's admin endpoints under `/api/auth/admin` are closed; user management goes through `/api/users`.
+
+### Fixed
+
+- A first administrator created with a mixed-case email could not sign in.
+- Role changes and session revocations now apply on the next request instead of after the session cookie cache expired.
+- A rejected Google or GitHub first sign-in no longer leaves a user row with no account.
 
 ## [0.4.3] - 2026-09-10
 

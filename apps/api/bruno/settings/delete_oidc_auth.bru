@@ -1,0 +1,11 @@
+meta {
+  name: Delete OIDC Credentials
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/settings/auth/oidc/credentials
+  body: none
+  auth: none
+}

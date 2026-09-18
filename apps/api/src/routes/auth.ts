@@ -3,10 +3,8 @@ import { Hono } from 'hono';
 import { config } from '../config.js';
 import type { AppEnv } from '../env.js';
 import type { AuthProvidersInfo } from '../types.js';
-import { auth } from '../lib/auth.js';
+import { auth, authConfig } from '../lib/auth.js';
 import { db } from '../lib/db.js';
-import { logger } from '../lib/logger.js';
-import { retainsOAuthAccess } from '../lib/oauth-access.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { setupAdminSchema, setupPasswordSchema, verifyInviteSchema } from '../schemas/auth.js';
 import {
@@ -22,31 +20,9 @@ import {
 	setupPassword,
 	validateInviteToken
 } from '../services/auth.service.js';
-import { loadOAuthProviders } from '../services/settings.service.js';
+import { getGitHubAuthStatus, getGoogleAuthStatus } from '../services/settings.service.js';
 import { publicAuthLimiter, resolveClientIp } from '../middleware/rate-limit.js';
-import { conflict, unauthorized } from '../utils/http-error.js';
-
-/**
- * Exempt from the eligibility gate below: these establish or end a session, or
- * authenticate by token. Gating them would strand a revoked user whose cached
- * session cookie is still readable — they could never sign back in once an
- * admin restored their access. Everything else is gated, get-session included,
- * so the SPA sees "signed out" rather than a shell whose every call fails.
- */
-const UNGATED_PREFIXES = ['/sign-in/', '/sign-up/', '/callback/', '/reset-password'];
-const UNGATED_EXACT = new Set([
-	'/sign-out',
-	'/error',
-	'/ok',
-	'/verify-email',
-	'/request-password-reset',
-	'/send-verification-email'
-]);
-
-function isSessionEstablishingPath(fullPath: string): boolean {
-	const path = fullPath.replace(/^\/api\/auth/, '');
-	return UNGATED_PREFIXES.some((p) => path.startsWith(p)) || UNGATED_EXACT.has(path);
-}
+import { conflict } from '../utils/http-error.js';
 
 // Custom endpoints come first; better-auth wildcard is last so it doesn't shadow them.
 // Routes are chained so Hono propagates request/response types for the RPC client.
@@ -133,10 +109,18 @@ export const authRouter = new Hono<AppEnv>()
 			security: []
 		}),
 		async (c) => {
-			const [google, github] = await loadOAuthProviders(db);
+			const cfg = authConfig();
+			const [google, github] = await Promise.all([
+				getGoogleAuthStatus(db),
+				getGitHubAuthStatus(db)
+			]);
 			const body: AuthProvidersInfo = {
-				google: { enabled: !!google },
-				github: { enabled: !!github }
+				// An empty allow-list rejects everyone, so the button could only produce errors.
+				google: { enabled: !!cfg.google && google.allowedDomains.length > 0 },
+				github: { enabled: !!cfg.github && github.allowedOrgs.length > 0 },
+				// Read from the built instance: an unreachable issuer hides the button instead of breaking it.
+				oidc: { enabled: !!cfg.oidc },
+				password: { enabled: !cfg.passwordSignInDisabled }
 			};
 			return c.json(body);
 		}
@@ -148,15 +132,5 @@ export const authRouter = new Hono<AppEnv>()
 			req.headers.set('origin', config.origin);
 		}
 		req.headers.set('x-rootprint-client-ip', resolveClientIp(c));
-
-		// Better Auth's endpoints never pass through requireUser
-		if (!isSessionEstablishingPath(c.req.path)) {
-			const session = await auth().api.getSession({ headers: req.headers });
-			if (session && !(await retainsOAuthAccess(session.user.id, session.session.createdAt))) {
-				logger.warn({ userId: session.user.id, path: c.req.path }, 'oauth access revoked');
-				throw unauthorized('Unauthorized');
-			}
-		}
-
 		return auth().handler(req);
 	});

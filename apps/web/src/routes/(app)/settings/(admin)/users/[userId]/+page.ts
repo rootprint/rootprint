@@ -9,6 +9,7 @@ import {
 	getUserSummary,
 	getUserVolume
 } from '$lib/api/activity';
+import { listAuthProviders } from '$lib/api/auth';
 import { parseWindow } from '$lib/utils/time-range';
 import { DEP } from '$lib/api/deps';
 import { ApiError } from '$lib/api/errors';
@@ -32,13 +33,14 @@ export const load: PageLoad = async ({ url, params, depends, parent }) => {
 	const { session } = await parent();
 	try {
 		// User identity is resolved (not streamed): the header + actions menu need it.
-		const user = await getUser(userId);
+		const [user, providers] = await Promise.all([getUser(userId), listAuthProviders()]);
 		return {
 			window,
 			offset,
 			userId,
 			user,
 			currentUserId: session?.user.id,
+			passwordEnabled: providers.password.enabled,
 			summary,
 			volume,
 			latency,

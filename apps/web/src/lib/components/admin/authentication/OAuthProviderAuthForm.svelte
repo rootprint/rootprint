@@ -11,22 +11,25 @@
 	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
 	import TagInput from '$lib/components/ui/TagInput.svelte';
 
-	type CredKey = 'clientId' | 'clientSecret';
+	type CredKey = 'issuerUrl' | 'clientId' | 'clientSecret';
 
 	let {
 		provider,
 		configured,
-		initialItems,
+		initialItems = [],
+		initialIssuerUrl = '',
 		origin
 	}: {
 		provider: OAuthProviderDescriptor;
 		configured: boolean;
-		initialItems: string[];
+		initialItems?: string[];
+		initialIssuerUrl?: string;
 		origin: string;
 	} = $props();
 
-	let creds = $state({ clientId: '', clientSecret: '' });
+	let creds = $state({ issuerUrl: '', clientId: '', clientSecret: '' });
 	let credInputs = $state<Record<CredKey, HTMLInputElement | null>>({
+		issuerUrl: null,
 		clientId: null,
 		clientSecret: null
 	});
@@ -41,27 +44,31 @@
 
 	function credentialHint(unconfiguredHint: string): string {
 		if (!configured) return unconfiguredHint;
-		if (editingCredentials) return 'Both fields are required when rotating credentials.';
+		if (editingCredentials) {
+			return provider.issuer
+				? 'All three fields are required when rotating credentials.'
+				: 'Both fields are required when rotating credentials.';
+		}
 		return 'Stored — use the edit icon to rotate.';
 	}
 
 	async function startEditCredentials(focus: CredKey) {
 		editingCredentials = true;
-		creds.clientId = '';
-		creds.clientSecret = '';
+		creds = { issuerUrl: '', clientId: '', clientSecret: '' };
 		await tick();
 		credInputs[focus]?.focus();
 	}
 
 	function cancelEditCredentials() {
 		editingCredentials = false;
-		creds.clientId = '';
-		creds.clientSecret = '';
+		creds = { issuerUrl: '', clientId: '', clientSecret: '' };
+		delete fieldErrors.issuerUrl;
 		delete fieldErrors.clientId;
 		delete fieldErrors.clientSecret;
 	}
 
 	function setItemsError(message: string | null) {
+		if (!provider.items) return;
 		if (message) {
 			fieldErrors[provider.items.fieldKey] = message;
 		} else {
@@ -74,35 +81,48 @@
 		formError = null;
 		fieldErrors = {};
 
+		const issuerUrl = creds.issuerUrl.trim();
 		const id = creds.clientId.trim();
 		const secret = creds.clientSecret.trim();
-		const hasCredentialChange = id !== '' || secret !== '';
+		const credFields = provider.issuer ? [issuerUrl, id, secret] : [id, secret];
+		const filled = credFields.filter((f) => f !== '').length;
+		const hasCredentialChange = filled > 0;
+		const fieldsLabel = provider.issuer
+			? 'Issuer URL, Client ID and Client Secret'
+			: 'Client ID and Client Secret';
 
 		if (!configured && !hasCredentialChange) {
-			formError = 'Client ID and Client Secret are required';
+			formError = `${fieldsLabel} are required`;
 			return;
 		}
-		if (hasCredentialChange && (id === '' || secret === '')) {
-			formError = 'Provide both Client ID and Client Secret to update credentials';
+		if (hasCredentialChange && filled !== credFields.length) {
+			formError = `Provide ${fieldsLabel} to update credentials`;
+			return;
+		}
+		if (!hasCredentialChange && !provider.items) {
+			await goto('/settings/authentication');
 			return;
 		}
 
-		const itemErrors = provider.items.validateItems(items);
-		if (itemErrors) {
-			fieldErrors = itemErrors;
-			return;
+		if (provider.items) {
+			const itemErrors = provider.items.validateItems(items);
+			if (itemErrors) {
+				fieldErrors = itemErrors;
+				return;
+			}
 		}
 
 		submitting = true;
 		try {
 			if (hasCredentialChange) {
-				const credErrors = provider.validateCredentials({ clientId: id, clientSecret: secret });
+				const input = { issuerUrl, clientId: id, clientSecret: secret };
+				const credErrors = provider.validateCredentials(input);
 				if (credErrors) {
 					fieldErrors = credErrors;
 					return;
 				}
 				try {
-					await provider.saveCredentials({ clientId: id, clientSecret: secret });
+					await provider.saveCredentials(input);
 				} catch (err) {
 					const formErrors = toFormErrors(err, 'Failed to save credentials');
 					formError = formErrors.message;
@@ -110,13 +130,15 @@
 					return;
 				}
 			}
-			try {
-				await provider.items.saveItems(items);
-			} catch (err) {
-				const formErrors = toFormErrors(err, provider.items.saveFailedFallback);
-				formError = formErrors.message;
-				fieldErrors = { ...fieldErrors, ...formErrors.fieldErrors };
-				return;
+			if (provider.items) {
+				try {
+					await provider.items.saveItems(items);
+				} catch (err) {
+					const formErrors = toFormErrors(err, provider.items.saveFailedFallback);
+					formError = formErrors.message;
+					fieldErrors = { ...fieldErrors, ...formErrors.fieldErrors };
+					return;
+				}
 			}
 			toast.success(provider.successToast);
 			await goto('/settings/authentication', { invalidateAll: true });
@@ -131,8 +153,9 @@
 	label: string,
 	unconfiguredHint: string,
 	placeholder: string,
-	type: 'text' | 'password'
+	type: 'text' | 'password' | 'url'
 )}
+	{@const lockedValue = key === 'issuerUrl' ? initialIssuerUrl : '•••••••••••••••••'}
 	<SettingsRow
 		plain={locked}
 		id="cfg-{provider.id}-{key}"
@@ -142,7 +165,7 @@
 	>
 		{#snippet children({ id, invalid, describedBy })}
 			{#if locked}
-				<DisplayField value="•••••••••••••••••" ariaLabel="{label} (configured)">
+				<DisplayField value={lockedValue} ariaLabel="{label} (configured)">
 					{#snippet action()}
 						<button
 							type="button"
@@ -205,6 +228,15 @@
 		</div>
 	</SettingsRow>
 
+	{#if provider.issuer}
+		{@render credentialRow(
+			'issuerUrl',
+			'Issuer URL',
+			provider.issuer.hint,
+			provider.issuer.placeholder,
+			'url'
+		)}
+	{/if}
 	{@render credentialRow(
 		'clientId',
 		'Client ID',
@@ -220,25 +252,28 @@
 		'password'
 	)}
 
-	<SettingsRow
-		plain
-		label={provider.items.label}
-		hint={provider.items.description}
-		error={fieldErrors[provider.items.fieldKey]}
-	>
-		{#snippet children({ invalid })}
-			<TagInput
-				bind:tags={items}
-				placeholderEmpty={provider.items.placeholderEmpty}
-				addLabel={provider.items.addLabel}
-				normalize={provider.items.normalize}
-				validate={provider.items.validate}
-				duplicateMessage={provider.items.duplicateMessage}
-				error={invalid}
-				onError={setItemsError}
-			/>
-		{/snippet}
-	</SettingsRow>
+	{#if provider.items}
+		{@const providerItems = provider.items}
+		<SettingsRow
+			plain
+			label={providerItems.label}
+			hint={providerItems.description}
+			error={fieldErrors[providerItems.fieldKey]}
+		>
+			{#snippet children({ invalid })}
+				<TagInput
+					bind:tags={items}
+					placeholderEmpty={providerItems.placeholderEmpty}
+					addLabel={providerItems.addLabel}
+					normalize={providerItems.normalize}
+					validate={providerItems.validate}
+					duplicateMessage={providerItems.duplicateMessage}
+					error={invalid}
+					onError={setItemsError}
+				/>
+			{/snippet}
+		</SettingsRow>
+	{/if}
 
 	<div class="flex justify-end px-4 py-3">
 		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>

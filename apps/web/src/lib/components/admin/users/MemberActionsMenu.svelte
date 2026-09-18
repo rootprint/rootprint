@@ -16,6 +16,7 @@
 	let {
 		user,
 		currentUserId,
+		passwordEnabled,
 		onRegenerate,
 		onToggleRole,
 		onResetPassword,
@@ -23,6 +24,8 @@
 	}: {
 		user: UserView;
 		currentUserId: string | undefined;
+		/** A reset only yields a usable link while password sign-in is on. */
+		passwordEnabled: boolean;
 		onRegenerate: (user: UserView) => Promise<void>;
 		onToggleRole: (user: UserView) => Promise<void>;
 		onResetPassword: (user: UserView) => void;
@@ -38,10 +41,7 @@
 
 	const isSelf = $derived(user.id === currentUserId);
 	const isPendingOrExpired = $derived(user.status === 'pending' || user.status === 'expired');
-	const canManageInvite = $derived(user.hasCredentialAccount && isPendingOrExpired);
-	const canResetPassword = $derived(
-		user.hasCredentialAccount && user.status === 'active' && !isSelf
-	);
+	const canResetPassword = $derived(passwordEnabled && user.status === 'active' && !isSelf);
 
 	async function handleRegenerate() {
 		pending = 'regenerate';
@@ -90,7 +90,7 @@
 		style="position-anchor:--{dd}"
 		class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 w-56 border p-1 text-sm"
 	>
-		{#if canManageInvite}
+		{#if isPendingOrExpired}
 			{#if user.inviteUrl}
 				<li>
 					<CopyButton

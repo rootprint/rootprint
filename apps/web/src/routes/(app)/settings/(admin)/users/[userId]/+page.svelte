@@ -25,6 +25,7 @@
 			<MemberActionsMenu
 				{user}
 				{currentUserId}
+				passwordEnabled={data.passwordEnabled}
 				onRegenerate={regenerateInvite}
 				onToggleRole={toggleUserRole}
 				onResetPassword={(_u: UserView) => (resetOpen = true)}

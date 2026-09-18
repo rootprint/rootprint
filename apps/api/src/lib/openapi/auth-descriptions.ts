@@ -5,7 +5,6 @@ const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
 
 function authTag(path: string): string {
 	if (path.startsWith('/api/auth/api-key/')) return 'Personal API keys';
-	if (path.startsWith('/api/auth/admin/')) return 'Auth administration';
 	return 'Authentication';
 }
 

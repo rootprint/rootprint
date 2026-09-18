@@ -105,10 +105,6 @@ export async function createUser(
 
 export async function reissueInvite(db: Db, userId: string): Promise<{ inviteUrl: string }> {
 	await ensureHumanUser(db, userId);
-	const hasCred = await hasCredentialAccount(db, userId);
-	if (!hasCred) {
-		throw badRequest('User has no credential account');
-	}
 	const token = await createInviteToken(db, userId);
 	return { inviteUrl: buildInviteUrl(token) };
 }
@@ -142,11 +138,6 @@ export async function resetPassword(
 		throw badRequest('Cannot reset your own password');
 	}
 	await ensureHumanUser(db, userId);
-	const hasCred = await hasCredentialAccount(db, userId);
-	if (!hasCred) {
-		throw badRequest('User has no credential account');
-	}
-
 	await revokeAdminUserSessions(userId, headers);
 
 	await db

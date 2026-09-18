@@ -44,7 +44,8 @@ import type { HealthResponse as HealthResponseSchema } from './schemas/responses
 import type { ShareViewResponse as ShareViewResponseSchema } from './schemas/responses/shares.js';
 import type {
 	GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema,
-	GitHubAuthSettingsResponse as GitHubAuthSettingsResponseSchema
+	GitHubAuthSettingsResponse as GitHubAuthSettingsResponseSchema,
+	OidcAuthSettingsResponse as OidcAuthSettingsResponseSchema
 } from './schemas/responses/settings.js';
 import type { ServiceAccountResponse as ServiceAccountResponseSchema } from './schemas/responses/service-accounts.js';
 import type {
@@ -62,7 +63,7 @@ import type {
 	TopActorRowResponse as TopActorRowResponseSchema,
 	VolumeBucketResponse as VolumeBucketResponseSchema
 } from './schemas/responses/admin.js';
-import type { oauthCredentialsSchema } from './schemas/settings.js';
+import type { oauthCredentialsSchema, oidcCredentialsSchema } from './schemas/settings.js';
 
 export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
 
@@ -157,7 +158,11 @@ export type GoogleAuthSettings = v.InferOutput<typeof GoogleAuthSettingsResponse
 
 export type GitHubAuthSettings = v.InferOutput<typeof GitHubAuthSettingsResponseSchema>;
 
+export type OidcAuthSettings = v.InferOutput<typeof OidcAuthSettingsResponseSchema>;
+
 export type AuthProvidersInfo = v.InferOutput<typeof AuthProvidersResponseSchema>;
+
+export type ExternalProviderId = Exclude<keyof AuthProvidersInfo, 'password'>;
 
 export type IndexStatsPoint = v.InferOutput<typeof IndexStatsPointSchema>;
 
@@ -240,6 +245,16 @@ export type AdminCreateUserInput = {
 
 // Settings (settings.service.ts)
 export type OAuthCredentials = v.InferOutput<typeof oauthCredentialsSchema>;
+
+export type OidcCredentials = v.InferOutput<typeof oidcCredentialsSchema>;
+
+/** Everything Better Auth is built from, plus the effective password policy. */
+export type AuthConfig = {
+	google?: OAuthCredentials;
+	github?: OAuthCredentials;
+	oidc?: OidcCredentials;
+	passwordSignInDisabled: boolean;
+};
 
 // Export (export.service.ts)
 export type ExportPreflightResult = {

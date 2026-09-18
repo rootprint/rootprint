@@ -4,7 +4,9 @@ import { readApiError } from '$lib/api/errors';
 import type {
 	GitHubAllowedOrgsInput,
 	GoogleAllowedDomainsInput,
-	OAuthCredentialsInput
+	OAuthCredentialsInput,
+	OidcCredentialsInput,
+	PasswordSignInInput
 } from 'api/schemas';
 
 export type GoogleAuthSettingsView = InferResponseType<
@@ -57,4 +59,30 @@ export async function saveGitHubAllowedOrgs(input: GitHubAllowedOrgsInput): Prom
 export async function removeGitHubCredentials(): Promise<void> {
 	const res = await client.api.settings.auth.github.credentials.$delete();
 	if (!res.ok) throw await readApiError(res, 'Failed to remove GitHub credentials');
+}
+
+export type OidcAuthSettingsView = InferResponseType<
+	typeof client.api.settings.auth.oidc.$get,
+	200
+>;
+
+export async function getOidcAuth(): Promise<OidcAuthSettingsView> {
+	const res = await client.api.settings.auth.oidc.$get();
+	if (!res.ok) throw await readApiError(res, 'Failed to load OpenID Connect settings');
+	return res.json();
+}
+
+export async function saveOidcCredentials(input: OidcCredentialsInput): Promise<void> {
+	const res = await client.api.settings.auth.oidc.credentials.$put({ json: input });
+	if (!res.ok) throw await readApiError(res, 'Failed to save OpenID Connect credentials');
+}
+
+export async function removeOidcCredentials(): Promise<void> {
+	const res = await client.api.settings.auth.oidc.credentials.$delete();
+	if (!res.ok) throw await readApiError(res, 'Failed to remove OpenID Connect credentials');
+}
+
+export async function savePasswordSignIn(input: PasswordSignInInput): Promise<void> {
+	const res = await client.api.settings.auth.password.$put({ json: input });
+	if (!res.ok) throw await readApiError(res, 'Failed to update password sign-in');
 }

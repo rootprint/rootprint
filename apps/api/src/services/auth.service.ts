@@ -3,7 +3,7 @@ import { generateId } from 'better-auth';
 import { and, eq, gt } from 'drizzle-orm';
 
 import { INVITE_EXPIRY_HOURS } from '../constants.js';
-import type { Db } from '../lib/db.js';
+import type { Db, Tx } from '../lib/db.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
 import { badRequest, conflict } from '../utils/http-error.js';
@@ -22,9 +22,7 @@ export async function isSetupCompleted(db: Db): Promise<boolean> {
 	return rows.length > 0;
 }
 
-async function claimFirstAdmin(
-	tx: Parameters<Parameters<Db['transaction']>[0]>[0]
-): Promise<boolean> {
+async function claimFirstAdmin(tx: Tx): Promise<boolean> {
 	const inserted = await tx
 		.insert(appSettings)
 		.values({ key: FIRST_ADMIN_CLAIMED_KEY, value: 'true' })
@@ -193,49 +191,4 @@ export async function githubTokenIsAllowed(
 ): Promise<boolean> {
 	if (!accessToken) return false;
 	return userIsInAllowedOrg(accessToken, (await getGitHubAuthStatus(db)).allowedOrgs);
-}
-
-/**
- * Re-evaluate OAuth access for an existing user.
- *
- * OR semantics: a user linked to both providers keeps access while either one
- * still validates. Three rules that are each easy to get wrong:
- *
- *  - A provider counts only while it is still *configured*. Deleting its client
- *    id and secret must end access, not just hide the sign-in button, and the
- *    allow-list rows are deliberately kept on delete so the domain check alone
- *    would still pass.
- *  - The credential-only exemption is keyed on having no governed account row at
- *    all, not on having no valid one: keyed the other way, a user whose only
- *    link has gone stale would fall through the exemption and be let in.
- *  - An empty allow-list allows nobody.
- *
- * Throws when the answer is indeterminate (outage, rate limit, database error)
- * rather than a definitive "not a member", so each caller picks its own policy:
- * the login gate denies, mid-session re-validation applies a bounded grace.
- */
-export async function userRetainsOAuthAccess(db: Db, userId: string): Promise<boolean> {
-	const [row] = await db
-		.select({ email: user.email })
-		.from(user)
-		.where(eq(user.id, userId))
-		.limit(1);
-	const accounts = await db
-		.select({ providerId: account.providerId, accessToken: account.accessToken })
-		.from(account)
-		.where(eq(account.userId, userId));
-
-	const hasGoogle = accounts.some((acct) => acct.providerId === 'google');
-	const github = accounts.find((acct) => acct.providerId === 'github');
-	if (!hasGoogle && !github) return true;
-
-	if (hasGoogle && row?.email) {
-		const google = await getGoogleAuthStatus(db);
-		if (google.configured && emailDomainAllowed(row.email, google.allowedDomains)) return true;
-	}
-
-	if (!github?.accessToken) return false;
-	const gh = await getGitHubAuthStatus(db);
-	if (!gh.configured) return false;
-	return userIsInAllowedOrg(github.accessToken, gh.allowedOrgs);
 }

@@ -44,30 +44,40 @@
 </script>
 
 {#if data.tokenStatus === 'valid'}
-	<AuthHeader eyebrow="Set your password" title="Welcome to Rootprint" divider>
-		Setting up the account for <span class="font-mono">{data.email}</span>.
-	</AuthHeader>
+	{#if data.passwordEnabled}
+		<AuthHeader eyebrow="Set your password" title="Welcome to Rootprint" divider>
+			Setting up the account for <span class="font-mono">{data.email}</span>.
+		</AuthHeader>
 
-	{#if formError}
-		<div role="alert" class="alert alert-error mt-4 text-sm">{formError}</div>
+		{#if formError}
+			<div role="alert" class="alert alert-error mt-4 text-sm">{formError}</div>
+		{/if}
+
+		<form class="mt-4 space-y-3" {onsubmit}>
+			<Field
+				label="Password"
+				type="password"
+				autocomplete="new-password"
+				minlength={8}
+				bind:value={password}
+				error={fieldErrors.password}
+				hint="min 8 chars"
+				required
+			/>
+
+			<button class="btn btn-primary mt-4 w-full" type="submit" disabled={submitting}>
+				{submitting ? 'Setting password…' : 'Set password'}
+			</button>
+		</form>
+	{:else}
+		<AuthHeader eyebrow="Invitation" title="Welcome to Rootprint" divider>
+			Your account for <span class="font-mono">{data.email}</span> is ready. This instance signs in through
+			an external provider, so no password is needed. Sign in with the provider account that uses that
+			same email address.
+		</AuthHeader>
+
+		<a class="btn btn-primary mt-4 w-full" href="/auth/sign-in">Continue to sign in</a>
 	{/if}
-
-	<form class="mt-4 space-y-3" {onsubmit}>
-		<Field
-			label="Password"
-			type="password"
-			autocomplete="new-password"
-			minlength={8}
-			bind:value={password}
-			error={fieldErrors.password}
-			hint="min 8 chars"
-			required
-		/>
-
-		<button class="btn btn-primary mt-4 w-full" type="submit" disabled={submitting}>
-			{submitting ? 'Setting password…' : 'Set password'}
-		</button>
-	</form>
 {:else}
 	<AuthHeader
 		eyebrow="Invite link"

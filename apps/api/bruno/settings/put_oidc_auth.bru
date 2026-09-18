@@ -1,0 +1,19 @@
+meta {
+  name: Set OIDC Issuer and Credentials
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/api/settings/auth/oidc/credentials
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "issuerUrl": "https://auth.example.com/realms/main",
+    "clientId": "rootprint",
+    "clientSecret": "your-oidc-client-secret"
+  }
+}

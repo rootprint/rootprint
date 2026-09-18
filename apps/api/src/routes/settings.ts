@@ -8,12 +8,16 @@ import { requireAdmin } from '../middleware/require-admin.js';
 import {
 	githubAllowedOrgsSchema,
 	googleAllowedDomainsSchema,
-	oauthCredentialsSchema
+	oauthCredentialsSchema,
+	oidcCredentialsSchema,
+	passwordSignInSchema
 } from '../schemas/settings.js';
 import {
 	GoogleAuthSettingsResponse,
-	GitHubAuthSettingsResponse
+	GitHubAuthSettingsResponse,
+	OidcAuthSettingsResponse
 } from '../schemas/responses/settings.js';
+import { verifyOidcIssuer } from '../services/oidc.service.js';
 import {
 	deleteGoogleAuthCredentials,
 	getGoogleAuthStatus,
@@ -22,7 +26,11 @@ import {
 	deleteGitHubAuthCredentials,
 	getGitHubAuthStatus,
 	putGitHubAuthAllowedOrgs,
-	putGitHubAuthCredentials
+	putGitHubAuthCredentials,
+	deleteOidcAuthCredentials,
+	getOidcAuthStatus,
+	putOidcAuthCredentials,
+	putPasswordSignInDisabled
 } from '../services/settings.service.js';
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
@@ -129,6 +137,62 @@ export const settingsRouter = new Hono<AuthedEnv>()
 		validator('json', githubAllowedOrgsSchema),
 		async (c) => {
 			await putGitHubAuthAllowedOrgs(db, c.req.valid('json'));
+			return c.body(null, 204);
+		}
+	)
+	.get(
+		'/auth/oidc',
+		describe({
+			tag: 'Auth settings',
+			summary: 'Get OpenID Connect auth status',
+			ok: OidcAuthSettingsResponse
+		}),
+		async (c) => c.json(await getOidcAuthStatus(db))
+	)
+	.put(
+		'/auth/oidc/credentials',
+		describe({
+			tag: 'Auth settings',
+			summary: 'Set OpenID Connect issuer and credentials',
+			description:
+				'Fetches <issuer>/.well-known/openid-configuration before saving. A 400 with code OIDC_DISCOVERY_FAILED means nothing was written.',
+			rawResponses: { '204': { description: 'Credentials saved' } }
+		}),
+		validator('json', oidcCredentialsSchema),
+		async (c) => {
+			const body = c.req.valid('json');
+			await verifyOidcIssuer(body.issuerUrl);
+			await putOidcAuthCredentials(db, body);
+			await reloadAuth();
+			return c.body(null, 204);
+		}
+	)
+	.delete(
+		'/auth/oidc/credentials',
+		describe({
+			tag: 'Auth settings',
+			summary: 'Delete OpenID Connect credentials',
+			rawResponses: { '204': { description: 'Credentials deleted' } }
+		}),
+		async (c) => {
+			await deleteOidcAuthCredentials(db);
+			await reloadAuth();
+			return c.body(null, 204);
+		}
+	)
+	.put(
+		'/auth/password',
+		describe({
+			tag: 'Auth settings',
+			summary: 'Enable or disable email/password sign-in',
+			description:
+				'Invitations and admin password resets keep working while disabled. Nothing checks that an external provider is usable first.',
+			rawResponses: { '204': { description: 'Saved' } }
+		}),
+		validator('json', passwordSignInSchema),
+		async (c) => {
+			await putPasswordSignInDisabled(db, !c.req.valid('json').enabled);
+			await reloadAuth();
 			return c.body(null, 204);
 		}
 	);

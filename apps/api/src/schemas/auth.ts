@@ -2,7 +2,7 @@ import * as v from 'valibot';
 
 export const setupAdminSchema = v.object({
 	name: v.pipe(v.string(), v.minLength(1), v.maxLength(128)),
-	email: v.pipe(v.string(), v.email()),
+	email: v.pipe(v.string(), v.trim(), v.toLowerCase(), v.email()),
 	password: v.pipe(v.string(), v.minLength(8), v.maxLength(128))
 });
 export type SetupAdminInput = v.InferOutput<typeof setupAdminSchema>;

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { githubProvider } from '$lib/components/admin/authentication/oauth-providers';
+	import { oidcProvider } from '$lib/components/admin/authentication/oauth-providers';
 	import ProviderSettingsPage from '$lib/components/admin/authentication/ProviderSettingsPage.svelte';
 
 	let { data } = $props();
 </script>
 
 <ProviderSettingsPage
-	provider={githubProvider}
+	provider={oidcProvider}
 	configured={data.settings.configured}
-	initialItems={data.settings.allowedOrgs}
+	initialIssuerUrl={data.settings.issuerUrl ?? ''}
 	origin={data.origin}
 />

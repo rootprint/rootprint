@@ -1,20 +1,17 @@
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError } from 'better-auth/api';
-import { admin, openAPI } from 'better-auth/plugins';
+import { admin, genericOAuth, openAPI } from 'better-auth/plugins';
+import { github } from 'better-auth/social-providers';
 import { apiKey } from '@better-auth/api-key';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { config } from '../config.js';
 import * as authSchema from '../db/auth.schema.js';
-import { account, inviteToken, user } from '../db/schema.js';
-import {
-	githubTokenIsAllowed,
-	googleEmailIsAllowed,
-	userRetainsOAuthAccess
-} from '../services/auth.service.js';
-import { loadOAuthProviders } from '../services/settings.service.js';
-import type { OAuthCredentials } from '../types.js';
+import { inviteToken } from '../db/schema.js';
+import { githubTokenIsAllowed, googleEmailIsAllowed } from '../services/auth.service.js';
+import { discoveryUrl, verifyOidcIssuer } from '../services/oidc.service.js';
+import { loadAuthConfig } from '../services/settings.service.js';
+import type { AuthConfig } from '../types.js';
 import { db } from './db.js';
 import { logger } from './logger.js';
 
@@ -29,23 +26,52 @@ const apiKeyPluginConfig = {
 	permissions: { defaultPermissions: { logs: ['read'] } }
 } satisfies Parameters<typeof apiKey>[0];
 
-function oauthCheckUnavailable(): APIError {
-	return new APIError('SERVICE_UNAVAILABLE', {
-		code: 'oauth_check_unavailable',
-		message: 'Could not verify OAuth access right now'
-	});
-}
+// /api/users is the only user-management HTTP surface. Disabled paths 404 over HTTP
+// and drop out of the OpenAPI schema; server-side auth().api.* calls bypass the check.
+const ADMIN_PATHS = Object.values(admin().endpoints).map((e) => e.path);
 
-function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCredentials) {
+function buildAuth(secret: string, cfg: AuthConfig) {
+	const oidc = cfg.oidc;
 	const trustedOrigins = [config.origin, ...(config.frontendUrl ? [config.frontendUrl] : [])];
 
 	const opts: BetterAuthOptions = {
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-		plugins: [admin(), apiKey(apiKeyPluginConfig)],
+		plugins: [
+			admin(),
+			apiKey(apiKeyPluginConfig),
+			...(oidc
+				? [
+						genericOAuth({
+							config: [
+								{
+									providerId: 'oidc',
+									discoveryUrl: discoveryUrl(oidc.issuerUrl),
+									clientId: oidc.clientId,
+									clientSecret: oidc.clientSecret,
+									scopes: ['openid', 'profile', 'email'],
+									requireIdTokenVerification: true,
+									// Keep sign-out local; the client would otherwise follow the IdP end-session redirect.
+									disableProviderLogout: true,
+									// `sub` is unique only within an issuer. Qualifying it means a row left over
+									// from a previous issuer can never match a subject from the current one.
+									accountSubject: ({ profile }) => {
+										// Numeric subjects are legal, so only an absent or empty one is refused.
+										const sub = profile.sub;
+										if (sub === undefined || sub === null || sub === '') {
+											throw new Error('ID token carries no sub');
+										}
+										return `${oidc.issuerUrl}|${String(sub)}`;
+									}
+								}
+							]
+						})
+					]
+				: [])
+		],
+		disabledPaths: [...ADMIN_PATHS, ...(cfg.passwordSignInDisabled ? ['/sign-in/email'] : [])],
 		trustedOrigins,
 		secret,
 		baseURL: config.origin,
-		session: { cookieCache: { enabled: true } },
 		rateLimit: { enabled: true },
 		advanced: { ipAddress: { ipAddressHeaders: ['x-rootprint-client-ip'] } },
 		// Every OAuth failure path falls back to this, so no per-flow
@@ -56,67 +82,43 @@ function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCred
 		user: {
 			additionalFields: {
 				lastActive: { type: 'date', required: false, returned: true }
+			},
+			// Runs for every OAuth create, link, and repeat sign-in, before any row is written.
+			// Admin-created users arrive with method "admin" and pass through.
+			validateUserInfo: async ({ user, source }) => {
+				if (source.method !== 'oauth' || !source.oauth) return;
+				if (source.oauth.providerId === 'google') {
+					if (!user.email || !(await googleEmailIsAllowed(db, user.email))) {
+						return { error: 'domain_not_allowed', errorDescription: 'Email domain not allowed' };
+					}
+					return;
+				}
+				if (source.oauth.providerId === 'github') {
+					const profile = source.oauth.profile as { orgAllowed?: boolean | null } | undefined;
+					const orgAllowed = profile?.orgAllowed;
+					if (orgAllowed === null) {
+						return {
+							error: 'oauth_check_unavailable',
+							errorDescription: 'Could not verify OAuth access right now'
+						};
+					}
+					if (!orgAllowed) {
+						return {
+							error: 'org_not_allowed',
+							errorDescription: 'GitHub organization not allowed'
+						};
+					}
+				}
 			}
 		},
 		databaseHooks: {
 			account: {
 				create: {
-					before: async (acct) => {
-						if (acct.providerId === 'google') {
-							const [row] = await db
-								.select({ email: user.email })
-								.from(user)
-								.where(eq(user.id, acct.userId))
-								.limit(1);
-							if (!row?.email || !(await googleEmailIsAllowed(db, row.email))) {
-								throw new APIError('FORBIDDEN', {
-									code: 'domain_not_allowed',
-									message: 'Email domain not allowed'
-								});
-							}
-							return;
-						}
-						if (acct.providerId === 'github') {
-							let allowed: boolean;
-							try {
-								allowed = await githubTokenIsAllowed(db, acct.accessToken);
-							} catch (err) {
-								logger.error({ err, userId: acct.userId }, 'github org check unavailable');
-								throw oauthCheckUnavailable();
-							}
-							if (!allowed) {
-								throw new APIError('FORBIDDEN', {
-									code: 'org_not_allowed',
-									message: 'GitHub organization not allowed'
-								});
-							}
-							return;
-						}
-					},
+					// Onboarding through a provider consumes the invite; the users list would
+					// otherwise show the user as pending until the token expires.
 					after: async (acct) => {
-						if (acct.providerId !== 'google' && acct.providerId !== 'github') return;
-						await db.transaction(async (tx) => {
-							await tx
-								.delete(account)
-								.where(and(eq(account.userId, acct.userId), eq(account.providerId, 'credential')));
-							await tx.delete(inviteToken).where(eq(inviteToken.userId, acct.userId));
-						});
-					}
-				}
-			},
-			session: {
-				create: {
-					before: async (session) => {
-						let retained: boolean;
-						try {
-							retained = await userRetainsOAuthAccess(db, session.userId);
-						} catch (err) {
-							logger.error({ err, userId: session.userId }, 'oauth access check unavailable');
-							throw oauthCheckUnavailable();
-						}
-						if (retained) return;
-						logger.warn({ userId: session.userId }, 'oauth access blocked');
-						return false;
+						if (acct.providerId === 'credential') return;
+						await db.delete(inviteToken).where(eq(inviteToken.userId, acct.userId));
 					}
 				}
 			}
@@ -124,26 +126,67 @@ function buildAuth(secret: string, google?: OAuthCredentials, github?: OAuthCred
 	};
 	const socialProviders: NonNullable<BetterAuthOptions['socialProviders']> = {};
 	const trustedProviders: string[] = [];
-	if (google) {
-		socialProviders.google = { clientId: google.clientId, clientSecret: google.clientSecret };
+	if (cfg.google) {
+		socialProviders.google = {
+			clientId: cfg.google.clientId,
+			clientSecret: cfg.google.clientSecret
+		};
 		trustedProviders.push('google');
 	}
-	if (github) {
+	if (cfg.github) {
+		const creds = { clientId: cfg.github.clientId, clientSecret: cfg.github.clientSecret };
+		const stock = github(creds);
 		socialProviders.github = {
-			clientId: github.clientId,
-			clientSecret: github.clientSecret,
+			...creds,
 			// read:org resolves private org memberships; user:email is required by GitHub.
-			scope: ['read:org', 'user:email']
+			scope: ['read:org', 'user:email'],
+			// validateUserInfo never sees the access token, so the org verdict rides on the profile.
+			getUserInfo: async (token) => {
+				const info = await stock.getUserInfo(token);
+				// A null profile ends the callback as unable_to_get_user_info before the hook runs.
+				if (!info) return null;
+				let orgAllowed: boolean | null;
+				try {
+					orgAllowed = await githubTokenIsAllowed(db, token.accessToken);
+				} catch (err) {
+					logger.error({ err }, 'github org check unavailable');
+					orgAllowed = null;
+				}
+				return { ...info, data: { ...info.data, orgAllowed } as typeof info.data };
+			}
 		};
 		trustedProviders.push('github');
 	}
-	if (trustedProviders.length > 0) {
-		opts.socialProviders = socialProviders;
-		opts.account = {
-			accountLinking: { enabled: true, trustedProviders }
-		};
-	}
+	if (cfg.google || cfg.github) opts.socialProviders = socialProviders;
+	// The admin's own IdP is trusted like Google and GitHub: many providers (Entra ID
+	// among them) never send email_verified, and untrusted linking requires it.
+	if (oidc) trustedProviders.push('oidc');
+	opts.account = {
+		encryptOAuthTokens: true,
+		// Local verification is relaxed because only admins create users here.
+		accountLinking: { enabled: true, trustedProviders, requireLocalEmailVerified: false }
+	};
 	return betterAuth(opts);
+}
+
+/**
+ * The plugin fetches discovery at init with no timeout, and every request awaits
+ * init, so an unreachable issuer would stall the whole auth path. Probe it with
+ * the bounded save-time check first and build without OIDC when it fails.
+ */
+async function loadReachableAuthConfig(): Promise<AuthConfig> {
+	const cfg = await loadAuthConfig(db);
+	if (!cfg.oidc) return cfg;
+	try {
+		await verifyOidcIssuer(cfg.oidc.issuerUrl);
+		return cfg;
+	} catch (err) {
+		logger.warn(
+			{ err, issuerUrl: cfg.oidc.issuerUrl },
+			'oidc discovery unreachable; provider disabled until the next auth reload'
+		);
+		return { ...cfg, oidc: undefined };
+	}
 }
 
 type AuthInstanceInternal = ReturnType<typeof buildAuth>;
@@ -151,9 +194,11 @@ type AuthInstanceInternal = ReturnType<typeof buildAuth>;
 const holder: {
 	instance: AuthInstanceInternal | null;
 	secret: string | null;
+	cfg: AuthConfig | null;
 } = {
 	instance: null,
-	secret: null
+	secret: null,
+	cfg: null
 };
 
 /**
@@ -164,9 +209,8 @@ export async function initAuth(secret: string): Promise<void> {
 	if (holder.instance !== null) {
 		throw new Error('initAuth has already been called');
 	}
-	const [google, github] = await loadOAuthProviders(db);
 	holder.secret = secret;
-	holder.instance = buildAuth(secret, google, github);
+	await rebuild();
 }
 
 export const auth = (): AuthInstanceInternal => {
@@ -176,12 +220,29 @@ export const auth = (): AuthInstanceInternal => {
 	return holder.instance;
 };
 
-export async function reloadAuth(): Promise<void> {
+/** What the live instance was built from; OIDC is absent here when its discovery failed. */
+export const authConfig = (): AuthConfig => {
+	if (holder.cfg === null) {
+		throw new Error('authConfig() called before initAuth(); ensure boot sequence ran');
+	}
+	return holder.cfg;
+};
+
+async function rebuild(): Promise<void> {
 	if (holder.secret === null) {
 		throw new Error('reloadAuth called before initAuth');
 	}
-	const [google, github] = await loadOAuthProviders(db);
-	holder.instance = buildAuth(holder.secret, google, github);
+	const cfg = await loadReachableAuthConfig();
+	holder.cfg = cfg;
+	holder.instance = buildAuth(holder.secret, cfg);
+}
+
+let reloading: Promise<void> = Promise.resolve();
+
+/** Serialized so two admin writes cannot finish their reloads out of order. */
+export function reloadAuth(): Promise<void> {
+	reloading = reloading.catch(() => undefined).then(rebuild);
+	return reloading;
 }
 
 export type AuthInstance = AuthInstanceInternal;
@@ -190,6 +251,7 @@ export async function authOpenAPISchema() {
 	const instance = betterAuth({
 		database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
 		plugins: [admin(), apiKey(apiKeyPluginConfig), openAPI()],
+		disabledPaths: ADMIN_PATHS,
 		baseURL: config.origin,
 		secret: 'openapi-schema-generation-only',
 		emailAndPassword: { enabled: true, disableSignUp: true }

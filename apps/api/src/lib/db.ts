@@ -13,6 +13,7 @@ const CONNECT_RETRY_DELAY_MS = 2000;
 
 export const db = drizzle(new pg.Pool({ connectionString: config.databaseUrl }), { schema });
 export type Db = typeof db;
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
 export async function connectDb(): Promise<void> {
 	let lastError: unknown;

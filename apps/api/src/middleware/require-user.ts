@@ -7,7 +7,6 @@ import type { AppEnv } from '../env.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
-import { retainsOAuthAccess } from '../lib/oauth-access.js';
 import { internal, unauthorized } from '../utils/http-error.js';
 
 // Intentionally unbounded; user cardinality is small in practice and pre-existing pattern.
@@ -33,11 +32,6 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
 		throw internal('Session validation failed');
 	}
 	if (!session) throw unauthorized('Unauthorized');
-
-	if (!(await retainsOAuthAccess(session.user.id, session.session.createdAt))) {
-		logger.warn({ userId: session.user.id }, 'oauth access revoked mid-session');
-		throw unauthorized('Unauthorized');
-	}
 
 	c.set('session', session);
 	bumpLastActive(session.user.id);

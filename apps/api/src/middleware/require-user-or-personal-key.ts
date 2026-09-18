@@ -7,7 +7,6 @@ import type { AuthedEnv } from '../env.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
-import { retainsOAuthAccess } from '../lib/oauth-access.js';
 import type { Scope } from '../types.js';
 import { extractBearerToken } from '../utils/bearer.js';
 import { forbidden, internal, unauthorized } from '../utils/http-error.js';
@@ -56,10 +55,6 @@ export function requireUserOrPersonalKey(required: Scope): MiddlewareHandler<Aut
 			.limit(1);
 		if (!owner) throw unauthorized('Invalid API key', 'PERSONAL_KEY_INVALID');
 		if (owner.banned) throw forbidden('API key owner is banned', 'PERSONAL_KEY_FORBIDDEN');
-		if (!(await retainsOAuthAccess(owner.id, result.key.createdAt))) {
-			logger.warn({ userId: owner.id }, 'oauth access revoked; personal api key rejected');
-			throw forbidden('API key owner is no longer allowed', 'PERSONAL_KEY_FORBIDDEN');
-		}
 
 		c.set('session', { user: { id: owner.id, role: owner.role } });
 		c.set('apiKeyActor', { keyId: result.key.id });
