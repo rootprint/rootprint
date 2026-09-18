@@ -1,11 +1,13 @@
+import * as v from 'valibot';
+
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_MEMBERSHIPS_PER_PAGE = 100;
 const GITHUB_MEMBERSHIPS_MAX_PAGES = 10;
 const GITHUB_REQUEST_TIMEOUT_MS = 5000;
 
-type GitHubMembership = {
-	organization?: { login?: string };
-};
+const membershipsSchema = v.array(
+	v.object({ organization: v.optional(v.object({ login: v.optional(v.string()) })) })
+);
 
 /**
  * False for a rejected token or a definitive non-membership; throws when GitHub
@@ -47,7 +49,7 @@ export async function userIsInAllowedOrg(
 			});
 		}
 
-		const memberships = (await res.json()) as GitHubMembership[];
+		const memberships = v.parse(membershipsSchema, await res.json());
 		if (
 			memberships.some((membership) => {
 				const login = membership.organization?.login;

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { generateId } from 'better-auth';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gt } from 'drizzle-orm';
 
 import { INVITE_EXPIRY_HOURS } from '../constants.js';
 import type { Db } from '../lib/db.js';
@@ -130,7 +130,7 @@ export async function setupPassword(
 	return await db.transaction(async (tx) => {
 		const [consumed] = await tx
 			.delete(inviteToken)
-			.where(eq(inviteToken.token, token))
+			.where(and(eq(inviteToken.token, token), gt(inviteToken.expiresAt, new Date())))
 			.returning({ userId: inviteToken.userId });
 
 		if (!consumed) throw badRequest('Invalid invite token', 'INVITE_INVALID');
