@@ -129,7 +129,7 @@ export const authRouter = new Hono<AppEnv>()
 	.all('/*', async (c) => {
 		const req = c.req.raw;
 		const origin = req.headers.get('origin');
-		if (!origin || origin === 'null') {
+		if (!origin) {
 			req.headers.set('origin', config.origin);
 		}
 		req.headers.set('x-rootprint-client-ip', resolveClientIp(c));
