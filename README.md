@@ -67,6 +67,8 @@ Then:
 
 Full install guide: https://docs.rootprint.io/install/docker-compose
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/rootprint?referralCode=ca9X8b&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
 ## Documentation
 
 - Live demo: https://demo.rootprint.io
