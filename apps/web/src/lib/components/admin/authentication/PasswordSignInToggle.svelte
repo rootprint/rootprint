@@ -64,7 +64,7 @@
 	onConfirm={() => save(false)}
 >
 	{#snippet message()}
-		Users without a linked external account will be unable to sign in. Test external sign-in in
-		another browser before continuing.
+		Users without a linked external account will be unable to sign in. Make sure you can sign in
+		with an external provider first, or you may lock yourself out.
 	{/snippet}
 </ConfirmModal>
