@@ -1,6 +1,14 @@
 import pg from 'pg';
 
+/** The suffix is the only thing standing between a mistyped URL and a real database. */
+function assertTestDatabase(databaseUrl: string): void {
+	if (!/_(test|e2e)$/.test(new URL(databaseUrl).pathname)) {
+		throw new Error(`refusing to use ${databaseUrl}: database name must end in _test or _e2e`);
+	}
+}
+
 export async function ensureDatabase(databaseUrl: string): Promise<void> {
+	assertTestDatabase(databaseUrl);
 	const url = new URL(databaseUrl);
 	const name = url.pathname.slice(1);
 	url.pathname = '/postgres';
@@ -16,9 +24,7 @@ export async function ensureDatabase(databaseUrl: string): Promise<void> {
 
 /** Drizzle keeps its migrations table in the `drizzle` schema, so everything in `public` is app data. */
 export async function truncateAll(databaseUrl: string): Promise<void> {
-	if (!/_(test|e2e)$/.test(new URL(databaseUrl).pathname)) {
-		throw new Error(`refusing to truncate ${databaseUrl}: database name must end in _test or _e2e`);
-	}
+	assertTestDatabase(databaseUrl);
 	const client = new pg.Client({ connectionString: databaseUrl });
 	await client.connect();
 	try {

@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { config } from '../config.js';
 import type { AppEnv } from '../env.js';
 import type { AuthProvidersInfo } from '../types.js';
-import { auth, authConfig } from '../lib/auth.js';
+import { auth, authConfig, reloadAuth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import { setupAdminSchema, setupPasswordSchema, verifyInviteSchema } from '../schemas/auth.js';
@@ -49,6 +49,7 @@ export const authRouter = new Hono<AppEnv>()
 			}
 
 			const result = await createFirstAdmin(db, auth(), body);
+			await reloadAuth();
 			return c.json(result, 201);
 		}
 	)

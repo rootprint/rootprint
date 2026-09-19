@@ -49,15 +49,12 @@ export async function apiSignIn(email: string, password: string): Promise<Api> {
 	return { cookie, call: (m, p, b) => request(m, p, b, cookie) };
 }
 
-/** Fresh database with one admin. The trailing settings write makes the server rebuild auth from the empty config. */
+/** Fresh database with one admin. setup-admin rebuilds the server's auth from the empty settings. */
 export async function seedAdmin(): Promise<Api> {
 	await resetDatabase();
 	const created = await request('POST', '/api/auth/setup-admin', ADMIN);
 	if (created.status !== 201) throw new Error(`setup-admin failed: ${created.status}`);
-	const api = await apiSignIn(ADMIN.email, ADMIN.password);
-	const reload = await api.call('PUT', '/api/settings/auth/password', { enabled: true });
-	if (reload.status !== 204) throw new Error(`auth reload failed: ${reload.status}`);
-	return api;
+	return apiSignIn(ADMIN.email, ADMIN.password);
 }
 
 export async function idpControl(patch: {
