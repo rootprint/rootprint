@@ -40,7 +40,7 @@ services:
     image: quickwit/quickwit:v0.9.0
     container_name: quickwit
     ports:
-      - '127.0.0.1:7290:7280' # REST API + Web UI (local only)
+      - '127.0.0.1:7280:7280' # REST API + Web UI (local only)
       - '127.0.0.1:7281:7281' # gRPC (local only)
     volumes:
       - ./quickwit.yaml:/quickwit/config/quickwit.yaml:ro

@@ -14,7 +14,7 @@ if (!existsSync(webIndex)) {
 
 process.env.DATABASE_URL = DATABASE_URL;
 process.env.ORIGIN = `http://127.0.0.1:${PORT}`;
-process.env.QUICKWIT_URL = process.env.E2E_QUICKWIT_URL ?? 'http://127.0.0.1:7290';
+process.env.QUICKWIT_URL = process.env.E2E_QUICKWIT_URL ?? 'http://127.0.0.1:7280';
 process.env.TRUST_PROXY_HOPS = '1';
 process.env.BETTER_AUTH_SECRET = '';
 process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? 'warn';
