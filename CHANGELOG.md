@@ -4,29 +4,31 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ## [Unreleased]
 
+### ⚠️ Breaking
+
+- **Better Auth's admin endpoints under `/api/auth/admin/*` are closed.** User management goes through `/api/users`, which already covered every operation the UI used.
+- **`hasCredentialAccount` removed from `GET /api/users` rows.** A user can now hold a password and a linked provider at the same time, so the flag no longer meant anything; the user page's "Auth" chip goes with it.
+
 ### Added
 
-- Optional fold mode on the log explorer: consecutive rows that match on every visible column except timestamp collapse behind a count badge (`fold=1` in the URL). Display-only; histogram, hit count, and the search query are unchanged.
-- Generic OpenID Connect SSO: configure one provider by issuer URL, client ID, and client secret under Settings → Authentication. ID token signatures are verified against the issuer's JWKS; new users are created with the `user` role and same-email accounts are linked.
-- Password sign-in toggle: admins can turn off email/password sign-in. Invitations and admin password resets keep working. Nothing stops you disabling it without a working external provider — see the recovery steps in the README.
+- **OpenID Connect SSO.** One provider, configured by issuer URL, client ID and client secret under **Settings → Authentication → OpenID Connect**, or via `GET /api/settings/auth/oidc`, `PUT`/`DELETE /api/settings/auth/oidc/credentials`. Discovery is fetched at save time and refused when the issuer, endpoints or PKCE `S256` support are missing; ID token signatures are verified against the issuer's JWKS. New users are created with the `user` role and same-email accounts are linked. `GET /api/auth/providers` gains `oidc.enabled`.
+- **Password sign-in toggle.** `PUT /api/settings/auth/password` with `{ "enabled": false }` disables `/api/auth/sign-in/email`; invitations and admin password resets keep working. `GET /api/auth/providers` gains `password.enabled`. Nothing stops an admin disabling it with no working external provider configured.
+- **Log explorer fold mode** (`fold=1`): consecutive rows that match on every visible column except timestamp collapse behind a count badge. Display-only; histogram, hit count and query are unchanged.
 
 ### Changed
 
-- Invited users can now complete onboarding by signing in through Google, GitHub, or OpenID Connect without first setting a password.
-- The sign-in page no longer assumes password sign-in when the providers request fails; it shows an error instead.
-- Google domain and GitHub organization allow-lists are enforced when a user signs in and are no longer re-checked during a session. Removing a provider signs its users out immediately; allow-list edits apply at the next sign-in.
-- Linking Google, GitHub, or OpenID Connect to a user no longer deletes their password.
-- Changing the OpenID Connect issuer URL or client ID unlinks every OpenID Connect account and signs those users out; they re-link by email on their next sign-in, or an admin resets their password.
-- Admins can reset the password of, or reissue an invite to, any user, including users who first signed in through a provider.
-- OAuth access and refresh tokens are stored encrypted with `BETTER_AUTH_SECRET`.
-- Better Auth's admin endpoints under `/api/auth/admin` are closed; user management goes through `/api/users`.
-- The users API no longer returns `hasCredentialAccount`, and the user page drops its "Auth" chip. Users can keep a password while linking an external provider, so the binary label was misleading.
+- **Provider admission moved to sign-in.** Google domain and GitHub organization allow-lists are enforced when a user signs in and no longer re-checked on every request. Removing a provider signs its users out immediately; allow-list edits apply at the next sign-in.
+- **Invited users can onboard through Google, GitHub or OpenID Connect** without first setting a password. Linking a provider consumes the invite and leaves any existing password in place.
+- **Changing the OpenID Connect issuer URL or client ID unlinks every OpenID Connect account** and signs those users out; they re-link by email on their next sign-in, or an admin resets their password.
+- **Admins can reset the password of, or reissue an invite to, any user,** including users who first signed in through a provider.
+- **OAuth access and refresh tokens are stored encrypted** with `BETTER_AUTH_SECRET`. Set it explicitly if that protection should survive a database compromise; the generated secret lives in the same database.
+- **Sign-in page** shows an error when the providers request fails instead of assuming password sign-in.
+- **Internal (api):** session cookie caching is off so role changes and revocations apply on the next request; auth field definitions are centralized in `constants.ts`; OIDC discovery is retried every 60s when the issuer is unreachable at boot, and the provider stays hidden until it succeeds.
 
 ### Fixed
 
 - A first administrator created with a mixed-case email could not sign in.
-- Role changes and session revocations now apply on the next request instead of after the session cookie cache expired.
-- A rejected Google or GitHub first sign-in no longer leaves a user row with no account.
+- A rejected Google or GitHub first sign-in left a user row with no account.
 
 ## [0.4.3] - 2026-09-10
 
