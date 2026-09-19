@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, api-rewrite]
   pull_request:
-    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -23,6 +22,25 @@ jobs:
       - run: bun run lint
       - run: bun run format:check
       - run: docker compose up -d --wait db quickwit dex
+      - run: bun --filter api test
       - run: bun --filter web build
       - run: bun --filter api build
       - run: docker build .
+  e2e:
+    name: E2E
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: docker compose up -d --wait db quickwit dex
+      - run: bun --filter web build
+      - run: bun --filter e2e test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: e2e/test-results
+          retention-days: 7
