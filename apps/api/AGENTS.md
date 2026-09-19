@@ -6,7 +6,7 @@ Hono backend on Bun. Responsibilities: log ingest (NDJSON + OTLP), search proxy 
 
 The frontend in `apps/web` calls this API over HTTP.
 
-For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.md`.
+For repo-wide rules (Bun, Prettier, TS strict, tests policy), see the root `AGENTS.md`.
 
 ## Stack
 
@@ -136,7 +136,7 @@ Required:
 | -------------- | ----------------------------------------------------------------------------- |
 | `DATABASE_URL` | Postgres connection string                                                    |
 | `ORIGIN`       | Canonical public URL used for auth callbacks, invite links, CORS, and cookies |
-| `QUICKWIT_URL` | Quickwit REST endpoint (e.g. `http://localhost:7280`)                         |
+| `QUICKWIT_URL` | Quickwit REST endpoint (e.g. `http://localhost:7290`)                         |
 
 Optional:
 
@@ -152,7 +152,7 @@ Defaults and examples live in the root `.env.example`.
 
 ## Tests
 
-No tests. Don't author unit, integration, or e2e tests unless explicitly requested.
+`tests/` is an HTTP-level suite for authentication. `bun test` (via `bun --filter api test`) preloads `tests/preload.ts`, which boots the real app against `rootprint_test` on the local Postgres and the real Quickwit from `docker compose` (host port 7290), then serves it on port 18282. Each file calls `resetDb()` in `beforeEach`. Helpers live in `tests/helpers/`: `Jar` (cookie jar with its own client IP), `fixtures.ts` (admin, members, invites), `fake-idp.ts` (OIDC provider), `providers.ts` (Google/GitHub fetch mocks). The preload sets `NODE_ENV=production` because Better Auth disables its origin/CSRF check under `NODE_ENV=test`. A failing test against unchanged behaviour is a finding: report it, do not bend the assertion. No tests outside authentication unless asked.
 
 ## Conventions
 

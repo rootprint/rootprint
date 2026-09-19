@@ -1,0 +1,31 @@
+issuer: http://127.0.0.1:5556/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+
+oauth2:
+  skipApprovalScreen: true
+
+staticClients:
+  - id: rootprint
+    secret: oidc-secret
+    name: Rootprint
+    redirectURIs:
+      - http://127.0.0.1:18282/api/auth/callback/oidc
+      - http://127.0.0.1:18283/api/auth/callback/oidc
+
+connectors:
+  - type: mockCallback
+    id: mock
+    name: Mock
+
+enablePasswordDB: true
+staticPasswords:
+  - email: dex-user@example.com
+    # bcrypt of the literal string "password", from Dex's own example config.
+    hash: '$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W'
+    username: dex-user
+    userID: dex-user-1

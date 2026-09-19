@@ -6,6 +6,7 @@ import { apiKey } from '@better-auth/api-key';
 import { eq } from 'drizzle-orm';
 
 import { config } from '../config.js';
+import { intEnv } from '../utils/require-env.js';
 import { USER_ADDITIONAL_FIELDS } from '../constants.js';
 import * as authSchema from '../db/auth.schema.js';
 import { inviteToken } from '../db/schema.js';
@@ -167,7 +168,7 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 	return betterAuth(opts);
 }
 
-const OIDC_RETRY_MS = 60_000;
+const OIDC_RETRY_MS = intEnv('OIDC_RETRY_MS', 60_000);
 let oidcRetry: ReturnType<typeof setTimeout> | null = null;
 
 function clearOidcRetry(): void {

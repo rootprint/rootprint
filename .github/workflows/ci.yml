@@ -22,6 +22,7 @@ jobs:
       - run: bun run check
       - run: bun run lint
       - run: bun run format:check
+      - run: docker compose up -d --wait db quickwit dex
       - run: bun --filter web build
       - run: bun --filter api build
       - run: docker build .
