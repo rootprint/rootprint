@@ -195,3 +195,32 @@ test('the authorize request advertises the generic OAuth callback under our own 
 
 	expect(authorizeUrl.searchParams.get('redirect_uri')).toBe(`${BASE_URL}/api/auth/callback/oidc`);
 });
+
+test('a callback with a forged state is refused and starts no session', async () => {
+	const admin = await seedAdmin();
+	await configureOidc(admin, idp);
+
+	const jar = new Jar();
+	const res = await jar.get('/api/auth/callback/oidc?code=whatever&state=forged');
+	expect(res.status).toBe(302);
+	expect(redirectError(res)).toBe('state_mismatch');
+	expect(hasSession(jar)).toBe(false);
+});
+
+test('an authorization code cannot be replayed', async () => {
+	const admin = await seedAdmin();
+	await configureOidc(admin, idp);
+
+	const jar = new Jar();
+	const authorizeUrl = await startSocial(jar, 'oidc');
+	const idpRes = await fetch(authorizeUrl, { redirect: 'manual' });
+	const cb = new URL(idpRes.headers.get('location') ?? '');
+	expect((await jar.get(cb.pathname + cb.search)).status).toBe(302);
+	expect(await sessionUser(jar)).not.toBeNull();
+
+	const replay = new Jar();
+	const second = await replay.get(cb.pathname + cb.search);
+	expect(second.status).toBe(302);
+	expect(redirectError(second)).not.toBeNull();
+	expect(hasSession(replay)).toBe(false);
+});
