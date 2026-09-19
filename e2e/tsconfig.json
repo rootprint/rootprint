@@ -1,0 +1,10 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"lib": ["ES2023", "DOM", "DOM.Iterable", "ESNext.Collection"],
+		"types": ["node", "bun-types"]
+	},
+	"include": ["**/*.ts"]
+}

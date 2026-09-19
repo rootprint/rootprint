@@ -199,14 +199,18 @@ app.use('*', serveStatic({ root: webRoot }));
 // SPA fallback: anything still unmatched gets index.html.
 app.get('*', serveStatic({ path: 'index.html', root: webRoot }));
 
-async function main(): Promise<void> {
-	logger.info('booting api');
+/** Everything before the listener: DB, migrations, secret, Quickwit probe, Better Auth. */
+export async function boot(): Promise<void> {
 	await connectDb();
 	await runMigrations();
-
 	const secret = await getBetterAuthSecret(db);
 	await probeQuickwit();
 	await initAuth(secret);
+}
+
+async function main(): Promise<void> {
+	logger.info('booting api');
+	await boot();
 
 	const statsCollector = startStatsCollector(db, quickwit);
 

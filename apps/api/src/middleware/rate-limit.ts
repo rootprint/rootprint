@@ -7,8 +7,7 @@ import type { AppEnv, AuthedEnv } from '../env.js';
 import { tooManyRequests } from '../utils/http-error.js';
 
 const RETRY_AFTER_SECONDS = Math.ceil(config.rateLimitWindowMs / 1000);
-export function resolveClientIp(c: Context): string {
-	const hops = config.trustedProxyHops;
+export function resolveClientIp(c: Context, hops = config.trustedProxyHops): string {
 	if (hops > 0) {
 		const xff = c.req.header('x-forwarded-for');
 		if (xff) {

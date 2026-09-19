@@ -4,7 +4,7 @@
 
 Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static`, a client-rendered SPA (`index.html` fallback, no SSR or prerendering) with no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
 
-For repo-wide rules (Bun, Prettier, TS strict, no tests), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see [Svelte 5 Patterns](#svelte-5-patterns) below.
+For repo-wide rules (Bun, Prettier, TS strict, tests policy), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see [Svelte 5 Patterns](#svelte-5-patterns) below.
 
 ## Stack
 
@@ -159,7 +159,7 @@ Recurring patterns to reach for before inventing new ones:
 
 ## Tests
 
-No tests. Manual visual review via `bun --filter web dev` or `bun --filter web preview`.
+No unit tests. Browser flows for authentication live in `e2e/` (Playwright, Chromium) and run against the production build: `bun --filter web build && bun --filter e2e test`. Selectors use accessible labels and roles; when changing an auth page's labels or button text, update the spec. Manual visual review remains `bun --filter web dev` or `bun --filter web preview`.
 
 ## Conventions
 
