@@ -49,6 +49,7 @@ function buildAuth(secret: string, cfg: AuthConfig) {
 									discoveryUrl: discoveryUrl(oidc.issuerUrl),
 									clientId: oidc.clientId,
 									clientSecret: oidc.clientSecret,
+									authentication: cfg.oidcTokenAuth,
 									scopes: ['openid', 'profile', 'email'],
 									requireIdTokenVerification: true,
 									// Keep sign-out local; the client would otherwise follow the IdP end-session redirect.
@@ -194,8 +195,8 @@ async function loadReachableAuthConfig(): Promise<AuthConfig> {
 	clearOidcRetry();
 	if (!cfg.oidc) return cfg;
 	try {
-		await verifyOidcIssuer(cfg.oidc.issuerUrl);
-		return cfg;
+		const { tokenAuth } = await verifyOidcIssuer(cfg.oidc.issuerUrl);
+		return { ...cfg, oidcTokenAuth: tokenAuth };
 	} catch (err) {
 		logger.warn(
 			{ err, issuerUrl: cfg.oidc.issuerUrl, retryInMs: OIDC_RETRY_MS },
@@ -204,6 +205,28 @@ async function loadReachableAuthConfig(): Promise<AuthConfig> {
 		scheduleOidcRetry();
 		return { ...cfg, oidc: undefined };
 	}
+}
+
+/**
+ * The plugin re-fetches discovery during init and silently skips the provider when
+ * that fetch or its content fails. Waiting for init keeps the previous instance
+ * serving meanwhile, and lets /providers report only what was actually registered.
+ */
+async function buildReadyAuth(secret: string, cfg: AuthConfig) {
+	const instance = buildAuth(secret, cfg);
+	const ctx = await instance.$context;
+	if (cfg.oidc && !ctx.socialProviders.some((p) => p.id === 'oidc')) {
+		logger.warn(
+			{ issuerUrl: cfg.oidc.issuerUrl, retryInMs: OIDC_RETRY_MS },
+			'oidc provider skipped by better-auth init; disabled until the retry succeeds'
+		);
+		scheduleOidcRetry();
+		return {
+			instance: buildAuth(secret, { ...cfg, oidc: undefined }),
+			cfg: { ...cfg, oidc: undefined }
+		};
+	}
+	return { instance, cfg };
 }
 
 type AuthInstanceInternal = ReturnType<typeof buildAuth>;
@@ -249,9 +272,9 @@ async function rebuild(): Promise<void> {
 	if (holder.secret === null) {
 		throw new Error('reloadAuth called before initAuth');
 	}
-	const cfg = await loadReachableAuthConfig();
-	holder.cfg = cfg;
-	holder.instance = buildAuth(holder.secret, cfg);
+	const ready = await buildReadyAuth(holder.secret, await loadReachableAuthConfig());
+	holder.cfg = ready.cfg;
+	holder.instance = ready.instance;
 }
 
 let reloading: Promise<void> = Promise.resolve();

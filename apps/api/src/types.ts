@@ -64,6 +64,7 @@ import type {
 	VolumeBucketResponse as VolumeBucketResponseSchema
 } from './schemas/responses/admin.js';
 import type { oauthCredentialsSchema, oidcCredentialsSchema } from './schemas/settings.js';
+import type { OidcTokenAuth } from './services/oidc.service.js';
 
 export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
 
@@ -245,6 +246,7 @@ export type AuthConfig = {
 	google?: OAuthCredentials;
 	github?: OAuthCredentials;
 	oidc?: OidcCredentials;
+	oidcTokenAuth?: OidcTokenAuth;
 	passwordSignInDisabled: boolean;
 };
 

@@ -15,8 +15,11 @@ const discoverySchema = v.object({
 	jwks_uri: endpoint,
 	// Optional in discovery, but the plugin sends the bearer token there when present.
 	userinfo_endpoint: v.nullish(endpoint),
-	code_challenge_methods_supported: v.nullish(v.array(v.string()))
+	code_challenge_methods_supported: v.nullish(v.array(v.string())),
+	token_endpoint_auth_methods_supported: v.nullish(v.array(v.string()))
 });
+
+export type OidcTokenAuth = 'basic' | 'post';
 
 /** `issuerUrl` is already normalized by `oidcCredentialsSchema`. */
 export function discoveryUrl(issuerUrl: string): string {
@@ -32,7 +35,7 @@ function discoveryFailed(message: string) {
  * safely, so a bad issuer is refused at save time instead of silently skipping the
  * provider at the next reload. Blind: the body is parsed, never echoed.
  */
-export async function verifyOidcIssuer(issuerUrl: string): Promise<void> {
+export async function verifyOidcIssuer(issuerUrl: string): Promise<{ tokenAuth: OidcTokenAuth }> {
 	let res: Response;
 	try {
 		res = await fetch(discoveryUrl(issuerUrl), {
@@ -62,4 +65,13 @@ export async function verifyOidcIssuer(issuerUrl: string): Promise<void> {
 	if (methods && !methods.includes('S256')) {
 		throw discoveryFailed('OpenID provider does not support PKCE with S256');
 	}
+	const authMethods = parsed.output.token_endpoint_auth_methods_supported;
+	const tokenAuth: OidcTokenAuth =
+		authMethods && !authMethods.includes('client_secret_basic') ? 'post' : 'basic';
+	if (authMethods && tokenAuth === 'post' && !authMethods.includes('client_secret_post')) {
+		throw discoveryFailed(
+			'OpenID provider accepts neither client_secret_basic nor client_secret_post'
+		);
+	}
+	return { tokenAuth };
 }
