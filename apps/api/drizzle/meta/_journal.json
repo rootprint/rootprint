@@ -155,6 +155,13 @@
       "when": 1789039650041,
       "tag": "0021_session_impersonated_by",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789807015506,
+      "tag": "0022_drop_user_ban_columns",
+      "breakpoints": true
     }
   ]
 }
