@@ -5,11 +5,6 @@ import { createSigner, sha256b64url } from './jwt.js';
 
 export type IdpUser = { sub: string; email: string | null; name: string; email_verified: boolean };
 export type TokenRequest = { auth: 'basic' | 'post'; clientId: string | null; pkceOk: boolean };
-type ControlPatch = {
-	user?: Partial<IdpUser>;
-	denyNext?: boolean;
-	discovery?: Record<string, unknown>;
-};
 
 export type FakeIdp = {
 	issuer: string;
@@ -17,18 +12,22 @@ export type FakeIdp = {
 	user: IdpUser;
 	/** Merged over the default discovery document. */
 	discovery: Record<string, unknown>;
-	/** Hold discovery past the API's 5s timeout. */
+	/** Hold discovery past the API's discovery timeout. */
 	slowDiscovery: boolean;
 	/** Next /authorize answers access_denied. */
 	denyNext: boolean;
 	/** Next ID token is signed by a key absent from /jwks, under the advertised kid. */
 	forgeNextIdToken: boolean;
-	authorizeRequests: URLSearchParams[];
 	tokenRequests: TokenRequest[];
 	down(): void;
 	up(): void;
 	stop(): void;
+	/** Back to the state `startFakeIdp` hands out, server included. */
+	reset(): void;
 };
+
+// Long enough to outlast the API's discovery timeout, whatever the suite set it to.
+const SLOW_DISCOVERY_MS = Number(process.env.OIDC_DISCOVERY_TIMEOUT_MS ?? 5_000) * 2;
 
 const DEFAULT_USER: IdpUser = {
 	sub: 'idp-user-1',
@@ -37,10 +36,13 @@ const DEFAULT_USER: IdpUser = {
 	email_verified: true
 };
 
-export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeIdp> {
-	const signer = await createSigner('idp-key');
-	// Same kid, different key: the callback finds a key to check against and the check fails.
-	const forger = await createSigner('idp-key');
+// One keypair per role for the whole process: keygen is slow and nothing here is instance-specific.
+const signerOnce = createSigner('idp-key');
+// Same kid, different key: the callback finds a key to check against and the check fails.
+const forgerOnce = createSigner('idp-key');
+
+export async function startFakeIdp(): Promise<FakeIdp> {
+	const [signer, forger] = await Promise.all([signerOnce, forgerOnce]);
 	const codes = new Map<string, { challenge?: string; nonce?: string; clientId?: string }>();
 
 	const state = {
@@ -50,13 +52,12 @@ export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeId
 		slowDiscovery: false,
 		denyNext: false,
 		forgeNextIdToken: false,
-		authorizeRequests: [] as URLSearchParams[],
 		tokenRequests: [] as TokenRequest[]
 	};
 
 	const app = new Hono()
 		.get('/.well-known/openid-configuration', async (c) => {
-			if (state.slowDiscovery) await Bun.sleep(6_000);
+			if (state.slowDiscovery) await Bun.sleep(SLOW_DISCOVERY_MS);
 			const i = state.issuer;
 			return c.json({
 				issuer: i,
@@ -74,7 +75,6 @@ export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeId
 		})
 		.get('/authorize', (c) => {
 			const q = new URL(c.req.url).searchParams;
-			state.authorizeRequests.push(q);
 			const redirect = new URL(q.get('redirect_uri') ?? '');
 			redirect.searchParams.set('state', q.get('state') ?? '');
 			if (state.denyNext) {
@@ -141,23 +141,15 @@ export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeId
 				email_verified: u.email_verified,
 				...(u.email === null ? {} : { email: u.email })
 			});
-		})
-		// Lets another process (Playwright) steer the provider.
-		.post('/__control', async (c) => {
-			const patch = await c.req.json<ControlPatch>();
-			if (patch.user) state.user = { ...state.user, ...patch.user };
-			if (patch.denyNext !== undefined) state.denyNext = patch.denyNext;
-			if (patch.discovery) state.discovery = patch.discovery;
-			return c.json({ ok: true });
 		});
 
 	const serve = (port: number) => Bun.serve({ port, hostname: '127.0.0.1', fetch: app.fetch });
-	let server = serve(opts.port ?? 0);
+	let server = serve(0);
 	const port = server.port!;
 	let isDown = false;
 	state.issuer = `http://127.0.0.1:${port}`;
 
-	return Object.assign(state, {
+	const controls = {
 		down() {
 			if (isDown) return;
 			server.stop(true);
@@ -171,6 +163,16 @@ export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeId
 		stop() {
 			if (!isDown) server.stop(true);
 			isDown = true;
+		},
+		reset() {
+			state.user = { ...DEFAULT_USER };
+			state.discovery = {};
+			state.slowDiscovery = false;
+			state.denyNext = false;
+			state.forgeNextIdToken = false;
+			state.tokenRequests.length = 0;
+			controls.up();
 		}
-	});
+	};
+	return Object.assign(state, controls);
 }

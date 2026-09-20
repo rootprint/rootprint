@@ -8,7 +8,7 @@ import {
 	seedAdmin,
 	sessionUser
 } from './helpers/fixtures.js';
-import { Jar, errorCode, json } from './helpers/http.js';
+import { Jar, bearer, errorCode, json } from './helpers/http.js';
 
 beforeEach(resetDb);
 
@@ -110,12 +110,10 @@ test('a personal key minted by a member reads logs but reaches no admin route', 
 	const key = await json<{ key: string }>(
 		await m.jar.post('/api/auth/api-key/create', { name: 'mine' })
 	);
-	const bearer = { headers: { authorization: `Bearer ${key.key}` } };
-
-	expect((await new Jar().get('/api/indexes', bearer)).status).toBe(200);
+	expect((await new Jar().get('/api/indexes', bearer(key.key))).status).toBe(200);
 	for (const path of ['/api/users', '/api/settings/auth/oidc', '/api/admin/cluster']) {
 		// oxlint-disable-next-line no-await-in-loop
-		const res = await new Jar().get(path, bearer);
+		const res = await new Jar().get(path, bearer(key.key));
 		expect(`${path} -> ${res.status}`).toBe(`${path} -> 403`);
 		expect(await errorCode(res)).toBe('SESSION_REQUIRED');
 	}

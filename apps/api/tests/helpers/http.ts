@@ -53,6 +53,8 @@ export class Jar {
 	}
 }
 
+export const bearer = (token: string) => ({ headers: { authorization: `Bearer ${token}` } });
+
 export async function json<T = Record<string, unknown>>(res: Response): Promise<T> {
 	return (await res.json()) as T;
 }

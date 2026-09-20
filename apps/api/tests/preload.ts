@@ -9,7 +9,9 @@ process.env.DATABASE_URL = TEST_DATABASE_URL;
 process.env.ORIGIN = BASE_URL;
 process.env.QUICKWIT_URL = QUICKWIT_URL;
 process.env.TRUST_PROXY_HOPS = '1';
+// Shorten both OIDC timers so the outage and slow-discovery tests don't wait out production values.
 process.env.OIDC_RETRY_MS = '200';
+process.env.OIDC_DISCOVERY_TIMEOUT_MS = '1000';
 // Empty, not deleted: dotenv would otherwise fill it from the repo .env.
 process.env.BETTER_AUTH_SECRET = '';
 process.env.LOG_LEVEL = 'silent';

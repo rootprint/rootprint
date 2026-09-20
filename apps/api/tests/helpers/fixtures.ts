@@ -1,5 +1,6 @@
 import { expect } from 'bun:test';
 
+import { auth } from '../../src/lib/auth.js';
 import type { AuthProvidersInfo } from '../../src/types.js';
 import { Jar, json } from './http.js';
 
@@ -78,6 +79,14 @@ export async function createActiveMember(
 
 export async function providers(): Promise<AuthProvidersInfo> {
 	return json<AuthProvidersInfo>(await new Jar().get('/api/auth/providers'));
+}
+
+/** @better-auth/api-key ships no types for `api.createApiKey`; mint keys the HTTP routes won't. */
+export function createApiKeyDirect(
+	body: Record<string, unknown>
+): Promise<{ id: string; key: string }> {
+	type CreateKey = (o: { body: Record<string, unknown> }) => Promise<{ id: string; key: string }>;
+	return (auth().api as unknown as { createApiKey: CreateKey }).createApiKey({ body });
 }
 
 export async function waitFor(predicate: () => Promise<boolean>, timeoutMs = 3_000): Promise<void> {

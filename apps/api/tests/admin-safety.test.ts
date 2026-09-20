@@ -2,10 +2,14 @@ import { beforeEach, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { account, apikey, inviteToken, session } from '../src/db/schema.js';
-import { auth } from '../src/lib/auth.js';
 import { db } from '../src/lib/db.js';
 import { resetDb } from './helpers/db.js';
-import { createActiveMember, seedAdmin, sessionUser } from './helpers/fixtures.js';
+import {
+	createActiveMember,
+	createApiKeyDirect,
+	seedAdmin,
+	sessionUser
+} from './helpers/fixtures.js';
 import { errorCode } from './helpers/http.js';
 
 beforeEach(resetDb);
@@ -27,10 +31,7 @@ test('deleting a user cascades sessions, accounts, invites and API keys', async 
 	const admin = await seedAdmin();
 	const m = await createActiveMember(admin);
 	expect((await admin.post(`/api/users/${m.id}/invites`, {})).status).toBe(200);
-	type CreateKey = (o: { body: Record<string, unknown> }) => Promise<{ id: string }>;
-	await (auth().api as unknown as { createApiKey: CreateKey }).createApiKey({
-		body: { name: 'cli', userId: m.id }
-	});
+	await createApiKeyDirect({ name: 'cli', userId: m.id });
 
 	const counts = async () => ({
 		sessions: (await db.select().from(session).where(eq(session.userId, m.id))).length,

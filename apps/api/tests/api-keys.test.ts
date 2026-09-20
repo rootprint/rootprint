@@ -2,15 +2,12 @@ import { beforeEach, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { apikey } from '../src/db/schema.js';
-import { auth } from '../src/lib/auth.js';
 import { db } from '../src/lib/db.js';
 import { resetDb } from './helpers/db.js';
-import { seedAdmin } from './helpers/fixtures.js';
-import { Jar, errorCode, json } from './helpers/http.js';
+import { createApiKeyDirect, seedAdmin } from './helpers/fixtures.js';
+import { Jar, bearer, errorCode, json } from './helpers/http.js';
 
 beforeEach(resetDb);
-
-type CreateKey = (o: { body: Record<string, unknown> }) => Promise<{ id: string; key: string }>;
 
 async function serviceKey(
 	admin: Jar,
@@ -28,12 +25,9 @@ async function serviceKey(
 		const k = await json<{ id: string; token: string }>(res);
 		return { ...k, userId: sa.id };
 	}
-	const createApiKey = (auth().api as unknown as { createApiKey: CreateKey }).createApiKey;
-	const k = await createApiKey({ body: { name: 'ci-key', userId: sa.id, permissions } });
+	const k = await createApiKeyDirect({ name: 'ci-key', userId: sa.id, permissions });
 	return { id: k.id, token: k.key, userId: sa.id };
 }
-
-const bearer = (token: string) => ({ headers: { authorization: `Bearer ${token}` } });
 
 // The compose Quickwit persists its data volume across runs, so this index can already exist
 // from an earlier run even though resetDb only truncates Postgres. A real Quickwit's already-

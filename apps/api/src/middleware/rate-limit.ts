@@ -7,15 +7,19 @@ import type { AppEnv, AuthedEnv } from '../env.js';
 import { tooManyRequests } from '../utils/http-error.js';
 
 const RETRY_AFTER_SECONDS = Math.ceil(config.rateLimitWindowMs / 1000);
-export function resolveClientIp(c: Context, hops = config.trustedProxyHops): string {
-	if (hops > 0) {
-		const xff = c.req.header('x-forwarded-for');
-		if (xff) {
-			const entries = xff.split(',').map((h) => h.trim());
-			return entries[entries.length - hops] ?? entries[0]!;
-		}
+
+/** Which entry of X-Forwarded-For is the client, counting back from the nearest trusted proxy. */
+export function pickForwardedIp(xff: string | undefined, peerIp: string, hops: number): string {
+	if (hops > 0 && xff) {
+		const entries = xff.split(',').map((h) => h.trim());
+		return entries[entries.length - hops] ?? entries[0]!;
 	}
-	return getConnInfo(c).remote.address ?? '0.0.0.0';
+	return peerIp;
+}
+
+export function resolveClientIp(c: Context): string {
+	const peerIp = getConnInfo(c).remote.address ?? '0.0.0.0';
+	return pickForwardedIp(c.req.header('x-forwarded-for'), peerIp, config.trustedProxyHops);
 }
 
 function rejectOverLimit(): never {
