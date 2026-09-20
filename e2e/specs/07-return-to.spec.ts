@@ -9,11 +9,6 @@ test.beforeAll(async () => {
 });
 
 test('a deep link survives the sign-in redirect', async ({ page }) => {
-	// Known bug: routes/auth/+layout.ts redirects a signed-in visitor on /auth/sign-in to '/',
-	// and the sign-in page's invalidate(DEP.session) re-runs that layout before goto(returnTo),
-	// so the deep link is lost. Remove this marker when the redirect honours returnTo.
-	test.fail(true, 'return-to is lost on password sign-in');
-
 	await page.goto('/settings/profile');
 	await expect(page).toHaveURL(/\/auth\/sign-in\?returnTo=%2Fsettings%2Fprofile/);
 
