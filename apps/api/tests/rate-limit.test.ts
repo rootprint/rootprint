@@ -1,7 +1,6 @@
 import { beforeEach, expect, test } from 'bun:test';
-import { Hono } from 'hono';
 
-import { resolveClientIp } from '../src/middleware/rate-limit.js';
+import { pickForwardedIp } from '../src/middleware/rate-limit.js';
 import { resetDb } from './helpers/db.js';
 import { seedAdmin } from './helpers/fixtures.js';
 import { Jar, errorCode } from './helpers/http.js';
@@ -26,21 +25,11 @@ test('authenticated routes are not affected by the public limiter', async () => 
 	expect(new Set(statuses)).toEqual(new Set([200]));
 });
 
-test('resolveClientIp honours X-Forwarded-For only for trusted hops', async () => {
-	const app = new Hono().get('/:hops', (c) =>
-		c.text(resolveClientIp(c, Number(c.req.param('hops'))))
-	);
-	const server = Bun.serve({ port: 0, hostname: '127.0.0.1', fetch: app.fetch });
-	const at = (hops: number, xff: string) =>
-		fetch(`http://127.0.0.1:${server.port}/${hops}`, {
-			headers: { 'x-forwarded-for': xff }
-		}).then((r) => r.text());
-	try {
-		expect(await at(0, '9.9.9.9')).toBe('127.0.0.1');
-		expect(await at(1, '9.9.9.9')).toBe('9.9.9.9');
-		expect(await at(1, '1.1.1.1, 2.2.2.2')).toBe('2.2.2.2');
-		expect(await at(2, '1.1.1.1, 2.2.2.2')).toBe('1.1.1.1');
-	} finally {
-		server.stop(true);
-	}
+test('the client IP is read from X-Forwarded-For only for trusted hops', () => {
+	const peer = '127.0.0.1';
+	expect(pickForwardedIp('9.9.9.9', peer, 0)).toBe(peer);
+	expect(pickForwardedIp(undefined, peer, 1)).toBe(peer);
+	expect(pickForwardedIp('9.9.9.9', peer, 1)).toBe('9.9.9.9');
+	expect(pickForwardedIp('1.1.1.1, 2.2.2.2', peer, 1)).toBe('2.2.2.2');
+	expect(pickForwardedIp('1.1.1.1, 2.2.2.2', peer, 2)).toBe('1.1.1.1');
 });

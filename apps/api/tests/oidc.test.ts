@@ -24,18 +24,7 @@ beforeAll(async () => {
 afterAll(() => idp.stop());
 beforeEach(async () => {
 	await resetDb();
-	idp.user = {
-		sub: 'idp-user-1',
-		email: 'sso@example.com',
-		name: 'Sso User',
-		email_verified: true
-	};
-	idp.discovery = {};
-	idp.slowDiscovery = false;
-	idp.denyNext = false;
-	idp.forgeNextIdToken = false;
-	idp.tokenRequests.length = 0;
-	idp.up();
+	idp.reset();
 });
 
 const oidcAccounts = () => db.select().from(account).where(eq(account.providerId, 'oidc'));
@@ -84,33 +73,29 @@ describe('save-time discovery rejections leave the previous config intact', () =
 	];
 
 	for (const [name, arrange] of cases) {
-		test(
-			name,
-			async () => {
-				const admin = await seedAdmin();
-				await configureOidc(admin, idp);
-				const bad = await startFakeIdp();
-				try {
-					arrange(bad);
-					const res = await admin.put('/api/settings/auth/oidc/credentials', {
-						issuerUrl: bad.issuer,
-						clientId: 'rootprint',
-						clientSecret: 'oidc-secret'
-					});
-					expect(res.status).toBe(400);
-					expect(await errorCode(res)).toBe('OIDC_DISCOVERY_FAILED');
-					const settings = await json(await admin.get('/api/settings/auth/oidc'));
-					expect(settings).toEqual({ configured: true, issuerUrl: idp.issuer });
-					expect((await providers()).oidc.enabled).toBe(true);
-					const signInRes = await oidcSignIn(new Jar());
-					expect(signInRes.status).toBe(302);
-					expect(redirectError(signInRes)).toBeNull();
-				} finally {
-					bad.stop();
-				}
-			},
-			12_000
-		);
+		test(name, async () => {
+			const admin = await seedAdmin();
+			await configureOidc(admin, idp);
+			const bad = await startFakeIdp();
+			try {
+				arrange(bad);
+				const res = await admin.put('/api/settings/auth/oidc/credentials', {
+					issuerUrl: bad.issuer,
+					clientId: 'rootprint',
+					clientSecret: 'oidc-secret'
+				});
+				expect(res.status).toBe(400);
+				expect(await errorCode(res)).toBe('OIDC_DISCOVERY_FAILED');
+				const settings = await json(await admin.get('/api/settings/auth/oidc'));
+				expect(settings).toEqual({ configured: true, issuerUrl: idp.issuer });
+				expect((await providers()).oidc.enabled).toBe(true);
+				const signInRes = await oidcSignIn(new Jar());
+				expect(signInRes.status).toBe(302);
+				expect(redirectError(signInRes)).toBeNull();
+			} finally {
+				bad.stop();
+			}
+		});
 	}
 });
 

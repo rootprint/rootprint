@@ -39,7 +39,7 @@ Root convenience scripts: `dev:api`, `build:api`, `start:api`, `check`, `lint`, 
 - TypeScript is strict. Every workspace extends `tsconfig.base.json`. Avoid `any` unless unavoidable.
 - Prettier config is at the repo root: tabs, single quotes, no trailing commas, line width ~100.
 - Automated tests cover authentication only. `apps/api/tests/` runs with `bun --filter api test`. Any change to sign-in, sessions, API keys, invites, provider settings or boot must add or update a scenario there. Do not add tests for other areas unless asked.
-- The suite needs the shared infrastructure running: `docker compose up -d --wait db quickwit dex`.
+- The suite needs the shared infrastructure running: `docker compose up -d --wait db quickwit`.
 - For stack-specific rules (Hono routing, Svelte 5 patterns), see the relevant workspace's `AGENTS.md`.
 
 ## CI Parity Before Merge

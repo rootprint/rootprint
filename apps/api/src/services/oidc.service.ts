@@ -1,9 +1,10 @@
 import * as v from 'valibot';
 
+import { config } from '../config.js';
 import { isHttpsOrLoopback, stripTrailingSlash } from '../schemas/settings.js';
 import { badRequest } from '../utils/http-error.js';
 
-const DISCOVERY_TIMEOUT_MS = 5000;
+const DISCOVERY_TIMEOUT_MS = config.oidcDiscoveryTimeoutMs;
 
 // The token endpoint carries the client secret; a discovery document may not downgrade it.
 const endpoint = v.pipe(v.string(), v.check(isHttpsOrLoopback));

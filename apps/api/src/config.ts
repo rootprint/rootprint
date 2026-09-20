@@ -20,5 +20,7 @@ export const config = {
 	oidcRetryMs: intEnv('OIDC_RETRY_MS', 60_000),
 	publicAuthRateLimit: intEnv('PUBLIC_AUTH_RATE_LIMIT', 30),
 	readRateLimit: intEnv('READ_RATE_LIMIT', 300),
-	searchAuditRetentionDays: intEnv('SEARCH_AUDIT_RETENTION_DAYS', 30, { min: 30 })
+	searchAuditRetentionDays: intEnv('SEARCH_AUDIT_RETENTION_DAYS', 30, { min: 30 }),
+	oidcDiscoveryTimeoutMs: intEnv('OIDC_DISCOVERY_TIMEOUT_MS', 5_000, { min: 100 }),
+	oidcRetryMs: intEnv('OIDC_RETRY_MS', 60_000, { min: 100 })
 };

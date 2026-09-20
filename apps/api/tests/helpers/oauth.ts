@@ -13,15 +13,11 @@ export async function startSocial(jar: Jar, provider: string, callbackURL = '/')
 }
 
 /** Visits the fake IdP like a browser would, then hands its redirect back to the API. */
-export async function completeOidc(jar: Jar, authorizeUrl: URL): Promise<Response> {
-	const idpRes = await fetch(authorizeUrl, { redirect: 'manual' });
+export async function oidcSignIn(jar: Jar): Promise<Response> {
+	const idpRes = await fetch(await startSocial(jar, 'oidc'), { redirect: 'manual' });
 	expect(idpRes.status).toBe(302);
 	const cb = new URL(idpRes.headers.get('location') ?? '');
 	return jar.get(cb.pathname + cb.search);
-}
-
-export async function oidcSignIn(jar: Jar): Promise<Response> {
-	return completeOidc(jar, await startSocial(jar, 'oidc'));
 }
 
 /** For Google/GitHub, whose authorize hosts are real: skip the visit and call back with the state. */
