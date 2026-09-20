@@ -159,7 +159,7 @@ Recurring patterns to reach for before inventing new ones:
 
 ## Tests
 
-No unit tests. Browser flows for authentication live in `e2e/` (Playwright, Chromium) and run against the production build: `bun --filter web build && bun --filter e2e test`. Selectors use accessible labels and roles; when changing an auth page's labels or button text, update the spec. Manual visual review remains `bun --filter web dev` or `bun --filter web preview`.
+No automated tests in this workspace. Authentication is covered by the API suite in `apps/api/tests/`. Manual visual review remains `bun --filter web dev` or `bun --filter web preview`.
 
 ## Conventions
 

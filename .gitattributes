@@ -5,6 +5,7 @@
 *.config.ts linguist-vendored
 scripts/** linguist-vendored
 apps/api/scripts/** linguist-vendored
+apps/api/tests/** linguist-vendored
 
 # Generated code & artifacts (do not edit by hand)
 apps/api/src/gen/** linguist-generated=true
