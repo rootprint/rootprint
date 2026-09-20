@@ -55,7 +55,7 @@ export function requireUserOrPersonalKey(required: Scope): MiddlewareHandler<Aut
 			.limit(1);
 		if (!owner) throw unauthorized('Invalid API key', 'PERSONAL_KEY_INVALID');
 
-		c.set('session', { user: { id: owner.id, role: owner.role } });
+		c.set('session', { user: { id: owner.id, role: 'user' } });
 		c.set('apiKeyActor', { keyId: result.key.id });
 		await next();
 	};

@@ -7,7 +7,8 @@ import type { AppEnv } from '../env.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
-import { internal, unauthorized } from '../utils/http-error.js';
+import { extractBearerToken } from '../utils/bearer.js';
+import { forbidden, internal, unauthorized } from '../utils/http-error.js';
 
 // Intentionally unbounded; user cardinality is small in practice and pre-existing pattern.
 const lastActiveMap = new Map<string, number>();
@@ -31,7 +32,12 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
 		logger.error({ err, requestId: c.get('requestId') }, 'session validation failed');
 		throw internal('Session validation failed');
 	}
-	if (!session) throw unauthorized('Unauthorized');
+	if (!session) {
+		if (extractBearerToken(c.req.header('authorization'))) {
+			throw forbidden('This route requires a session', 'SESSION_REQUIRED');
+		}
+		throw unauthorized('Unauthorized');
+	}
 
 	c.set('session', session);
 	bumpLastActive(session.user.id);
