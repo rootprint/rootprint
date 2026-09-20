@@ -30,12 +30,17 @@ test('requireUser: no cookie, tampered cookie and expired session are 401; valid
 	expect((await admin.get('/api/users')).status).toBe(401);
 });
 
-test('requireAdmin: a member is 403 until promoted, then 200 on the next request', async () => {
+test('requireAdmin: promotion and demotion both land on the next request', async () => {
 	const admin = await seedAdmin();
 	const m = await createActiveMember(admin);
 	expect((await m.jar.get('/api/users')).status).toBe(403);
 	expect((await admin.put(`/api/users/${m.id}/role`, { role: 'admin' })).status).toBe(204);
 	expect((await m.jar.get('/api/users')).status).toBe(200);
+
+	// The direction that matters: a revoked admin must not keep the access their live session was
+	// issued under.
+	expect((await admin.put(`/api/users/${m.id}/role`, { role: 'user' })).status).toBe(204);
+	expect((await m.jar.get('/api/users')).status).toBe(403);
 });
 
 test('deleting a user ends their session', async () => {

@@ -21,6 +21,8 @@ export type FakeIdp = {
 	slowDiscovery: boolean;
 	/** Next /authorize answers access_denied. */
 	denyNext: boolean;
+	/** Next ID token is signed by a key absent from /jwks, under the advertised kid. */
+	forgeNextIdToken: boolean;
 	authorizeRequests: URLSearchParams[];
 	tokenRequests: TokenRequest[];
 	down(): void;
@@ -37,6 +39,8 @@ const DEFAULT_USER: IdpUser = {
 
 export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeIdp> {
 	const signer = await createSigner('idp-key');
+	// Same kid, different key: the callback finds a key to check against and the check fails.
+	const forger = await createSigner('idp-key');
 	const codes = new Map<string, { challenge?: string; nonce?: string; clientId?: string }>();
 
 	const state = {
@@ -45,6 +49,7 @@ export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeId
 		discovery: {} as Record<string, unknown>,
 		slowDiscovery: false,
 		denyNext: false,
+		forgeNextIdToken: false,
 		authorizeRequests: [] as URLSearchParams[],
 		tokenRequests: [] as TokenRequest[]
 	};
@@ -106,7 +111,9 @@ export async function startFakeIdp(opts: { port?: number } = {}): Promise<FakeId
 			codes.delete(code);
 			const now = Math.floor(Date.now() / 1000);
 			const u = state.user;
-			const idToken = await signer.sign({
+			const active = state.forgeNextIdToken ? forger : signer;
+			state.forgeNextIdToken = false;
+			const idToken = await active.sign({
 				iss: state.issuer,
 				sub: u.sub,
 				aud: entry.clientId ?? clientId,

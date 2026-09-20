@@ -33,6 +33,7 @@ beforeEach(async () => {
 	idp.discovery = {};
 	idp.slowDiscovery = false;
 	idp.denyNext = false;
+	idp.forgeNextIdToken = false;
 	idp.tokenRequests.length = 0;
 	idp.up();
 });
@@ -223,4 +224,22 @@ test('an authorization code cannot be replayed', async () => {
 	expect(second.status).toBe(302);
 	expect(redirectError(second)).not.toBeNull();
 	expect(hasSession(replay)).toBe(false);
+});
+
+// An upgrade canary, not a guard on our own code: Better Auth verifies the ID token against the
+// discovery JWKS whatever we configure — neither flipping nor deleting requireIdTokenVerification
+// changes it. Nothing in this repo can regress it, so this test exists to go red if a Better Auth
+// upgrade ever stops checking signatures.
+test('an ID token signed by a key outside the published JWKS is refused', async () => {
+	const admin = await seedAdmin();
+	await configureOidc(admin, idp);
+
+	idp.forgeNextIdToken = true;
+	const jar = new Jar();
+	const res = await oidcSignIn(jar);
+
+	expect(res.status).toBe(302);
+	expect(redirectError(res)).not.toBeNull();
+	expect(hasSession(jar)).toBe(false);
+	expect(await oidcAccounts()).toHaveLength(0);
 });
