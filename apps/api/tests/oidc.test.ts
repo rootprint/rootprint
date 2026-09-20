@@ -193,7 +193,11 @@ test('a callback with a forged state is refused and starts no session', async ()
 	expect(hasSession(jar)).toBe(false);
 });
 
-test('an authorization code cannot be replayed', async () => {
+// The state above was never valid; this one was. Better Auth stores the state as a verification
+// row and deletes it on first use, so the replay is refused before the token exchange — which is
+// also why the authorization code's own single-use enforcement is NOT reachable from this route,
+// whatever cookies the replaying client carries.
+test('a state that already completed a callback cannot be replayed', async () => {
 	const admin = await seedAdmin();
 	await configureOidc(admin, idp);
 
@@ -207,7 +211,7 @@ test('an authorization code cannot be replayed', async () => {
 	const replay = new Jar();
 	const second = await replay.get(cb.pathname + cb.search);
 	expect(second.status).toBe(302);
-	expect(redirectError(second)).not.toBeNull();
+	expect(redirectError(second)).toBe('state_mismatch');
 	expect(hasSession(replay)).toBe(false);
 });
 
