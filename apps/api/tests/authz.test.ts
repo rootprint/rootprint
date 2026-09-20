@@ -8,7 +8,7 @@ import {
 	seedAdmin,
 	sessionUser
 } from './helpers/fixtures.js';
-import { Jar, json } from './helpers/http.js';
+import { Jar, errorCode, json } from './helpers/http.js';
 
 beforeEach(resetDb);
 
@@ -115,7 +115,9 @@ test('a personal key minted by a member reads logs but reaches no admin route', 
 	expect((await new Jar().get('/api/indexes', bearer)).status).toBe(200);
 	for (const path of ['/api/users', '/api/settings/auth/oidc', '/api/admin/cluster']) {
 		// oxlint-disable-next-line no-await-in-loop
-		expect((await new Jar().get(path, bearer)).status).toBe(401);
+		const res = await new Jar().get(path, bearer);
+		expect(`${path} -> ${res.status}`).toBe(`${path} -> 403`);
+		expect(await errorCode(res)).toBe('SESSION_REQUIRED');
 	}
 });
 
