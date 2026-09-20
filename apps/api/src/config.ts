@@ -17,6 +17,7 @@ export const config = {
 	port: intEnv('PORT', 8282),
 	trustedProxyHops: intEnv('TRUST_PROXY_HOPS', 0),
 	rateLimitWindowMs: intEnv('RATE_LIMIT_WINDOW_MS', 60_000),
+	oidcRetryMs: intEnv('OIDC_RETRY_MS', 60_000),
 	publicAuthRateLimit: intEnv('PUBLIC_AUTH_RATE_LIMIT', 30),
 	readRateLimit: intEnv('READ_RATE_LIMIT', 300),
 	searchAuditRetentionDays: intEnv('SEARCH_AUDIT_RETENTION_DAYS', 30, { min: 30 })
