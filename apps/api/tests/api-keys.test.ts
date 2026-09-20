@@ -57,6 +57,13 @@ async function ensureAppLogsIndex(admin: Jar): Promise<void> {
 	throw new Error(`could not ensure app-logs index: ${res.status} ${JSON.stringify(body)}`);
 }
 
+const ndjsonAs = (token: string) =>
+	new Jar().fetch('/api/ingest/ndjson', {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/x-ndjson' },
+		body: '{"message":"hi"}\n'
+	});
+
 // @better-auth/api-key reports a permission mismatch as KEY_NOT_FOUND and a missing row as
 // INVALID_API_KEY, so the middleware yields 403 for under-scoped or disabled keys and 401 for
 // tokens that match no row at all.
@@ -108,16 +115,9 @@ test('ingest and personal keys are not interchangeable', async () => {
 		await admin.post('/api/api-keys', { name: 'shipper', indexId: 'app-logs' })
 	);
 	const personal = await serviceKey(admin);
-	const ndjson = (token: string) =>
-		new Jar().fetch('/api/ingest/ndjson', {
-			method: 'POST',
-			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/x-ndjson' },
-			body: '{"message":"hi"}\n'
-		});
+	expect((await ndjsonAs(ingest.token)).status).toBe(200);
 
-	expect((await ndjson(ingest.token)).status).toBe(200);
-
-	const wrongKind = await ndjson(personal.token);
+	const wrongKind = await ndjsonAs(personal.token);
 	expect(wrongKind.status).toBe(403);
 	expect(await errorCode(wrongKind)).toBe('INGEST_INVALID_TOKEN');
 
@@ -143,4 +143,21 @@ test('the ingest key list exposes only the stored prefix', async () => {
 	const start = saList[0]?.start;
 	expect(typeof start).toBe('string');
 	expect((start as string).length).toBeLessThanOrEqual(10);
+});
+
+// verifyApiKey caches a hit for 60s, so revocation only works because deleteApiKey flushes that
+// cache. The first ingest below is what puts the key in it.
+test('a deleted ingest key stops working at once, not when its cache entry expires', async () => {
+	const admin = await seedAdmin();
+	await ensureAppLogsIndex(admin);
+	const created = await json<{ summary: { id: number }; token: string }>(
+		await admin.post('/api/api-keys', { name: 'shipper', indexId: 'app-logs' })
+	);
+
+	expect((await ndjsonAs(created.token)).status).toBe(200);
+	expect((await admin.delete(`/api/api-keys/${created.summary.id}`)).status).toBe(204);
+
+	const replay = await ndjsonAs(created.token);
+	expect(replay.status).toBe(403);
+	expect(await errorCode(replay)).toBe('INGEST_INVALID_TOKEN');
 });
