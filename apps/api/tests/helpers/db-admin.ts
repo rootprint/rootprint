@@ -2,7 +2,7 @@ import pg from 'pg';
 
 /** The suffix is the only thing standing between a mistyped URL and a real database. */
 function assertTestDatabase(databaseUrl: string): void {
-	if (!/_test$/.test(new URL(databaseUrl).pathname)) {
+	if (!new URL(databaseUrl).pathname.endsWith('_test')) {
 		throw new Error(`refusing to use ${databaseUrl}: database name must end in _test`);
 	}
 }
