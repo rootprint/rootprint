@@ -159,7 +159,7 @@ Recurring patterns to reach for before inventing new ones:
 
 ## Tests
 
-No tests here. Authentication is covered by the API suite in `apps/api/tests/`. Manual visual review is `bun --filter web dev` or `bun --filter web preview`.
+No automated tests in this workspace. Authentication is covered by the API suite in `apps/api/tests/`. Manual visual review remains `bun --filter web dev` or `bun --filter web preview`.
 
 ## Conventions
 

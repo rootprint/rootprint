@@ -1,13 +1,8 @@
 const enc = new TextEncoder();
 
-export function b64url(data: ArrayBuffer | Uint8Array | string): string {
-	const bytes =
-		typeof data === 'string'
-			? enc.encode(data)
-			: data instanceof Uint8Array
-				? data
-				: new Uint8Array(data);
-	return Buffer.from(bytes).toString('base64url');
+export function b64url(data: ArrayBuffer | string): string {
+	const buf = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data);
+	return buf.toString('base64url');
 }
 
 export async function sha256b64url(value: string): Promise<string> {
