@@ -2,6 +2,7 @@ import * as v from 'valibot';
 
 import { named } from '../../lib/openapi/describe.js';
 import { isoTimestampString } from '../../utils/valibot.js';
+import { DisplayModeSchema } from '../display-mode.js';
 
 export const IndexFieldSchema = named(
 	'IndexFieldSchema',
@@ -61,7 +62,7 @@ export const PreferencesResponse = named(
 	v.object({
 		displayFields: v.nullable(v.array(v.string())),
 		lineWrap: v.boolean(),
-		displayMode: v.picklist(['table', 'inline'])
+		displayMode: DisplayModeSchema
 	})
 );
 

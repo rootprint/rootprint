@@ -2,6 +2,7 @@ import * as v from 'valibot';
 
 import { FIELD_VALUES_MAX } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
+import { DisplayModeSchema } from './display-mode.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, tsParam } from '../utils/valibot.js';
 
@@ -88,7 +89,7 @@ export const StatsQuery = v.object({
 export const PutPreferencesBody = v.object({
 	displayFields: v.nullable(v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.maxLength(100))),
 	lineWrap: v.boolean(),
-	displayMode: v.picklist(['table', 'inline'])
+	displayMode: DisplayModeSchema
 });
 
 export const FIELD_TYPES = ['text', 'i64', 'u64', 'f64', 'bool', 'datetime', 'ip', 'json'] as const;

@@ -65,6 +65,8 @@ import type {
 } from './schemas/responses/admin.js';
 import type { oauthCredentialsSchema, oidcCredentialsSchema } from './schemas/settings.js';
 import type { ExportFormatSchema } from './schemas/export.js';
+import type { DisplayModeSchema } from './schemas/display-mode.js';
+import type { SortDirectionSchema } from './schemas/filters.js';
 import type { OidcTokenAuth } from './services/oidc.service.js';
 
 export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
@@ -117,7 +119,7 @@ export type Filter = {
 	exclude: boolean;
 };
 
-export type SortDirection = 'asc' | 'desc';
+export type SortDirection = v.InferOutput<typeof SortDirectionSchema>;
 
 export type TimeRange =
 	{ type: 'relative'; preset: Preset } | { type: 'absolute'; start: number; end: number };
@@ -152,7 +154,7 @@ export type SavedView = v.InferOutput<typeof SavedViewResponseSchema>;
 
 export type ShareView = v.InferOutput<typeof ShareViewResponseSchema>;
 
-export type DisplayMode = 'table' | 'inline';
+export type DisplayMode = v.InferOutput<typeof DisplayModeSchema>;
 
 export type Preferences = v.InferOutput<typeof PreferencesResponseSchema>;
 
@@ -259,16 +261,7 @@ export type ExportPreflightResult = {
 };
 
 // Index stats (index-stats.service.ts)
-export type LatestIndexSnapshot = {
-	indexId: string;
-	capturedAt: string;
-	numDocs: number;
-	sizeBytes: number;
-	uncompressedBytes: number;
-	numSplits: number;
-	minTimestamp: number | null;
-	maxTimestamp: number | null;
-};
+export type LatestIndexSnapshot = IndexStatsPoint & { indexId: string };
 
 export type PromSample = {
 	labels: Record<string, string>;

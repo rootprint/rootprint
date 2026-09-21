@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import type { Filter, SortDirection } from '../types.js';
+import type { Filter } from '../types.js';
 
 export const fieldName = v.pipe(
 	v.string(),
@@ -16,4 +16,4 @@ export const FilterSchema: v.GenericSchema<Filter> = v.object({
 	exclude: v.boolean()
 });
 
-export const SortDirectionSchema: v.GenericSchema<SortDirection> = v.picklist(['asc', 'desc']);
+export const SortDirectionSchema = v.picklist(['asc', 'desc']);
