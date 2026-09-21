@@ -1,4 +1,4 @@
-import type { ExportPreflightResult, IndexConfig } from '../types.js';
+import type { ExportFormat, ExportPreflightResult, IndexConfig } from '../types.js';
 
 import { type QuickwitClient } from 'quickwit-js';
 
@@ -87,7 +87,7 @@ function formatCsvBatch(rows: Record<string, unknown>[]): Uint8Array {
 	return TEXT_ENCODER.encode(out);
 }
 
-function pickContentType(format: 'json' | 'csv' | 'text'): string {
+function pickContentType(format: ExportFormat): string {
 	switch (format) {
 		case 'json':
 			return 'application/x-ndjson';
@@ -98,11 +98,11 @@ function pickContentType(format: 'json' | 'csv' | 'text'): string {
 	}
 }
 
-function pickExtension(format: 'json' | 'csv' | 'text'): string {
+function pickExtension(format: ExportFormat): string {
 	return format === 'text' ? 'txt' : format;
 }
 
-function buildFilename(indexId: string, format: 'json' | 'csv' | 'text'): string {
+function buildFilename(indexId: string, format: ExportFormat): string {
 	const safe = indexId.replace(/[^a-zA-Z0-9_.-]/g, '_');
 	const stamp = new Date()
 		.toISOString()
@@ -114,7 +114,7 @@ function buildFilename(indexId: string, format: 'json' | 'csv' | 'text'): string
 function formatBatch(
 	hits: Record<string, unknown>[],
 	cfg: IndexConfig,
-	format: 'json' | 'csv' | 'text'
+	format: ExportFormat
 ): Uint8Array {
 	switch (format) {
 		case 'json':

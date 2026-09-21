@@ -64,6 +64,7 @@ import type {
 	VolumeBucketResponse as VolumeBucketResponseSchema
 } from './schemas/responses/admin.js';
 import type { oauthCredentialsSchema, oidcCredentialsSchema } from './schemas/settings.js';
+import type { ExportFormatSchema } from './schemas/export.js';
 import type { OidcTokenAuth } from './services/oidc.service.js';
 
 export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
@@ -182,7 +183,7 @@ export type SaturationSnapshot = v.InferOutput<typeof SaturationSnapshotResponse
 
 export type QuickwitSnapshot = v.InferOutput<typeof QuickwitSnapshotResponseSchema>;
 
-export type ExportFormat = 'json' | 'csv' | 'text';
+export type ExportFormat = v.InferOutput<typeof ExportFormatSchema>;
 
 // Index configuration (index.service.ts)
 export type IndexSettings = {
