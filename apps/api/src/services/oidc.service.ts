@@ -1,13 +1,13 @@
 import * as v from 'valibot';
 
 import { config } from '../config.js';
-import { isHttpsOrLoopback, stripTrailingSlash } from '../schemas/settings.js';
+import { isHttpsOrPrivate, stripTrailingSlash } from '../schemas/settings.js';
 import { badRequest } from '../utils/http-error.js';
 
 const DISCOVERY_TIMEOUT_MS = config.oidcDiscoveryTimeoutMs;
 
 // The token endpoint carries the client secret; a discovery document may not downgrade it.
-const endpoint = v.pipe(v.string(), v.check(isHttpsOrLoopback));
+const endpoint = v.pipe(v.string(), v.check(isHttpsOrPrivate));
 
 const discoverySchema = v.object({
 	issuer: v.pipe(v.string(), v.minLength(1)),

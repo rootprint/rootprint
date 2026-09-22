@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 
 import { account, user } from '../src/db/schema.js';
 import { db } from '../src/lib/db.js';
+import { isHttpsOrPrivate } from '../src/schemas/settings.js';
 import { resetDb } from './helpers/db.js';
 import { BASE_URL } from './helpers/env.js';
 import { startFakeIdp, type FakeIdp } from './helpers/fake-idp.js';
@@ -231,4 +232,27 @@ test('an ID token signed by a key outside the published JWKS is refused', async 
 	expect(redirectError(res)).not.toBeNull();
 	expect(hasSession(jar)).toBe(false);
 	expect(await oidcAccounts()).toHaveLength(0);
+});
+
+describe('issuer scheme rule', () => {
+	test.each([
+		['https://idp.example', true],
+		['http://localhost:8080/realms/x', true],
+		['http://127.0.0.1:8080', true],
+		['http://[::1]:8080', true],
+		['http://10.1.2.3:5556', true],
+		['http://172.16.0.1:5556', true],
+		['http://192.168.1.10:5556', true],
+		['http://[fd00::1]:5556', true],
+		['http://idp.example', false],
+		['http://172.32.0.1:5556', false],
+		['http://8.8.8.8', false],
+		['http://dex.argocd.svc.cluster.local:5556', true],
+		['http://keycloak:8080/realms/x', true],
+		['http://idp.internal', true],
+		['http://[2001:db8::1]:5556', false],
+		['not-a-url', false]
+	])('%s → %p', (url, allowed) => {
+		expect(isHttpsOrPrivate(url)).toBe(allowed);
+	});
 });

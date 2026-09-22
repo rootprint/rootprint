@@ -41,19 +41,42 @@ export const githubAllowedOrgsSchema = v.object({
 });
 export type GitHubAllowedOrgsInput = v.InferOutput<typeof githubAllowedOrgsSchema>;
 
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+/** RFC 4193 unique-local (fc00::/7) and RFC 4291 link-local (fe80::/10); `hostname` keeps the brackets. */
+const IPV6_PRIVATE = /^\[(?:f[cd]|fe[89ab])/i;
 
-/** `https:` anywhere, or `http:` only to a loopback host — the token endpoint carries the client secret. */
-export function isHttpsOrLoopback(raw: string): boolean {
+/**
+ * Names that cannot resolve on the public internet: `.local` is mDNS and covers Kubernetes'
+ * `*.svc.cluster.local`, `.internal` is the reserved private-use TLD.
+ * fixed list; take it from config if anyone runs a custom k8s clusterDomain.
+ */
+const PRIVATE_SUFFIXES = ['.internal', '.local'];
+
+/**
+ * An RFC 1918 / IPv6 private address — the carve-out Keycloak's "external requests" mode makes —
+ * or a name that only private DNS can answer.
+ */
+function isPrivateHost(hostname: string): boolean {
+	if (hostname.startsWith('[')) return hostname === '[::1]' || IPV6_PRIVATE.test(hostname);
+	const v4 = IPV4.exec(hostname);
+	if (v4) {
+		const a = Number(v4[1]);
+		const b = Number(v4[2]);
+		return a === 127 || a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+	}
+	// A single-label name (`localhost`, `dex`) has no public DNS equivalent.
+	return !hostname.includes('.') || PRIVATE_SUFFIXES.some((s) => hostname.endsWith(s));
+}
+
+/** `https:` anywhere, or `http:` only on a private network — the token endpoint carries the client secret. */
+export function isHttpsOrPrivate(raw: string): boolean {
 	let url: URL;
 	try {
 		url = new URL(raw);
 	} catch {
 		return false;
 	}
-	return (
-		url.protocol === 'https:' || (url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname))
-	);
+	return url.protocol === 'https:' || (url.protocol === 'http:' && isPrivateHost(url.hostname));
 }
 
 export function stripTrailingSlash(value: string): string {
@@ -68,7 +91,7 @@ export const oidcCredentialsSchema = v.object({
 		v.string(),
 		v.trim(),
 		v.url('Issuer URL must be a valid URL'),
-		v.check(isHttpsOrLoopback, 'Issuer URL must use https'),
+		v.check(isHttpsOrPrivate, 'Issuer URL must use https, or http on a private network'),
 		v.transform(stripTrailingSlash)
 	)
 });
