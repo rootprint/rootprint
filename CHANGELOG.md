@@ -4,31 +4,46 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-09-22
+
 ### ⚠️ Breaking
 
-- **Better Auth's admin endpoints under `/api/auth/admin/*` are closed.** User management goes through `/api/users`, which already covered every operation the UI used.
-- **`hasCredentialAccount` removed from `GET /api/users` rows.** A user can now hold a password and a linked provider at the same time, so the flag no longer meant anything; the user page's "Auth" chip goes with it.
+- **Better Auth's admin endpoints under `/api/auth/admin/*` are closed.** Use `/api/users` for user management and `/api/service-accounts` for service accounts.
+- **`hasCredentialAccount` removed from `GET /api/users` rows.** Users can keep a password alongside linked providers; the user page no longer shows the "Auth" chip.
+- **Migration `0022` drops the legacy `user.banned`, `user.ban_reason` and `user.ban_expires` columns.** Rolling back to 0.4.3 after migration requires restoring those columns or a database backup.
 
 ### Added
 
 - **OpenID Connect SSO.** One provider, configured by issuer URL, client ID and client secret under **Settings → Authentication → OpenID Connect**, or via `GET /api/settings/auth/oidc`, `PUT`/`DELETE /api/settings/auth/oidc/credentials`. Discovery is fetched at save time and refused when the issuer, endpoints or PKCE `S256` support are missing; ID token signatures are verified against the issuer's JWKS. New users are created with the `user` role and same-email accounts are linked. `GET /api/auth/providers` gains `oidc.enabled`.
-- **Password sign-in toggle.** `PUT /api/settings/auth/password` with `{ "enabled": false }` disables `/api/auth/sign-in/email`; invitations and admin password resets keep working. `GET /api/auth/providers` gains `password.enabled`. Nothing stops an admin disabling it with no working external provider configured.
-- **Log explorer fold mode** (`fold=1`): consecutive rows that match on every visible column except timestamp collapse behind a count badge. Display-only; histogram, hit count and query are unchanged.
+- **Password sign-in toggle.** `PUT /api/settings/auth/password` with `{ "enabled": false }` disables `/api/auth/sign-in/email`; invitations and admin password resets keep working. `GET /api/auth/providers` gains `password.enabled`.
+- **Log explorer fold mode** (`fold=1`): consecutive rows that match on every visible column except timestamp collapse behind a count badge.
+- **Syslog severity aliases** `emerg`, `alert`, `crit`, `err` and `notice` have matching colors and severity ordering.
+- **`INGEST_PROXY_TIMEOUT_MS`** sets how long `/ingest`, `/v1/logs` and `/v1/traces` wait on Quickwit before answering `503`. Default 120 seconds.
 
 ### Changed
 
-- **Provider admission moved to sign-in.** Google domain and GitHub organization allow-lists are enforced when a user signs in and no longer re-checked on every request. Removing a provider signs its users out immediately; allow-list edits apply at the next sign-in.
+- **Provider access checks run at sign-in.** Google domain and GitHub organization allow-lists apply when users create, link or sign in to an account. Removing a provider revokes its users' sessions; allow-list edits apply at the next sign-in.
 - **Invited users can onboard through Google, GitHub or OpenID Connect** without first setting a password. Linking a provider consumes the invite and leaves any existing password in place.
 - **Changing the OpenID Connect issuer URL or client ID unlinks every OpenID Connect account** and signs those users out; they re-link by email on their next sign-in, or an admin resets their password.
 - **Admins can reset the password of, or reissue an invite to, any user,** including users who first signed in through a provider.
 - **OAuth access and refresh tokens are stored encrypted** with `BETTER_AUTH_SECRET`. Set it explicitly if that protection should survive a database compromise; the generated secret lives in the same database.
 - **Sign-in page** shows an error when the providers request fails instead of assuming password sign-in.
-- **Internal (api):** session cookie caching is off so role changes and revocations apply on the next request; auth field definitions are centralized in `constants.ts`; OIDC discovery is retried every 60s when the issuer is unreachable at boot, and the provider stays hidden until it succeeds.
+- **Authentication and admin settings UI** gains clearer sign-in states, keyboard-accessible table rows and responsive user, API-key and service-account tables.
+- **Session validation reads the database on each request,** so role changes and revocations apply on the next request.
+- **OIDC discovery retries after an unreachable issuer at boot,** with a default interval of 60 seconds configurable through `OIDC_RETRY_MS`.
+- **Internal:** centralized auth field definitions and shared row-limit controls across monitoring tables.
 
 ### Fixed
 
 - A first administrator created with a mixed-case email could not sign in.
 - A rejected Google or GitHub first sign-in left a user row with no account.
+- First-admin setup now reloads authentication configuration before the next sign-in.
+- Auth requests with an explicit `Origin: null` no longer bypass origin validation through a server-side origin replacement.
+- Re-running an unchanged query refreshes log results, histogram counts, field discovery and field values.
+- Log context pagination advances through dense time windows and shows pagination limits.
+- Default display columns remain defaults when changing line wrap or display mode, including while preferences load.
+- Expanded fields and collapsed field groups persist on user toggles without overwriting another index's preferences during navigation.
+- An ingest request that timed out or lost the connection while reading Quickwit's response returned `500` instead of the retryable `503`.
 
 ## [0.4.3] - 2026-09-10
 

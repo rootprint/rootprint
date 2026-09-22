@@ -3173,7 +3173,7 @@
 	"info": {
 		"description": "HTTP API for the Rootprint log management platform.",
 		"title": "Rootprint API",
-		"version": "0.4.3"
+		"version": "0.4.4"
 	},
 	"openapi": "3.1.0",
 	"paths": {
