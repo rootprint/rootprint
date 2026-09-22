@@ -22,5 +22,5 @@ export const config = {
 	searchAuditRetentionDays: intEnv('SEARCH_AUDIT_RETENTION_DAYS', 30, { min: 30 }),
 	oidcDiscoveryTimeoutMs: intEnv('OIDC_DISCOVERY_TIMEOUT_MS', 5_000, { min: 100 }),
 	oidcRetryMs: intEnv('OIDC_RETRY_MS', 60_000, { min: 100 }),
-	ingestProxyTimeoutMs: intEnv('INGEST_PROXY_TIMEOUT_MS', 45_000, { min: 1_000 })
+	ingestProxyTimeoutMs: intEnv('INGEST_PROXY_TIMEOUT_MS', 120_000, { min: 1_000 })
 };
