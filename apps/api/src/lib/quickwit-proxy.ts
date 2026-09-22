@@ -62,6 +62,12 @@ export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<Prox
 		await upstream.body?.cancel().catch(() => {});
 		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
 	}
-	const bodyBytes = await upstream.arrayBuffer();
+	// The timeout signal stays armed while the body streams, so an abort here must still read as 503.
+	let bodyBytes: ArrayBuffer;
+	try {
+		bodyBytes = await upstream.arrayBuffer();
+	} catch {
+		throw serviceUnavailable('Upstream unavailable', 'UPSTREAM_UNAVAILABLE');
+	}
 	return { status: upstream.status, headers: upstream.headers, bodyBytes };
 }
