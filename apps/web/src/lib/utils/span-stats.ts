@@ -98,12 +98,67 @@ const dbSystem = (span: SpanNode): string => attr(span, DB_SYSTEM_KEYS);
 const isDbSpan = (span: SpanNode): boolean =>
 	Boolean(dbSystem(span) || attr(span, DB_STATEMENT_KEYS));
 
-export function dbSpans(spans: SpanNode[]): SpanNode[] {
-	return spans.filter(isDbSpan);
+function dbStatement(span: SpanNode): string {
+	return attr(span, DB_STATEMENT_KEYS).trim() || span.name;
 }
 
-function dbStatement(span: SpanNode): string {
-	return attr(span, DB_STATEMENT_KEYS) || span.name;
+export interface DbQuery {
+	key: string;
+	statement: string;
+	errorCount: number;
+	totalMicros: number;
+	calls: SpanNode[];
+}
+
+export interface DbTarget {
+	key: string;
+	system: string;
+	host: string;
+	count: number;
+	totalMicros: number;
+	queries: DbQuery[];
+}
+
+/** `net.peer.name` predates semconv 1.21's `server.address`. */
+const DB_HOST_KEYS = ['server.address', 'net.peer.name'];
+
+/** Groups on the raw statement: instrumentations already send it sanitized or parameterized. */
+export function dbRollups(spans: SpanNode[]): DbTarget[] {
+	const targets = new Map<string, DbTarget>();
+	const queries = new Map<string, DbQuery>();
+	for (const s of spans) {
+		if (!isDbSpan(s)) continue;
+		const system = dbSystem(s);
+		const host = attr(s, DB_HOST_KEYS);
+		const statement = dbStatement(s);
+
+		const targetKey = JSON.stringify([system, host]);
+		let target = targets.get(targetKey);
+		if (!target) {
+			target = { key: targetKey, system, host, count: 0, totalMicros: 0, queries: [] };
+			targets.set(targetKey, target);
+		}
+		target.count++;
+		target.totalMicros += s.durationMicros;
+
+		const queryKey = JSON.stringify([system, host, statement]);
+		let query = queries.get(queryKey);
+		if (!query) {
+			query = { key: queryKey, statement, errorCount: 0, totalMicros: 0, calls: [] };
+			queries.set(queryKey, query);
+			target.queries.push(query);
+		}
+		if (s.isError) query.errorCount++;
+		query.totalMicros += s.durationMicros;
+		query.calls.push(s);
+	}
+	for (const target of targets.values()) {
+		target.queries.sort((a, b) => b.totalMicros - a.totalMicros);
+		for (const query of target.queries) {
+			query.calls.sort((a, b) => a.startOffsetMicros - b.startOffsetMicros);
+		}
+	}
+	return [...targets.values()].toSorted((a, b) => b.totalMicros - a.totalMicros);
 }
 
 export function exceptionHeadline(fields: Record<string, string>): string {

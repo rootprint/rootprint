@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { ScrollText, X } from 'lucide-svelte';
+	import { ChevronRight, ScrollText, X } from 'lucide-svelte';
 
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import { pluralize } from '$lib/utils/format';
 	import { serviceColor } from '$lib/utils/service-color';
 	import {
-		dbSpans,
+		dbRollups,
 		describeSpan,
 		exceptionHeadline,
 		firstErrorSpan,
@@ -17,7 +17,7 @@
 	import { formatSpanDuration, formatSpanStart } from '$lib/utils/time';
 	import type { FieldRowData, SpanNode } from '$lib/types';
 
-	type SpanTab = 'overview' | 'parameters' | 'events';
+	type SpanTab = 'overview' | 'parameters' | 'database' | 'events';
 
 	let {
 		span,
@@ -38,6 +38,7 @@
 	const TABS: { id: SpanTab; label: string }[] = [
 		{ id: 'overview', label: 'Overview' },
 		{ id: 'parameters', label: 'Parameters' },
+		{ id: 'database', label: 'Database' },
 		{ id: 'events', label: 'Events' }
 	];
 
@@ -115,15 +116,13 @@
 
 	const rollups = $derived(topOperations(subtree));
 
-	const dbCalls = $derived(
-		dbSpans([span, ...subtree]).toSorted((a, b) => a.startOffsetMicros - b.startOffsetMicros)
-	);
-
-	const dbTotalMicros = $derived(dbCalls.reduce((sum, s) => sum + s.durationMicros, 0));
+	const dbTargets = $derived(dbRollups([span, ...subtree]));
+	const dbCallCount = $derived(dbTargets.reduce((n, t) => n + t.count, 0));
+	const dbTotalMicros = $derived(dbTargets.reduce((sum, t) => sum + t.totalMicros, 0));
 	const dbSharePct = $derived(percentOf(dbTotalMicros, span.durationMicros));
-	const dbBarPct = $derived(Math.min(dbSharePct ?? 0, 100));
 
-	const tabCount = (id: SpanTab): number | null => (id === 'events' ? span.events.length : null);
+	const tabCount = (id: SpanTab): number | null =>
+		id === 'events' ? span.events.length : id === 'database' ? dbCallCount : null;
 	const isDisabled = (id: SpanTab): boolean => tabCount(id) === 0;
 
 	$effect(() => {
@@ -339,35 +338,6 @@
 								</dd>
 							</div>
 						</dl>
-
-						{#if dbCalls.length > 0}
-							<div class="border-line bg-base-200/50 border-t px-3 py-2.5">
-								<div class="flex items-baseline justify-between gap-3">
-									<p class="text-xs">
-										Database work
-										<span class="text-subtle ml-1">
-											{pluralize(dbCalls.length, 'operation')}
-										</span>
-									</p>
-									<p class="shrink-0 font-mono text-xs tabular-nums">
-										{formatSpanDuration(dbTotalMicros)}
-										{#if dbSharePct !== null}
-											<span class="text-subtle ml-1">{dbSharePct}%</span>
-										{/if}
-									</p>
-								</div>
-								<div
-									class="bg-base-300 mt-1.5 h-1 overflow-hidden rounded-sm"
-									role="img"
-									aria-label={`Cumulative database work ${dbSharePct ?? 0}% of span duration`}
-								>
-									<span class="bg-warning block h-full" style={`width:${dbBarPct}%`}></span>
-								</div>
-								<p class="text-subtle mt-1 text-xs">
-									Cumulative span time; concurrent work may overlap
-								</p>
-							</div>
-						{/if}
 					</div>
 				</section>
 
@@ -411,6 +381,94 @@
 				{#if resource}
 					{@render group('Resource', toFields(resource), 'No resource attributes')}
 				{/if}
+			{:else if activeTab === 'database'}
+				<div class="flex items-baseline justify-between gap-3">
+					<p class="text-sm">{pluralize(dbCallCount, 'call')}</p>
+					<p
+						class="font-mono text-xs tabular-nums"
+						title="Sum of call durations; concurrent calls may overlap"
+					>
+						{formatSpanDuration(dbTotalMicros)}
+						{#if dbSharePct !== null}
+							<span class="text-subtle ml-1">{dbSharePct}% of span</span>
+						{/if}
+					</p>
+				</div>
+
+				{#each dbTargets as target (target.key)}
+					<section>
+						<div class="mb-2 flex items-baseline justify-between gap-3">
+							<h3 class="section-label min-w-0 truncate" title={target.host}>
+								{target.system || 'Database'}
+								{#if target.host}
+									<span class="text-subtle ml-1 font-normal">{target.host}</span>
+								{/if}
+							</h3>
+							<p class="text-subtle shrink-0 text-xs tabular-nums">
+								{pluralize(target.count, 'call')} · {formatSpanDuration(target.totalMicros)}
+							</p>
+						</div>
+
+						<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
+							{#each target.queries as query (query.key)}
+								<details class="group">
+									<summary
+										class="hover:bg-base-200 flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 [&::-webkit-details-marker]:hidden"
+									>
+										<ChevronRight
+											class="text-subtle h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90"
+										/>
+										<span class="min-w-0 flex-1 truncate font-mono text-xs" title={query.statement}>
+											{query.statement.split('\n')[0]}
+										</span>
+										{#if query.errorCount > 0}
+											<span class="text-error shrink-0 text-xs tabular-nums">
+												{query.errorCount} failed
+											</span>
+										{/if}
+										{#if query.calls.length > 1}
+											<span class="text-subtle shrink-0 text-xs tabular-nums"
+												>×{query.calls.length}</span
+											>
+										{/if}
+										<span class="w-14 shrink-0 text-right font-mono text-xs tabular-nums">
+											{formatSpanDuration(query.totalMicros)}
+										</span>
+									</summary>
+
+									<div class="border-line border-t px-3 py-2.5">
+										<pre
+											class="bg-base-200 text-base-content/70 rounded p-2 font-mono text-xs break-words whitespace-pre-wrap">{query.statement}</pre>
+										<ol class="mt-2">
+											{#each query.calls as call (call.spanId)}
+												<li>
+													<button
+														type="button"
+														class="hover:bg-base-200 flex w-full items-center gap-3 rounded px-1.5 py-1 text-left text-xs"
+														onclick={() => onSelectSpan(call.spanId)}
+													>
+														<span class="w-16 shrink-0 font-mono tabular-nums">
+															{formatOffset(call.startOffsetMicros - span.startOffsetMicros)}
+														</span>
+														<span class="w-16 shrink-0 font-mono tabular-nums">
+															{formatSpanDuration(call.durationMicros)}
+														</span>
+														<span class="text-subtle min-w-0 flex-1 truncate">
+															{call.serviceName}
+														</span>
+														{#if call.isError}
+															<span class="text-error shrink-0">Failed</span>
+														{/if}
+													</button>
+												</li>
+											{/each}
+										</ol>
+									</div>
+								</details>
+							{/each}
+						</div>
+					</section>
+				{/each}
 			{:else if activeTab === 'events'}
 				{#if span.events.length > 0}
 					<section>
