@@ -72,6 +72,7 @@ export type ExploreFilters = {
 	minMs: number | null;
 	maxMs: number | null;
 	status: ExploreStatus;
+	root: boolean;
 	q: string;
 };
 
@@ -91,6 +92,7 @@ function filterQuery(filters: ExploreFilters) {
 		minMs: filters.minMs === null ? undefined : String(filters.minMs),
 		maxMs: filters.maxMs === null ? undefined : String(filters.maxMs),
 		status: filters.status,
+		root: filters.root ? 'true' : undefined,
 		q: filters.q === '' ? undefined : filters.q
 	};
 }

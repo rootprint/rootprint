@@ -71,7 +71,10 @@
 		else params.set(name, value);
 	}
 
-	function setFilter(name: 'service' | 'operation' | 'status' | 'q', value: string | null) {
+	function setFilter(
+		name: 'service' | 'operation' | 'status' | 'root' | 'q',
+		value: string | null
+	) {
 		navigate((params) => setParam(params, name, value));
 	}
 

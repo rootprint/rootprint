@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleAlert, CircleCheck, RefreshCw, X } from 'lucide-svelte';
+	import { CircleAlert, CircleCheck, ListTree, RefreshCw, X } from 'lucide-svelte';
 
 	import type { ExploreFilters } from '$lib/api/traces';
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
@@ -7,7 +7,7 @@
 	import type { TimeRange } from '$lib/types';
 	import { paramWholeNumber } from '$lib/utils/query-params';
 
-	type FilterName = 'service' | 'operation' | 'status' | 'q';
+	type FilterName = 'service' | 'operation' | 'status' | 'root' | 'q';
 
 	type Props = {
 		filters: ExploreFilters;
@@ -51,6 +51,7 @@
 	);
 	let customOpen = $state(false);
 	const showCustom = $derived(customOpen || presetId === 'custom');
+	const rootErrors = $derived(filters.root && filters.status === 'error');
 
 	// Follows the applied query until the user edits it; a navigation resets it to the URL value.
 	let draft = $derived(filters.q);
@@ -142,6 +143,15 @@
 			<CircleCheck class="size-3.5" aria-hidden="true" />OK
 		</button>
 	</div>
+	<button
+		type="button"
+		class={['btn btn-sm shrink-0', filters.root && 'btn-neutral btn-soft']}
+		aria-pressed={filters.root}
+		title="Only each trace's root span"
+		onclick={() => onFilter('root', filters.root ? null : 'true')}
+	>
+		<ListTree class="size-3.5" aria-hidden="true" />Root only
+	</button>
 	<TimeRangePicker value={timeRange} onChange={onRange} />
 	<button
 		type="button"
@@ -153,7 +163,7 @@
 	</button>
 </div>
 
-{#if filters.operation !== null || showCustom || queryError !== null}
+{#if filters.operation !== null || showCustom || rootErrors || queryError !== null}
 	<div
 		class="border-line bg-base-100 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-3 py-2 text-xs"
 	>
@@ -206,6 +216,11 @@
 				</label>
 				<button type="submit" class="btn btn-xs">Apply</button>
 			</form>
+		{/if}
+		{#if rootErrors}
+			<p class="text-muted">
+				Traces whose root span failed. Errors deeper in a trace aren't shown.
+			</p>
 		{/if}
 		{#if queryError !== null}
 			<p id={queryErrorId} class="text-error" role="alert">{queryError}</p>

@@ -37,6 +37,7 @@ import {
 	NANOS_PER_MICRO,
 	NANOS_PER_MILLI,
 	orEmptyStore,
+	ROOT_SPANS,
 	SERVICE_FIELD,
 	TIMESTAMP_FIELD
 } from './trace.service.js';
@@ -63,6 +64,7 @@ export function exploreQuery(filters: ExploreFilters): string {
 	}
 	if (filters.status === 'error') clauses.push(ERROR_SPANS);
 	if (filters.status === 'ok') clauses.push(`NOT ${ERROR_SPANS}`);
+	if (filters.root) clauses.push(ROOT_SPANS);
 	if (filters.q !== undefined && filters.q !== '') clauses.push(`(${filters.q})`);
 	return clauses.length === 0 ? '*' : clauses.join(' AND ');
 }

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { tsParam } from '../utils/valibot.js';
+import { boolParam, tsParam } from '../utils/valibot.js';
 
 export const ExportFormatSchema = v.picklist(['json', 'csv', 'text']);
 
@@ -10,12 +10,7 @@ export const ExportLogsQuery = v.pipe(
 		startTs: tsParam,
 		endTs: tsParam,
 		format: ExportFormatSchema,
-		dryRun: v.optional(
-			v.pipe(
-				v.string(),
-				v.transform((s) => s === 'true')
-			)
-		)
+		dryRun: v.optional(boolParam)
 	}),
 	v.check(({ startTs, endTs }) => startTs <= endTs, 'startTs must be <= endTs')
 );

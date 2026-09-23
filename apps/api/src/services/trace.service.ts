@@ -12,6 +12,7 @@ export const DURATION_FIELD = 'span_duration_millis';
 export const NAME_FIELD = 'span_name';
 export const SERVICE_FIELD = 'service_name';
 export const ERROR_SPANS = 'span_status.code:error';
+export const ROOT_SPANS = 'is_root:true';
 
 const MAX_TRACE_SPANS = 2_000;
 

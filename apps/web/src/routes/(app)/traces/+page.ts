@@ -22,6 +22,7 @@ export const load: PageLoad = ({ url, depends }) => {
 		minMs: paramWholeNumber(params.get('minMs')),
 		maxMs: paramWholeNumber(params.get('maxMs')),
 		status: paramOneOf(params.get('status'), EXPLORE_STATUSES) ?? 'all',
+		root: params.get('root') === 'true',
 		q: params.get('q')?.trim() ?? ''
 	};
 

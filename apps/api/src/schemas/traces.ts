@@ -7,7 +7,7 @@ import {
 	MAX_EXPLORE_LIMIT,
 	MAX_EXPLORE_OFFSET
 } from '../constants.js';
-import { EPOCH_SECONDS, intParam } from '../utils/valibot.js';
+import { boolParam, EPOCH_SECONDS, intParam } from '../utils/valibot.js';
 import { intervalParam, intervalSeconds, MAX_BUCKETS, MAX_RANGE_SECONDS } from './monitoring.js';
 
 // Rejects the all-zeros id: OTLP writes it on logs that carry no trace context.
@@ -51,6 +51,7 @@ const exploreFilterEntries = {
 	minMs: v.optional(intParam({ min: 0, label: 'minMs' })),
 	maxMs: v.optional(intParam({ min: 1, label: 'maxMs' })),
 	status: v.optional(v.picklist(EXPLORE_STATUSES), 'all'),
+	root: v.optional(boolParam),
 	q: v.optional(
 		v.pipe(
 			v.string(),
