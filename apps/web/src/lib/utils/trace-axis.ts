@@ -11,12 +11,7 @@ function niceStep(raw: number): number {
 	return (frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 5 ? 5 : 10) * pow;
 }
 
-/**
- * Unit from the largest value a label carries, not the window width — zoomed into the tail of a long
- * trace those differ by orders of magnitude, and sizing on the window renders "1333000000.0µs" where
- * "1333.0002s" is meant. Decimals track the step, or a step finer than the unit renders every label
- * identically.
- */
+/** Unit from the largest label, not the window width: they differ wildly zoomed into a tail. */
 function tickFormatter(maxValueMicros: number, stepMicros: number): (n: number) => string {
 	let div = 1;
 	let suffix = 'µs';
@@ -32,7 +27,6 @@ function tickFormatter(maxValueMicros: number, stepMicros: number): (n: number) 
 	return (n) => `${(n / div).toFixed(decimals)}${suffix}`;
 }
 
-/** `startMicros` offsets the labels only, so a zoomed view still reads in trace time. */
 export function traceAxis(totalMicros: number, startMicros = 0): TraceAxis {
 	if (totalMicros <= 0) return { ticks: [], gridStyle: '' };
 
@@ -43,8 +37,7 @@ export function traceAxis(totalMicros: number, startMicros = 0): TraceAxis {
 		ticks.push({ pct: (t / totalMicros) * 100, label: format(startMicros + t) });
 	}
 
-	// content-box origin and clip are load-bearing: ticks and bars are positioned in the content
-	// box, so a gradient on the padding box drifts by the track's `pr-14` (~56px) at the right edge.
+	// content-box: ticks and bars sit in the content box, so a padding-box grid drifts by `pr-14`.
 	const gridStyle =
 		'background-origin:content-box;background-clip:content-box;' +
 		'background-image:repeating-linear-gradient(to right,var(--color-line) 0 1px,transparent 1px ' +

@@ -10,18 +10,17 @@ export interface TraceLogsTarget {
 	indexId: string;
 	traceIdField: string;
 	traceId: string;
+	/** Span links use the whole trace's window too: that is what the counts are taken over. */
 	traceStartMicros: number;
-	startOffsetMicros: number;
 	durationMicros: number;
 	spanId?: string;
 }
 
 export function traceLogsWindow(target: TraceLogsTarget): TimeRange {
-	const startMicros = target.traceStartMicros + target.startOffsetMicros;
 	return {
 		type: 'absolute',
-		start: Math.floor(startMicros / 1e6) - PAD_SECONDS,
-		end: Math.ceil((startMicros + target.durationMicros) / 1e6) + PAD_SECONDS
+		start: Math.floor(target.traceStartMicros / 1e6) - PAD_SECONDS,
+		end: Math.ceil((target.traceStartMicros + target.durationMicros) / 1e6) + PAD_SECONDS
 	};
 }
 

@@ -17,7 +17,6 @@ const MAX_TRACE_SPANS = 2_000;
 
 const REDUNDANT_ATTRIBUTES = ['otel.status_code', 'error'];
 
-/** OTel SpanKind → Jaeger's `span.kind` tag. 0 and 1 emit no tag, per the OTel-to-Jaeger spec. */
 export const SPAN_KIND_TAGS: Record<number, 'server' | 'client' | 'producer' | 'consumer'> = {
 	2: 'server',
 	3: 'client',
@@ -83,10 +82,7 @@ export const asRecord = (value: unknown): Record<string, unknown> =>
 		? (value as Record<string, unknown>)
 		: {};
 
-/**
- * Quickwit lifts `service.name` out into its own column at ingest, so hashing `resource_attributes`
- * alone merges two services that share a host — the dev data has exactly that pair.
- */
+/** Includes the service: Quickwit moves `service.name` out of `resource_attributes` at ingest. */
 function resourceKeyOf(serviceName: string, attributes: Record<string, string>): string {
 	const sorted = Object.keys(attributes)
 		.toSorted()
@@ -100,6 +96,8 @@ interface RawSpanHit {
 	span_name?: unknown;
 	span_kind?: unknown;
 	service_name?: unknown;
+	scope_name?: unknown;
+	scope_version?: unknown;
 	span_start_timestamp_nanos?: unknown;
 	span_end_timestamp_nanos?: unknown;
 	span_status?: unknown;
@@ -127,7 +125,10 @@ export async function getTrace(
 	traceId: string
 ): Promise<TraceResponse> {
 	const idx = qw.index(traceIndexId);
-	const builder = idx.query(`trace_id:${traceId}`).limit(MAX_TRACE_SPANS);
+	const builder = idx
+		.query(`trace_id:${traceId}`)
+		.sortBy('span_start_timestamp_nanos', 'asc')
+		.limit(MAX_TRACE_SPANS);
 	const response = await idx
 		.search<RawSpanHit>(builder)
 		.catch(orEmptyStore(traceIndexId, 'every trace'));
@@ -161,24 +162,26 @@ export async function getTrace(
 		}
 
 		const attributes = flattenAttributes(asRecord(hit.span_attributes));
-		// Both restate `isError`, which the span already carries; the message survives as
-		// `otel.status_description` below. Envoy and Istio set `error` on ~every failing span.
+		// Both restate `isError`; the status message survives as `otel.status_description`.
 		for (const key of REDUNDANT_ATTRIBUTES) delete attributes[key];
 		const kindTag = SPAN_KIND_TAGS[Number(hit.span_kind)];
 		if (kindTag !== undefined) attributes['span.kind'] = kindTag;
 		const statusMessage = statusMessageOf(hit.span_status);
 		if (statusMessage !== null) attributes['otel.status_description'] = statusMessage;
+		const scopeName = asText(hit.scope_name, '');
+		if (scopeName !== '') attributes['otel.scope.name'] = scopeName;
+		const scopeVersion = asText(hit.scope_version, '');
+		if (scopeVersion !== '') attributes['otel.scope.version'] = scopeVersion;
 
 		const endMicros = toMicros(hit.span_end_timestamp_nanos);
 		spans.push({
 			spanId,
-			// Absent, not null, on a root — `skip_serializing_if` omits empty fields entirely.
 			parentSpanId: asText(hit.parent_span_id, '') || null,
 			name: asText(hit.span_name, '(unnamed)'),
 			serviceName,
-			// Rewritten below, once the trace's earliest span is known.
+			// Absolute until rebased below.
 			startOffsetMicros: startMicros,
-			// From the timestamps, not `span_duration_millis`, which floors a real 26us span to 0.
+			// Not `span_duration_millis`: it floors sub-millisecond spans to 0.
 			durationMicros: endMicros !== null && endMicros > startMicros ? endMicros - startMicros : 0,
 			isError: isErrorStatus(hit.span_status),
 			attributes,
@@ -195,10 +198,10 @@ export async function getTrace(
 		});
 	}
 
-	if (spans.length === 0) return emptyTrace(response.num_hits > 0);
+	if (spans.length === 0) return emptyTrace(true);
 
-	// reduce, not Math.min(...spans): the span count is unbounded and a spread would overflow.
-	const traceStartMicros = spans.reduce((min, s) => Math.min(min, s.startOffsetMicros), Infinity);
+	// Relies on the ascending sort above.
+	const traceStartMicros = spans[0].startOffsetMicros;
 	for (const span of spans) {
 		span.startOffsetMicros -= traceStartMicros;
 		for (const event of span.events) event.timeOffsetMicros -= traceStartMicros;

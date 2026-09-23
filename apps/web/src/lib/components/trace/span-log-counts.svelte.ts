@@ -1,12 +1,7 @@
 import { fetchSpanLogCounts } from '$lib/api/traces';
 import type { TraceLogsTarget } from '$lib/utils/trace-logs';
 
-/**
- * Per-span log counts, resolved in the background.
- *
- * `undefined` while in flight, `null` once resolved but unavailable — a caller that treated the two
- * alike would either flash links on every span or drop them for good.
- */
+/** `undefined` while in flight, `null` when unavailable; callers must tell them apart. */
 export class SpanLogCounts {
 	counts = $state.raw<ReadonlyMap<string, number> | null | undefined>(undefined);
 

@@ -4,7 +4,6 @@ import type { SpanNode } from '$lib/types';
 const DB_SYSTEM_KEYS = ['db.system', 'db.system.name'];
 const DB_STATEMENT_KEYS = ['db.statement', 'db.query.text'];
 
-/** First non-empty value among `keys`. Empty attribute values are treated as absent throughout. */
 const attr = (span: SpanNode, keys: string[]): string => {
 	for (const key of keys) if (span.attributes[key]) return span.attributes[key];
 	return '';
@@ -19,15 +18,26 @@ export interface OperationRollup {
 	slowestSpanId: string;
 }
 
-export function descendants(span: SpanNode): SpanNode[] {
-	return span.children.flatMap((child) => [child, ...descendants(child)]);
+/** Iterative: a recursive spread re-copies subtrees per level, quadratic on deep chains. */
+export function spansInTreeOrder(roots: SpanNode[]): SpanNode[] {
+	const out: SpanNode[] = [];
+	const stack = roots.toReversed();
+	for (let node = stack.pop(); node; node = stack.pop()) {
+		out.push(node);
+		for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]);
+	}
+	return out;
 }
 
-/**
- * Duration not covered by any direct child. The union of child intervals, not their sum:
- * concurrent children would over-subtract and drive self time negative. Intervals are clamped
- * to the parent's window first, so clock skew on a child can't inflate the covered span.
- */
+export function firstErrorSpan(spans: Iterable<SpanNode>): SpanNode | null {
+	let first: SpanNode | null = null;
+	for (const span of spans) {
+		if (span.isError && (!first || span.startOffsetMicros < first.startOffsetMicros)) first = span;
+	}
+	return first;
+}
+
+/** Union of clamped child intervals, not their sum, so overlap and skew can't go negative. */
 export function selfMicros(span: SpanNode): number {
 	const spanStart = span.startOffsetMicros;
 	const spanEnd = spanStart + span.durationMicros;
@@ -55,11 +65,10 @@ export function selfMicros(span: SpanNode): number {
 	return Math.max(span.durationMicros - covered, 0);
 }
 
-/** Groups spans by service+name, heaviest total first. The count is the N+1 signal. */
 export function topOperations(spans: SpanNode[]): OperationRollup[] {
 	const groups = new Map<string, OperationRollup & { slowestMicros: number }>();
 	for (const s of spans) {
-		// Not `a:b` — span names carry colons (`GET /orders/:id`), so a delimiter can't be unambiguous.
+		// Not `a:b`: span names carry colons.
 		const key = JSON.stringify([s.serviceName, s.name]);
 		const group = groups.get(key);
 		if (!group) {
@@ -86,7 +95,6 @@ export function topOperations(spans: SpanNode[]): OperationRollup[] {
 
 const dbSystem = (span: SpanNode): string => attr(span, DB_SYSTEM_KEYS);
 
-/** One definition of database-ness, so the Database tab and the Overview headline can't disagree. */
 const isDbSpan = (span: SpanNode): boolean =>
 	Boolean(dbSystem(span) || attr(span, DB_STATEMENT_KEYS));
 
@@ -98,15 +106,11 @@ function dbStatement(span: SpanNode): string {
 	return attr(span, DB_STATEMENT_KEYS) || span.name;
 }
 
-/** `type: message` from an `exception` event's fields — the Overview summary and Events tab share it. */
 export function exceptionHeadline(fields: Record<string, string>): string {
 	return [fields['exception.type'], fields['exception.message']].filter(Boolean).join(': ');
 }
 
-/**
- * The span's semconv headline, first convention that matches. Attribute names are doubled up
- * because semconv 1.21→1.26 renamed the HTTP and messaging keys and exporters lag the spec.
- */
+/** Keys are doubled up: semconv 1.21→1.26 renamed HTTP and messaging attributes. */
 export function describeSpan(span: SpanNode): { kind: string; detail: string } | null {
 	const a = span.attributes;
 

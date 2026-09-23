@@ -1,14 +1,8 @@
-/**
- * The one way to link a trace, used by the log query box and the log drawer.
- * `index` names the log index the trace's span→log links should target; null renders the trace with
- * those links disabled. `span` preselects a span in the waterfall, so a row that matched a query opens
- * on the span that matched rather than on the root. `returnTo` goes through URLSearchParams because
- * the explorer URL carries `&`.
- */
 /** A trace opened from the explorer returns there; any other `returnTo` is a log search. */
 export const openedFromExplorer = (returnTo: string | null): boolean =>
 	returnTo?.startsWith('/traces') ?? false;
 
+/** `index` is the log index for span→log links; null disables them. */
 export function traceDetailHref(
 	traceId: string,
 	opts: {
