@@ -94,7 +94,6 @@
 
 	function down(event: PointerEvent): void {
 		event.preventDefault();
-		track?.focus();
 		cachedRect = null;
 		try {
 			// Throws on an inactive pointer; `up()` on window covers that.
@@ -148,12 +147,6 @@
 			onChange(selected);
 		}
 	}
-
-	function key(event: KeyboardEvent): void {
-		if (event.key !== '0') return;
-		event.preventDefault();
-		onChange(fullView());
-	}
 </script>
 
 <!-- On window: without pointer capture a release outside the strip never reaches the track. -->
@@ -164,19 +157,16 @@
 	onscroll={() => (cachedRect = null)}
 />
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	bind:this={track}
 	role="group"
-	tabindex="0"
-	aria-label="Timeline view range — drag to zoom, 0 to reset"
+	aria-label="Timeline view range — drag to zoom"
 	class="border-line bg-base-200/40 relative touch-none overflow-hidden border-b select-none"
 	style={`height:${TICK_H + BAR_AREA_H}px;cursor:${cursor};${axis.gridStyle}`}
 	onpointerdown={down}
 	onpointermove={move}
 	ondblclick={() => zoomed && onChange(fullView())}
-	onkeydown={key}
 >
 	<span class="sr-only" aria-live="polite">
 		Showing {Math.round(view.start * 100)}% to {Math.round(view.end * 100)}% of the trace
