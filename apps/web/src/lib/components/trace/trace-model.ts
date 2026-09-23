@@ -1,14 +1,12 @@
 import type { SpanNode, TraceModel, ViewRange } from '$lib/types';
 import type { TraceResponse } from 'api/types';
 
-/** Shapes a flat span list into the waterfall tree. */
 export function buildTraceModel(trace: TraceResponse): TraceModel {
 	const byId = new Map<string, SpanNode>();
 	for (const s of trace.spans) {
 		byId.set(s.spanId, { ...s, depth: 0, children: [] });
 	}
 
-	// Duplicate span ids collapse here, so spanCount is distinct ids rather than spans returned.
 	const nodes = [...byId.values()];
 
 	const spansPerService = new Map<string, number>();
@@ -29,7 +27,7 @@ export function buildTraceModel(trace: TraceResponse): TraceModel {
 		const parent = node.parentSpanId ? byId.get(node.parentSpanId) : undefined;
 		if (parent && parent !== node) parent.children.push(node);
 		else {
-			// A long-running parent is only exported when it ends, so children can be searchable first.
+			// A parent is only exported once it ends, so its children can arrive first.
 			if (node.parentSpanId && !parent) orphanCount++;
 			roots.push(node);
 		}
@@ -39,14 +37,14 @@ export function buildTraceModel(trace: TraceResponse): TraceModel {
 	const walk = (node: SpanNode, depth: number): void => {
 		visited.add(node.spanId);
 		node.depth = depth;
-		// Severs back-edges: a parent chain can loop, and walk() would recurse forever.
+		// Parent chains can loop; dropping visited children stops infinite recursion.
 		node.children = node.children.filter((child) => !visited.has(child.spanId));
 		node.children.sort((a, b) => a.startOffsetMicros - b.startOffsetMicros);
 		for (const child of node.children) walk(child, depth + 1);
 	};
 	for (const root of roots) walk(root, 0);
 
-	// Members of a parent cycle are unreachable from any root; surface them rather than drop them.
+	// Cycle members are unreachable from any root.
 	for (const node of nodes) {
 		if (visited.has(node.spanId)) continue;
 		roots.push(node);
@@ -67,6 +65,10 @@ export function buildTraceModel(trace: TraceResponse): TraceModel {
 	};
 }
 
-export const fullView = (): ViewRange => ({ start: 0, end: 1 });
+/** Newline-joined so a needle can't match across two fields. */
+export function spanSearchText(node: SpanNode): string {
+	const attributes = Object.entries(node.attributes).map(([key, value]) => `${key}=${value}`);
+	return [node.serviceName, node.name, node.spanId, ...attributes].join('\n').toLowerCase();
+}
 
-export const MIN_VIEW_SPAN = 1e-6;
+export const fullView = (): ViewRange => ({ start: 0, end: 1 });

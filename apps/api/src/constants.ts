@@ -22,6 +22,9 @@ export const CONTENT_TYPE_PROTOBUF = 'application/x-protobuf';
 export const CONTENT_TYPE_JSON = 'application/json';
 
 // Search
+/** The log search `limit` ceiling; the trace page's per-span log counts read up to it. */
+export const SEARCH_MAX_LIMIT = 1000;
+
 export const FIELD_VALUES_MAX = 65_000;
 
 /** Fallback `limit` for the field-values endpoint when the caller doesn't pass one. */

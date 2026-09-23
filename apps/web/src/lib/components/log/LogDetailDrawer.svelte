@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Copy, ExternalLink, GripVertical } from 'lucide-svelte';
+	import { Copy, ExternalLink, GripVertical, RotateCw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { page } from '$app/state';
@@ -10,7 +10,8 @@
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
-	import { TraceResource } from '$lib/components/trace/trace-resource.svelte';
+	import { buildTraceModel } from '$lib/components/trace/trace-model';
+	import { fetchTrace } from '$lib/api/traces';
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
 	import { copyWithToast } from '$lib/utils/clipboard';
@@ -18,7 +19,7 @@
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import { traceDetailHref } from '$lib/utils/trace-params';
 	import { isTraceId } from 'api/schemas';
-	import type { LogHit } from '$lib/types';
+	import type { LogHit, TraceModel } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
 	const MAX_SHARE_PAYLOAD_BYTES = 64 * 1024;
@@ -73,18 +74,20 @@
 		const v = getByPath(hit.raw, path);
 		return isTraceId(v) ? v : null;
 	});
-	let traceResource = $state.raw<TraceResource | null>(null);
+	let traceLoad = $state.raw<{ traceId: string; model: Promise<TraceModel> } | null>(null);
 
+	function loadTrace(id: string): void {
+		const model = fetchTrace(id).then(buildTraceModel);
+		// A superseded load is no longer awaited, so its rejection would go unhandled.
+		model.catch(() => {});
+		traceLoad = { traceId: id, model };
+	}
+
+	// Only once the tab opens: each fetch is a span search plus an audit row.
 	$effect(() => {
-		const id = traceId;
-		if (id === null) return;
-		const r = new TraceResource(id);
-		traceResource = r;
-		void r.load();
-		return () => {
-			r.dispose();
-			traceResource = null;
-		};
+		if (activeTab === 'trace' && traceId !== null && traceLoad?.traceId !== traceId) {
+			loadTrace(traceId);
+		}
 	});
 
 	let sharing = $state(false);
@@ -303,12 +306,33 @@
 			{:else if activeTab === 'traceback'}
 				<TracebackPane value={traceback} />
 			{:else if activeTab === 'trace'}
-				<TracePane
-					model={traceResource?.model ?? null}
-					loading={traceResource?.loading ?? true}
-					error={traceResource?.error ?? null}
-					onRetry={() => void traceResource?.load()}
-				/>
+				{#await traceLoad?.model}
+					<div role="status" class="flex h-full items-center justify-center">
+						<span class="loading loading-spinner loading-sm"></span>
+						<span class="sr-only">Loading trace</span>
+					</div>
+				{:then model}
+					{#if model}
+						<TracePane {model} />
+					{/if}
+				{:catch e}
+					<div
+						role="alert"
+						class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center"
+					>
+						<p class="text-warning-ink text-sm">
+							{e instanceof Error ? e.message : 'Failed to load trace'}
+						</p>
+						<button
+							type="button"
+							class="btn btn-sm btn-ghost gap-1.5"
+							onclick={() => traceId && loadTrace(traceId)}
+						>
+							<RotateCw class="h-3.5 w-3.5" />
+							Try again
+						</button>
+					</div>
+				{/await}
 			{:else if activeTab === 'context'}
 				<ContextPane
 					{hit}

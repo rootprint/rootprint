@@ -7,10 +7,11 @@
 	import { serviceColor } from '$lib/utils/service-color';
 	import {
 		dbSpans,
-		descendants,
 		describeSpan,
 		exceptionHeadline,
+		firstErrorSpan,
 		selfMicros,
+		spansInTreeOrder,
 		topOperations
 	} from '$lib/utils/span-stats';
 	import { formatSpanDuration, formatSpanStart } from '$lib/utils/time';
@@ -40,7 +41,6 @@
 		{ id: 'events', label: 'Events' }
 	];
 
-	/** Rendered on the exception's own header and <pre>, so they'd be duplicates in the field table. */
 	const EXCEPTION_KEYS = ['exception.type', 'exception.message', 'exception.stacktrace'];
 
 	let activeTab = $state<SpanTab>('overview');
@@ -81,9 +81,9 @@
 	const percentOf = (part: number, whole: number): number | null =>
 		whole > 0 ? Math.round((part / whole) * 100) : null;
 
-	const startText = $derived(
-		`${formatOffset(span.startOffsetMicros)} · ${formatSpanStart(traceStartMicros + span.startOffsetMicros)}`
-	);
+	const startOffset = $derived(formatOffset(span.startOffsetMicros));
+	const startWall = $derived(formatSpanStart(traceStartMicros + span.startOffsetMicros));
+	const startText = $derived(`${startOffset} · ${startWall}`);
 	const durationText = $derived(formatSpanDuration(span.durationMicros));
 
 	const identity = $derived([
@@ -96,22 +96,15 @@
 	const attributes = $derived(toFields(span.attributes));
 	const resource = $derived(resources[span.resourceId] ?? null);
 
-	const subtree = $derived(descendants(span));
+	const subtree = $derived(spansInTreeOrder(span.children));
 
 	const selfDurationMicros = $derived(selfMicros(span));
 	const selfPct = $derived(percentOf(selfDurationMicros, span.durationMicros));
-	const childDurationMicros = $derived(Math.max(span.durationMicros - selfDurationMicros, 0));
-	const childPct = $derived(selfPct === null ? null : Math.max(100 - selfPct, 0));
+	const childDurationMicros = $derived(span.durationMicros - selfDurationMicros);
+	const childPct = $derived(selfPct === null ? null : 100 - selfPct);
 
 	const errorsBelow = $derived(subtree.filter((s) => s.isError));
-	// Single pass for one element: a failing dependency can make every descendant an error.
-	const firstErrorBelow = $derived(
-		errorsBelow.reduce<SpanNode | null>(
-			(earliest, s) =>
-				earliest && earliest.startOffsetMicros <= s.startOffsetMicros ? earliest : s,
-			null
-		)
-	);
+	const firstErrorBelow = $derived(firstErrorSpan(errorsBelow));
 	const exceptionEvent = $derived(span.events.find((e) => e.name === 'exception') ?? null);
 	const errorMessage = $derived(
 		span.attributes['otel.status_description'] ||
@@ -130,11 +123,8 @@
 	const dbSharePct = $derived(percentOf(dbTotalMicros, span.durationMicros));
 	const dbBarPct = $derived(Math.min(dbSharePct ?? 0, 100));
 
-	const tabCounts: Partial<Record<SpanTab, number>> = $derived({
-		events: span.events.length
-	});
-
-	const isDisabled = (id: SpanTab): boolean => id in tabCounts && !tabCounts[id];
+	const tabCount = (id: SpanTab): number | null => (id === 'events' ? span.events.length : null);
+	const isDisabled = (id: SpanTab): boolean => tabCount(id) === 0;
 
 	$effect(() => {
 		if (isDisabled(activeTab)) activeTab = 'overview';
@@ -229,8 +219,8 @@
 				}}
 			>
 				{tab.label}
-				{#if tabCounts[tab.id]}
-					<span class="text-subtle ml-1 tabular-nums">{tabCounts[tab.id]}</span>
+				{#if tabCount(tab.id)}
+					<span class="text-subtle ml-1 tabular-nums">{tabCount(tab.id)}</span>
 				{/if}
 			</button>
 		{/each}
@@ -339,13 +329,13 @@
 							<div class="min-w-0 px-3 py-2.5">
 								<dt class="section-label">Started</dt>
 								<dd class="mt-0.5 truncate font-mono text-xs tabular-nums" title={startText}>
-									{formatSpanStart(traceStartMicros + span.startOffsetMicros)}
+									{startWall}
 								</dd>
 							</div>
 							<div class="px-3 py-2.5">
 								<dt class="section-label">Trace offset</dt>
 								<dd class="mt-0.5 font-mono text-xs tabular-nums">
-									{formatOffset(span.startOffsetMicros)}
+									{startOffset}
 								</dd>
 							</div>
 						</dl>

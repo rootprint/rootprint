@@ -8,6 +8,7 @@ import { fetchTrace } from '$lib/api/traces';
 import { SpanLogCounts } from '$lib/components/trace/span-log-counts.svelte';
 import { buildTraceModel } from '$lib/components/trace/trace-model';
 import { safeReturnTo } from '$lib/return-to';
+import type { TraceLogsTarget } from '$lib/utils/trace-logs';
 
 export const load: PageLoad = async ({ params, url }) => {
 	if (!isTraceId(params.traceId)) error(400, 'Not a valid trace id');
@@ -18,33 +19,30 @@ export const load: PageLoad = async ({ params, url }) => {
 		const [trace, fieldConfig, summaries] = await Promise.all([
 			fetchTrace(params.traceId),
 			logIndexId ? getIndexConfig(logIndexId).catch(() => null) : null,
-			// Only feeds the log-index picker, so a failure costs correlation, not the trace.
+			// Only feeds the log-index picker; a failure mustn't cost the trace.
 			listIndexes().catch(() => [])
 		]);
 		const model = buildTraceModel(trace);
-		const logTarget =
+		const logsTarget: TraceLogsTarget | null =
 			logIndexId !== null && fieldConfig !== null
-				? { indexId: logIndexId, traceIdField: fieldConfig.traceIdField }
+				? {
+						indexId: logIndexId,
+						traceIdField: fieldConfig.traceIdField,
+						traceId: params.traceId,
+						traceStartMicros: model.traceStartMicros,
+						durationMicros: model.durationMicros
+					}
 				: null;
 
 		return {
 			traceId: params.traceId,
 			indexes: toLogIndexOptions(summaries),
 			logIndexId,
-			logTarget,
+			logsTarget,
 			returnTo: safeReturnTo(url.searchParams.get('returnTo')),
 			model,
 			truncated: trace.truncated,
-			spanLogCounts: logTarget
-				? new SpanLogCounts({
-						indexId: logTarget.indexId,
-						traceIdField: logTarget.traceIdField,
-						traceId: params.traceId,
-						traceStartMicros: model.traceStartMicros,
-						startOffsetMicros: 0,
-						durationMicros: model.durationMicros
-					})
-				: null
+			spanLogCounts: logsTarget ? new SpanLogCounts(logsTarget) : null
 		};
 	} catch (e) {
 		if (e instanceof ApiError) error(e.status, e.message);

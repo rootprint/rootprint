@@ -1,3 +1,4 @@
+import { SEARCH_MAX_LIMIT } from 'api/constants';
 import { composeQuery } from 'api/query';
 
 import { client } from '$lib/api/client';
@@ -10,9 +11,6 @@ import {
 	traceLogsWindow,
 	type TraceLogsTarget
 } from '$lib/utils/trace-logs';
-
-/** The log search endpoint's own ceiling. A terms agg would dodge documents, but `span_id` isn't fast. */
-const MAX_TRACE_LOGS = 1000;
 
 export async function fetchTrace(traceId: string, opts: { signal?: AbortSignal } = {}) {
 	const res = await client.api.traces[':traceId'].$get(
@@ -28,19 +26,19 @@ export async function fetchTrace(traceId: string, opts: { signal?: AbortSignal }
 export async function fetchSpanLogCounts(
 	input: Omit<TraceLogsTarget, 'spanId'>
 ): Promise<Map<string, number> | null> {
+	// A terms agg would avoid fetching documents, but `span_id` isn't a fast field.
 	const { rawHits } = await searchLogs({
 		indexId: input.indexId,
 		query: composeQuery('', traceLogsFilters(input)),
-		limit: MAX_TRACE_LOGS,
+		limit: SEARCH_MAX_LIMIT,
 		offset: 0,
 		sortDirection: 'desc',
 		...resolveWindow(traceLogsWindow(input))
 	});
 
-	if (rawHits.length === MAX_TRACE_LOGS) {
-		// Degrades to "counts unavailable": the log links stay, they just lose their numbers.
+	if (rawHits.length === SEARCH_MAX_LIMIT) {
 		console.warn(
-			`Trace ${input.traceId} has at least ${MAX_TRACE_LOGS} logs, more than one request reaches; per-span log counts are unavailable.`
+			`Trace ${input.traceId} has at least ${SEARCH_MAX_LIMIT} logs, more than one request reaches; per-span log counts are unavailable.`
 		);
 		return null;
 	}

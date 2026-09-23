@@ -4,7 +4,7 @@
 	import { serviceColor } from '$lib/utils/service-color';
 	import { traceAxis } from '$lib/utils/trace-axis';
 	import TraceAxisTicks from './TraceAxisTicks.svelte';
-	import { fullView, MIN_VIEW_SPAN } from './trace-model';
+	import { fullView } from './trace-model';
 	import type { SpanNode, ViewRange } from '$lib/types';
 
 	let {
@@ -22,22 +22,15 @@
 	const TICK_H = 18;
 	const BAR_AREA_H = 34;
 	const BAR_H = 2;
-	/** Grab zone on each side of the viewport frame, in px. */
 	const HANDLE_PX = 8;
-	/** The frame never draws narrower than this, however deep the zoom goes. */
 	const FRAME_MIN_PX = 3;
-	/** Without a floor a sub-microsecond span leaves no mark at all in the strip. */
 	const MIN_BAR_PCT = 0.15;
-	/** Horizontal resolution the strip is quantised to before rendering. */
 	const BAR_COLUMNS = 400;
-	const KEY_STEP = 0.05;
+	const MIN_VIEW_SPAN = 1e-6;
 
 	const axis = $derived(traceAxis(durationMicros));
 
-	/**
-	 * Depth compresses into the bar band rather than mapping 1:1, and bars landing on the same slot
-	 * and column are dropped: 2,000 spans in 34px would otherwise stack invisibly on each other.
-	 */
+	/** Bars sharing a slot and column are dropped: 2,000 spans in 34px stack invisibly. */
 	const bars = $derived.by(() => {
 		const total = Math.max(durationMicros, 1);
 		let maxDepth = 1;
@@ -72,8 +65,7 @@
 	let brush = $state<ViewRange | null>(null);
 	let cursor = $state('crosshair');
 
-	// Cached because hover calls modeAt on every pointermove, and an uncached read is a forced layout
-	// per event. Non-null asserted: every reader runs from an event on `track` itself.
+	// Cached: hover calls modeAt on every pointermove, and each uncached read forces a layout.
 	let cachedRect: DOMRect | null = null;
 	const rect = (): DOMRect => (cachedRect ??= track!.getBoundingClientRect());
 
@@ -88,8 +80,7 @@
 		if (!zoomed) return 'brush';
 		const box = rect();
 		const grab = HANDLE_PX / box.width;
-		// The frame as drawn, not the logical range: past a certain zoom both edges are the same
-		// fraction, and testing them in order would hand every press to the left handle.
+		// The drawn frame, not the logical range: at deep zoom both edges coincide.
 		const end = Math.max(view.end, view.start + FRAME_MIN_PX / box.width);
 		const toStart = Math.abs(at - view.start);
 		const toEnd = Math.abs(at - end);
@@ -102,13 +93,11 @@
 		mode === 'pan' ? 'grab' : mode === 'brush' ? 'crosshair' : 'col-resize';
 
 	function down(event: PointerEvent): void {
-		// preventDefault kills text selection and the native drag, and the focus default with them.
 		event.preventDefault();
 		track?.focus();
 		cachedRect = null;
 		try {
-			// Best-effort: keeps a drag alive past the strip's edges, and throws on a pointer the
-			// browser no longer considers active. `up()` on window covers the failure.
+			// Throws on an inactive pointer; `up()` on window covers that.
 			track?.setPointerCapture(event.pointerId);
 		} catch {
 			/* empty */
@@ -128,8 +117,6 @@
 		drag.moved = true;
 
 		if (drag.mode === 'brush') {
-			// Anchored to the press point, not the live selection: reading it back would make a
-			// leftward drag widen the brush instead of shrinking it.
 			const at = fractionAt(event.clientX);
 			brush = { start: Math.min(drag.anchor, at), end: Math.max(drag.anchor, at) };
 			return;
@@ -156,43 +143,20 @@
 		brush = null;
 		cursor = 'crosshair';
 		if (mode !== 'brush') return;
-		// Travel, not width: a width threshold would reject the deliberate one-pixel drags that are
-		// the only way to reach a useful window on a trace with this much dead time.
+		// Travel, not width: tiny deliberate drags must still zoom on traces with long dead time.
 		if (moved && selected !== null && selected.end - selected.start > MIN_VIEW_SPAN) {
 			onChange(selected);
 		}
 	}
 
 	function key(event: KeyboardEvent): void {
-		const width = view.end - view.start;
-		const pan = (by: number): ViewRange => {
-			const shift = Math.max(Math.min(by, 1 - view.end), -view.start);
-			return { start: view.start + shift, end: view.end + shift };
-		};
-		const zoom = (factor: number): ViewRange => {
-			const mid = (view.start + view.end) / 2;
-			const half = clamp((width * factor) / 2, MIN_VIEW_SPAN / 2, 0.5);
-			return { start: clamp(mid - half), end: clamp(mid + half) };
-		};
-		// No Escape: it belongs to whatever dismisses the surrounding surface.
-		const next =
-			event.key === 'ArrowLeft'
-				? pan(-width * KEY_STEP)
-				: event.key === 'ArrowRight'
-					? pan(width * KEY_STEP)
-					: event.key === '+' || event.key === '='
-						? zoom(0.5)
-						: event.key === '0'
-							? fullView()
-							: null;
-		if (next === null) return;
+		if (event.key !== '0') return;
 		event.preventDefault();
-		onChange(next);
+		onChange(fullView());
 	}
 </script>
 
-<!-- On window, not the track: without pointer capture a release outside the strip never reaches it,
-     and the drag would run on against the bare cursor. -->
+<!-- On window: without pointer capture a release outside the strip never reaches the track. -->
 <svelte:window
 	onpointerup={up}
 	onpointercancel={up}
@@ -200,15 +164,13 @@
 	onscroll={() => (cachedRect = null)}
 />
 
-<!-- A two-ended range has no single ARIA role, so: a group that carries the focus and gestures, with
-     the value announced from the live region rather than a valuenow that could only describe one edge. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	bind:this={track}
 	role="group"
 	tabindex="0"
-	aria-label="Timeline view range — drag to zoom, arrows to pan, plus and minus to zoom, 0 to reset"
+	aria-label="Timeline view range — drag to zoom, 0 to reset"
 	class="border-line bg-base-200/40 relative touch-none overflow-hidden border-b select-none"
 	style={`height:${TICK_H + BAR_AREA_H}px;cursor:${cursor};${axis.gridStyle}`}
 	onpointerdown={down}
@@ -238,7 +200,6 @@
 			class="bg-base-100/65 pointer-events-none absolute inset-y-0 right-0"
 			style={`width:${(1 - view.end) * 100}%`}
 		></div>
-		<!-- A deep zoom is a sub-pixel slice of the full trace; without a floor the frame vanishes. -->
 		<div
 			class="border-primary pointer-events-none absolute inset-y-0 border"
 			style={`left:${view.start * 100}%;width:${(view.end - view.start) * 100}%;min-width:${FRAME_MIN_PX}px`}
