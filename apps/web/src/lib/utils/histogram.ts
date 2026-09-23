@@ -20,6 +20,17 @@ export function computeHistogramIntervalSeconds(windowSeconds: number): number {
 	return 86400;
 }
 
+const NICE_INTERVALS = [
+	1, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400
+];
+
+const CHART_MAX_BUCKETS = 60;
+
+/** Smallest round interval that keeps a chart at 60 buckets or fewer, so bars keep a steady width. */
+export function chartIntervalSeconds(windowSeconds: number): number {
+	return NICE_INTERVALS.find((s) => windowSeconds / s <= CHART_MAX_BUCKETS) ?? 86400;
+}
+
 /** Picks the largest whole-number unit Quickwit accepts. */
 export function formatInterval(seconds: number): string {
 	if (seconds <= 0) return '1s';

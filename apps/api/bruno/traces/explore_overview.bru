@@ -1,0 +1,27 @@
+meta {
+  name: Explore Traces Overview
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/traces/explore/overview
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1723989600
+  endTs: 1723990500
+  interval: 30s
+  ~service: frontend
+  ~operation: GET /cart
+  ~minMs: 100
+  ~maxMs: 1000
+  ~status: error
+  ~q: span_attributes.http.response.status_code:500
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

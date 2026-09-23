@@ -27,7 +27,11 @@
 		formatValue: (value: number) => string;
 		height?: number;
 		curve?: 'linear' | 'spline';
+		/** Draws every series as bars centred on each bucket start instead of lines. */
+		bars?: boolean;
 		showLegend?: boolean;
+		/** Puts the legend beside the title instead of under the chart. */
+		legendInHeader?: boolean;
 		emptyMessage?: string;
 		/** Shared cursor across every panel using the same key. */
 		syncKey?: string;
@@ -45,7 +49,9 @@
 		formatValue,
 		height = 200,
 		curve = 'linear',
+		bars = false,
 		showLegend = true,
+		legendInHeader = false,
 		emptyMessage = 'No data in this time range.',
 		syncKey,
 		onBrush
@@ -73,7 +79,11 @@
 	}
 
 	function makeOpts(UPlot: typeof uPlotLib): Omit<uPlotLib.Options, 'width' | 'height'> {
-		const paths = curve === 'spline' ? UPlot.paths.spline?.() : UPlot.paths.linear?.();
+		const paths = bars
+			? UPlot.paths.bars?.({ size: [0.96, 64, 1], align: 0, gap: 1 })
+			: curve === 'spline'
+				? UPlot.paths.spline?.()
+				: UPlot.paths.linear?.();
 		const axisStroke = baseContentAt(0.65);
 		const gridStroke = baseContentAt(0.1);
 		const [r0, r1] = xRange;
@@ -88,16 +98,18 @@
 			uplotSeries.push({
 				label: s.label,
 				stroke: colors[i],
-				width: 1.5,
+				fill: bars ? colors[i] : undefined,
+				width: bars ? 0 : 1.5,
+				alpha: bars ? 0.5 : 1,
 				paths,
-				spanGaps: true,
-				points: { show: showPoint },
+				spanGaps: !bars,
+				points: { show: !bars && showPoint },
 				show: vis[i]
 			});
 		});
 
 		return {
-			padding: [12, 8, 0, 0],
+			padding: [12, 0, 0, 0],
 			cursor: {
 				drag: { x: brush !== undefined, y: false, setScale: false },
 				points: { show: false },
@@ -142,7 +154,14 @@
 					stroke: axisStroke,
 					grid: { show: true, stroke: gridStroke, width: 0.8 },
 					ticks: { show: false },
-					size: 56,
+					gap: 6,
+					// Fits the widest label instead of reserving a fixed gutter.
+					size: (u, values, axisIdx) => {
+						// Resolved at runtime to [css, px] despite the `string` typing.
+						u.ctx.font = (u.axes[axisIdx].font as unknown as [string])[0];
+						const widest = Math.max(0, ...(values ?? []).map((v) => u.ctx.measureText(v).width));
+						return Math.ceil(widest / UPlot.pxRatio) + 8;
+					},
 					values: (_u, splits) => splits.map((v) => formatValue(v))
 				}
 			]
@@ -153,10 +172,15 @@
 <section class="border-line rounded-box border p-4" aria-label={title}>
 	<header class="pb-3">
 		<div class="flex items-start justify-between gap-4">
-			<div>
-				<h2 class="section-label">{title}</h2>
-				{#if description}
-					<p class="text-subtle mt-1 text-xs">{description}</p>
+			<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+				<div>
+					<h2 class="section-label">{title}</h2>
+					{#if description}
+						<p class="text-subtle mt-1 text-xs">{description}</p>
+					{/if}
+				</div>
+				{#if showLegend && legendInHeader && data}
+					<UplotLegend items={legendItems} onToggle={toggle} inline />
 				{/if}
 			</div>
 			{#if summary}
@@ -195,7 +219,7 @@
 				{/snippet}
 			</UplotChart>
 		</div>
-		{#if showLegend}
+		{#if showLegend && !legendInHeader}
 			<UplotLegend items={legendItems} onToggle={toggle} />
 		{/if}
 	{/if}

@@ -1,10 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { MediaQuery } from 'svelte/reactivity';
-	import { Activity, PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-svelte';
+	import {
+		Activity,
+		PanelLeftClose,
+		PanelLeftOpen,
+		Search,
+		Settings,
+		Waypoints
+	} from 'lucide-svelte';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
+	import { openedFromExplorer } from '$lib/utils/trace-params';
 	import { readString, writeString } from '$lib/utils/safe-storage';
 
 	type User = { id: string; name: string | null; email: string };
@@ -20,8 +28,14 @@
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
 	const onMonitoring = $derived(path.startsWith('/monitoring'));
-	// Traces and shared searches are only ever reached from a log, so they keep Search lit.
-	const onSearch = $derived(path === '/' || path.startsWith('/traces') || path.startsWith('/s/'));
+	const onTraceDetail = $derived(path.startsWith('/traces/'));
+	// A trace lights the page that opened it: the explorer, or (by default) the log search.
+	const fromExplorer = $derived(openedFromExplorer(page.url.searchParams.get('returnTo')));
+	const onTraces = $derived(path === '/traces' || (onTraceDetail && fromExplorer));
+	// Shared searches are only ever reached from a log, so they keep Search lit.
+	const onSearch = $derived(
+		path === '/' || path.startsWith('/s/') || (onTraceDetail && !fromExplorer)
+	);
 </script>
 
 <aside
@@ -44,6 +58,7 @@
 
 	<nav aria-label="Primary" class="flex flex-1 flex-col gap-0.5 px-2 py-3">
 		<SidebarNavItem href="/" label="Search" icon={Search} active={onSearch} {collapsed} />
+		<SidebarNavItem href="/traces" label="Traces" icon={Waypoints} active={onTraces} {collapsed} />
 		<SidebarNavItem
 			href="/monitoring"
 			label="Services"

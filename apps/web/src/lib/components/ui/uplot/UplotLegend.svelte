@@ -1,10 +1,16 @@
 <script lang="ts">
 	type Item = { key: string; label: string; color: string; visible: boolean };
 
-	let { items, onToggle }: { items: Item[]; onToggle: (index: number) => void } = $props();
+	let {
+		items,
+		onToggle,
+		inline = false
+	}: { items: Item[]; onToggle: (index: number) => void; inline?: boolean } = $props();
 </script>
 
-<div class="flex flex-wrap items-center justify-center gap-4 pt-3">
+<div
+	class={['flex flex-wrap items-center', inline ? 'gap-x-3 gap-y-1' : 'justify-center gap-4 pt-3']}
+>
 	{#each items as item, i (item.key)}
 		<button
 			type="button"

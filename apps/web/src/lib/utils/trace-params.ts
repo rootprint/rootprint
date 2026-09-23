@@ -5,6 +5,10 @@
  * on the span that matched rather than on the root. `returnTo` goes through URLSearchParams because
  * the explorer URL carries `&`.
  */
+/** A trace opened from the explorer returns there; any other `returnTo` is a log search. */
+export const openedFromExplorer = (returnTo: string | null): boolean =>
+	returnTo?.startsWith('/traces') ?? false;
+
 export function traceDetailHref(
 	traceId: string,
 	opts: {

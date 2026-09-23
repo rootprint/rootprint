@@ -1,8 +1,11 @@
 import { composeQuery } from 'api/query';
+import type { ExploreSort, ExploreStatus } from 'api/constants';
+import type { InferResponseType } from 'hono/client';
 
 import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { ApiError, readApiError, toFieldErrors } from '$lib/api/errors';
 import { searchLogs } from '$lib/api/log-search';
+import { chartIntervalSeconds, formatInterval } from '$lib/utils/histogram';
 import { resolveWindow } from '$lib/utils/time-range';
 import {
 	SPAN_ID_FIELD,
@@ -52,4 +55,73 @@ export async function fetchSpanLogCounts(
 		counts.set(spanId, (counts.get(spanId) ?? 0) + 1);
 	}
 	return counts;
+}
+
+const explore = client.api.traces.explore;
+
+export type ExploreOverview = InferResponseType<typeof explore.overview.$get, 200>;
+export type ExploreBucket = ExploreOverview['buckets'][number];
+export type ExploreSummary = ExploreOverview['summary'];
+export type ExploreOperation = ExploreOverview['operations'][number];
+export type ExploreSpans = InferResponseType<typeof explore.spans.$get, 200>;
+export type ExploreSpanRow = ExploreSpans['rows'][number];
+
+export type ExploreFilters = {
+	startTs: number;
+	endTs: number;
+	service: string | null;
+	operation: string | null;
+	minMs: number | null;
+	maxMs: number | null;
+	status: ExploreStatus;
+	q: string;
+};
+
+/** A failure the user fixes in the query box: Quickwit's parse error or the API's own check on `q`. */
+export function queryErrorOf(error: unknown): string | null {
+	if (!(error instanceof ApiError)) return null;
+	if (error.code === 'QUICKWIT_VALIDATION') return error.message;
+	return error.body === undefined ? null : (toFieldErrors(error.body)['q'] ?? null);
+}
+
+function filterQuery(filters: ExploreFilters) {
+	return {
+		startTs: String(filters.startTs),
+		endTs: String(filters.endTs),
+		service: filters.service ?? undefined,
+		operation: filters.operation ?? undefined,
+		minMs: filters.minMs === null ? undefined : String(filters.minMs),
+		maxMs: filters.maxMs === null ? undefined : String(filters.maxMs),
+		status: filters.status,
+		q: filters.q === '' ? undefined : filters.q
+	};
+}
+
+export async function fetchExploreOverview(filters: ExploreFilters): Promise<ExploreOverview> {
+	const res = await explore.overview.$get({
+		query: {
+			...filterQuery(filters),
+			interval: formatInterval(chartIntervalSeconds(filters.endTs - filters.startTs))
+		}
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to load trace overview');
+	return res.json();
+}
+
+export async function fetchExploreSpans(
+	input: ExploreFilters & { sort: ExploreSort; limit: number; offset: number; signal?: AbortSignal }
+): Promise<ExploreSpans> {
+	const res = await explore.spans.$get(
+		{
+			query: {
+				...filterQuery(input),
+				sort: input.sort,
+				limit: String(input.limit),
+				offset: String(input.offset)
+			}
+		},
+		{ init: { signal: input.signal } }
+	);
+	if (!res.ok) throw await readApiError(res, 'Failed to load spans');
+	return res.json();
 }

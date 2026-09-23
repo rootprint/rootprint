@@ -20,6 +20,7 @@
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { formatCount } from '$lib/utils/format';
+	import { paramOneOf, setTimeRangeParams } from '$lib/utils/query-params';
 
 	let { data } = $props();
 
@@ -31,10 +32,6 @@
 	type DetailTab = { id: DetailView; label: string; count?: string; error?: boolean };
 
 	const DETAIL_VIEWS = ['services', 'endpoints', 'dependencies', 'errors'] as const;
-
-	function paramOneOf<T extends string>(value: string | null, options: readonly T[]): T | null {
-		return options.includes(value as T) ? (value as T) : null;
-	}
 
 	const activeView = $derived(
 		paramOneOf(page.url.searchParams.get('view'), DETAIL_VIEWS) ?? 'overview'
@@ -76,15 +73,7 @@
 	}
 
 	function setRange(next: TimeRange) {
-		navigate((params) => {
-			params.delete('to');
-			if (next.type === 'relative') {
-				params.set('from', next.preset);
-			} else {
-				params.set('from', String(next.start));
-				params.set('to', String(next.end));
-			}
-		});
+		navigate((params) => setTimeRangeParams(params, next));
 	}
 
 	function setService(value: string) {

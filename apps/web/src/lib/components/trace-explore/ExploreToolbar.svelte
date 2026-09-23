@@ -1,0 +1,214 @@
+<script lang="ts">
+	import { CircleAlert, CircleCheck, RefreshCw, X } from 'lucide-svelte';
+
+	import type { ExploreFilters } from '$lib/api/traces';
+	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
+	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
+	import type { TimeRange } from '$lib/types';
+	import { paramWholeNumber } from '$lib/utils/query-params';
+
+	type FilterName = 'service' | 'operation' | 'status' | 'q';
+
+	type Props = {
+		filters: ExploreFilters;
+		timeRange: TimeRange;
+		services: string[];
+		queryError: string | null;
+		refreshing: boolean;
+		onFilter: (name: FilterName, value: string | null) => void;
+		onDuration: (minMs: number | null, maxMs: number | null) => void;
+		onRange: (range: TimeRange) => void;
+		onRefresh: () => void;
+	};
+
+	let {
+		filters,
+		timeRange,
+		services,
+		queryError,
+		refreshing,
+		onFilter,
+		onDuration,
+		onRange,
+		onRefresh
+	}: Props = $props();
+
+	const uid = $props.id();
+	const queryErrorId = `${uid}-query-error`;
+
+	const DURATION_PRESETS = [
+		{ id: 'any', label: 'Any duration', minMs: null, maxMs: null },
+		{ id: 'lt10ms', label: '< 10 ms', minMs: null, maxMs: 10 },
+		{ id: '10-100ms', label: '10–100 ms', minMs: 10, maxMs: 100 },
+		{ id: '100ms-1s', label: '100 ms – 1 s', minMs: 100, maxMs: 1_000 },
+		{ id: '1-10s', label: '1–10 s', minMs: 1_000, maxMs: 10_000 },
+		{ id: 'gt10s', label: '> 10 s', minMs: 10_000, maxMs: null }
+	] as const;
+
+	const presetId = $derived(
+		DURATION_PRESETS.find((p) => p.minMs === filters.minMs && p.maxMs === filters.maxMs)?.id ??
+			'custom'
+	);
+	let customOpen = $state(false);
+	const showCustom = $derived(customOpen || presetId === 'custom');
+
+	// Follows the applied query until the user edits it; a navigation resets it to the URL value.
+	let draft = $derived(filters.q);
+
+	function pickDuration(id: string) {
+		if (id === 'custom') {
+			customOpen = true;
+			return;
+		}
+		customOpen = false;
+		const preset = DURATION_PRESETS.find((p) => p.id === id);
+		if (preset !== undefined) onDuration(preset.minMs, preset.maxMs);
+	}
+
+	function applyCustom(event: SubmitEvent) {
+		event.preventDefault();
+		const form = event.currentTarget as HTMLFormElement;
+		const data = new FormData(form);
+		const minMs = paramWholeNumber(data.get('minMs') as string | null);
+		const maxMs = paramWholeNumber(data.get('maxMs') as string | null);
+		if (minMs !== null && maxMs !== null && minMs >= maxMs) {
+			const maxInput = form.elements.namedItem('maxMs') as HTMLInputElement;
+			maxInput.setCustomValidity('Must be greater than Min ms');
+			maxInput.reportValidity();
+			return;
+		}
+		onDuration(minMs, maxMs);
+	}
+
+	function applyQuery(event: SubmitEvent) {
+		event.preventDefault();
+		onFilter('q', draft.trim() || null);
+	}
+
+	function toggleStatus(status: 'error' | 'ok') {
+		onFilter('status', filters.status === status ? null : status);
+	}
+</script>
+
+<div class="border-line bg-base-100 flex h-12 shrink-0 items-center gap-2 border-b px-3">
+	<ServicePicker
+		{services}
+		value={filters.service}
+		onChange={(value) => onFilter('service', value || null)}
+		showLabel={false}
+	/>
+	<form class="min-w-0 flex-1" onsubmit={applyQuery}>
+		<input
+			type="search"
+			class={[
+				'input input-sm w-full font-mono text-xs placeholder:font-sans',
+				queryError !== null && 'input-error'
+			]}
+			value={draft}
+			oninput={(event) => (draft = event.currentTarget.value)}
+			placeholder="Search spans…"
+			title="Filter spans with a Quickwit query, e.g. span_attributes.http.response.status_code:503"
+			aria-label="Search spans"
+			aria-invalid={queryError !== null}
+			aria-describedby={queryError === null ? undefined : queryErrorId}
+		/>
+	</form>
+	<select
+		class="select select-sm text-ui w-auto shrink-0"
+		aria-label="Duration"
+		value={showCustom ? 'custom' : presetId}
+		onchange={(event) => pickDuration(event.currentTarget.value)}
+	>
+		{#each DURATION_PRESETS as preset (preset.id)}
+			<option value={preset.id}>{preset.label}</option>
+		{/each}
+		<option value="custom">Custom…</option>
+	</select>
+	<div class="join shrink-0" role="group" aria-label="Span status">
+		<button
+			type="button"
+			class={['btn btn-sm join-item', filters.status === 'error' && 'btn-error btn-soft']}
+			aria-pressed={filters.status === 'error'}
+			onclick={() => toggleStatus('error')}
+		>
+			<CircleAlert class="size-3.5" aria-hidden="true" />Error
+		</button>
+		<button
+			type="button"
+			class={['btn btn-sm join-item', filters.status === 'ok' && 'btn-success btn-soft']}
+			aria-pressed={filters.status === 'ok'}
+			onclick={() => toggleStatus('ok')}
+		>
+			<CircleCheck class="size-3.5" aria-hidden="true" />OK
+		</button>
+	</div>
+	<TimeRangePicker value={timeRange} onChange={onRange} />
+	<button
+		type="button"
+		class="btn btn-sm btn-ghost ml-auto shrink-0"
+		disabled={refreshing}
+		onclick={onRefresh}
+	>
+		<RefreshCw class="size-3.5 {refreshing ? 'animate-spin' : ''}" aria-hidden="true" />Refresh
+	</button>
+</div>
+
+{#if filters.operation !== null || showCustom || queryError !== null}
+	<div
+		class="border-line bg-base-100 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-3 py-2 text-xs"
+	>
+		{#if filters.operation !== null}
+			<span class="badge badge-sm badge-neutral badge-soft gap-1 font-mono">
+				<span class="max-w-[24rem] truncate" title={filters.operation}>
+					operation "{filters.operation}"
+				</span>
+				<button
+					type="button"
+					class="ml-0.5 cursor-pointer opacity-60 hover:opacity-100"
+					aria-label={`Remove operation filter ${filters.operation}`}
+					title="Remove filter"
+					onclick={() => onFilter('operation', null)}
+				>
+					<X class="h-3 w-3" />
+				</button>
+			</span>
+		{/if}
+		{#if showCustom}
+			<form
+				class="flex flex-wrap items-center gap-2"
+				onsubmit={applyCustom}
+				oninput={(event) =>
+					(event.currentTarget.elements.namedItem('maxMs') as HTMLInputElement).setCustomValidity(
+						''
+					)}
+			>
+				<label class="flex items-center gap-1.5">
+					Min ms
+					<input
+						name="minMs"
+						type="number"
+						min="0"
+						step="1"
+						class="input input-xs w-24"
+						value={filters.minMs ?? ''}
+					/>
+				</label>
+				<label class="flex items-center gap-1.5">
+					Below ms
+					<input
+						name="maxMs"
+						type="number"
+						min="1"
+						step="1"
+						class="input input-xs w-24"
+						value={filters.maxMs ?? ''}
+					/>
+				</label>
+				<button type="submit" class="btn btn-xs">Apply</button>
+			</form>
+		{/if}
+		{#if queryError !== null}
+			<p id={queryErrorId} class="text-error" role="alert">{queryError}</p>
+		{/if}
+	</div>
+{/if}

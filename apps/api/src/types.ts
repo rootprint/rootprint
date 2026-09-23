@@ -31,7 +31,14 @@ import type {
 	ServiceErrorsResponseSchema,
 	ServiceHealthResponseSchema
 } from './schemas/responses/monitoring.js';
-import type { TraceResponseSchema, TraceSpanSchema } from './schemas/responses/traces.js';
+import type {
+	ExploreOperationSchema,
+	ExploreOverviewResponseSchema,
+	ExploreSpanRowSchema,
+	ExploreSpansResponseSchema,
+	TraceResponseSchema,
+	TraceSpanSchema
+} from './schemas/responses/traces.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
 import type {
 	ApiKeyResponse as ApiKeyResponseSchema,
@@ -301,6 +308,14 @@ export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;
 export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
 
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
+
+export type ExploreSpanRow = v.InferOutput<typeof ExploreSpanRowSchema>;
+
+export type ExploreSpansResponse = v.InferOutput<typeof ExploreSpansResponseSchema>;
+
+export type ExploreOperation = v.InferOutput<typeof ExploreOperationSchema>;
+
+export type ExploreOverviewResponse = v.InferOutput<typeof ExploreOverviewResponseSchema>;
 
 export type MonitoringBucket = v.InferOutput<typeof MonitoringBucketSchema>;
 

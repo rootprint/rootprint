@@ -1,4 +1,4 @@
-import { AggregationBuilder, QuickwitError, QuickwitErrorCode } from 'quickwit-js';
+import { AggregationBuilder } from 'quickwit-js';
 import type {
 	AggregationBucket,
 	BucketAggregationResult,
@@ -7,7 +7,6 @@ import type {
 	SearchResponse
 } from 'quickwit-js';
 
-import { logger } from '../lib/logger.js';
 import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import { escapeFilterValue } from '../lib/query/compose-query.js';
 import {
@@ -26,19 +25,34 @@ import type {
 	ServiceErrorsResponse,
 	ServiceHealthResponse
 } from '../types.js';
-import { asBuckets, termsAgg } from '../utils/aggregations.js';
+import {
+	asBuckets,
+	metric,
+	P50,
+	P95,
+	percentile,
+	summaryPercentile,
+	termsAgg
+} from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
-import { asRecord, asText, SPAN_KIND_TAGS } from './trace.service.js';
+import {
+	asRecord,
+	asText,
+	DURATION_FIELD,
+	ERROR_SPANS,
+	httpStatusOf,
+	NAME_FIELD,
+	NANOS_PER_MILLI,
+	orEmptyStore,
+	SERVICE_FIELD,
+	SPAN_KIND_TAGS,
+	TIMESTAMP_FIELD
+} from './trace.service.js';
 
 /** SpanKind 2 is SERVER: one span per inbound request. */
 const SERVER_SPANS = 'span_kind:2';
 const DEPENDENCY_SPANS = 'span_kind:IN [3 4]';
-const ERROR_SPANS = 'span_status.code:error';
 
-const TIMESTAMP_FIELD = 'span_start_timestamp_nanos';
-const DURATION_FIELD = 'span_duration_millis';
-const NAME_FIELD = 'span_name';
-const SERVICE_FIELD = 'service_name';
 const HTTP_ROUTE_FIELD = 'span_attributes.http.route';
 const URL_PATH_FIELD = 'span_attributes.url.path';
 const HTTP_TARGET_FIELD = 'span_attributes.http.target';
@@ -55,7 +69,6 @@ const ERROR_KIND_QUERIES: Record<NonNullable<ServiceErrorsInput['kind']>, string
 };
 
 const MESSAGE_MAX_CHARS = 300;
-const NANOS_PER_MILLI = 1_000_000;
 
 /** The first event carrying exception data, so `message` never mixes two events. */
 function exceptionAttributes(events: unknown): Record<string, unknown> {
@@ -70,20 +83,6 @@ function exceptionAttributes(events: unknown): Record<string, unknown> {
 		}
 	}
 	return {};
-}
-
-function coerceStatus(raw: unknown): number | null {
-	if (typeof raw !== 'number' && (typeof raw !== 'string' || raw === '')) return null;
-	const status = Number(raw);
-	return Number.isFinite(status) ? status : null;
-}
-
-/** Modern OTel SDKs emit `http.response.status_code`; older ones emit `http.status_code`. */
-function httpStatusOf(attributes: Record<string, unknown>): number | null {
-	return (
-		coerceStatus(attributes['http.response.status_code']) ??
-		coerceStatus(attributes['http.status_code'])
-	);
 }
 
 export function toErrorRow(hit: Record<string, unknown>): MonitoringErrorRow | null {
@@ -131,29 +130,9 @@ const DEPENDENCY_LIMIT = 20;
 const PEERS_PER_DEPENDENCY = 3;
 
 const PERCENTS = [50, 95];
-const P50 = '50.0';
-const P95 = '95.0';
-
-const finite = (value: unknown): number | null =>
-	typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 const isHttpMethod = (value: string): boolean =>
 	/^(?:CONNECT|DELETE|GET|HEAD|OPTIONS|PATCH|POST|PUT|TRACE)$/i.test(value);
-
-const percentile = (bucket: AggregationBucket, percent: string): number | null =>
-	finite((bucket['pct'] as { values?: Record<string, unknown> } | undefined)?.values?.[percent]);
-
-const summaryPercentile = (
-	result: PercentilesAggregationResult | undefined,
-	percent: string
-): number | null => {
-	const values = result?.values;
-	if (values === undefined || Array.isArray(values)) return null;
-	return finite(values[percent]);
-};
-
-const metric = (bucket: AggregationBucket, name: string): number | null =>
-	finite((bucket[name] as { value?: unknown } | undefined)?.value);
 
 function mergeTimeBuckets(
 	totals: AggregationBucket[],
@@ -512,44 +491,30 @@ export async function getServiceHealth(
 			.timeRange(...timeRange)
 	);
 
-	let responses: [
-		SearchResponse,
-		SearchResponse | undefined,
-		SearchResponse[],
-		SearchResponse,
-		SearchResponse,
-		SearchResponse | undefined,
-		SearchResponse
-	];
-	try {
-		responses = await Promise.all([
-			idx.search(servicesQuery),
-			serviceNamesQuery === undefined ? undefined : idx.search(serviceNamesQuery),
-			Promise.all(endpointQueries.map((query) => idx.search(query))),
-			idx.search(errorsQuery),
-			idx.search(totalsQuery),
-			dependencyQuery === undefined ? undefined : idx.search(dependencyQuery),
-			idx.search(allErrorsQuery)
-		]);
-	} catch (error) {
-		if (error instanceof QuickwitError && error.code === QuickwitErrorCode.NOT_FOUND) {
-			logger.warn({ traceIndexId }, 'span store not found — monitoring will read as empty');
-			return {
-				telemetryStatus: 'span_store_missing',
-				services: [],
-				serviceNames: [],
-				servicesTruncated: false,
-				intervalSeconds: intervalSec,
-				summary: { requests: 0, errors: 0, errorSpans: 0, p50: null, p95: null },
-				buckets: [],
-				latencyKeysMs: [],
-				serviceLatencies: [],
-				endpoints: [],
-				failingOperations: [],
-				dependencies: []
-			};
-		}
-		return translateQuickwitError(error);
+	const responses = await Promise.all([
+		idx.search(servicesQuery),
+		serviceNamesQuery === undefined ? undefined : idx.search(serviceNamesQuery),
+		Promise.all(endpointQueries.map((query) => idx.search(query))),
+		idx.search(errorsQuery),
+		idx.search(totalsQuery),
+		dependencyQuery === undefined ? undefined : idx.search(dependencyQuery),
+		idx.search(allErrorsQuery)
+	]).catch(orEmptyStore(traceIndexId, 'monitoring'));
+	if (responses === null) {
+		return {
+			telemetryStatus: 'span_store_missing',
+			services: [],
+			serviceNames: [],
+			servicesTruncated: false,
+			intervalSeconds: intervalSec,
+			summary: { requests: 0, errors: 0, errorSpans: 0, p50: null, p95: null },
+			buckets: [],
+			latencyKeysMs: [],
+			serviceLatencies: [],
+			endpoints: [],
+			failingOperations: [],
+			dependencies: []
+		};
 	}
 
 	const [

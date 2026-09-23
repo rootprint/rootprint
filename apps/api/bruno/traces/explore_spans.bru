@@ -1,0 +1,29 @@
+meta {
+  name: Explore Traces Spans
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/traces/explore/spans
+  body: none
+  auth: bearer
+}
+
+params:query {
+  startTs: 1723989600
+  endTs: 1723990500
+  ~service: frontend
+  ~operation: GET /cart
+  ~minMs: 100
+  ~maxMs: 1000
+  ~status: error
+  ~q: span_attributes.http.response.status_code:500
+  ~sort: -duration
+  ~limit: 50
+  ~offset: 0
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}

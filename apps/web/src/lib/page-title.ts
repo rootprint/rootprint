@@ -6,6 +6,7 @@ const APP_NAME = 'Rootprint';
 const STATIC_TITLES: Record<string, string> = {
 	'/': 'Logs',
 	'/monitoring': 'Services',
+	'/traces': 'Traces',
 	'/s/[code]': 'Shared log',
 	'/traces/[traceId]': 'Trace',
 	'/auth/sign-in': 'Sign in',

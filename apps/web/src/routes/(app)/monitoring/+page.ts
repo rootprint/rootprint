@@ -1,13 +1,13 @@
 import type { PageLoad } from './$types';
 
 import { getServiceHealth } from '$lib/api/monitoring';
-import { deserialize } from '$lib/utils/query-params';
+import { parseTimeRange } from '$lib/utils/query-params';
 import { resolveWindow } from '$lib/utils/time-range';
 
 const ENDPOINT_ROWS = 30;
 
 export const load: PageLoad = ({ url }) => {
-	const { timeRange } = deserialize(url.searchParams);
+	const timeRange = parseTimeRange(url.searchParams);
 	const { startTs, endTs } = resolveWindow(timeRange);
 	const service = url.searchParams.get('service')?.trim() || null;
 

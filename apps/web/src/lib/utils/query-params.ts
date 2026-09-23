@@ -7,6 +7,31 @@ const DEFAULTS = {
 	sortDirection: 'desc' as SortDirection
 };
 
+export function paramOneOf<T extends string>(
+	value: string | null,
+	options: readonly T[]
+): T | null {
+	return options.includes(value as T) ? (value as T) : null;
+}
+
+/** A non-negative integer, or null for anything else (missing, blank, fractional, negative). */
+export function paramWholeNumber(value: string | null): number | null {
+	if (value === null || value.trim() === '') return null;
+	const n = Number(value);
+	return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+/** Writes `from`/`to` for a range, dropping a stale `to` when switching to a preset. */
+export function setTimeRangeParams(params: URLSearchParams, range: TimeRange): void {
+	params.delete('to');
+	if (range.type === 'relative') {
+		params.set('from', range.preset);
+	} else {
+		params.set('from', String(range.start));
+		params.set('to', String(range.end));
+	}
+}
+
 function encodeFilter(f: Filter): string {
 	return `${f.exclude ? '-' : ''}${f.field}:${f.value}`;
 }
@@ -66,13 +91,10 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 	return params;
 }
 
-export function deserialize(params: URLSearchParams): ParsedQuery {
-	const index = params.get('index');
-	const query = params.get('q') ?? DEFAULTS.query;
-
+/** Reads only `from`/`to`, so a load function using it doesn't rerun on unrelated params. */
+export function parseTimeRange(params: URLSearchParams): TimeRange {
 	const from = params.get('from');
 	const to = params.get('to');
-	let timeRange: TimeRange;
 
 	const fromNum = from !== null && from !== '' ? Number(from) : NaN;
 	const toNum = to !== null && to !== '' ? Number(to) : NaN;
@@ -80,12 +102,16 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 	// Floored, not rejected: the API's TimeRangeSchema requires integer epoch seconds, but a
 	// fractional bookmark should still search its intended window.
 	if (Number.isFinite(fromNum) && Number.isFinite(toNum) && fromNum >= 0 && fromNum < toNum) {
-		timeRange = { type: 'absolute', start: Math.floor(fromNum), end: Math.ceil(toNum) };
-	} else if (from !== null && isPreset(from)) {
-		timeRange = { type: 'relative', preset: from };
-	} else {
-		timeRange = { type: 'relative', preset: DEFAULTS.timeRangePreset };
+		return { type: 'absolute', start: Math.floor(fromNum), end: Math.ceil(toNum) };
 	}
+	if (from !== null && isPreset(from)) return { type: 'relative', preset: from };
+	return { type: 'relative', preset: DEFAULTS.timeRangePreset };
+}
+
+export function deserialize(params: URLSearchParams): ParsedQuery {
+	const index = params.get('index');
+	const query = params.get('q') ?? DEFAULTS.query;
+	const timeRange = parseTimeRange(params);
 
 	const sort = params.get('sort');
 	const sortDirection: SortDirection =
