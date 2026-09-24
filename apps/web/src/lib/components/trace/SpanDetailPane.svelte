@@ -162,7 +162,7 @@
 <div class="flex h-full min-h-0 flex-col">
 	<div class="border-line flex items-start justify-between gap-3 border-b px-4 py-3.5">
 		<div class="min-w-0">
-			<div class="text-base-content/60 flex min-w-0 items-center gap-1.5 text-xs">
+			<div class="text-subtle flex min-w-0 items-center gap-1.5 text-xs">
 				<span
 					class="h-2 w-2 shrink-0 rounded-full"
 					style={`background-color:${serviceColor(span.serviceName)}`}
@@ -176,7 +176,7 @@
 		</div>
 		<div class="flex shrink-0 items-center gap-1.5">
 			{#if logsHref}
-				<a href={logsHref} target="_blank" rel="noopener" class="btn btn-primary btn-xs gap-1.5">
+				<a href={logsHref} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
 					<ScrollText class="h-3.5 w-3.5" />
 					Logs for this span
 				</a>
@@ -210,8 +210,11 @@
 				aria-disabled={isDisabled(tab.id)}
 				class={[
 					'tab-underline shrink-0 px-3 py-2.5 text-xs transition-colors',
-					isDisabled(tab.id) && 'text-base-content/30 cursor-not-allowed',
-					activeTab === tab.id ? 'text-base-content font-medium' : 'text-base-content/60'
+					isDisabled(tab.id)
+						? 'text-base-content/30 cursor-not-allowed'
+						: activeTab === tab.id
+							? 'text-base-content font-medium'
+							: 'text-subtle'
 				]}
 				onclick={() => {
 					if (!isDisabled(tab.id)) activeTab = tab.id;
@@ -259,7 +262,7 @@
 									{/if}
 								</div>
 								{#if errorMessage}
-									<p class="text-base-content/70 mt-1 text-xs leading-5 break-words">
+									<p class="text-muted mt-1 text-xs leading-5 break-words">
 										{errorMessage}
 									</p>
 								{/if}
@@ -438,7 +441,7 @@
 
 									<div class="border-line border-t px-3 py-2.5">
 										<pre
-											class="bg-base-200 text-base-content/70 rounded p-2 font-mono text-xs break-words whitespace-pre-wrap">{query.statement}</pre>
+											class="bg-base-200 text-muted rounded p-2 font-mono text-xs break-words whitespace-pre-wrap">{query.statement}</pre>
 										<ol class="mt-2">
 											{#each query.calls as call (call.spanId)}
 												<li>
@@ -474,7 +477,8 @@
 					<section>
 						<h3 class="section-label mb-2">Event timeline</h3>
 
-						<ol>
+						<!-- Row-start offset lines the dot up with the card header's first text line. -->
+						<ol class="timeline timeline-vertical timeline-compact">
 							{#each span.events as event, i (i)}
 								{@const isException = event.name === 'exception'}
 								{@const stacktrace = isException ? event.fields['exception.stacktrace'] : ''}
@@ -482,20 +486,25 @@
 								{@const fields = toFields(event.fields).filter(
 									(f) => !isException || !EXCEPTION_KEYS.includes(f.name)
 								)}
-								<li class="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-2.5 pb-3 last:pb-0">
-									<div class="relative flex justify-center" aria-hidden="true">
-										{#if i < span.events.length - 1}
-											<span class="bg-line absolute top-5 bottom-[-2rem] w-px"></span>
-										{/if}
-										<span
-											class={[
-												'border-base-100 relative mt-4 h-2.5 w-2.5 rounded-full border-2',
-												isException ? 'bg-error' : 'bg-base-content'
-											]}
-										></span>
-									</div>
+								{@const isLast = i === span.events.length - 1}
+								<li class="[--timeline-row-start:1rem]">
+									{#if i > 0}
+										<hr class="bg-line w-px" aria-hidden="true" />
+									{/if}
+									<div
+										class={[
+											'timeline-middle size-2 rounded-full',
+											isException ? 'bg-error' : 'bg-base-content'
+										]}
+										aria-hidden="true"
+									></div>
 
-									<article class="border-line overflow-hidden rounded-md border">
+									<article
+										class={[
+											'timeline-end border-line m-0 ms-2.5 min-w-0 justify-self-stretch overflow-hidden rounded-md border',
+											!isLast && 'mb-3'
+										]}
+									>
 										<header class="flex min-w-0 items-start justify-between gap-3 px-3 py-2.5">
 											<div class="min-w-0">
 												<h4
@@ -536,10 +545,13 @@
 											<div class="border-line border-t px-3 py-2.5">
 												<p class="section-label mb-1.5">Stack trace</p>
 												<pre
-													class="bg-base-200 text-base-content/70 max-h-80 overflow-auto rounded p-2 font-mono text-xs whitespace-pre">{stacktrace}</pre>
+													class="bg-base-200 text-muted max-h-80 overflow-auto rounded p-2 font-mono text-xs whitespace-pre">{stacktrace}</pre>
 											</div>
 										{/if}
 									</article>
+									{#if !isLast}
+										<hr class="bg-line w-px" aria-hidden="true" />
+									{/if}
 								</li>
 							{/each}
 						</ol>

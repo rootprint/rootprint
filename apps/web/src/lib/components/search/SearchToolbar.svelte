@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
 	import { traceDetailHref } from '$lib/utils/trace-params';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
@@ -222,13 +223,14 @@
 	</select>
 
 	<div class="relative min-w-0 flex-1">
-		<input
+		<SearchInput
+			class="w-full"
+			inputClass="font-mono text-xs placeholder:font-sans"
 			type="text"
-			class="input input-sm w-full font-mono text-xs placeholder:font-sans"
-			aria-label="Search logs"
+			label="Search logs"
 			placeholder="Search logs… (or paste a trace ID)"
 			title={'Search logs with a Quickwit query. A bare 32-character hex trace ID opens that trace instead — wrap it in quotes to search for it as text.'}
-			bind:this={inputEl}
+			bind:ref={inputEl}
 			bind:value={queryInput}
 			onfocus={() => {
 				focused = true;

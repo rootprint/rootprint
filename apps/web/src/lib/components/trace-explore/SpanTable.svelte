@@ -14,12 +14,15 @@
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
+	import SortButton from '$lib/components/ui/SortButton.svelte';
 	import { RequestGuard } from '$lib/stores/request-guard';
 	import { formatCount } from '$lib/utils/format';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { formatEpochMillis, formatSpanDuration } from '$lib/utils/time';
 	import { traceDetailHref } from '$lib/utils/trace-params';
+
+	type SortField = 'start' | 'duration';
 
 	type Props = {
 		filters: ExploreFilters;
@@ -106,11 +109,11 @@
 		void fetchPage(offset);
 	}
 
-	function toggleSort(field: 'start' | 'duration') {
+	function toggleSort(field: SortField) {
 		onSort(sort === `-${field}` ? field : `-${field}`);
 	}
 
-	function ariaSort(field: 'start' | 'duration'): 'ascending' | 'descending' | 'none' {
+	function ariaSort(field: SortField): 'ascending' | 'descending' | 'none' {
 		if (sort === `-${field}`) return 'descending';
 		if (sort === field) return 'ascending';
 		return 'none';
@@ -138,16 +141,20 @@
 				<thead>
 					<tr class="bg-base-200/70 text-muted font-medium">
 						<th scope="col" aria-sort={ariaSort('start')}>
-							<button type="button" onclick={() => toggleSort('start')}>
-								Time {sort === '-start' ? '↓' : sort === 'start' ? '↑' : ''}
-							</button>
+							<SortButton
+								label="Time"
+								direction={ariaSort('start')}
+								onclick={() => toggleSort('start')}
+							/>
 						</th>
 						<th scope="col">Service</th>
 						<th scope="col">Operation</th>
 						<th scope="col" class="text-right" aria-sort={ariaSort('duration')}>
-							<button type="button" onclick={() => toggleSort('duration')}>
-								Duration {sort === '-duration' ? '↓' : sort === 'duration' ? '↑' : ''}
-							</button>
+							<SortButton
+								label="Duration"
+								direction={ariaSort('duration')}
+								onclick={() => toggleSort('duration')}
+							/>
 						</th>
 						<th scope="col">Status</th>
 						<th scope="col">Trace ID</th>

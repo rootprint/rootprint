@@ -34,7 +34,7 @@
 		{
 			key: 'requests',
 			label: 'Requests',
-			cssVar: 'var(--color-success)',
+			cssVar: 'var(--chart-1)',
 			values: buckets.map((b) => b.requests)
 		}
 	]);
@@ -54,7 +54,7 @@
 		{onBrush}
 	/>
 	<UplotLinePanel
-		title="Errors over time"
+		title="Error rate"
 		summary={`${formatCount(summary.errors)} errors`}
 		{xs}
 		{xRange}

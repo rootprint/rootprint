@@ -146,7 +146,7 @@
 		role="listitem"
 		aria-current={isSelected ? 'true' : undefined}
 		class={[
-			'border-line/40 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b',
+			'grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)]',
 			!isSelected && 'even:bg-base-200/50',
 			isSelected && 'bg-base-300',
 			dimmed && 'opacity-35',
@@ -245,7 +245,7 @@
 				<span
 					class={[
 						'absolute top-1/2 ml-1.5 -translate-y-1/2 font-mono text-[10px] whitespace-nowrap',
-						onScreen ? 'text-base-content/60' : 'text-base-content/30'
+						onScreen ? 'text-subtle' : 'text-base-content/30'
 					]}
 					style={`left:calc(${left}% + max(${width}%, ${MIN_BAR_PX}px))`}
 				>
@@ -264,7 +264,7 @@
 <div class="flex h-full flex-col">
 	{#if model.spanCount === 0}
 		<div class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-			<p role="status" class="text-base-content/60 text-sm">
+			<p role="status" class="text-subtle text-sm">
 				No spans found for this trace. They may not have been ingested, or they may fall outside the
 				trace index's retention window.
 			</p>

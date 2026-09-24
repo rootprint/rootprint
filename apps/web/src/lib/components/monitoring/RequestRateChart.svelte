@@ -26,7 +26,7 @@
 		{
 			key: 'requests',
 			label: 'Requests / min',
-			cssVar: 'var(--color-success)',
+			cssVar: 'var(--chart-1)',
 			// The first and last buckets are usually clipped by the range edges, so rate uses the
 			// covered seconds rather than the full interval.
 			values: buckets.map((bucket) => {

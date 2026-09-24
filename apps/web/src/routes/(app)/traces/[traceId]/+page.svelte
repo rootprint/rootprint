@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ArrowLeft, Check, Copy, ScrollText, Search } from 'lucide-svelte';
+	import { ArrowLeft, Check, Copy, ScrollText } from 'lucide-svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { slide } from 'svelte/transition';
@@ -10,6 +10,7 @@
 	import TracePane from '$lib/components/trace/TracePane.svelte';
 	import { spanSearchText } from '$lib/components/trace/trace-model';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import { pluralize } from '$lib/utils/format';
 	import { writeLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
@@ -146,11 +147,11 @@
 			<div class="min-w-0">
 				<p class="eyebrow">Operation</p>
 				<div class="mt-0.5 flex min-w-0 items-baseline gap-3">
-					<h1 class="truncate font-mono text-lg font-medium">
+					<h1 class="truncate font-mono text-lg">
 						{root ? root.name : 'Trace'}
 					</h1>
 					{#if hasSpans}
-						<p class="text-base-content/60 shrink-0 font-mono text-lg tabular-nums">
+						<p class="text-subtle shrink-0 font-mono text-lg tabular-nums">
 							{formatSpanDuration(model.durationMicros)}
 						</p>
 					{/if}
@@ -205,7 +206,7 @@
 					</span>
 				{/each}
 				<span class="bg-line h-3 w-px"></span>
-				<span class="text-base-content/60 font-mono tabular-nums">
+				<span class="text-subtle font-mono tabular-nums">
 					{pluralize(model.spanCount, 'span')}
 				</span>
 				{#if firstError}
@@ -243,19 +244,18 @@
 
 	{#if hasSpans}
 		<div class="border-line border-b px-4 py-2">
-			<label class="input input-sm w-full gap-2">
-				<Search class="text-base-content/50 h-3.5 w-3.5" />
-				<input
-					type="text"
-					placeholder="Search spans by name, service, span ID or attribute"
-					aria-label="Search spans"
-					bind:value={filter}
-					onkeydown={(e) => {
-						if (e.key !== 'Enter') return;
-						e.preventDefault();
-						stepMatch(e.shiftKey ? -1 : 1);
-					}}
-				/>
+			<SearchInput
+				class="w-full"
+				type="text"
+				placeholder="Search spans by name, service, span ID or attribute"
+				label="Search spans"
+				bind:value={filter}
+				onkeydown={(e) => {
+					if (e.key !== 'Enter') return;
+					e.preventDefault();
+					stepMatch(e.shiftKey ? -1 : 1);
+				}}
+			>
 				{#if needle !== ''}
 					<span class="text-subtle shrink-0 font-mono text-xs tabular-nums" aria-live="polite">
 						{#if matchedSpans.length === 0}
@@ -265,7 +265,7 @@
 						{/if}
 					</span>
 				{/if}
-			</label>
+			</SearchInput>
 		</div>
 	{/if}
 

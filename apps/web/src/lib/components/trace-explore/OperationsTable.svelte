@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { ArrowDown, ArrowUp } from 'lucide-svelte';
-
 	import type { ExploreOperation } from '$lib/api/traces';
 	import { rowActivate } from '$lib/attachments/row-activate';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
+	import SortButton from '$lib/components/ui/SortButton.svelte';
 	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
 	import { serviceColor } from '$lib/utils/service-color';
 
@@ -62,19 +61,6 @@
 	}
 </script>
 
-{#snippet sortButton(key: SortKey, label: string)}
-	<button type="button" class="inline-flex items-center gap-1" onclick={() => sortBy(key)}>
-		{label}
-		{#if sortKey === key}
-			{#if descending}
-				<ArrowDown class="size-3" aria-hidden="true" />
-			{:else}
-				<ArrowUp class="size-3" aria-hidden="true" />
-			{/if}
-		{/if}
-	</button>
-{/snippet}
-
 {#if operations.length === 0}
 	<EmptyPanel title="No spans match these filters">
 		Try a wider time range or fewer filters.
@@ -86,17 +72,29 @@
 				<thead>
 					<tr class="bg-base-200/70 text-muted font-medium">
 						<th scope="col" aria-sort={ariaSort('operation')}>
-							{@render sortButton('operation', 'Operation')}
+							<SortButton
+								label="Operation"
+								direction={ariaSort('operation')}
+								onclick={() => sortBy('operation')}
+							/>
 						</th>
 						<th scope="col">Services</th>
 						<th scope="col" class="text-right" aria-sort={ariaSort('requests')}>
-							{@render sortButton('requests', 'Requests')}
+							<SortButton
+								label="Requests"
+								direction={ariaSort('requests')}
+								onclick={() => sortBy('requests')}
+							/>
 						</th>
 						<th scope="col" class="text-right" aria-sort={ariaSort('errorRate')}>
-							{@render sortButton('errorRate', 'Errors')}
+							<SortButton
+								label="Errors"
+								direction={ariaSort('errorRate')}
+								onclick={() => sortBy('errorRate')}
+							/>
 						</th>
 						<th scope="col" class="text-right" aria-sort={ariaSort('p95')}>
-							{@render sortButton('p95', 'P95')}
+							<SortButton label="P95" direction={ariaSort('p95')} onclick={() => sortBy('p95')} />
 						</th>
 					</tr>
 				</thead>

@@ -3,6 +3,7 @@
 
 	import type { ExploreFilters } from '$lib/api/traces';
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
+	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { paramWholeNumber } from '$lib/utils/query-params';
@@ -99,17 +100,12 @@
 		showLabel={false}
 	/>
 	<form class="min-w-0 flex-1" onsubmit={applyQuery}>
-		<input
-			type="search"
-			class={[
-				'input input-sm w-full font-mono text-xs placeholder:font-sans',
-				queryError !== null && 'input-error'
-			]}
-			value={draft}
-			oninput={(event) => (draft = event.currentTarget.value)}
-			placeholder="Search spans…"
-			title="Filter spans with a Quickwit query, e.g. span_attributes.http.response.status_code:503"
-			aria-label="Search spans"
+		<SearchInput
+			class={['w-full', queryError !== null && 'input-error']}
+			inputClass="font-mono text-xs placeholder:font-sans"
+			bind:value={draft}
+			placeholder="span_attributes.http.response.status_code:503"
+			label="Search spans"
 			aria-invalid={queryError !== null}
 			aria-describedby={queryError === null ? undefined : queryErrorId}
 		/>
@@ -192,27 +188,13 @@
 						''
 					)}
 			>
-				<label class="flex items-center gap-1.5">
-					Min ms
-					<input
-						name="minMs"
-						type="number"
-						min="0"
-						step="1"
-						class="input input-xs w-24"
-						value={filters.minMs ?? ''}
-					/>
+				<label class="input input-xs w-36">
+					<span class="label">Min ms</span>
+					<input name="minMs" type="number" min="0" step="1" value={filters.minMs ?? ''} />
 				</label>
-				<label class="flex items-center gap-1.5">
-					Below ms
-					<input
-						name="maxMs"
-						type="number"
-						min="1"
-						step="1"
-						class="input input-xs w-24"
-						value={filters.maxMs ?? ''}
-					/>
+				<label class="input input-xs w-36">
+					<span class="label">Below ms</span>
+					<input name="maxMs" type="number" min="1" step="1" value={filters.maxMs ?? ''} />
 				</label>
 				<button type="submit" class="btn btn-xs">Apply</button>
 			</form>

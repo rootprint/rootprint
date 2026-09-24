@@ -1,20 +1,28 @@
 <script lang="ts">
 	import { Search } from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
+	import type { ClassValue, HTMLInputAttributes } from 'svelte/elements';
 
 	let {
 		value = $bindable(''),
-		placeholder,
+		ref = $bindable(null),
 		label,
-		class: className = 'flex-1'
-	}: {
+		class: className = 'flex-1',
+		inputClass,
+		children,
+		...rest
+	}: Omit<HTMLInputAttributes, 'value' | 'class'> & {
 		value: string;
-		placeholder: string;
+		ref?: HTMLInputElement | null;
 		label: string;
-		class?: string;
+		class?: ClassValue;
+		inputClass?: ClassValue;
+		children?: Snippet;
 	} = $props();
 </script>
 
-<label class="input input-sm {className}">
-	<Search class="h-3.5 w-3.5 opacity-60" />
-	<input type="search" {placeholder} aria-label={label} bind:value />
+<label class={['input input-sm', className]}>
+	<Search class="size-3.5 shrink-0 opacity-60" aria-hidden="true" />
+	<input type="search" aria-label={label} class={inputClass} {...rest} bind:value bind:this={ref} />
+	{@render children?.()}
 </label>
