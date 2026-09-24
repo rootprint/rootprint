@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { LogHit } from '$lib/types';
 	import { levelColor } from '$lib/constants/level-colors';
-	import { formatLogRowTimestamp } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { formatCell } from '$lib/utils/column-width';
 	import { rowActivate } from '$lib/attachments/row-activate';
@@ -28,7 +28,7 @@
 
 	const parts = $derived(
 		[
-			formatLogRowTimestamp(hit.timestamp),
+			formatTimestamp(hit.timestamp),
 			...columns.map((c) => formatCell(getByPath(hit.raw, c)))
 		].filter((p) => p !== '')
 	);

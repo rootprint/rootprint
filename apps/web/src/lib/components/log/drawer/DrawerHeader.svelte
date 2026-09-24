@@ -4,7 +4,7 @@
 
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { levelColor } from '$lib/constants/level-colors';
-	import { formatLogRowTimestamp } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import type { LogHit } from '$lib/types';
 
 	export type DrawerTab = 'parameters' | 'traceback' | 'trace' | 'json' | 'context';
@@ -78,7 +78,7 @@
 				class="border-line bg-base-200/60 text-muted inline-flex h-7 items-center rounded border px-2 font-mono"
 				datetime={hit.timestamp}
 			>
-				{formatLogRowTimestamp(hit.timestamp)}
+				{formatTimestamp(hit.timestamp)}
 			</time>
 			{@render meta?.()}
 		</div>

@@ -9,7 +9,7 @@
 	import { baseContentAt } from '$lib/utils/chart-colors';
 	import { formatInterval } from '$lib/utils/histogram';
 	import { sortBySeverity } from '$lib/utils/severity';
-	import { formatChartDate, formatChartTime, formatChartTooltip } from '$lib/utils/time';
+	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
 
 	type Props = {
 		buckets: HistogramBucket[];
@@ -21,7 +21,6 @@
 
 	let { buckets, loading, error, collapsed = $bindable(false), onBrush }: Props = $props();
 
-	const SECONDS_PER_DAY = 86400;
 	const HEIGHT = 150;
 
 	const bucketWidthLabel = $derived.by<string | null>(() => {
@@ -100,7 +99,6 @@
 
 		const timestamps = columnarData?.uplot[0] ?? [];
 		const span = timestamps.length > 1 ? timestamps[timestamps.length - 1] - timestamps[0] : 0;
-		const useDate = span > SECONDS_PER_DAY;
 		const halfBucket = (timestamps.length > 1 ? timestamps[1] - timestamps[0] : 1) / 2;
 
 		const axisStroke = baseContentAt(0.65);
@@ -137,8 +135,7 @@
 					gap: 2,
 					size: 20,
 					space: 120,
-					values: (_u, splits) =>
-						splits.map((v) => (useDate ? formatChartDate(v) : formatChartTime(v)))
+					values: (_u, splits) => splits.map((v) => formatTickDate(v * 1000, span * 1000))
 				},
 				{
 					stroke: axisStroke,
@@ -198,7 +195,7 @@
 					<UplotChart data={columnarData.uplot} height={HEIGHT} {makeOpts}>
 						{#snippet tooltip(idx)}
 							<div class="text-muted mb-1 text-xs tabular-nums">
-								{formatChartTooltip(columnarData.uplot[0][idx])}
+								{formatTooltipDate(columnarData.uplot[0][idx] * 1000)}
 							</div>
 							{#each levels as level, i (level)}
 								{@const count = columnarData.rawSeries[i][idx]}

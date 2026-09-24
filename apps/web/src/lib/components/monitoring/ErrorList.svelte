@@ -21,7 +21,7 @@
 	import { RequestGuard } from '$lib/stores/request-guard';
 	import { formatCount, formatDurationMs } from '$lib/utils/format';
 	import { readLastIndex } from '$lib/utils/last-index';
-	import { formatEpochMillis } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import { exploreHref, traceDetailHref } from '$lib/utils/trace-params';
 
 	type Props = {
@@ -284,7 +284,7 @@
 						class="hover:bg-base-200/60 grid {columns} items-center gap-3 px-4 py-2 transition-colors"
 					>
 						<span class="text-muted font-mono text-xs tabular-nums"
-							>{formatEpochMillis(row.timestampMs)}</span
+							>{formatTimestamp(row.timestampMs)}</span
 						>
 						{#if showService}
 							<span class="truncate font-mono text-xs" title={row.service}>{row.service}</span>

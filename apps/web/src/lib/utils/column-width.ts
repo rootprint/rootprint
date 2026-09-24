@@ -3,7 +3,7 @@ import { getByPath } from './get-by-path';
 const MAX_COLUMN_CH = 60;
 const SAMPLE_SIZE = 20;
 
-// Width of "YYYY-MM-DD HH:MM:SS.SSS" produced by formatLogRowTimestamp.
+// Width of "YYYY-MM-DD HH:MM:SS.SSS" produced by formatTimestamp.
 const TIMESTAMP_COLUMN_WIDTH = 23;
 
 export function formatCell(value: unknown): string {

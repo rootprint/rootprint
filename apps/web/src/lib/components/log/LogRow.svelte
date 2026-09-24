@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { LogHit } from '$lib/types';
 	import { levelColor } from '$lib/constants/level-colors';
-	import { formatLogRowTimestamp } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { formatCell } from '$lib/utils/column-width';
 	import { rowActivate } from '$lib/attachments/row-activate';
@@ -66,7 +66,7 @@
 		<FoldGutter {fold} child={foldChild} onToggle={onToggleFold} />
 	{/if}
 	<span class="text-muted px-2 py-1" title={hit.timestamp}>
-		{formatLogRowTimestamp(hit.timestamp)}
+		{formatTimestamp(hit.timestamp)}
 	</span>
 	{#each columns as column (column)}
 		{@const cell = formatCell(getByPath(hit.raw, column))}

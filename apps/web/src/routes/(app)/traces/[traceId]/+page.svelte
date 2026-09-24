@@ -13,7 +13,7 @@
 	import { serviceColor } from '$lib/utils/service-color';
 	import { firstErrorSpan, spansInTreeOrder } from '$lib/utils/span-stats';
 	import { traceLogsHref } from '$lib/utils/trace-logs';
-	import { formatSpanStart } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import { traceOrigin, type TraceOrigin } from '$lib/utils/trace-params';
 	import type { SpanNode } from '$lib/types';
 
@@ -167,7 +167,7 @@
 						<span class="truncate">{root.serviceName}</span>
 						<span aria-hidden="true">·</span>
 						<time class="shrink-0 font-mono tabular-nums">
-							{formatSpanStart(model.traceStartMicros)}
+							{formatTimestamp(model.traceStartMicros / 1000)}
 						</time>
 					</p>
 				{/if}

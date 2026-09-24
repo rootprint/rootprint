@@ -19,7 +19,7 @@
 	import { formatDurationMicros } from '$lib/utils/format';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
-	import { formatEpochMillis } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import { traceDetailHref } from '$lib/utils/trace-params';
 
 	type SortField = 'start' | 'duration';
@@ -167,7 +167,7 @@
 							{@attach rowActivate(() => () => void goto(hrefFor(row)))}
 						>
 							<td class="text-muted font-mono whitespace-nowrap tabular-nums">
-								{formatEpochMillis(row.startMs)}
+								{formatTimestamp(row.startMs)}
 							</td>
 							<td>
 								<span class="inline-flex items-center gap-1 font-mono">

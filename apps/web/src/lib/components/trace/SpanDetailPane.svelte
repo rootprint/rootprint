@@ -13,7 +13,7 @@
 		spansInTreeOrder,
 		topOperations
 	} from '$lib/utils/span-stats';
-	import { formatSpanStart } from '$lib/utils/time';
+	import { formatTimestamp } from '$lib/utils/time';
 	import type { FieldRowData, SpanNode } from '$lib/types';
 
 	type SpanTab = 'overview' | 'parameters' | 'database' | 'events';
@@ -82,7 +82,7 @@
 		whole > 0 ? Math.round((part / whole) * 100) : null;
 
 	const startOffset = $derived(formatOffset(span.startOffsetMicros));
-	const startWall = $derived(formatSpanStart(traceStartMicros + span.startOffsetMicros));
+	const startWall = $derived(formatTimestamp((traceStartMicros + span.startOffsetMicros) / 1000));
 	const startText = $derived(`${startOffset} · ${startWall}`);
 	const durationText = $derived(formatDurationMicros(span.durationMicros));
 
