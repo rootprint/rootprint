@@ -331,7 +331,12 @@
 				{:then model}
 					{#if model}
 						{@const span = selectedSpanId ? model.byId.get(selectedSpanId) : undefined}
-						<TracePane {model} {selectedSpanId} onSelectSpan={(id) => (selectedSpanId = id)} />
+						<TracePane
+							{model}
+							{selectedSpanId}
+							onSelectSpan={(id) => (selectedSpanId = id)}
+							onReload={() => traceId && loadTrace(traceId)}
+						/>
 						{#if span}
 							<!-- Positioned against the fixed dialog; the strip left uncovered keeps the drawer in view. -->
 							<div

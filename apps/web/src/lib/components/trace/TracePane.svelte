@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ScrollText, TriangleAlert } from 'lucide-svelte';
+	import { RotateCw, ScrollText, TriangleAlert } from 'lucide-svelte';
 	import { tick } from 'svelte';
 
 	import { SvelteSet } from 'svelte/reactivity';
@@ -19,7 +19,8 @@
 		selectedSpanId = null,
 		onSelectSpan,
 		spanLogs,
-		minimap = false
+		minimap = false,
+		onReload
 	}: {
 		model: TraceModel;
 		matchedSpanIds?: ReadonlySet<string> | null;
@@ -27,6 +28,7 @@
 		onSelectSpan?: (spanId: string) => void;
 		spanLogs?: (span: SpanNode) => { href: string; count: number | null } | null;
 		minimap?: boolean;
+		onReload?: () => void;
 	} = $props();
 
 	const TREE_LEFT_PX = 18;
@@ -261,12 +263,17 @@
 
 <div class="flex h-full flex-col">
 	{#if model.spanCount === 0}
-		<div
-			role="status"
-			class="text-base-content/60 flex flex-1 items-center justify-center px-6 text-center text-sm"
-		>
-			No spans found for this trace. They may not have been ingested, or they may fall outside the
-			trace index's retention window.
+		<div class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+			<p role="status" class="text-base-content/60 text-sm">
+				No spans found for this trace. They may not have been ingested, or they may fall outside the
+				trace index's retention window.
+			</p>
+			{#if onReload}
+				<button type="button" class="btn btn-sm btn-ghost gap-1.5" onclick={onReload}>
+					<RotateCw class="h-3.5 w-3.5" />
+					Reload
+				</button>
+			{/if}
 		</div>
 	{:else}
 		{#if minimap}

@@ -279,6 +279,7 @@
 					onSelectSpan={selectSpan}
 					{spanLogs}
 					minimap
+					onReload={invalidateAll}
 				/>
 			{/key}
 		</div>
