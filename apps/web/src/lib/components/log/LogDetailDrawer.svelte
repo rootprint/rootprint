@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Copy, ExternalLink, GripVertical, RotateCw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { prefersReducedMotion } from 'svelte/motion';
+	import { fly } from 'svelte/transition';
 
 	import { page } from '$app/state';
 
@@ -9,6 +11,7 @@
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
+	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
 	import { buildTraceModel } from '$lib/components/trace/trace-model';
 	import { fetchTrace } from '$lib/api/traces';
@@ -74,6 +77,7 @@
 		const v = getByPath(hit.raw, path);
 		return isTraceId(v) ? v : null;
 	});
+	let selectedSpanId = $state<string | null>(null);
 	let traceLoad = $state.raw<{ traceId: string; model: Promise<TraceModel> } | null>(null);
 
 	function loadTrace(id: string): void {
@@ -140,6 +144,7 @@
 		prevHit = hit;
 		if (!opened) return;
 		activeTab = 'parameters';
+		selectedSpanId = null;
 		previousFocus = document.activeElement as HTMLElement | null;
 		queueMicrotask(() => dialogRef?.focus());
 	});
@@ -154,10 +159,19 @@
 		queueMicrotask(() => previousFocus?.focus());
 	}
 
+	function closeSpan(): void {
+		const closed = selectedSpanId;
+		selectedSpanId = null;
+		if (closed) queueMicrotask(() => document.getElementById(`span-btn-${closed}`)?.focus());
+	}
+
+	const focusOnCreate = (node: HTMLElement) => node.focus();
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (!hit || e.key !== 'Escape') return;
 		e.preventDefault();
-		close();
+		if (selectedSpanId !== null) closeSpan();
+		else close();
 	}
 
 	async function shareLog() {
@@ -290,7 +304,10 @@
 			{hasTraceback}
 			hasTrace={traceId !== null}
 			meta={traceSummary}
-			onTabChange={(t) => (activeTab = t)}
+			onTabChange={(t) => {
+				activeTab = t;
+				selectedSpanId = null;
+			}}
 			onShare={shareLog}
 			onClose={close}
 		/>
@@ -313,7 +330,28 @@
 					</div>
 				{:then model}
 					{#if model}
-						<TracePane {model} />
+						{@const span = selectedSpanId ? model.byId.get(selectedSpanId) : undefined}
+						<TracePane {model} {selectedSpanId} onSelectSpan={(id) => (selectedSpanId = id)} />
+						{#if span}
+							<!-- Positioned against the fixed dialog; the strip left uncovered keeps the drawer in view. -->
+							<div
+								tabindex="-1"
+								class="border-line bg-base-100 absolute inset-y-0 right-0 z-10 w-[88%] border-l shadow-2xl outline-none"
+								aria-label="Span detail"
+								role="region"
+								transition:fly={{ x: '100%', duration: prefersReducedMotion.current ? 0 : 200 }}
+								{@attach focusOnCreate}
+							>
+								<SpanDetailPane
+									{span}
+									resources={model.resources}
+									traceStartMicros={model.traceStartMicros}
+									onSelectSpan={(id) => (selectedSpanId = id)}
+									onClose={closeSpan}
+									logsHref={null}
+								/>
+							</div>
+						{/if}
 					{/if}
 				{:catch e}
 					<div
