@@ -11,6 +11,7 @@
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
+	import { RequestGuard } from '$lib/stores/request-guard';
 	import type { LogFieldValueBucket, QuerySuggestion } from '$lib/types';
 	import { tokenAtCaret, type CaretToken } from '$lib/utils/query-token';
 	import { serializeTimeRange } from '$lib/utils/fields';
@@ -30,6 +31,7 @@
 	let dismissed = $state(false);
 
 	const unrun = $derived(queryInput !== store.query);
+	const submitGuard = new RequestGuard();
 
 	const valueCache = new Map<string, LogFieldValueBucket[]>();
 	let valueCacheRevision = -1;
@@ -196,9 +198,12 @@
 		const query = queryInput;
 		const raw = query.trim().toLowerCase();
 		dismissed = true;
+		const submission = submitGuard.next();
 		if (isTraceId(raw)) {
 			const href = traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url });
-			if (await traceHasSpans(href)) {
+			const found = await traceHasSpans(href);
+			if (!submitGuard.isCurrent(submission)) return;
+			if (found) {
 				queryInput = '';
 				void goto(href);
 				return;

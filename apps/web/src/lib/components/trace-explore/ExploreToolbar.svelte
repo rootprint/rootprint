@@ -9,6 +9,7 @@
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
+	import { RequestGuard } from '$lib/stores/request-guard';
 	import type { TimeRange } from '$lib/types';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { paramWholeNumber } from '$lib/utils/query-params';
@@ -88,13 +89,18 @@
 		onDuration(minMs, maxMs);
 	}
 
+	const submitGuard = new RequestGuard();
+
 	async function applyQuery(event: SubmitEvent) {
 		event.preventDefault();
 		const query = draft.trim();
 		const raw = query.toLowerCase();
+		const submission = submitGuard.next();
 		if (isTraceId(raw)) {
 			const href = traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url });
-			if (await traceHasSpans(href)) {
+			const found = await traceHasSpans(href);
+			if (!submitGuard.isCurrent(submission)) return;
+			if (found) {
 				void goto(href);
 				return;
 			}
