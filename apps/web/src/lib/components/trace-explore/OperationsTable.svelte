@@ -3,7 +3,7 @@
 	import { rowActivate } from '$lib/attachments/row-activate';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import SortButton from '$lib/components/ui/SortButton.svelte';
-	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
+	import { formatCount, formatDurationMs, formatPercent, formatRate } from '$lib/utils/format';
 	import { serviceColor } from '$lib/utils/service-color';
 
 	type Props = {
@@ -151,7 +151,7 @@
 									<span class="w-14 tabular-nums">
 										{formatCount(op.requests)}
 										<span class="text-subtle block">
-											{op.ratePerSec < 0.01 ? '<0.01' : op.ratePerSec.toFixed(2)}/s
+											{formatRate(op.ratePerSec * 60)}/min
 										</span>
 									</span>
 								</div>

@@ -4,9 +4,8 @@
 
 	import { SvelteSet } from 'svelte/reactivity';
 
-	import { pluralize } from '$lib/utils/format';
+	import { formatDurationMicros, pluralize } from '$lib/utils/format';
 	import { serviceColor } from '$lib/utils/service-color';
-	import { formatSpanDuration } from '$lib/utils/time';
 	import { traceAxis } from '$lib/utils/trace-axis';
 	import TraceAxisTicks from './TraceAxisTicks.svelte';
 	import TraceMinimap from './TraceMinimap.svelte';
@@ -249,7 +248,7 @@
 					]}
 					style={`left:calc(${left}% + max(${width}%, ${MIN_BAR_PX}px))`}
 				>
-					{formatSpanDuration(node.durationMicros)}
+					{formatDurationMicros(node.durationMicros)}
 				</span>
 			</div>
 		</div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDurationMs } from '$lib/utils/format';
+	import { formatCount, formatDurationMs } from '$lib/utils/format';
 
 	type Props = {
 		totalSearches: number;
@@ -19,7 +19,7 @@
 <div class="border-line rounded-box grid grid-cols-4 overflow-hidden border">
 	<div class={cellClass}>
 		<span class={labelClass}>Searches</span>
-		<span class={valueClass}>{totalSearches.toLocaleString()}</span>
+		<span class={valueClass}>{formatCount(totalSearches)}</span>
 	</div>
 	<div class="{cellClass} {seamClass}">
 		<span class={labelClass}>p50</span>

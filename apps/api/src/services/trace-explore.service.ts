@@ -137,14 +137,10 @@ const emptyOverview = (): ExploreOverviewResponse => ({
 const bucketsOf = (response: SearchResponse | undefined, name: string) =>
 	asBuckets(response?.aggregations?.[name] as BucketAggregationResult | undefined);
 
-// `span_duration_millis` is floored, so a percentile p means somewhere in [p, p+1) ms: report the
-// midpoint, which also lets an all-sub-ms percentile read "<1 ms" instead of "0 ms".
-const unfloor = (ms: number | null): number | null => (ms === null ? null : ms + 0.5);
-
 const percentilesOf = (bucket: AggregationBucket) => ({
-	p50: unfloor(percentile(bucket, P50)),
-	p95: unfloor(percentile(bucket, P95)),
-	p99: unfloor(percentile(bucket, P99))
+	p50: percentile(bucket, P50),
+	p95: percentile(bucket, P95),
+	p99: percentile(bucket, P99)
 });
 
 export async function getExploreOverview(
@@ -252,9 +248,9 @@ export async function getExploreOverview(
 		summary: {
 			requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
 			errors: buckets.reduce((sum, bucket) => sum + bucket.errors, 0),
-			p50: unfloor(summaryPercentile(summaryPct, P50)),
-			p95: unfloor(summaryPercentile(summaryPct, P95)),
-			p99: unfloor(summaryPercentile(summaryPct, P99))
+			p50: summaryPercentile(summaryPct, P50),
+			p95: summaryPercentile(summaryPct, P95),
+			p99: summaryPercentile(summaryPct, P99)
 		},
 		operations,
 		operationsTruncated: (opsAgg?.sum_other_doc_count ?? 0) > 0,

@@ -16,10 +16,10 @@
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import SortButton from '$lib/components/ui/SortButton.svelte';
 	import { RequestGuard } from '$lib/stores/request-guard';
-	import { formatCount } from '$lib/utils/format';
+	import { formatDurationMicros } from '$lib/utils/format';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
-	import { formatEpochMillis, formatSpanDuration } from '$lib/utils/time';
+	import { formatEpochMillis } from '$lib/utils/time';
 	import { traceDetailHref } from '$lib/utils/trace-params';
 
 	type SortField = 'start' | 'duration';
@@ -130,7 +130,7 @@
 			Try a wider time range or fewer filters.
 		</EmptyPanel>
 	{:else}
-		<p class="text-muted text-xs tabular-nums">{formatCount(total)} spans</p>
+		<p class="text-muted text-xs tabular-nums">{total.toLocaleString()} spans</p>
 		<div
 			class={[
 				'border-line rounded-box overflow-x-auto border',
@@ -185,7 +185,7 @@
 								</a>
 							</td>
 							<td class="text-right whitespace-nowrap tabular-nums">
-								{formatSpanDuration(row.durationMicros)}
+								{formatDurationMicros(row.durationMicros)}
 							</td>
 							<td class="whitespace-nowrap">
 								{#if row.isError}

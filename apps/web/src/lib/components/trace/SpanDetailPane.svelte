@@ -2,7 +2,7 @@
 	import { ChevronRight, ScrollText, X } from 'lucide-svelte';
 
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
-	import { pluralize } from '$lib/utils/format';
+	import { formatDurationMicros, pluralize } from '$lib/utils/format';
 	import { serviceColor } from '$lib/utils/service-color';
 	import {
 		dbRollups,
@@ -13,7 +13,7 @@
 		spansInTreeOrder,
 		topOperations
 	} from '$lib/utils/span-stats';
-	import { formatSpanDuration, formatSpanStart } from '$lib/utils/time';
+	import { formatSpanStart } from '$lib/utils/time';
 	import type { FieldRowData, SpanNode } from '$lib/types';
 
 	type SpanTab = 'overview' | 'parameters' | 'database' | 'events';
@@ -66,7 +66,7 @@
 	}
 
 	const formatOffset = (micros: number): string =>
-		micros === 0 ? '+0µs' : `${micros < 0 ? '-' : '+'}${formatSpanDuration(Math.abs(micros))}`;
+		`${micros < 0 ? '-' : '+'}${formatDurationMicros(Math.abs(micros))}`;
 
 	const field = (name: string, value: string): FieldRowData => ({
 		name,
@@ -84,7 +84,7 @@
 	const startOffset = $derived(formatOffset(span.startOffsetMicros));
 	const startWall = $derived(formatSpanStart(traceStartMicros + span.startOffsetMicros));
 	const startText = $derived(`${startOffset} · ${startWall}`);
-	const durationText = $derived(formatSpanDuration(span.durationMicros));
+	const durationText = $derived(formatDurationMicros(span.durationMicros));
 
 	const identity = $derived([
 		field('span_id', span.spanId),
@@ -301,7 +301,7 @@
 										Self time
 									</dt>
 									<dd class="mt-0.5 font-mono text-xs tabular-nums">
-										{formatSpanDuration(selfDurationMicros)}
+										{formatDurationMicros(selfDurationMicros)}
 										{#if selfPct !== null}
 											<span class="text-subtle ml-1">{selfPct}%</span>
 										{/if}
@@ -313,7 +313,7 @@
 										Child spans
 									</dt>
 									<dd class="mt-0.5 font-mono text-xs tabular-nums">
-										{formatSpanDuration(childDurationMicros)}
+										{formatDurationMicros(childDurationMicros)}
 										{#if childPct !== null}
 											<span class="text-subtle ml-1">{childPct}%</span>
 										{/if}
@@ -355,7 +355,7 @@
 									<span class="flex min-w-0 items-baseline justify-between gap-3">
 										<span class="min-w-0 truncate font-mono text-xs">{rollup.name}</span>
 										<span class="shrink-0 font-mono text-xs tabular-nums">
-											{formatSpanDuration(rollup.totalMicros)}
+											{formatDurationMicros(rollup.totalMicros)}
 										</span>
 									</span>
 									<span class="mt-1.5 flex min-w-0 items-center gap-2">
@@ -389,7 +389,7 @@
 						class="font-mono text-xs tabular-nums"
 						title="Sum of call durations; concurrent calls may overlap"
 					>
-						{formatSpanDuration(dbTotalMicros)}
+						{formatDurationMicros(dbTotalMicros)}
 						{#if dbSharePct !== null}
 							<span class="text-subtle ml-1">{dbSharePct}% of span</span>
 						{/if}
@@ -406,7 +406,7 @@
 								{/if}
 							</h3>
 							<p class="text-subtle shrink-0 text-xs tabular-nums">
-								{pluralize(target.count, 'call')} · {formatSpanDuration(target.totalMicros)}
+								{pluralize(target.count, 'call')} · {formatDurationMicros(target.totalMicros)}
 							</p>
 						</div>
 
@@ -434,7 +434,7 @@
 											>
 										{/if}
 										<span class="w-14 shrink-0 text-right font-mono text-xs tabular-nums">
-											{formatSpanDuration(query.totalMicros)}
+											{formatDurationMicros(query.totalMicros)}
 										</span>
 									</summary>
 
@@ -453,7 +453,7 @@
 															{formatOffset(call.startOffsetMicros - span.startOffsetMicros)}
 														</span>
 														<span class="w-16 shrink-0 font-mono tabular-nums">
-															{formatSpanDuration(call.durationMicros)}
+															{formatDurationMicros(call.durationMicros)}
 														</span>
 														<span class="text-subtle min-w-0 flex-1 truncate">
 															{call.serviceName}

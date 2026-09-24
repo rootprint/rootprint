@@ -6,9 +6,7 @@ export function formatOrDash<T>(v: T | null | undefined, fmt: (x: T) => string):
 	return v === null || v === undefined ? '—' : fmt(v);
 }
 
-// Non-breaking space keeps "99.47 GiB" from wrapping between the number and
-// its unit when the containing cell is narrow.
-const NBSP = ' ';
+export const NBSP = '\u00a0';
 
 export function formatBytes(n: number): string {
 	if (n < 1024) return `${n.toFixed(0)}${NBSP}B`;
@@ -19,21 +17,42 @@ export function formatBytes(n: number): string {
 	return `${(n / 1024 ** 5).toFixed(2)}${NBSP}PiB`;
 }
 
+const DURATION_UNITS = [
+	['d', 86_400_000],
+	['h', 3_600_000],
+	['min', 60_000],
+	['s', 1000],
+	['ms', 1]
+] as const;
+
+const threeDigits = (n: number) => Number(n.toPrecision(3));
+
+// For whole-millisecond values (percentiles and averages over `span_duration_millis`, search
+// timings): anything under 1 ms is below their resolution, so it reads "<1 ms" rather than µs.
 export function formatDurationMs(ms: number | null | undefined): string {
 	if (ms === null || ms === undefined || !Number.isFinite(ms)) return '—';
-	if (ms === 0) return '0 ms';
-	if (ms < 1) return '<1 ms';
-	if (ms < 1000) return `${Math.round(ms)} ms`;
-	if (ms < 60_000) return `${(ms / 1000).toFixed(2)} s`;
-	if (ms < 3_600_000) return `${(ms / 60_000).toFixed(2)} min`;
-	if (ms < 86_400_000) return `${(ms / 3_600_000).toFixed(2)} h`;
-	return `${(ms / 86_400_000).toFixed(2)} d`;
+	if (ms === 0) return `0${NBSP}ms`;
+	if (ms < 1) return `<1${NBSP}ms`;
+	const [unit, size] =
+		DURATION_UNITS.find(([, unitMs]) => threeDigits(ms / unitMs) >= 1) ?? (['ms', 1] as const);
+	return `${threeDigits(ms / size)}${NBSP}${unit}`;
 }
 
+export function formatDurationMicros(micros: number): string {
+	return micros < 1000 ? `${micros}${NBSP}µs` : formatDurationMs(micros / 1000);
+}
+
+const COMPACT_NUMBER = new Intl.NumberFormat('en', {
+	notation: 'compact',
+	maximumFractionDigits: 1
+});
+
 export function formatCount(n: number): string {
-	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-	if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-	return n.toFixed(0);
+	return COMPACT_NUMBER.format(n);
+}
+
+export function formatRate(perMin: number): string {
+	return perMin > 0 && perMin < 0.1 ? '<0.1' : formatCount(perMin);
 }
 
 // Renders a 0–1 ratio as a percentage. Floors very small values to "<0.1%" so

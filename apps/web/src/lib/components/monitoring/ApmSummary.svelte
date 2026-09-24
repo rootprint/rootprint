@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ServiceHealthServiceRow, ServiceHealthSummary } from '$lib/api/monitoring';
-	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
+	import { formatCount, formatDurationMs, formatPercent, formatRate } from '$lib/utils/format';
 
 	type Props = {
 		service: string | null;
@@ -28,10 +28,6 @@
 				? 'p50 unavailable'
 				: `p50 ${formatDurationMs(summary.p50)}`
 	);
-
-	function formatRate(rate: number): string {
-		return rate > 0 && rate < 1 ? rate.toFixed(1) : formatCount(rate);
-	}
 </script>
 
 <section class="border-line rounded-box grid grid-cols-5 border" aria-label="Performance summary">

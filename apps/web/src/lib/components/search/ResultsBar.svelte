@@ -3,12 +3,12 @@
 	import ExportDialog from './ExportDialog.svelte';
 	import DisplaySettings from './DisplaySettings.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
+	import { formatDurationMicros } from '$lib/utils/format';
 
 	let { store }: { store: SearchStore } = $props();
 
 	let exportOpen = $state(false);
 
-	const durationMs = $derived(Math.round(store.elapsedTimeMicros / 1000));
 	const counting = $derived(store.loading === 'fresh' || store.histogramLoading);
 	const numClass = $derived(counting ? 'text-subtle' : 'text-base-content');
 	const exportDisabled = $derived(
@@ -28,8 +28,7 @@
 	<span>logs found</span>
 	{#if store.hasSearched && store.elapsedTimeMicros > 0}
 		<span>in</span>
-		<span class={numClass}>{durationMs}</span>
-		<span>ms</span>
+		<span class={numClass}>{formatDurationMicros(store.elapsedTimeMicros)}</span>
 	{/if}
 	<div class="ml-auto flex items-center gap-1">
 		<button

@@ -1,3 +1,5 @@
+import { NBSP } from './format';
+
 const TICK_TARGET = 6;
 
 export interface TraceAxis {
@@ -24,7 +26,7 @@ function tickFormatter(maxValueMicros: number, stepMicros: number): (n: number) 
 	}
 	const stepInUnit = stepMicros / div;
 	const decimals = Math.max(0, Math.min(9, Math.ceil(-Math.log10(stepInUnit))));
-	return (n) => `${(n / div).toFixed(decimals)}${suffix}`;
+	return (n) => `${(n / div).toFixed(decimals)}${NBSP}${suffix}`;
 }
 
 export function traceAxis(totalMicros: number, startMicros = 0): TraceAxis {

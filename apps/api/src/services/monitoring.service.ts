@@ -33,7 +33,8 @@ import {
 	P95,
 	percentile,
 	summaryPercentile,
-	termsAgg
+	termsAgg,
+	unfloor
 } from '../utils/aggregations.js';
 import { translateQuickwitError } from '../utils/quickwit-error.js';
 import {
@@ -140,7 +141,7 @@ function mergeTimeBuckets(
 		errors: Math.min(bucket.doc_count, errorCounts.get(Number(bucket.key)) ?? 0),
 		p50: percentile(bucket, P50),
 		p95: percentile(bucket, P95),
-		avg: metric(bucket, 'avg')
+		avg: unfloor(metric(bucket, 'avg'))
 	}));
 }
 

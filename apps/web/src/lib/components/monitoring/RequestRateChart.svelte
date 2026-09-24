@@ -2,7 +2,7 @@
 	import type { ServiceHealthBucket, ServiceHealthSummary } from '$lib/api/monitoring';
 	import UplotLinePanel from '$lib/components/ui/uplot/UplotLinePanel.svelte';
 	import type { ChartSeries } from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import { formatCount } from '$lib/utils/format';
+	import { formatRate } from '$lib/utils/format';
 
 	type Props = {
 		buckets: ServiceHealthBucket[];
@@ -16,9 +16,7 @@
 
 	let { buckets, summary, intervalSeconds, xRange, syncKey, onBrush, height }: Props = $props();
 
-	function formatRate(value: number): string {
-		return value > 0 && value < 1 ? `${value.toFixed(1)}/min` : `${formatCount(value)}/min`;
-	}
+	const formatPerMin = (value: number) => `${formatRate(value)}/min`;
 
 	const xs = $derived(buckets.map((bucket) => Math.floor(bucket.keyMs / 1000)));
 	const averageRate = $derived((summary.requests / (xRange[1] - xRange[0])) * 60);
@@ -42,11 +40,11 @@
 <UplotLinePanel
 	title="Request rate"
 	description="Server spans normalized to requests per minute."
-	summary={`avg ${formatRate(averageRate)}`}
+	summary={`avg ${formatPerMin(averageRate)}`}
 	{xs}
 	{xRange}
 	{series}
-	formatValue={formatRate}
+	formatValue={formatPerMin}
 	showLegend={false}
 	emptyMessage="No spans in this time range."
 	{height}

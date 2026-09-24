@@ -9,7 +9,7 @@
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import type { Window } from '$lib/utils/time-range';
-	import { formatDurationMs } from '$lib/utils/format';
+	import { formatCount, formatDurationMs } from '$lib/utils/format';
 	import { setSearchParam } from '$lib/utils/search-params';
 
 	let { data } = $props();
@@ -84,7 +84,7 @@
 									{@render apiKeyActor(r.id, r.label)}
 								{/if}
 							</span>
-							<span class="text-right tabular-nums">{r.count.toLocaleString()}</span>
+							<span class="text-right tabular-nums">{formatCount(r.count)}</span>
 							<span class="text-right whitespace-nowrap tabular-nums">
 								{formatDurationMs(r.avgDurationMs)}
 							</span>

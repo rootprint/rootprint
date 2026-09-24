@@ -3,7 +3,7 @@
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
 	import TracesLink from '$lib/components/ui/TracesLink.svelte';
-	import { formatDurationMs } from '$lib/utils/format';
+	import { formatCount, formatDurationMs } from '$lib/utils/format';
 	import { readString, writeString } from '$lib/utils/safe-storage';
 
 	type Props = {
@@ -81,7 +81,7 @@
 									</div>
 								{/if}
 							</td>
-							<td class="text-right tabular-nums">{endpoint.requests.toLocaleString()}</td>
+							<td class="text-right tabular-nums">{formatCount(endpoint.requests)}</td>
 							<td class="text-right whitespace-nowrap tabular-nums">
 								{formatDurationMs(endpoint.p50)}
 							</td>

@@ -53,22 +53,12 @@ export function parseLocalDateTime(dateStr: string, timeStr: string): number | n
 }
 
 export function formatTickDate(d: Date | number, spanMs: number): string {
-	const date = d instanceof Date ? d : new Date(d);
 	const oneDay = 24 * 60 * 60 * 1000;
-	return spanMs <= oneDay ? format(date, 'HH:mm') : format(date, 'MMM d');
+	return spanMs <= oneDay ? format(d, 'HH:mm') : format(d, 'MMM d');
 }
 
 export function formatTooltipDate(d: Date | number): string {
-	const date = d instanceof Date ? d : new Date(d);
-	return format(date, 'yyyy-MM-dd HH:mm');
-}
-
-export function formatSpanDuration(micros: number): string {
-	if (micros === 0) return '<1µs';
-	if (micros < 1_000) return `${micros}µs`;
-	const millis = micros / 1_000;
-	if (Number(millis.toFixed(1)) < 1_000) return `${millis.toFixed(1)}ms`;
-	return `${(micros / 1_000_000).toFixed(2)}s`;
+	return format(d, 'yyyy-MM-dd HH:mm');
 }
 
 export function formatSpanStart(micros: number): string {

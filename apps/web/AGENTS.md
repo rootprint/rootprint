@@ -276,3 +276,4 @@ No automated tests in this workspace. Authentication is covered by the API suite
 - Cross-workspace types: `import type { ... } from 'api/types'`. Schemas: `import { ... } from 'api/schemas'`.
 - Component callback props are camelCase (`onSave`, `onToggleSort`); lowercase only when the prop mirrors a native DOM event on an element the component wraps (`Modal`'s `onclose`/`oncancel`).
 - `.svelte.ts` modules are kebab-case (`metrics-poller.svelte.ts`), like all other `.ts` files.
+- Numbers go through `$lib/utils/format`: `formatDurationMs` for whole-millisecond values (percentiles, averages), `formatDurationMicros` for span and search timings, `formatRate` for rates, always per minute. Counts are compact (`formatCount`) in tables, KPIs and charts, and exact (`toLocaleString()`) where the number itself is the answer: result totals, export, pagination, facet counts. `uplot/UplotLinePanel` tooltips reuse the panel's `formatValue`.

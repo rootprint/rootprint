@@ -8,12 +8,12 @@
 	import { spanSearchText } from '$lib/components/trace/trace-model';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import { pluralize } from '$lib/utils/format';
+	import { formatDurationMicros, pluralize } from '$lib/utils/format';
 	import { writeLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
 	import { firstErrorSpan, spansInTreeOrder } from '$lib/utils/span-stats';
 	import { traceLogsHref } from '$lib/utils/trace-logs';
-	import { formatSpanDuration, formatSpanStart } from '$lib/utils/time';
+	import { formatSpanStart } from '$lib/utils/time';
 	import { traceOrigin, type TraceOrigin } from '$lib/utils/trace-params';
 	import type { SpanNode } from '$lib/types';
 
@@ -153,7 +153,7 @@
 					</h1>
 					{#if hasSpans}
 						<p class="text-subtle text-h3 shrink-0 font-mono tabular-nums">
-							{formatSpanDuration(model.durationMicros)}
+							{formatDurationMicros(model.durationMicros)}
 						</p>
 					{/if}
 				</div>
