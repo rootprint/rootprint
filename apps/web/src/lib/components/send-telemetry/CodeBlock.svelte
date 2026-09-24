@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CodeXml, Check, Copy } from 'lucide-svelte';
+	import { CodeXml } from 'lucide-svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { highlightCode } from '$lib/utils/code-highlight';
 	import { apiKeyDecorations } from '$lib/send-telemetry/snippet-utils';
@@ -46,17 +46,7 @@
 			<CodeXml class="size-3.5 shrink-0" aria-hidden="true" />
 			<span>{langLabel}</span>
 		</div>
-		<CopyButton text={code} class="btn btn-ghost btn-xs" ariaLabel={copyTitle}>
-			{#snippet children({ copied }: { copied: boolean })}
-				{#if copied}
-					<Check class="size-3" aria-hidden="true" />
-					Copied
-				{:else}
-					<Copy class="size-3" aria-hidden="true" />
-					Copy
-				{/if}
-			{/snippet}
-		</CopyButton>
+		<CopyButton text={code} aria-label={copyTitle}>Copy</CopyButton>
 	</div>
 	<div
 		class="bg-base-100 overflow-x-auto text-sm leading-relaxed [&_pre]:px-4 [&_pre]:py-3 [&_pre]:whitespace-pre"

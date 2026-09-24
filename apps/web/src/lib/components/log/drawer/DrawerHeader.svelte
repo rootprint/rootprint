@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { Share2, X } from 'lucide-svelte';
 
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
 	import type { LogHit } from '$lib/types';
@@ -11,7 +12,6 @@
 	let {
 		hit,
 		activeTab,
-		sharing = false,
 		hasTraceback = false,
 		hasTrace = false,
 		meta,
@@ -21,12 +21,11 @@
 	}: {
 		hit: LogHit;
 		activeTab: DrawerTab;
-		sharing?: boolean;
 		hasTraceback?: boolean;
 		hasTrace?: boolean;
 		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
-		onShare: () => void;
+		onShare: () => Promise<string | undefined>;
 		onClose: () => void;
 	} = $props();
 
@@ -48,20 +47,13 @@
 		<div class="flex items-center justify-between gap-3">
 			<p id="log-detail-title" class="section-label">Log event</p>
 			<div class="flex items-center gap-1">
-				<button
-					type="button"
+				<CopyButton
+					text={onShare}
+					icon={Share2}
 					class="btn btn-ghost btn-xs btn-square"
-					aria-label={sharing ? 'Creating share link' : 'Copy share link'}
+					aria-label="Copy share link"
 					title="Copy share link"
-					disabled={sharing}
-					onclick={onShare}
-				>
-					{#if sharing}
-						<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
-					{:else}
-						<Share2 class="size-3" aria-hidden="true" />
-					{/if}
-				</button>
+				/>
 				<button
 					type="button"
 					class="btn btn-ghost btn-xs btn-square"

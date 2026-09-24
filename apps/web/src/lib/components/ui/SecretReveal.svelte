@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { KeyRound, Check, Copy } from 'lucide-svelte';
+	import { KeyRound } from 'lucide-svelte';
 	import CopyButton from './CopyButton.svelte';
 
 	let { value, label }: { value: string; label: string } = $props();
@@ -11,17 +11,7 @@
 			<KeyRound class="size-3.5 shrink-0" aria-hidden="true" />
 			<span>{label}</span>
 		</div>
-		<CopyButton text={value} class="btn btn-ghost btn-xs" ariaLabel="Copy {label.toLowerCase()}">
-			{#snippet children({ copied }: { copied: boolean })}
-				{#if copied}
-					<Check class="size-3" aria-hidden="true" />
-					Copied
-				{:else}
-					<Copy class="size-3" aria-hidden="true" />
-					Copy
-				{/if}
-			{/snippet}
-		</CopyButton>
+		<CopyButton text={value} aria-label="Copy {label.toLowerCase()}">Copy</CopyButton>
 	</div>
 	<div class="bg-base-100 px-4 py-3 font-mono text-xs leading-relaxed break-all select-all">
 		{value}

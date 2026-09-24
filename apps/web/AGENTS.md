@@ -195,7 +195,7 @@ Pick the DaisyUI component by behavior:
 | Status indicator                    | `status` next to a text label                                                          |
 | Short label, count, tag             | `badge badge-sm` (`badge-ghost` or `badge-soft`)                                       |
 | Form-level error                    | `alert alert-error` at the top of the form                                             |
-| Result of an action (saved, failed) | `toast.success` / `toast.error` from `svelte-sonner`                                   |
+| Result of an action (saved, failed) | `toast.success` / `toast.error` from `svelte-sonner` (not copy: see `CopyButton`)      |
 | Switching panels                    | `tab-underline` on tab buttons or links (see `admin/indexes/IndexTabs`)                |
 | Grouped controls                    | `join` + `join-item`                                                                   |
 | Menu, picker, popover               | `dropdown` on a `popover` element opened by `popovertarget` (see `ui/TimeRangePicker`) |
@@ -209,23 +209,23 @@ Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default si
 
 Check `$lib/components/ui/` before writing markup. The second time a pattern appears, move it there instead of copying it.
 
-| Component                                                  | Use for                                                    |
-| ---------------------------------------------------------- | ---------------------------------------------------------- |
-| `PageHeader`                                               | Breadcrumb, `h1`, description and actions at the page top  |
-| `SearchInput`                                              | Every search box                                           |
-| `SortButton`                                               | Sortable table headers                                     |
-| `Field`, `SelectField`, `TagInput`                         | Stacked form fields with label, hint and error             |
-| `SettingsRow`                                              | Label-left, control-right settings rows                    |
-| `Modal`, `FormModal`, `ConfirmModal`, `TypeToConfirmModal` | Dialogs, form dialogs, confirmations, destructive confirms |
-| `ListCard`, `ListRow`                                      | Hairline lists of linked records                           |
-| `EmptyPanel`, `PanelError`                                 | Empty and failed panels (`PanelError` retries)             |
-| `CopyButton`, `CopyableField`, `DisplayField`              | Copyable and read-only values                              |
-| `SecretReveal`, `OneTimeKeyReveal`                         | Secrets and newly created keys                             |
-| `TimeRangePicker`, `TimeRangeTabs`, `RowLimitSelector`     | Time range and row limit controls                          |
-| `FieldRow`                                                 | Key/value rows with filter and copy actions                |
-| `TracesLink`                                               | Icon-only row link into the Traces explorer                |
-| `UserIdentity`                                             | Avatar, name and email                                     |
-| `uplot/UplotLinePanel`                                     | Time-series charts (built on `UplotChart`, `UplotLegend`)  |
+| Component                                                  | Use for                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| `PageHeader`                                               | Breadcrumb, `h1`, description and actions at the page top             |
+| `SearchInput`                                              | Every search box                                                      |
+| `SortButton`                                               | Sortable table headers                                                |
+| `Field`, `SelectField`, `TagInput`                         | Stacked form fields with label, hint and error                        |
+| `SettingsRow`                                              | Label-left, control-right settings rows                               |
+| `Modal`, `FormModal`, `ConfirmModal`, `TypeToConfirmModal` | Dialogs, form dialogs, confirmations, destructive confirms            |
+| `ListCard`, `ListRow`                                      | Hairline lists of linked records                                      |
+| `EmptyPanel`, `PanelError`                                 | Empty and failed panels (`PanelError` retries)                        |
+| `CopyButton`, `CopyableField`, `DisplayField`              | Every copy action (icon turns to a check, no toast); read-only values |
+| `SecretReveal`, `OneTimeKeyReveal`                         | Secrets and newly created keys                                        |
+| `TimeRangePicker`, `TimeRangeTabs`, `RowLimitSelector`     | Time range and row limit controls                                     |
+| `FieldRow`                                                 | Key/value rows with filter and copy actions                           |
+| `TracesLink`                                               | Icon-only row link into the Traces explorer                           |
+| `UserIdentity`                                             | Avatar, name and email                                                |
+| `uplot/UplotLinePanel`                                     | Time-series charts (built on `UplotChart`, `UplotLegend`)             |
 
 ### Named Classes
 

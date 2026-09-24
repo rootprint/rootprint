@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Copy, Minus, Plus } from 'lucide-svelte';
+	import { Minus, Plus } from 'lucide-svelte';
+	import CopyButton from './CopyButton.svelte';
 	import type { FieldRowData } from '$lib/types';
 
 	let {
@@ -7,16 +8,16 @@
 		keyClass = 'w-[min(38%,14rem)]',
 		onFilterFor,
 		onFilterOut,
-		onCopy
+		copyable = false
 	}: {
 		field: FieldRowData;
 		keyClass?: string;
 		onFilterFor?: (field: FieldRowData) => void;
 		onFilterOut?: (field: FieldRowData) => void;
-		onCopy?: (field: FieldRowData) => void;
+		copyable?: boolean;
 	} = $props();
 
-	const hasActions = $derived(Boolean(onFilterFor || onFilterOut || onCopy));
+	const hasActions = $derived(Boolean(onFilterFor || onFilterOut || copyable));
 </script>
 
 <tr class="group border-line border-b align-top last:border-b-0">
@@ -68,19 +69,13 @@
 							<Minus class="size-3" aria-hidden="true" />
 						</button>
 					{/if}
-					{#if onCopy}
-						<button
-							type="button"
+					{#if copyable}
+						<CopyButton
+							text={field.value}
 							class="btn btn-xs btn-square join-item"
 							aria-label="Copy value"
 							title="Copy value"
-							onclick={(e) => {
-								onCopy?.(field);
-								e.currentTarget.blur();
-							}}
-						>
-							<Copy class="size-3" aria-hidden="true" />
-						</button>
+						/>
 					{/if}
 				</span>
 			{/if}

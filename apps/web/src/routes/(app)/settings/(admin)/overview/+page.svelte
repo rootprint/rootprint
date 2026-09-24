@@ -7,10 +7,10 @@
 	import ClusterIdentityStrip from '$lib/components/admin/overview/ClusterIdentityStrip.svelte';
 	import HeadlineNumbers from '$lib/components/admin/overview/HeadlineNumbers.svelte';
 	import StorageTrendChart from '$lib/components/admin/overview/StorageTrendChart.svelte';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import { copyWithToast } from '$lib/utils/clipboard';
 	import type { ConnectionState } from '$lib/types';
 	import { MetricsPoller } from './metrics-poller.svelte';
 
@@ -104,10 +104,6 @@
 			.split('\n')
 			.filter((line) => line.toLowerCase().includes(q))
 			.join('\n');
-	}
-
-	async function copyRaw(text: string): Promise<void> {
-		await copyWithToast(text, 'Raw metrics copied');
 	}
 
 	async function loadRaw(): Promise<void> {
@@ -213,13 +209,9 @@
 				>
 					{rawLoading ? 'Loading…' : 'Refresh'}
 				</button>
-				<button
-					class="btn btn-sm"
-					onclick={() => rawText && copyRaw(rawText)}
-					disabled={rawText === null}
-				>
+				<CopyButton text={rawText ?? ''} class="btn btn-sm" disabled={rawText === null}>
 					Copy all
-				</button>
+				</CopyButton>
 			</div>
 			{#if rawError}
 				<PanelError message={`Raw metrics unavailable: ${rawError}`} retry={() => void loadRaw()} />

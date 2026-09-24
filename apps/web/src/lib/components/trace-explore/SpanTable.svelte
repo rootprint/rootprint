@@ -203,11 +203,9 @@
 								<CopyButton
 									text={row.traceId}
 									class="btn btn-ghost btn-xs -mx-2 font-mono font-normal"
-									ariaLabel={`Copy trace ID ${row.traceId}`}
+									aria-label={`Copy trace ID ${row.traceId}`}
 								>
-									{#snippet children({ copied })}
-										{copied ? 'Copied' : row.traceId.slice(0, 12)}
-									{/snippet}
+									{row.traceId.slice(0, 12)}
 								</CopyButton>
 							</td>
 						</tr>

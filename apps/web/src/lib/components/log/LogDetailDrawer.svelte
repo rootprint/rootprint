@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Copy, ExternalLink, GripVertical, RotateCw } from 'lucide-svelte';
+	import { ExternalLink, GripVertical, RotateCw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { page } from '$app/state';
@@ -10,12 +10,12 @@
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
 	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
 	import { buildTraceModel } from '$lib/components/trace/trace-model';
 	import { fetchTrace } from '$lib/api/traces';
 	import { createShare } from '$lib/api/shares';
 	import { ApiError } from '$lib/api/errors';
-	import { copyWithToast } from '$lib/utils/clipboard';
 	import { getByPath } from '$lib/utils/get-by-path';
 	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
 	import { traceDetailHref } from '$lib/utils/trace-params';
@@ -92,7 +92,6 @@
 		}
 	});
 
-	let sharing = $state(false);
 	let dialogRef: HTMLDivElement | null = $state(null);
 	let previousFocus: HTMLElement | null = null;
 
@@ -172,7 +171,7 @@
 		else close();
 	}
 
-	async function shareLog() {
+	async function shareLog(): Promise<string | undefined> {
 		if (!hit || !store.fieldConfig) return;
 		const indexId = store.selectedIndex;
 		const startTime = store.resolvedStartTs;
@@ -194,16 +193,11 @@
 			toast.error('Share payload too large');
 			return;
 		}
-		sharing = true;
 		try {
 			const { code } = await createShare(sharePayload);
-			const url = `${window.location.origin}/s/${code}`;
-			await copyWithToast(url, 'Share link copied', 'Failed to copy share link');
+			return `${window.location.origin}/s/${code}`;
 		} catch (e) {
-			const msg = e instanceof ApiError ? e.message : 'Failed to create share';
-			toast.error(msg);
-		} finally {
-			sharing = false;
+			toast.error(e instanceof ApiError ? e.message : 'Failed to create share');
 		}
 	}
 
@@ -240,16 +234,14 @@
 {#snippet traceSummary()}
 	{#if traceId}
 		{@const id = traceId}
-		<button
-			type="button"
+		<CopyButton
+			text={id}
 			class="border-line bg-base-200/60 text-muted hover:bg-base-300 hover:text-base-content inline-flex h-7 items-center gap-1.5 rounded border px-2 text-xs transition-colors"
 			aria-label="Copy trace ID"
 			title={`Copy trace ID: ${id}`}
-			onclick={() => copyWithToast(id, 'Trace ID copied', 'Failed to copy trace ID')}
 		>
 			Trace ID
-			<Copy class="size-3" aria-hidden="true" />
-		</button>
+		</CopyButton>
 		<a
 			href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
 			class="btn btn-xs btn-primary ml-auto"
@@ -298,7 +290,6 @@
 		<DrawerHeader
 			{hit}
 			{activeTab}
-			{sharing}
 			{hasTraceback}
 			hasTrace={traceId !== null}
 			meta={traceSummary}

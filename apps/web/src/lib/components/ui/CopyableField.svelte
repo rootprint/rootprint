@@ -20,9 +20,7 @@
 		{value}
 		aria-label={ariaLabel}
 	/>
-	<CopyButton text={value} ariaLabel={buttonAriaLabel}>
-		{#snippet children({ copied })}
-			{copied ? 'Copied' : 'Copy'}
-		{/snippet}
-	</CopyButton>
+	<CopyButton text={value} class="btn btn-sm btn-neutral" aria-label={buttonAriaLabel}
+		>Copy</CopyButton
+	>
 </div>

@@ -5,13 +5,13 @@
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
 	import { traceDetailHref } from '$lib/utils/trace-params';
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 	import type { LogFieldValueBucket, QuerySuggestion } from '$lib/types';
-	import { copyWithToast } from '$lib/utils/clipboard';
 	import { tokenAtCaret, type CaretToken } from '$lib/utils/query-token';
 	import { serializeTimeRange } from '$lib/utils/fields';
 	import { fetchFieldValuesBulk } from '$lib/api/field-values';
@@ -202,10 +202,6 @@
 		}
 		store.runQuery(queryInput);
 	}
-
-	function shareLink() {
-		void copyWithToast(window.location.href, 'Link copied', 'Failed to copy link');
-	}
 </script>
 
 <div class="border-line bg-base-100 flex h-12 shrink-0 items-center gap-2 border-b px-3">
@@ -264,15 +260,13 @@
 	/>
 
 	<div class="ml-auto flex items-center gap-1">
-		<button
-			type="button"
-			class="btn btn-sm btn-ghost"
-			aria-label="Share"
-			title="Share"
-			onclick={shareLink}
-		>
-			<Share2 class="size-3.5" aria-hidden="true" />
-		</button>
+		<CopyButton
+			text={page.url.href}
+			icon={Share2}
+			class="btn btn-sm btn-ghost [&_svg]:size-3.5"
+			aria-label="Copy link"
+			title="Copy link"
+		/>
 		<button
 			type="button"
 			class="btn btn-sm {unrun ? 'btn-primary' : 'btn-ghost'}"

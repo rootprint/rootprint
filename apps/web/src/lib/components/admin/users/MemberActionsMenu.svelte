@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		Check,
 		KeyRound,
 		Link,
 		MoreHorizontal,
@@ -96,18 +95,10 @@
 				<li>
 					<CopyButton
 						text={user.inviteUrl}
-						class="hover:bg-base-200 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left"
-						ariaLabel="Copy invite link"
+						icon={Link}
+						class="hover:bg-base-200 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left [&_svg]:size-3.5"
 					>
-						{#snippet children({ copied })}
-							{#if copied}
-								<Check class="size-3.5" aria-hidden="true" />
-								<span>Copied</span>
-							{:else}
-								<Link class="size-3.5" aria-hidden="true" />
-								<span>Copy invite link</span>
-							{/if}
-						{/snippet}
+						<span>Copy invite link</span>
 					</CopyButton>
 				</li>
 			{/if}

@@ -222,11 +222,9 @@
 			<CopyButton
 				text={callbackUrl}
 				class="badge badge-ghost badge-sm cursor-pointer"
-				ariaLabel="Copy callback URL"
+				aria-label="Copy callback URL"
 			>
-				{#snippet children({ copied }: { copied: boolean })}
-					{copied ? 'Copied' : 'Copy'}
-				{/snippet}
+				Copy
 			</CopyButton>
 		</div>
 	</SettingsRow>

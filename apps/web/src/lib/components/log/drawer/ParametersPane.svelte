@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { ChevronDown, Copy } from 'lucide-svelte';
+	import { ChevronDown } from 'lucide-svelte';
 
+	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import type { FieldGroup, FieldGroupId } from '$lib/utils/hit-fields';
 	import { groupHitFields } from '$lib/utils/hit-fields';
-	import { copyWithToast } from '$lib/utils/clipboard';
 	import type { FieldRowData, LogHit } from '$lib/types';
 	import type { SearchStore } from '$lib/stores/search.svelte';
 
@@ -63,14 +63,6 @@
 	function applyFilter(field: FieldRowData, negate: boolean) {
 		store.addFilter(field.name, field.value, negate);
 	}
-
-	function copyValue(field: FieldRowData) {
-		void copyWithToast(field.value, 'Value copied');
-	}
-
-	function copyMessage(): void {
-		void copyWithToast(grouped.message, 'Message copied');
-	}
 </script>
 
 <div class="h-full overflow-x-hidden overflow-y-auto">
@@ -78,15 +70,13 @@
 		<div class="mb-1.5 flex items-center justify-between gap-3">
 			<p class="section-label">{grouped.messageLabel}</p>
 			{#if grouped.message !== ''}
-				<button
-					type="button"
+				<CopyButton
+					text={grouped.message}
 					class="btn btn-ghost btn-xs gap-1"
 					aria-label="Copy log message"
-					onclick={copyMessage}
 				>
-					<Copy class="size-3" aria-hidden="true" />
 					Copy
-				</button>
+				</CopyButton>
 			{/if}
 		</div>
 		<div
@@ -150,7 +140,7 @@
 											{field}
 											onFilterFor={(f) => applyFilter(f, false)}
 											onFilterOut={(f) => applyFilter(f, true)}
-											onCopy={copyValue}
+											copyable
 										/>
 									{/each}
 								</tbody>

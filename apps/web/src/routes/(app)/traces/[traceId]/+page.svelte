@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ArrowLeft, Check, Copy, ScrollText } from 'lucide-svelte';
+	import { ArrowLeft, ScrollText } from 'lucide-svelte';
 
 	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
@@ -173,16 +173,9 @@
 				<CopyButton
 					text={data.traceId}
 					class="text-subtle hover:text-base-content mt-0.5 flex w-full min-w-0 items-center justify-end gap-1.5"
-					ariaLabel="Copy trace ID"
+					aria-label="Copy trace ID"
 				>
-					{#snippet children({ copied }: { copied: boolean })}
-						<span class="truncate font-mono text-xs">{data.traceId}</span>
-						{#if copied}
-							<Check class="size-3 shrink-0" aria-hidden="true" />
-						{:else}
-							<Copy class="size-3 shrink-0" aria-hidden="true" />
-						{/if}
-					{/snippet}
+					<span class="truncate font-mono text-xs">{data.traceId}</span>
 				</CopyButton>
 			</div>
 		</div>

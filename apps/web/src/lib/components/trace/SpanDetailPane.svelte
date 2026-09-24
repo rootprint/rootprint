@@ -2,7 +2,6 @@
 	import { ChevronRight, ScrollText, X } from 'lucide-svelte';
 
 	import FieldRow from '$lib/components/ui/FieldRow.svelte';
-	import { copyWithToast } from '$lib/utils/clipboard';
 	import { pluralize } from '$lib/utils/format';
 	import { serviceColor } from '$lib/utils/service-color';
 	import {
@@ -128,8 +127,6 @@
 	$effect(() => {
 		if (isDisabled(activeTab)) activeTab = 'overview';
 	});
-
-	const copyValue = (f: FieldRowData): void => void copyWithToast(f.value, 'Value copied');
 </script>
 
 {#snippet table(fields: FieldRowData[])}
@@ -137,7 +134,7 @@
 		<table class="w-full table-fixed border-collapse">
 			<tbody>
 				{#each fields as f (f.name)}
-					<FieldRow field={f} keyClass="w-40 max-w-40" onCopy={copyValue} />
+					<FieldRow field={f} keyClass="w-40 max-w-40" copyable />
 				{/each}
 			</tbody>
 		</table>
