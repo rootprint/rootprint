@@ -53,7 +53,10 @@
 
 		const upperBuckets: Record<string, number>[] = buckets.map((b) => {
 			const out: Record<string, number> = {};
-			for (const k of Object.keys(b.levels)) out[k.toUpperCase()] = b.levels[k];
+			for (const [k, n] of Object.entries(b.levels)) {
+				const level = k.toUpperCase();
+				out[level] = (out[level] ?? 0) + n;
+			}
 			return out;
 		});
 
