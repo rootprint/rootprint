@@ -12,7 +12,7 @@
 	import type { TimeRange } from '$lib/types';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { paramWholeNumber } from '$lib/utils/query-params';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	import { traceDetailHref, traceHasSpans } from '$lib/utils/trace-params';
 
 	type FilterName = 'service' | 'operation' | 'status' | 'root' | 'q';
 
@@ -88,14 +88,18 @@
 		onDuration(minMs, maxMs);
 	}
 
-	function applyQuery(event: SubmitEvent) {
+	async function applyQuery(event: SubmitEvent) {
 		event.preventDefault();
-		const raw = draft.trim().toLowerCase();
+		const query = draft.trim();
+		const raw = query.toLowerCase();
 		if (isTraceId(raw)) {
-			void goto(traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url }));
-			return;
+			const href = traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url });
+			if (await traceHasSpans(href)) {
+				void goto(href);
+				return;
+			}
 		}
-		onFilter('q', draft.trim() || null);
+		onFilter('q', query || null);
 	}
 
 	function toggleStatus(status: 'error' | 'ok') {
@@ -117,6 +121,7 @@
 			bind:value={draft}
 			placeholder="span_attributes.http.response.status_code:503"
 			label="Search spans"
+			title="Search spans with a Quickwit query. A 32-character hex ID that matches a trace opens it instead — wrap it in quotes to search for it as text."
 			aria-invalid={queryError !== null}
 			aria-describedby={queryError === null ? undefined : queryErrorId}
 		/>

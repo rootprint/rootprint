@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	import { traceDetailHref, traceHasSpans } from '$lib/utils/trace-params';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
@@ -180,7 +180,7 @@
 			e.preventDefault();
 			void accept(highlight);
 		} else if (e.key === 'Enter') {
-			runQuery();
+			void runQuery();
 		} else if (e.key === 'Escape' && suggestOpen) {
 			e.stopPropagation();
 			dismissed = true;
@@ -188,19 +188,23 @@
 	}
 
 	/**
-	 * A pasted trace id opens the trace instead of searching — it is an id, not a log query, and matches
-	 * no log field. Only on Enter or Run — blur no longer commits, and navigating away from a click would
-	 * surprise. `isTraceId` rejects the all-zeros id, so OTLP's null trace id still falls through.
+	 * A pasted trace id opens the trace instead of searching. Only on Enter or Run — blur no longer
+	 * commits, and navigating away from a click would surprise. `isTraceId` rejects the all-zeros id, so
+	 * OTLP's null trace id still falls through.
 	 */
-	function runQuery() {
-		const raw = queryInput.trim().toLowerCase();
+	async function runQuery() {
+		const query = queryInput;
+		const raw = query.trim().toLowerCase();
 		dismissed = true;
 		if (isTraceId(raw)) {
-			queryInput = '';
-			void goto(traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url }));
-			return;
+			const href = traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url });
+			if (await traceHasSpans(href)) {
+				queryInput = '';
+				void goto(href);
+				return;
+			}
 		}
-		store.runQuery(queryInput);
+		store.runQuery(query);
 	}
 </script>
 
@@ -225,7 +229,7 @@
 			type="text"
 			label="Search logs"
 			placeholder="Search logs… (or paste a trace ID)"
-			title={'Search logs with a Quickwit query. A bare 32-character hex trace ID opens that trace instead — wrap it in quotes to search for it as text.'}
+			title={'Search logs with a Quickwit query. A 32-character hex ID that matches a trace opens it instead — wrap it in quotes to search for it as text.'}
 			bind:ref={inputEl}
 			bind:value={queryInput}
 			onfocus={() => {
@@ -275,7 +279,7 @@
 			onmousedown={(e) => {
 				e.preventDefault();
 			}}
-			onclick={runQuery}
+			onclick={() => void runQuery()}
 		>
 			<Play class="size-3.5" aria-hidden="true" />
 			Run
