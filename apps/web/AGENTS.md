@@ -223,6 +223,7 @@ Check `$lib/components/ui/` before writing markup. The second time a pattern app
 | `SecretReveal`, `OneTimeKeyReveal`                         | Secrets and newly created keys                             |
 | `TimeRangePicker`, `TimeRangeTabs`, `RowLimitSelector`     | Time range and row limit controls                          |
 | `FieldRow`                                                 | Key/value rows with filter and copy actions                |
+| `TracesLink`                                               | Icon-only row link into the Traces explorer                |
 | `UserIdentity`                                             | Avatar, name and email                                     |
 | `uplot/UplotLinePanel`                                     | Time-series charts (built on `UplotChart`, `UplotLegend`)  |
 

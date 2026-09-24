@@ -7,6 +7,7 @@ import type {
 	SearchResponse
 } from 'quickwit-js';
 
+import { ERROR_HTTP_STATUS_CLAUSES, ERROR_KIND_CLAUSES } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit.js';
 import { escapeFilterValue } from '../lib/query/compose-query.js';
 import {
@@ -58,15 +59,6 @@ const URL_PATH_FIELD = 'span_attributes.url.path';
 const HTTP_TARGET_FIELD = 'span_attributes.http.target';
 const URL_FULL_FIELD = 'span_attributes.url.full';
 const PEER_FIELD = 'span_attributes.server.address';
-const HTTP_RESPONSE_STATUS_FIELD = 'span_attributes.http.response.status_code';
-const HTTP_STATUS_FIELD = 'span_attributes.http.status_code';
-const ERROR_KIND_QUERIES: Record<NonNullable<ServiceErrorsInput['kind']>, string> = {
-	server: '2',
-	client: '3',
-	producer: '4',
-	consumer: '5',
-	internal: 'IN [0 1]'
-};
 
 const MESSAGE_MAX_CHARS = 300;
 
@@ -202,11 +194,18 @@ function endpointRow(
 	spanName: string,
 	nameBucket: AggregationBucket
 ): MonitoringEndpoint {
+	const sourceIndex = ENDPOINT_SOURCES.findIndex((source) => source.field === field);
+	const sourceQuery = endpointSourceQuery(SERVER_SPANS, sourceIndex);
 	return {
 		id: JSON.stringify([service, field, value, spanName]),
 		service,
 		name: endpointLabel(field, value, spanName),
 		routeAvailable: field !== NAME_FIELD || !isHttpMethod(spanName),
+		operation: spanName,
+		query:
+			field === NAME_FIELD
+				? sourceQuery
+				: `${sourceQuery} AND ${field}:${escapeFilterValue(value)}`,
 		requests: nameBucket.doc_count,
 		totalMillis: metric(nameBucket, 'total') ?? 0,
 		p50: percentile(nameBucket, P50),
@@ -331,20 +330,8 @@ export function serviceErrorsQuery(
 	const clauses = [ERROR_SPANS];
 	if (service !== undefined) clauses.push(`${SERVICE_FIELD}:${escapeFilterValue(service)}`);
 	if (operation !== undefined) clauses.push(`${NAME_FIELD}:${escapeFilterValue(operation)}`);
-	if (kind !== undefined) {
-		clauses.push(`span_kind:${ERROR_KIND_QUERIES[kind]}`);
-	}
-	if (httpStatus !== undefined) {
-		if (httpStatus === 'none') {
-			clauses.push(`NOT (${HTTP_RESPONSE_STATUS_FIELD}:* OR ${HTTP_STATUS_FIELD}:*)`);
-		} else {
-			const lower = httpStatus === '4xx' ? 400 : 500;
-			const upper = lower + 99;
-			clauses.push(
-				`(${HTTP_RESPONSE_STATUS_FIELD}:[${lower} TO ${upper}] OR ${HTTP_STATUS_FIELD}:[${lower} TO ${upper}])`
-			);
-		}
-	}
+	if (kind !== undefined) clauses.push(ERROR_KIND_CLAUSES[kind]);
+	if (httpStatus !== undefined) clauses.push(ERROR_HTTP_STATUS_CLAUSES[httpStatus]);
 	return clauses.join(' AND ');
 }
 

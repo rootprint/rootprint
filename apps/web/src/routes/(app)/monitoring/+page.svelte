@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ERROR_HTTP_STATUSES, SPAN_KINDS } from 'api/constants';
+	import { ChartNoAxesGantt } from 'lucide-svelte';
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -21,6 +22,7 @@
 	import type { TimeRange } from '$lib/types';
 	import { formatCount } from '$lib/utils/format';
 	import { paramOneOf, setTimeRangeParams } from '$lib/utils/query-params';
+	import { exploreHref } from '$lib/utils/trace-params';
 
 	let { data } = $props();
 
@@ -151,6 +153,9 @@
 				<ServicePicker services={serviceNames} value={data.service} onChange={setService} />
 			{/if}
 			<TimeRangePicker value={data.timeRange} onChange={setRange} />
+			<a class="btn btn-sm" href={exploreHref(page.url, { service: data.service })}>
+				<ChartNoAxesGantt class="size-3.5" aria-hidden="true" />View traces
+			</a>
 		</div>
 	</header>
 {/snippet}

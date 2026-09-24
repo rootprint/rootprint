@@ -1,3 +1,5 @@
+import type { ExploreStatus } from 'api/constants';
+
 /** A trace opened from the explorer returns there; any other `returnTo` is a log search. */
 export const openedFromExplorer = (returnTo: string | null): boolean =>
 	returnTo?.startsWith('/traces') ?? false;
@@ -20,4 +22,19 @@ export function traceDetailHref(
 	const query = params.toString();
 	const path = `/traces/${encodeURIComponent(traceId)}`;
 	return query ? `${path}?${query}` : path;
+}
+
+export type ExploreLinkFilters = Partial<Record<'service' | 'operation' | 'q', string | null>> & {
+	status?: ExploreStatus;
+};
+
+export function exploreHref(current: URL, filters: ExploreLinkFilters): string {
+	const params = new URLSearchParams();
+	for (const key of ['from', 'to']) {
+		const value = current.searchParams.get(key);
+		if (value !== null) params.set(key, value);
+	}
+	for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
+	const query = params.toString();
+	return query ? `/traces?${query}` : '/traces';
 }

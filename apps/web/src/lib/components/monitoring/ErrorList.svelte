@@ -1,6 +1,13 @@
 <script lang="ts">
-	import { ERROR_PAGE_SIZE, MAX_ERROR_OFFSET } from 'api/constants';
-	import { ExternalLink } from 'lucide-svelte';
+	import {
+		ERROR_HTTP_STATUS_CLAUSES,
+		ERROR_KIND_CLAUSES,
+		ERROR_PAGE_SIZE,
+		MAX_ERROR_OFFSET
+	} from 'api/constants';
+	import { ChartNoAxesGantt, ExternalLink } from 'lucide-svelte';
+
+	import { page } from '$app/state';
 
 	import {
 		getServiceErrors,
@@ -15,7 +22,7 @@
 	import { formatCount, formatDurationMs } from '$lib/utils/format';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { formatEpochMillis } from '$lib/utils/time';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	import { exploreHref, traceDetailHref } from '$lib/utils/trace-params';
 
 	type Props = {
 		operations: ServiceHealthFailingOperation[];
@@ -81,6 +88,17 @@
 		operation === null || operations.some((candidate) => candidate.name === operation)
 	);
 	const scope = $derived({ service, startTs, endTs, operation, kind, httpStatus });
+	// The explorer has no kind or HTTP filter, so those ride along in its query box.
+	const tracesHref = $derived(
+		exploreHref(page.url, {
+			service,
+			operation,
+			status: 'error',
+			q: [kind && ERROR_KIND_CLAUSES[kind], httpStatus && ERROR_HTTP_STATUS_CLAUSES[httpStatus]]
+				.filter(Boolean)
+				.join(' AND ')
+		})
+	);
 
 	function appendRows(newRows: ServiceErrorRow[]): void {
 		const fresh = newRows.filter((row) => {
@@ -175,6 +193,9 @@
 					<option value="none">No HTTP status</option>
 				</select>
 			</label>
+			<a class="btn btn-xs" href={tracesHref}>
+				<ChartNoAxesGantt class="size-3" aria-hidden="true" />Open in Traces
+			</a>
 		</div>
 	</div>
 

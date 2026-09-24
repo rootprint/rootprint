@@ -1,12 +1,18 @@
 <script lang="ts">
+	import { isTraceId } from 'api/schemas';
 	import { CircleAlert, CircleCheck, ListTree, RefreshCw, X } from 'lucide-svelte';
+
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 
 	import type { ExploreFilters } from '$lib/api/traces';
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
+	import { readLastIndex } from '$lib/utils/last-index';
 	import { paramWholeNumber } from '$lib/utils/query-params';
+	import { traceDetailHref } from '$lib/utils/trace-params';
 
 	type FilterName = 'service' | 'operation' | 'status' | 'root' | 'q';
 
@@ -84,6 +90,11 @@
 
 	function applyQuery(event: SubmitEvent) {
 		event.preventDefault();
+		const raw = draft.trim().toLowerCase();
+		if (isTraceId(raw)) {
+			void goto(traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url }));
+			return;
+		}
 		onFilter('q', draft.trim() || null);
 	}
 

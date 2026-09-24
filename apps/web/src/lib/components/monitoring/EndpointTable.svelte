@@ -2,6 +2,7 @@
 	import type { ServiceHealthEndpoint } from '$lib/api/monitoring';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
+	import TracesLink from '$lib/components/ui/TracesLink.svelte';
 	import { formatDurationMs } from '$lib/utils/format';
 	import { readString, writeString } from '$lib/utils/safe-storage';
 
@@ -53,6 +54,7 @@
 						<th scope="col" class="text-right">p50 latency</th>
 						<th scope="col" class="text-right">p95 latency</th>
 						<th scope="col" class="text-right">Total time</th>
+						<th scope="col" class="w-8"><span class="sr-only">Traces</span></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -88,6 +90,16 @@
 							</td>
 							<td class="text-right font-medium whitespace-nowrap tabular-nums">
 								{formatDurationMs(endpoint.totalMillis)}
+							</td>
+							<td class="w-8 text-right">
+								<TracesLink
+									filters={{
+										service: endpoint.service,
+										operation: endpoint.operation,
+										q: endpoint.query
+									}}
+									subject={endpoint.name}
+								/>
 							</td>
 						</tr>
 					{/each}

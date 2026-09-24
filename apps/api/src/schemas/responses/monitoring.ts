@@ -23,6 +23,10 @@ export const MonitoringEndpointSchema = named(
 		service: v.string(),
 		name: v.string(),
 		routeAvailable: v.boolean(),
+		/** Raw span name, for the trace explorer's `operation` filter. */
+		operation: v.string(),
+		/** Quickwit clause for exactly the spans this row counts, beyond its service and operation. */
+		query: v.string(),
 		requests: v.number(),
 		totalMillis: v.number(),
 		p50: v.nullable(v.number()),

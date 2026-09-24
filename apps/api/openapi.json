@@ -1805,6 +1805,9 @@
 					"name": {
 						"type": "string"
 					},
+					"operation": {
+						"type": "string"
+					},
 					"p50": {
 						"anyOf": [
 							{
@@ -1825,6 +1828,9 @@
 							}
 						]
 					},
+					"query": {
+						"type": "string"
+					},
 					"requests": {
 						"type": "number"
 					},
@@ -1843,6 +1849,8 @@
 					"service",
 					"name",
 					"routeAvailable",
+					"operation",
+					"query",
 					"requests",
 					"totalMillis",
 					"p50",
@@ -16220,6 +16228,13 @@
 					},
 					{
 						"in": "query",
+						"name": "root",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
 						"name": "q",
 						"schema": {
 							"maxLength": 2000,
@@ -16355,6 +16370,13 @@
 								"error",
 								"ok"
 							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "root",
+						"schema": {
 							"type": "string"
 						}
 					},
