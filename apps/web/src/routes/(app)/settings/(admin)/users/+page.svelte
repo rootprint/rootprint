@@ -92,7 +92,7 @@
 		<span role="status" class="text-subtle text-xs tabular-nums">[{countLabel}]</span>
 
 		<button class="btn btn-primary btn-sm" onclick={() => (createUserOpen = true)}>
-			<UserPlus class="h-3.5 w-3.5" />
+			<UserPlus class="size-3.5" aria-hidden="true" />
 			Create user
 		</button>
 	</div>

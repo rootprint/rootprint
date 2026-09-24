@@ -209,7 +209,7 @@
 			ondblclick={(e) => e.stopPropagation()}
 			onclick={() => onChange(fullView())}
 		>
-			<ZoomOut class="h-3 w-3" />
+			<ZoomOut class="size-3" aria-hidden="true" />
 		</button>
 	{/if}
 

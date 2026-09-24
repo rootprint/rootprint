@@ -2,7 +2,6 @@
 	import type uPlotLib from 'uplot';
 
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import { slide } from 'svelte/transition';
 
 	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
 	import { levelColor, UNKNOWN_LEVEL } from '$lib/constants/level-colors';
@@ -158,9 +157,9 @@
 			onclick={() => (collapsed = !collapsed)}
 		>
 			{#if collapsed}
-				<ChevronRight class="text-base-content/40 h-2.5 w-2.5" />
+				<ChevronRight class="text-subtle size-3" aria-hidden="true" />
 			{:else}
-				<ChevronDown class="text-base-content/40 h-2.5 w-2.5" />
+				<ChevronDown class="text-subtle size-3" aria-hidden="true" />
 			{/if}
 			<span class="section-label text-left"> Frequency </span>
 		</button>
@@ -169,18 +168,18 @@
 				<span class="loading loading-spinner loading-xs mr-1"></span>
 			{/if}
 			{#if bucketWidthLabel}
-				<span class="text-base-content/80">{bucketWidthLabel}</span>
+				<span class="text-base-content">{bucketWidthLabel}</span>
 				<span>buckets</span>
 			{/if}
 		</div>
 	</div>
 
 	{#if !collapsed}
-		<div transition:slide={{ duration: 200 }}>
+		<div>
 			<div class="px-2">
 				{#if error}
 					<div class="flex h-[150px] items-center justify-center">
-						<p class="text-error/80 text-xs">{error}</p>
+						<p class="text-error text-xs">{error}</p>
 					</div>
 				{:else if loading}
 					<div class="flex h-[150px] items-center justify-center">
@@ -206,7 +205,7 @@
 											class="inline-block h-2 w-2 rounded-sm"
 											style="background-color: {levelColors[level]}"
 										></span>
-										<span class="text-base-content/80">{level}</span>
+										<span class="text-base-content">{level}</span>
 										<span class="text-base-content ml-auto font-mono">{count.toLocaleString()}</span
 										>
 									</div>

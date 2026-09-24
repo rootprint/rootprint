@@ -149,9 +149,9 @@
 			onclick={onToggle}
 		>
 			{#if open}
-				<ChevronDown class="text-base-content/60 h-3 w-3 shrink-0" />
+				<ChevronDown class="text-muted size-3 shrink-0" aria-hidden="true" />
 			{:else}
-				<ChevronRight class="text-base-content/60 h-3 w-3 shrink-0" />
+				<ChevronRight class="text-muted size-3 shrink-0" aria-hidden="true" />
 			{/if}
 			<span class="min-w-0 flex-1 truncate text-left text-xs" title={field.name}>
 				{label}
@@ -172,7 +172,7 @@
 			title={pinned ? 'Unpin field' : 'Pin field'}
 			onclick={onPin}
 		>
-			<Pin class="h-3 w-3 {pinned ? 'fill-current' : ''}" />
+			<Pin class="size-3 {pinned ? 'fill-current' : ''}" aria-hidden="true" />
 		</button>
 	</div>
 
@@ -220,7 +220,7 @@
 										e.currentTarget.blur();
 									}}
 								>
-									<Minus class="h-3 w-3" />
+									<Minus class="size-3" aria-hidden="true" />
 								</button>
 							{:else}
 								<input
@@ -246,12 +246,12 @@
 								{bucket.value}
 							</button>
 							<span
-								class="text-subtle shrink-0 text-right font-sans text-xs tabular-nums transition-opacity duration-150 group-focus-within:opacity-0 group-hover:opacity-0"
+								class="text-subtle shrink-0 text-right font-sans text-xs tabular-nums transition-opacity group-focus-within:opacity-0 group-hover:opacity-0"
 							>
 								{isGhost || isExcluded ? '—' : bucket.count.toLocaleString()}
 							</span>
 							<span
-								class="border-line bg-base-100 pointer-events-none absolute right-1 flex shrink-0 translate-x-1 overflow-hidden rounded opacity-0 transition-all duration-150 ease-out group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100"
+								class="border-line bg-base-100 pointer-events-none absolute right-1 flex shrink-0 overflow-hidden rounded opacity-0 transition-opacity ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
 							>
 								<button
 									type="button"
@@ -263,7 +263,7 @@
 										e.currentTarget.blur();
 									}}
 								>
-									<Plus class="h-3 w-3" />
+									<Plus class="size-3" aria-hidden="true" />
 								</button>
 								<button
 									type="button"
@@ -275,7 +275,7 @@
 										e.currentTarget.blur();
 									}}
 								>
-									<Minus class="h-3 w-3" />
+									<Minus class="size-3" aria-hidden="true" />
 								</button>
 							</span>
 						</li>

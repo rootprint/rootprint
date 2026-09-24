@@ -297,13 +297,13 @@
 				{#if !anchorVisible}
 					<button
 						type="button"
-						class="btn btn-sm btn-primary absolute right-4 bottom-4 z-10 gap-1 rounded-full shadow-lg"
+						class="btn btn-sm btn-primary absolute right-4 bottom-4 z-10 gap-1 shadow-lg"
 						onclick={scrollToAnchor}
 					>
 						{#if anchorAbove}
-							<ArrowUp class="h-3 w-3" />
+							<ArrowUp class="size-3" aria-hidden="true" />
 						{:else}
-							<ArrowDown class="h-3 w-3" />
+							<ArrowDown class="size-3" aria-hidden="true" />
 						{/if}
 						Back to hit
 					</button>

@@ -31,7 +31,7 @@
 			</thead>
 			<tbody>
 				{#each dependencies as dependency (dependency.name)}
-					<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
+					<tr class="border-line border-b last:border-b-0">
 						<td class="max-w-md py-2 font-mono">
 							<div class="truncate" title={dependency.name}>{dependency.name}</div>
 							{#if dependency.peers.length > 0}

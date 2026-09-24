@@ -144,7 +144,7 @@
 	<div bind:this={chartEl}></div>
 	{#if tooltipVisible && tooltipIdx != null && data && tooltipIdx < data[0].length}
 		<div
-			class="border-base-300/50 bg-base-100 pointer-events-none absolute z-20 grid items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
+			class="border-line bg-base-100 rounded-box pointer-events-none absolute z-20 grid items-start gap-1.5 border px-2.5 py-1.5 text-xs shadow-lg"
 			style="left: {tooltipLeft}px; top: {tooltipTop}px; min-width: {tooltipWidth}px;"
 		>
 			{@render tooltip(tooltipIdx)}

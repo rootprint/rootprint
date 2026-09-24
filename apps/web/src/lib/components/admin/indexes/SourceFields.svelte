@@ -40,12 +40,12 @@
 			onclick={() => (activeTab = tab.id)}
 			class={[
 				'tab-underline flex h-9 items-center gap-1.5 px-3 text-xs transition-colors',
-				activeTab === tab.id ? 'text-base-content' : 'text-base-content/60 hover:text-base-content'
+				activeTab === tab.id ? 'text-base-content' : 'text-muted hover:text-base-content'
 			]}
 		>
 			{tab.label}
 			{#if tab.hasError}
-				<span class="bg-error h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+				<span class="status status-error" aria-hidden="true"></span>
 			{/if}
 		</button>
 	{/each}
@@ -397,7 +397,7 @@
 	<div class="flex flex-col gap-3 px-4 py-4">
 		<div>
 			<label for="src-vrl" class="text-sm">VRL script</label>
-			<div class="text-base-content/60 mt-0.5 text-xs">
+			<div class="text-muted mt-0.5 text-xs">
 				Optional Vector Remap Language program run on each document before indexing. Leave blank to
 				disable.
 			</div>

@@ -23,11 +23,11 @@
 	style="anchor-name:--{dd}"
 	aria-label="Help"
 	data-tip={collapsed ? 'Help' : ''}
-	class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right flex items-center rounded text-sm transition-colors {collapsed
+	class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right flex items-center rounded text-sm transition-colors {collapsed
 		? 'h-10 w-10 justify-center'
 		: 'h-9 gap-2.5 px-3'}"
 >
-	<CircleHelp class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+	<CircleHelp class="size-4 shrink-0" aria-hidden="true" />
 	{#if !collapsed}
 		Help
 	{/if}
@@ -38,7 +38,7 @@
 	popover
 	id={dd}
 	style="position-anchor:--{dd}"
-	class="dropdown dropdown-right dropdown-end border-line rounded-box bg-base-100 ml-2 w-52 border p-2"
+	class="dropdown dropdown-right dropdown-end border-line rounded-box bg-base-100 ml-2 w-52 border p-2 shadow-lg"
 >
 	{#each links as link (link.href)}
 		{@const Icon = link.icon}
@@ -48,9 +48,9 @@
 				target="_blank"
 				rel="noopener"
 				onclick={() => panelEl?.togglePopover(false)}
-				class="text-base-content/80 hover:text-base-content hover:bg-base-200/60 flex items-center gap-2.5 rounded px-2 py-1.5 text-sm transition-colors"
+				class="text-base-content hover:bg-base-200/60 flex items-center gap-2.5 rounded px-2 py-1.5 text-sm transition-colors"
 			>
-				<Icon class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+				<Icon class="text-muted size-4 shrink-0" aria-hidden="true" />
 				{link.label}
 			</a>
 		</li>

@@ -35,28 +35,28 @@
 	<div class="border-line flex flex-wrap items-start justify-between gap-4 border-b pb-4">
 		<div>
 			<p class="text-sm">API keys</p>
-			<p class="text-base-content/60 text-xs">
+			<p class="text-muted text-xs">
 				Query the log API programmatically. A key can read exactly what you can see.
 			</p>
 		</div>
 		<button class="btn btn-sm" onclick={() => (createOpen = true)}>
-			<Plus class="h-3.5 w-3.5" />
+			<Plus class="size-3.5" aria-hidden="true" />
 			Create key
 		</button>
 	</div>
 
 	{#if keys === null}
-		<p class="text-base-content/60 mt-4 text-sm">
+		<p class="text-muted mt-4 text-sm">
 			Couldn't load your API keys. Reload the page to try again.
 		</p>
 	{:else if keys.length === 0}
-		<p class="text-base-content/60 mt-4 text-sm">No API keys yet.</p>
+		<p class="text-muted mt-4 text-sm">No API keys yet.</p>
 	{:else}
 		<ul class="divide-line mt-4 divide-y">
 			{#each keys as key (key.id)}
 				<li class="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
 					<span class="min-w-0 flex-1 truncate text-sm">{key.name ?? '—'}</span>
-					<span class="text-base-content/60 font-mono text-xs">
+					<span class="text-muted font-mono text-xs">
 						{key.start != null ? `${key.start}…` : '—'}
 					</span>
 					<span class="text-subtle text-xs">
@@ -69,9 +69,10 @@
 						type="button"
 						class="btn btn-square btn-ghost text-error btn-sm"
 						aria-label="Revoke API key {key.name ?? ''}"
+						title="Revoke API key {key.name ?? ''}"
 						onclick={() => openDelete(key)}
 					>
-						<Trash2 class="h-4 w-4" />
+						<Trash2 class="size-3.5" aria-hidden="true" />
 					</button>
 				</li>
 			{/each}

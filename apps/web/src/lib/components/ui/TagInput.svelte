@@ -72,11 +72,12 @@
 			{tag}
 			<button
 				type="button"
-				class="cursor-pointer opacity-50 hover:opacity-100"
+				class="text-subtle hover:text-base-content cursor-pointer"
 				aria-label="Remove {tag}"
+				title="Remove {tag}"
 				onclick={() => remove(tag)}
 			>
-				<X class="h-3 w-3" />
+				<X class="size-3" aria-hidden="true" />
 			</button>
 		</span>
 	{/each}

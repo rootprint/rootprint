@@ -2,9 +2,6 @@
 	import { goto, invalidateAll, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import { ArrowLeft, Check, Copy, ScrollText } from 'lucide-svelte';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { MediaQuery } from 'svelte/reactivity';
-	import { slide } from 'svelte/transition';
 
 	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
 	import TracePane from '$lib/components/trace/TracePane.svelte';
@@ -21,7 +18,6 @@
 	import type { SpanNode } from '$lib/types';
 
 	let { data } = $props();
-	const sideBySide = new MediaQuery('(min-width: 80rem)');
 
 	function selectLogIndex(id: string | null): void {
 		// location, not page.url: shallow `?span=` updates never reach page.url.
@@ -113,7 +109,7 @@
 	<header class="border-line border-b px-4 py-3">
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			<a href={data.returnTo} class="btn btn-ghost btn-xs -ml-2 gap-1.5">
-				<ArrowLeft class="h-3.5 w-3.5" />
+				<ArrowLeft class="size-3" aria-hidden="true" />
 				{backLabel}
 			</a>
 			<div class="flex items-center gap-2">
@@ -136,7 +132,7 @@
 
 				{#if hasSpans && traceLogsUrl}
 					<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
-						<ScrollText class="h-3.5 w-3.5" />
+						<ScrollText class="size-3" aria-hidden="true" />
 						Logs for this trace
 					</a>
 				{/if}
@@ -145,13 +141,13 @@
 
 		<div class="mt-3 flex min-w-0 items-end justify-between gap-3">
 			<div class="min-w-0">
-				<p class="eyebrow">Operation</p>
+				<p class="section-label">Operation</p>
 				<div class="mt-0.5 flex min-w-0 items-baseline gap-3">
-					<h1 class="truncate font-mono text-lg">
+					<h1 class="text-h3 truncate font-mono">
 						{root ? root.name : 'Trace'}
 					</h1>
 					{#if hasSpans}
-						<p class="text-subtle shrink-0 font-mono text-lg tabular-nums">
+						<p class="text-subtle text-h3 shrink-0 font-mono tabular-nums">
 							{formatSpanDuration(model.durationMicros)}
 						</p>
 					{/if}
@@ -159,8 +155,9 @@
 				{#if root}
 					<p class="text-subtle mt-0.5 flex min-w-0 items-center gap-1.5 text-xs">
 						<span
-							class="h-2 w-2 shrink-0 rounded-full"
+							class="status shrink-0"
 							style={`background-color:${serviceColor(root.serviceName)}`}
+							aria-hidden="true"
 						></span>
 						<span class="truncate">{root.serviceName}</span>
 						<span aria-hidden="true">·</span>
@@ -181,9 +178,9 @@
 					{#snippet children({ copied }: { copied: boolean })}
 						<span class="truncate font-mono text-xs">{data.traceId}</span>
 						{#if copied}
-							<Check class="h-3 w-3 shrink-0" />
+							<Check class="size-3 shrink-0" aria-hidden="true" />
 						{:else}
-							<Copy class="h-3 w-3 shrink-0" />
+							<Copy class="size-3 shrink-0" aria-hidden="true" />
 						{/if}
 					{/snippet}
 				</CopyButton>
@@ -198,8 +195,9 @@
 				{#each model.services as service (service.name)}
 					<span class="flex min-w-0 items-center gap-1.5">
 						<span
-							class="h-2 w-2 shrink-0 rounded-full"
+							class="status shrink-0"
 							style={`background-color:${serviceColor(service.name)}`}
+							aria-hidden="true"
 						></span>
 						<span class="truncate">{service.name}</span>
 						<span class="text-subtle tabular-nums">{service.count}</span>
@@ -288,10 +286,6 @@
 			<aside
 				class="border-line h-1/2 w-full shrink-0 overflow-hidden border-t xl:h-auto xl:w-[clamp(22rem,36vw,34rem)] xl:border-t-0 xl:border-l"
 				aria-label="Span detail"
-				transition:slide={{
-					axis: sideBySide.current ? 'x' : 'y',
-					duration: prefersReducedMotion.current ? 0 : 200
-				}}
 			>
 				<SpanDetailPane
 					span={selectedSpan}

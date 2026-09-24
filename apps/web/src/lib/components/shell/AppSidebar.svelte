@@ -39,7 +39,7 @@
 </script>
 
 <aside
-	class="border-line bg-base-100 flex min-h-0 shrink-0 flex-col overflow-y-auto border-r transition-[width] duration-150 {collapsed
+	class="border-line bg-base-100 flex min-h-0 shrink-0 flex-col overflow-y-auto border-r transition-[width] {collapsed
 		? 'w-14'
 		: 'w-60'}"
 >
@@ -51,7 +51,7 @@
 		<a href="/" class="flex items-center gap-2 hover:opacity-80" aria-label="Rootprint home">
 			<img src="/logo.png" alt="" class="h-6 w-6 object-contain" />
 			{#if !collapsed}
-				<span class="text-base font-semibold tracking-tight">Rootprint</span>
+				<span class="text-base font-medium tracking-tight">Rootprint</span>
 			{/if}
 		</a>
 	</div>
@@ -94,14 +94,14 @@
 			}}
 			aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
 			data-tip={collapsed ? 'Expand' : ''}
-			class="text-base-content/60 hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
+			class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
 				? 'h-10 w-10 justify-center'
 				: 'h-9 gap-2.5 px-3'}"
 		>
 			{#if collapsed}
-				<PanelLeftOpen class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+				<PanelLeftOpen class="size-4 shrink-0" aria-hidden="true" />
 			{:else}
-				<PanelLeftClose class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+				<PanelLeftClose class="size-4 shrink-0" aria-hidden="true" />
 				Collapse
 			{/if}
 		</button>

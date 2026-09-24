@@ -84,7 +84,7 @@
 		/>
 
 		{#if traceIndexId}
-			<p class="text-base-content/60 text-xs">
+			<p class="text-muted text-xs">
 				Spans from this key go to <span class="font-mono">{traceIndexId}</span>.
 			</p>
 		{:else}

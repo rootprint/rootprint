@@ -20,29 +20,29 @@
 
 	const statusUi = $derived(
 		status === 'expired'
-			? { label: 'Invite expired', dot: 'bg-error', text: 'text-error' }
+			? { label: 'Invite expired', dot: 'status-error', text: 'text-error' }
 			: status === 'pending'
-				? { label: 'Invite pending', dot: 'bg-warning', text: 'text-base-content/90' }
-				: { label: 'Active', dot: 'bg-success', text: 'text-base-content/90' }
+				? { label: 'Invite pending', dot: 'status-warning', text: 'text-base-content' }
+				: { label: 'Active', dot: 'status-success', text: 'text-base-content' }
 	);
 </script>
 
 <div class="flex flex-col gap-4">
 	<!-- Read-only facts shown as compact chips so they're legible at a glance. -->
 	<dl class="flex flex-wrap items-center gap-2 text-xs">
-		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
+		<div class="badge badge-sm badge-ghost gap-1.5">
 			<dt class="text-muted">Joined</dt>
-			<dd class="text-base-content/90 font-medium">{joined}</dd>
+			<dd class="font-medium">{joined}</dd>
 		</div>
-		<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
+		<div class="badge badge-sm badge-ghost gap-1.5">
 			<dt class="text-muted">Last active</dt>
-			<dd class="text-base-content/90 font-medium">{lastActiveLabel}</dd>
+			<dd class="font-medium">{lastActiveLabel}</dd>
 		</div>
 		{#if status}
-			<div class="bg-base-200 flex items-center gap-1.5 rounded-full px-3 py-1">
+			<div class="badge badge-sm badge-ghost gap-1.5">
 				<dt class="text-muted">Status</dt>
 				<dd class="flex items-center gap-1.5 font-medium {statusUi.text}">
-					<span class="h-1.5 w-1.5 rounded-full {statusUi.dot}" aria-hidden="true"></span>
+					<span class="status {statusUi.dot}" aria-hidden="true"></span>
 					{statusUi.label}
 				</dd>
 			</div>

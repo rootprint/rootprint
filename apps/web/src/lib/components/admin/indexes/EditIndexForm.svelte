@@ -109,7 +109,7 @@
 	<SettingsRow plain label="Immutable" hint="Quickwit forbids changing these after creation.">
 		<div class="flex flex-col gap-2 text-sm">
 			<div class="flex flex-col gap-1">
-				<span class="text-base-content/60 text-xs">Index ID</span>
+				<span class="text-muted text-xs">Index ID</span>
 				<input
 					type="text"
 					value={detail.indexId}
@@ -118,7 +118,7 @@
 				/>
 			</div>
 			<div class="flex flex-col gap-1">
-				<span class="text-base-content/60 text-xs">Index URI</span>
+				<span class="text-muted text-xs">Index URI</span>
 				<input
 					type="text"
 					value={detail.indexUri ?? '(default)'}
@@ -127,7 +127,7 @@
 				/>
 			</div>
 			<div class="flex flex-col gap-1">
-				<span class="text-base-content/60 text-xs">Timestamp field</span>
+				<span class="text-muted text-xs">Timestamp field</span>
 				<input
 					type="text"
 					value={detail.timestampField ?? ''}
@@ -150,7 +150,7 @@
 			</div>
 			{#if mode === 'dynamic'}
 				<div class="flex flex-col gap-1">
-					<span class="text-base-content/60 text-xs">Unmapped fields are indexed as:</span>
+					<span class="text-muted text-xs">Unmapped fields are indexed as:</span>
 					<DynamicMappingFields bind:dm={dynamic} />
 				</div>
 			{/if}
@@ -203,7 +203,7 @@
 				</div>
 				{#if partitionKey.trim() !== ''}
 					<div class="flex flex-col gap-1">
-						<label for="edit-max-partitions" class="text-base-content/60 text-xs">
+						<label for="edit-max-partitions" class="text-muted text-xs">
 							Max partitions (default 200)
 						</label>
 						<input
@@ -317,7 +317,7 @@
 							<span class="text-subtle font-sans text-xs break-all">{field.description}</span>
 						{/if}
 					</div>
-					<span class="text-base-content/60">{field.type}</span>
+					<span class="text-muted">{field.type}</span>
 				</div>
 			{/each}
 		</div>

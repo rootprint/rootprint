@@ -36,7 +36,7 @@
 	onclose={() => (inviteUrl = null)}
 >
 	{#snippet fields()}
-		<p class="text-base-content/60 text-sm">
+		<p class="text-muted text-sm">
 			Reset password for <strong>{userName}</strong>? Their current password and active sessions
 			will be invalidated, and you'll get a one-time setup link to share with them.
 		</p>
@@ -44,7 +44,7 @@
 
 	{#snippet reveal()}
 		<div class="flex flex-col gap-3">
-			<p class="text-base-content/60 text-sm">
+			<p class="text-muted text-sm">
 				Share this setup link with <strong>{userName}</strong>. It expires per the invite policy.
 			</p>
 			<CopyableField value={inviteUrl ?? ''} ariaLabel="Setup link" />

@@ -70,7 +70,7 @@
 	{/snippet}
 	{#snippet reveal()}
 		<div class="flex flex-col gap-3">
-			<p class="text-base-content/60 text-sm">
+			<p class="text-muted text-sm">
 				Share this link with <strong>{name}</strong> to complete account setup.
 			</p>
 			<CopyableField value={inviteUrl ?? ''} ariaLabel="Invite link" />

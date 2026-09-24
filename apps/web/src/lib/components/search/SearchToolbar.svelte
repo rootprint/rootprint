@@ -271,7 +271,7 @@
 			title="Share"
 			onclick={shareLink}
 		>
-			<Share2 class="h-3.5 w-3.5" />
+			<Share2 class="size-3.5" aria-hidden="true" />
 		</button>
 		<button
 			type="button"
@@ -283,7 +283,7 @@
 			}}
 			onclick={runQuery}
 		>
-			<Play class="h-3.5 w-3.5" />
+			<Play class="size-3.5" aria-hidden="true" />
 			Run
 		</button>
 	</div>

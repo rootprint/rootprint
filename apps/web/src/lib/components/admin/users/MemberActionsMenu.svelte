@@ -3,7 +3,6 @@
 		Check,
 		KeyRound,
 		Link,
-		Loader,
 		MoreHorizontal,
 		RefreshCw,
 		Shield,
@@ -67,11 +66,12 @@
 {#if isSelf}
 	<button
 		type="button"
-		class="btn btn-square btn-ghost btn-sm opacity-30"
+		class="btn btn-square btn-ghost btn-sm"
 		disabled
 		aria-label="No actions available on your own account"
+		title="No actions available on your own account"
 	>
-		<MoreHorizontal class="h-4 w-4" />
+		<MoreHorizontal class="size-3.5" aria-hidden="true" />
 	</button>
 {:else}
 	<button
@@ -80,15 +80,16 @@
 		style="anchor-name:--{dd}"
 		class="btn btn-square btn-ghost btn-sm"
 		aria-label="Actions for {user.name}"
+		title="Actions for {user.name}"
 	>
-		<MoreHorizontal class="h-4 w-4" />
+		<MoreHorizontal class="size-3.5" aria-hidden="true" />
 	</button>
 	<ul
 		bind:this={panelEl}
 		popover
 		id={dd}
 		style="position-anchor:--{dd}"
-		class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 w-56 border p-1 text-sm"
+		class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 w-56 border p-1 text-sm shadow-lg"
 	>
 		{#if isPendingOrExpired}
 			{#if user.inviteUrl}
@@ -100,10 +101,10 @@
 					>
 						{#snippet children({ copied })}
 							{#if copied}
-								<Check class="h-3.5 w-3.5" />
+								<Check class="size-3.5" aria-hidden="true" />
 								<span>Copied</span>
 							{:else}
-								<Link class="h-3.5 w-3.5" />
+								<Link class="size-3.5" aria-hidden="true" />
 								<span>Copy invite link</span>
 							{/if}
 						{/snippet}
@@ -118,9 +119,9 @@
 					disabled={pending === 'regenerate'}
 				>
 					{#if pending === 'regenerate'}
-						<Loader class="h-3.5 w-3.5 animate-spin" />
+						<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
 					{:else}
-						<RefreshCw class="h-3.5 w-3.5" />
+						<RefreshCw class="size-3.5" aria-hidden="true" />
 					{/if}
 					<span>Regenerate invite</span>
 				</button>
@@ -135,11 +136,11 @@
 				disabled={pending === 'toggle-role'}
 			>
 				{#if pending === 'toggle-role'}
-					<Loader class="h-3.5 w-3.5 animate-spin" />
+					<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
 				{:else if user.role === 'admin'}
-					<ShieldOff class="h-3.5 w-3.5" />
+					<ShieldOff class="size-3.5" aria-hidden="true" />
 				{:else}
-					<Shield class="h-3.5 w-3.5" />
+					<Shield class="size-3.5" aria-hidden="true" />
 				{/if}
 				<span>{user.role === 'admin' ? 'Revoke admin' : 'Make admin'}</span>
 			</button>
@@ -155,7 +156,7 @@
 						onResetPassword(user);
 					}}
 				>
-					<KeyRound class="h-3.5 w-3.5" />
+					<KeyRound class="size-3.5" aria-hidden="true" />
 					<span>Reset password</span>
 				</button>
 			</li>
@@ -172,7 +173,7 @@
 					onRemove(user);
 				}}
 			>
-				<Trash2 class="h-3.5 w-3.5" />
+				<Trash2 class="size-3.5" aria-hidden="true" />
 				<span>Remove user</span>
 			</button>
 		</li>

@@ -85,7 +85,7 @@
 			{source.enabled ? 'Disable' : 'Enable'}
 		</button>
 		<button type="button" class="btn btn-outline btn-sm" onclick={() => (resetOpen = true)}>
-			<RotateCcw class="h-3.5 w-3.5" />
+			<RotateCcw class="size-3.5" aria-hidden="true" />
 			Reset checkpoint
 		</button>
 		<button
@@ -93,7 +93,7 @@
 			class="btn btn-outline btn-sm btn-error"
 			onclick={() => (deleteOpen = true)}
 		>
-			<Trash2 class="h-3.5 w-3.5" />
+			<Trash2 class="size-3.5" aria-hidden="true" />
 			Delete
 		</button>
 	</div>

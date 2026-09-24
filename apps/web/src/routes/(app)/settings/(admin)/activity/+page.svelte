@@ -29,10 +29,10 @@
 	{#snippet apiKeyActor(id: string, label: string | null)}
 		<div class="flex min-w-0 items-center gap-2">
 			<span
-				class="bg-base-200 text-base-content/60 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+				class="bg-base-200 text-muted flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
 				aria-hidden="true"
 			>
-				<KeyRound class="h-3.5 w-3.5" />
+				<KeyRound class="size-3.5" aria-hidden="true" />
 			</span>
 			<span class="truncate text-sm">{label ?? id}</span>
 		</div>

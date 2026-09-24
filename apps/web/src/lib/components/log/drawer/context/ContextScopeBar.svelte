@@ -28,9 +28,8 @@
 		'flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs transition-colors disabled:opacity-60';
 	const chipSelected = 'bg-primary border-primary text-primary-content';
 	const chipIdle =
-		'border-base-content/15 text-base-content/60 hover:border-base-content/40 hover:text-base-content';
-	const chipNoValue =
-		'border-base-content/15 text-base-content/30 cursor-not-allowed border-dashed';
+		'border-base-content/15 text-muted hover:border-base-content/40 hover:text-base-content';
+	const chipNoValue = 'border-base-content/15 text-subtle cursor-not-allowed border-dashed';
 </script>
 
 <div class="border-line bg-base-100 flex flex-wrap items-center gap-1.5 border-b px-3 py-2">
@@ -44,7 +43,7 @@
 		onclick={() => onChange([])}
 	>
 		{#if selected.length === 0}
-			<Check class="h-3 w-3 shrink-0" />
+			<Check class="size-3 shrink-0" aria-hidden="true" />
 		{/if}
 		All
 	</button>
@@ -65,7 +64,7 @@
 			onclick={() => toggle(tab.field)}
 		>
 			{#if isSelected}
-				<Check class="h-3 w-3 shrink-0" />
+				<Check class="size-3 shrink-0" aria-hidden="true" />
 			{/if}
 			<span class="truncate font-mono">{tab.field}</span>
 		</button>
@@ -79,7 +78,7 @@
 				title="Configure context fields"
 				aria-label="Configure context fields"
 			>
-				<Settings2 class="h-3.5 w-3.5" />
+				<Settings2 class="size-3" aria-hidden="true" />
 			</a>
 		{/if}
 		<button
@@ -90,7 +89,7 @@
 			{disabled}
 			onclick={onOpenAsSearch}
 		>
-			<ExternalLink class="h-3.5 w-3.5" />
+			<ExternalLink class="size-3" aria-hidden="true" />
 		</button>
 	</div>
 </div>

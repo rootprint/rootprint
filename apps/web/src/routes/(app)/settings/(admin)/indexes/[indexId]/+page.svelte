@@ -58,7 +58,7 @@
 					href="/settings/indexes/{encodeURIComponent(detail.indexId)}/edit"
 					class="btn btn-outline btn-sm"
 				>
-					<Pencil class="h-3.5 w-3.5" />
+					<Pencil class="size-3.5" aria-hidden="true" />
 					Edit
 				</a>
 				<button
@@ -66,7 +66,7 @@
 					class="btn btn-outline btn-sm btn-error"
 					onclick={() => (deleteOpen = true)}
 				>
-					<Trash2 class="h-3.5 w-3.5" />
+					<Trash2 class="size-3.5" aria-hidden="true" />
 					Delete
 				</button>
 			</div>
@@ -125,7 +125,7 @@
 				/>
 				<span class="text-subtle text-xs tabular-nums">[{sourcesCountLabel}]</span>
 				<a href="/settings/indexes/{detail.indexId}/sources/new" class="btn btn-primary btn-sm">
-					<Plus class="h-3.5 w-3.5" />
+					<Plus class="size-3.5" aria-hidden="true" />
 					Create source
 				</a>
 			</div>
@@ -140,11 +140,11 @@
 					<ListRow href="/settings/indexes/{detail.indexId}/sources/{source.sourceId}">
 						<div class="min-w-0 flex-1">
 							<div class="truncate font-mono text-sm">{source.sourceId}</div>
-							<div class="text-base-content/60 truncate text-xs">
+							<div class="text-muted truncate text-xs">
 								{sourceTypeLabel(source.sourceType)} · {source.enabled ? 'enabled' : 'disabled'}
 							</div>
 						</div>
-						<ChevronRight class="h-4 w-4 opacity-50" />
+						<ChevronRight class="text-subtle size-3.5" aria-hidden="true" />
 					</ListRow>
 				{/each}
 			</ListCard>

@@ -155,7 +155,12 @@
 		disabled={refreshing}
 		onclick={onRefresh}
 	>
-		<RefreshCw class="size-3.5 {refreshing ? 'animate-spin' : ''}" aria-hidden="true" />Refresh
+		{#if refreshing}
+			<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+		{:else}
+			<RefreshCw class="size-3.5" aria-hidden="true" />
+		{/if}
+		Refresh
 	</button>
 </div>
 
@@ -175,7 +180,7 @@
 					title="Remove filter"
 					onclick={() => onFilter('operation', null)}
 				>
-					<X class="h-3 w-3" />
+					<X class="size-3" aria-hidden="true" />
 				</button>
 			</span>
 		{/if}

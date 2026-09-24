@@ -45,7 +45,7 @@
 
 {#if data.tokenStatus === 'valid'}
 	{#if data.providers.password.enabled}
-		<AuthHeader eyebrow="Set your password" title="Welcome to Rootprint" divider>
+		<AuthHeader label="Set your password" title="Welcome to Rootprint" divider>
 			Setting up the account for <span class="font-mono">{data.email}</span>.
 		</AuthHeader>
 
@@ -70,7 +70,7 @@
 			</button>
 		</form>
 	{:else}
-		<AuthHeader eyebrow="Invitation" title="Welcome to Rootprint" divider>
+		<AuthHeader label="Invitation" title="Welcome to Rootprint" divider>
 			Your account for <span class="font-mono">{data.email}</span> is ready. This instance signs in through
 			an external provider, so no password is needed. Sign in with the provider account that uses that
 			same email address.
@@ -80,7 +80,7 @@
 	{/if}
 {:else}
 	<AuthHeader
-		eyebrow="Invite link"
+		label="Invite link"
 		title={data.tokenStatus === 'expired' ? 'Invite expired' : 'Invalid invite'}
 	>
 		{#if data.tokenStatus === 'expired'}

@@ -7,7 +7,9 @@
 	import ClusterIdentityStrip from '$lib/components/admin/overview/ClusterIdentityStrip.svelte';
 	import HeadlineNumbers from '$lib/components/admin/overview/HeadlineNumbers.svelte';
 	import StorageTrendChart from '$lib/components/admin/overview/StorageTrendChart.svelte';
+	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import { copyWithToast } from '$lib/utils/clipboard';
 	import type { ConnectionState } from '$lib/types';
 	import { MetricsPoller } from './metrics-poller.svelte';
@@ -129,7 +131,7 @@
 <div class="settings-page">
 	<PageHeader title="Overview" description="Live process and cluster health for Quickwit.">
 		{#snippet actions()}
-			<button class="text-base-content/60 hover:text-base-content text-xs" onclick={refresh}>
+			<button class="text-muted hover:text-base-content text-xs" onclick={refresh}>
 				Refresh
 			</button>
 		{/snippet}
@@ -150,25 +152,20 @@
 		<HeadlineNumbers totals={cluster?.totals ?? null} live={poller.liveSummary} />
 
 		{#if poller.unavailable}
-			<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-2 text-xs">
-				Quickwit metrics unavailable ({poller.failures} consecutive failures).
-				<button class="ml-2 underline" onclick={() => poller.poll()}>Retry now</button>
-			</div>
+			<PanelError
+				message={`Quickwit metrics unavailable (${poller.failures} consecutive failures)`}
+				retry={() => poller.poll()}
+			/>
 		{:else if poller.stale}
-			<div class="text-base-content/60 text-xs">
+			<div class="text-muted text-xs">
 				Live metrics stale — last update {poller.staleSeconds}s ago.
 			</div>
 		{/if}
 
 		{#if clusterError}
-			<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-3 text-xs">
-				Cluster overview unavailable: {clusterError}
-				<button class="ml-2 underline" onclick={refresh}>Retry</button>
-			</div>
+			<PanelError message={`Cluster overview unavailable: ${clusterError}`} retry={refresh} />
 		{:else if cluster && cluster.perIndex.length === 0}
-			<div class="border-line text-base-content/60 rounded-box border px-4 py-6 text-sm">
-				No indexes yet — create one to start tracking.
-			</div>
+			<EmptyPanel title="No indexes yet">Create one to start tracking.</EmptyPanel>
 		{:else if cluster}
 			<StorageTrendChart
 				indexes={cluster.perIndex}
@@ -178,21 +175,22 @@
 				loading={historiesLoading}
 			/>
 			{#if Object.keys(historyErrors).length > 0}
-				<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-2 text-xs">
-					<p class="font-medium">History fetch errors</p>
-					<ul class="mt-1 list-disc pl-5">
-						{#each Object.entries(historyErrors) as [id, msg] (id)}
-							<li><span class="font-mono">{id}</span>: {msg}</li>
-						{/each}
-					</ul>
-				</div>
+				<PanelError
+					message={`History unavailable for ${Object.keys(historyErrors).join(', ')}`}
+					error={new Error(
+						Object.entries(historyErrors)
+							.map(([id, msg]) => `${id}: ${msg}`)
+							.join('; ')
+					)}
+					retry={() => void loadHistories()}
+				/>
 			{/if}
 		{/if}
 	</div>
 
 	<details class="border-line rounded-box group mt-10 border px-4 py-3" ontoggle={onRawToggle}>
 		<summary
-			class="text-base-content/70 hover:text-base-content flex cursor-pointer items-center justify-between text-xs"
+			class="text-muted hover:text-base-content flex cursor-pointer items-center justify-between text-xs"
 		>
 			<span class="section-label">Raw metrics</span>
 			<span class="text-muted text-xs group-open:hidden">expand</span>
@@ -224,9 +222,7 @@
 				</button>
 			</div>
 			{#if rawError}
-				<div class="border-error/40 bg-error/5 text-error rounded border px-4 py-2 text-xs">
-					Raw metrics unavailable: {rawError}
-				</div>
+				<PanelError message={`Raw metrics unavailable: ${rawError}`} retry={() => void loadRaw()} />
 			{:else if rawLoading && rawText === null}
 				<div class="text-muted px-4 py-6 text-center text-xs">Loading raw metrics…</div>
 			{:else if rawText !== null}

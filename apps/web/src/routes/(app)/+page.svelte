@@ -96,22 +96,22 @@
 </script>
 
 {#if data.hasDocuments === false}
-	<div class="bg-base-200/30 flex h-full min-h-0 w-full items-center justify-center p-8">
+	<div class="flex h-full min-h-0 w-full items-center justify-center p-8">
 		<section class="border-line bg-base-100 rounded-box w-full max-w-xl border p-8">
 			<div
 				class="bg-primary text-primary-content mb-6 flex h-10 w-10 items-center justify-center rounded"
 			>
-				<Send class="h-5 w-5" aria-hidden="true" />
+				<Send class="size-5" aria-hidden="true" />
 			</div>
-			<p class="eyebrow">Get started</p>
-			<h1 class="mt-1 text-3xl tracking-tight">Send your first logs</h1>
-			<p class="text-base-content/60 mt-3 max-w-md text-sm leading-6">
+			<p class="section-label">Get started</p>
+			<h1 class="text-h2 mt-1">Send your first logs</h1>
+			<p class="text-muted mt-3 max-w-md text-sm leading-6">
 				Your indexes are ready. Choose where your logs come from and follow the integration guide to
 				start searching them in Rootprint.
 			</p>
 			<div class="mt-7 flex flex-wrap items-center gap-3">
 				<a href="/settings/send-telemetry" class="btn btn-primary btn-sm">
-					<Send class="h-3.5 w-3.5" aria-hidden="true" />
+					<Send class="size-3.5" aria-hidden="true" />
 					Choose an integration
 				</a>
 				<a
@@ -121,7 +121,7 @@
 					class="btn btn-ghost btn-sm"
 				>
 					Read the guide
-					<ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+					<ExternalLink class="size-3.5" aria-hidden="true" />
 				</a>
 			</div>
 		</section>
@@ -168,7 +168,7 @@
 					{:else if displayState === 'error'}
 						<div class="flex h-full items-center justify-center p-6">
 							<div class="alert alert-error max-w-md" role="alert">
-								<CircleX class="h-4 w-4 shrink-0" />
+								<CircleX class="size-3.5 shrink-0" aria-hidden="true" />
 								<span class="text-xs"
 									>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
 								>
@@ -180,11 +180,11 @@
 								class="border-line bg-base-100 rounded-box w-full max-w-sm border px-6 py-8 text-center"
 							>
 								<div
-									class="bg-base-200 text-base-content/45 mx-auto flex h-10 w-10 items-center justify-center rounded"
+									class="bg-base-200 text-subtle mx-auto flex h-10 w-10 items-center justify-center rounded"
 								>
-									<SearchX class="h-5 w-5" aria-hidden="true" />
+									<SearchX class="size-5" aria-hidden="true" />
 								</div>
-								<h2 class="mt-4 text-base">No logs match this search</h2>
+								<h2 class="mt-4 text-base font-medium">No logs match this search</h2>
 								<p class="text-subtle mx-auto mt-1 max-w-xs text-xs leading-5">
 									Try widening the time range or updating your query and filters.
 								</p>

@@ -132,15 +132,6 @@
 }
 
 @layer components {
-	.eyebrow {
-		font-family: var(--font-sans);
-		font-size: 0.75rem;
-		line-height: 1.25rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--color-muted);
-	}
-
 	.section-label {
 		font-family: var(--font-sans);
 		font-size: var(--text-xs);
@@ -209,7 +200,7 @@
 	@apply relative;
 
 	&::after {
-		@apply bg-base-content absolute inset-x-0 bottom-0 h-0.5 opacity-0 transition-opacity duration-150;
+		@apply bg-base-content absolute inset-x-0 bottom-0 h-0.5 opacity-0 transition-opacity;
 		content: '';
 	}
 
@@ -224,7 +215,7 @@
 	@apply relative;
 
 	& > .nav-rail-bar {
-		@apply bg-primary absolute inset-y-1.5 left-0 w-0.5 rounded-full opacity-0 transition-opacity duration-150;
+		@apply bg-primary absolute inset-y-1.5 left-0 w-0.5 rounded-full opacity-0 transition-opacity;
 	}
 
 	&[aria-current='page'] > .nav-rail-bar,

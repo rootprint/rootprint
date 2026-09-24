@@ -47,24 +47,26 @@
 					<span class="text-muted text-xs tabular-nums">
 						{start + 1}–{start + rows.length} of {services.length}
 					</span>
-					<div class="border-line divide-line flex divide-x overflow-hidden rounded border">
+					<div class="join">
 						<button
 							type="button"
-							class="text-muted hover:bg-base-200 hover:text-base-content disabled:text-base-content/20 grid h-7 w-8 place-items-center transition-colors disabled:hover:bg-transparent"
+							class="btn btn-sm btn-square join-item"
 							aria-label="Previous page"
+							title="Previous page"
 							disabled={pageIndex === 0}
 							onclick={() => (pageIndex -= 1)}
 						>
-							<ChevronLeft class="h-3.5 w-3.5" />
+							<ChevronLeft class="size-3.5" aria-hidden="true" />
 						</button>
 						<button
 							type="button"
-							class="text-muted hover:bg-base-200 hover:text-base-content disabled:text-base-content/20 grid h-7 w-8 place-items-center transition-colors disabled:hover:bg-transparent"
+							class="btn btn-sm btn-square join-item"
 							aria-label="Next page"
+							title="Next page"
 							disabled={pageIndex >= lastPage}
 							onclick={() => (pageIndex += 1)}
 						>
-							<ChevronRight class="h-3.5 w-3.5" />
+							<ChevronRight class="size-3.5" aria-hidden="true" />
 						</button>
 					</div>
 				</div>
@@ -86,7 +88,7 @@
 			<tbody>
 				{#each rows as service, index (service.name)}
 					{@const errorRate = service.requests === 0 ? 0 : service.errors / service.requests}
-					<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
+					<tr class="border-line border-b last:border-b-0">
 						<td class="w-10 text-right tabular-nums">
 							{start + index + 1}
 						</td>

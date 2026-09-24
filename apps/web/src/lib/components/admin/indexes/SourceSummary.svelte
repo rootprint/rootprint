@@ -25,7 +25,7 @@
 
 <div class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border">
 	<div class="px-4 py-3">
-		<p class="text-base-content/60 text-xs">
+		<p class="text-muted text-xs">
 			{#if managed}
 				This is a built-in source managed by Quickwit. It can be viewed but not edited, disabled, or
 				deleted here.
@@ -47,7 +47,7 @@
 		<div class="flex flex-col gap-3 px-4 py-4">
 			<div>
 				<div class="text-sm">VRL script</div>
-				<div class="text-base-content/60 mt-0.5 text-xs">Transform applied before indexing.</div>
+				<div class="text-muted mt-0.5 text-xs">Transform applied before indexing.</div>
 			</div>
 			<pre
 				class="bg-base-200 rounded-box overflow-x-auto p-3 font-mono text-xs whitespace-pre-wrap">{source.vrlScript ??

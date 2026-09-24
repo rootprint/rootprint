@@ -77,7 +77,7 @@
 	class="border-base-content/20 bg-base-100 hover:bg-base-200 text-ui focus-visible:border-base-content flex h-8 max-w-48 min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded border px-2 select-none"
 >
 	<span class="truncate">{label}</span>
-	<ChevronDown class="h-3 w-3 shrink-0 opacity-60" />
+	<ChevronDown class="text-muted size-3 shrink-0" aria-hidden="true" />
 </button>
 
 <div
@@ -86,7 +86,7 @@
 	id={dd}
 	style="position-anchor:--{dd}"
 	ontoggle={onToggle}
-	class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 flex border"
+	class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 flex border shadow-lg"
 >
 	<div class="border-line flex w-44 flex-col border-r p-3">
 		<p class="section-label mb-2">Ranges</p>
@@ -100,7 +100,7 @@
 				onclick={() => selectPreset(preset)}
 			>
 				<span>{PRESET_LABELS[preset]}</span>
-				<span class="opacity-60">{preset}</span>
+				<span class={[!active && 'text-muted']}>{preset}</span>
 			</button>
 		{/each}
 	</div>
@@ -114,6 +114,7 @@
 				type="date"
 				class="input input-sm flex-1 font-mono"
 				aria-describedby="time-range-error"
+				aria-label="From date"
 				bind:value={dateStart}
 				onkeydown={(e) => {
 					if (e.key === 'Enter') apply();
@@ -127,6 +128,7 @@
 				maxlength="5"
 				class="input input-sm w-20 font-mono"
 				aria-describedby="time-range-error"
+				aria-label="From time"
 				bind:value={timeStart}
 				onkeydown={(e) => {
 					if (e.key === 'Enter') apply();
@@ -140,6 +142,7 @@
 				type="date"
 				class="input input-sm flex-1 font-mono"
 				aria-describedby="time-range-error"
+				aria-label="To date"
 				bind:value={dateEnd}
 				onkeydown={(e) => {
 					if (e.key === 'Enter') apply();
@@ -153,6 +156,7 @@
 				maxlength="5"
 				class="input input-sm w-20 font-mono"
 				aria-describedby="time-range-error"
+				aria-label="To time"
 				bind:value={timeEnd}
 				onkeydown={(e) => {
 					if (e.key === 'Enter') apply();

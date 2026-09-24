@@ -38,7 +38,7 @@
 </script>
 
 <Modal bind:open {title} busy={loading}>
-	<p class="text-base-content/70 text-sm">
+	<p class="text-muted text-sm">
 		{@render message()}
 	</p>
 

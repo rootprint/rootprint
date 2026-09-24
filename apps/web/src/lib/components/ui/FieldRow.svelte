@@ -21,10 +21,7 @@
 
 <tr class="group border-line border-b align-top last:border-b-0">
 	<td
-		class={[
-			'border-line text-base-content/70 truncate border-r px-3 py-1.5 font-mono text-xs',
-			keyClass
-		]}
+		class={['border-line text-muted truncate border-r px-3 py-1.5 font-mono text-xs', keyClass]}
 		title={field.name}
 	>
 		{field.displayName}
@@ -36,7 +33,7 @@
 		]}
 	>
 		{#if field.isEmpty}
-			<span class="text-base-content/30">—</span>
+			<span class="text-subtle">—</span>
 		{:else}
 			<span class="break-words whitespace-pre-wrap">{field.value}</span>
 			{#if hasActions}
@@ -54,7 +51,7 @@
 								e.currentTarget.blur();
 							}}
 						>
-							<Plus class="h-3 w-3" />
+							<Plus class="size-3" aria-hidden="true" />
 						</button>
 					{/if}
 					{#if onFilterOut}
@@ -68,7 +65,7 @@
 								e.currentTarget.blur();
 							}}
 						>
-							<Minus class="h-3 w-3" />
+							<Minus class="size-3" aria-hidden="true" />
 						</button>
 					{/if}
 					{#if onCopy}
@@ -82,7 +79,7 @@
 								e.currentTarget.blur();
 							}}
 						>
-							<Copy class="h-3 w-3" />
+							<Copy class="size-3" aria-hidden="true" />
 						</button>
 					{/if}
 				</span>

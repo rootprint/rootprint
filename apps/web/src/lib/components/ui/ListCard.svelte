@@ -24,7 +24,7 @@
 	style={cols ? `grid-template-columns: ${cols}` : undefined}
 >
 	{#if empty}
-		<div class="text-base-content/60 col-span-full py-10 text-center text-xs">{emptyMessage}</div>
+		<div class="text-muted col-span-full py-10 text-center text-xs">{emptyMessage}</div>
 	{:else}
 		{@render children()}
 	{/if}

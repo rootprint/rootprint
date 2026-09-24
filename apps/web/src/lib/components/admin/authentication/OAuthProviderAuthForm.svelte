@@ -172,9 +172,10 @@
 							type="button"
 							class="badge badge-ghost badge-sm cursor-pointer"
 							aria-label="Edit {label}"
+							title="Edit {label}"
 							onclick={() => startEditCredentials(key)}
 						>
-							<Pencil class="h-3 w-3" />
+							<Pencil class="size-3" aria-hidden="true" />
 						</button>
 					{/snippet}
 				</DisplayField>
@@ -195,9 +196,10 @@
 							type="button"
 							class="badge badge-ghost badge-sm cursor-pointer"
 							aria-label="Cancel editing credentials"
+							title="Cancel editing credentials"
 							onclick={cancelEditCredentials}
 						>
-							<X class="h-3 w-3" />
+							<X class="size-3" aria-hidden="true" />
 						</button>
 					{/if}
 				</label>

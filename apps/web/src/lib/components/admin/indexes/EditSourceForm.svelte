@@ -62,7 +62,7 @@
 >
 	{#if source.hasUnsupportedConfig}
 		<div class="text-warning-ink flex items-start gap-2 px-4 py-3 text-xs">
-			<TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+			<TriangleAlert class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
 			<p>
 				This source has connection settings Rootprint can't display (for example, multiple
 				notifications). Saving here will replace them with the values shown below.
@@ -72,8 +72,8 @@
 	<SourceFields bind:form {fieldErrors} mode="edit" />
 
 	<div class="flex items-center justify-between gap-3 px-4 py-3">
-		<p class="text-base-content/60 flex items-center gap-1.5 text-xs">
-			<Info class="h-3.5 w-3.5 shrink-0" />
+		<p class="text-muted flex items-center gap-1.5 text-xs">
+			<Info class="size-3.5 shrink-0" aria-hidden="true" />
 			Changing connection settings may reset this source's ingestion checkpoint.
 		</p>
 		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>

@@ -151,16 +151,16 @@
 		</div>
 
 		{#if lockedNumHits !== null}
-			<p class="text-base-content/70 text-sm">
+			<p class="text-muted text-sm">
 				{lockedNumHits.toLocaleString()} logs match your search
 			</p>
 		{/if}
 
 		{#if previewCapped}
 			<div
-				class="border-warning/60 bg-base-200/60 text-base-content/80 flex items-center gap-2 rounded-r border-l-2 px-3 py-2 text-xs"
+				class="border-warning/60 bg-base-200/60 text-base-content flex items-center gap-2 rounded-r border-l-2 px-3 py-2 text-xs"
 			>
-				<Info class="text-warning-ink h-3.5 w-3.5 shrink-0" />
+				<Info class="text-warning-ink size-3.5 shrink-0" aria-hidden="true" />
 				Only the first {EXPORT_MAX_ROWS.toLocaleString()} logs will be exported
 			</div>
 		{/if}
@@ -179,7 +179,7 @@
 				<span class="loading loading-spinner loading-xs"></span>
 				Preparing…
 			{:else}
-				<Download class="h-3.5 w-3.5" />
+				<Download class="size-3.5" aria-hidden="true" />
 				{exportLabel(format)}
 			{/if}
 		</button>

@@ -141,8 +141,8 @@
 {#snippet pageHeader(serviceNames: string[] | null)}
 	<header class="flex flex-wrap items-end justify-between gap-4">
 		<div class="min-w-0">
-			<p class="eyebrow">Services</p>
-			<h1 class="mt-0.5 truncate text-2xl tracking-tight" title={data.service ?? 'All services'}>
+			<p class="section-label">Services</p>
+			<h1 class="text-h3 mt-0.5 truncate" title={data.service ?? 'All services'}>
 				{data.service ?? 'All services'}
 			</h1>
 		</div>

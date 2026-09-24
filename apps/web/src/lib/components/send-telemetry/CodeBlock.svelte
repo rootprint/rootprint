@@ -42,24 +42,24 @@
 
 <div class="border-line rounded-box overflow-hidden border">
 	<div class="border-line bg-base-200 flex items-center justify-between gap-3 border-b px-3 py-1.5">
-		<div class="text-base-content/70 flex items-center gap-2 text-sm">
-			<CodeXml size={14} class="shrink-0" />
+		<div class="text-muted flex items-center gap-2 text-sm">
+			<CodeXml class="size-3.5 shrink-0" aria-hidden="true" />
 			<span>{langLabel}</span>
 		</div>
 		<CopyButton text={code} class="btn btn-ghost btn-xs" ariaLabel={copyTitle}>
 			{#snippet children({ copied }: { copied: boolean })}
 				{#if copied}
-					<Check size={14} />
+					<Check class="size-3" aria-hidden="true" />
 					Copied
 				{:else}
-					<Copy size={14} />
+					<Copy class="size-3" aria-hidden="true" />
 					Copy
 				{/if}
 			{/snippet}
 		</CopyButton>
 	</div>
 	<div
-		class="overflow-x-auto bg-white text-sm leading-relaxed [&_pre]:px-4 [&_pre]:py-3 [&_pre]:whitespace-pre"
+		class="bg-base-100 overflow-x-auto text-sm leading-relaxed [&_pre]:px-4 [&_pre]:py-3 [&_pre]:whitespace-pre"
 	>
 		{#if html}
 			<!-- html is Shiki output with substituted API keys wrapped via decorations. -->

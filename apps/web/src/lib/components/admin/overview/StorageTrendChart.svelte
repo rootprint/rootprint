@@ -164,7 +164,7 @@
 	<div class="relative px-2 pb-2">
 		{#if loading}
 			<div class="bg-base-100/60 absolute inset-0 z-10 flex items-center justify-center">
-				<span class="loading loading-spinner loading-sm text-base-content/40"></span>
+				<span class="loading loading-spinner loading-sm text-subtle"></span>
 			</div>
 		{/if}
 		{#if !columnar || series.length === 0}
@@ -183,7 +183,7 @@
 			>
 				{#snippet tooltip(idx)}
 					{@const rows = tooltipRowsAt(idx)}
-					<div class="text-base-content border-base-300/50 mb-1.5 border-b pb-1.5 font-medium">
+					<div class="text-base-content border-line mb-1.5 border-b pb-1.5 font-medium">
 						{formatTooltipDate(columnar[0][idx] * 1000)}
 					</div>
 					<div class="grid gap-1.5">
@@ -194,14 +194,14 @@
 									style="background-color: {row.color};"
 								></div>
 								<div class="flex flex-1 items-center justify-between gap-4">
-									<span class="text-base-content/60 truncate">{row.label}</span>
+									<span class="text-muted truncate">{row.label}</span>
 									<span class="text-base-content font-mono font-medium tabular-nums">
 										{formatBytes(row.value)}
 									</span>
 								</div>
 							</div>
 						{/each}
-						<div class="border-base-300/50 my-0.5 border-t"></div>
+						<div class="border-line my-0.5 border-t"></div>
 						<div class="flex w-full items-center gap-2 leading-none">
 							<div class="h-2.5 w-2.5 shrink-0"></div>
 							<div class="flex flex-1 items-center justify-between gap-4">

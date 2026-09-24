@@ -27,7 +27,7 @@
 			data-sveltekit-replacestate
 			class={[
 				'tab-underline flex h-10 items-center px-3 text-xs transition-colors',
-				isActive ? 'text-base-content' : 'text-base-content/60 hover:text-base-content'
+				isActive ? 'text-base-content' : 'text-muted hover:text-base-content'
 			]}
 		>
 			{item.label}

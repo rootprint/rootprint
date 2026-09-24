@@ -34,16 +34,16 @@
 			>
 				<div>
 					<p class="text-sm">Password</p>
-					<p class="text-base-content/60 text-xs">Change the password you use to sign in.</p>
+					<p class="text-muted text-xs">Change the password you use to sign in.</p>
 				</div>
 				<button class="btn btn-sm" onclick={() => (passwordOpen = true)}>Change password</button>
 			</div>
 		{:else if data.hasPassword === 'unknown'}
-			<div class="border-line text-base-content/60 rounded-box border px-6 py-4 text-sm">
+			<div class="border-line text-muted rounded-box border px-6 py-4 text-sm">
 				Couldn't determine how you sign in. Reload the page to try again.
 			</div>
 		{:else}
-			<div class="border-line text-base-content/60 rounded-box border px-6 py-4 text-sm">
+			<div class="border-line text-muted rounded-box border px-6 py-4 text-sm">
 				You sign in with single sign-on, so there's no password to manage.
 			</div>
 		{/if}
@@ -51,7 +51,7 @@
 		{#if isAdmin}
 			<a
 				href={`/settings/users/${sessionUser.id}`}
-				class="text-base-content/60 hover:text-base-content text-sm transition-colors"
+				class="text-muted hover:text-base-content text-sm transition-colors"
 			>
 				View your activity →
 			</a>

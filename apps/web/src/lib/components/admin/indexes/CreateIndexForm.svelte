@@ -91,7 +91,7 @@
 			</div>
 			{#if form.mode === 'dynamic'}
 				<div class="flex flex-col gap-1">
-					<span class="text-base-content/60 text-xs">Unmapped fields are indexed as:</span>
+					<span class="text-muted text-xs">Unmapped fields are indexed as:</span>
 					<DynamicMappingFields bind:dm={form.dynamic} />
 				</div>
 			{/if}
@@ -238,7 +238,7 @@
 				</div>
 				{#if form.partitionKey.trim() !== ''}
 					<div class="flex flex-col gap-1">
-						<label for="idx-max-partitions" class="text-base-content/60 text-xs">
+						<label for="idx-max-partitions" class="text-muted text-xs">
 							Max partitions (default 200)
 						</label>
 						<input

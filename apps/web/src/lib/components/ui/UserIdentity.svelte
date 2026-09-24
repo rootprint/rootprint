@@ -18,7 +18,7 @@
 	const sizes: Record<Size, { box: string; circle: string; name: string; email: string }> = {
 		sm: {
 			box: 'gap-2',
-			circle: 'h-7 w-7 text-[10px]',
+			circle: 'h-7 w-7 text-xs',
 			name: 'text-sm',
 			email: 'font-mono text-xs'
 		},
@@ -31,7 +31,7 @@
 		lg: {
 			box: 'gap-4',
 			circle: 'h-14 w-14 text-base',
-			name: 'text-2xl',
+			name: 'text-h3',
 			email: 'font-mono text-xs'
 		}
 	};
@@ -49,7 +49,7 @@
 	<div class="min-w-0">
 		<div class="{cls.name} truncate">{display}</div>
 		{#if email && email !== display}
-			<div class="{cls.email} text-base-content/60 truncate">{email}</div>
+			<div class="{cls.email} text-muted truncate">{email}</div>
 		{/if}
 	</div>
 {/snippet}

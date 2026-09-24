@@ -51,7 +51,7 @@
 			<span class="block truncate text-sm">{user.name ?? 'User'}</span>
 			<span class="text-subtle block truncate text-xs">{user.email}</span>
 		</span>
-		<ChevronsUpDown class="text-base-content/40 h-3.5 w-3.5 shrink-0" />
+		<ChevronsUpDown class="text-subtle size-3.5 shrink-0" aria-hidden="true" />
 	{/if}
 </button>
 
@@ -59,11 +59,11 @@
 	popover
 	id={dd}
 	style="position-anchor:--{dd}"
-	class="dropdown dropdown-right dropdown-end border-line rounded-box bg-base-100 ml-2 w-64 border p-0"
+	class="dropdown dropdown-right dropdown-end border-line rounded-box bg-base-100 ml-2 w-64 border p-0 shadow-lg"
 >
 	<div class="border-line border-b px-4 py-3">
 		<p class="text-sm">{user.name ?? 'User'}</p>
-		<p class="text-base-content/60 mt-0.5 font-mono text-xs">{user.email}</p>
+		<p class="text-muted mt-0.5 font-mono text-xs">{user.email}</p>
 	</div>
 	<div class="p-2">
 		<button
@@ -72,7 +72,7 @@
 			onclick={signOut}
 			disabled={signingOut}
 		>
-			<LogOut class="h-3.5 w-3.5 opacity-70" />
+			<LogOut class="text-muted size-3.5" aria-hidden="true" />
 			{signingOut ? 'Signing out…' : 'Sign out'}
 		</button>
 	</div>

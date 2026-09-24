@@ -63,9 +63,9 @@
 							}}
 						>
 							{#if kind === 'field'}
-								<Tag class="text-base-content/50 h-3 w-3 shrink-0" />
+								<Tag class="text-subtle size-3 shrink-0" aria-hidden="true" />
 							{:else}
-								<Text class="text-base-content/50 h-3 w-3 shrink-0" />
+								<Text class="text-subtle size-3 shrink-0" aria-hidden="true" />
 							{/if}
 							<span class="min-w-0 flex-1 truncate text-left">{item.label}</span>
 							{#if item.detail !== null}

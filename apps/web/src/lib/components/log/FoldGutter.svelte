@@ -32,9 +32,9 @@
 			onclick={onToggle}
 		>
 			{#if fold.expanded}
-				<ChevronDown class="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+				<ChevronDown class="size-3 shrink-0" aria-hidden="true" />
 			{:else}
-				<ChevronRight class="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+				<ChevronRight class="size-3 shrink-0" aria-hidden="true" />
 			{/if}
 			{fold.count}
 		</button>

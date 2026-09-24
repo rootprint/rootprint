@@ -19,7 +19,7 @@
 			aria-selected={value === opt}
 			class="px-3 py-1 transition-colors {value === opt
 				? 'bg-base-200 text-base-content'
-				: 'text-base-content/60 hover:text-base-content hover:bg-base-200/60'}"
+				: 'text-muted hover:text-base-content hover:bg-base-200/60'}"
 			onclick={() => onChange(opt)}
 		>
 			{opt}

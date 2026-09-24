@@ -101,7 +101,7 @@
 				<tbody>
 					{#each rows as op (op.operation)}
 						<tr
-							class="border-line/40 hover:bg-base-200/60 cursor-pointer border-b last:border-b-0"
+							class="border-line hover:bg-base-200/60 cursor-pointer border-b last:border-b-0"
 							{@attach rowActivate(() => () => onSelect(op))}
 						>
 							<td class="max-w-sm py-2 font-mono">
@@ -123,8 +123,9 @@
 											class="border-line inline-flex items-center gap-1 rounded border px-1.5 font-mono"
 										>
 											<span
-												class="size-2 rounded-full"
+												class="status"
 												style="background-color: {serviceColor(service)}"
+												aria-hidden="true"
 											></span>
 											{service}
 										</span>

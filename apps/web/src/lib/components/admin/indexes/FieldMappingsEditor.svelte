@@ -106,12 +106,13 @@
 
 				<button
 					type="button"
-					class="text-base-content/50 hover:text-error mt-1 disabled:opacity-30"
+					class="btn btn-ghost btn-xs btn-square enabled:text-subtle hover:text-error mt-1"
 					aria-label={`Remove field ${i + 1}`}
+					title={`Remove field ${i + 1}`}
 					disabled={fields.length <= minFields}
 					onclick={() => removeField(i)}
 				>
-					<Trash2 class="h-4 w-4" />
+					<Trash2 class="size-3" aria-hidden="true" />
 				</button>
 			</div>
 
@@ -194,7 +195,7 @@
 			{#if field.type === 'datetime'}
 				<div class="flex flex-col gap-2">
 					<div class="flex flex-col gap-1">
-						<span class="text-base-content/60 text-xs">Input formats</span>
+						<span class="text-muted text-xs">Input formats</span>
 						<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
 							{#each DATETIME_INPUT_PRESETS as preset (preset)}
 								<label class="flex items-center gap-1.5">
@@ -210,7 +211,7 @@
 						</div>
 					</div>
 					<div class="flex flex-col gap-1">
-						<span class="text-base-content/60 text-xs">Custom (strptime), one per line</span>
+						<span class="text-muted text-xs">Custom (strptime), one per line</span>
 						<textarea
 							bind:value={field.inputFormatsCustom}
 							rows="2"
@@ -228,6 +229,6 @@
 
 <div class="px-4 py-3">
 	<button type="button" class="btn btn-ghost btn-sm" onclick={addField}>
-		<Plus class="h-3.5 w-3.5" /> Add field
+		<Plus class="size-3.5" aria-hidden="true" /> Add field
 	</button>
 </div>

@@ -25,13 +25,13 @@
 		{:else if provider.id === 'github'}
 			<GitHubIcon class="h-5 w-5" />
 		{:else if provider.id === 'oidc'}
-			<KeyRound class="h-5 w-5" />
+			<KeyRound class="size-5" aria-hidden="true" />
 		{/if}
 	</div>
 
 	<div class="min-w-0 flex-1">
 		<div class="truncate text-sm">{provider.name}</div>
-		<div class="text-base-content/60 truncate text-xs">
+		<div class="text-muted truncate text-xs">
 			{provider.statusLine ?? provider.description}
 		</div>
 	</div>

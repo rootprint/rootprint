@@ -34,14 +34,14 @@
 					title="Remove filter"
 					onclick={() => store.removeFilter(filter.field, filter.value, filter.exclude)}
 				>
-					<X class="h-3 w-3" />
+					<X class="size-3" aria-hidden="true" />
 				</button>
 			</span>
 		{/each}
 
 		<button
 			type="button"
-			class="text-base-content/60 hover:text-base-content ml-auto cursor-pointer text-xs font-medium hover:underline"
+			class="text-muted hover:text-base-content ml-auto cursor-pointer text-xs font-medium hover:underline"
 			onclick={() => store.clearFilters()}
 		>
 			Clear all

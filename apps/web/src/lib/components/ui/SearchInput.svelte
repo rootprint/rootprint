@@ -22,7 +22,7 @@
 </script>
 
 <label class={['input input-sm', className]}>
-	<Search class="size-3.5 shrink-0 opacity-60" aria-hidden="true" />
+	<Search class="text-muted size-3.5 shrink-0" aria-hidden="true" />
 	<input type="search" aria-label={label} class={inputClass} {...rest} bind:value bind:this={ref} />
 	{@render children?.()}
 </label>

@@ -25,10 +25,10 @@
 		? 'h-10 w-10 justify-center'
 		: 'h-9 gap-2.5 px-3'} {active
 		? 'text-base-content bg-base-200'
-		: 'text-base-content/60 hover:text-base-content hover:bg-base-200/60'}"
+		: 'text-muted hover:text-base-content hover:bg-base-200/60'}"
 >
 	<span class="nav-rail-bar"></span>
-	<Icon class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+	<Icon class="size-4 shrink-0" aria-hidden="true" />
 	{#if !collapsed}
 		{label}
 	{/if}

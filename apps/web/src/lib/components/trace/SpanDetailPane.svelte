@@ -133,7 +133,7 @@
 </script>
 
 {#snippet table(fields: FieldRowData[])}
-	<div class="border-line overflow-hidden rounded-md border">
+	<div class="border-line rounded-box overflow-hidden border">
 		<table class="w-full table-fixed border-collapse">
 			<tbody>
 				{#each fields as f (f.name)}
@@ -164,8 +164,9 @@
 		<div class="min-w-0">
 			<div class="text-subtle flex min-w-0 items-center gap-1.5 text-xs">
 				<span
-					class="h-2 w-2 shrink-0 rounded-full"
+					class="status shrink-0"
 					style={`background-color:${serviceColor(span.serviceName)}`}
+					aria-hidden="true"
 				></span>
 				<span class="truncate">{span.serviceName}</span>
 				{#if span.isError}
@@ -177,7 +178,7 @@
 		<div class="flex shrink-0 items-center gap-1.5">
 			{#if logsHref}
 				<a href={logsHref} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
-					<ScrollText class="h-3.5 w-3.5" />
+					<ScrollText class="size-3" aria-hidden="true" />
 					Logs for this span
 				</a>
 			{/if}
@@ -185,9 +186,10 @@
 				type="button"
 				class="btn btn-ghost btn-xs btn-square"
 				aria-label="Close span detail"
+				title="Close span detail"
 				onclick={onClose}
 			>
-				<X class="h-3.5 w-3.5" />
+				<X class="size-3" aria-hidden="true" />
 			</button>
 		</div>
 	</div>
@@ -211,7 +213,7 @@
 				class={[
 					'tab-underline shrink-0 px-3 py-2.5 text-xs transition-colors',
 					isDisabled(tab.id)
-						? 'text-base-content/30 cursor-not-allowed'
+						? 'text-subtle cursor-not-allowed opacity-50'
 						: activeTab === tab.id
 							? 'text-base-content font-medium'
 							: 'text-subtle'
@@ -238,13 +240,11 @@
 			{#if activeTab === 'overview'}
 				<section>
 					<h3 class="section-label mb-2">Status</h3>
-					<div class="border-line rounded-md border px-3 py-2.5">
+					<div class="border-line rounded-box border px-3 py-2.5">
 						<div class="flex items-start gap-2.5">
 							<span
-								class={[
-									'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-									span.isError ? 'bg-error' : 'bg-success'
-								]}
+								class={['status mt-1.5 shrink-0', span.isError ? 'status-error' : 'status-success']}
+								aria-hidden="true"
 							></span>
 							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -283,7 +283,7 @@
 
 				<section>
 					<h3 class="section-label mb-2">Timing</h3>
-					<div class="border-line overflow-hidden rounded-md border">
+					<div class="border-line rounded-box overflow-hidden border">
 						<div class="p-3">
 							<p class="text-subtle text-xs">Total duration</p>
 							<p class="mt-0.5 font-mono text-xl leading-6 tabular-nums">{durationText}</p>
@@ -329,13 +329,13 @@
 							class="border-line divide-line grid grid-cols-[minmax(0,1fr)_auto] divide-x border-t"
 						>
 							<div class="min-w-0 px-3 py-2.5">
-								<dt class="section-label">Started</dt>
+								<dt class="text-muted text-xs">Started</dt>
 								<dd class="mt-0.5 truncate font-mono text-xs tabular-nums" title={startText}>
 									{startWall}
 								</dd>
 							</div>
 							<div class="px-3 py-2.5">
-								<dt class="section-label">Trace offset</dt>
+								<dt class="text-muted text-xs">Trace offset</dt>
 								<dd class="mt-0.5 font-mono text-xs tabular-nums">
 									{startOffset}
 								</dd>
@@ -347,7 +347,7 @@
 				{#if subtree.length > 0}
 					<section>
 						<h3 class="section-label mb-2">Top operations</h3>
-						<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
+						<div class="border-line divide-line rounded-box divide-y overflow-hidden border">
 							{#each rollups as rollup (rollup.key)}
 								<button
 									type="button"
@@ -363,8 +363,9 @@
 									</span>
 									<span class="mt-1.5 flex min-w-0 items-center gap-2">
 										<span
-											class="h-1.5 w-1.5 shrink-0 rounded-full"
+											class="status shrink-0"
 											style={`background-color:${serviceColor(rollup.serviceName)}`}
+											aria-hidden="true"
 										></span>
 										<span class="text-subtle min-w-0 truncate text-xs">
 											{rollup.serviceName}
@@ -412,14 +413,15 @@
 							</p>
 						</div>
 
-						<div class="border-line divide-line divide-y overflow-hidden rounded-md border">
+						<div class="border-line divide-line rounded-box divide-y overflow-hidden border">
 							{#each target.queries as query (query.key)}
 								<details class="group">
 									<summary
 										class="hover:bg-base-200 flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 [&::-webkit-details-marker]:hidden"
 									>
 										<ChevronRight
-											class="text-subtle h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90"
+											class="text-subtle size-3.5 shrink-0 group-open:rotate-90"
+											aria-hidden="true"
 										/>
 										<span class="min-w-0 flex-1 truncate font-mono text-xs" title={query.statement}>
 											{query.statement.split('\n')[0]}
@@ -501,7 +503,7 @@
 
 									<article
 										class={[
-											'timeline-end border-line m-0 ms-2.5 min-w-0 justify-self-stretch overflow-hidden rounded-md border',
+											'timeline-end border-line rounded-box m-0 ms-2.5 min-w-0 justify-self-stretch overflow-hidden border',
 											!isLast && 'mb-3'
 										]}
 									>
@@ -517,7 +519,7 @@
 													{event.name}
 												</h4>
 												{#if headline}
-													<p class="text-error/80 mt-0.5 text-xs leading-5 break-words">
+													<p class="text-error mt-0.5 text-xs leading-5 break-words">
 														{headline}
 													</p>
 												{/if}

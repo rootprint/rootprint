@@ -93,7 +93,7 @@
 
 <div class="border-line rounded-box border p-4">
 	<header class="pb-3">
-		<p class="eyebrow">Volume over time</p>
+		<p class="section-label">Volume over time</p>
 	</header>
 	{#if !columnar}
 		<div class="text-subtle flex h-72 items-center justify-center text-xs">
@@ -109,7 +109,7 @@
 						style="background-color: {barColor};"
 					></div>
 					<div class="flex flex-1 items-center justify-between gap-4">
-						<span class="text-base-content/60">Searches</span>
+						<span class="text-muted">Searches</span>
 						<span class="text-base-content font-mono font-medium tabular-nums">
 							{columnar[1][idx].toLocaleString()}
 						</span>

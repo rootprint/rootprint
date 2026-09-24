@@ -29,7 +29,7 @@
 									: 'text-muted hover:text-base-content hover:bg-base-200/60'}"
 							>
 								<span class="nav-rail-bar"></span>
-								<Icon class="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+								<Icon class="size-4 shrink-0" aria-hidden="true" />
 								{item.label}
 							</a>
 						</li>

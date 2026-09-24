@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { Copy, ExternalLink, GripVertical, RotateCw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { fly } from 'svelte/transition';
 
 	import { page } from '$app/state';
 
@@ -250,13 +248,13 @@
 			onclick={() => copyWithToast(id, 'Trace ID copied', 'Failed to copy trace ID')}
 		>
 			Trace ID
-			<Copy class="h-3 w-3" aria-hidden="true" />
+			<Copy class="size-3" aria-hidden="true" />
 		</button>
 		<a
 			href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
 			class="btn btn-xs btn-primary ml-auto"
 		>
-			<ExternalLink class="h-3 w-3" aria-hidden="true" />
+			<ExternalLink class="size-3" aria-hidden="true" />
 			Open trace page
 		</a>
 	{/if}
@@ -273,7 +271,7 @@
 	<div
 		bind:this={dialogRef}
 		tabindex={-1}
-		class="border-line bg-base-100 fixed top-0 right-0 z-50 flex h-full max-w-full flex-col border-l shadow-2xl outline-none"
+		class="border-line bg-base-100 fixed top-0 right-0 z-50 flex h-full max-w-full flex-col border-l shadow-lg outline-none"
 		style="width: {widthPx}px"
 		role="dialog"
 		aria-labelledby="log-detail-title"
@@ -285,7 +283,7 @@
 			aria-hidden="true"
 			title="Drag to resize · double-click to reset"
 			class={[
-				'border-base-content/20 bg-base-100 text-base-content/60 hover:bg-base-200 hover:text-base-content absolute top-1/2 left-0 -ml-2 flex h-8 w-4 -translate-x-full -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-md border shadow-sm transition-colors',
+				'border-line bg-base-100 text-muted hover:bg-base-200 hover:text-base-content rounded-box absolute top-1/2 left-0 -ml-2 flex h-8 w-4 -translate-x-full -translate-y-1/2 cursor-ew-resize items-center justify-center border transition-colors',
 				dragging && 'bg-base-200 text-base-content'
 			]}
 			onpointerdown={handleHandlePointerDown}
@@ -294,7 +292,7 @@
 			onpointercancel={handleHandlePointerUp}
 			ondblclick={resetWidth}
 		>
-			<GripVertical class="h-3 w-3" />
+			<GripVertical class="size-3" aria-hidden="true" />
 		</button>
 
 		<DrawerHeader
@@ -341,10 +339,9 @@
 							<!-- Positioned against the fixed dialog; the strip left uncovered keeps the drawer in view. -->
 							<div
 								tabindex="-1"
-								class="border-line bg-base-100 absolute inset-y-0 right-0 z-10 w-[88%] border-l shadow-2xl outline-none"
+								class="border-line bg-base-100 absolute inset-y-0 right-0 z-10 w-[88%] border-l shadow-lg outline-none"
 								aria-label="Span detail"
 								role="region"
-								transition:fly={{ x: '100%', duration: prefersReducedMotion.current ? 0 : 200 }}
 								{@attach focusOnCreate}
 							>
 								<SpanDetailPane
@@ -371,7 +368,7 @@
 							class="btn btn-sm btn-ghost gap-1.5"
 							onclick={() => traceId && loadTrace(traceId)}
 						>
-							<RotateCw class="h-3.5 w-3.5" />
+							<RotateCw class="size-3.5" aria-hidden="true" />
 							Try again
 						</button>
 					</div>

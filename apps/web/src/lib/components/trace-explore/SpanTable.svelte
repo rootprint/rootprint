@@ -163,7 +163,7 @@
 				<tbody>
 					{#each rows as row (row.traceId + row.spanId)}
 						<tr
-							class="border-line/40 hover:bg-base-200/60 cursor-pointer border-b last:border-b-0"
+							class="border-line hover:bg-base-200/60 cursor-pointer border-b last:border-b-0"
 							{@attach rowActivate(() => () => void goto(hrefFor(row)))}
 						>
 							<td class="text-muted font-mono whitespace-nowrap tabular-nums">
@@ -172,8 +172,9 @@
 							<td>
 								<span class="inline-flex items-center gap-1 font-mono">
 									<span
-										class="size-2 rounded-full"
+										class="status"
 										style="background-color: {serviceColor(row.service)}"
+										aria-hidden="true"
 									></span>
 									{row.service}
 								</span>

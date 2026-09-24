@@ -45,7 +45,7 @@
 
 <Modal bind:open {title} busy={loading} onclose={() => (typed = '')}>
 	<div class="flex flex-col gap-4">
-		<p class="text-base-content/60 text-sm">
+		<p class="text-muted text-sm">
 			{@render message()}
 		</p>
 

@@ -21,7 +21,7 @@
 
 <div class="flex h-full min-h-0 flex-col p-3">
 	<div
-		class="border-line bg-base-200/50 flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border"
+		class="border-line bg-base-200/50 rounded-box flex min-h-0 flex-1 flex-col overflow-hidden border"
 	>
 		<div class="border-line bg-base-200 flex items-center justify-between border-b px-3 py-1.5">
 			<div class="flex items-center gap-2">
@@ -36,7 +36,7 @@
 				aria-label="Copy traceback"
 				onclick={copyTraceback}
 			>
-				<Copy class="h-3 w-3" aria-hidden="true" />
+				<Copy class="size-3" aria-hidden="true" />
 				Copy
 			</button>
 		</div>

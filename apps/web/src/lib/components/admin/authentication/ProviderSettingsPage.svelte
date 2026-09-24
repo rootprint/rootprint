@@ -32,7 +32,7 @@
 					class="btn btn-outline btn-sm btn-error shrink-0"
 					onclick={() => (removeOpen = true)}
 				>
-					<Trash2 class="h-3.5 w-3.5" />
+					<Trash2 class="size-3.5" aria-hidden="true" />
 					Remove
 				</button>
 			{/if}

@@ -2,19 +2,19 @@
 	import type { Snippet } from 'svelte';
 
 	let {
-		eyebrow,
+		label,
 		title,
 		divider = false,
 		children
 	}: {
-		eyebrow: string;
+		label: string;
 		title: string;
 		divider?: boolean;
 		children?: Snippet;
 	} = $props();
 </script>
 
-<p class="eyebrow mb-1.5">{eyebrow}</p>
+<p class="section-label mb-1.5">{label}</p>
 <h1 class="text-h2">{title}</h1>
 {#if children}
 	<p class="text-muted mt-2 text-sm">{@render children()}</p>

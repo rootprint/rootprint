@@ -73,9 +73,9 @@
 	/>
 
 	<div class="mt-8 flex flex-wrap items-center justify-between gap-4">
-		<h2 class="text-base">Accounts</h2>
+		<h2 class="text-base font-medium">Accounts</h2>
 		<button class="btn btn-primary btn-sm" onclick={() => (saCreateOpen = true)}>
-			<Plus class="h-3.5 w-3.5" />
+			<Plus class="size-3.5" aria-hidden="true" />
 			Create service account
 		</button>
 	</div>
@@ -103,9 +103,10 @@
 								type="button"
 								class="btn btn-square btn-ghost text-error btn-sm"
 								aria-label="Delete service account {sa.name}"
+								title="Delete service account {sa.name}"
 								onclick={() => openDelete({ kind: 'service-account', id: sa.id, name: sa.name })}
 							>
-								<Trash2 class="h-4 w-4" />
+								<Trash2 class="size-3.5" aria-hidden="true" />
 							</button>
 						</div>
 					</div>
@@ -115,7 +116,7 @@
 	</div>
 
 	<div class="mt-12 flex flex-wrap items-center justify-between gap-4">
-		<h2 class="text-base">Service account keys</h2>
+		<h2 class="text-base font-medium">Service account keys</h2>
 		<button
 			class="btn btn-primary btn-sm"
 			onclick={() => (keyCreateOpen = true)}
@@ -124,7 +125,7 @@
 				? 'service-account-key-prerequisite'
 				: undefined}
 		>
-			<Plus class="h-3.5 w-3.5" />
+			<Plus class="size-3.5" aria-hidden="true" />
 			Create key
 		</button>
 	</div>
@@ -164,9 +165,10 @@
 								type="button"
 								class="btn btn-square btn-ghost text-error btn-sm"
 								aria-label="Revoke service account key {key.name ?? ''}"
+								title="Revoke service account key {key.name ?? ''}"
 								onclick={() => openDelete({ kind: 'key', id: key.id, name: key.name })}
 							>
-								<Trash2 class="h-4 w-4" />
+								<Trash2 class="size-3.5" aria-hidden="true" />
 							</button>
 						</div>
 					</div>

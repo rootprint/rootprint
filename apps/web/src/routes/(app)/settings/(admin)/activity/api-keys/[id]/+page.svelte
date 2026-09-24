@@ -12,7 +12,7 @@
 			<h1 class="text-h1 text-muted mt-3">Loading…</h1>
 		{:then s}
 			<h1 class="text-h1 mt-3">{s.displayName ?? `API key #${data.apiKeyId}`}</h1>
-			<p class="text-base-content/60 mt-2 font-mono text-xs">#{data.apiKeyId}</p>
+			<p class="text-muted mt-2 font-mono text-xs">#{data.apiKeyId}</p>
 		{:catch}
 			<h1 class="text-h1 mt-3">API key #{data.apiKeyId}</h1>
 		{/await}

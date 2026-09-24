@@ -13,6 +13,6 @@
 </script>
 
 <label class="input input-sm border-line bg-base-200/40 w-full">
-	<input {value} disabled class="text-base-content/50" aria-label={ariaLabel} />
+	<input {value} disabled class="text-subtle" aria-label={ariaLabel} />
 	{#if action}{@render action()}{/if}
 </label>

@@ -207,7 +207,7 @@
 										style="background-color: {colors[i]};"
 									></div>
 									<div class="flex flex-1 items-center justify-between gap-4">
-										<span class="text-base-content/60">{s.label}</span>
+										<span class="text-muted">{s.label}</span>
 										<span class="text-base-content font-mono font-medium tabular-nums">
 											{value === null ? '—' : formatValue(value)}
 										</span>

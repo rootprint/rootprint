@@ -2,7 +2,7 @@
 	<div class="m-auto flex max-w-sm flex-col items-center gap-4 text-center">
 		<div class="flex items-center gap-2">
 			<img src="/logo.png" alt="" class="h-8 w-8 object-contain" />
-			<span class="text-xl font-semibold tracking-tight">Rootprint</span>
+			<span class="text-xl font-medium tracking-tight">Rootprint</span>
 		</div>
 		<h1 class="text-h3">A larger screen is needed</h1>
 		<p class="text-muted text-sm">

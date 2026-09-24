@@ -33,7 +33,7 @@
 
 <div class="flex flex-col gap-4">
 	<div class="flex items-center justify-between">
-		<p class="eyebrow">Activity</p>
+		<p class="section-label">Activity</p>
 		<TimeRangeTabs value={window} onChange={(w: Window) => onSetParam('window', w)} />
 	</div>
 
@@ -109,7 +109,7 @@
 				</div>
 				{#each rec.rows as r (r.id)}
 					<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
-						<span class="text-base-content/60 font-mono text-xs whitespace-nowrap">
+						<span class="text-muted font-mono text-xs whitespace-nowrap">
 							{formatActivityTimestamp(r.executedAt)}
 						</span>
 						<span class="min-w-0 truncate text-center">{r.indexId}</span>
@@ -126,7 +126,7 @@
 				{/each}
 			</ListCard>
 			<div class="flex items-center justify-between pt-1 text-xs">
-				<span class="text-base-content/60">
+				<span class="text-muted">
 					{Math.min(offset + rec.rows.length, rec.total).toLocaleString()} / {rec.total.toLocaleString()}
 				</span>
 				<div class="flex gap-2">

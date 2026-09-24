@@ -99,7 +99,7 @@
 	<span class="text-subtle min-w-0 truncate">{node.name}</span>
 	{#if node.isError}
 		<TriangleAlert
-			class="text-error h-3 w-3 shrink-0"
+			class="text-error size-3 shrink-0"
 			role="img"
 			aria-label="Span reported an error"
 		/>
@@ -180,7 +180,7 @@
 			{#if node.children.length > 0}
 				<button
 					type="button"
-					class="absolute top-1/2 z-10 flex h-4 min-w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded border px-1 font-mono text-[9px] leading-none"
+					class="absolute top-1/2 z-10 flex h-4 min-w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded border px-1 font-mono text-xs leading-none"
 					style={`left:${nodeX};border-color:${color};${
 						isCollapsed
 							? `background-color:${color};color:color-mix(in oklab, ${color} 22%, black)`
@@ -226,7 +226,7 @@
 						: `View ${pluralize(logs.count, 'log')} for ${node.name}`}
 					onclick={(e) => e.stopPropagation()}
 				>
-					<ScrollText class="h-3.5 w-3.5" />
+					<ScrollText class="size-3.5" aria-hidden="true" />
 					{#if logs.count !== null}
 						<span class="font-mono text-xs tabular-nums">{logs.count}</span>
 					{/if}
@@ -244,8 +244,8 @@
 				{/if}
 				<span
 					class={[
-						'absolute top-1/2 ml-1.5 -translate-y-1/2 font-mono text-[10px] whitespace-nowrap',
-						onScreen ? 'text-subtle' : 'text-base-content/30'
+						'absolute top-1/2 ml-1.5 -translate-y-1/2 font-mono text-xs whitespace-nowrap',
+						onScreen ? 'text-subtle' : 'text-subtle opacity-50'
 					]}
 					style={`left:calc(${left}% + max(${width}%, ${MIN_BAR_PX}px))`}
 				>
@@ -270,7 +270,7 @@
 			</p>
 			{#if onReload}
 				<button type="button" class="btn btn-sm btn-ghost gap-1.5" onclick={onReload}>
-					<RotateCw class="h-3.5 w-3.5" />
+					<RotateCw class="size-3.5" aria-hidden="true" />
 					Reload
 				</button>
 			{/if}

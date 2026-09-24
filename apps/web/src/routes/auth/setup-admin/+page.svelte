@@ -45,7 +45,7 @@
 	}
 </script>
 
-<AuthHeader eyebrow="First-time setup" title="Create administrator">
+<AuthHeader label="First-time setup" title="Create administrator">
 	This first account will have admin privileges. After creating it, sign in to configure Rootprint.
 </AuthHeader>
 

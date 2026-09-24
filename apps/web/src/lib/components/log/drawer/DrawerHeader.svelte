@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { LoaderCircle, Share2, X } from 'lucide-svelte';
+	import { Share2, X } from 'lucide-svelte';
 
 	import { levelColor } from '$lib/constants/level-colors';
 	import { formatLogRowTimestamp } from '$lib/utils/time';
@@ -57,9 +57,9 @@
 					onclick={onShare}
 				>
 					{#if sharing}
-						<LoaderCircle class="h-3.5 w-3.5 animate-spin" />
+						<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
 					{:else}
-						<Share2 class="h-3.5 w-3.5" />
+						<Share2 class="size-3" aria-hidden="true" />
 					{/if}
 				</button>
 				<button
@@ -69,24 +69,21 @@
 					title="Close (Esc)"
 					onclick={onClose}
 				>
-					<X class="h-3.5 w-3.5" />
+					<X class="size-3" aria-hidden="true" />
 				</button>
 			</div>
 		</div>
 
 		<div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
 			<span
-				class="border-line bg-base-200/60 text-base-content/80 inline-flex h-7 items-center gap-1.5 rounded border px-2 font-mono"
+				class="border-line bg-base-200/60 text-base-content inline-flex h-7 items-center gap-1.5 rounded border px-2 font-mono"
 			>
-				<span
-					class="inline-block h-2 w-2 shrink-0 rounded-full"
-					style="background-color: {levelHex};"
-					aria-hidden="true"
+				<span class="status shrink-0" style="background-color: {levelHex};" aria-hidden="true"
 				></span>
 				{levelLabel}
 			</span>
 			<time
-				class="border-line bg-base-200/60 text-base-content/70 inline-flex h-7 items-center rounded border px-2 font-mono"
+				class="border-line bg-base-200/60 text-muted inline-flex h-7 items-center rounded border px-2 font-mono"
 				datetime={hit.timestamp}
 			>
 				{formatLogRowTimestamp(hit.timestamp)}
@@ -111,7 +108,7 @@
 					'tab-underline shrink-0 px-4 py-3 text-xs whitespace-nowrap transition-colors',
 					activeTab === tab.id
 						? 'text-base-content font-medium'
-						: 'text-base-content/55 hover:text-base-content'
+						: 'text-subtle hover:text-base-content'
 				]}
 				onclick={() => onTabChange(tab.id)}
 			>

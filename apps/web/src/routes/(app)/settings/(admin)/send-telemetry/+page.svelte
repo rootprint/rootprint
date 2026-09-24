@@ -42,10 +42,10 @@
 				href="https://docs.rootprint.io/send-logs/overview"
 				target="_blank"
 				rel="noreferrer"
-				class="link link-hover text-base-content/60 hover:text-base-content flex items-center gap-1.5 text-xs"
+				class="link link-hover text-muted hover:text-base-content flex items-center gap-1.5 text-xs"
 			>
 				Documentation
-				<ExternalLink class="h-3 w-3" />
+				<ExternalLink class="size-3" aria-hidden="true" />
 			</a>
 		{/snippet}
 	</PageHeader>
@@ -61,9 +61,9 @@
 
 	{#if query.trim() !== ''}
 		<section class="mt-8 flex flex-col gap-3">
-			<p class="text-base-content/60 text-sm font-medium">Results</p>
+			<p class="text-muted text-sm font-medium">Results</p>
 			{#if searchResults.length === 0}
-				<p class="text-base-content/60 text-xs">No integrations match "{query.trim()}".</p>
+				<p class="text-muted text-xs">No integrations match "{query.trim()}".</p>
 			{:else}
 				<div class="flex flex-wrap gap-3">
 					{#each searchResults as integration (integration.id)}
@@ -75,7 +75,7 @@
 	{:else}
 		{#each sections as { origin, items } (origin.id)}
 			<section class="mt-10 flex flex-col gap-3">
-				<p class="text-base-content/60 text-sm font-medium">{origin.label}</p>
+				<p class="text-muted text-sm font-medium">{origin.label}</p>
 				<div class="flex flex-wrap gap-3">
 					{#each items as integration (integration.id)}
 						<IntegrationCard {integration} {signal} />

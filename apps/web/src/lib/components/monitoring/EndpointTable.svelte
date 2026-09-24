@@ -57,7 +57,7 @@
 				</thead>
 				<tbody>
 					{#each rows as endpoint, index (endpoint.id)}
-						<tr class="border-line/40 even:bg-base-200/50 border-b last:border-b-0">
+						<tr class="border-line border-b last:border-b-0">
 							<td class="w-10 text-right tabular-nums">
 								{index + 1}
 							</td>

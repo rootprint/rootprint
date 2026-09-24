@@ -40,7 +40,7 @@
 			title="Fold repeats"
 			onclick={() => store.setFoldEnabled(!store.foldEnabled)}
 		>
-			<ListCollapse class="h-4 w-4" />
+			<ListCollapse class="size-3" aria-hidden="true" />
 		</button>
 		<button
 			type="button"
@@ -50,7 +50,7 @@
 			disabled={exportDisabled}
 			onclick={() => (exportOpen = true)}
 		>
-			<Download class="h-4 w-4" />
+			<Download class="size-3" aria-hidden="true" />
 		</button>
 		<DisplaySettings
 			activeFields={store.activeFields}

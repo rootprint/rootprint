@@ -319,7 +319,7 @@
 		class="border-line bg-base-100 sticky top-0 z-10 flex h-12 shrink-0 items-center border-b px-3"
 	>
 		<label class="input input-sm w-full gap-2">
-			<Search class="text-base-content/50 h-3.5 w-3.5" />
+			<Search class="text-subtle size-3.5" aria-hidden="true" />
 			<input
 				type="text"
 				placeholder="Filter fields…"
@@ -375,7 +375,7 @@
 									<li>
 										<button
 											type="button"
-											class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-left text-xs transition-colors duration-150 disabled:cursor-not-allowed"
+											class="flex w-full cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-left text-xs transition-colors disabled:cursor-not-allowed"
 											role="checkbox"
 											aria-checked={isActive}
 											disabled={levelField === null || level.name === UNKNOWN_LEVEL}
@@ -386,18 +386,17 @@
 										>
 											{#if showFull}
 												<span
-													class="h-2 w-2 shrink-0 rounded-full transition-colors duration-150"
+													class="status shrink-0"
 													style="background-color: {levelColor(level.name)};"
+													aria-hidden="true"
 												></span>
 											{:else}
-												<span
-													class="bg-base-content/20 h-2 w-2 shrink-0 rounded-full transition-colors duration-150"
-												></span>
+												<span class="status shrink-0" aria-hidden="true"></span>
 											{/if}
 											<span
-												class="min-w-0 flex-1 truncate transition-colors duration-150 {showFull
+												class="min-w-0 flex-1 truncate transition-colors {showFull
 													? ''
-													: 'text-base-content/40'}"
+													: 'text-subtle'}"
 											>
 												{level.name}
 											</span>
@@ -445,9 +444,9 @@
 										onclick={() => toggleGroup(item.group)}
 									>
 										{#if item.collapsed}
-											<ChevronRight class="text-base-content/60 h-3 w-3 shrink-0" />
+											<ChevronRight class="text-muted size-3 shrink-0" aria-hidden="true" />
 										{:else}
-											<ChevronDown class="text-base-content/60 h-3 w-3 shrink-0" />
+											<ChevronDown class="text-muted size-3 shrink-0" aria-hidden="true" />
 										{/if}
 										<span class="flex-1 text-left text-xs font-medium">{item.label}</span>
 									</button>

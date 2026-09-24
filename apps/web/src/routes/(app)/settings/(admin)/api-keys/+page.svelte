@@ -113,7 +113,7 @@
 		<span role="status" class="text-subtle text-xs tabular-nums">[{countLabel}]</span>
 
 		<button class="btn btn-primary btn-sm" onclick={() => (createOpen = true)} disabled={noIndexes}>
-			<Plus class="h-3.5 w-3.5" />
+			<Plus class="size-3.5" aria-hidden="true" />
 			Create ingest key
 		</button>
 	</div>
@@ -145,17 +145,19 @@
 								type="button"
 								class="btn btn-square btn-ghost btn-sm"
 								aria-label="View API key {key.name}"
+								title="View API key {key.name}"
 								onclick={() => openView(key)}
 							>
-								<Eye class="h-4 w-4" />
+								<Eye class="size-3.5" aria-hidden="true" />
 							</button>
 							<button
 								type="button"
 								class="btn btn-square btn-ghost text-error btn-sm"
 								aria-label="Delete API key {key.name}"
+								title="Delete API key {key.name}"
 								onclick={() => openDelete(key)}
 							>
-								<Trash2 class="h-4 w-4" />
+								<Trash2 class="size-3.5" aria-hidden="true" />
 							</button>
 						</div>
 					</div>

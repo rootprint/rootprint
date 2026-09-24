@@ -131,11 +131,11 @@
 <svelte:window onpageshow={() => (pendingProvider = null)} />
 
 {#if adminCreated}
-	<AuthHeader eyebrow="Sign in" title="Administrator created">
+	<AuthHeader label="Sign in" title="Administrator created">
 		Your administrator account is ready. Sign in to configure Rootprint.
 	</AuthHeader>
 {:else}
-	<AuthHeader eyebrow="Sign in" title="Welcome back" />
+	<AuthHeader label="Sign in" title="Welcome back" />
 {/if}
 
 {#if formError || oauthError}

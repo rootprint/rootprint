@@ -53,15 +53,15 @@
 			href={integration.docs}
 			target="_blank"
 			rel="noreferrer"
-			class="link link-hover text-base-content/60 hover:text-base-content flex items-center gap-1.5 text-xs"
+			class="link link-hover text-muted hover:text-base-content flex items-center gap-1.5 text-xs"
 		>
 			Documentation
-			<ExternalLink class="h-3 w-3" />
+			<ExternalLink class="size-3" aria-hidden="true" />
 		</a>
 	</div>
 	{#if signal === 'traces'}
 		{#if traceIndexId}
-			<p class="text-base-content/60 text-xs">
+			<p class="text-muted text-xs">
 				Spans go to <span class="text-base-content font-mono">{traceIndexId}</span> — the span store,
 				not the key’s index.
 			</p>
@@ -71,7 +71,7 @@
 			</p>
 		{/if}
 	{:else}
-		<p class="text-base-content/60 text-xs">
+		<p class="text-muted text-xs">
 			Sending to <span class="text-base-content">{selectedIndexId}</span>
 		</p>
 	{/if}

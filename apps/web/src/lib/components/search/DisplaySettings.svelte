@@ -111,7 +111,7 @@
 	aria-label="Display settings"
 	title="Display settings"
 >
-	<Settings class="h-4 w-4" />
+	<Settings class="size-3" aria-hidden="true" />
 </button>
 
 <div
@@ -120,16 +120,16 @@
 	id={dd}
 	style="position-anchor:--{dd}"
 	ontoggle={onToggle}
-	class="dropdown dropdown-end border-line bg-base-100 mt-1 w-64 rounded-lg border tracking-normal normal-case shadow-lg"
+	class="dropdown dropdown-end border-line bg-base-100 rounded-box mt-1 w-64 border shadow-lg"
 >
 	{#if mode === 'add'}
 		<div class="border-line border-b px-3 py-2">
 			<button
 				type="button"
-				class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-xs font-medium tracking-wider uppercase"
+				class="text-muted hover:text-base-content flex items-center gap-1 text-xs font-medium"
 				onclick={() => (mode = 'columns')}
 			>
-				<ChevronLeft class="h-3.5 w-3.5" />
+				<ChevronLeft class="size-3.5" aria-hidden="true" />
 				<span>Add column</span>
 			</button>
 		</div>
@@ -224,15 +224,16 @@
 						<div
 							class="hover:bg-base-200 text-base-content flex items-center gap-1 rounded px-2 py-1.5 font-mono text-xs"
 						>
-							<GripVertical class="text-base-content/40 h-3 w-3 shrink-0 cursor-grab" />
+							<GripVertical class="text-subtle size-3 shrink-0 cursor-grab" aria-hidden="true" />
 							<span class="flex-1 truncate" title={field.id}>{field.id}</span>
 							<button
 								type="button"
 								class="btn btn-ghost btn-xs p-0"
 								aria-label="Remove column"
+								title="Remove column"
 								onclick={() => removeField(field.id)}
 							>
-								<X class="text-base-content/40 hover:text-base-content h-3 w-3" />
+								<X class="text-subtle hover:text-base-content size-3" aria-hidden="true" />
 							</button>
 						</div>
 					{/each}
@@ -241,10 +242,10 @@
 
 			<button
 				type="button"
-				class="text-base-content/70 hover:bg-base-200 hover:text-base-content mt-1 flex items-center gap-1 rounded px-2 py-1.5 text-left text-xs"
+				class="text-muted hover:bg-base-200 hover:text-base-content mt-1 flex items-center gap-1 rounded px-2 py-1.5 text-left text-xs"
 				onclick={openAddMode}
 			>
-				<Plus class="h-3 w-3 shrink-0" />
+				<Plus class="size-3 shrink-0" aria-hidden="true" />
 				<span>Add column</span>
 			</button>
 		</div>

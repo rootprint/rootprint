@@ -6,7 +6,7 @@
 
 <div class="flex flex-col gap-3">
 	<SecretReveal {value} {label} />
-	<p class="text-base-content/60 text-xs">
+	<p class="text-muted text-xs">
 		This key is shown only once. Copy it now — you won't be able to see it again.
 	</p>
 </div>

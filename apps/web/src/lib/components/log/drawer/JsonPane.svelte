@@ -37,7 +37,7 @@
 
 <div class="flex h-full min-h-0 flex-col p-3">
 	<div
-		class="border-line bg-base-200/50 relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border"
+		class="border-line bg-base-200/50 rounded-box relative flex min-h-0 flex-1 flex-col overflow-hidden border"
 	>
 		<div class="border-line bg-base-200 flex items-center justify-between border-b px-3 py-1.5">
 			<div class="flex items-center gap-2">
@@ -53,7 +53,7 @@
 				title="Copy JSON"
 				onclick={copyAll}
 			>
-				<Copy class="h-3 w-3" aria-hidden="true" />
+				<Copy class="size-3" aria-hidden="true" />
 				Copy
 			</button>
 		</div>
@@ -61,7 +61,7 @@
 			{#if html}
 				{@html html}
 			{:else}
-				<pre class="text-base-content/60 font-mono">{pretty}</pre>
+				<pre class="text-muted font-mono">{pretty}</pre>
 			{/if}
 		</div>
 	</div>

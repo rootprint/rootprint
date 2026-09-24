@@ -39,9 +39,9 @@
 	>
 		{fieldConfig?.timestampField ?? 'timestamp'}
 		{#if sortDirection === 'desc'}
-			<ArrowDown class="h-3 w-3" />
+			<ArrowDown class="size-3" aria-hidden="true" />
 		{:else}
-			<ArrowUp class="h-3 w-3" />
+			<ArrowUp class="size-3" aria-hidden="true" />
 		{/if}
 	</button>
 	{#each columns as column (column)}

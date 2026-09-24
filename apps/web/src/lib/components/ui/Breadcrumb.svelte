@@ -4,18 +4,15 @@
 	let { segments }: { segments: BreadcrumbSegment[] } = $props();
 </script>
 
-<p class="eyebrow">
+<p class="section-label">
 	{#each segments as segment, i (i)}
-		{#if i > 0}<span class="text-base-content/30 mx-1.5">/</span>{/if}
+		{#if i > 0}<span class="text-subtle mx-1.5">/</span>{/if}
 		{#if segment.href}
-			<a
-				class="hover:text-base-content"
-				class:font-mono={segment.mono}
-				class:normal-case={segment.mono}
-				href={segment.href}>{segment.label}</a
+			<a class="hover:text-base-content" class:font-mono={segment.mono} href={segment.href}
+				>{segment.label}</a
 			>
 		{:else}
-			<span class:font-mono={segment.mono} class:normal-case={segment.mono}>{segment.label}</span>
+			<span class:font-mono={segment.mono}>{segment.label}</span>
 		{/if}
 	{/each}
 </p>

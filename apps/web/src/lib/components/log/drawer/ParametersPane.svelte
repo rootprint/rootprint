@@ -84,13 +84,13 @@
 					aria-label="Copy log message"
 					onclick={copyMessage}
 				>
-					<Copy class="h-3 w-3" aria-hidden="true" />
+					<Copy class="size-3" aria-hidden="true" />
 					Copy
 				</button>
 			{/if}
 		</div>
 		<div
-			class="border-line rounded-md border p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap"
+			class="border-line rounded-box border p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap"
 		>
 			{#if grouped.message === ''}
 				<span class="text-subtle font-sans text-xs">(no message)</span>
@@ -130,20 +130,18 @@
 							aria-controls={`drawer-group-${group.id}`}
 							onclick={() => toggle(group.id)}
 						>
-							<span class="inline-flex transition-transform" class:-rotate-90={isCollapsed}>
-								<ChevronDown class="text-base-content/50 h-3 w-3" />
+							<span class="inline-flex" class:-rotate-90={isCollapsed}>
+								<ChevronDown class="text-subtle size-3" aria-hidden="true" />
 							</span>
 							<p class="section-label">{group.label}</p>
-							<span class="bg-base-300 text-muted rounded-sm px-1.5 py-0.5 text-xs tabular-nums"
-								>{group.fields.length}</span
-							>
+							<span class="badge badge-sm badge-ghost tabular-nums">{group.fields.length}</span>
 						</button>
 					{/if}
 
 					{#if !isCollapsed}
 						<div
 							id={`drawer-group-${group.id}`}
-							class="border-line overflow-hidden rounded-md border"
+							class="border-line rounded-box overflow-hidden border"
 						>
 							<table class="w-full table-fixed border-collapse">
 								<tbody>

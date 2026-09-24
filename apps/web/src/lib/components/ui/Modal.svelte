@@ -46,7 +46,7 @@
 	<div
 		class="modal-box border-line rounded-box bg-base-100 max-w-lg overflow-x-hidden border shadow-none"
 	>
-		<h3 id={titleId} class="text-lg tracking-tight">{title}</h3>
+		<h3 id={titleId} class="text-base font-medium">{title}</h3>
 		<div class="mt-4">
 			{@render children()}
 		</div>

@@ -28,9 +28,9 @@
 
 	<div class="mt-8 flex flex-wrap items-center gap-4">
 		<SearchInput bind:value={search} placeholder="Search indexes…" label="Search indexes" />
-		<span class="text-base-content/60 text-xs">[{countLabel}]</span>
+		<span class="text-muted text-xs">[{countLabel}]</span>
 		<a href="/settings/indexes/_new" class="btn btn-primary btn-sm">
-			<Plus class="h-3.5 w-3.5" />
+			<Plus class="size-3.5" aria-hidden="true" />
 			Create index
 		</a>
 	</div>
@@ -42,11 +42,11 @@
 					<div class="min-w-0 flex-1 truncate font-mono text-sm">{idx.indexId}</div>
 					{#if idx.isTraceIndex}
 						<span class="badge badge-sm badge-ghost gap-1">
-							<Waypoints class="h-3 w-3" />
+							<Waypoints class="size-3" aria-hidden="true" />
 							Traces
 						</span>
 					{/if}
-					<ChevronRight class="h-4 w-4 opacity-50" />
+					<ChevronRight class="text-subtle size-3.5" aria-hidden="true" />
 				</ListRow>
 			{/each}
 		</ListCard>
