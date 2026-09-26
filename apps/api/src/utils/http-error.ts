@@ -63,3 +63,16 @@ export function fromAuthApiError(err: unknown, fallback: string): HttpError {
 	}
 	throw err;
 }
+
+export async function withUniqueViolation<T>(
+	message: string,
+	code: string,
+	fn: () => Promise<T>
+): Promise<T> {
+	try {
+		return await fn();
+	} catch (err) {
+		if (isUniqueViolation(err)) throw conflict(message, code);
+		throw err;
+	}
+}

@@ -19,3 +19,5 @@ export const ServiceAccountCreatedResponse = named(
 	'ServiceAccountCreatedResponse',
 	v.object({ id: v.string() })
 );
+
+export type ServiceAccountSummary = v.InferOutput<typeof ServiceAccountResponse>;

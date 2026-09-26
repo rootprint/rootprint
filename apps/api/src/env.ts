@@ -1,4 +1,4 @@
-import type { VerifiedApiKey } from './types.js';
+import type { VerifiedApiKey } from './services/api-key.service.js';
 
 export type RequestSession = { user: { id: string; role?: string | null } };
 

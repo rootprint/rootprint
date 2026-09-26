@@ -13,7 +13,7 @@ import { parseWindow } from '$lib/utils/time-range';
 import { DEP } from '$lib/api/deps';
 import { ApiError } from '$lib/api/errors';
 import { getUser } from '$lib/api/users';
-import { parseOffset } from '$lib/utils/search-params';
+import { parseOffset } from '$lib/components/settings/search-params';
 
 export const load: PageLoad = async ({ url, params, depends, parent }) => {
 	depends(DEP.users);

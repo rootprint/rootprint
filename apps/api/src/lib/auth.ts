@@ -12,7 +12,7 @@ import { inviteToken } from '../db/schema.js';
 import { githubTokenIsAllowed, googleEmailIsAllowed } from '../services/auth.service.js';
 import { discoveryUrl, verifyOidcIssuer } from '../services/oidc.service.js';
 import { loadAuthConfig } from '../services/settings.service.js';
-import type { AuthConfig } from '../types.js';
+import type { AuthConfig } from '../services/settings.service.js';
 import { db } from './db.js';
 import { logger } from './logger.js';
 

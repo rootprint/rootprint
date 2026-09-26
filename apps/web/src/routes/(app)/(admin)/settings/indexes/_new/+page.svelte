@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CreateIndexForm from '$lib/components/admin/indexes/CreateIndexForm.svelte';
+	import CreateIndexForm from '$lib/components/settings/indexes/CreateIndexForm.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 </script>
 

@@ -4,8 +4,8 @@ import { config } from '../../config.js';
 import { CONTENT_TYPE_JSON } from '../../constants.js';
 import type { KeyedEnv } from '../../env.js';
 import { describe } from '../../lib/openapi/describe.js';
-import { quickwitUrl } from '../../lib/quickwit.js';
-import { proxyToQuickwit } from '../../lib/quickwit-proxy.js';
+import { quickwitUrl } from '../../lib/quickwit/client.js';
+import { proxyToQuickwit } from '../../lib/quickwit/proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
 import { badRequest } from '../../utils/http-error.js';
 

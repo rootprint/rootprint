@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { githubProvider } from '$lib/components/admin/authentication/oauth-providers';
-	import ProviderSettingsPage from '$lib/components/admin/authentication/ProviderSettingsPage.svelte';
+	import { githubProvider } from '$lib/components/settings/authentication/oauth-providers';
+	import ProviderSettingsPage from '$lib/components/settings/authentication/ProviderSettingsPage.svelte';
 
 	let { data } = $props();
 </script>

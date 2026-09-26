@@ -105,3 +105,11 @@ export const ExploreOverviewResponseSchema = named(
 		facets: v.object({ services: v.array(v.string()) })
 	})
 );
+
+export type ExploreSpanRow = v.InferOutput<typeof ExploreSpanRowSchema>;
+
+export type ExploreSpansResponse = v.InferOutput<typeof ExploreSpansResponseSchema>;
+
+export type ExploreOperation = v.InferOutput<typeof ExploreOperationSchema>;
+
+export type ExploreOverviewResponse = v.InferOutput<typeof ExploreOverviewResponseSchema>;

@@ -5,13 +5,13 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
 	import { setSourceEnabled, resetSourceCheckpoint, deleteSource } from '$lib/api/indexes';
-	import EditSourceForm from '$lib/components/admin/indexes/EditSourceForm.svelte';
-	import SourceSummary from '$lib/components/admin/indexes/SourceSummary.svelte';
+	import EditSourceForm from '$lib/components/settings/indexes/EditSourceForm.svelte';
+	import SourceSummary from '$lib/components/settings/indexes/SourceSummary.svelte';
 	import {
 		isEditableSourceType,
 		isManagedSource,
 		sourceTypeLabel
-	} from '$lib/components/admin/indexes/source-form';
+	} from '$lib/components/settings/indexes/source-form';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 

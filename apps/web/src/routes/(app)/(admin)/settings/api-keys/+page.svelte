@@ -5,7 +5,7 @@
 	import { invalidate } from '$app/navigation';
 	import { DEP } from '$lib/api/deps';
 	import { deleteApiKey, getApiKey } from '$lib/api/api-keys';
-	import CreateApiKeyModal from '$lib/components/admin/api-keys/CreateApiKeyModal.svelte';
+	import CreateApiKeyModal from '$lib/components/settings/api-keys/CreateApiKeyModal.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import SecretReveal from '$lib/components/ui/SecretReveal.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';

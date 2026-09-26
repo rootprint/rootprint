@@ -3,19 +3,19 @@ import { AggregationBuilder } from 'quickwit-js';
 
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit.js';
-import { composeQuery } from '../lib/query/compose-query.js';
-import { asBuckets, termsAgg } from '../utils/aggregations.js';
-import { translateQuickwitError } from '../utils/quickwit-error.js';
+import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { composeQuery } from '../lib/quickwit/query.js';
+import { asBuckets, termsAgg } from '../lib/quickwit/aggregations.js';
+import { translateQuickwitError } from '../lib/quickwit/errors.js';
+import type { Filter } from '../types.js';
 import type {
 	FieldValueEntry,
 	FieldValuesBulkResponse,
 	FieldValuesResponse,
-	Filter,
 	HistogramResponse,
-	IndexConfig,
 	LogSearchResponse
-} from '../types.js';
+} from '../schemas/responses/indexes.js';
+import type { IndexConfig } from './index.service.js';
 
 function isTruncated(agg: BucketAggregationResult | undefined): boolean {
 	return (agg?.sum_other_doc_count ?? 0) > 0;

@@ -6,7 +6,8 @@ import type { Db } from '../lib/db.js';
 // apikey = Better Auth API key plugin table; referenceId is the owning user id.
 import { apikey as personalApiKey, user } from '../db/schema.js';
 import { auth } from '../lib/auth.js';
-import type { ServiceAccountApiKeySummary, ServiceAccountSummary } from '../types.js';
+import type { ServiceAccountApiKeySummary } from '../schemas/responses/api-keys.js';
+import type { ServiceAccountSummary } from '../schemas/responses/service-accounts.js';
 import { fromAuthApiError, notFound } from '../utils/http-error.js';
 
 export async function listServiceAccounts(db: Db): Promise<ServiceAccountSummary[]> {

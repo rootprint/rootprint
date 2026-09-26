@@ -8,7 +8,7 @@ import {
 	getApiKeyVolume
 } from '$lib/api/activity';
 import { parseWindow } from '$lib/utils/time-range';
-import { parseOffset } from '$lib/utils/search-params';
+import { parseOffset } from '$lib/components/settings/search-params';
 
 export const load: PageLoad = async ({ url, params }) => {
 	const window = parseWindow(url.searchParams.get('window'));

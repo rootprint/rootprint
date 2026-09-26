@@ -3,8 +3,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { Db } from '../lib/db.js';
 import { view } from '../db/schema.js';
 import type { Filter, SavedView, SortDirection, TimeRange } from '../types.js';
-import { internal, notFound } from '../utils/http-error.js';
-import { withUniqueViolation } from '../utils/db.js';
+import { internal, notFound, withUniqueViolation } from '../utils/http-error.js';
 
 type ViewRow = typeof view.$inferSelect;
 

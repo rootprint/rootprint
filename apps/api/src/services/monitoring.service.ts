@@ -8,8 +8,8 @@ import type {
 } from 'quickwit-js';
 
 import { ERROR_HTTP_STATUS_CLAUSES, ERROR_KIND_CLAUSES } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit.js';
-import { escapeFilterValue } from '../lib/query/compose-query.js';
+import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { escapeFilterValue } from '../lib/quickwit/query.js';
 import {
 	intervalSeconds,
 	type ServiceErrorsInput,
@@ -25,7 +25,7 @@ import type {
 	MonitoringServiceRow,
 	ServiceErrorsResponse,
 	ServiceHealthResponse
-} from '../types.js';
+} from '../schemas/responses/monitoring.js';
 import {
 	asBuckets,
 	metric,
@@ -35,8 +35,8 @@ import {
 	summaryPercentile,
 	termsAgg,
 	unfloor
-} from '../utils/aggregations.js';
-import { translateQuickwitError } from '../utils/quickwit-error.js';
+} from '../lib/quickwit/aggregations.js';
+import { translateQuickwitError } from '../lib/quickwit/errors.js';
 import {
 	asRecord,
 	asText,

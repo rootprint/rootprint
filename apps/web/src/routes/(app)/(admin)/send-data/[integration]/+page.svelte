@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/send-telemetry/constants';
-	import { integrationById } from '$lib/send-telemetry/integrations';
-	import { SIGNAL_TABS, signalFromUrl } from '$lib/send-telemetry/signal';
-	import WizardHeader from '$lib/components/send-telemetry/WizardHeader.svelte';
-	import WizardSteps from '$lib/components/send-telemetry/WizardSteps.svelte';
-	import TabLinks from '$lib/components/send-telemetry/TabLinks.svelte';
+	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/components/send-data/constants';
+	import { integrationById } from '$lib/components/send-data/integrations';
+	import { SIGNAL_TABS, signalFromUrl } from '$lib/components/send-data/signal';
+	import WizardHeader from '$lib/components/send-data/WizardHeader.svelte';
+	import WizardSteps from '$lib/components/send-data/WizardSteps.svelte';
+	import TabLinks from '$lib/components/send-data/TabLinks.svelte';
 
 	let { data } = $props();
 

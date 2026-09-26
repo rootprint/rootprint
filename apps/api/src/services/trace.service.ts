@@ -2,7 +2,7 @@ import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-
 
 import { logger } from '../lib/logger.js';
 import type { TraceResponse, TraceSpan } from '../types.js';
-import { translateQuickwitError } from '../utils/quickwit-error.js';
+import { translateQuickwitError } from '../lib/quickwit/errors.js';
 
 export const NANOS_PER_MICRO = 1_000;
 export const NANOS_PER_MILLI = 1_000_000;

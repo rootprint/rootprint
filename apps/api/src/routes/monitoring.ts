@@ -4,7 +4,7 @@ import { config } from '../config.js';
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
-import { quickwit } from '../lib/quickwit.js';
+import { quickwit } from '../lib/quickwit/client.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { LOGS_READ, requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { ServiceErrorsQuery, ServiceHealthQuery } from '../schemas/monitoring.js';

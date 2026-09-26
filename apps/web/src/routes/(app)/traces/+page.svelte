@@ -6,10 +6,10 @@
 
 	import { DEP } from '$lib/api/deps';
 	import { queryErrorOf, type ExploreOperation, type ExploreOverview } from '$lib/api/traces';
-	import ExploreCharts from '$lib/components/trace-explore/ExploreCharts.svelte';
-	import ExploreToolbar from '$lib/components/trace-explore/ExploreToolbar.svelte';
-	import OperationsTable from '$lib/components/trace-explore/OperationsTable.svelte';
-	import SpanTable from '$lib/components/trace-explore/SpanTable.svelte';
+	import ExploreCharts from '$lib/components/traces/ExploreCharts.svelte';
+	import ExploreToolbar from '$lib/components/traces/ExploreToolbar.svelte';
+	import OperationsTable from '$lib/components/traces/OperationsTable.svelte';
+	import SpanTable from '$lib/components/traces/SpanTable.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { paramOneOf, setTimeRangeParams } from '$lib/utils/query-params';

@@ -4,9 +4,9 @@
 	import { getClusterOverview, getAdminMetricsRaw, type ClusterOverview } from '$lib/api/admin';
 	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
 	import { getIndexStats } from '$lib/api/indexes';
-	import ClusterIdentityStrip from '$lib/components/admin/overview/ClusterIdentityStrip.svelte';
-	import HeadlineNumbers from '$lib/components/admin/overview/HeadlineNumbers.svelte';
-	import StorageTrendChart from '$lib/components/admin/overview/StorageTrendChart.svelte';
+	import ClusterIdentityStrip from '$lib/components/settings/overview/ClusterIdentityStrip.svelte';
+	import HeadlineNumbers from '$lib/components/settings/overview/HeadlineNumbers.svelte';
+	import StorageTrendChart from '$lib/components/settings/overview/StorageTrendChart.svelte';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';

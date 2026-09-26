@@ -16,3 +16,5 @@ export const ShareViewResponse = named(
 		filters: v.array(FilterSchema)
 	})
 );
+
+export type ShareView = v.InferOutput<typeof ShareViewResponse>;

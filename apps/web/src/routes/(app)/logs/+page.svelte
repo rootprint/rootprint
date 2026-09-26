@@ -2,24 +2,24 @@
 	import { CircleX, ExternalLink, SearchX, Send } from 'lucide-svelte';
 	import { readString, writeString } from '$lib/utils/safe-storage';
 
-	import FieldPanel from '$lib/components/sidebar/FieldPanel.svelte';
-	import LogDetailDrawer from '$lib/components/log/LogDetailDrawer.svelte';
-	import LogFrequencyChart from '$lib/components/log/LogFrequencyChart.svelte';
-	import VirtualLogList from '$lib/components/log/VirtualLogList.svelte';
-	import SearchToolbar from '$lib/components/search/SearchToolbar.svelte';
-	import FilterChips from '$lib/components/search/FilterChips.svelte';
-	import ResultsBar from '$lib/components/search/ResultsBar.svelte';
-	import { SearchStore } from '$lib/stores/search.svelte';
+	import FieldPanel from '$lib/components/logs/FieldPanel.svelte';
+	import LogDetailDrawer from '$lib/components/logs/LogDetailDrawer.svelte';
+	import LogFrequencyChart from '$lib/components/logs/LogFrequencyChart.svelte';
+	import VirtualLogList from '$lib/components/logs/VirtualLogList.svelte';
+	import SearchToolbar from '$lib/components/logs/SearchToolbar.svelte';
+	import FilterChips from '$lib/components/logs/FilterChips.svelte';
+	import ResultsBar from '$lib/components/logs/ResultsBar.svelte';
+	import { SearchStore } from '$lib/components/logs/search.svelte';
 	import { shell } from '$lib/stores/shell.svelte';
 	import {
 		buildGridTemplate,
 		computeColumnWidths,
 		computeFieldWidth
-	} from '$lib/utils/column-width';
+	} from '$lib/components/logs/column-width';
 	import { page } from '$app/state';
 	import { replaceState } from '$app/navigation';
 	import { deserialize } from '$lib/utils/query-params';
-	import { normalizeHit } from '$lib/utils/normalize-hit';
+	import { normalizeHit } from '$lib/components/logs/normalize-hit';
 	import type { LogHit } from '$lib/types';
 
 	const SCROLL_TRIGGER_PX = 1500;

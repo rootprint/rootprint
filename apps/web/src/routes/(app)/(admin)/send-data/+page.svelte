@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ExternalLink } from 'lucide-svelte';
 	import { page } from '$app/state';
-	import IntegrationCard from '$lib/components/send-telemetry/IntegrationCard.svelte';
-	import TabLinks from '$lib/components/send-telemetry/TabLinks.svelte';
+	import IntegrationCard from '$lib/components/send-data/IntegrationCard.svelte';
+	import TabLinks from '$lib/components/send-data/TabLinks.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import { integrations } from '$lib/send-telemetry/integrations';
-	import { ORIGINS } from '$lib/send-telemetry/origins';
-	import { SIGNAL_TABS, signalFromUrl } from '$lib/send-telemetry/signal';
+	import { integrations } from '$lib/components/send-data/integrations';
+	import { ORIGINS } from '$lib/components/send-data/origins';
+	import { SIGNAL_TABS, signalFromUrl } from '$lib/components/send-data/signal';
 
 	let query = $state('');
 

@@ -6,16 +6,16 @@
 	import { page } from '$app/state';
 
 	import type { ServiceHealth } from '$lib/api/monitoring';
-	import ApmSummary from '$lib/components/monitoring/ApmSummary.svelte';
-	import DependencyTable from '$lib/components/monitoring/DependencyTable.svelte';
-	import EndpointTable from '$lib/components/monitoring/EndpointTable.svelte';
-	import ErrorList from '$lib/components/monitoring/ErrorList.svelte';
-	import ErrorRateChart from '$lib/components/monitoring/ErrorRateChart.svelte';
-	import RequestLatencyChart from '$lib/components/monitoring/RequestLatencyChart.svelte';
-	import RequestRateChart from '$lib/components/monitoring/RequestRateChart.svelte';
-	import ServiceLatencyChart from '$lib/components/monitoring/ServiceLatencyChart.svelte';
-	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
-	import ServiceTable from '$lib/components/monitoring/ServiceTable.svelte';
+	import ApmSummary from '$lib/components/services/ApmSummary.svelte';
+	import DependencyTable from '$lib/components/services/DependencyTable.svelte';
+	import EndpointTable from '$lib/components/services/EndpointTable.svelte';
+	import ErrorList from '$lib/components/services/ErrorList.svelte';
+	import ErrorRateChart from '$lib/components/services/ErrorRateChart.svelte';
+	import RequestLatencyChart from '$lib/components/services/RequestLatencyChart.svelte';
+	import RequestRateChart from '$lib/components/services/RequestRateChart.svelte';
+	import ServiceLatencyChart from '$lib/components/services/ServiceLatencyChart.svelte';
+	import ServicePicker from '$lib/components/services/ServicePicker.svelte';
+	import ServiceTable from '$lib/components/services/ServiceTable.svelte';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';

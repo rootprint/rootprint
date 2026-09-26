@@ -7,9 +7,10 @@ import {
 	type SourceConfigRequest
 } from 'quickwit-js';
 
-import type { IndexSource, QuickwitIndexMetadata, SourceDetail } from '../types.js';
+import type { IndexSource, SourceDetail } from '../types.js';
+import type { QuickwitIndexMetadata } from './quickwit-index.service.js';
 import { conflict, notFound } from '../utils/http-error.js';
-import { translateQuickwitError, withNotFound } from '../utils/quickwit-error.js';
+import { translateQuickwitError, withNotFound } from '../lib/quickwit/errors.js';
 import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
 import { getIndex as qwGetIndex } from './quickwit-index.service.js';
 

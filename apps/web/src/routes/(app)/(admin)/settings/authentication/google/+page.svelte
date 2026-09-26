@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { googleProvider } from '$lib/components/admin/authentication/oauth-providers';
-	import ProviderSettingsPage from '$lib/components/admin/authentication/ProviderSettingsPage.svelte';
+	import { googleProvider } from '$lib/components/settings/authentication/oauth-providers';
+	import ProviderSettingsPage from '$lib/components/settings/authentication/ProviderSettingsPage.svelte';
 
 	let { data } = $props();
 </script>

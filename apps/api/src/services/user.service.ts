@@ -1,15 +1,15 @@
 import { generateId } from 'better-auth';
 import { and, eq } from 'drizzle-orm';
 
-import type { User, UserRole, UserStatus } from '../types.js';
+import type { UserRole, UserStatus } from '../types.js';
+import type { User } from '../schemas/responses/users.js';
 
 import { config } from '../config.js';
 import { authConfig } from '../lib/auth.js';
 import type { Db, Tx } from '../lib/db.js';
 import { account, inviteToken, session, user } from '../db/schema.js';
 import { createInviteToken, replaceInviteToken } from './auth.service.js';
-import { badRequest, notFound } from '../utils/http-error.js';
-import { withUniqueViolation } from '../utils/db.js';
+import { badRequest, notFound, withUniqueViolation } from '../utils/http-error.js';
 
 const buildInviteUrl = (token: string) => `${config.origin}/auth/setup?token=${token}`;
 

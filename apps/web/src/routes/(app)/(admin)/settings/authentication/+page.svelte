@@ -1,6 +1,6 @@
 <script lang="ts">
-	import AuthProviderRow from '$lib/components/admin/authentication/AuthProviderRow.svelte';
-	import PasswordSignInToggle from '$lib/components/admin/authentication/PasswordSignInToggle.svelte';
+	import AuthProviderRow from '$lib/components/settings/authentication/AuthProviderRow.svelte';
+	import PasswordSignInToggle from '$lib/components/settings/authentication/PasswordSignInToggle.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { pluralize } from '$lib/utils/format';

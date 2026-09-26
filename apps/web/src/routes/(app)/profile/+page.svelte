@@ -3,8 +3,8 @@
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import PageScroll from '$lib/components/ui/PageScroll.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
-	import ChangePasswordModal from '$lib/components/account/ChangePasswordModal.svelte';
-	import PersonalApiKeysSection from '$lib/components/account/PersonalApiKeysSection.svelte';
+	import ChangePasswordModal from '$lib/components/profile/ChangePasswordModal.svelte';
+	import PersonalApiKeysSection from '$lib/components/profile/PersonalApiKeysSection.svelte';
 
 	let { data } = $props();
 

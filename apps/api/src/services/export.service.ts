@@ -1,10 +1,17 @@
-import type { ExportFormat, ExportPreflightResult, IndexConfig } from '../types.js';
+import type { ExportFormat } from '../types.js';
+import type { IndexConfig } from './index.service.js';
 
 import { type QuickwitClient } from 'quickwit-js';
 
 import { EXPORT_MAX_ROWS } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit.js';
+import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
+
+export type ExportPreflightResult = {
+	total: number;
+	capped: boolean;
+	numHits: number;
+};
 
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();

@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import type { AuthedEnv } from '../../env.js';
 import { db } from '../../lib/db.js';
 import { describe } from '../../lib/openapi/describe.js';
-import { quickwit } from '../../lib/quickwit.js';
+import { quickwit } from '../../lib/quickwit/client.js';
 import { requireAdmin } from '../../middleware/require-admin.js';
 import {
 	ClusterDocumentStatusResponse,

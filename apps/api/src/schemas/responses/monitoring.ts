@@ -128,3 +128,21 @@ export const ServiceHealthResponseSchema = named(
 		dependencies: v.array(MonitoringDependencySchema)
 	})
 );
+
+export type MonitoringBucket = v.InferOutput<typeof MonitoringBucketSchema>;
+
+export type MonitoringEndpoint = v.InferOutput<typeof MonitoringEndpointSchema>;
+
+export type MonitoringServiceLatency = v.InferOutput<typeof MonitoringServiceLatencySchema>;
+
+export type MonitoringServiceRow = v.InferOutput<typeof MonitoringServiceRowSchema>;
+
+export type MonitoringFailingOperation = v.InferOutput<typeof MonitoringFailingOperationSchema>;
+
+export type MonitoringErrorRow = v.InferOutput<typeof MonitoringErrorRowSchema>;
+
+export type MonitoringDependency = v.InferOutput<typeof MonitoringDependencySchema>;
+
+export type ServiceHealthResponse = v.InferOutput<typeof ServiceHealthResponseSchema>;
+
+export type ServiceErrorsResponse = v.InferOutput<typeof ServiceErrorsResponseSchema>;

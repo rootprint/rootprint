@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { KeyRound } from 'lucide-svelte';
 
-	import KpiStrip from '$lib/components/activity/KpiStrip.svelte';
-	import LatencyChart from '$lib/components/activity/LatencyChart.svelte';
+	import KpiStrip from '$lib/components/settings/activity/KpiStrip.svelte';
+	import LatencyChart from '$lib/components/settings/activity/LatencyChart.svelte';
 	import TimeRangeTabs from '$lib/components/ui/TimeRangeTabs.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
@@ -10,7 +10,7 @@
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import type { Window } from '$lib/utils/time-range';
 	import { formatCount, formatDurationMs } from '$lib/utils/format';
-	import { setSearchParam } from '$lib/utils/search-params';
+	import { setSearchParam } from '$lib/components/settings/search-params';
 
 	let { data } = $props();
 

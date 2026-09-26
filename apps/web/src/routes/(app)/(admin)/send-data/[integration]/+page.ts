@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { listApiKeys } from '$lib/api/api-keys';
 import { ApiError } from '$lib/api/errors';
 import { listIndexes } from '$lib/api/indexes';
-import { integrationById } from '$lib/send-telemetry/integrations';
+import { integrationById } from '$lib/components/send-data/integrations';
 import { DEP } from '$lib/api/deps';
 import type { PageLoad } from './$types';
 

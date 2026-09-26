@@ -11,15 +11,17 @@ import type { Db } from '../lib/db.js';
 import { config } from '../config.js';
 // apiKey = the custom ingest-key table, not Better Auth's own apikey table.
 import { apiKey } from '../db/schema.js';
-import type {
-	ApiKeySummary,
-	ApiKeyValue,
-	CreateApiKeyInput,
-	VerifiedApiKey,
-	VerifyApiKeyResult
-} from '../types.js';
-import { badRequest, internal, notFound } from '../utils/http-error.js';
-import { withUniqueViolation } from '../utils/db.js';
+import type { CreateApiKeyInput } from '../types.js';
+import type { ApiKeySummary, ApiKeyValue } from '../schemas/responses/api-keys.js';
+import { badRequest, internal, notFound, withUniqueViolation } from '../utils/http-error.js';
+
+export type VerifiedApiKey = {
+	id: number;
+	name: string;
+	indexId: string;
+};
+
+export type VerifyApiKeyResult = { status: 'ok'; key: VerifiedApiKey } | { status: 'not-found' };
 
 function generateApiKey(): string {
 	return `${INGEST_PREFIX}${randomBytes(API_KEY_RANDOM_BYTES).toString('hex')}`;

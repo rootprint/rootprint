@@ -5,9 +5,9 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { deleteIndex } from '$lib/api/indexes';
-	import IndexConfigForm from '$lib/components/admin/indexes/IndexConfigForm.svelte';
-	import IndexTabs from '$lib/components/admin/indexes/IndexTabs.svelte';
-	import { sourceTypeLabel } from '$lib/components/admin/indexes/source-form';
+	import IndexConfigForm from '$lib/components/settings/indexes/IndexConfigForm.svelte';
+	import IndexTabs from '$lib/components/settings/indexes/IndexTabs.svelte';
+	import { sourceTypeLabel } from '$lib/components/settings/indexes/source-form';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import ListRow from '$lib/components/ui/ListRow.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';

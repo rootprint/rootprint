@@ -1,12 +1,35 @@
-import type { FieldMapping, IndexMetadata } from 'quickwit-js';
+import type { FieldMapping, IndexMetadata, QuickwitClient } from 'quickwit-js';
 import { NotFoundError, isFastFieldEnabled } from 'quickwit-js';
-import type { QuickwitClient } from 'quickwit-js';
-import type {
-	DynamicMapping,
-	IndexField,
-	QuickwitIndexMetadata,
-	QuickwitSource
-} from '../types.js';
+import type { DynamicMapping } from '../types.js';
+import type { IndexField } from '../schemas/responses/indexes.js';
+
+export type QuickwitSource = {
+	sourceId: string;
+	sourceType: string;
+	enabled: boolean;
+	inputFormat: string | null;
+	numPipelines: number | null;
+	params: unknown | null;
+	vrlScript: string | null;
+};
+
+export type QuickwitIndexMetadata = {
+	indexId: string;
+	indexUri: string | null;
+	mode: string | null;
+	partitionKey: string | null;
+	maxNumPartitions: number | null;
+	dynamicMapping: DynamicMapping | null;
+	timestampField: string | null;
+	indexFieldPresence: boolean | null;
+	storeSource: boolean | null;
+	tagFields: string[] | null;
+	defaultSearchFields: string[] | null;
+	commitTimeoutSecs: number | null;
+	retention: { period: string; schedule: string | null } | null;
+	fields: IndexField[];
+	sources: QuickwitSource[];
+};
 
 export function normalizeDynamicMapping(
 	dm: Record<string, unknown> | undefined | null

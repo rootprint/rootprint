@@ -11,7 +11,7 @@ import type {
 	SummaryRow,
 	TopActorRow,
 	VolumeBucket
-} from '../types.js';
+} from '../schemas/responses/admin.js';
 
 type WindowResolved = {
 	interval: string; // for INTERVAL literal in SQL

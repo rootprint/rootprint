@@ -27,3 +27,9 @@ export const OidcAuthSettingsResponse = named(
 		issuerUrl: v.nullable(v.string())
 	})
 );
+
+export type GoogleAuthSettings = v.InferOutput<typeof GoogleAuthSettingsResponse>;
+
+export type GitHubAuthSettings = v.InferOutput<typeof GitHubAuthSettingsResponse>;
+
+export type OidcAuthSettings = v.InferOutput<typeof OidcAuthSettingsResponse>;

@@ -6,8 +6,8 @@
 	import { deleteServiceAccountKey } from '$lib/api/api-keys';
 	import { DEP } from '$lib/api/deps';
 	import { deleteServiceAccount } from '$lib/api/service-accounts';
-	import CreateServiceAccountKeyModal from '$lib/components/admin/service-accounts/CreateServiceAccountKeyModal.svelte';
-	import CreateServiceAccountModal from '$lib/components/admin/service-accounts/CreateServiceAccountModal.svelte';
+	import CreateServiceAccountKeyModal from '$lib/components/settings/service-accounts/CreateServiceAccountKeyModal.svelte';
+	import CreateServiceAccountModal from '$lib/components/settings/service-accounts/CreateServiceAccountModal.svelte';
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import ListCard from '$lib/components/ui/ListCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
