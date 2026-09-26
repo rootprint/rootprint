@@ -8,14 +8,17 @@
 		Search,
 		Send,
 		Settings,
+		Star,
 		ChartNoAxesGantt
 	} from 'lucide-svelte';
+	import GitHubIcon from '@iconify-svelte/logos/github-icon';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
 	import { shell } from '$lib/stores/shell.svelte';
 	import { traceOrigin } from '$lib/utils/trace-params';
 	import { readString, writeString } from '$lib/utils/safe-storage';
+	import { formatCount } from '$lib/utils/format';
 
 	type User = { id: string; name: string | null; email: string };
 
@@ -26,6 +29,9 @@
 	const wide = new MediaQuery('(min-width: 80rem)');
 	const savedPreference = readString(STORAGE_KEY);
 	let collapsed = $state(savedPreference === null ? !wide.current : savedPreference === '1');
+
+	// Baked in by the release build so self-hosted browsers never call GitHub; unset locally.
+	const stars = Number(import.meta.env.VITE_GITHUB_STARS) || null;
 
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
@@ -90,6 +96,27 @@
 				/>
 			{/if}
 			<HelpMenu {collapsed} />
+			<a
+				href="https://github.com/rootprint/rootprint"
+				target="_blank"
+				rel="noopener"
+				aria-label={collapsed ? 'GitHub' : undefined}
+				data-tip={collapsed ? 'GitHub' : ''}
+				class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right flex items-center rounded text-sm transition-colors {collapsed
+					? 'h-10 w-10 justify-center'
+					: 'h-9 gap-2.5 px-3'}"
+			>
+				<GitHubIcon class="size-4 shrink-0" aria-hidden="true" />
+				{#if !collapsed}
+					GitHub
+					{#if stars !== null}
+						<span class="text-subtle ml-auto flex items-center gap-1 text-xs tabular-nums">
+							<Star class="size-3 fill-current text-yellow-500" aria-hidden="true" />
+							{formatCount(stars)}<span class="sr-only">{' stars'}</span>
+						</span>
+					{/if}
+				{/if}
+			</a>
 			{#if isAdmin}
 				<SidebarNavItem
 					href="/settings"

@@ -4,6 +4,10 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ## [Unreleased]
 
+### Added
+
+- **GitHub** link in the sidebar, below Help, with the repository's star count. The count is baked in when the image is built, so the app never contacts GitHub.
+
 ### Changed
 
 - **Search is now Logs, at `/logs`; Services moved to `/services`.** `/` and `/monitoring` redirect and keep their query string, so bookmarked searches still open.

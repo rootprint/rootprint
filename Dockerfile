@@ -15,6 +15,10 @@ RUN bun install --frozen-lockfile --ignore-scripts
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
 
+# Star count shown in the sidebar, fetched by the release workflow. Declared here so
+# a changed count doesn't bust the install layer above.
+ARG VITE_GITHUB_STARS
+
 # Build web first (no dependency on api dist), then api.
 RUN bun --filter web build \
  && bun --filter api build
