@@ -4,26 +4,18 @@ import {
 	Activity,
 	Database,
 	KeyRound,
-	Send,
 	Users,
-	ShieldCheck,
-	UserRound
+	ShieldCheck
 } from 'lucide-svelte';
 import type { BreadcrumbSegment } from '$lib/types';
 
 export type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
-export type NavGroup = { label: string; adminOnly: boolean; items: NavItem[] };
+export type NavGroup = { label: string; items: NavItem[] };
 
 /** Settings sidebar nav tree. Shared with breadcrumbs so the two cannot drift. */
 export const navGroups: NavGroup[] = [
 	{
-		label: 'Account',
-		adminOnly: false,
-		items: [{ href: '/settings/profile', label: 'Profile', icon: UserRound }]
-	},
-	{
 		label: 'Cluster',
-		adminOnly: true,
 		items: [
 			{ href: '/settings/overview', label: 'Overview', icon: LayoutDashboard },
 			{ href: '/settings/activity', label: 'Activity', icon: Activity }
@@ -31,16 +23,13 @@ export const navGroups: NavGroup[] = [
 	},
 	{
 		label: 'Data',
-		adminOnly: true,
 		items: [
-			{ href: '/settings/send-telemetry', label: 'Send logs & traces', icon: Send },
 			{ href: '/settings/api-keys', label: 'API keys', icon: KeyRound },
 			{ href: '/settings/indexes', label: 'Indexes', icon: Database }
 		]
 	},
 	{
 		label: 'Security',
-		adminOnly: true,
 		items: [
 			{ href: '/settings/authentication', label: 'Authentication', icon: ShieldCheck },
 			{ href: '/settings/service-accounts', label: 'Service accounts', icon: Bot },
@@ -53,10 +42,7 @@ export const navGroups: NavGroup[] = [
 const ROOT: BreadcrumbSegment = { label: 'Settings', href: '/settings' };
 const ACTIVITY: BreadcrumbSegment = { label: 'Activity', href: '/settings/activity' };
 const INDEXES: BreadcrumbSegment = { label: 'Indexes', href: '/settings/indexes' };
-const SEND_TELEMETRY: BreadcrumbSegment = {
-	label: 'Send logs & traces',
-	href: '/settings/send-telemetry'
-};
+const SEND_DATA: BreadcrumbSegment = { label: 'Send data', href: '/send-data' };
 const AUTH: BreadcrumbSegment = { label: 'Authentication', href: '/settings/authentication' };
 const USERS: BreadcrumbSegment = { label: 'Users', href: '/settings/users' };
 
@@ -64,7 +50,6 @@ type Params = Record<string, string | undefined>;
 
 /** Breadcrumb trails keyed by clean route pattern (`(group)` segments stripped). The only place breadcrumb structure lives — add new settings pages here. */
 const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
-	'/settings/profile': () => [ROOT, { label: 'Profile' }],
 	'/settings/overview': () => [ROOT, { label: 'Overview' }],
 	'/settings/activity': () => [ROOT, { label: 'Activity' }],
 	'/settings/activity/api-keys/[id]': () => [ROOT, ACTIVITY, { label: 'API key' }],
@@ -94,12 +79,7 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 		{ label: p.sourceId ?? 'Source', mono: true }
 	],
 	'/settings/api-keys': () => [ROOT, { label: 'API keys' }],
-	'/settings/send-telemetry': () => [ROOT, { label: 'Send logs & traces' }],
-	'/settings/send-telemetry/[integration]': (p) => [
-		ROOT,
-		SEND_TELEMETRY,
-		{ label: p.integration ?? 'Integration' }
-	],
+	'/send-data/[integration]': (p) => [SEND_DATA, { label: p.integration ?? 'Integration' }],
 	'/settings/users': () => [ROOT, { label: 'Users' }],
 	'/settings/users/[userId]': () => [ROOT, USERS, { label: 'User' }],
 	'/settings/service-accounts': () => [ROOT, { label: 'Service accounts' }],

@@ -115,7 +115,7 @@
 				start searching them in Rootprint.
 			</p>
 			<div class="mt-7 flex flex-wrap items-center gap-3">
-				<a href="/settings/send-telemetry" class="btn btn-primary btn-sm">
+				<a href="/send-data" class="btn btn-primary btn-sm">
 					<Send class="size-3.5" aria-hidden="true" />
 					Choose an integration
 				</a>
@@ -138,6 +138,7 @@
 		</aside>
 
 		<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+			<h1 class="sr-only">Logs</h1>
 			<SearchToolbar {store} />
 			<FilterChips {store} />
 

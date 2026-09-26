@@ -2,9 +2,9 @@ import { OTLP_LOGS_INGEST_PATH, OTLP_TRACES_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
 import type { Callout, IntegrationContext, Signal, Snippet, Verify } from '../types';
 
-/** The standard "did my logs arrive?" verify step: a link into Search scoped to the index. */
+/** The standard "did my logs arrive?" verify step: a link into Logs scoped to the index. */
 export function searchVerifyLink(indexId: string): Verify {
-	return { label: 'Open Search', href: `/?index=${encodeURIComponent(indexId)}` };
+	return { label: 'Open Logs', href: `/logs?index=${encodeURIComponent(indexId)}` };
 }
 
 export const BEARER_CALLOUT: Callout = {

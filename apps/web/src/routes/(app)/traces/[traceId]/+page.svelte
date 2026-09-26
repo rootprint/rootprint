@@ -38,8 +38,8 @@
 
 	const BACK_LABELS: Record<TraceOrigin, string> = {
 		traces: 'Back to traces',
-		monitoring: 'Back to services',
-		search: 'Back to logs'
+		services: 'Back to services',
+		logs: 'Back to logs'
 	};
 	const backLabel = $derived(BACK_LABELS[traceOrigin(data.returnTo)]);
 

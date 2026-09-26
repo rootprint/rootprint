@@ -9,6 +9,7 @@
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
+	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
 	import type { TimeRange } from '$lib/types';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { paramWholeNumber } from '$lib/utils/query-params';
@@ -103,7 +104,7 @@
 	}
 </script>
 
-<div class="border-line bg-base-100 flex h-12 shrink-0 items-center gap-2 border-b px-3">
+<PageToolbar>
 	<ServicePicker
 		{services}
 		value={filters.service}
@@ -174,7 +175,7 @@
 		{/if}
 		Refresh
 	</button>
-</div>
+</PageToolbar>
 
 {#if filters.operation !== null || showCustom || rootErrors || queryError !== null}
 	<div

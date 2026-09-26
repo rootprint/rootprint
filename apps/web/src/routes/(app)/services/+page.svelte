@@ -17,6 +17,7 @@
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
 	import ServiceTable from '$lib/components/monitoring/ServiceTable.svelte';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
+	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
@@ -140,119 +141,144 @@
 	}
 </script>
 
-{#snippet pageHeader(serviceNames: string[] | null)}
-	<header class="flex flex-wrap items-end justify-between gap-4">
-		<div class="min-w-0">
-			<p class="section-label">Services</p>
-			<h1 class="text-h3 mt-0.5 truncate" title={data.service ?? 'All services'}>
-				{data.service ?? 'All services'}
-			</h1>
-		</div>
-		<div class="flex flex-wrap items-end gap-3">
-			{#if serviceNames !== null}
-				<ServicePicker services={serviceNames} value={data.service} onChange={setService} />
-			{/if}
+{#snippet toolbar(serviceNames: string[])}
+	<PageToolbar>
+		<ServicePicker
+			services={serviceNames}
+			value={data.service}
+			onChange={setService}
+			showLabel={false}
+		/>
+		<div class="ml-auto flex items-center gap-2">
 			<TimeRangePicker value={data.timeRange} onChange={setRange} />
 			<a class="btn btn-sm" href={exploreHref(page.url, { service: data.service })}>
 				<ChartNoAxesGantt class="size-3.5" aria-hidden="true" />View traces
 			</a>
 		</div>
-	</header>
+	</PageToolbar>
 {/snippet}
 
-<div class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto px-8 py-6 lg:px-10 lg:py-8">
+<div class="flex min-h-0 w-full flex-1 flex-col">
+	<h1 class="sr-only">Services</h1>
 	{#await data.health}
-		<div class="flex flex-col gap-5" role="status" aria-label="Loading service health">
-			{@render pageHeader(null)}
-			<div class="skeleton h-24 w-full"></div>
-			<div class="skeleton h-9 w-full"></div>
-			<div class="grid gap-4 lg:grid-cols-2">
-				<div class="skeleton h-64"></div>
-				<div class="skeleton h-64"></div>
-			</div>
-			<span class="sr-only">Loading service health</span>
-		</div>
+		{@render toolbar([])}
 	{:then health}
-		<div class="flex flex-col gap-5">
-			{@render pageHeader(health.serviceNames)}
+		{@render toolbar(health.serviceNames)}
+	{:catch}
+		{@render toolbar([])}
+	{/await}
 
-			{#if health.telemetryStatus === 'span_store_missing'}
-				<EmptyPanel title="Trace telemetry unavailable">
-					The configured span store could not be found. Check trace storage configuration and
-					ingestion.
-				</EmptyPanel>
-			{:else}
-				{@const noTraffic =
-					health.summary.requests === 0 &&
-					health.dependencies.length === 0 &&
-					health.summary.errorSpans === 0}
-				{@const tabs = detailTabs(data.service, health)}
-				{@const currentView = tabs.some((tab) => tab.id === activeView) ? activeView : 'overview'}
-				<ApmSummary
-					service={data.service}
-					services={health.services}
-					summary={health.summary}
-					{xRange}
-				/>
-
-				{#if data.service === null && health.servicesTruncated}
-					<p class="text-warning-ink -mt-3 text-xs">
-						Showing the {health.services.length} most active services.
-					</p>
-				{/if}
-
-				<div
-					class="border-b-line flex min-w-0 overflow-x-auto border-b"
-					role="tablist"
-					aria-label="Service details"
-					tabindex={-1}
-					onkeydown={handleTabKeydown}
-				>
-					{#each tabs as tab (tab.id)}
-						<button
-							type="button"
-							role="tab"
-							id={`${tabsetId}-${tab.id}`}
-							data-view={tab.id}
-							aria-controls={panelId}
-							aria-selected={currentView === tab.id}
-							tabindex={currentView === tab.id ? 0 : -1}
-							class="tab-underline h-9 shrink-0 px-3 text-xs"
-							onclick={() => setView(tab.id)}
-						>
-							{tab.label}
-							{#if tab.count !== undefined}
-								<span class={['ml-1 tabular-nums', tab.error ? 'text-error' : 'text-subtle']}
-									>{tab.count}</span
-								>
-							{/if}
-						</button>
-					{/each}
+	<div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-8 py-6 lg:px-10 lg:py-8">
+		{#await data.health}
+			<div class="flex flex-col gap-5" role="status" aria-label="Loading service health">
+				<div class="skeleton h-24 w-full"></div>
+				<div class="skeleton h-9 w-full"></div>
+				<div class="grid gap-4 lg:grid-cols-2">
+					<div class="skeleton h-64"></div>
+					<div class="skeleton h-64"></div>
 				</div>
+				<span class="sr-only">Loading service health</span>
+			</div>
+		{:then health}
+			<div class="flex flex-col gap-5">
+				{#if health.telemetryStatus === 'span_store_missing'}
+					<EmptyPanel title="Trace telemetry unavailable">
+						The configured span store could not be found. Check trace storage configuration and
+						ingestion.
+					</EmptyPanel>
+				{:else}
+					{@const noTraffic =
+						health.summary.requests === 0 &&
+						health.dependencies.length === 0 &&
+						health.summary.errorSpans === 0}
+					{@const tabs = detailTabs(data.service, health)}
+					{@const currentView = tabs.some((tab) => tab.id === activeView) ? activeView : 'overview'}
+					<ApmSummary
+						service={data.service}
+						services={health.services}
+						summary={health.summary}
+						{xRange}
+					/>
 
-				<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${currentView}`}>
-					{#if currentView === 'overview'}
-						{#if noTraffic}
-							<EmptyPanel title="No request traffic">
-								{#if data.service === null}
-									No server spans were received in this time range. Try a wider range or verify
-									trace ingestion.
-								{:else}
-									No server spans were received for <span class="font-mono">{data.service}</span> in this
-									time range.
+					{#if data.service === null && health.servicesTruncated}
+						<p class="text-warning-ink -mt-3 text-xs">
+							Showing the {health.services.length} most active services.
+						</p>
+					{/if}
+
+					<div
+						class="border-b-line flex min-w-0 overflow-x-auto border-b"
+						role="tablist"
+						aria-label="Service details"
+						tabindex={-1}
+						onkeydown={handleTabKeydown}
+					>
+						{#each tabs as tab (tab.id)}
+							<button
+								type="button"
+								role="tab"
+								id={`${tabsetId}-${tab.id}`}
+								data-view={tab.id}
+								aria-controls={panelId}
+								aria-selected={currentView === tab.id}
+								tabindex={currentView === tab.id ? 0 : -1}
+								class="tab-underline h-9 shrink-0 px-3 text-xs"
+								onclick={() => setView(tab.id)}
+							>
+								{tab.label}
+								{#if tab.count !== undefined}
+									<span class={['ml-1 tabular-nums', tab.error ? 'text-error' : 'text-subtle']}
+										>{tab.count}</span
+									>
 								{/if}
-							</EmptyPanel>
-						{:else if data.service === null}
-							<div class="flex flex-col gap-4">
-								<ServiceLatencyChart
-									services={health.serviceLatencies}
-									keysMs={health.latencyKeysMs}
-									{xRange}
-									syncKey={SYNC_KEY}
-									onBrush={brushRange}
-									height={190}
-								/>
-								<div class="grid gap-4 lg:grid-cols-2">
+							</button>
+						{/each}
+					</div>
+
+					<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${currentView}`}>
+						{#if currentView === 'overview'}
+							{#if noTraffic}
+								<EmptyPanel title="No request traffic">
+									{#if data.service === null}
+										No server spans were received in this time range. Try a wider range or verify
+										trace ingestion.
+									{:else}
+										No server spans were received for <span class="font-mono">{data.service}</span> in
+										this time range.
+									{/if}
+								</EmptyPanel>
+							{:else if data.service === null}
+								<div class="flex flex-col gap-4">
+									<ServiceLatencyChart
+										services={health.serviceLatencies}
+										keysMs={health.latencyKeysMs}
+										{xRange}
+										syncKey={SYNC_KEY}
+										onBrush={brushRange}
+										height={190}
+									/>
+									<div class="grid gap-4 lg:grid-cols-2">
+										<RequestRateChart
+											buckets={health.buckets}
+											summary={health.summary}
+											intervalSeconds={health.intervalSeconds}
+											{xRange}
+											syncKey={SYNC_KEY}
+											onBrush={brushRange}
+											height={180}
+										/>
+										<ErrorRateChart
+											buckets={health.buckets}
+											summary={health.summary}
+											{xRange}
+											syncKey={SYNC_KEY}
+											onBrush={brushRange}
+											height={180}
+										/>
+									</div>
+								</div>
+							{:else}
+								<div class="grid gap-4 xl:grid-cols-3">
 									<RequestRateChart
 										buckets={health.buckets}
 										summary={health.summary}
@@ -260,7 +286,7 @@
 										{xRange}
 										syncKey={SYNC_KEY}
 										onBrush={brushRange}
-										height={180}
+										height={190}
 									/>
 									<ErrorRateChart
 										buckets={health.buckets}
@@ -268,66 +294,43 @@
 										{xRange}
 										syncKey={SYNC_KEY}
 										onBrush={brushRange}
-										height={180}
+										height={190}
+									/>
+									<RequestLatencyChart
+										buckets={health.buckets}
+										summary={health.summary}
+										{xRange}
+										syncKey={SYNC_KEY}
+										onBrush={brushRange}
+										height={190}
 									/>
 								</div>
-							</div>
-						{:else}
-							<div class="grid gap-4 xl:grid-cols-3">
-								<RequestRateChart
-									buckets={health.buckets}
-									summary={health.summary}
-									intervalSeconds={health.intervalSeconds}
-									{xRange}
-									syncKey={SYNC_KEY}
-									onBrush={brushRange}
-									height={190}
-								/>
-								<ErrorRateChart
-									buckets={health.buckets}
-									summary={health.summary}
-									{xRange}
-									syncKey={SYNC_KEY}
-									onBrush={brushRange}
-									height={190}
-								/>
-								<RequestLatencyChart
-									buckets={health.buckets}
-									summary={health.summary}
-									{xRange}
-									syncKey={SYNC_KEY}
-									onBrush={brushRange}
-									height={190}
-								/>
-							</div>
+							{/if}
+						{:else if currentView === 'services' && data.service === null}
+							<ServiceTable services={health.services} onSelect={setService} />
+						{:else if currentView === 'endpoints'}
+							<EndpointTable endpoints={health.endpoints} showService={data.service === null} />
+						{:else if currentView === 'dependencies' && data.service !== null}
+							<DependencyTable dependencies={health.dependencies} service={data.service} />
+						{:else if currentView === 'errors'}
+							<ErrorList
+								operations={health.failingOperations}
+								service={data.service}
+								startTs={data.startTs}
+								endTs={data.endTs}
+								showService={data.service === null}
+								operation={errorOperation}
+								kind={errorKind}
+								httpStatus={errorHttpStatus}
+								onFilterChange={setErrorFilter}
+								onClearFilters={clearErrorFilters}
+							/>
 						{/if}
-					{:else if currentView === 'services' && data.service === null}
-						<ServiceTable services={health.services} onSelect={setService} />
-					{:else if currentView === 'endpoints'}
-						<EndpointTable endpoints={health.endpoints} showService={data.service === null} />
-					{:else if currentView === 'dependencies' && data.service !== null}
-						<DependencyTable dependencies={health.dependencies} service={data.service} />
-					{:else if currentView === 'errors'}
-						<ErrorList
-							operations={health.failingOperations}
-							service={data.service}
-							startTs={data.startTs}
-							endTs={data.endTs}
-							showService={data.service === null}
-							operation={errorOperation}
-							kind={errorKind}
-							httpStatus={errorHttpStatus}
-							onFilterChange={setErrorFilter}
-							onClearFilters={clearErrorFilters}
-						/>
-					{/if}
-				</div>
-			{/if}
-		</div>
-	{:catch error}
-		{@render pageHeader(null)}
-		<div class="mt-5">
+					</div>
+				{/if}
+			</div>
+		{:catch error}
 			<PanelError message="Couldn't load service health" {error} />
-		</div>
-	{/await}
+		{/await}
+	</div>
 </div>

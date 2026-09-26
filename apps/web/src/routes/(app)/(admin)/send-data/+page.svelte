@@ -34,7 +34,7 @@
 
 <div class="settings-page">
 	<PageHeader
-		title={'Send logs & traces'}
+		title="Send data"
 		description="Pick where your logs and traces come from to get step-by-step setup instructions."
 	>
 		{#snippet actions()}

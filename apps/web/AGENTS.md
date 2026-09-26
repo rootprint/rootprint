@@ -29,24 +29,24 @@ bun --filter web lint             # oxlint
 
 ## Source Layout
 
-| Path                                 | Purpose                                                     |
-| ------------------------------------ | ----------------------------------------------------------- |
-| `src/routes/`                        | SvelteKit pages and layouts                                 |
-| `src/routes/(app)/`                  | Authenticated product routes (group layout)                 |
-| `src/routes/(app)/settings/(admin)/` | Admin-only settings                                         |
-| `src/routes/auth/`                   | Sign-in, first-time admin setup                             |
-| `src/lib/api/client.ts`              | Hono RPC client (`hc<AppType>`)                             |
-| `src/lib/api/<resource>.ts`          | Typed wrappers per API resource; throw `ApiError`           |
-| `src/lib/auth-client.ts`             | Better Auth client                                          |
-| `src/lib/components/ui/`             | Shared UI kit (see [Shared Components](#shared-components)) |
-| `src/lib/components/<feature>/`      | Feature components (`log`, `trace`, `search`, `admin`, …)   |
-| `src/lib/attachments/`               | Shared `{@attach}` DOM behaviour                            |
-| `src/lib/stores/`                    | Shared state (`search.svelte.ts`, request guards)           |
-| `src/lib/utils/`                     | Pure helpers (formatting, query params, colors)             |
-| `src/lib/types.ts`                   | App-local types (pure types only)                           |
-| `src/app.html`                       | HTML shell + boot loader                                    |
-| `src/app.css`                        | Tailwind entry, DaisyUI theme, tokens, named classes        |
-| `svelte.config.js`, `vite.config.ts` | Tooling configs                                             |
+| Path                                 | Purpose                                                       |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `src/routes/`                        | SvelteKit pages and layouts                                   |
+| `src/routes/(app)/`                  | Authenticated product routes (group layout)                   |
+| `src/routes/(app)/(admin)/`          | Admin-only routes (settings, send data) behind one role guard |
+| `src/routes/auth/`                   | Sign-in, first-time admin setup                               |
+| `src/lib/api/client.ts`              | Hono RPC client (`hc<AppType>`)                               |
+| `src/lib/api/<resource>.ts`          | Typed wrappers per API resource; throw `ApiError`             |
+| `src/lib/auth-client.ts`             | Better Auth client                                            |
+| `src/lib/components/ui/`             | Shared UI kit (see [Shared Components](#shared-components))   |
+| `src/lib/components/<feature>/`      | Feature components (`log`, `trace`, `search`, `admin`, …)     |
+| `src/lib/attachments/`               | Shared `{@attach}` DOM behaviour                              |
+| `src/lib/stores/`                    | Shared state (`search.svelte.ts`, request guards)             |
+| `src/lib/utils/`                     | Pure helpers (formatting, query params, colors)               |
+| `src/lib/types.ts`                   | App-local types (pure types only)                             |
+| `src/app.html`                       | HTML shell + boot loader                                      |
+| `src/app.css`                        | Tailwind entry, DaisyUI theme, tokens, named classes          |
+| `svelte.config.js`, `vite.config.ts` | Tooling configs                                               |
 
 ## Data Loading
 
@@ -63,7 +63,7 @@ bun --filter web lint             # oxlint
 Loaders (`+page.ts` / `+layout.ts`) follow one of three conventions, chosen by intent:
 
 - **Bubble (default):** let the error propagate to the root `+error.svelte`. Use for generic failures with no special handling.
-- **`error(status, msg)`:** call it, don't `throw` it (SvelteKit 2 throws internally). Use only to surface a _meaningful_ HTTP status/message (e.g. mapping an `ApiError` 404 to "Index not found"). See `routes/(app)/settings/(admin)/indexes/[indexId]/+page.ts`.
+- **`error(status, msg)`:** call it, don't `throw` it (SvelteKit 2 throws internally). Use only to surface a _meaningful_ HTTP status/message (e.g. mapping an `ApiError` 404 to "Index not found"). See `routes/(app)/(admin)/settings/indexes/[indexId]/+page.ts`.
 - **Return a discriminated result** (e.g. `{ error: 'not_found' | 'forbidden' | 'unknown' }`): use only when the page renders its own inline error UI instead of the global error page. See `routes/(app)/s/[code]/+page.ts`.
 
 Do not add `try/catch` to a loader unless it implements one of the two non-default conventions for a deliberate reason.
@@ -153,7 +153,7 @@ Use semantic classes (`bg-base-100`, `text-muted`, `btn-primary`, …), never ra
 | ------------------------- | ----------------- | ----------------------------------------------------------- |
 | `text-h1`                 | 40/48, 400, tight | Page title, one per page (through `PageHeader`)             |
 | `text-h2`, `text-display` | 32, 64; 400       | Rare large headings (auth, onboarding, error page)          |
-| `text-h3`                 | 24/32, 400        | Workbench page title (monitoring, trace detail)             |
+| `text-h3`                 | 24/32, 400        | Detail page title (trace detail)                            |
 | `text-xl tabular-nums`    | 20/28, 400        | KPI and headline numbers                                    |
 | `text-base font-medium`   | 16/24, 500        | Panel, section and modal headings (`h2`–`h4` inside a page) |
 | `text-sm`                 | 14/24, 400        | Body default, navigation, forms                             |
@@ -212,6 +212,8 @@ Check `$lib/components/ui/` before writing markup. The second time a pattern app
 | Component                                                  | Use for                                                               |
 | ---------------------------------------------------------- | --------------------------------------------------------------------- |
 | `PageHeader`                                               | Breadcrumb, `h1`, description and actions at the page top             |
+| `PageToolbar`                                              | The `h-12` top bar every explorer page opens with                     |
+| `PageScroll`                                               | Scroll container around admin pages; `.settings-page` queries it      |
 | `SearchInput`                                              | Every search box                                                      |
 | `SortButton`                                               | Sortable table headers                                                |
 | `Field`, `SelectField`, `TagInput`                         | Stacked form fields with label, hint and error                        |
@@ -248,9 +250,10 @@ Defined in `src/app.css`. Add one only when DaisyUI plus utilities can't express
 
 ### Page Composition
 
-- Every page starts with `ui/PageHeader`: breadcrumb, `text-h1` title, `text-muted text-sm` description, optional actions on the right.
-- Workbench pages (logs, traces, trace detail, monitoring) are the exception: they open with their toolbar. When one shows a title, it is a `.section-label` context line over a `text-h3` title, mono when the title is an operation name.
-- Settings pages wrap their content in `.settings-page`.
+- Every page is one of three types:
+  - **Explorer** (logs, traces, services) opens with `ui/PageToolbar`. Left to right: scope picker, query, filters, then pushed right: time range, run/refresh, page actions. No visible title; an `sr-only` `h1` names the section.
+  - **Detail** (trace detail) opens with a back link, then a `.section-label` context line over a `text-h3` title, mono when the title is an operation name.
+  - **Admin** (settings, profile, send data) starts with `ui/PageHeader`: breadcrumb, `text-h1` title, `text-muted text-sm` description, optional actions on the right. Content is wrapped in `.settings-page` inside `ui/PageScroll`; the settings layout provides it, pages outside settings add their own.
 - Content sits in hairline panels. Sections open with a `.section-label` or a `text-base font-medium` heading.
 - One primary action per surface.
 - Every panel that loads data has a loading state (`skeleton` or spinner), an empty state (`EmptyPanel`) and an error state (`PanelError`).

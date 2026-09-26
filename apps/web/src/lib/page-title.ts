@@ -4,11 +4,13 @@ const APP_NAME = 'Rootprint';
 
 /** Titles for routes outside the settings breadcrumb manifest; settings pages derive theirs from the breadcrumb trail so the two never drift. */
 const STATIC_TITLES: Record<string, string> = {
-	'/': 'Logs',
-	'/monitoring': 'Services',
+	'/logs': 'Logs',
+	'/services': 'Services',
 	'/traces': 'Traces',
 	'/s/[code]': 'Shared log',
 	'/traces/[traceId]': 'Trace',
+	'/profile': 'Profile',
+	'/send-data': 'Send data',
 	'/auth/sign-in': 'Sign in',
 	'/auth/setup': 'Setup',
 	'/auth/setup-admin': 'Admin setup'

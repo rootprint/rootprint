@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SettingsNav from '$lib/components/shell/SettingsNav.svelte';
+	import PageScroll from '$lib/components/ui/PageScroll.svelte';
 
 	let { children } = $props();
 </script>
@@ -7,7 +8,7 @@
 <div class="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
 	<SettingsNav />
 
-	<div class="@container/settings min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+	<PageScroll>
 		{@render children()}
-	</div>
+	</PageScroll>
 </div>

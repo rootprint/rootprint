@@ -1,0 +1,65 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import PageScroll from '$lib/components/ui/PageScroll.svelte';
+	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
+	import ChangePasswordModal from '$lib/components/account/ChangePasswordModal.svelte';
+	import PersonalApiKeysSection from '$lib/components/account/PersonalApiKeysSection.svelte';
+
+	let { data } = $props();
+
+	const sessionUser = $derived(page.data.session!.user);
+
+	const isAdmin = $derived(sessionUser.role === 'admin');
+	let passwordOpen = $state(false);
+</script>
+
+<PageScroll>
+	<div class="settings-page">
+		<PageHeader title="Profile" description="Your account details." />
+
+		<div class="mt-8 flex flex-col gap-4">
+			<div class="border-line rounded-box bg-base-100 border p-6">
+				<UserIdentity
+					id={sessionUser.id}
+					name={sessionUser.name}
+					email={sessionUser.email}
+					size="lg"
+				/>
+			</div>
+
+			<PersonalApiKeysSection keys={data.personalKeys} />
+
+			{#if data.hasPassword === true}
+				<div
+					class="border-line rounded-box flex flex-wrap items-center justify-between gap-4 border p-6"
+				>
+					<div>
+						<p class="text-sm">Password</p>
+						<p class="text-muted text-xs">Change the password you use to sign in.</p>
+					</div>
+					<button class="btn btn-sm" onclick={() => (passwordOpen = true)}>Change password</button>
+				</div>
+			{:else if data.hasPassword === 'unknown'}
+				<div class="border-line text-muted rounded-box border px-6 py-4 text-sm">
+					Couldn't determine how you sign in. Reload the page to try again.
+				</div>
+			{:else}
+				<div class="border-line text-muted rounded-box border px-6 py-4 text-sm">
+					You sign in with single sign-on, so there's no password to manage.
+				</div>
+			{/if}
+
+			{#if isAdmin}
+				<a
+					href={`/settings/users/${sessionUser.id}`}
+					class="text-muted hover:text-base-content text-sm transition-colors"
+				>
+					View your activity →
+				</a>
+			{/if}
+		</div>
+	</div>
+</PageScroll>
+
+<ChangePasswordModal bind:open={passwordOpen} />

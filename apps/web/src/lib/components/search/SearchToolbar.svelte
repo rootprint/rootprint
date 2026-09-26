@@ -8,6 +8,7 @@
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
+	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
 	import type { SearchStore } from '$lib/stores/search.svelte';
@@ -206,7 +207,7 @@
 	}
 </script>
 
-<div class="border-line bg-base-100 flex h-12 shrink-0 items-center gap-2 border-b px-3">
+<PageToolbar>
 	<ViewsDropdown {store} />
 
 	<select
@@ -283,4 +284,4 @@
 			Run
 		</button>
 	</div>
-</div>
+</PageToolbar>

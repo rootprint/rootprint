@@ -4,7 +4,7 @@
 	let { integration, signal }: { integration: Integration; signal: Signal } = $props();
 	const Icon = $derived(integration.icon);
 	const href = $derived(
-		`/settings/send-telemetry/${integration.id}${signal === 'traces' ? '?signal=traces' : ''}`
+		`/send-data/${integration.id}${signal === 'traces' ? '?signal=traces' : ''}`
 	);
 </script>
 

@@ -26,7 +26,7 @@
 			sortDirection: 'desc',
 			filters
 		});
-		void goto(`/?${params.toString()}`, {
+		void goto(`/logs?${params.toString()}`, {
 			replaceState: true,
 			state: { openHit: hit }
 		});
