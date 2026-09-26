@@ -14,6 +14,8 @@ RUN bun install --frozen-lockfile --ignore-scripts
 # Source for the two workspaces we actually build.
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
+# The web build reads the running version's release highlights from it.
+COPY CHANGELOG.md ./
 
 # Star count shown in the sidebar, fetched by the release workflow. Declared here so
 # a changed count doesn't bust the install layer above.

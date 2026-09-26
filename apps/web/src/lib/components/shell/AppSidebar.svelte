@@ -15,6 +15,7 @@
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
+	import WhatsNew from './WhatsNew.svelte';
 	import { shell } from '$lib/stores/shell.svelte';
 	import { traceOrigin } from '$lib/utils/trace-params';
 	import { readString, writeString } from '$lib/utils/safe-storage';
@@ -83,6 +84,8 @@
 			{collapsed}
 		/>
 	</nav>
+
+	<WhatsNew {collapsed} />
 
 	<div class="border-line shrink-0 border-t px-2 py-3">
 		<div class="flex flex-col gap-0.5">

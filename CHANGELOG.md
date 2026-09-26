@@ -2,6 +2,8 @@
 
 All notable changes to Rootprint are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+A release's optional `### Highlights` bullets (plain text, written for users) are announced once in the app's sidebar and stay under **Help → What's new**.
+
 ## [Unreleased]
 
 ### Added

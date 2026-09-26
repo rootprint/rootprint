@@ -40,3 +40,4 @@ docs
 apps/api/proto
 *.md
 !apps/api/README.md
+!CHANGELOG.md
