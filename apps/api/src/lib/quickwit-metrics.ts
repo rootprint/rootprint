@@ -142,10 +142,7 @@ export async function fetchQuickwitMetrics(): Promise<{ raw: string; metrics: Pr
 	try {
 		res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 	} catch {
-		throw serviceUnavailable(
-			`Quickwit /metrics unreachable at ${url}`,
-			'QUICKWIT_METRICS_UNAVAILABLE'
-		);
+		throw serviceUnavailable('Quickwit /metrics unreachable', 'QUICKWIT_METRICS_UNAVAILABLE');
 	}
 	if (!res.ok) {
 		throw serviceUnavailable(
@@ -164,10 +161,7 @@ export async function fetchQuickwitMetrics(): Promise<{ raw: string; metrics: Pr
 	try {
 		raw = await res.text();
 	} catch {
-		throw serviceUnavailable(
-			`Quickwit /metrics body unreadable at ${url}`,
-			'QUICKWIT_METRICS_UNAVAILABLE'
-		);
+		throw serviceUnavailable('Quickwit /metrics body unreadable', 'QUICKWIT_METRICS_UNAVAILABLE');
 	}
 	const metrics = parsePromText(raw);
 	return { raw, metrics };

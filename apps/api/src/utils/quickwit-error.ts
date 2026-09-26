@@ -11,9 +11,6 @@ import {
 	unauthorized
 } from './http-error.js';
 
-/** Seconds advertised in Retry-After for transient upstream failures. Matches the OTLP /v1 path. */
-const UPSTREAM_RETRY_AFTER_SECONDS = 5;
-
 /**
  * Maps a Quickwit client error onto an HttpError, classifying by its `code`.
  *
@@ -46,8 +43,7 @@ export function quickwitErrorToHttp(err: QuickwitError): HttpError {
 		default:
 			return serviceUnavailable(
 				'Search backend is temporarily unavailable — please retry',
-				'UPSTREAM_UNAVAILABLE',
-				UPSTREAM_RETRY_AFTER_SECONDS
+				'UPSTREAM_UNAVAILABLE'
 			);
 	}
 }
