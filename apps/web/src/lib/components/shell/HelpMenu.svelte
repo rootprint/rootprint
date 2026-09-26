@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleHelp, BookOpen, GitBranch, Tag } from 'lucide-svelte';
+	import { CircleHelp, BookOpen, Tag } from 'lucide-svelte';
 
 	let { collapsed = false }: { collapsed?: boolean } = $props();
 
@@ -9,7 +9,6 @@
 
 	const links = [
 		{ href: DOCS, label: 'Documentation', icon: BookOpen },
-		{ href: GITHUB, label: 'GitHub', icon: GitBranch },
 		{ href: CHANGELOG, label: 'Changelog', icon: Tag }
 	];
 
