@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { isTraceId } from 'api/schemas';
 
 import type { PageLoad } from './$types';
@@ -23,6 +23,11 @@ export const load: PageLoad = async ({ params, url }) => {
 			listIndexes().catch(() => [])
 		]);
 		const model = buildTraceModel(trace);
+		if (model.spanCount === 0 && url.searchParams.has('pasted')) {
+			const back = new URL(safeReturnTo(url.searchParams.get('returnTo')), url);
+			back.searchParams.set('q', params.traceId);
+			redirect(307, `${back.pathname}${back.search}${back.hash}`);
+		}
 		const logsTarget: TraceLogsTarget | null =
 			logIndexId !== null && fieldConfig !== null
 				? {

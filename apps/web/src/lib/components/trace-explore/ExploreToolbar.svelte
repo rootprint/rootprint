@@ -9,11 +9,10 @@
 	import ServicePicker from '$lib/components/monitoring/ServicePicker.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
-	import { RequestGuard } from '$lib/stores/request-guard';
 	import type { TimeRange } from '$lib/types';
 	import { readLastIndex } from '$lib/utils/last-index';
 	import { paramWholeNumber } from '$lib/utils/query-params';
-	import { traceDetailHref, traceHasSpans } from '$lib/utils/trace-params';
+	import { traceDetailHref } from '$lib/utils/trace-params';
 
 	type FilterName = 'service' | 'operation' | 'status' | 'root' | 'q';
 
@@ -89,23 +88,14 @@
 		onDuration(minMs, maxMs);
 	}
 
-	const submitGuard = new RequestGuard();
-
-	async function applyQuery(event: SubmitEvent) {
+	function applyQuery(event: SubmitEvent) {
 		event.preventDefault();
-		const query = draft.trim();
-		const raw = query.toLowerCase();
-		const submission = submitGuard.next();
+		const raw = draft.trim().toLowerCase();
 		if (isTraceId(raw)) {
-			const href = traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url });
-			const found = await traceHasSpans(href);
-			if (!submitGuard.isCurrent(submission)) return;
-			if (found) {
-				void goto(href);
-				return;
-			}
+			void goto(traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url, pasted: true }));
+			return;
 		}
-		onFilter('q', query || null);
+		onFilter('q', draft.trim() || null);
 	}
 
 	function toggleStatus(status: 'error' | 'ok') {
