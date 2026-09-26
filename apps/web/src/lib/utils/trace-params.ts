@@ -9,18 +9,24 @@ export function traceOrigin(returnTo: string | null): TraceOrigin {
 	return 'search';
 }
 
-/** `index` is the log index for span→log links; null disables them. */
+/**
+ * `index` is the log index for span→log links; null disables them. `pasted` marks an id typed into a
+ * search box: MD5s and dashless UUIDs are also 32 hex chars, so the trace page sends one with no spans
+ * back to `returnTo` as a text search.
+ */
 export function traceDetailHref(
 	traceId: string,
 	opts: {
 		index: string | null;
 		returnTo?: { pathname: string; search: string; hash: string };
 		span?: string;
+		pasted?: boolean;
 	}
 ): string {
 	const params = new URLSearchParams();
 	if (opts.index !== null) params.set('index', opts.index);
 	if (opts.span !== undefined) params.set('span', opts.span);
+	if (opts.pasted) params.set('pasted', '1');
 	if (opts.returnTo !== undefined) {
 		params.set('returnTo', `${opts.returnTo.pathname}${opts.returnTo.search}${opts.returnTo.hash}`);
 	}

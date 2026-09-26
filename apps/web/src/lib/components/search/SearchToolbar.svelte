@@ -188,8 +188,8 @@
 	}
 
 	/**
-	 * A pasted trace id opens the trace instead of searching — it is an id, not a log query, and matches
-	 * no log field. Only on Enter or Run — blur no longer commits, and navigating away from a click would
+	 * A pasted trace id opens the trace instead of searching; one with no spans comes back as a text
+	 * search. Only on Enter or Run — blur no longer commits, and navigating away from a click would
 	 * surprise. `isTraceId` rejects the all-zeros id, so OTLP's null trace id still falls through.
 	 */
 	function runQuery() {
@@ -197,7 +197,9 @@
 		dismissed = true;
 		if (isTraceId(raw)) {
 			queryInput = '';
-			void goto(traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url }));
+			void goto(
+				traceDetailHref(raw, { index: store.selectedIndex, returnTo: page.url, pasted: true })
+			);
 			return;
 		}
 		store.runQuery(queryInput);
@@ -225,7 +227,7 @@
 			type="text"
 			label="Search logs"
 			placeholder="Search logs… (or paste a trace ID)"
-			title={'Search logs with a Quickwit query. A bare 32-character hex trace ID opens that trace instead — wrap it in quotes to search for it as text.'}
+			title={'Search logs with a Quickwit query. A 32-character hex ID that matches a trace opens it instead — wrap it in quotes to search for it as text.'}
 			bind:ref={inputEl}
 			bind:value={queryInput}
 			onfocus={() => {

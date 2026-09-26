@@ -92,7 +92,7 @@
 		event.preventDefault();
 		const raw = draft.trim().toLowerCase();
 		if (isTraceId(raw)) {
-			void goto(traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url }));
+			void goto(traceDetailHref(raw, { index: readLastIndex(), returnTo: page.url, pasted: true }));
 			return;
 		}
 		onFilter('q', draft.trim() || null);
@@ -117,6 +117,7 @@
 			bind:value={draft}
 			placeholder="span_attributes.http.response.status_code:503"
 			label="Search spans"
+			title="Search spans with a Quickwit query. A 32-character hex ID that matches a trace opens it instead — wrap it in quotes to search for it as text."
 			aria-invalid={queryError !== null}
 			aria-describedby={queryError === null ? undefined : queryErrorId}
 		/>
