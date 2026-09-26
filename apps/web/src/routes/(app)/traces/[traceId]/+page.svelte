@@ -3,15 +3,15 @@
 	import { page } from '$app/state';
 	import { ArrowLeft, ScrollText } from 'lucide-svelte';
 
-	import SpanDetailPane from '$lib/components/trace/SpanDetailPane.svelte';
-	import TracePane from '$lib/components/trace/TracePane.svelte';
-	import { spanSearchText } from '$lib/components/trace/trace-model';
+	import SpanDetailPane from '$lib/components/traces/SpanDetailPane.svelte';
+	import TracePane from '$lib/components/traces/TracePane.svelte';
+	import { spanSearchText } from '$lib/components/traces/trace-model';
 	import CopyButton from '$lib/components/ui/CopyButton.svelte';
 	import SearchInput from '$lib/components/ui/SearchInput.svelte';
 	import { formatDurationMicros, pluralize } from '$lib/utils/format';
 	import { writeLastIndex } from '$lib/utils/last-index';
 	import { serviceColor } from '$lib/utils/service-color';
-	import { firstErrorSpan, spansInTreeOrder } from '$lib/utils/span-stats';
+	import { firstErrorSpan, spansInTreeOrder } from '$lib/components/traces/span-stats';
 	import { traceLogsHref } from '$lib/utils/trace-logs';
 	import { formatTimestamp } from '$lib/utils/time';
 	import { traceOrigin, type TraceOrigin } from '$lib/utils/trace-params';
@@ -38,8 +38,8 @@
 
 	const BACK_LABELS: Record<TraceOrigin, string> = {
 		traces: 'Back to traces',
-		monitoring: 'Back to services',
-		search: 'Back to logs'
+		services: 'Back to services',
+		logs: 'Back to logs'
 	};
 	const backLabel = $derived(BACK_LABELS[traceOrigin(data.returnTo)]);
 

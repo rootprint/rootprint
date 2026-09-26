@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import Breadcrumb from './Breadcrumb.svelte';
-	import { resolveBreadcrumbs } from '$lib/settings-nav';
+	import { resolveBreadcrumbs } from '$lib/admin-nav';
 
 	let {
 		title,

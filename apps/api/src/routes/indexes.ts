@@ -4,7 +4,7 @@ import { exportsRouter } from './exports.js';
 import { viewsRouter } from './views.js';
 
 import { db } from '../lib/db.js';
-import { quickwit } from '../lib/quickwit.js';
+import { quickwit } from '../lib/quickwit/client.js';
 import { describe, validator } from '../lib/openapi/describe.js';
 import type { AuthedEnv } from '../env.js';
 import { requireAdmin } from '../middleware/require-admin.js';

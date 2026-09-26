@@ -44,3 +44,9 @@ export const ServiceAccountApiKeyCreatedResponse = named(
 	'ServiceAccountApiKeyCreatedResponse',
 	v.object({ id: v.string(), token: v.string() })
 );
+
+export type ApiKeySummary = v.InferOutput<typeof ApiKeyResponse>;
+
+export type ServiceAccountApiKeySummary = v.InferOutput<typeof ServiceAccountApiKeyResponse>;
+
+export type ApiKeyValue = v.InferOutput<typeof ApiKeyValueResponse>;

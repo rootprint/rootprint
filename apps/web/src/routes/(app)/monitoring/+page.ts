@@ -1,21 +1,7 @@
+import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-import { getServiceHealth } from '$lib/api/monitoring';
-import { parseTimeRange } from '$lib/utils/query-params';
-import { resolveWindow } from '$lib/utils/time-range';
-
-const ENDPOINT_ROWS = 30;
-
+// The Services page lived here before it was renamed; keeps old bookmarks working.
 export const load: PageLoad = ({ url }) => {
-	const timeRange = parseTimeRange(url.searchParams);
-	const { startTs, endTs } = resolveWindow(timeRange);
-	const service = url.searchParams.get('service')?.trim() || null;
-
-	return {
-		timeRange,
-		service,
-		startTs,
-		endTs,
-		health: getServiceHealth({ service, startTs, endTs, endpointLimit: ENDPOINT_ROWS })
-	};
+	redirect(307, `/services${url.search}`);
 };

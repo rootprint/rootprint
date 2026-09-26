@@ -1,0 +1,238 @@
+<script lang="ts">
+	import { CircleX, ExternalLink, SearchX, Send } from 'lucide-svelte';
+	import { readString, writeString } from '$lib/utils/safe-storage';
+
+	import FieldPanel from '$lib/components/logs/FieldPanel.svelte';
+	import LogDetailDrawer from '$lib/components/logs/LogDetailDrawer.svelte';
+	import LogFrequencyChart from '$lib/components/logs/LogFrequencyChart.svelte';
+	import VirtualLogList from '$lib/components/logs/VirtualLogList.svelte';
+	import SearchToolbar from '$lib/components/logs/SearchToolbar.svelte';
+	import FilterChips from '$lib/components/logs/FilterChips.svelte';
+	import ResultsBar from '$lib/components/logs/ResultsBar.svelte';
+	import { SearchStore } from '$lib/components/logs/search.svelte';
+	import { shell } from '$lib/stores/shell.svelte';
+	import {
+		buildGridTemplate,
+		computeColumnWidths,
+		computeFieldWidth
+	} from '$lib/components/logs/column-width';
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
+	import { deserialize } from '$lib/utils/query-params';
+	import { normalizeHit } from '$lib/components/logs/normalize-hit';
+	import type { LogHit } from '$lib/types';
+
+	const SCROLL_TRIGGER_PX = 1500;
+
+	let { data } = $props();
+	let viewport = $state<HTMLElement | null>(null);
+
+	// Reactive closure so the store sees live URL state: page.url is reactive in Svelte 5, so reading it inside the $effect-tracked closure re-runs on URL change.
+	const store = new SearchStore({
+		parsedQuery: () => deserialize(page.url.searchParams),
+		indexes: () => data.indexes,
+		onFreshSearch: () => viewport?.scrollTo(0, 0)
+	});
+
+	store.setupAutoSearch();
+
+	const messageField = $derived(store.fieldConfig?.messageField);
+	const columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
+	const messageWidth = $derived(
+		messageField && store.activeFields.includes(messageField)
+			? computeFieldWidth(store.rawHits, messageField)
+			: 0
+	);
+	const gridTemplate = $derived(
+		buildGridTemplate(
+			store.activeFields,
+			columnWidths,
+			messageField,
+			messageWidth,
+			store.lineWrap,
+			store.foldEnabled
+		)
+	);
+
+	const CHART_STORAGE_KEY = 'rootprint:chart-collapsed';
+
+	let chartCollapsed = $state(readString(CHART_STORAGE_KEY) === '1');
+	$effect(() => writeString(CHART_STORAGE_KEY, chartCollapsed ? '1' : '0'));
+
+	let selectedLog = $state<LogHit | null>(null);
+	$effect(() => {
+		shell.inert = selectedLog !== null;
+		return () => (shell.inert = false);
+	});
+
+	let prevIndexId: string | null | undefined = undefined;
+	$effect(() => {
+		const idx = store.selectedIndex;
+		if (prevIndexId !== undefined && idx !== prevIndexId) selectedLog = null;
+		prevIndexId = idx;
+	});
+
+	const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived.by(() => {
+		if (store.configError || store.searchError) return 'error';
+		if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
+		if (store.logs.length === 0) return 'empty';
+		return 'logs';
+	});
+
+	// Open the drawer on the hit embedded in page state by /s/[code].
+	// Must wait for fieldConfig to be loaded so we can normalize the hit.
+	$effect(() => {
+		const openHit = page.state.openHit;
+		if (!openHit || !store.fieldConfig) return;
+		selectedLog = normalizeHit(openHit, 0, store.fieldConfig);
+		replaceState('', { ...page.state, openHit: undefined });
+	});
+
+	function openRow(hit: LogHit) {
+		selectedLog = hit;
+	}
+
+	function handleScroll() {
+		const v = viewport;
+		if (v && v.scrollHeight - v.scrollTop - v.clientHeight < SCROLL_TRIGGER_PX) {
+			store.maybeLoadMore();
+		}
+	}
+</script>
+
+{#if data.hasDocuments === false}
+	<div class="flex h-full min-h-0 w-full items-center justify-center p-8">
+		<section class="border-line bg-base-100 rounded-box w-full max-w-xl border p-8">
+			<div
+				class="bg-primary text-primary-content mb-6 flex h-10 w-10 items-center justify-center rounded"
+			>
+				<Send class="size-5" aria-hidden="true" />
+			</div>
+			<p class="section-label">Get started</p>
+			<h1 class="text-h2 mt-1">Send your first logs</h1>
+			<p class="text-muted mt-3 max-w-md text-sm leading-6">
+				Your indexes are ready. Choose where your logs come from and follow the integration guide to
+				start searching them in Rootprint.
+			</p>
+			<div class="mt-7 flex flex-wrap items-center gap-3">
+				<a href="/send-data" class="btn btn-primary btn-sm">
+					<Send class="size-3.5" aria-hidden="true" />
+					Choose an integration
+				</a>
+				<a
+					href="https://docs.rootprint.io/send-logs/overview"
+					target="_blank"
+					rel="noreferrer"
+					class="btn btn-ghost btn-sm"
+				>
+					Read the guide
+					<ExternalLink class="size-3.5" aria-hidden="true" />
+				</a>
+			</div>
+		</section>
+	</div>
+{:else}
+	<div class="flex h-full min-h-0 w-full" inert={selectedLog !== null}>
+		<aside aria-label="Log fields" class="border-line w-64 shrink-0 border-r">
+			<FieldPanel {store} />
+		</aside>
+
+		<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+			<h1 class="sr-only">Logs</h1>
+			<SearchToolbar {store} />
+			<FilterChips {store} />
+
+			<LogFrequencyChart
+				buckets={store.histogramBuckets}
+				loading={store.histogramLoading}
+				error={store.histogramError}
+				bind:collapsed={chartCollapsed}
+				onBrush={(start, end) =>
+					store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
+			/>
+
+			<ResultsBar {store} />
+
+			<div class="min-h-0 flex-1">
+				<div
+					bind:this={viewport}
+					onscroll={handleScroll}
+					class="bg-base-200/30 h-full w-full overflow-auto"
+				>
+					{#if displayState === 'loading'}
+						<div class="flex h-full items-center justify-center p-6" role="status">
+							<div
+								class="border-line bg-base-100 rounded-box flex min-w-52 items-center gap-3 border px-4 py-3"
+							>
+								<span class="loading loading-spinner loading-sm"></span>
+								<div>
+									<p class="text-sm">Searching logs</p>
+									<p class="text-subtle text-xs">Fetching the latest results…</p>
+								</div>
+							</div>
+						</div>
+					{:else if displayState === 'error'}
+						<div class="flex h-full items-center justify-center p-6">
+							<div class="alert alert-error max-w-md" role="alert">
+								<CircleX class="size-3.5 shrink-0" aria-hidden="true" />
+								<span class="text-xs"
+									>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
+								>
+							</div>
+						</div>
+					{:else if displayState === 'empty'}
+						<div class="flex h-full items-center justify-center p-6" role="status">
+							<section
+								class="border-line bg-base-100 rounded-box w-full max-w-sm border px-6 py-8 text-center"
+							>
+								<div
+									class="bg-base-200 text-subtle mx-auto flex h-10 w-10 items-center justify-center rounded"
+								>
+									<SearchX class="size-5" aria-hidden="true" />
+								</div>
+								<h2 class="mt-4 text-base font-medium">No logs match this search</h2>
+								<p class="text-subtle mx-auto mt-1 max-w-xs text-xs leading-5">
+									Try widening the time range or updating your query and filters.
+								</p>
+								{#if store.filters.length > 0}
+									<button
+										type="button"
+										class="btn btn-ghost btn-xs mt-4"
+										onclick={() => store.clearFilters()}
+									>
+										Clear filters
+									</button>
+								{/if}
+							</section>
+						</div>
+					{:else}
+						<VirtualLogList
+							rows={store.rows}
+							activeFields={store.activeFields}
+							{gridTemplate}
+							fieldConfig={store.fieldConfig}
+							sortDirection={store.sortDirection}
+							{viewport}
+							lineWrap={store.lineWrap}
+							foldGutter={store.foldEnabled}
+							displayMode={store.displayMode}
+							listEnd={store.listEnd}
+							loadingMore={store.loadingMore}
+							onToggleSort={() => store.toggleSort()}
+							onRowClick={openRow}
+							onToggleFold={(id) => store.toggleFold(id)}
+							onLoadMore={() => store.maybeLoadMore()}
+						/>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<LogDetailDrawer
+		hit={selectedLog}
+		onClose={() => (selectedLog = null)}
+		onReplaceHit={(h) => (selectedLog = h)}
+		{store}
+	/>
+{/if}

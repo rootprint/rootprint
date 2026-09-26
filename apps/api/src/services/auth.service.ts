@@ -6,8 +6,7 @@ import { INVITE_EXPIRY_HOURS } from '../constants.js';
 import type { Db, Tx } from '../lib/db.js';
 import { account, appSettings, inviteToken, user } from '../db/schema.js';
 import type { AuthInstance } from '../lib/auth.js';
-import { badRequest, conflict } from '../utils/http-error.js';
-import { withUniqueViolation } from '../utils/db.js';
+import { badRequest, conflict, withUniqueViolation } from '../utils/http-error.js';
 import { getGitHubAuthStatus, getGoogleAuthStatus } from './settings.service.js';
 import { userIsInAllowedOrg } from './github.service.js';
 

@@ -1,0 +1,300 @@
+<script lang="ts">
+	import { RotateCw, ScrollText, TriangleAlert } from 'lucide-svelte';
+	import { tick } from 'svelte';
+
+	import { SvelteSet } from 'svelte/reactivity';
+
+	import { formatDurationMicros, pluralize } from '$lib/utils/format';
+	import { serviceColor } from '$lib/utils/service-color';
+	import { traceAxis } from '$lib/components/traces/trace-axis';
+	import TraceAxisTicks from './TraceAxisTicks.svelte';
+	import TraceMinimap from './TraceMinimap.svelte';
+	import { fullView } from './trace-model';
+	import type { SpanNode, TraceModel, ViewRange } from '$lib/types';
+
+	let {
+		model,
+		matchedSpanIds = null,
+		selectedSpanId = null,
+		onSelectSpan,
+		spanLogs,
+		minimap = false,
+		onReload
+	}: {
+		model: TraceModel;
+		matchedSpanIds?: ReadonlySet<string> | null;
+		selectedSpanId?: string | null;
+		onSelectSpan?: (spanId: string) => void;
+		spanLogs?: (span: SpanNode) => { href: string; count: number | null } | null;
+		minimap?: boolean;
+		onReload?: () => void;
+	} = $props();
+
+	const TREE_LEFT_PX = 18;
+	const TREE_INDENT_PX = 14;
+	const TREE_LABEL_GAP_PX = 18;
+	const TREE_MAX_INDENT_PCT = 45;
+	const indentX = (depth: number): string =>
+		`min(${TREE_LEFT_PX + depth * TREE_INDENT_PX}px, ${TREE_MAX_INDENT_PCT}%)`;
+	const MIN_BAR_PX = 2;
+	const collapsedSpanIds = new SvelteSet<string>();
+
+	function toggleSpan(spanId: string): void {
+		if (!collapsedSpanIds.delete(spanId)) collapsedSpanIds.add(spanId);
+	}
+
+	// Not reset on `model` change: the page keys this by trace id, so that's only a reload.
+	let view = $state<ViewRange>(fullView());
+
+	const win = $derived.by(() => {
+		const total = Math.max(model.durationMicros, 1);
+		const startMicros = view.start * total;
+		const totalMicros = Math.max((view.end - view.start) * total, 1);
+		return { startMicros, totalMicros, endMicros: startMicros + totalMicros };
+	});
+
+	$effect.pre(() => {
+		if (!selectedSpanId) return;
+
+		const spanId = selectedSpanId;
+		// Parent links can be cyclic.
+		const seen = new Set<string>();
+		let node = model.byId.get(spanId);
+		while (node?.parentSpanId && !seen.has(node.spanId)) {
+			seen.add(node.spanId);
+			collapsedSpanIds.delete(node.parentSpanId);
+			node = model.byId.get(node.parentSpanId);
+		}
+
+		void tick().then(() => {
+			if (selectedSpanId === spanId) {
+				document.getElementById(`span-btn-${spanId}`)?.scrollIntoView({ block: 'nearest' });
+			}
+		});
+	});
+
+	const axis = $derived(traceAxis(win.totalMicros, win.startMicros));
+	const forcedOpen = $derived.by(() => {
+		if (matchedSpanIds === null) return null;
+		const matches = matchedSpanIds;
+		const open = new Set<string>();
+		const walk = (node: SpanNode): boolean => {
+			let hit = matches.has(node.spanId);
+			for (const child of node.children) {
+				if (walk(child)) {
+					hit = true;
+					open.add(node.spanId);
+				}
+			}
+			return hit;
+		};
+		for (const root of model.roots) walk(root);
+		return open;
+	});
+</script>
+
+{#snippet spanLabel(node: SpanNode)}
+	<span class="shrink-0 font-medium whitespace-nowrap">{node.serviceName}</span>
+	<span class="text-subtle min-w-0 truncate">{node.name}</span>
+	{#if node.isError}
+		<TriangleAlert
+			class="text-error size-3 shrink-0"
+			role="img"
+			aria-label="Span reported an error"
+		/>
+	{/if}
+{/snippet}
+
+{#snippet spanRow(
+	node: SpanNode,
+	ancestorRails: { x: string; color: string }[],
+	isLast: boolean,
+	parentColor: string | null
+)}
+	{@const isCollapsed = collapsedSpanIds.has(node.spanId) && !forcedOpen?.has(node.spanId)}
+	{@const spanEnd = node.startOffsetMicros + node.durationMicros}
+	{@const onScreen = spanEnd >= win.startMicros && node.startOffsetMicros <= win.endMicros}
+	{@const left = Math.min(
+		Math.max(((node.startOffsetMicros - win.startMicros) / win.totalMicros) * 100, 0),
+		100
+	)}
+	{@const width = Math.min(
+		((Math.min(spanEnd, win.endMicros) - Math.max(node.startOffsetMicros, win.startMicros)) /
+			win.totalMicros) *
+			100,
+		100 - left
+	)}
+	{@const logs = spanLogs?.(node) ?? null}
+	{@const hasVisibleChildren = node.children.length > 0 && !isCollapsed}
+	{@const parentDepth = Math.max(node.depth - 1, 0)}
+	{@const nodeX = indentX(node.depth)}
+	{@const parentX = indentX(parentDepth)}
+	{@const color = serviceColor(node.serviceName)}
+	<!-- Only drawn rails are carried down; a placeholder per level made this O(depth²). -->
+	{@const childRails =
+		isLast || parentColor === null
+			? ancestorRails
+			: [...ancestorRails, { x: parentX, color: parentColor }]}
+	{@const dimmed = matchedSpanIds !== null && !matchedSpanIds.has(node.spanId)}
+	{@const isSelected = node.spanId === selectedSpanId}
+	{@const labelClass = 'flex min-w-0 items-center gap-1.5 py-1.5 pr-3'}
+	{@const labelStyle = `padding-left:calc(${nodeX} + ${TREE_LABEL_GAP_PX}px)`}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+	<div
+		role="listitem"
+		aria-current={isSelected ? 'true' : undefined}
+		class={[
+			'grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)]',
+			!isSelected && 'even:bg-base-200/50',
+			isSelected && 'bg-base-300',
+			dimmed && 'opacity-35',
+			onSelectSpan && 'cursor-pointer'
+		]}
+		onclick={() => onSelectSpan?.(node.spanId)}
+	>
+		<div class="relative flex min-w-0 items-stretch overflow-hidden text-xs">
+			{#each ancestorRails as rail, i (i)}
+				<span
+					class="absolute inset-y-0 border-l"
+					style={`left:${rail.x};border-color:${rail.color}`}
+				></span>
+			{/each}
+			{#if node.depth > 0}
+				<span
+					class={['absolute top-0 border-l', isLast ? 'h-1/2' : 'bottom-0']}
+					style={`left:${parentX};border-color:${parentColor}`}
+				></span>
+				<span
+					class="absolute top-1/2 border-t"
+					style={`left:${parentX};width:calc(${nodeX} - ${parentX});border-color:${parentColor}`}
+				></span>
+			{/if}
+			{#if hasVisibleChildren}
+				<span
+					class="absolute top-1/2 bottom-0 border-l"
+					style={`left:${nodeX};border-color:${color}`}
+				></span>
+			{/if}
+			{#if node.children.length > 0}
+				<button
+					type="button"
+					class="absolute top-1/2 z-10 flex h-4 min-w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded border px-1 font-mono text-xs leading-none"
+					style={`left:${nodeX};border-color:${color};${
+						isCollapsed
+							? `background-color:${color};color:color-mix(in oklab, ${color} 22%, black)`
+							: `background-color:var(--color-base-100);color:${color}`
+					}`}
+					onclick={(e) => {
+						e.stopPropagation();
+						toggleSpan(node.spanId);
+					}}
+					aria-expanded={!isCollapsed}
+					aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${node.name}`}
+				>
+					{node.children.length}
+				</button>
+			{:else}
+				<span
+					class="border-base-100 absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+					style={`left:${nodeX};background-color:${node.isError ? 'var(--color-error)' : color}`}
+				></span>
+			{/if}
+			{#if onSelectSpan}
+				<button
+					type="button"
+					id={`span-btn-${node.spanId}`}
+					class={[labelClass, 'text-left']}
+					style={labelStyle}
+				>
+					{@render spanLabel(node)}
+				</button>
+			{:else}
+				<span class={labelClass} style={labelStyle}>
+					{@render spanLabel(node)}
+				</span>
+			{/if}
+			{#if logs}
+				<a
+					href={logs.href}
+					target="_blank"
+					rel="noopener"
+					class="text-subtle hover:text-base-content flex shrink-0 items-center gap-1 self-center pr-2"
+					aria-label={logs.count === null
+						? `View logs for ${node.name}`
+						: `View ${pluralize(logs.count, 'log')} for ${node.name}`}
+					onclick={(e) => e.stopPropagation()}
+				>
+					<ScrollText class="size-3.5" aria-hidden="true" />
+					{#if logs.count !== null}
+						<span class="font-mono text-xs tabular-nums">{logs.count}</span>
+					{/if}
+				</a>
+			{/if}
+		</div>
+		<div class="py-1.5 pr-14" style={axis.gridStyle}>
+			<div class="relative h-4">
+				{#if onScreen}
+					<!-- Pixel floor: a percent floor inflates short bars on long traces. -->
+					<div
+						class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
+						style={`left:${left}%;width:${width}%;min-width:${MIN_BAR_PX}px;background-color:${color};${node.isError ? 'outline:1px solid var(--color-error);outline-offset:1px' : ''}`}
+					></div>
+				{/if}
+				<span
+					class={[
+						'absolute top-1/2 ml-1.5 -translate-y-1/2 font-mono text-xs whitespace-nowrap',
+						onScreen ? 'text-subtle' : 'text-subtle opacity-50'
+					]}
+					style={`left:calc(${left}% + max(${width}%, ${MIN_BAR_PX}px))`}
+				>
+					{formatDurationMicros(node.durationMicros)}
+				</span>
+			</div>
+		</div>
+	</div>
+	{#if !isCollapsed}
+		{#each node.children as child, index (child.spanId)}
+			{@render spanRow(child, childRails, index === node.children.length - 1, color)}
+		{/each}
+	{/if}
+{/snippet}
+
+<div class="flex h-full flex-col">
+	{#if model.spanCount === 0}
+		<div class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+			<p role="status" class="text-subtle text-sm">
+				No spans found for this trace. They may not have been ingested, or they may fall outside the
+				trace index's retention window.
+			</p>
+			{#if onReload}
+				<button type="button" class="btn btn-sm btn-ghost gap-1.5" onclick={onReload}>
+					<RotateCw class="size-3.5" aria-hidden="true" />
+					Reload
+				</button>
+			{/if}
+		</div>
+	{:else}
+		{#if minimap}
+			<TraceMinimap
+				spans={model.byId}
+				durationMicros={model.durationMicros}
+				{view}
+				onChange={(next) => (view = next)}
+			/>
+		{/if}
+		<div class="border-line grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] border-b">
+			<div></div>
+			<div class="py-1.5 pr-14">
+				<div class="relative h-4">
+					<TraceAxisTicks ticks={axis.ticks} />
+				</div>
+			</div>
+		</div>
+		<div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto" role="list">
+			{#each model.roots as root (root.spanId)}
+				{@render spanRow(root, [], true, null)}
+			{/each}
+		</div>
+	{/if}
+</div>

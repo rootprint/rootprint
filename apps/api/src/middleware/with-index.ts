@@ -2,9 +2,9 @@ import type { MiddlewareHandler } from 'hono';
 
 import type { AuthedEnv } from '../env.js';
 import { db } from '../lib/db.js';
-import { quickwit } from '../lib/quickwit.js';
+import { quickwit } from '../lib/quickwit/client.js';
 import { getIndexConfig, getIndexMeta } from '../services/index.service.js';
-import type { IndexConfig, IndexMeta } from '../types.js';
+import type { IndexConfig, IndexMeta } from '../services/index.service.js';
 import { notFound } from '../utils/http-error.js';
 
 type IndexMetaEnv = AuthedEnv & {

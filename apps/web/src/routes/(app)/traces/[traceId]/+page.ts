@@ -5,8 +5,8 @@ import type { PageLoad } from './$types';
 import { ApiError } from '$lib/api/errors';
 import { getIndexConfig, listIndexes, toLogIndexOptions } from '$lib/api/indexes';
 import { fetchTrace } from '$lib/api/traces';
-import { SpanLogCounts } from '$lib/components/trace/span-log-counts.svelte';
-import { buildTraceModel } from '$lib/components/trace/trace-model';
+import { SpanLogCounts } from '$lib/components/traces/span-log-counts.svelte';
+import { buildTraceModel } from '$lib/components/traces/trace-model';
 import { safeReturnTo } from '$lib/return-to';
 import type { TraceLogsTarget } from '$lib/utils/trace-logs';
 

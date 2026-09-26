@@ -7,10 +7,11 @@ import type { AuthedEnv } from '../env.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
-import type { Scope } from '../types.js';
 import { extractBearerToken } from '../utils/bearer.js';
 import { forbidden, internal, unauthorized } from '../utils/http-error.js';
 import { requireUser } from './require-user.js';
+
+export type Scope = Record<string, string[]>;
 
 export const LOGS_READ: Scope = { logs: ['read'] };
 

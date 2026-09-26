@@ -173,3 +173,32 @@ export const ClusterDocumentStatusResponse = named(
 	'ClusterDocumentStatusResponse',
 	v.object({ hasDocuments: v.boolean() })
 );
+
+export type PerIndexOverview = v.InferOutput<typeof PerIndexOverviewResponse>;
+
+export type ClusterOverview = v.InferOutput<typeof ClusterOverviewResponse>;
+
+export type QuickwitBuildInfo = v.InferOutput<typeof QuickwitBuildInfoResponse>;
+
+export type ResourceSnapshot = v.InferOutput<typeof ResourceSnapshotResponse>;
+
+// cpuBusyRatio is max(main, non_blocking) tokio worker busy ratio — Quickwit
+// computes this over a recent window, so it's a real "right now" % rather than
+// cumulative.
+export type SaturationSnapshot = v.InferOutput<typeof SaturationSnapshotResponse>;
+
+export type QuickwitSnapshot = v.InferOutput<typeof QuickwitSnapshotResponse>;
+
+export type SummaryRow = v.InferOutput<typeof SummaryRowResponse>;
+
+export type LatencyBucket = v.InferOutput<typeof LatencyBucketResponse>;
+
+export type TopActorRow = v.InferOutput<typeof TopActorRowResponse>;
+
+export type ActorSummaryRow = v.InferOutput<typeof ActorSummaryRowResponse>;
+
+export type VolumeBucket = v.InferOutput<typeof VolumeBucketResponse>;
+
+export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponse>;
+
+export type RecentResult = v.InferOutput<typeof RecentResultResponse>;

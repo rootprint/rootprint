@@ -5,78 +5,20 @@ import type { Preset } from './constants.js';
 export type { Preset };
 import type {
 	DynamicMappingSchema,
-	FieldValueEntrySchema,
-	FieldValuesBulkResponse as FieldValuesBulkResponseSchema,
-	FieldValuesResponse as FieldValuesResponseSchema,
-	HistogramBucketSchema,
-	HistogramResponse as HistogramResponseSchema,
 	IndexDetailResponse as IndexDetailResponseSchema,
-	IndexFieldSchema,
 	IndexListResponse as IndexListResponseSchema,
 	IndexSourceSchema,
-	IndexStatsPointSchema,
-	IndexViewConfigResponse as IndexViewConfigResponseSchema,
-	LogSearchResponse as LogSearchResponseSchema,
 	PreferencesResponse as PreferencesResponseSchema,
 	SourceDetailSchema as SourceDetailResponseSchema
 } from './schemas/responses/indexes.js';
-import type {
-	MonitoringBucketSchema,
-	MonitoringDependencySchema,
-	MonitoringEndpointSchema,
-	MonitoringErrorRowSchema,
-	MonitoringFailingOperationSchema,
-	MonitoringServiceLatencySchema,
-	MonitoringServiceRowSchema,
-	ServiceErrorsResponseSchema,
-	ServiceHealthResponseSchema
-} from './schemas/responses/monitoring.js';
-import type {
-	ExploreOperationSchema,
-	ExploreOverviewResponseSchema,
-	ExploreSpanRowSchema,
-	ExploreSpansResponseSchema,
-	TraceResponseSchema,
-	TraceSpanSchema
-} from './schemas/responses/traces.js';
+import type { TraceResponseSchema, TraceSpanSchema } from './schemas/responses/traces.js';
 import type { SavedViewResponse as SavedViewResponseSchema } from './schemas/responses/views.js';
-import type {
-	ApiKeyResponse as ApiKeyResponseSchema,
-	ApiKeyValueResponse as ApiKeyValueResponseSchema,
-	ServiceAccountApiKeyResponse as ServiceAccountApiKeyResponseSchema
-} from './schemas/responses/api-keys.js';
-import type { UserResponse as UserResponseSchema } from './schemas/responses/users.js';
 import type { AuthProvidersResponse as AuthProvidersResponseSchema } from './schemas/responses/auth.js';
-import type { HealthResponse as HealthResponseSchema } from './schemas/responses/health.js';
-import type { ShareViewResponse as ShareViewResponseSchema } from './schemas/responses/shares.js';
-import type {
-	GoogleAuthSettingsResponse as GoogleAuthSettingsResponseSchema,
-	GitHubAuthSettingsResponse as GitHubAuthSettingsResponseSchema,
-	OidcAuthSettingsResponse as OidcAuthSettingsResponseSchema
-} from './schemas/responses/settings.js';
-import type { ServiceAccountResponse as ServiceAccountResponseSchema } from './schemas/responses/service-accounts.js';
-import type {
-	ActorIndexRowResponse as ActorIndexRowResponseSchema,
-	ActorSummaryRowResponse as ActorSummaryRowResponseSchema,
-	ClusterOverviewResponse as ClusterOverviewResponseSchema,
-	LatencyBucketResponse as LatencyBucketResponseSchema,
-	PerIndexOverviewResponse as PerIndexOverviewResponseSchema,
-	QuickwitBuildInfoResponse as QuickwitBuildInfoResponseSchema,
-	QuickwitSnapshotResponse as QuickwitSnapshotResponseSchema,
-	RecentResultResponse as RecentResultResponseSchema,
-	ResourceSnapshotResponse as ResourceSnapshotResponseSchema,
-	SaturationSnapshotResponse as SaturationSnapshotResponseSchema,
-	SummaryRowResponse as SummaryRowResponseSchema,
-	TopActorRowResponse as TopActorRowResponseSchema,
-	VolumeBucketResponse as VolumeBucketResponseSchema
-} from './schemas/responses/admin.js';
-import type { oauthCredentialsSchema, oidcCredentialsSchema } from './schemas/settings.js';
 import type { ExportFormatSchema } from './schemas/export.js';
 import type { DisplayModeSchema } from './schemas/display-mode.js';
 import type { SortDirectionSchema } from './schemas/filters.js';
-import type { OidcTokenAuth } from './services/oidc.service.js';
 
-export type HealthResponse = v.InferOutput<typeof HealthResponseSchema>;
+// Only what apps/web imports. Server-only types live beside the code that produces them.
 
 export type ApiErrorDetail = {
 	path: string;
@@ -93,8 +35,6 @@ export type ApiErrorBody = {
 	};
 };
 
-export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
-
 export type DynamicMapping = v.InferOutput<typeof DynamicMappingSchema>;
 
 export type IndexSource = v.InferOutput<typeof IndexSourceSchema>;
@@ -104,20 +44,6 @@ export type SourceDetail = v.InferOutput<typeof SourceDetailResponseSchema>;
 export type IndexSummary = v.InferOutput<typeof IndexListResponseSchema>[number];
 
 export type IndexDetail = v.InferOutput<typeof IndexDetailResponseSchema>;
-
-export type IndexViewConfig = v.InferOutput<typeof IndexViewConfigResponseSchema>;
-
-export type LogHit = Record<string, unknown>;
-
-export type LogSearchResponse = v.InferOutput<typeof LogSearchResponseSchema>;
-
-export type HistogramBucket = v.InferOutput<typeof HistogramBucketSchema>;
-
-export type HistogramResponse = v.InferOutput<typeof HistogramResponseSchema>;
-
-export type FieldValueEntry = v.InferOutput<typeof FieldValueEntrySchema>;
-
-export type FieldValuesResponse = v.InferOutput<typeof FieldValuesResponseSchema>;
 
 export type Filter = {
 	field: string;
@@ -131,206 +57,23 @@ export type SortDirection = v.InferOutput<typeof SortDirectionSchema>;
 export type TimeRange =
 	{ type: 'relative'; preset: Preset } | { type: 'absolute'; start: number; end: number };
 
-export type FieldValuesBulkResponse = v.InferOutput<typeof FieldValuesBulkResponseSchema>;
-
 export type UserRole = 'admin' | 'user';
 export type UserStatus = 'active' | 'pending' | 'expired';
 
-export type User = v.InferOutput<typeof UserResponseSchema>;
-
-export type ApiKeySummary = v.InferOutput<typeof ApiKeyResponseSchema>;
-
-export type ServiceAccountApiKeySummary = v.InferOutput<typeof ServiceAccountApiKeyResponseSchema>;
-
-export type ApiKeyValue = v.InferOutput<typeof ApiKeyValueResponseSchema>;
-
-export type ServiceAccountSummary = v.InferOutput<typeof ServiceAccountResponseSchema>;
-
-export type VerifiedApiKey = {
-	id: number;
-	name: string;
-	indexId: string;
-};
-
-export type Scope = Record<string, string[]>;
-
 export type { CreateApiKeyInput } from './schemas/api-keys.js';
-export type { ShareCreateInput } from './schemas/shares.js';
 
 export type SavedView = v.InferOutput<typeof SavedViewResponseSchema>;
-
-export type ShareView = v.InferOutput<typeof ShareViewResponseSchema>;
 
 export type DisplayMode = v.InferOutput<typeof DisplayModeSchema>;
 
 export type Preferences = v.InferOutput<typeof PreferencesResponseSchema>;
 
-export type GoogleAuthSettings = v.InferOutput<typeof GoogleAuthSettingsResponseSchema>;
-
-export type GitHubAuthSettings = v.InferOutput<typeof GitHubAuthSettingsResponseSchema>;
-
-export type OidcAuthSettings = v.InferOutput<typeof OidcAuthSettingsResponseSchema>;
-
 export type AuthProvidersInfo = v.InferOutput<typeof AuthProvidersResponseSchema>;
 
 export type ExternalProviderId = Exclude<keyof AuthProvidersInfo, 'password'>;
 
-export type IndexStatsPoint = v.InferOutput<typeof IndexStatsPointSchema>;
-
-export type PerIndexOverview = v.InferOutput<typeof PerIndexOverviewResponseSchema>;
-
-export type ClusterOverview = v.InferOutput<typeof ClusterOverviewResponseSchema>;
-
-export type QuickwitBuildInfo = v.InferOutput<typeof QuickwitBuildInfoResponseSchema>;
-
-export type ResourceSnapshot = v.InferOutput<typeof ResourceSnapshotResponseSchema>;
-
-// cpuBusyRatio is max(main, non_blocking) tokio worker busy ratio — Quickwit
-// computes this over a recent window, so it's a real "right now" % rather than
-// cumulative.
-export type SaturationSnapshot = v.InferOutput<typeof SaturationSnapshotResponseSchema>;
-
-export type QuickwitSnapshot = v.InferOutput<typeof QuickwitSnapshotResponseSchema>;
-
 export type ExportFormat = v.InferOutput<typeof ExportFormatSchema>;
-
-// Index configuration (index.service.ts)
-export type IndexSettings = {
-	displayName: string | null;
-	levelField: string;
-	messageField: string;
-	tracebackField: string | null;
-	contextFields: string[] | null;
-	traceIdField: string;
-};
-
-export type IndexConfig = {
-	indexId: string;
-	levelField: string;
-	timestampField: string;
-	messageField: string;
-};
-
-export type QuickwitSource = {
-	sourceId: string;
-	sourceType: string;
-	enabled: boolean;
-	inputFormat: string | null;
-	numPipelines: number | null;
-	params: unknown | null;
-	vrlScript: string | null;
-};
-
-export type QuickwitIndexMetadata = {
-	indexId: string;
-	indexUri: string | null;
-	mode: string | null;
-	partitionKey: string | null;
-	maxNumPartitions: number | null;
-	dynamicMapping: DynamicMapping | null;
-	timestampField: string | null;
-	indexFieldPresence: boolean | null;
-	storeSource: boolean | null;
-	tagFields: string[] | null;
-	defaultSearchFields: string[] | null;
-	commitTimeoutSecs: number | null;
-	retention: { period: string; schedule: string | null } | null;
-	fields: IndexField[];
-	sources: QuickwitSource[];
-};
-
-export type IndexMeta = {
-	settings: IndexSettings;
-	index: QuickwitIndexMetadata;
-};
-
-export type VerifyApiKeyResult = { status: 'ok'; key: VerifiedApiKey } | { status: 'not-found' };
-
-// Settings (settings.service.ts)
-export type OAuthCredentials = v.InferOutput<typeof oauthCredentialsSchema>;
-
-export type OidcCredentials = v.InferOutput<typeof oidcCredentialsSchema>;
-
-/** Everything Better Auth is built from, plus the effective password policy. */
-export type AuthConfig = {
-	google?: OAuthCredentials;
-	github?: OAuthCredentials;
-	oidc?: OidcCredentials;
-	oidcTokenAuth?: OidcTokenAuth;
-	passwordSignInDisabled: boolean;
-};
-
-// Export (export.service.ts)
-export type ExportPreflightResult = {
-	total: number;
-	capped: boolean;
-	numHits: number;
-};
-
-// Index stats (index-stats.service.ts)
-export type LatestIndexSnapshot = IndexStatsPoint & { indexId: string };
-
-export type PromSample = {
-	labels: Record<string, string>;
-	value: number;
-};
-
-export type PromMetricType = 'counter' | 'gauge' | 'histogram' | 'summary' | 'untyped';
-
-export type PromMetric = {
-	name: string;
-	type: PromMetricType;
-	help?: string;
-	samples: PromSample[];
-};
-
-export type ProxyResult = {
-	status: number;
-	headers: Headers;
-	bodyBytes: ArrayBuffer;
-};
-
-// Search activity (search-activity.service.ts)
-export type SummaryRow = v.InferOutput<typeof SummaryRowResponseSchema>;
-
-export type LatencyBucket = v.InferOutput<typeof LatencyBucketResponseSchema>;
-
-export type TopActorRow = v.InferOutput<typeof TopActorRowResponseSchema>;
-
-export type ActorSummaryRow = v.InferOutput<typeof ActorSummaryRowResponseSchema>;
-
-export type VolumeBucket = v.InferOutput<typeof VolumeBucketResponseSchema>;
-
-export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponseSchema>;
-
-export type RecentResult = v.InferOutput<typeof RecentResultResponseSchema>;
 
 export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
 
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;
-
-export type ExploreSpanRow = v.InferOutput<typeof ExploreSpanRowSchema>;
-
-export type ExploreSpansResponse = v.InferOutput<typeof ExploreSpansResponseSchema>;
-
-export type ExploreOperation = v.InferOutput<typeof ExploreOperationSchema>;
-
-export type ExploreOverviewResponse = v.InferOutput<typeof ExploreOverviewResponseSchema>;
-
-export type MonitoringBucket = v.InferOutput<typeof MonitoringBucketSchema>;
-
-export type MonitoringEndpoint = v.InferOutput<typeof MonitoringEndpointSchema>;
-
-export type MonitoringServiceLatency = v.InferOutput<typeof MonitoringServiceLatencySchema>;
-
-export type MonitoringServiceRow = v.InferOutput<typeof MonitoringServiceRowSchema>;
-
-export type MonitoringFailingOperation = v.InferOutput<typeof MonitoringFailingOperationSchema>;
-
-export type MonitoringErrorRow = v.InferOutput<typeof MonitoringErrorRowSchema>;
-
-export type MonitoringDependency = v.InferOutput<typeof MonitoringDependencySchema>;
-
-export type ServiceHealthResponse = v.InferOutput<typeof ServiceHealthResponseSchema>;
-
-export type ServiceErrorsResponse = v.InferOutput<typeof ServiceErrorsResponseSchema>;

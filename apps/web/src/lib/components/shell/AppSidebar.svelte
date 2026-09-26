@@ -6,6 +6,7 @@
 		PanelLeftClose,
 		PanelLeftOpen,
 		Search,
+		Send,
 		Settings,
 		ChartNoAxesGantt
 	} from 'lucide-svelte';
@@ -18,7 +19,7 @@
 
 	type User = { id: string; name: string | null; email: string };
 
-	let { user }: { user: User } = $props();
+	let { user, isAdmin }: { user: User; isAdmin: boolean } = $props();
 
 	const STORAGE_KEY = 'rootprint:sidebar-collapsed';
 
@@ -28,15 +29,16 @@
 
 	const path = $derived(page.url.pathname);
 	const onSettings = $derived(path.startsWith('/settings'));
+	const onSendData = $derived(path.startsWith('/send-data'));
 	const onTraceDetail = $derived(path.startsWith('/traces/'));
-	// A trace lights the page that opened it: the explorer, monitoring, or (by default) the log search.
+	// A trace lights the page that opened it: the trace explorer, services, or (by default) logs.
 	const origin = $derived(
 		onTraceDetail ? traceOrigin(page.url.searchParams.get('returnTo')) : null
 	);
 	const onTraces = $derived(path === '/traces' || origin === 'traces');
-	const onMonitoring = $derived(path.startsWith('/monitoring') || origin === 'monitoring');
-	// Shared searches are only ever reached from a log, so they keep Search lit.
-	const onSearch = $derived(path === '/' || path.startsWith('/s/') || origin === 'search');
+	const onServices = $derived(path.startsWith('/services') || origin === 'services');
+	// Shared searches are only ever reached from a log, so they keep Logs lit.
+	const onLogs = $derived(path.startsWith('/logs') || path.startsWith('/s/') || origin === 'logs');
 </script>
 
 <aside
@@ -59,7 +61,7 @@
 	</div>
 
 	<nav aria-label="Primary" class="flex flex-1 flex-col gap-0.5 px-2 py-3">
-		<SidebarNavItem href="/" label="Search" icon={Search} active={onSearch} {collapsed} />
+		<SidebarNavItem href="/logs" label="Logs" icon={Search} active={onLogs} {collapsed} />
 		<SidebarNavItem
 			href="/traces"
 			label="Traces"
@@ -68,24 +70,35 @@
 			{collapsed}
 		/>
 		<SidebarNavItem
-			href="/monitoring"
+			href="/services"
 			label="Services"
 			icon={Activity}
-			active={onMonitoring}
+			active={onServices}
 			{collapsed}
 		/>
 	</nav>
 
 	<div class="border-line shrink-0 border-t px-2 py-3">
 		<div class="flex flex-col gap-0.5">
+			{#if isAdmin}
+				<SidebarNavItem
+					href="/send-data"
+					label="Send data"
+					icon={Send}
+					active={onSendData}
+					{collapsed}
+				/>
+			{/if}
 			<HelpMenu {collapsed} />
-			<SidebarNavItem
-				href="/settings"
-				label="Settings"
-				icon={Settings}
-				active={onSettings}
-				{collapsed}
-			/>
+			{#if isAdmin}
+				<SidebarNavItem
+					href="/settings"
+					label="Settings"
+					icon={Settings}
+					active={onSettings}
+					{collapsed}
+				/>
+			{/if}
 		</div>
 		<div class="border-line my-2 border-t"></div>
 		<button

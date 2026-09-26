@@ -8,15 +8,15 @@ import {
 } from 'quickwit-js';
 
 import type { ExploreSort } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit.js';
-import { escapeFilterValue } from '../lib/query/compose-query.js';
+import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { escapeFilterValue } from '../lib/quickwit/query.js';
 import type { ExploreFilters, ExploreOverviewInput, ExploreSpansInput } from '../schemas/traces.js';
 import type {
 	ExploreOperation,
 	ExploreOverviewResponse,
 	ExploreSpanRow,
 	ExploreSpansResponse
-} from '../types.js';
+} from '../schemas/responses/traces.js';
 import {
 	asBuckets,
 	P50,
@@ -25,7 +25,7 @@ import {
 	percentile,
 	summaryPercentile,
 	termsAgg
-} from '../utils/aggregations.js';
+} from '../lib/quickwit/aggregations.js';
 import {
 	asRecord,
 	asText,

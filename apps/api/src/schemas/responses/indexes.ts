@@ -190,3 +190,19 @@ export const FieldValuesBulkResponse = named(
 		elapsedTimeMicros: v.optional(v.number())
 	})
 );
+
+export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
+
+export type IndexViewConfig = v.InferOutput<typeof IndexViewConfigResponse>;
+
+export type IndexStatsPoint = v.InferOutput<typeof IndexStatsPointSchema>;
+
+export type LogSearchResponse = v.InferOutput<typeof LogSearchResponse>;
+
+export type HistogramResponse = v.InferOutput<typeof HistogramResponse>;
+
+export type FieldValueEntry = v.InferOutput<typeof FieldValueEntrySchema>;
+
+export type FieldValuesResponse = v.InferOutput<typeof FieldValuesResponse>;
+
+export type FieldValuesBulkResponse = v.InferOutput<typeof FieldValuesBulkResponse>;

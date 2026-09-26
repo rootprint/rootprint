@@ -1,18 +1,11 @@
 import { eq, inArray } from 'drizzle-orm';
 
-import type {
-	IndexConfig,
-	IndexDetail,
-	IndexField,
-	IndexMeta,
-	IndexSettings,
-	IndexSummary,
-	IndexViewConfig
-} from '../types.js';
+import type { IndexDetail, IndexSummary } from '../types.js';
+import type { IndexField, IndexViewConfig } from '../schemas/responses/indexes.js';
 import { NotFoundError, QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
 
 import type { Db } from '../lib/db.js';
-import { fetchFieldCaps } from '../lib/quickwit-field-caps.js';
+import { fetchFieldCaps } from '../lib/quickwit/field-caps.js';
 import {
 	apiKey,
 	indexSettings,
@@ -24,19 +17,44 @@ import {
 } from '../db/schema.js';
 import { config } from '../config.js';
 import { conflict, internal, notFound } from '../utils/http-error.js';
-import { translateQuickwitError, withNotFound } from '../utils/quickwit-error.js';
+import { translateQuickwitError, withNotFound } from '../lib/quickwit/errors.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type {
 	CreateIndexInput,
 	SaveIndexConfigInput,
 	UpdateQuickwitConfigInput
 } from '../schemas/indexes.js';
-import { getIndex as qwGetIndex, listIndexes as qwListIndexes } from './quickwit-index.service.js';
+import {
+	getIndex as qwGetIndex,
+	listIndexes as qwListIndexes,
+	type QuickwitIndexMetadata
+} from './quickwit-index.service.js';
 import {
 	findFieldCollisions,
 	toCreateIndexRequest,
 	toUpdateIndexRequest
-} from './quickwit-index-config.js';
+} from '../lib/quickwit/index-config.js';
+
+export type IndexSettings = {
+	displayName: string | null;
+	levelField: string;
+	messageField: string;
+	tracebackField: string | null;
+	contextFields: string[] | null;
+	traceIdField: string;
+};
+
+export type IndexConfig = {
+	indexId: string;
+	levelField: string;
+	timestampField: string;
+	messageField: string;
+};
+
+export type IndexMeta = {
+	settings: IndexSettings;
+	index: QuickwitIndexMetadata;
+};
 
 const DEFAULT_SETTINGS: IndexSettings = {
 	displayName: null,

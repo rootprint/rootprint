@@ -38,5 +38,5 @@ export function traceLogsHref(target: TraceLogsTarget): string {
 		timeRange: traceLogsWindow(target),
 		filters: traceLogsFilters(target)
 	});
-	return `/?${params.toString()}`;
+	return `/logs?${params.toString()}`;
 }

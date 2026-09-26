@@ -1,12 +1,12 @@
 import type { ExploreStatus } from 'api/constants';
 
-export type TraceOrigin = 'traces' | 'monitoring' | 'search';
+export type TraceOrigin = 'traces' | 'services' | 'logs';
 
-/** The page a trace was opened from, by its `returnTo`; anything else is a log search. */
+/** The page a trace was opened from, by its `returnTo`; anything else is the log explorer. */
 export function traceOrigin(returnTo: string | null): TraceOrigin {
 	if (returnTo?.startsWith('/traces')) return 'traces';
-	if (returnTo?.startsWith('/monitoring')) return 'monitoring';
-	return 'search';
+	if (returnTo?.startsWith('/services')) return 'services';
+	return 'logs';
 }
 
 /**

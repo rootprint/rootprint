@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm';
 
 import type { Db } from '../lib/db.js';
 import { share } from '../db/schema.js';
-import type { ShareCreateInput, ShareView } from '../types.js';
+import type { ShareCreateInput } from '../schemas/shares.js';
+import type { ShareView } from '../schemas/responses/shares.js';
 import { internal, notFound } from '../utils/http-error.js';
 
 export async function createShare(

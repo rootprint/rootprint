@@ -1,0 +1,50 @@
+<script lang="ts">
+	import { X } from 'lucide-svelte';
+	import type { SearchStore } from '$lib/components/logs/search.svelte';
+	import { filterKey } from '$lib/utils/query-params';
+
+	let { store }: { store: SearchStore } = $props();
+
+	const filters = $derived(store.filters);
+</script>
+
+{#if filters.length > 0}
+	<div class="border-line bg-base-100 flex flex-wrap items-center gap-1.5 border-b px-3 py-2">
+		{#each filters as filter (filterKey(filter))}
+			<span
+				class="badge badge-sm gap-1 font-mono {filter.exclude
+					? 'badge-error badge-soft'
+					: 'badge-neutral badge-soft'}"
+			>
+				<span class="max-w-[10rem] truncate" title={filter.field}>{filter.field}</span>
+				<button
+					type="button"
+					class="hover:bg-base-content/10 cursor-pointer rounded px-0.5 opacity-60 hover:opacity-100"
+					aria-label="Invert filter"
+					title="Invert filter"
+					onclick={() => store.addFilter(filter.field, filter.value, !filter.exclude)}
+				>
+					{filter.exclude ? '≠' : '='}
+				</button>
+				<span class="max-w-[14rem] truncate" title={filter.value}>"{filter.value}"</span>
+				<button
+					type="button"
+					class="ml-0.5 cursor-pointer opacity-60 hover:opacity-100"
+					aria-label="Remove filter"
+					title="Remove filter"
+					onclick={() => store.removeFilter(filter.field, filter.value, filter.exclude)}
+				>
+					<X class="size-3" aria-hidden="true" />
+				</button>
+			</span>
+		{/each}
+
+		<button
+			type="button"
+			class="text-muted hover:text-base-content ml-auto cursor-pointer text-xs font-medium hover:underline"
+			onclick={() => store.clearFilters()}
+		>
+			Clear all
+		</button>
+	</div>
+{/if}

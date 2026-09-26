@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { describe, validator } from '../lib/openapi/describe.js';
-import { quickwit } from '../lib/quickwit.js';
+import { quickwit } from '../lib/quickwit/client.js';
 import { requireUser } from '../middleware/require-user.js';
 import { withIndexConfig, type IndexConfigEnv } from '../middleware/with-index.js';
 import { ExportLogsQuery } from '../schemas/export.js';

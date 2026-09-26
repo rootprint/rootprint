@@ -4,6 +4,13 @@ All notable changes to Rootprint are documented here. The format follows [Keep a
 
 ## [Unreleased]
 
+### Changed
+
+- **Search is now Logs, at `/logs`; Services moved to `/services`.** `/` and `/monitoring` redirect and keep their query string, so bookmarked searches still open.
+- **Profile moved to the user menu**, at `/profile`.
+- **Send data** (formerly **Settings → Send logs & traces**) is a sidebar entry for admins, at `/send-data`.
+- **Settings is admin-only.** Members no longer see it in the sidebar.
+
 ## [0.4.4] - 2026-09-22
 
 ### ⚠️ Breaking

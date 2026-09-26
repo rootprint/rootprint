@@ -25,3 +25,5 @@ export const UserResponse = named(
 export const UserListResponse = v.array(UserResponse);
 
 export const InviteUrlResponse = named('InviteUrlResponse', v.object({ inviteUrl: v.string() }));
+
+export type User = v.InferOutput<typeof UserResponse>;

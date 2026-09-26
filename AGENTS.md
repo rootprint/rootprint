@@ -76,7 +76,7 @@ bun --filter api db:studio       # open Drizzle Studio
 - Export explicit input/output types for shared helpers/services.
 - Use `import type` for type-only imports.
 - Use Valibot for runtime validation; infer types from schemas where possible.
-- Shared backend types live in `apps/api/src/types.ts`; app-local frontend types in `apps/web/src/lib/types.ts`.
+- Backend types the web uses live in `apps/api/src/types.ts`, except request-input types, which it imports from `api/schemas` beside their schemas; server-only backend types live beside the code that produces them (see `apps/api/AGENTS.md`); app-local frontend types in `apps/web/src/lib/types.ts`.
 - Cross-workspace types: import from `api/types` (re-exported via `exports['./types']` in `apps/api/package.json`).
 - `types.ts` files hold pure types only — no runtime exports.
 

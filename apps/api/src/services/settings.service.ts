@@ -2,15 +2,23 @@ import { eq, inArray } from 'drizzle-orm';
 
 import type { Db, Tx } from '../lib/db.js';
 import { account, appSettings, session } from '../db/schema.js';
+import type { ExternalProviderId } from '../types.js';
 import type {
-	AuthConfig,
-	ExternalProviderId,
 	GitHubAuthSettings,
 	GoogleAuthSettings,
-	OAuthCredentials,
-	OidcAuthSettings,
-	OidcCredentials
-} from '../types.js';
+	OidcAuthSettings
+} from '../schemas/responses/settings.js';
+import type { OAuthCredentialsInput, OidcCredentialsInput } from '../schemas/settings.js';
+import type { OidcTokenAuth } from './oidc.service.js';
+
+/** Everything Better Auth is built from, plus the effective password policy. */
+export type AuthConfig = {
+	google?: OAuthCredentialsInput;
+	github?: OAuthCredentialsInput;
+	oidc?: OidcCredentialsInput;
+	oidcTokenAuth?: OidcTokenAuth;
+	passwordSignInDisabled: boolean;
+};
 
 const GOOGLE_CLIENT_ID = 'google_client_id';
 const GOOGLE_CLIENT_SECRET = 'google_client_secret';
@@ -94,7 +102,7 @@ function credentialsFrom(
 	byKey: Map<string, string>,
 	idKey: string,
 	secretKey: string
-): OAuthCredentials | undefined {
+): OAuthCredentialsInput | undefined {
 	const clientId = byKey.get(idKey);
 	const clientSecret = byKey.get(secretKey);
 	return clientId && clientSecret ? { clientId, clientSecret } : undefined;
@@ -192,7 +200,7 @@ async function unlinkOidc(tx: Tx): Promise<void> {
 	await tx.delete(account).where(eq(account.providerId, 'oidc'));
 }
 
-export async function putOidcAuthCredentials(db: Db, input: OidcCredentials): Promise<void> {
+export async function putOidcAuthCredentials(db: Db, input: OidcCredentialsInput): Promise<void> {
 	await db.transaction(async (tx) => {
 		// Entra ID and others mint per-application subjects, so a client change breaks
 		// identity like an issuer change does. Rotating only the secret does not.

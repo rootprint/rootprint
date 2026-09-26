@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronsUpDown, LogOut } from 'lucide-svelte';
+	import { ChevronsUpDown, LogOut, UserRound } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidate } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
@@ -14,6 +14,7 @@
 	const color = $derived(avatarColor(user.id));
 
 	const dd = $props.id();
+	let panelEl = $state<HTMLDivElement | null>(null);
 
 	let signingOut = $state(false);
 
@@ -56,6 +57,7 @@
 </button>
 
 <div
+	bind:this={panelEl}
 	popover
 	id={dd}
 	style="position-anchor:--{dd}"
@@ -66,6 +68,14 @@
 		<p class="text-muted mt-0.5 font-mono text-xs">{user.email}</p>
 	</div>
 	<div class="p-2">
+		<a
+			href="/profile"
+			class="btn btn-ghost btn-sm w-full justify-start"
+			onclick={() => panelEl?.togglePopover(false)}
+		>
+			<UserRound class="text-muted size-3.5" aria-hidden="true" />
+			Profile
+		</a>
 		<button
 			type="button"
 			class="btn btn-ghost btn-sm w-full justify-start"

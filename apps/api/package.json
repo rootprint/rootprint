@@ -21,8 +21,8 @@
 			"default": "./src/constants.ts"
 		},
 		"./query": {
-			"types": "./src/lib/query/compose-query.ts",
-			"default": "./src/lib/query/compose-query.ts"
+			"types": "./src/lib/quickwit/query.ts",
+			"default": "./src/lib/quickwit/query.ts"
 		}
 	},
 	"scripts": {
