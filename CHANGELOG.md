@@ -32,6 +32,11 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
   - Node.js warns that Winston needs `OTEL_NODE_DISABLED_INSTRUMENTATIONS=winston` under the register hook, or every line is stored twice.
   - Node.js adds an ESM run command with the loader hook that patches imported modules, and drops Fastify from the auto-instrumented list.
 - **Nginx guide covers RHEL, Fedora and Amazon Linux**, where the logs need an ACL for Vector rather than the `adm` group.
+- **Send data guides drop deprecated names.**
+  - The OpenTelemetry Collector guide uses `file_log` and `otlp_http` and asks for Contrib v0.149 or newer.
+  - The Python guide takes `LoggingHandler` from `opentelemetry-instrumentation-logging`.
+  - The Node.js guide asks for Node 22 or newer.
+  - The Docker guide runs Vector 0.58.
 
 ## [0.4.4] - 2026-09-22
 

@@ -28,7 +28,7 @@ export function correlationCallout(caveat = ''): Callout {
 export const COLLECTOR_CORRELATION_CALLOUT: Callout = {
 	variant: 'info',
 	html:
-		'One <code>otlphttp</code> exporter carries both signals — keep <code>logs_endpoint</code> ' +
+		'One <code>otlp_http</code> exporter carries both signals — keep <code>logs_endpoint</code> ' +
 		'and <code>traces_endpoint</code> side by side and declare both pipelines. The ' +
 		'<a href="?signal=logs" class="link">Logs tab</a> has the logs half — pairing by ' +
 		'<code>trace_id</code> needs log records that carry trace context: an OTel log appender ' +

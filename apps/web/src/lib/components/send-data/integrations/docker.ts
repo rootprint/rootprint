@@ -5,7 +5,7 @@ import type { Integration } from '../types';
 
 const COMPOSE_FRAGMENT = `services:
   rootprint-vector:
-    image: timberio/vector:0.54.0-alpine
+    image: timberio/vector:0.58.0-alpine
     container_name: rootprint-vector
     restart: unless-stopped
     volumes:

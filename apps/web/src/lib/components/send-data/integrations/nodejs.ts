@@ -90,10 +90,9 @@ function otelSteps(ctx: IntegrationContext): Step[] {
 		{
 			title: 'Install and configure',
 			body:
-				'Reach for this only when your app has no logging library — it emits records through the ' +
-				'Logs Bridge API, which OpenTelemetry intends for logging-library authors rather than ' +
-				'applications. On Pino or Winston, use those tabs. Install the SDK and the protobuf log ' +
-				'exporter, then set the endpoint and ingest key via environment variables.',
+				'Use this when your app has no logging library — it emits records through the ' +
+				'OpenTelemetry Logs API directly. On Pino or Winston, use those tabs. Install the SDK and ' +
+				'the protobuf log exporter, then set the endpoint and ingest key via environment variables.',
 			snippets: [
 				{ code: OTEL_INSTALL, lang: 'bash', copyTitle: 'Copy install command' },
 				otelEnvVarsSnippet({ ctx, serviceName: 'my-node-service' })
@@ -102,7 +101,7 @@ function otelSteps(ctx: IntegrationContext): Step[] {
 		},
 		{
 			title: 'Send your first log',
-			body: 'Save this to a file and run it with Node 18+ (ESM).',
+			body: 'Save this as index.mjs and run it with node index.mjs on Node 22 or newer.',
 			snippets: [{ code: OTEL_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
 			callout: PROTOBUF_CALLOUT
 		}

@@ -2,13 +2,15 @@ import PythonIcon from '@iconify-svelte/logos/python';
 import { BEARER_CALLOUT, correlationCallout, otelEnvVarsSnippet } from './_shared';
 import type { Integration } from '../types';
 
-const INSTALL_COMMAND = 'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http';
+const INSTALL_COMMAND =
+	'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http opentelemetry-instrumentation-logging';
 
 const EXAMPLE_CODE = `import logging
 from opentelemetry._logs import set_logger_provider
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
 
 logger_provider = LoggerProvider()
 set_logger_provider(logger_provider)
@@ -35,8 +37,8 @@ export const python: Integration = {
 			{
 				title: 'Install and configure',
 				body:
-					'rootprint accepts OTLP over HTTP (proto-http). Install the SDK, then set ' +
-					'the endpoint and ingest key via environment variables.',
+					'rootprint accepts OTLP over HTTP (proto-http). Install the SDK and the logging ' +
+					'handler, then set the endpoint and ingest key via environment variables.',
 				snippets: [
 					{ code: INSTALL_COMMAND, lang: 'bash', copyTitle: 'Copy install command' },
 					otelEnvVarsSnippet({ ctx, serviceName: 'my-python-service' })

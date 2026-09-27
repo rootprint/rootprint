@@ -24,7 +24,7 @@ export const otelCollector: Integration = {
 	logs: {
 		buildSteps: (ctx) => {
 			const config = `receivers:
-  filelog:
+  file_log:
     include:
       - /var/log/myapp/*.log
     start_at: end
@@ -35,7 +35,7 @@ processors:
   batch: {}
 
 exporters:
-  otlphttp:
+  otlp_http:
     logs_endpoint: ${ctx.origin}${OTLP_LOGS_INGEST_PATH}
     compression: gzip
     headers:
@@ -44,16 +44,16 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [filelog]
+      receivers: [file_log]
       processors: [batch]
-      exporters: [otlphttp]`;
+      exporters: [otlp_http]`;
 
 			return [
 				{
 					title: 'Install the OpenTelemetry Collector',
 					body:
-						'Install the Contrib distribution (otelcol-contrib) for your platform — it bundles the ' +
-						'filelog receiver used below. Per-platform packages are maintained upstream.',
+						'Install the Contrib distribution (otelcol-contrib) v0.149 or newer for your platform — it bundles the ' +
+						'file_log receiver used below. Per-platform packages are maintained upstream.',
 					linkOut: {
 						label: 'Open Collector installation',
 						href: 'https://opentelemetry.io/docs/collector/installation/'
@@ -99,7 +99,7 @@ processors:
   batch: {}
 
 exporters:
-  otlphttp:
+  otlp_http:
     traces_endpoint: ${ctx.origin}${OTLP_TRACES_INGEST_PATH}
     compression: gzip
     headers:
@@ -110,13 +110,13 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp]`;
+      exporters: [otlp_http]`;
 
 			return [
 				{
 					title: 'Install the OpenTelemetry Collector',
 					body:
-						'Install the Contrib distribution (otelcol-contrib) for your platform. Per-platform ' +
+						'Install the Contrib distribution (otelcol-contrib) v0.149 or newer for your platform. Per-platform ' +
 						'packages are maintained upstream.',
 					linkOut: {
 						label: 'Open Collector installation',
