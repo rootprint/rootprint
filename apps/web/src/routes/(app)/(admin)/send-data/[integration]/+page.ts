@@ -17,8 +17,8 @@ export const load: PageLoad = async ({ params, depends }) => {
 	try {
 		const [apiKeys, indexes] = await Promise.all([listApiKeys(), listIndexes()]);
 		const traceIndexId = indexes.find((i) => i.isTraceIndex)?.indexId ?? null;
-		// Every guide sends OTLP, and Quickwit drops OTLP logs aimed at a non-OTel index while still
-		// answering 200, so keys on custom indexes are neither offered nor creatable here.
+		// Every guide sends OTLP, and Quickwit answers 200 to OTLP logs aimed at a non-OTel index but
+		// drops them, so this page neither offers nor creates keys on custom indexes.
 		const isOtelLogsIndex = (id: string) => id.startsWith('otel-') && id !== traceIndexId;
 		return {
 			integrationId: params.integration,

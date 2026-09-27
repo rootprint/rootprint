@@ -15,12 +15,12 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Search is now Logs, at `/logs`; Services moved to `/services`.** `/` and `/monitoring` redirect and keep their query string, so bookmarked searches still open.
 - **Profile moved to the user menu**, at `/profile`.
 - **Send data** (formerly **Settings → Send logs & traces**) is a sidebar entry for admins, at `/send-data`.
-- **Send data guides start with the ingest key.** Step 1 picks or creates the key that fills every snippet, the last step opens Logs or the trace explorer, and the nine integrations are grouped by kind.
+- **Send data guides start with the ingest key.** You pick or create the key in step 1, and the snippets use it. The last step opens Logs or the trace explorer, and the catalog groups the nine integrations by kind.
 - **Settings is admin-only.** Members no longer see it in the sidebar.
 
 ### Fixed
 
-- **Send data guides deliver data as written.** Logs now arrive with a service name and their own severity, deprecated names are gone, and only ingest keys on `otel-` indexes are offered, since Quickwit silently drops OTLP logs sent to any other index.
+- **Send data guides deliver data as written.** Logs arrive with a service name and keep their own severity, and the snippets use current component names and APIs. The guides offer ingest keys on `otel-` indexes and hide the rest: Quickwit answers 200 to OTLP logs sent to any other index and discards them.
 
 ## [0.4.4] - 2026-09-22
 

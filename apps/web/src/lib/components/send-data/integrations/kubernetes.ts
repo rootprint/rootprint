@@ -68,7 +68,7 @@ config:
 				{
 					title: 'Write values.yaml',
 					body:
-						'The endpoint and ingest key are prefilled. The kubernetesAttributes preset tags every ' +
+						'This file includes your endpoint and ingest key. The kubernetesAttributes preset tags every ' +
 						'record with pod, namespace, node, and container; the transform infers severity from the ' +
 						'message body when a record has none.',
 					snippets: [

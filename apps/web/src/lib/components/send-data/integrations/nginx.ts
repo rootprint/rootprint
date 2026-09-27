@@ -53,8 +53,8 @@ ${vectorOtlpSnippet({
 				{
 					title: 'Write /etc/vector/vector.yaml',
 					body:
-						'Save this at /etc/vector/vector.yaml. The endpoint and ingest key are prefilled — ' +
-						'lines arrive in rootprint as raw log bodies; structured parsing is documented separately.',
+						'Save this at /etc/vector/vector.yaml. It includes your endpoint and ingest key. Lines ' +
+						'arrive in rootprint as raw log bodies; the docs cover structured parsing.',
 					snippets: [
 						{
 							code: vectorConfig,

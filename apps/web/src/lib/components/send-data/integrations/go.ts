@@ -119,12 +119,12 @@ export const go: Integration = {
 			{
 				title: 'Send your first span',
 				body:
-					'Save this to main.go and run `go run .` — Shutdown flushes the batch before the ' +
-					'process exits. Then instrument for real with otelhttp and otelgrpc from ' +
+					'Save this to main.go and run `go run .`; Shutdown flushes the batch before the ' +
+					'process exits. Then instrument your app with otelhttp and otelgrpc from ' +
 					'go.opentelemetry.io/contrib.',
 				snippets: [{ code: TRACES_EXAMPLE_CODE, lang: 'go', copyTitle: 'Copy example' }],
 				callout: correlationCallout(
-					'Log with <code>InfoContext(ctx, …)</code> — a call without the request’s context ' +
+					'Log with <code>InfoContext(ctx, …)</code>: a call without the request’s context ' +
 						'carries no span.'
 				)
 			}

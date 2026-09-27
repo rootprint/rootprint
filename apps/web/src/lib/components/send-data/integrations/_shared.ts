@@ -5,8 +5,8 @@ import type { Callout, IntegrationContext, Signal, Snippet } from '../types';
 export const BEARER_CALLOUT: Callout = {
 	variant: 'warning',
 	html:
-		'Keep the <code>%20</code> after <code>Bearer</code>: OTLP header variables are ' +
-		'URL-encoded, and a literal space breaks the unquoted <code>export</code> line.'
+		'Keep the <code>%20</code> after <code>Bearer</code>: OTLP exporters URL-decode header ' +
+		'variables, and a literal space breaks the unquoted <code>export</code> line.'
 };
 
 /**
@@ -17,9 +17,9 @@ export function correlationCallout(caveat = ''): Callout {
 	return {
 		variant: 'info',
 		html:
-			'Ship logs from this service too — see the ' +
-			'<a href="?signal=logs" class="link">Logs tab</a> — and rootprint pairs the two by ' +
-			'<code>trace_id</code>, so a log written inside a span opens its trace.' +
+			'Ship this service’s logs too (the <a href="?signal=logs" class="link">Logs tab</a> ' +
+			'shows how). rootprint pairs logs and spans by <code>trace_id</code>, so you can open ' +
+			'the trace from any log written inside a span.' +
 			(caveat && ` ${caveat}`)
 	};
 }

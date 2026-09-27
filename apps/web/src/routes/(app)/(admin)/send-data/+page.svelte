@@ -10,8 +10,8 @@
 
 	const signal = $derived(signalFromUrl(page.url));
 
-	// Only integrations that support the active signal: Vector, Docker and friends emit no spans, so
-	// a group the signal empties is dropped rather than shown bare.
+	// Keep integrations that support the active signal. The log shippers emit no spans, so drop a
+	// group the signal leaves empty instead of rendering a bare heading.
 	const sections = $derived(
 		ORIGINS.map((origin) => ({
 			origin,

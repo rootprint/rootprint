@@ -90,9 +90,9 @@ function otelSteps(ctx: IntegrationContext): Step[] {
 		{
 			title: 'Install and configure',
 			body:
-				'Use this when your app has no logging library — it emits records through the ' +
-				'OpenTelemetry Logs API directly. On Pino or Winston, use those tabs. Install the SDK and ' +
-				'the protobuf log exporter, then set the endpoint and ingest key via environment variables.',
+				'Use this when your app has no logging library: it emits records through the ' +
+				'OpenTelemetry Logs API. On Pino or Winston, use those tabs. Install the SDK and the ' +
+				'protobuf log exporter, then set the endpoint and ingest key in environment variables.',
 			snippets: [
 				{ code: OTEL_INSTALL, lang: 'bash', copyTitle: 'Copy install command' },
 				otelEnvVarsSnippet({ ctx, serviceName: 'my-node-service' })
@@ -180,8 +180,8 @@ export const nodejs: Integration = {
 			{
 				title: 'Install the auto-instrumentation package',
 				body:
-					'The register entrypoint starts the SDK and patches every supported library — http, ' +
-					'express, koa, pg, redis and the rest — before your code loads. Fastify apps add ' +
+					'The register entrypoint starts the SDK and patches supported libraries (http, ' +
+					'express, koa, pg, redis and more) before your code loads. Fastify apps add ' +
 					'@fastify/otel.',
 				snippets: [{ code: TRACES_INSTALL, lang: 'bash', copyTitle: 'Copy install command' }]
 			},
@@ -204,16 +204,16 @@ export const nodejs: Integration = {
 			{
 				title: 'Start your app with the register hook',
 				body:
-					'Use the second command if your entrypoint is ESM — the loader hook is what patches ' +
-					'imported modules. Exercise a route and the spans are batched and exported within a ' +
-					'few seconds.',
+					'Use the second command if your entrypoint is ESM: its loader hook patches imported ' +
+					'modules. Exercise a route, and the SDK batches and exports the spans within a few ' +
+					'seconds.',
 				snippets: [
 					{ code: TRACES_RUN_COMMAND, lang: 'bash', copyTitle: 'Copy run command' },
 					{ code: TRACES_RUN_COMMAND_ESM, lang: 'bash', copyTitle: 'Copy ESM run command' }
 				],
 				callout: correlationCallout(
-					'On Winston, also set <code>OTEL_NODE_DISABLED_INSTRUMENTATIONS=winston</code> — the ' +
-						'hook otherwise adds a second transport and stores every line twice.'
+					'On Winston, also set <code>OTEL_NODE_DISABLED_INSTRUMENTATIONS=winston</code>. ' +
+						'Without it, the hook adds a second transport and stores every line twice.'
 				)
 			}
 		]

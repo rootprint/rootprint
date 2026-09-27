@@ -7,19 +7,19 @@ import type { Callout, Integration, Step } from '../types';
 const CORRELATION_CALLOUT: Callout = {
 	variant: 'info',
 	html:
-		'One <code>otlp_http</code> exporter carries both signals — keep <code>logs_endpoint</code> ' +
+		'One <code>otlp_http</code> exporter carries both signals: keep <code>logs_endpoint</code> ' +
 		'and <code>traces_endpoint</code> side by side and declare both pipelines. The ' +
-		'<a href="?signal=logs" class="link">Logs tab</a> has the logs half — pairing by ' +
-		'<code>trace_id</code> needs log records that carry trace context: an OTel log appender ' +
-		'in the app, or tailed lines whose trace ID the Collector parses out ' +
-		'(<code>trace_parser</code>).'
+		'<a href="?signal=logs" class="link">Logs tab</a> has the logs half. To pair logs with ' +
+		'spans by <code>trace_id</code>, your log records need trace context, from an OTel log ' +
+		'appender in the app or from a <code>trace_parser</code> that reads the trace ID out of ' +
+		'tailed lines.'
 };
 
 const INSTALL_STEP: Step = {
 	title: 'Install the OpenTelemetry Collector',
 	body:
-		'Install the Contrib distribution (otelcol-contrib) v0.149 or newer for your platform. ' +
-		'Per-platform packages are maintained upstream.',
+		'Install the Contrib distribution (otelcol-contrib), v0.149 or newer. The OpenTelemetry ' +
+		'project maintains the per-platform packages.',
 	linkOut: {
 		label: 'Open Collector installation',
 		href: 'https://opentelemetry.io/docs/collector/installation/'

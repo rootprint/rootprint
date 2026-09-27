@@ -40,8 +40,8 @@ ${vectorOtlpSnippet({
 				{
 					title: 'Write vector.yaml',
 					body:
-						'Save this next to your docker-compose.yaml. The endpoint and ingest key are prefilled; ' +
-						'each container’s logs are filed under its container name.',
+						'Save this next to your docker-compose.yaml. It includes your endpoint and ingest key ' +
+						'and uses each container’s name as its service name.',
 					snippets: [
 						{
 							code: vectorConfig,
@@ -72,8 +72,8 @@ ${vectorOtlpSnippet({
 				{
 					title: 'Send a test log',
 					body:
-						'Run a container that stays up for a few seconds — Vector attaches to running ' +
-						'containers, so one removed the instant it exits can be missed.',
+						'Run a container that stays up for a few seconds. Vector attaches to running ' +
+						'containers, so it can miss one that --rm removes the moment it exits.',
 					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];

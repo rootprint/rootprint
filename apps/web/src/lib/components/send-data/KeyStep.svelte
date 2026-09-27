@@ -74,7 +74,7 @@
 	{#if loadFailed}
 		<p class="text-error">Couldn't load this key. Reload the page to try again.</p>
 	{:else}
-		<p class="text-muted">It's filled into every snippet below.</p>
+		<p class="text-muted">The snippets below use it.</p>
 	{/if}
 	<div class="flex flex-wrap items-center gap-2">
 		<select
@@ -98,7 +98,7 @@
 			</p>
 		{:else}
 			<p class="text-warning-ink text-xs">
-				No span store exists in Quickwit yet, so spans sent now have nowhere to land.
+				Quickwit has no span store, so spans you send have nowhere to land.
 			</p>
 		{/if}
 	{:else}
