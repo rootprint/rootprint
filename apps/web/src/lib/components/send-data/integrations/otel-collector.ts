@@ -1,8 +1,30 @@
 import OtelCollectorIcon from '@iconify-svelte/logos/opentelemetry-icon';
 import { OTLP_LOGS_INGEST_PATH, OTLP_TRACES_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
-import { COLLECTOR_CORRELATION_CALLOUT } from './_shared';
-import type { Integration } from '../types';
+import type { Callout, Integration, Step } from '../types';
+
+/** The Collector variant of the correlation callout: one exporter, both signals. */
+const CORRELATION_CALLOUT: Callout = {
+	variant: 'info',
+	html:
+		'One <code>otlp_http</code> exporter carries both signals — keep <code>logs_endpoint</code> ' +
+		'and <code>traces_endpoint</code> side by side and declare both pipelines. The ' +
+		'<a href="?signal=logs" class="link">Logs tab</a> has the logs half — pairing by ' +
+		'<code>trace_id</code> needs log records that carry trace context: an OTel log appender ' +
+		'in the app, or tailed lines whose trace ID the Collector parses out ' +
+		'(<code>trace_parser</code>).'
+};
+
+const INSTALL_STEP: Step = {
+	title: 'Install the OpenTelemetry Collector',
+	body:
+		'Install the Contrib distribution (otelcol-contrib) v0.149 or newer for your platform. ' +
+		'Per-platform packages are maintained upstream.',
+	linkOut: {
+		label: 'Open Collector installation',
+		href: 'https://opentelemetry.io/docs/collector/installation/'
+	}
+};
 
 const RESTART_COMMAND = `sudo systemctl restart otelcol-contrib
 sudo systemctl status otelcol-contrib`;
@@ -49,16 +71,7 @@ service:
       exporters: [otlp_http]`;
 
 			return [
-				{
-					title: 'Install the OpenTelemetry Collector',
-					body:
-						'Install the Contrib distribution (otelcol-contrib) v0.149 or newer for your platform — it bundles the ' +
-						'file_log receiver used below. Per-platform packages are maintained upstream.',
-					linkOut: {
-						label: 'Open Collector installation',
-						href: 'https://opentelemetry.io/docs/collector/installation/'
-					}
-				},
+				INSTALL_STEP,
 				{
 					title: 'Write /etc/otelcol-contrib/config.yaml',
 					body:
@@ -113,16 +126,7 @@ service:
       exporters: [otlp_http]`;
 
 			return [
-				{
-					title: 'Install the OpenTelemetry Collector',
-					body:
-						'Install the Contrib distribution (otelcol-contrib) v0.149 or newer for your platform. Per-platform ' +
-						'packages are maintained upstream.',
-					linkOut: {
-						label: 'Open Collector installation',
-						href: 'https://opentelemetry.io/docs/collector/installation/'
-					}
-				},
+				INSTALL_STEP,
 				{
 					title: 'Write /etc/otelcol-contrib/config.yaml',
 					body:
@@ -151,7 +155,7 @@ service:
 						'Collector re-encodes to protobuf on export. The ids are fixed, so repeat runs add ' +
 						'spans to the same trace.',
 					snippets: [{ code: TRACE_TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					callout: COLLECTOR_CORRELATION_CALLOUT
+					callout: CORRELATION_CALLOUT
 				}
 			];
 		}

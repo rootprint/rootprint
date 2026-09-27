@@ -1,6 +1,7 @@
 import type { IconComponent } from '$lib/types';
+import type { HighlightLang } from '$lib/utils/code-highlight';
 
-export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml';
+export type SnippetLang = Exclude<HighlightLang, 'json'>;
 
 export type IntegrationOrigin = 'Application' | 'Agents' | 'Infrastructure';
 

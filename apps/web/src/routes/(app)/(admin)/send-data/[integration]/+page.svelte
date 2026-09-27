@@ -38,6 +38,15 @@
 		data.apiKeys.find((k) => k.id === selectedApiKeyId)?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID
 	);
 	const hasKeys = $derived(data.apiKeys.length > 0);
+	const check = $derived(
+		signal === 'traces'
+			? { noun: 'spans', href: '/traces', label: 'Open Traces' }
+			: {
+					noun: 'logs',
+					href: `/logs?index=${encodeURIComponent(selectedIndexId)}`,
+					label: 'Open Logs'
+				}
+	);
 
 	const ctx = $derived({
 		origin: page.url.origin,
@@ -72,8 +81,8 @@
 			</div>
 		{/if}
 
-		<ol class="mt-10">
-			<StepBlock number={1} title={hasKeys ? 'Choose an ingest key' : 'Create an ingest key'}>
+		<ol class="mt-10 [counter-reset:step]">
+			<StepBlock title={hasKeys ? 'Choose an ingest key' : 'Create an ingest key'}>
 				<KeyStep
 					{signal}
 					apiKeys={data.apiKeys}
@@ -85,8 +94,8 @@
 				/>
 			</StepBlock>
 
-			{#each steps as step, i (step.title)}
-				<StepBlock number={i + 2} title={step.title}>
+			{#each steps as step (step.title)}
+				<StepBlock title={step.title}>
 					{#if step.body}
 						<p class="text-muted">{step.body}</p>
 					{/if}
@@ -121,30 +130,18 @@
 			{/each}
 
 			<!-- Until a key exists, creating one is the page's single primary action. -->
-			<StepBlock
-				number={steps.length + 2}
-				title={signal === 'traces' ? 'Check that spans arrive' : 'Check that logs arrive'}
-				last
-			>
+			<StepBlock title="Check that {check.noun} arrive">
 				{#if signal === 'traces'}
 					<p class="text-muted">Opens the trace explorer.</p>
-					<div>
-						<a href="/traces" class={['btn btn-sm', hasKeys && 'btn-primary']}>Open Traces</a>
-					</div>
 				{:else}
 					<p class="text-muted">
 						Opens Logs filtered to <span class="text-base-content font-mono">{selectedIndexId}</span
 						>.
 					</p>
-					<div>
-						<a
-							href="/logs?index={encodeURIComponent(selectedIndexId)}"
-							class={['btn btn-sm', hasKeys && 'btn-primary']}
-						>
-							Open Logs
-						</a>
-					</div>
 				{/if}
+				<div>
+					<a href={check.href} class={['btn btn-sm', hasKeys && 'btn-primary']}>{check.label}</a>
+				</div>
 			</StepBlock>
 		</ol>
 	</div>

@@ -24,18 +24,6 @@ export function correlationCallout(caveat = ''): Callout {
 	};
 }
 
-/** The Collector and Kubernetes variant: one exporter, both signals. */
-export const COLLECTOR_CORRELATION_CALLOUT: Callout = {
-	variant: 'info',
-	html:
-		'One <code>otlp_http</code> exporter carries both signals — keep <code>logs_endpoint</code> ' +
-		'and <code>traces_endpoint</code> side by side and declare both pipelines. The ' +
-		'<a href="?signal=logs" class="link">Logs tab</a> has the logs half — pairing by ' +
-		'<code>trace_id</code> needs log records that carry trace context: an OTel log appender ' +
-		'in the app, or tailed lines whose trace ID the Collector parses out ' +
-		'(<code>trace_parser</code>).'
-};
-
 export function otelEnvVarsSnippet({
 	ctx,
 	serviceName,
