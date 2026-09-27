@@ -15,28 +15,12 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Search is now Logs, at `/logs`; Services moved to `/services`.** `/` and `/monitoring` redirect and keep their query string, so bookmarked searches still open.
 - **Profile moved to the user menu**, at `/profile`.
 - **Send data** (formerly **Settings → Send logs & traces**) is a sidebar entry for admins, at `/send-data`.
-- **Send data guides start with the ingest key.** Step 1 picks an existing ingest key or creates one, and the key fills every snippet; each guide ends with a step that opens Logs, or the trace explorer on the Traces tab. The integration list drops its search box and groups the nine integrations as Application code, Collectors and agents, and Infrastructure.
+- **Send data guides start with the ingest key.** Step 1 picks or creates the key that fills every snippet, the last step opens Logs or the trace explorer, and the nine integrations are grouped by kind.
 - **Settings is admin-only.** Members no longer see it in the sidebar.
 
 ### Fixed
 
-- **Vector, Docker and Nginx guides deliver logs.** Their `vector.yaml` now reshapes each line into OTLP before the sink; Vector's `otlp` codec silently dropped raw lines, so nothing reached rootprint. Lines are filed under a service name: `myapp`, `nginx`, or the container's name.
-- **Docker guide's test container is caught.** It stays up for a few seconds; one removed the instant it exited was often missed.
-- **Kubernetes guide installs.** `values.yaml` sets `image.repository`, which the OpenTelemetry Collector chart requires.
-- **Node.js guide's OpenTelemetry SDK and Winston tabs run.** They pass `{ exporter }` to `BatchLogRecordProcessor`, as current `@opentelemetry/sdk-logs` requires.
-- **Send data offers only ingest keys on `otel-` indexes.** Quickwit drops OTLP logs sent to a custom index yet reports success, so those keys lost every record.
-- **Kubernetes guide keeps the severity a record already has.** Its transform only fills in records with none, so an INFO line mentioning "error" stays INFO and "retry" no longer means WARN.
-- **OpenTelemetry Collector and Fluent Bit guides set `service.name`**, so tailed lines stop landing as `unknown_service`. The Fluent Bit guide moves to `fluent-bit.yaml` (resource attributes need its YAML-only processors), with a systemd drop-in that points the service at it, gzip, and unlimited retries.
-- **Traces tabs no longer promise every log row a trace.**
-  - The Go logs example logs with `InfoContext(ctx, …)`, which carries the span.
-  - Node.js warns that Winston needs `OTEL_NODE_DISABLED_INSTRUMENTATIONS=winston` under the register hook, or every line is stored twice.
-  - Node.js adds an ESM run command with the loader hook that patches imported modules, and drops Fastify from the auto-instrumented list.
-- **Nginx guide covers RHEL, Fedora and Amazon Linux**, where the logs need an ACL for Vector rather than the `adm` group.
-- **Send data guides drop deprecated names.**
-  - The OpenTelemetry Collector guide uses `file_log` and `otlp_http` and asks for Contrib v0.149 or newer.
-  - The Python guide takes `LoggingHandler` from `opentelemetry-instrumentation-logging`.
-  - The Node.js guide asks for Node 22 or newer.
-  - The Docker guide runs Vector 0.58.
+- **Send data guides deliver data as written.** Logs now arrive with a service name and their own severity, deprecated names are gone, and only ingest keys on `otel-` indexes are offered, since Quickwit silently drops OTLP logs sent to any other index.
 
 ## [0.4.4] - 2026-09-22
 
