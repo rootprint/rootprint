@@ -80,7 +80,7 @@
 
 <Modal bind:open={whatsNew.open} title="What's new in {version}" onclose={() => triggerEl?.focus()}>
 	<ul class="[list-style-type:disc] space-y-2 pl-5 text-sm">
-		{#each highlights as highlight (highlight)}
+		{#each highlights as highlight}
 			<li>{highlight}</li>
 		{/each}
 	</ul>
