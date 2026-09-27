@@ -94,8 +94,7 @@
 	{#if signal === 'traces'}
 		{#if traceIndexId}
 			<p class="text-muted text-xs">
-				Spans go to the span store, <span class="text-base-content font-mono">{traceIndexId}</span>,
-				whichever key you pick.
+				Spans always go to <span class="text-base-content font-mono">{traceIndexId}</span>
 			</p>
 		{:else}
 			<p class="text-warning-ink text-xs">
