@@ -83,8 +83,12 @@
 			active={onServices}
 			{collapsed}
 		/>
-		{#if isAdmin}
-			<div class="border-line my-2 border-t"></div>
+	</nav>
+
+	<WhatsNew {collapsed} />
+
+	{#if isAdmin}
+		<div class="border-line shrink-0 border-t px-2 py-3">
 			<SidebarNavItem
 				href="/send-data"
 				label="Send data"
@@ -92,65 +96,63 @@
 				active={onSendData}
 				{collapsed}
 			/>
-		{/if}
-	</nav>
+		</div>
+	{/if}
 
-	<WhatsNew {collapsed} />
+	<div class="border-line flex shrink-0 flex-col gap-0.5 border-t px-2 py-3">
+		{#if isAdmin}
+			<SidebarNavItem
+				href="/settings"
+				label="Settings"
+				icon={Settings}
+				active={onSettings}
+				{collapsed}
+			/>
+		{/if}
+		<HelpMenu {collapsed} />
+		<a
+			href="https://github.com/rootprint/rootprint"
+			target="_blank"
+			rel="noopener"
+			aria-label={collapsed ? 'GitHub' : undefined}
+			data-tip={collapsed ? 'GitHub' : ''}
+			class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right flex items-center rounded text-sm transition-colors {collapsed
+				? 'h-10 w-10 justify-center'
+				: 'h-9 gap-2.5 px-3'}"
+		>
+			<GitHubIcon class="size-4 shrink-0" aria-hidden="true" />
+			{#if !collapsed}
+				GitHub
+				{#if stars !== null}
+					<span class="text-subtle ml-auto flex items-center gap-1 text-xs tabular-nums">
+						<Star class="size-3 fill-current text-yellow-500" aria-hidden="true" />
+						{formatCount(stars)}<span class="sr-only">{' stars'}</span>
+					</span>
+				{/if}
+			{/if}
+		</a>
+		<button
+			type="button"
+			onclick={() => {
+				collapsed = !collapsed;
+				writeString(STORAGE_KEY, collapsed ? '1' : '0');
+			}}
+			aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+			data-tip={collapsed ? 'Expand' : ''}
+			class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
+				? 'h-10 w-10 justify-center'
+				: 'h-9 gap-2.5 px-3'}"
+		>
+			{#if collapsed}
+				<PanelLeftOpen class="size-4 shrink-0" aria-hidden="true" />
+			{:else}
+				<PanelLeftClose class="size-4 shrink-0" aria-hidden="true" />
+				Collapse
+			{/if}
+		</button>
+	</div>
 
 	<div class="border-line shrink-0 border-t px-2 py-3">
-		<div class="flex flex-col gap-0.5">
-			{#if isAdmin}
-				<SidebarNavItem
-					href="/settings"
-					label="Settings"
-					icon={Settings}
-					active={onSettings}
-					{collapsed}
-				/>
-			{/if}
-			<HelpMenu {collapsed} />
-			<a
-				href="https://github.com/rootprint/rootprint"
-				target="_blank"
-				rel="noopener"
-				aria-label={collapsed ? 'GitHub' : undefined}
-				data-tip={collapsed ? 'GitHub' : ''}
-				class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right flex items-center rounded text-sm transition-colors {collapsed
-					? 'h-10 w-10 justify-center'
-					: 'h-9 gap-2.5 px-3'}"
-			>
-				<GitHubIcon class="size-4 shrink-0" aria-hidden="true" />
-				{#if !collapsed}
-					GitHub
-					{#if stars !== null}
-						<span class="text-subtle ml-auto flex items-center gap-1 text-xs tabular-nums">
-							<Star class="size-3 fill-current text-yellow-500" aria-hidden="true" />
-							{formatCount(stars)}<span class="sr-only">{' stars'}</span>
-						</span>
-					{/if}
-				{/if}
-			</a>
-			<button
-				type="button"
-				onclick={() => {
-					collapsed = !collapsed;
-					writeString(STORAGE_KEY, collapsed ? '1' : '0');
-				}}
-				aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-				data-tip={collapsed ? 'Expand' : ''}
-				class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
-					? 'h-10 w-10 justify-center'
-					: 'h-9 gap-2.5 px-3'}"
-			>
-				{#if collapsed}
-					<PanelLeftOpen class="size-4 shrink-0" aria-hidden="true" />
-				{:else}
-					<PanelLeftClose class="size-4 shrink-0" aria-hidden="true" />
-					Collapse
-				{/if}
-			</button>
-		</div>
-		<div class="border-line my-2 border-t"></div>
 		<UserMenu {user} {collapsed} />
 	</div>
 </aside>
