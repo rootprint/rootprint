@@ -35,29 +35,27 @@ presets:
 
 config:
   processors:
+    # Only fills in records with no severity, so OTLP logs keep the level their SDK set.
     transform:
       log_statements:
-        - context: log
-          statements:
-            - set(severity_number, SEVERITY_NUMBER_ERROR) where IsString(body) and IsMatch(body, "(?i)\\\\b(error|fatal|panic|exception)\\\\b")
-            - set(severity_text, "ERROR") where severity_number == SEVERITY_NUMBER_ERROR
-            - set(severity_number, SEVERITY_NUMBER_WARN) where severity_number == 0 and IsString(body) and IsMatch(body, "(?i)\\\\b(warn|warning|deprecated|retry)\\\\b")
-            - set(severity_text, "WARN") where severity_number == SEVERITY_NUMBER_WARN
-            - set(severity_number, SEVERITY_NUMBER_INFO) where severity_number == 0
-            - set(severity_text, "INFO") where severity_text == ""
+        - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsString(log.body) and IsMatch(log.body, "(?i)\\\\b(error|fatal|panic|exception)\\\\b")
+        - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsString(log.body) and IsMatch(log.body, "(?i)\\\\b(warn|warning|deprecated)\\\\b")
+        - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED
+        - set(log.severity_text, "ERROR") where log.severity_text == "" and log.severity_number == SEVERITY_NUMBER_ERROR
+        - set(log.severity_text, "WARN") where log.severity_text == "" and log.severity_number == SEVERITY_NUMBER_WARN
+        - set(log.severity_text, "INFO") where log.severity_text == "" and log.severity_number == SEVERITY_NUMBER_INFO
   exporters:
-    otlphttp:
+    otlp_http:
       logs_endpoint: ${ctx.origin}${OTLP_LOGS_INGEST_PATH}
-      compression: gzip
       headers:
         Authorization: "Bearer ${ctx.apiKey}"
   service:
     pipelines:
       logs:
-        # Listed in full because the chart replaces this array rather than merging it.
-        # The presets add memory_limiter/k8sattributes/batch — keep them when slotting in transform.
-        processors: [memory_limiter, k8sattributes, transform, batch]
-        exporters: [otlphttp]`;
+        # Helm replaces lists instead of merging them, so this repeats the chart's
+        # memory_limiter/batch and the preset's k8s_attributes around transform.
+        processors: [memory_limiter, k8s_attributes, transform, batch]
+        exporters: [otlp_http]`;
 
 			return [
 				{
@@ -72,7 +70,7 @@ config:
 					body:
 						'The endpoint and ingest key are prefilled. The kubernetesAttributes preset tags every ' +
 						'record with pod, namespace, node, and container; the transform infers severity from the ' +
-						'message body.',
+						'message body when a record has none.',
 					snippets: [
 						{
 							code: values,

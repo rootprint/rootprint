@@ -28,6 +28,8 @@ export const otelCollector: Integration = {
     include:
       - /var/log/myapp/*.log
     start_at: end
+    resource:
+      service.name: myapp
 
 processors:
   batch: {}
@@ -61,7 +63,7 @@ service:
 					title: 'Write /etc/otelcol-contrib/config.yaml',
 					body:
 						'Save this at /etc/otelcol-contrib/config.yaml. Replace /var/log/myapp/*.log with the ' +
-						"glob that matches your application's log files.",
+						"glob that matches your application's log files, and myapp with its service name.",
 					snippets: [
 						{
 							code: config,

@@ -1,5 +1,5 @@
 import NodejsIcon from '@iconify-svelte/logos/nodejs-icon';
-import { BEARER_CALLOUT, CORRELATION_CALLOUT, otelEnvVarsSnippet } from './_shared';
+import { BEARER_CALLOUT, correlationCallout, otelEnvVarsSnippet } from './_shared';
 import type { Integration, IntegrationContext, Step } from '../types';
 
 const OTEL_INSTALL =
@@ -80,6 +80,10 @@ const TRACES_INSTALL = 'npm install @opentelemetry/api @opentelemetry/auto-instr
 
 const TRACES_RUN_COMMAND =
 	'node --require @opentelemetry/auto-instrumentations-node/register app.js';
+
+const TRACES_RUN_COMMAND_ESM =
+	'node --experimental-loader=@opentelemetry/instrumentation/hook.mjs \\\n' +
+	'  --import @opentelemetry/auto-instrumentations-node/register app.js';
 
 function otelSteps(ctx: IntegrationContext): Step[] {
 	return [
@@ -178,7 +182,8 @@ export const nodejs: Integration = {
 				title: 'Install the auto-instrumentation package',
 				body:
 					'The register entrypoint starts the SDK and patches every supported library — http, ' +
-					'express, fastify, pg, redis and the rest — before your code loads.',
+					'express, koa, pg, redis and the rest — before your code loads. Fastify apps add ' +
+					'@fastify/otel.',
 				snippets: [{ code: TRACES_INSTALL, lang: 'bash', copyTitle: 'Copy install command' }]
 			},
 			{
@@ -200,10 +205,17 @@ export const nodejs: Integration = {
 			{
 				title: 'Start your app with the register hook',
 				body:
-					'Use --import instead of --require if your entrypoint is ESM. Exercise a route and the ' +
-					'spans are batched and exported within a few seconds.',
-				snippets: [{ code: TRACES_RUN_COMMAND, lang: 'bash', copyTitle: 'Copy run command' }],
-				callout: CORRELATION_CALLOUT
+					'Use the second command if your entrypoint is ESM — the loader hook is what patches ' +
+					'imported modules. Exercise a route and the spans are batched and exported within a ' +
+					'few seconds.',
+				snippets: [
+					{ code: TRACES_RUN_COMMAND, lang: 'bash', copyTitle: 'Copy run command' },
+					{ code: TRACES_RUN_COMMAND_ESM, lang: 'bash', copyTitle: 'Copy ESM run command' }
+				],
+				callout: correlationCallout(
+					'On Winston, also set <code>OTEL_NODE_DISABLED_INSTRUMENTATIONS=winston</code> — the ' +
+						'hook otherwise adds a second transport and stores every line twice.'
+				)
 			}
 		]
 	}

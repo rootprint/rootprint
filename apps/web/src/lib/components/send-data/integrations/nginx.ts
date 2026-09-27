@@ -3,7 +3,13 @@ import { vectorOtlpSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
-const GROUP_ADD_COMMAND = 'sudo usermod -aG adm vector';
+const GROUP_ADD_COMMAND = `# Debian/Ubuntu: nginx logs belong to the adm group (the Vector package usually adds this)
+sudo usermod -aG adm vector
+
+# RHEL/Fedora/Amazon Linux: nginx logs are nginx:root 0640, so grant read access with ACLs
+sudo setfacl -m u:vector:rx /var/log/nginx
+sudo setfacl -m u:vector:r /var/log/nginx/*.log
+sudo setfacl -d -m u:vector:r /var/log/nginx`;
 
 const RESTART_COMMAND = `sudo systemctl restart vector
 sudo systemctl status vector`;
@@ -66,9 +72,9 @@ ${vectorOtlpSnippet({
 				},
 				{
 					title: 'Grant Vector log access and restart it',
-					body: 'Vector runs as its own user; add it to the adm group so it can read /var/log/nginx/*.',
+					body: 'Vector runs as its own user and needs read access to /var/log/nginx/*. Run the lines for your distro.',
 					snippets: [
-						{ code: GROUP_ADD_COMMAND, lang: 'bash', copyTitle: 'Copy group command' },
+						{ code: GROUP_ADD_COMMAND, lang: 'bash', copyTitle: 'Copy access commands' },
 						{ code: RESTART_COMMAND, lang: 'bash', copyTitle: 'Copy restart command' }
 					]
 				},

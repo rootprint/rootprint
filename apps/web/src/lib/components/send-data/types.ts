@@ -1,6 +1,6 @@
 import type { IconComponent } from '$lib/types';
 
-export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
+export type SnippetLang = 'bash' | 'python' | 'javascript' | 'go' | 'yaml';
 
 export type IntegrationOrigin = 'Application' | 'Agents' | 'Infrastructure';
 

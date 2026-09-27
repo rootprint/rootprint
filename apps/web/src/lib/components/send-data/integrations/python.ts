@@ -1,5 +1,5 @@
 import PythonIcon from '@iconify-svelte/logos/python';
-import { BEARER_CALLOUT, CORRELATION_CALLOUT, otelEnvVarsSnippet } from './_shared';
+import { BEARER_CALLOUT, correlationCallout, otelEnvVarsSnippet } from './_shared';
 import type { Integration } from '../types';
 
 const INSTALL_COMMAND = 'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http';
@@ -85,7 +85,7 @@ export const python: Integration = {
 					'opentelemetry-instrument wraps your entrypoint. Exercise a route and the spans are ' +
 					'batched and exported within a few seconds.',
 				snippets: [{ code: TRACES_RUN_COMMAND, lang: 'bash', copyTitle: 'Copy run command' }],
-				callout: CORRELATION_CALLOUT
+				callout: correlationCallout()
 			}
 		]
 	}

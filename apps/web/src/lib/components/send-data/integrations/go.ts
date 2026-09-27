@@ -1,5 +1,5 @@
 import GoIcon from '@iconify-svelte/logos/go';
-import { BEARER_CALLOUT, CORRELATION_CALLOUT, otelEnvVarsSnippet } from './_shared';
+import { BEARER_CALLOUT, correlationCallout, otelEnvVarsSnippet } from './_shared';
 import type { Integration } from '../types';
 
 const INIT_COMMAND = 'go mod init example.com/rootprint-demo';
@@ -34,7 +34,8 @@ func main() {
 	global.SetLoggerProvider(provider)
 
 	logger := otelslog.NewLogger("hello")
-	logger.Info("Hello from Go to rootprint")
+	// Pass the request's ctx in real code: the record takes its trace_id from it.
+	logger.InfoContext(ctx, "Hello from Go to rootprint")
 }`;
 
 const TRACES_GET_COMMAND = `go get go.opentelemetry.io/otel \\
@@ -119,10 +120,13 @@ export const go: Integration = {
 				title: 'Send your first span',
 				body:
 					'Save this to main.go and run `go run .` — Shutdown flushes the batch before the ' +
-					'process exits. Then instrument for real with the net/http and database wrappers in ' +
+					'process exits. Then instrument for real with otelhttp and otelgrpc from ' +
 					'go.opentelemetry.io/contrib.',
 				snippets: [{ code: TRACES_EXAMPLE_CODE, lang: 'go', copyTitle: 'Copy example' }],
-				callout: CORRELATION_CALLOUT
+				callout: correlationCallout(
+					'Log with <code>InfoContext(ctx, …)</code> — a call without the request’s context ' +
+						'carries no span.'
+				)
 			}
 		]
 	}

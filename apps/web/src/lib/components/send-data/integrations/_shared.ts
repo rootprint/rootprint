@@ -5,18 +5,24 @@ import type { Callout, IntegrationContext, Signal, Snippet } from '../types';
 export const BEARER_CALLOUT: Callout = {
 	variant: 'warning',
 	html:
-		'The <code>%20</code> after <code>Bearer</code> is required — OTLP expects ' +
-		'URL-encoded header values.'
+		'Keep the <code>%20</code> after <code>Bearer</code>: OTLP header variables are ' +
+		'URL-encoded, and a literal space breaks the unquoted <code>export</code> line.'
 };
 
-/** Closes a language Traces tab: a log row opens its trace only when the service ships both. */
-export const CORRELATION_CALLOUT: Callout = {
-	variant: 'info',
-	html:
-		'Ship logs from this service too — see the ' +
-		'<a href="?signal=logs" class="link">Logs tab</a> — and rootprint pairs the two by ' +
-		'<code>trace_id</code>, so any log row opens its trace.'
-};
+/**
+ * Closes a language Traces tab: a log row opens its trace only when the service ships both.
+ * `caveat` is the language's trap that would leave rows unpaired or doubled.
+ */
+export function correlationCallout(caveat = ''): Callout {
+	return {
+		variant: 'info',
+		html:
+			'Ship logs from this service too — see the ' +
+			'<a href="?signal=logs" class="link">Logs tab</a> — and rootprint pairs the two by ' +
+			'<code>trace_id</code>, so a log written inside a span opens its trace.' +
+			(caveat && ` ${caveat}`)
+	};
+}
 
 /** The Collector and Kubernetes variant: one exporter, both signals. */
 export const COLLECTOR_CORRELATION_CALLOUT: Callout = {
@@ -25,8 +31,9 @@ export const COLLECTOR_CORRELATION_CALLOUT: Callout = {
 		'One <code>otlphttp</code> exporter carries both signals — keep <code>logs_endpoint</code> ' +
 		'and <code>traces_endpoint</code> side by side and declare both pipelines. The ' +
 		'<a href="?signal=logs" class="link">Logs tab</a> has the logs half — pairing by ' +
-		'<code>trace_id</code> works once the application’s own log records carry trace context ' +
-		'(e.g. an OTel log appender), not for tailed stdout/file lines.'
+		'<code>trace_id</code> needs log records that carry trace context: an OTel log appender ' +
+		'in the app, or tailed lines whose trace ID the Collector parses out ' +
+		'(<code>trace_parser</code>).'
 };
 
 export function otelEnvVarsSnippet({

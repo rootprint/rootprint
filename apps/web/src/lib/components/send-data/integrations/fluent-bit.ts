@@ -3,6 +3,12 @@ import { OTLP_LOGS_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
+// The packaged unit hard-codes fluent-bit.conf; /opt/fluent-bit/bin is the official packages' prefix.
+const UNIT_OVERRIDE_COMMAND = `sudo mkdir -p /etc/systemd/system/fluent-bit.service.d
+printf '[Service]\\nExecStart=\\nExecStart=/opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.yaml\\n' \\
+  | sudo tee /etc/systemd/system/fluent-bit.service.d/yaml.conf
+sudo systemctl daemon-reload`;
+
 const RESTART_COMMAND = `sudo systemctl restart fluent-bit
 sudo systemctl status fluent-bit`;
 
@@ -20,31 +26,40 @@ export const fluentBit: Integration = {
 			const url = new URL(ctx.origin);
 			const host = url.hostname;
 			const port = url.port ? Number(url.port) : url.protocol === 'https:' ? 443 : 80;
-			const tls = url.protocol === 'https:' ? 'On' : 'Off';
+			const tls = url.protocol === 'https:' ? 'on' : 'off';
 
-			const config = `[SERVICE]
-    Flush         1
-    Log_Level     info
-    Daemon        Off
-    HTTP_Server   Off
+			// YAML because resource attributes need processors, which the classic format lacks.
+			const config = `service:
+  flush: 1
+  log_level: info
 
-[INPUT]
-    Name             tail
-    Path             /var/log/myapp/*.log
-    Tag              myapp.*
-    Read_from_Head   False
+pipeline:
+  inputs:
+    - name: tail
+      path: /var/log/myapp/*.log
+      tag: myapp.*
+      processors:
+        logs:
+          - name: opentelemetry_envelope
+          - name: content_modifier
+            context: otel_resource_attributes
+            action: upsert
+            key: service.name
+            value: myapp
 
-[OUTPUT]
-    Name                  opentelemetry
-    Match                 *
-    Host                  ${host}
-    Port                  ${port}
-    Tls                   ${tls}
-    Tls.verify            On
-    Logs_uri              ${OTLP_LOGS_INGEST_PATH}
-    Header                Authorization Bearer ${ctx.apiKey}
-    Logs_body_key         $log
-    Log_response_payload  True`;
+  outputs:
+    - name: opentelemetry
+      match: "*"
+      host: ${host}
+      port: ${port}
+      tls: ${tls}
+      tls.verify: on
+      logs_uri: ${OTLP_LOGS_INGEST_PATH}
+      header: Authorization Bearer ${ctx.apiKey}
+      logs_body_key: $log
+      compress: gzip
+      retry_limit: no_limits
+      log_response_payload: true`;
 
 			return [
 				{
@@ -58,15 +73,24 @@ export const fluentBit: Integration = {
 					}
 				},
 				{
-					title: 'Configure /etc/fluent-bit/fluent-bit.conf',
-					body: "Replace /var/log/myapp/*.log with the glob that matches your application's logs.",
+					title: 'Write /etc/fluent-bit/fluent-bit.yaml',
+					body:
+						"Replace /var/log/myapp/*.log with the glob that matches your application's logs, " +
+						'and myapp with its service name.',
 					snippets: [
 						{
 							code: config,
-							lang: 'ini',
-							copyTitle: 'Copy fluent-bit.conf',
+							lang: 'yaml',
+							copyTitle: 'Copy fluent-bit.yaml',
 							highlightValue: highlightKey(ctx)
 						}
+					]
+				},
+				{
+					title: 'Point the service at the YAML file',
+					body: 'The package’s systemd unit loads fluent-bit.conf; this drop-in swaps in the YAML file.',
+					snippets: [
+						{ code: UNIT_OVERRIDE_COMMAND, lang: 'bash', copyTitle: 'Copy override commands' }
 					]
 				},
 				{

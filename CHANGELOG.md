@@ -25,6 +25,13 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Kubernetes guide installs.** `values.yaml` sets `image.repository`, which the OpenTelemetry Collector chart requires.
 - **Node.js guide's OpenTelemetry SDK and Winston tabs run.** They pass `{ exporter }` to `BatchLogRecordProcessor`, as current `@opentelemetry/sdk-logs` requires.
 - **Send data offers only ingest keys on `otel-` indexes.** Quickwit drops OTLP logs sent to a custom index yet reports success, so those keys lost every record.
+- **Kubernetes guide keeps the severity a record already has.** Its transform only fills in records with none, so an INFO line mentioning "error" stays INFO and "retry" no longer means WARN.
+- **OpenTelemetry Collector and Fluent Bit guides set `service.name`**, so tailed lines stop landing as `unknown_service`. The Fluent Bit guide moves to `fluent-bit.yaml` (resource attributes need its YAML-only processors), with a systemd drop-in that points the service at it, gzip, and unlimited retries.
+- **Traces tabs no longer promise every log row a trace.**
+  - The Go logs example logs with `InfoContext(ctx, …)`, which carries the span.
+  - Node.js warns that Winston needs `OTEL_NODE_DISABLED_INSTRUMENTATIONS=winston` under the register hook, or every line is stored twice.
+  - Node.js adds an ESM run command with the loader hook that patches imported modules, and drops Fastify from the auto-instrumented list.
+- **Nginx guide covers RHEL, Fedora and Amazon Linux**, where the logs need an ACL for Vector rather than the `adm` group.
 
 ## [0.4.4] - 2026-09-22
 
