@@ -83,6 +83,16 @@
 			active={onServices}
 			{collapsed}
 		/>
+		{#if isAdmin}
+			<div class="border-line my-2 border-t"></div>
+			<SidebarNavItem
+				href="/send-data"
+				label="Send data"
+				icon={Send}
+				active={onSendData}
+				{collapsed}
+			/>
+		{/if}
 	</nav>
 
 	<WhatsNew {collapsed} />
@@ -91,10 +101,10 @@
 		<div class="flex flex-col gap-0.5">
 			{#if isAdmin}
 				<SidebarNavItem
-					href="/send-data"
-					label="Send data"
-					icon={Send}
-					active={onSendData}
+					href="/settings"
+					label="Settings"
+					icon={Settings}
+					active={onSettings}
 					{collapsed}
 				/>
 			{/if}
@@ -120,36 +130,26 @@
 					{/if}
 				{/if}
 			</a>
-			{#if isAdmin}
-				<SidebarNavItem
-					href="/settings"
-					label="Settings"
-					icon={Settings}
-					active={onSettings}
-					{collapsed}
-				/>
-			{/if}
+			<button
+				type="button"
+				onclick={() => {
+					collapsed = !collapsed;
+					writeString(STORAGE_KEY, collapsed ? '1' : '0');
+				}}
+				aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+				data-tip={collapsed ? 'Expand' : ''}
+				class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
+					? 'h-10 w-10 justify-center'
+					: 'h-9 gap-2.5 px-3'}"
+			>
+				{#if collapsed}
+					<PanelLeftOpen class="size-4 shrink-0" aria-hidden="true" />
+				{:else}
+					<PanelLeftClose class="size-4 shrink-0" aria-hidden="true" />
+					Collapse
+				{/if}
+			</button>
 		</div>
-		<div class="border-line my-2 border-t"></div>
-		<button
-			type="button"
-			onclick={() => {
-				collapsed = !collapsed;
-				writeString(STORAGE_KEY, collapsed ? '1' : '0');
-			}}
-			aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-			data-tip={collapsed ? 'Expand' : ''}
-			class="text-muted hover:text-base-content hover:bg-base-200/60 tooltip tooltip-right relative flex items-center rounded text-sm transition-colors {collapsed
-				? 'h-10 w-10 justify-center'
-				: 'h-9 gap-2.5 px-3'}"
-		>
-			{#if collapsed}
-				<PanelLeftOpen class="size-4 shrink-0" aria-hidden="true" />
-			{:else}
-				<PanelLeftClose class="size-4 shrink-0" aria-hidden="true" />
-				Collapse
-			{/if}
-		</button>
 		<div class="border-line my-2 border-t"></div>
 		<UserMenu {user} {collapsed} />
 	</div>
