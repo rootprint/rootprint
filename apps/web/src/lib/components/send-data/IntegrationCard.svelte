@@ -13,7 +13,7 @@
 	{href}
 	class="border-line rounded-box hover:bg-base-200/60 flex items-center gap-3 border px-4 py-3 text-sm transition-colors"
 >
-	<Icon class="size-6 shrink-0" />
+	<Icon class="size-6 shrink-0" aria-hidden="true" />
 	<span class="min-w-0 truncate" title={integration.label}>{integration.label}</span>
 	<ChevronRight class="text-subtle ml-auto size-3.5 shrink-0" aria-hidden="true" />
 </a>

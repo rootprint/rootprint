@@ -88,7 +88,7 @@
 	<WhatsNew {collapsed} />
 
 	{#if isAdmin}
-		<div class="border-line shrink-0 border-t px-2 py-3">
+		<nav aria-label="Send data" class="border-line shrink-0 border-t px-2 py-3">
 			<SidebarNavItem
 				href="/send-data"
 				label="Send data"
@@ -96,7 +96,7 @@
 				active={onSendData}
 				{collapsed}
 			/>
-		</div>
+		</nav>
 	{/if}
 
 	<div class="border-line flex shrink-0 flex-col gap-0.5 border-t px-2 py-3">

@@ -49,7 +49,13 @@
 	}
 </script>
 
-<button {...rest} type="button" class={className} disabled={disabled || busy} onclick={copy}>
+<button
+	{...rest}
+	type="button"
+	class="relative {className}"
+	disabled={disabled || busy}
+	onclick={copy}
+>
 	{#if busy}
 		<span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
 	{:else if copied}

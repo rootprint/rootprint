@@ -1,7 +1,7 @@
 import type { DecorationItem, HighlighterCore } from 'shiki/core';
 
 /** Every language the app ever highlights: `SnippetLang` plus the JSON pane. */
-type HighlightLang = 'json' | 'bash' | 'python' | 'javascript' | 'go' | 'yaml' | 'ini';
+type HighlightLang = 'json' | 'bash' | 'python' | 'javascript' | 'go' | 'yaml';
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
 
@@ -20,8 +20,7 @@ function loadHighlighter(): Promise<HighlighterCore> {
 					import('@shikijs/langs/python'),
 					import('@shikijs/langs/javascript'),
 					import('@shikijs/langs/go'),
-					import('@shikijs/langs/yaml'),
-					import('@shikijs/langs/ini')
+					import('@shikijs/langs/yaml')
 				],
 				engine: createJavaScriptRegexEngine()
 			});
