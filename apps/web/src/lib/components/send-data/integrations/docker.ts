@@ -1,5 +1,5 @@
 import DockerIcon from '@iconify-svelte/logos/docker-icon';
-import { vectorOtlpSinkSnippet } from './_shared';
+import { vectorOtlpSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -14,7 +14,7 @@ const COMPOSE_FRAGMENT = `services:
 
 const RUN_COMMAND = 'docker compose up -d rootprint-vector';
 
-const TEST_COMMAND = 'docker run --rm alpine echo "hello from rootprint"';
+const TEST_COMMAND = `docker run --rm alpine sh -c 'sleep 2; echo "hello from rootprint"; sleep 2'`;
 
 export const docker: Integration = {
 	id: 'docker',
@@ -29,12 +29,19 @@ export const docker: Integration = {
     type: docker_logs
     exclude_containers: [rootprint-vector]
 
-${vectorOtlpSinkSnippet({ ctx, inputs: 'docker' })}`;
+${vectorOtlpSnippet({
+	ctx,
+	inputs: 'docker',
+	serviceName: 'string(.container_name) ?? "docker"',
+	attribute: ['log.iostream', '.stream']
+})}`;
 
 			return [
 				{
 					title: 'Write vector.yaml',
-					body: 'Save this next to your docker-compose.yaml. The endpoint and ingest key are prefilled.',
+					body:
+						'Save this next to your docker-compose.yaml. The endpoint and ingest key are prefilled; ' +
+						'each container’s logs are filed under its container name.',
 					snippets: [
 						{
 							code: vectorConfig,
@@ -64,7 +71,9 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'docker' })}`;
 				},
 				{
 					title: 'Send a test log',
-					body: 'Run any short-lived container — Vector picks up its stdout and forwards it to rootprint.',
+					body:
+						'Run a container that stays up for a few seconds — Vector attaches to running ' +
+						'containers, so one removed the instant it exits can be missed.',
 					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];

@@ -23,6 +23,10 @@ export const kubernetes: Integration = {
 		buildSteps: (ctx) => {
 			const values = `mode: daemonset
 
+# The chart ships no default image; this distribution bundles every component used below.
+image:
+  repository: otel/opentelemetry-collector-k8s
+
 presets:
   logsCollection:
     enabled: true

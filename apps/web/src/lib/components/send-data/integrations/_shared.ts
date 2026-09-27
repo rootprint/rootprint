@@ -67,17 +67,43 @@ export function otelEnvVarsSnippet({
 	};
 }
 
-export function vectorOtlpSinkSnippet({
+/**
+ * Vector's `otlp` codec drops any event not already shaped as OTLP, so a remap builds the
+ * `resourceLogs` envelope before the sink.
+ */
+export function vectorOtlpSnippet({
 	ctx,
-	inputs
+	inputs,
+	serviceName,
+	attribute: [attributeKey, attributeExpr]
 }: {
 	ctx: IntegrationContext;
 	inputs: string;
+	/** VRL expression for `service.name`. */
+	serviceName: string;
+	/** A log-record attribute: its key and the VRL expression that fills it. */
+	attribute: [string, string];
 }): string {
-	return `sinks:
+	return `transforms:
+  to_otlp:
+    type: remap
+    inputs: [${inputs}]
+    source: |
+      .resourceLogs = [{
+        "resource": { "attributes": [
+          { "key": "service.name", "value": { "stringValue": ${serviceName} } }
+        ]},
+        "scopeLogs": [{ "logRecords": [{
+          "timeUnixNano": to_unix_timestamp(timestamp(.timestamp) ?? now(), unit: "nanoseconds"),
+          "body": { "stringValue": string(.message) ?? "" },
+          "attributes": [{ "key": "${attributeKey}", "value": { "stringValue": string(${attributeExpr}) ?? "" } }]
+        }]}]
+      }]
+
+sinks:
   rootprint:
     type: opentelemetry
-    inputs: [${inputs}]
+    inputs: [to_otlp]
     protocol:
       type: http
       uri: ${ctx.origin}${OTLP_LOGS_INGEST_PATH}

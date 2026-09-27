@@ -1,5 +1,5 @@
 import NginxIcon from '@iconify-svelte/logos/nginx';
-import { vectorOtlpSinkSnippet } from './_shared';
+import { vectorOtlpSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -26,7 +26,12 @@ export const nginx: Integration = {
       - /var/log/nginx/error.log
     read_from: end
 
-${vectorOtlpSinkSnippet({ ctx, inputs: 'nginx_logs' })}`;
+${vectorOtlpSnippet({
+	ctx,
+	inputs: 'nginx_logs',
+	serviceName: '"nginx"',
+	attribute: ['log.file.path', '.file']
+})}`;
 
 			return [
 				{

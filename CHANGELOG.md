@@ -18,6 +18,14 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Send data guides start with the ingest key.** Step 1 picks an existing ingest key or creates one, and the key fills every snippet; each guide ends with a step that opens Logs, or the trace explorer on the Traces tab. The integration list drops its search box and groups the nine integrations as Application code, Collectors and agents, and Infrastructure.
 - **Settings is admin-only.** Members no longer see it in the sidebar.
 
+### Fixed
+
+- **Vector, Docker and Nginx guides deliver logs.** Their `vector.yaml` now reshapes each line into OTLP before the sink; Vector's `otlp` codec silently dropped raw lines, so nothing reached rootprint. Lines are filed under a service name: `myapp`, `nginx`, or the container's name.
+- **Docker guide's test container is caught.** It stays up for a few seconds; one removed the instant it exited was often missed.
+- **Kubernetes guide installs.** `values.yaml` sets `image.repository`, which the OpenTelemetry Collector chart requires.
+- **Node.js guide's OpenTelemetry SDK and Winston tabs run.** They pass `{ exporter }` to `BatchLogRecordProcessor`, as current `@opentelemetry/sdk-logs` requires.
+- **Send data offers only ingest keys on `otel-` indexes.** Quickwit drops OTLP logs sent to a custom index yet reports success, so those keys lost every record.
+
 ## [0.4.4] - 2026-09-22
 
 ### ⚠️ Breaking

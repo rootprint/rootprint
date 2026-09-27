@@ -1,5 +1,5 @@
 import VectorIcon from '@iconify-svelte/logos/vector-timber';
-import { vectorOtlpSinkSnippet } from './_shared';
+import { vectorOtlpSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -24,7 +24,12 @@ export const vector: Integration = {
       - /var/log/myapp/*.log
     read_from: end
 
-${vectorOtlpSinkSnippet({ ctx, inputs: 'app_logs' })}`;
+${vectorOtlpSnippet({
+	ctx,
+	inputs: 'app_logs',
+	serviceName: '"myapp"',
+	attribute: ['log.file.path', '.file']
+})}`;
 
 			return [
 				{
@@ -41,7 +46,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'app_logs' })}`;
 					title: 'Write /etc/vector/vector.yaml',
 					body:
 						'Save this at /etc/vector/vector.yaml. Replace /var/log/myapp/*.log with the glob ' +
-						"that matches your application's log files.",
+						"that matches your application's log files, and myapp with its service name.",
 					snippets: [
 						{
 							code: vectorConfig,

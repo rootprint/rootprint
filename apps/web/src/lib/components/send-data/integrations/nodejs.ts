@@ -17,7 +17,7 @@ const resource = defaultResource().merge(
 
 const provider = new LoggerProvider({
   resource,
-  processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+  processors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() })]
 });
 
 logs.setGlobalLoggerProvider(provider);
@@ -54,7 +54,7 @@ const resource = defaultResource().merge(
 
 const provider = new LoggerProvider({
   resource,
-  processors: [new BatchLogRecordProcessor(new OTLPLogExporter())]
+  processors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() })]
 });
 
 logs.setGlobalLoggerProvider(provider);
