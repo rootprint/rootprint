@@ -1,7 +1,6 @@
 import FluentBitIcon from '@iconify-svelte/simple-icons/fluentbit';
 import { OTLP_LOGS_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
-import { searchVerifyLink } from './_shared';
 import type { Integration } from '../types';
 
 const RESTART_COMMAND = `sudo systemctl restart fluent-bit
@@ -14,7 +13,7 @@ export const fluentBit: Integration = {
 	id: 'fluent-bit',
 	label: 'Fluent Bit',
 	icon: FluentBitIcon,
-	origin: 'LogAgents',
+	origin: 'Agents',
 	docs: 'https://docs.rootprint.io/send-logs/log-agents/fluent-bit',
 	logs: {
 		buildSteps: (ctx) => {
@@ -77,8 +76,7 @@ export const fluentBit: Integration = {
 				{
 					title: 'Send a test log line',
 					body: 'Append a line to the watched log path and wait a second.',
-					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					verify: searchVerifyLink(ctx.indexId)
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];
 		}

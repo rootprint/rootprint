@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChevronRight } from 'lucide-svelte';
 	import type { Integration, Signal } from '$lib/components/send-data/types';
 
 	let { integration, signal }: { integration: Integration; signal: Signal } = $props();
@@ -10,8 +11,9 @@
 
 <a
 	{href}
-	class="border-line rounded-box hover:bg-base-200/60 flex w-40 flex-col items-center gap-3 border p-5 text-center transition-colors"
+	class="border-line rounded-box hover:bg-base-200/60 flex items-center gap-3 border px-4 py-3 text-sm transition-colors"
 >
-	<Icon class="size-8 shrink-0" />
-	<span class="text-sm font-medium">{integration.label}</span>
+	<Icon class="size-6 shrink-0" />
+	<span class="min-w-0 truncate" title={integration.label}>{integration.label}</span>
+	<ChevronRight class="text-subtle ml-auto size-3.5 shrink-0" aria-hidden="true" />
 </a>

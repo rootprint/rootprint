@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { ExternalLink } from 'lucide-svelte';
 	import { page } from '$app/state';
+	import Callout from '$lib/components/send-data/Callout.svelte';
+	import CodeBlock from '$lib/components/send-data/CodeBlock.svelte';
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/components/send-data/constants';
 	import { integrationById } from '$lib/components/send-data/integrations';
+	import KeyStep from '$lib/components/send-data/KeyStep.svelte';
 	import { SIGNAL_TABS, signalFromUrl } from '$lib/components/send-data/signal';
-	import WizardHeader from '$lib/components/send-data/WizardHeader.svelte';
-	import WizardSteps from '$lib/components/send-data/WizardSteps.svelte';
+	import StepBlock from '$lib/components/send-data/StepBlock.svelte';
 	import TabLinks from '$lib/components/send-data/TabLinks.svelte';
+	import WizardHeader from '$lib/components/send-data/WizardHeader.svelte';
 
 	let { data } = $props();
 
@@ -30,41 +34,118 @@
 		})
 	);
 	let realApiKeyValue = $state<string | null>(null);
-	const selectedApiKey = $derived(
-		selectedApiKeyId != null ? (data.apiKeys.find((k) => k.id === selectedApiKeyId) ?? null) : null
+	const selectedIndexId = $derived(
+		data.apiKeys.find((k) => k.id === selectedApiKeyId)?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID
 	);
-	const selectedIndexId = $derived(selectedApiKey?.indexId ?? DEFAULT_OTEL_LOGS_INDEX_ID);
+	const hasKeys = $derived(data.apiKeys.length > 0);
 
 	const ctx = $derived({
 		origin: page.url.origin,
-		apiKey: realApiKeyValue ?? '<your-ingest-api-key>',
+		apiKey: realApiKeyValue ?? '<your-ingest-key>',
 		hasRealApiKey: realApiKeyValue !== null,
-		indexId: selectedIndexId,
 		flavor
 	});
 
 	const steps = $derived(setup.buildSteps(ctx));
 </script>
 
-<div class="settings-page flex flex-col gap-2">
-	<WizardHeader
-		{integration}
-		{signal}
-		apiKeys={data.apiKeys}
-		indexes={data.indexes}
-		traceIndexId={data.traceIndexId}
-		{selectedIndexId}
-		bind:selectedApiKeyId
-		bind:realApiKeyValue
-	/>
+<div class="settings-page">
+	<div class="max-w-3xl">
+		<WizardHeader {integration} />
 
-	{#if integration.traces}
-		<TabLinks items={SIGNAL_TABS} active={signal} param="signal" ariaLabel="Telemetry signal" />
-	{/if}
+		{#if integration.traces}
+			<div class="mt-6">
+				<TabLinks items={SIGNAL_TABS} active={signal} param="signal" ariaLabel="Telemetry signal" />
+			</div>
+		{/if}
 
-	{#if setup.flavors && flavor}
-		<TabLinks items={setup.flavors} active={flavor} param="flavor" ariaLabel="Integration flavor" />
-	{/if}
+		{#if setup.flavors && flavor}
+			<div class="mt-4 flex items-center gap-3">
+				<span class="text-muted text-xs">Library</span>
+				<TabLinks
+					items={setup.flavors}
+					active={flavor}
+					param="flavor"
+					ariaLabel="Logging library"
+					segmented
+				/>
+			</div>
+		{/if}
 
-	<WizardSteps {steps} />
+		<ol class="mt-10">
+			<StepBlock number={1} title={hasKeys ? 'Choose an ingest key' : 'Create an ingest key'}>
+				<KeyStep
+					{signal}
+					apiKeys={data.apiKeys}
+					indexes={data.indexes}
+					traceIndexId={data.traceIndexId}
+					{selectedIndexId}
+					bind:selectedApiKeyId
+					bind:realApiKeyValue
+				/>
+			</StepBlock>
+
+			{#each steps as step, i (step.title)}
+				<StepBlock number={i + 2} title={step.title}>
+					{#if step.body}
+						<p class="text-muted">{step.body}</p>
+					{/if}
+					{#if step.linkOut}
+						<div>
+							<a
+								href={step.linkOut.href}
+								target="_blank"
+								rel="noreferrer"
+								class="btn btn-outline btn-sm"
+							>
+								{step.linkOut.label}
+								<ExternalLink class="size-3.5" aria-hidden="true" />
+							</a>
+						</div>
+					{/if}
+					{#each step.snippets ?? [] as snippet (snippet.code)}
+						<CodeBlock
+							code={snippet.code}
+							lang={snippet.lang}
+							copyTitle={snippet.copyTitle}
+							highlightValue={snippet.highlightValue}
+						/>
+					{/each}
+					{#if step.callout}
+						<Callout variant={step.callout.variant}>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							{@html step.callout.html}
+						</Callout>
+					{/if}
+				</StepBlock>
+			{/each}
+
+			<!-- Until a key exists, creating one is the page's single primary action. -->
+			<StepBlock
+				number={steps.length + 2}
+				title={signal === 'traces' ? 'Check that spans arrive' : 'Check that logs arrive'}
+				last
+			>
+				{#if signal === 'traces'}
+					<p class="text-muted">Opens the trace explorer.</p>
+					<div>
+						<a href="/traces" class={['btn btn-sm', hasKeys && 'btn-primary']}>Open Traces</a>
+					</div>
+				{:else}
+					<p class="text-muted">
+						Opens Logs filtered to <span class="text-base-content font-mono">{selectedIndexId}</span
+						>.
+					</p>
+					<div>
+						<a
+							href="/logs?index={encodeURIComponent(selectedIndexId)}"
+							class={['btn btn-sm', hasKeys && 'btn-primary']}
+						>
+							Open Logs
+						</a>
+					</div>
+				{/if}
+			</StepBlock>
+		</ol>
+	</div>
 </div>

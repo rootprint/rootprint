@@ -1,5 +1,5 @@
 import NginxIcon from '@iconify-svelte/logos/nginx';
-import { searchVerifyLink, vectorOtlpSinkSnippet } from './_shared';
+import { vectorOtlpSinkSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -14,7 +14,7 @@ export const nginx: Integration = {
 	id: 'nginx',
 	label: 'Nginx',
 	icon: NginxIcon,
-	origin: 'WebServers',
+	origin: 'Infrastructure',
 	docs: 'https://docs.rootprint.io/send-logs/web-servers/nginx',
 	logs: {
 		buildSteps: (ctx) => {
@@ -42,7 +42,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'nginx_logs' })}`;
 				{
 					title: 'Write /etc/vector/vector.yaml',
 					body:
-						'Save this at /etc/vector/vector.yaml. The endpoint and API key are prefilled — ' +
+						'Save this at /etc/vector/vector.yaml. The endpoint and ingest key are prefilled — ' +
 						'lines arrive in rootprint as raw log bodies; structured parsing is documented separately.',
 					snippets: [
 						{
@@ -70,8 +70,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'nginx_logs' })}`;
 				{
 					title: 'Send a test request',
 					body: 'A single curl is enough — Nginx writes the access line, Vector picks it up.',
-					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					verify: searchVerifyLink(ctx.indexId)
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];
 		}

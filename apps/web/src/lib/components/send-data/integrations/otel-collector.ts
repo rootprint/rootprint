@@ -1,7 +1,7 @@
 import OtelCollectorIcon from '@iconify-svelte/logos/opentelemetry-icon';
 import { OTLP_LOGS_INGEST_PATH, OTLP_TRACES_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
-import { COLLECTOR_CORRELATION_CALLOUT, searchVerifyLink } from './_shared';
+import { COLLECTOR_CORRELATION_CALLOUT } from './_shared';
 import type { Integration } from '../types';
 
 const RESTART_COMMAND = `sudo systemctl restart otelcol-contrib
@@ -19,7 +19,7 @@ export const otelCollector: Integration = {
 	id: 'otel-collector',
 	label: 'OpenTelemetry Collector',
 	icon: OtelCollectorIcon,
-	origin: 'OpenTelemetry',
+	origin: 'Agents',
 	docs: 'https://docs.rootprint.io/send-logs/log-agents/otel-collector',
 	logs: {
 		buildSteps: (ctx) => {
@@ -78,8 +78,7 @@ service:
 				{
 					title: 'Append a test line',
 					body: 'Append a line to the watched log path and wait a second.',
-					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					verify: searchVerifyLink(ctx.indexId)
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];
 		}

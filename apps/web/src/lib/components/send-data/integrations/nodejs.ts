@@ -1,10 +1,5 @@
 import NodejsIcon from '@iconify-svelte/logos/nodejs-icon';
-import {
-	BEARER_CALLOUT,
-	CORRELATION_CALLOUT,
-	otelEnvVarsSnippet,
-	searchVerifyLink
-} from './_shared';
+import { BEARER_CALLOUT, CORRELATION_CALLOUT, otelEnvVarsSnippet } from './_shared';
 import type { Integration, IntegrationContext, Step } from '../types';
 
 const OTEL_INSTALL =
@@ -94,7 +89,7 @@ function otelSteps(ctx: IntegrationContext): Step[] {
 				'Reach for this only when your app has no logging library — it emits records through the ' +
 				'Logs Bridge API, which OpenTelemetry intends for logging-library authors rather than ' +
 				'applications. On Pino or Winston, use those tabs. Install the SDK and the protobuf log ' +
-				'exporter, then set the endpoint and API key via environment variables.',
+				'exporter, then set the endpoint and ingest key via environment variables.',
 			snippets: [
 				{ code: OTEL_INSTALL, lang: 'bash', copyTitle: 'Copy install command' },
 				otelEnvVarsSnippet({ ctx, serviceName: 'my-node-service' })
@@ -105,8 +100,7 @@ function otelSteps(ctx: IntegrationContext): Step[] {
 			title: 'Send your first log',
 			body: 'Save this to a file and run it with Node 18+ (ESM).',
 			snippets: [{ code: OTEL_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
-			callout: PROTOBUF_CALLOUT,
-			verify: searchVerifyLink(ctx.indexId)
+			callout: PROTOBUF_CALLOUT
 		}
 	];
 }
@@ -127,8 +121,7 @@ function pinoSteps(ctx: IntegrationContext): Step[] {
 		{
 			title: 'Send your first log',
 			body: 'Wire the transport into a Pino logger and emit a record.',
-			snippets: [{ code: PINO_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
-			verify: searchVerifyLink(ctx.indexId)
+			snippets: [{ code: PINO_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }]
 		}
 	];
 }
@@ -150,8 +143,7 @@ function winstonSteps(ctx: IntegrationContext): Step[] {
 			title: 'Send your first log',
 			body: 'Wire the OTel transport into a Winston logger and emit a record.',
 			snippets: [{ code: WINSTON_EXAMPLE, lang: 'javascript', copyTitle: 'Copy example' }],
-			callout: PROTOBUF_CALLOUT,
-			verify: searchVerifyLink(ctx.indexId)
+			callout: PROTOBUF_CALLOUT
 		}
 	];
 }

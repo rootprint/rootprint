@@ -1,10 +1,5 @@
 import PythonIcon from '@iconify-svelte/logos/python';
-import {
-	BEARER_CALLOUT,
-	CORRELATION_CALLOUT,
-	otelEnvVarsSnippet,
-	searchVerifyLink
-} from './_shared';
+import { BEARER_CALLOUT, CORRELATION_CALLOUT, otelEnvVarsSnippet } from './_shared';
 import type { Integration } from '../types';
 
 const INSTALL_COMMAND = 'pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http';
@@ -41,7 +36,7 @@ export const python: Integration = {
 				title: 'Install and configure',
 				body:
 					'rootprint accepts OTLP over HTTP (proto-http). Install the SDK, then set ' +
-					'the endpoint and API key via environment variables.',
+					'the endpoint and ingest key via environment variables.',
 				snippets: [
 					{ code: INSTALL_COMMAND, lang: 'bash', copyTitle: 'Copy install command' },
 					otelEnvVarsSnippet({ ctx, serviceName: 'my-python-service' })
@@ -51,8 +46,7 @@ export const python: Integration = {
 			{
 				title: 'Send your first log',
 				body: 'Paste this into a fresh file to verify end-to-end delivery.',
-				snippets: [{ code: EXAMPLE_CODE, lang: 'python', copyTitle: 'Copy example' }],
-				verify: searchVerifyLink(ctx.indexId)
+				snippets: [{ code: EXAMPLE_CODE, lang: 'python', copyTitle: 'Copy example' }]
 			}
 		]
 	},

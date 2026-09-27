@@ -1,5 +1,5 @@
 import VectorIcon from '@iconify-svelte/logos/vector-timber';
-import { searchVerifyLink, vectorOtlpSinkSnippet } from './_shared';
+import { vectorOtlpSinkSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -13,7 +13,7 @@ export const vector: Integration = {
 	id: 'vector',
 	label: 'Vector',
 	icon: VectorIcon,
-	origin: 'LogAgents',
+	origin: 'Agents',
 	docs: 'https://docs.rootprint.io/send-logs/log-agents/vector',
 	logs: {
 		buildSteps: (ctx) => {
@@ -58,8 +58,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'app_logs' })}`;
 				{
 					title: 'Append a test line',
 					body: 'Append a line to the watched log path and wait a second.',
-					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					verify: searchVerifyLink(ctx.indexId)
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];
 		}

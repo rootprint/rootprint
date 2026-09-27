@@ -1,7 +1,6 @@
 import KubernetesIcon from '@iconify-svelte/logos/kubernetes';
 import { OTLP_LOGS_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
-import { searchVerifyLink } from './_shared';
 import type { Integration } from '../types';
 
 const ADD_REPO = `helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
@@ -18,7 +17,7 @@ export const kubernetes: Integration = {
 	id: 'kubernetes',
 	label: 'Kubernetes',
 	icon: KubernetesIcon,
-	origin: 'Containers',
+	origin: 'Infrastructure',
 	docs: 'https://docs.rootprint.io/send-logs/platforms/kubernetes',
 	logs: {
 		buildSteps: (ctx) => {
@@ -67,7 +66,7 @@ config:
 				{
 					title: 'Write values.yaml',
 					body:
-						'The endpoint and API key are prefilled. The kubernetesAttributes preset tags every ' +
+						'The endpoint and ingest key are prefilled. The kubernetesAttributes preset tags every ' +
 						'record with pod, namespace, node, and container; the transform infers severity from the ' +
 						'message body.',
 					snippets: [
@@ -95,8 +94,7 @@ config:
 					body:
 						'Runs a one-off pod that prints a line and exits — the node’s Collector tails it and ships ' +
 						'it within a few seconds. Clean up with `kubectl delete pod rootprint-smoke-test`.',
-					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					verify: searchVerifyLink(ctx.indexId)
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];
 		}

@@ -1,11 +1,6 @@
 import { OTLP_LOGS_INGEST_PATH, OTLP_TRACES_INGEST_PATH } from '../constants';
 import { highlightKey } from '../snippet-utils';
-import type { Callout, IntegrationContext, Signal, Snippet, Verify } from '../types';
-
-/** The standard "did my logs arrive?" verify step: a link into Logs scoped to the index. */
-export function searchVerifyLink(indexId: string): Verify {
-	return { label: 'Open Logs', href: `/logs?index=${encodeURIComponent(indexId)}` };
-}
+import type { Callout, IntegrationContext, Signal, Snippet } from '../types';
 
 export const BEARER_CALLOUT: Callout = {
 	variant: 'warning',
@@ -14,11 +9,11 @@ export const BEARER_CALLOUT: Callout = {
 		'URL-encoded header values.'
 };
 
-/** Closes a language Traces tab: spans are only ever reached from a log, so say so. */
+/** Closes a language Traces tab: a log row opens its trace only when the service ships both. */
 export const CORRELATION_CALLOUT: Callout = {
 	variant: 'info',
 	html:
-		'Spans are reached from a log. Ship logs from this service too — see the ' +
+		'Ship logs from this service too — see the ' +
 		'<a href="?signal=logs" class="link">Logs tab</a> — and rootprint pairs the two by ' +
 		'<code>trace_id</code>, so any log row opens its trace.'
 };

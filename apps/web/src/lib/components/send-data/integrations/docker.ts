@@ -1,5 +1,5 @@
 import DockerIcon from '@iconify-svelte/logos/docker-icon';
-import { searchVerifyLink, vectorOtlpSinkSnippet } from './_shared';
+import { vectorOtlpSinkSnippet } from './_shared';
 import { highlightKey } from '../snippet-utils';
 import type { Integration } from '../types';
 
@@ -20,7 +20,7 @@ export const docker: Integration = {
 	id: 'docker',
 	label: 'Docker',
 	icon: DockerIcon,
-	origin: 'Containers',
+	origin: 'Infrastructure',
 	docs: 'https://docs.rootprint.io/send-logs/platforms/docker',
 	logs: {
 		buildSteps: (ctx) => {
@@ -34,7 +34,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'docker' })}`;
 			return [
 				{
 					title: 'Write vector.yaml',
-					body: 'Save this next to your docker-compose.yaml. The endpoint and API key are prefilled.',
+					body: 'Save this next to your docker-compose.yaml. The endpoint and ingest key are prefilled.',
 					snippets: [
 						{
 							code: vectorConfig,
@@ -65,8 +65,7 @@ ${vectorOtlpSinkSnippet({ ctx, inputs: 'docker' })}`;
 				{
 					title: 'Send a test log',
 					body: 'Run any short-lived container — Vector picks up its stdout and forwards it to rootprint.',
-					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }],
-					verify: searchVerifyLink(ctx.indexId)
+					snippets: [{ code: TEST_COMMAND, lang: 'bash', copyTitle: 'Copy test command' }]
 				}
 			];
 		}

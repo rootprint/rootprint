@@ -8,8 +8,6 @@ export type OriginMeta = {
 /** Wizard sections, in display order. */
 export const ORIGINS: OriginMeta[] = [
 	{ id: 'Application', label: 'Application code' },
-	{ id: 'Containers', label: 'Containers' },
-	{ id: 'OpenTelemetry', label: 'OpenTelemetry' },
-	{ id: 'LogAgents', label: 'Log Agents' },
-	{ id: 'WebServers', label: 'Web Servers' }
+	{ id: 'Agents', label: 'Collectors and agents' },
+	{ id: 'Infrastructure', label: 'Infrastructure' }
 ];

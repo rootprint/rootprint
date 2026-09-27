@@ -15,6 +15,7 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Search is now Logs, at `/logs`; Services moved to `/services`.** `/` and `/monitoring` redirect and keep their query string, so bookmarked searches still open.
 - **Profile moved to the user menu**, at `/profile`.
 - **Send data** (formerly **Settings → Send logs & traces**) is a sidebar entry for admins, at `/send-data`.
+- **Send data guides start with the ingest key.** Step 1 picks an existing ingest key or creates one, and the key fills every snippet; each guide ends with a step that opens Logs, or the trace explorer on the Traces tab. The integration list drops its search box and groups the nine integrations as Application code, Collectors and agents, and Infrastructure.
 - **Settings is admin-only.** Members no longer see it in the sidebar.
 
 ## [0.4.4] - 2026-09-22
