@@ -202,7 +202,7 @@ Pick the DaisyUI component by behavior:
 | Menu, picker, popover               | `dropdown` on a `popover` element opened by `popovertarget` (see `ui/TimeRangePicker`) |
 | Dialog                              | the `ui/Modal` family (native `<dialog>`)                                              |
 | Loading                             | `loading loading-spinner loading-xs` inline, `skeleton` for panels                     |
-| Hint on an icon-only control        | `tooltip`                                                                              |
+| Label on a collapsed sidebar item   | `tooltip tooltip-right` with `data-tip` (see `shell/SidebarNavItem`)                   |
 
 Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default size in modal footers and on auth pages. `btn-ghost` for secondary actions, `btn-primary` for the one primary action, `btn-error` only to confirm a destructive action.
 
@@ -280,4 +280,5 @@ No automated tests in this workspace. Authentication is covered by the API suite
 - Cross-workspace types: `import type { ... } from 'api/types'`. Schemas: `import { ... } from 'api/schemas'`.
 - Component callback props are camelCase (`onSave`, `onToggleSort`); lowercase only when the prop mirrors a native DOM event on an element the component wraps (`Modal`'s `onclose`/`oncancel`).
 - `.svelte.ts` modules are kebab-case (`metrics-poller.svelte.ts`), like all other `.ts` files.
-- Numbers go through `$lib/utils/format`: `formatDurationMs` for whole-millisecond values (percentiles, averages), `formatDurationMicros` for span and search timings, `formatRate` for rates, always per minute. Counts are compact (`formatCount`) in tables, KPIs and charts, and exact (`toLocaleString()`) where the number itself is the answer: result totals, export, pagination, facet counts. `uplot/UplotLinePanel` tooltips reuse the panel's `formatValue`.
+- Numbers go through `$lib/utils/format`: `formatDurationMs` for whole-millisecond values (percentiles, averages), `formatDurationMicros` for span durations and the log search's elapsed time, `formatRate` for rates, always per minute. Counts are compact (`formatCount`) in tables, KPIs and chart axes, and exact (`toLocaleString()`) where the number itself is the answer: result totals, export, pagination, facet counts, and bar-chart tooltips (`LogFrequencyChart`, `VolumeChart`). `uplot/UplotLinePanel` tooltips reuse the panel's `formatValue`.
+- Timestamps go through `$lib/utils/time`: `formatTimestamp` (milliseconds) for log and span times, `formatActivityTimestamp` (seconds) in the activity tables, `formatRelativeTime` for last active and last used, `formatDate` / `formatDateTime` for account dates, `formatTickDate` on chart axes and `formatTooltipDate` in chart tooltips. Time-range labels live in `$lib/utils/time-range`.

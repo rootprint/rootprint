@@ -67,7 +67,7 @@ Sibling top-level dirs:
 ## Routing & Request Handling
 
 - Each resource gets a `Hono` router and is mounted with `app.route('/path', router)` in `src/app.ts`.
-- Session-protected routers wrap via the `withAuth()` helper, which mounts `requireUser`; admin routers additionally mount `requireAdmin` themselves. Ingest routes use `requireIngestKey` from `require-api-key`.
+- Session-only routers (`admin/*`, `users`, `service-accounts`, `api-keys`, `shares`, `settings`) are wrapped in `withAuth()` in `app.ts`, which mounts `requireUser`; admin routers additionally mount `requireAdmin` themselves. Routers that mix session-only and bearer-key routes (`indexes`, `views`, `exports`, `traces`, `monitoring`) mount `requireUser` or `requireUserOrPersonalKey` themselves, per router or per route. Ingest routes use `requireIngestKey` from `require-api-key`.
 - Read context values via `c.get('requestId' | 'session' | 'apiKey')`. The env types (`AppEnv`, `AuthedEnv`, `KeyedEnv`) live in `src/env.ts`.
 
 ## Error Handling
@@ -80,7 +80,7 @@ Sibling top-level dirs:
 
 ## Validation
 
-- Use Valibot for all external input (request bodies, query params, headers). The `app.onError` handler maps `ValiError` to a 400 with a structured detail list.
+- Use Valibot for all external input (request bodies, query params, headers). Routes validate through the `validator` wrapper in `lib/openapi/describe.ts`, which throws `HttpError(400, 'VALIDATION_FAILED')` with one `details` entry per issue.
 - Infer TS types from Valibot schemas where possible (`v.InferOutput<typeof Schema>`).
 - Request schemas live in `src/schemas/<resource>.ts` (shared path-param schemas in `src/utils/params.ts`); response schemas in `src/schemas/responses/<resource>.ts`. Route files never define schemas inline — they import them.
 
@@ -109,10 +109,10 @@ Sibling top-level dirs:
 
 - Better Auth setup lives in `src/lib/auth.ts`. Database tables follow Better Auth's schema (`src/db/auth.schema.ts`).
 - Session-based auth (cookies) for the web app; ingest API keys for log producers (`requireIngestKey` in `src/middleware/require-api-key.ts`).
-- Read endpoints additionally accept a personal or service-account bearer key via `requireUserOrPersonalKey` (`src/middleware/require-user-or-personal-key.ts`), falling back to the session cookie when no bearer is present.
+- Log and trace reads (index list, index fields and config, log search, histogram, field values, `/api/traces`, `/api/monitoring`) additionally accept a personal or service-account bearer key via `requireUserOrPersonalKey` (`src/middleware/require-user-or-personal-key.ts`), falling back to the session cookie when no bearer is present. Export, saved views and index preferences are session-only.
 - Google, GitHub, and one generic OpenID Connect provider are configured at runtime via the admin settings UI (writes to `app_settings`). Provider env vars (`GOOGLE_CLIENT_ID` etc.) are **not** read. Better Auth is rebuilt with `reloadAuth()` after credential and password-toggle writes only; allow-list writes are read from the DB at each OAuth sign-in and do not reload.
 - Google sign-in is gated by a domain allowlist; GitHub sign-in by an org allowlist. Both live in `app_settings` and are enforced in `user.validateUserInfo` (`lib/auth.ts`), which Better Auth runs on every OAuth create, link, and repeat sign-in before any row is written. The GitHub verdict is computed in a `getUserInfo` wrapper (the hook never sees the access token) and carried on the profile as `orgAllowed`. If creds are present but the allowlist is empty or missing, all sign-ins for that provider are rejected and the providers endpoint reports it disabled. Nothing re-checks a provider during a session: a removed domain or org takes effect at the user's next sign-in. OIDC has no app-side allowlist: the IdP decides who may sign in. The IdP must echo the nonce and support PKCE (both required by the plugin config), and ID token signatures are verified against the discovered JWKS (`requireIdTokenVerification`). `oidc` is a trusted provider like Google and GitHub (see the comment in `lib/auth.ts`). OIDC `accountId` is `<issuerUrl>|<sub>`.
-- The issuer URL must be `https:` (or loopback `http:`) — the token endpoint carries the client secret. Discovery is fetched on save and again at each Better Auth build. The build probes the issuer with the same 5 s check and omits the provider when it fails (`loadReachableAuthConfig` in `lib/auth.ts`); a retry runs a minute later, so an unreachable issuer leaves OIDC off rather than stalling the auth path.
+- The issuer URL must be `https:`, or `http:` on a private network (`isHttpsOrPrivate` in `schemas/settings.ts`) — the token endpoint carries the client secret. The discovered endpoints must pass the same check, and an `https:` issuer may not downgrade any of them to `http:`. Discovery is fetched on save and again at each Better Auth build. The build probes the issuer with the same 5 s check and omits the provider when it fails (`loadReachableAuthConfig` in `lib/auth.ts`); a retry runs a minute later, so an unreachable issuer leaves OIDC off rather than stalling the auth path.
 - `password_sign_in_disabled` closes `/sign-in/email` via `disabledPaths`. Nothing checks that an external provider is configured or working first — an admin can lock themselves out. Break-glass: delete that row, then restart the API or re-save provider credentials so `disabledPaths` is rebuilt; if the admin has no credential row, insert an `invite_token` row and open `/auth/setup?token=…`.
 - Linking a provider (`google`, `github`, `oidc`) to a user deletes any pending invite and nothing else; any credential row survives, so a password user keeps their password. Account linking is auto-enabled for configured providers with `requireLocalEmailVerified: false`, so an invited user who has not set a password can complete onboarding through a provider.
 - Deleting a provider's credentials revokes the sessions of every user with an account row for that provider, in the same transaction. Deleting OIDC credentials, or saving them with a different issuer URL or client ID, also deletes the `oidc` account rows; users re-link by email at their next sign-in or get a password from an admin reset. Personal API keys are untouched. An OAuth callback already in progress may still complete.
@@ -141,13 +141,21 @@ Required:
 
 Optional:
 
-| Var                           | Purpose                                                        |
-| ----------------------------- | -------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET`          | Override the auto-generated Better Auth signing secret         |
-| `FRONTEND_URL`                | Additional allowed CORS origin for split SPA + API deployments |
-| `PORT`                        | Override the HTTP listen port (default `8282`)                 |
-| `TRACE_INDEX_ID`              | Quickwit index holding spans (default `otel-traces-v0_9`)      |
-| `SEARCH_AUDIT_RETENTION_DAYS` | Search audit retention in days (minimum/default `30`)          |
+| Var                           | Purpose                                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`          | Override the auto-generated Better Auth signing secret                                                                               |
+| `FRONTEND_URL`                | Additional allowed CORS origin for split SPA + API deployments                                                                       |
+| `PORT`                        | Override the HTTP listen port (default `8282`)                                                                                       |
+| `TRACE_INDEX_ID`              | Quickwit index holding spans (default `otel-traces-v0_9`)                                                                            |
+| `SEARCH_AUDIT_RETENTION_DAYS` | Search audit retention in days (minimum/default `30`)                                                                                |
+| `LOG_LEVEL`                   | pino log level (default `info`)                                                                                                      |
+| `TRUST_PROXY_HOPS`            | Trusted proxies setting `X-Forwarded-For`; rate limits key on the client IP at that depth (default `0`, the TCP peer)                |
+| `RATE_LIMIT_WINDOW_MS`        | Window shared by both rate limiters (default `60000`)                                                                                |
+| `PUBLIC_AUTH_RATE_LIMIT`      | Requests per IP per window on unauthenticated auth routes (default `30`)                                                             |
+| `READ_RATE_LIMIT`             | Requests per actor per window on search, histogram, field values, share resolve, `/api/traces` and `/api/monitoring` (default `300`) |
+| `OIDC_DISCOVERY_TIMEOUT_MS`   | How long an OIDC discovery fetch may take (default `5000`, minimum `100`)                                                            |
+| `OIDC_RETRY_MS`               | Wait before rebuilding auth after an OIDC discovery failure (default `60000`, minimum `100`)                                         |
+| `INGEST_PROXY_TIMEOUT_MS`     | How long an ingest POST waits on Quickwit before answering 503 (default `120000`, minimum `1000`)                                    |
 
 Defaults and examples live in the root `.env.example`.
 

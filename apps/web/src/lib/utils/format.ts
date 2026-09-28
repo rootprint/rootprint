@@ -27,8 +27,8 @@ const DURATION_UNITS = [
 
 const threeDigits = (n: number) => Number(n.toPrecision(3));
 
-// For whole-millisecond values (percentiles and averages over `span_duration_millis`, search
-// timings): anything under 1 ms is below their resolution, so it reads "<1 ms" rather than µs.
+// For whole-millisecond values (percentiles and averages over `span_duration_millis`,
+// search-audit durations): anything under 1 ms is below their resolution, so it reads "<1 ms" rather than µs.
 export function formatDurationMs(ms: number | null | undefined): string {
 	if (ms === null || ms === undefined || !Number.isFinite(ms)) return '—';
 	if (ms === 0) return `0${NBSP}ms`;
