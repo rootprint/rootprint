@@ -4,7 +4,7 @@ import { FIELD_VALUES_MAX } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
 import { DisplayModeSchema } from './display-mode.js';
 import { IndexIdParams } from '../utils/params.js';
-import { intParam, tsParam } from '../utils/valibot.js';
+import { intParam, tsEndParam, tsParam } from '../utils/valibot.js';
 
 const dedupedStrings = v.pipe(
 	v.array(v.pipe(v.string(), v.minLength(1))),
@@ -37,13 +37,13 @@ export const FieldParams = v.object({
 /** Required: field discovery is range-scoped, an unbounded `_field_caps` scans every split. */
 export const IndexFieldsQuery = v.object({
 	startTs: tsParam,
-	endTs: tsParam
+	endTs: tsEndParam
 });
 
 export const HistogramQuery = v.object({
 	q: v.optional(v.string()),
 	startTs: v.optional(tsParam),
-	endTs: v.optional(tsParam),
+	endTs: v.optional(tsEndParam),
 	interval: v.pipe(
 		v.string(),
 		v.regex(
@@ -56,7 +56,7 @@ export const HistogramQuery = v.object({
 export const FieldValuesQuery = v.object({
 	q: v.optional(v.string()),
 	startTs: v.optional(tsParam),
-	endTs: v.optional(tsParam),
+	endTs: v.optional(tsEndParam),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
 
@@ -76,7 +76,7 @@ export const FieldValuesBulkQuery = v.object({
 	q: v.optional(v.string()),
 	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
 	startTs: v.optional(tsParam),
-	endTs: v.optional(tsParam),
+	endTs: v.optional(tsEndParam),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
 

@@ -40,6 +40,14 @@ export const EPOCH_SECONDS = 'Unix timestamp in seconds';
 /** Query-param timestamp: numeric string in, epoch seconds out. */
 export const tsParam = v.pipe(toNum, v.minValue(0), v.description(EPOCH_SECONDS));
 
+/** Rounded up: Quickwit's `end_timestamp` is exclusive whole seconds, so truncating would drop the final partial second. */
+export const tsEndParam = v.pipe(
+	toNum,
+	v.minValue(0),
+	v.transform(Math.ceil),
+	v.description(EPOCH_SECONDS)
+);
+
 /** JSON-body timestamp in epoch seconds. */
 export const epochSeconds = v.pipe(
 	v.number(),

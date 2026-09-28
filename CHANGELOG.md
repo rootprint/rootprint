@@ -28,6 +28,7 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 
 ### Fixed
 
+- **Log API calls with a fractional `endTs` no longer drop the last partial second.** The log search, histogram, field, field-values and export endpoints now round `endTs` up to the next whole second instead of truncating it. The web app always sends whole seconds and was not affected.
 - **Send data guides deliver data as written.** Logs arrive with a service name and keep their own severity, and the snippets use current component names and APIs. The guides offer ingest keys on `otel-` indexes and hide the rest: Quickwit answers 200 to OTLP logs sent to any other index and discards them.
 
 ## [0.4.4] - 2026-09-22

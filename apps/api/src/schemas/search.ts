@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 
 import { SEARCH_MAX_LIMIT } from '../constants.js';
-import { boolParam, intParam, tsParam } from '../utils/valibot.js';
+import { boolParam, intParam, tsEndParam, tsParam } from '../utils/valibot.js';
 import { SortDirectionSchema } from './filters.js';
 
 export const SearchQuery = v.object({
@@ -9,7 +9,7 @@ export const SearchQuery = v.object({
 	limit: v.optional(intParam({ min: 1, max: SEARCH_MAX_LIMIT, label: 'limit' })),
 	offset: v.optional(intParam({ min: 0, label: 'offset' })),
 	startTs: v.optional(tsParam),
-	endTs: v.optional(tsParam),
+	endTs: v.optional(tsEndParam),
 	sortOrder: v.optional(SortDirectionSchema),
 	countAll: v.optional(boolParam)
 });

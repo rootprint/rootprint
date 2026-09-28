@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { boolParam, tsParam } from '../utils/valibot.js';
+import { boolParam, tsEndParam, tsParam } from '../utils/valibot.js';
 
 export const ExportFormatSchema = v.picklist(['json', 'csv', 'text']);
 
@@ -8,7 +8,7 @@ export const ExportLogsQuery = v.pipe(
 	v.object({
 		q: v.optional(v.string()),
 		startTs: tsParam,
-		endTs: tsParam,
+		endTs: tsEndParam,
 		format: ExportFormatSchema,
 		dryRun: v.optional(boolParam)
 	}),
