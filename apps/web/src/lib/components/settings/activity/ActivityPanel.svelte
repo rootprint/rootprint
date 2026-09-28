@@ -131,14 +131,14 @@
 				</span>
 				<div class="flex gap-2">
 					<button
-						class="btn btn-xs"
+						class="btn btn-ghost btn-xs"
 						disabled={offset === 0}
 						onclick={() => onSetParam('offset', String(Math.max(0, offset - ACTIVITY_PAGE_SIZE)))}
 					>
 						Prev
 					</button>
 					<button
-						class="btn btn-xs"
+						class="btn btn-ghost btn-xs"
 						disabled={offset + rec.rows.length >= rec.total}
 						onclick={() => onSetParam('offset', String(offset + ACTIVITY_PAGE_SIZE))}
 					>

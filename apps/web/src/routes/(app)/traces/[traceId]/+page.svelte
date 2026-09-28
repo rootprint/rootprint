@@ -136,7 +136,12 @@
 				</select>
 
 				{#if hasSpans && traceLogsUrl}
-					<a href={traceLogsUrl} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
+					<a
+						href={traceLogsUrl}
+						target="_blank"
+						rel="noopener"
+						class="btn btn-ghost btn-xs gap-1.5"
+					>
 						<ScrollText class="size-3" aria-hidden="true" />
 						Logs for this trace
 					</a>

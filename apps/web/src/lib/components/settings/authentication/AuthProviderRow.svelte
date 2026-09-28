@@ -36,10 +36,7 @@
 		</div>
 	</div>
 
-	<a
-		class="btn btn-sm {provider.configured ? 'btn-ghost' : 'btn-primary'}"
-		href={provider.editHref}
-	>
+	<a class="btn btn-ghost btn-sm" href={provider.editHref}>
 		{provider.configured ? 'Edit' : 'Configure'}
 	</a>
 </div>

@@ -76,15 +76,10 @@
 
 {#snippet sourceActions()}
 	<div class="flex items-center gap-2">
-		<button
-			type="button"
-			class="btn btn-outline btn-sm"
-			disabled={toggling}
-			onclick={toggleEnabled}
-		>
+		<button type="button" class="btn btn-ghost btn-sm" disabled={toggling} onclick={toggleEnabled}>
 			{source.enabled ? 'Disable' : 'Enable'}
 		</button>
-		<button type="button" class="btn btn-outline btn-sm" onclick={() => (resetOpen = true)}>
+		<button type="button" class="btn btn-ghost btn-sm" onclick={() => (resetOpen = true)}>
 			<RotateCcw class="size-3.5" aria-hidden="true" />
 			Reset checkpoint
 		</button>

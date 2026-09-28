@@ -56,7 +56,7 @@
 			<div class="flex shrink-0 gap-2">
 				<a
 					href="/settings/indexes/{encodeURIComponent(detail.indexId)}/edit"
-					class="btn btn-outline btn-sm"
+					class="btn btn-ghost btn-sm"
 				>
 					<Pencil class="size-3.5" aria-hidden="true" />
 					Edit

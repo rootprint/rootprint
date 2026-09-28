@@ -44,7 +44,7 @@
 					{#if onFilterFor}
 						<button
 							type="button"
-							class="btn btn-xs btn-square join-item"
+							class="btn btn-ghost btn-xs btn-square join-item"
 							aria-label="Filter for value"
 							title="Filter for value"
 							onclick={(e) => {
@@ -58,7 +58,7 @@
 					{#if onFilterOut}
 						<button
 							type="button"
-							class="btn btn-xs btn-square join-item"
+							class="btn btn-ghost btn-xs btn-square join-item"
 							aria-label="Filter out value"
 							title="Filter out value"
 							onclick={(e) => {
@@ -72,7 +72,7 @@
 					{#if copyable}
 						<CopyButton
 							text={field.value}
-							class="btn btn-xs btn-square join-item"
+							class="btn btn-ghost btn-xs btn-square join-item"
 							aria-label="Copy value"
 							title="Copy value"
 						/>

@@ -204,7 +204,10 @@ Pick the DaisyUI component by behavior:
 | Loading                             | `loading loading-spinner loading-xs` inline, `skeleton` for panels                     |
 | Label on a collapsed sidebar item   | `tooltip tooltip-right` with `data-tip` (see `shell/SidebarNavItem`)                   |
 
-Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default size in modal footers and on auth pages. `btn-ghost` for secondary actions, `btn-primary` for the one primary action, `btn-error` only to confirm a destructive action.
+Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default size in modal footers and on auth pages. `btn-ghost` for secondary actions, `btn-primary` for the one primary action, `btn-error` only to confirm a destructive action (`FormModal` takes `destructive` for that).
+
+- Three exceptions keep a border or fill: provider sign-in buttons on the filled auth card are `btn-outline` (ghost vanishes on `base-200`), the button that opens a destructive confirm is `btn-outline btn-error`, and a control floating over content keeps the default fill (the trace minimap's reset zoom).
+- Toggles and segmented controls mark the on state with `btn-soft`: `btn-neutral`, or the status color when the option is a status (`ExploreToolbar`). Never `btn-primary`; green is for the action.
 
 ### Shared Components
 
@@ -246,7 +249,7 @@ Defined in `src/app.css`. Add one only when DaisyUI plus utilities can't express
 - Controls with an adornment (icon, button, suffix) use DaisyUI 5's `<label class="input">` wrapper around a bare `<input>` (see `ui/SearchInput`). No button-on-input layouts that produce separate floating hover shapes.
 - Every control has a visible label or an `aria-label`.
 - Field-level errors render as `text-error text-xs` micro-text under the control (`ui/Field` is the contract), not inside an alert.
-- Form-level errors render as an `alert alert-error` at the top.
+- Form-level errors render as an `alert alert-error` at the top. On a page form longer than the viewport, scroll it into view on failure (see `settings/indexes/CreateIndexForm`).
 - The global focus style in `app.css` replaces DaisyUI's 2px ring with a 1px `base-content` border shift. Same footprint, no visual jump. Don't add `focus:ring-*` to form controls.
 
 ### Page Composition

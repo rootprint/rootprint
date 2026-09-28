@@ -39,7 +39,7 @@
 				Query the log API programmatically. A key can read exactly what you can see.
 			</p>
 		</div>
-		<button class="btn btn-sm" onclick={() => (createOpen = true)}>
+		<button class="btn btn-ghost btn-sm" onclick={() => (createOpen = true)}>
 			<Plus class="size-3.5" aria-hidden="true" />
 			Create key
 		</button>

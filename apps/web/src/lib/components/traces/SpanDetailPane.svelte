@@ -174,7 +174,7 @@
 		</div>
 		<div class="flex shrink-0 items-center gap-1.5">
 			{#if logsHref}
-				<a href={logsHref} target="_blank" rel="noopener" class="btn btn-xs gap-1.5">
+				<a href={logsHref} target="_blank" rel="noopener" class="btn btn-ghost btn-xs gap-1.5">
 					<ScrollText class="size-3" aria-hidden="true" />
 					Logs for this span
 				</a>

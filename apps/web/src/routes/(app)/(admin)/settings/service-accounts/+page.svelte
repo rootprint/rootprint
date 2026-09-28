@@ -118,7 +118,7 @@
 	<div class="mt-12 flex flex-wrap items-center justify-between gap-4">
 		<h2 class="text-base font-medium">Service account keys</h2>
 		<button
-			class="btn btn-primary btn-sm"
+			class="btn btn-ghost btn-sm"
 			onclick={() => (keyCreateOpen = true)}
 			disabled={serviceAccounts.length === 0}
 			aria-describedby={serviceAccounts.length === 0

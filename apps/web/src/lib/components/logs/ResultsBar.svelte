@@ -33,7 +33,7 @@
 	<div class="ml-auto flex items-center gap-1">
 		<button
 			type="button"
-			class={['btn btn-xs btn-square', store.foldEnabled ? 'btn-primary' : 'btn-ghost']}
+			class={['btn btn-xs btn-square', store.foldEnabled ? 'btn-neutral btn-soft' : 'btn-ghost']}
 			aria-pressed={store.foldEnabled}
 			aria-label="Fold repeats"
 			title="Fold repeats"

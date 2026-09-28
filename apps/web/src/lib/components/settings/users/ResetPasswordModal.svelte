@@ -32,6 +32,7 @@
 	title="Reset password"
 	submitLabel="Reset password"
 	busyLabel="Resetting…"
+	destructive
 	{submit}
 	onclose={() => (inviteUrl = null)}
 >

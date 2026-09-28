@@ -105,7 +105,7 @@
 								href={step.linkOut.href}
 								target="_blank"
 								rel="noreferrer"
-								class="btn btn-outline btn-sm"
+								class="btn btn-ghost btn-sm"
 							>
 								{step.linkOut.label}
 								<ExternalLink class="size-3.5" aria-hidden="true" />

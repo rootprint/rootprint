@@ -10,6 +10,7 @@
 		title,
 		submitLabel,
 		busyLabel = 'Creating…',
+		destructive = false,
 		// a fieldless modal (confirm + reveal) validates nothing, so the cast has no output to widen
 		schema = v.object({}) as unknown as TSchema,
 		values = () => ({}),
@@ -22,6 +23,7 @@
 		title: string;
 		submitLabel: string;
 		busyLabel?: string;
+		destructive?: boolean;
 		schema?: TSchema;
 		values?: () => unknown;
 		submit: (input: v.InferOutput<TSchema>) => Promise<void>;
@@ -109,7 +111,12 @@
 			>
 				Cancel
 			</button>
-			<button form={formId} type="submit" class="btn btn-primary" disabled={submitting}>
+			<button
+				form={formId}
+				type="submit"
+				class={['btn', destructive ? 'btn-error' : 'btn-primary']}
+				disabled={submitting}
+			>
 				{submitting ? busyLabel : submitLabel}
 			</button>
 		{/if}

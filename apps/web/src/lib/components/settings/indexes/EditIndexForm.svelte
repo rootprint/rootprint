@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
 
@@ -47,6 +48,15 @@
 
 	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
+	let formError = $state<string | null>(null);
+	let alertEl = $state<HTMLElement>();
+
+	// the submit button sits below the alert on long forms, so bring the alert into view
+	async function showFormError(message: string) {
+		formError = message;
+		await tick();
+		alertEl?.scrollIntoView({ block: 'nearest' });
+	}
 
 	function buildInput(): UpdateQuickwitConfigInput {
 		return {
@@ -75,11 +85,12 @@
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
+		formError = null;
 
 		const parsed = v.safeParse(updateQuickwitConfigSchema, buildInput());
 		if (!parsed.success) {
 			fieldErrors = issuesToPathErrors(parsed.issues);
-			toast.error('Please fix the highlighted fields.');
+			await showFormError('Please fix the highlighted fields.');
 			return;
 		}
 
@@ -92,7 +103,7 @@
 		} catch (err) {
 			const formErrors = toFormErrors(err, 'Failed to update index configuration');
 			fieldErrors = formErrors.fieldErrors;
-			toast.error(formErrors.message);
+			await showFormError(formErrors.message);
 		} finally {
 			submitting = false;
 		}
@@ -106,6 +117,12 @@
 	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
+	{#if formError}
+		<div bind:this={alertEl} role="alert" class="alert alert-error mx-4 mt-4 text-sm">
+			{formError}
+		</div>
+	{/if}
+
 	<SettingsRow plain label="Immutable" hint="Quickwit forbids changing these after creation.">
 		<div class="flex flex-col gap-2 text-sm">
 			<div class="flex flex-col gap-1">

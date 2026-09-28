@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Info, TriangleAlert } from 'lucide-svelte';
+	import { tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
 
@@ -21,10 +22,20 @@
 	let form = $state(sourceDetailToForm(source));
 	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
+	let formError = $state<string | null>(null);
+	let alertEl = $state<HTMLElement>();
+
+	// the submit button sits below the alert on long forms, so bring the alert into view
+	async function showFormError(message: string) {
+		formError = message;
+		await tick();
+		alertEl?.scrollIntoView({ block: 'nearest' });
+	}
 
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
+		formError = null;
 
 		if (form.sourceType === 'kafka') {
 			const clientParams = parseClientParams(form.clientParamsJson);
@@ -37,7 +48,7 @@
 		const parsed = v.safeParse(updateSourceSchema, formToUpdateInput(form));
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
-			toast.error('Please fix the highlighted fields.');
+			await showFormError('Please fix the highlighted fields.');
 			return;
 		}
 
@@ -49,7 +60,7 @@
 		} catch (err) {
 			const formErrors = toFormErrors(err, 'Failed to update source');
 			fieldErrors = formErrors.fieldErrors;
-			toast.error(formErrors.message);
+			await showFormError(formErrors.message);
 		} finally {
 			submitting = false;
 		}
@@ -60,6 +71,12 @@
 	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
+	{#if formError}
+		<div bind:this={alertEl} role="alert" class="alert alert-error mx-4 mt-4 text-sm">
+			{formError}
+		</div>
+	{/if}
+
 	{#if source.hasUnsupportedConfig}
 		<div class="text-warning-ink flex items-start gap-2 px-4 py-3 text-xs">
 			<TriangleAlert class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />

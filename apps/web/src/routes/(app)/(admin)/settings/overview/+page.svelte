@@ -202,14 +202,14 @@
 					disabled={rawText === null}
 				/>
 				<button
-					class="btn btn-sm"
+					class="btn btn-ghost btn-sm"
 					onclick={loadRaw}
 					disabled={rawLoading}
 					title="Refresh raw metrics"
 				>
 					{rawLoading ? 'Loading…' : 'Refresh'}
 				</button>
-				<CopyButton text={rawText ?? ''} class="btn btn-sm" disabled={rawText === null}>
+				<CopyButton text={rawText ?? ''} class="btn btn-ghost btn-sm" disabled={rawText === null}>
 					Copy all
 				</CopyButton>
 			</div>

@@ -20,7 +20,7 @@
 		{value}
 		aria-label={ariaLabel}
 	/>
-	<CopyButton text={value} class="btn btn-sm btn-neutral" aria-label={buttonAriaLabel}
+	<CopyButton text={value} class="btn btn-ghost btn-sm" aria-label={buttonAriaLabel}
 		>Copy</CopyButton
 	>
 </div>

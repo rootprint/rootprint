@@ -214,7 +214,7 @@
 					<span class="label">Below ms</span>
 					<input name="maxMs" type="number" min="1" step="1" value={filters.maxMs ?? ''} />
 				</label>
-				<button type="submit" class="btn btn-xs">Apply</button>
+				<button type="submit" class="btn btn-ghost btn-xs">Apply</button>
 			</form>
 		{/if}
 		{#if rootErrors}

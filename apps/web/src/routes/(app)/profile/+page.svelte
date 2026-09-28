@@ -38,7 +38,9 @@
 						<p class="text-sm">Password</p>
 						<p class="text-muted text-xs">Change the password you use to sign in.</p>
 					</div>
-					<button class="btn btn-sm" onclick={() => (passwordOpen = true)}>Change password</button>
+					<button class="btn btn-ghost btn-sm" onclick={() => (passwordOpen = true)}
+						>Change password</button
+					>
 				</div>
 			{:else if data.hasPassword === 'unknown'}
 				<div class="border-line text-muted rounded-box border px-6 py-4 text-sm">

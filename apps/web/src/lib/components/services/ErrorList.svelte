@@ -187,7 +187,7 @@
 					<option value="none">No HTTP status</option>
 				</select>
 			</label>
-			<a class="btn btn-xs" href={tracesHref}>
+			<a class="btn btn-ghost btn-xs" href={tracesHref}>
 				<ChartNoAxesGantt class="size-3" aria-hidden="true" />Open in Traces
 			</a>
 		</div>
@@ -313,7 +313,7 @@
 		{:else if !atEnd}
 			<button
 				type="button"
-				class="btn btn-sm self-center"
+				class="btn btn-ghost btn-sm self-center"
 				disabled={loadingMore}
 				onclick={loadPage}
 			>

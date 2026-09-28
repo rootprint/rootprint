@@ -222,7 +222,7 @@
 		{:else if !atEnd && !queryFailure}
 			<button
 				type="button"
-				class="btn btn-sm self-center"
+				class="btn btn-ghost btn-sm self-center"
 				disabled={loading || loadingMore}
 				onclick={loadPage}
 			>

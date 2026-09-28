@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
 
@@ -16,10 +17,20 @@
 	let form = $state(emptySourceForm());
 	let submitting = $state(false);
 	let fieldErrors = $state<Record<string, string>>({});
+	let formError = $state<string | null>(null);
+	let alertEl = $state<HTMLElement>();
+
+	// the submit button sits below the alert on long forms, so bring the alert into view
+	async function showFormError(message: string) {
+		formError = message;
+		await tick();
+		alertEl?.scrollIntoView({ block: 'nearest' });
+	}
 
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
 		fieldErrors = {};
+		formError = null;
 
 		if (form.sourceType === 'kafka') {
 			const clientParams = parseClientParams(form.clientParamsJson);
@@ -32,7 +43,7 @@
 		const parsed = v.safeParse(createSourceSchema, formToCreateInput(form));
 		if (!parsed.success) {
 			fieldErrors = issuesToFieldErrors(parsed.issues);
-			toast.error('Please fix the highlighted fields.');
+			await showFormError('Please fix the highlighted fields.');
 			return;
 		}
 
@@ -45,7 +56,7 @@
 		} catch (err) {
 			const formErrors = toFormErrors(err, 'Failed to create source');
 			fieldErrors = formErrors.fieldErrors;
-			toast.error(formErrors.message);
+			await showFormError(formErrors.message);
 		} finally {
 			submitting = false;
 		}
@@ -56,6 +67,12 @@
 	{onsubmit}
 	class="border-line rounded-box bg-base-100 divide-line flex flex-col divide-y border"
 >
+	{#if formError}
+		<div bind:this={alertEl} role="alert" class="alert alert-error mx-4 mt-4 text-sm">
+			{formError}
+		</div>
+	{/if}
+
 	<SourceFields bind:form {fieldErrors} mode="create" />
 
 	<div class="flex justify-end gap-2 px-4 py-3">

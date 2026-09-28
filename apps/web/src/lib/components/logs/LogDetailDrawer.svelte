@@ -245,7 +245,7 @@
 		</CopyButton>
 		<a
 			href={traceDetailHref(id, { index: store.selectedIndex, returnTo: page.url })}
-			class="btn btn-xs btn-primary ml-auto"
+			class="btn btn-ghost btn-xs ml-auto"
 		>
 			<ExternalLink class="size-3" aria-hidden="true" />
 			Open trace page

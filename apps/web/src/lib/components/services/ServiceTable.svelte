@@ -93,7 +93,7 @@
 					<div class="join">
 						<button
 							type="button"
-							class="btn btn-sm btn-square join-item"
+							class="btn btn-ghost btn-sm btn-square join-item"
 							aria-label="Previous page"
 							title="Previous page"
 							disabled={pageIndex === 0}
@@ -103,7 +103,7 @@
 						</button>
 						<button
 							type="button"
-							class="btn btn-sm btn-square join-item"
+							class="btn btn-ghost btn-sm btn-square join-item"
 							aria-label="Next page"
 							title="Next page"
 							disabled={pageIndex >= lastPage}
