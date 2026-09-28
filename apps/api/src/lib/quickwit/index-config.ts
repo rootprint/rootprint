@@ -3,7 +3,7 @@ import type {
 	DocMapping,
 	FieldMapping,
 	IndexConfig as QuickwitIndexConfig
-} from 'quickwit-js';
+} from '@rootprint-io/quickwit-js';
 
 import type { DynamicMapping } from '../../types.js';
 import type { IndexField } from '../../schemas/responses/indexes.js';

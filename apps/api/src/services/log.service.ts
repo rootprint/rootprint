@@ -1,5 +1,5 @@
-import type { BucketAggregationResult, QuickwitClient } from 'quickwit-js';
-import { AggregationBuilder } from 'quickwit-js';
+import type { BucketAggregationResult, QuickwitClient } from '@rootprint-io/quickwit-js';
+import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT } from '../constants.js';

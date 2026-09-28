@@ -10,7 +10,7 @@ import { requestId as requestIdMiddleware } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { QuickwitError } from 'quickwit-js';
+import { QuickwitError } from '@rootprint-io/quickwit-js';
 
 import { config } from './config.js';
 import type { AppEnv, AuthedEnv } from './env.js';

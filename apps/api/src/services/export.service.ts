@@ -1,7 +1,7 @@
 import type { ExportFormat } from '../types.js';
 import type { IndexConfig } from './index.service.js';
 
-import { type QuickwitClient } from 'quickwit-js';
+import { type QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import { EXPORT_MAX_ROWS } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit/client.js';

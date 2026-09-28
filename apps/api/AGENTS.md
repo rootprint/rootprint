@@ -15,7 +15,7 @@ For repo-wide rules (Bun, Prettier, TS strict, tests policy), see the root `AGEN
 - ORM: Drizzle + `pg` (PostgreSQL)
 - Auth: Better Auth
 - Validation: Valibot
-- Quickwit client: `quickwit-js`
+- Quickwit client: `@rootprint-io/quickwit-js`
 - Protobuf codegen: buf + `@bufbuild/protoc-gen-es`
 
 ## Run, Build, Check

@@ -1,4 +1,4 @@
-import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
+import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import { logger } from '../lib/logger.js';
 import type { TraceResponse, TraceSpan } from '../types.js';

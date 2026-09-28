@@ -1,5 +1,5 @@
-import type { FieldMapping, IndexMetadata, QuickwitClient } from 'quickwit-js';
-import { NotFoundError, isFastFieldEnabled } from 'quickwit-js';
+import type { FieldMapping, IndexMetadata, QuickwitClient } from '@rootprint-io/quickwit-js';
+import { NotFoundError, isFastFieldEnabled } from '@rootprint-io/quickwit-js';
 import type { DynamicMapping } from '../types.js';
 import type { IndexField } from '../schemas/responses/indexes.js';
 

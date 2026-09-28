@@ -21,6 +21,7 @@
         "@better-auth/api-key": "^1.7.3",
         "@bufbuild/protobuf": "^2.14.1",
         "@hono/standard-validator": "^0.4.0",
+        "@rootprint-io/quickwit-js": "^0.5.0",
         "@valibot/to-json-schema": "^1.7.1",
         "better-auth": "^1.7.3",
         "dotenv": "^17.4.2",
@@ -30,7 +31,6 @@
         "hono-rate-limiter": "^0.5.4",
         "pg": "^8.23.0",
         "pino": "^10.3.1",
-        "quickwit-js": "^0.4.0",
         "valibot": "^1.4.2",
       },
       "devDependencies": {
@@ -294,6 +294,8 @@
     "@rolldown/binding-win32-x64-msvc": ["@rolldown/binding-win32-x64-msvc@1.1.5", "", { "os": "win32", "cpu": "x64" }, "sha512-tTZuDBPw85tEN5PQi1pnEBzDy0Z49HtScLAbD5t6hyeU92A95pRWaSMw1GZZi/RwgSgUIl0xrSlXIT/9QzvYSA=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
+
+    "@rootprint-io/quickwit-js": ["@rootprint-io/quickwit-js@0.5.0", "", {}, "sha512-oDzRfF0p8FAXNn6zT2UCkl2CEKwGf51zUUNExq46kT/5wL+yJPvM/vcd2MUdhdOTRJbCdnQmDo4lcPglmrwM0A=="],
 
     "@shikijs/core": ["@shikijs/core@4.4.3", "", { "dependencies": { "@shikijs/primitive": "4.4.3", "@shikijs/types": "4.4.3", "@shikijs/vscode-textmate": "^10.0.2", "@types/hast": "^3.0.5", "hast-util-to-html": "^9.0.5" } }, "sha512-QCR4q2ZO/ILJEuwiBMel4wdcTDb1JGwfjKTxPDF6x8ixOaluPrVqIn06C99AcRPhmYlBR56d/Fb+GN58GzExpg=="],
 
@@ -594,8 +596,6 @@
     "quansync": ["quansync@0.2.11", "", {}, "sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA=="],
 
     "quick-format-unescaped": ["quick-format-unescaped@4.0.4", "", {}, "sha512-tYC1Q1hgyRuHgloV/YXs2w15unPVh8qfu/qCTfhTYamaw7fyhumKa2yGpdSo87vY32rIclj+4fWYQXUMs9EHvg=="],
-
-    "quickwit-js": ["quickwit-js@0.4.0", "", {}, "sha512-onsQ044zf9V1gf29iwzM5bZ2zXQCDRVGpREKjdeEitxDvlbNlIZt1XEaSSUYxhdxK4N9t3yMxOyzTRs2Tr9awQ=="],
 
     "readdirp": ["readdirp@4.1.2", "", {}, "sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg=="],
 

@@ -1,4 +1,4 @@
-import { QuickwitClient, QuickwitError } from 'quickwit-js';
+import { QuickwitClient, QuickwitError } from '@rootprint-io/quickwit-js';
 
 import { config } from '../../config.js';
 

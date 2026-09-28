@@ -2,7 +2,12 @@ import { eq, inArray } from 'drizzle-orm';
 
 import type { IndexDetail, IndexSummary } from '../types.js';
 import type { IndexField, IndexViewConfig } from '../schemas/responses/indexes.js';
-import { NotFoundError, QuickwitError, QuickwitErrorCode, type QuickwitClient } from 'quickwit-js';
+import {
+	NotFoundError,
+	QuickwitError,
+	QuickwitErrorCode,
+	type QuickwitClient
+} from '@rootprint-io/quickwit-js';
 
 import type { Db } from '../lib/db.js';
 import { fetchFieldCaps } from '../lib/quickwit/field-caps.js';

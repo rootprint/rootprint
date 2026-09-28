@@ -1,4 +1,4 @@
-import { NotFoundError, QuickwitError, QuickwitErrorCode } from 'quickwit-js';
+import { NotFoundError, QuickwitError, QuickwitErrorCode } from '@rootprint-io/quickwit-js';
 
 import {
 	HttpError,

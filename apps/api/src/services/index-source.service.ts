@@ -5,7 +5,7 @@ import {
 	type QuickwitClient,
 	type SourceConfig,
 	type SourceConfigRequest
-} from 'quickwit-js';
+} from '@rootprint-io/quickwit-js';
 
 import type { IndexSource, SourceDetail } from '../types.js';
 import type { QuickwitIndexMetadata } from './quickwit-index.service.js';

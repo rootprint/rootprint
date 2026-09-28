@@ -1,11 +1,11 @@
-import { AggregationBuilder } from 'quickwit-js';
+import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 import type {
 	AggregationBucket,
 	BucketAggregationResult,
 	PercentilesAggregationResult,
 	QuickwitClient,
 	SearchResponse
-} from 'quickwit-js';
+} from '@rootprint-io/quickwit-js';
 
 import { DEPENDENCY_SPANS, ERROR_HTTP_STATUS_CLAUSES, ERROR_KIND_CLAUSES } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit/client.js';

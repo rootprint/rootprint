@@ -5,7 +5,7 @@ import {
 	type PercentilesAggregationResult,
 	type QuickwitClient,
 	type SearchResponse
-} from 'quickwit-js';
+} from '@rootprint-io/quickwit-js';
 
 import type { ExploreSort } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit/client.js';

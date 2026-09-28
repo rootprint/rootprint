@@ -42,6 +42,7 @@
 		"@better-auth/api-key": "^1.7.3",
 		"@bufbuild/protobuf": "^2.14.1",
 		"@hono/standard-validator": "^0.4.0",
+		"@rootprint-io/quickwit-js": "^0.5.0",
 		"@valibot/to-json-schema": "^1.7.1",
 		"better-auth": "^1.7.3",
 		"dotenv": "^17.4.2",
@@ -51,7 +52,6 @@
 		"hono-rate-limiter": "^0.5.4",
 		"pg": "^8.23.0",
 		"pino": "^10.3.1",
-		"quickwit-js": "^0.4.0",
 		"valibot": "^1.4.2"
 	},
 	"devDependencies": {

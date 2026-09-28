@@ -1,4 +1,4 @@
-import type { QuickwitClient } from 'quickwit-js';
+import type { QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import { config } from '../config.js';
 import type { Db } from '../lib/db.js';

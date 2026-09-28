@@ -1,9 +1,9 @@
-import { AggregationBuilder } from 'quickwit-js';
+import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 import type {
 	AggregationBucket,
 	BucketAggregationResult,
 	PercentilesAggregationResult
-} from 'quickwit-js';
+} from '@rootprint-io/quickwit-js';
 
 export function termsAgg(field: string, size: number) {
 	return AggregationBuilder.terms(field, { size, shardSize: size });

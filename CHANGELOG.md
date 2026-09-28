@@ -21,6 +21,7 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Settings is admin-only.** Members no longer see it in the sidebar.
 - **Services counts consumer and root spans as requests**, not only server spans, so queue workers and scheduled jobs appear. `GET /api/monitoring/services` numbers change accordingly; its response shape does not.
 - **The Services catalog is a sortable table**, worst error rate first, below the summary and charts. Links to `/services?service=<name>` redirect to the service's page.
+- **The Quickwit client is now `@rootprint-io/quickwit-js` 0.5**, the renamed `quickwit-js`. Every search now goes to Quickwit as a POST.
 
 ### Removed
 
