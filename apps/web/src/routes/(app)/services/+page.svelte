@@ -1,17 +1,11 @@
 <script lang="ts">
-	import { ERROR_HTTP_STATUSES, SPAN_KINDS } from 'api/constants';
 	import { ChartNoAxesGantt } from 'lucide-svelte';
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import type { ServiceHealth } from '$lib/api/monitoring';
 	import ApmSummary from '$lib/components/services/ApmSummary.svelte';
-	import DependencyTable from '$lib/components/services/DependencyTable.svelte';
-	import EndpointTable from '$lib/components/services/EndpointTable.svelte';
-	import ErrorList from '$lib/components/services/ErrorList.svelte';
 	import ErrorRateChart from '$lib/components/services/ErrorRateChart.svelte';
-	import RequestLatencyChart from '$lib/components/services/RequestLatencyChart.svelte';
 	import RequestRateChart from '$lib/components/services/RequestRateChart.svelte';
 	import ServiceLatencyChart from '$lib/components/services/ServiceLatencyChart.svelte';
 	import ServicePicker from '$lib/components/services/ServicePicker.svelte';
@@ -21,8 +15,7 @@
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '$lib/types';
-	import { formatCount } from '$lib/utils/format';
-	import { paramOneOf, setTimeRangeParams } from '$lib/utils/query-params';
+	import { servicesHref, setTimeRangeParams } from '$lib/utils/query-params';
 	import { exploreHref } from '$lib/utils/trace-params';
 
 	let { data } = $props();
@@ -31,127 +24,28 @@
 	const SYNC_KEY = 'service-health';
 
 	const xRange = $derived<[number, number]>([data.startTs, data.endTs]);
-	type DetailView = 'overview' | 'services' | 'endpoints' | 'dependencies' | 'errors';
-	type DetailTab = { id: DetailView; label: string; count?: string; error?: boolean };
-
-	const DETAIL_VIEWS = ['services', 'endpoints', 'dependencies', 'errors'] as const;
-
-	const activeView = $derived(
-		paramOneOf(page.url.searchParams.get('view'), DETAIL_VIEWS) ?? 'overview'
-	);
-	const errorOperation = $derived(page.url.searchParams.get('operation')?.trim() || null);
-	const errorKind = $derived(paramOneOf(page.url.searchParams.get('kind'), SPAN_KINDS));
-	const errorHttpStatus = $derived(
-		paramOneOf(page.url.searchParams.get('httpStatus'), ERROR_HTTP_STATUSES)
-	);
-	const tabsetId = $props.id();
-	const panelId = `${tabsetId}-panel`;
-
-	function detailTabs(service: string | null, health: ServiceHealth): DetailTab[] {
-		const tabs: DetailTab[] = [{ id: 'overview', label: 'Overview' }];
-		if (service === null) {
-			tabs.push({
-				id: 'services',
-				label: 'Services',
-				count: `${health.services.length}${health.servicesTruncated ? '+' : ''}`
-			});
-		}
-		tabs.push({ id: 'endpoints', label: 'Endpoints' });
-		if (service !== null && health.dependencies.length > 0) {
-			tabs.push({ id: 'dependencies', label: 'Dependencies' });
-		}
-		tabs.push({
-			id: 'errors',
-			label: 'Errors',
-			count: formatCount(health.summary.errorSpans),
-			error: health.summary.errorSpans > 0
-		});
-		return tabs;
-	}
-
-	function navigate(mutate: (params: URLSearchParams) => void, replaceState = false) {
-		const url = new URL(page.url);
-		mutate(url.searchParams);
-		goto(url, { keepFocus: true, noScroll: true, replaceState });
-	}
 
 	function setRange(next: TimeRange) {
-		navigate((params) => setTimeRangeParams(params, next));
-	}
-
-	function setService(value: string) {
-		navigate((params) => {
-			if (value === '') params.delete('service');
-			else params.set('service', value);
-			params.delete('operation');
-			if (
-				(activeView === 'services' && value !== '') ||
-				(activeView === 'dependencies' && value === '')
-			) {
-				params.delete('view');
-			}
-		});
-	}
-
-	function setView(view: DetailView) {
-		navigate((params) => {
-			if (view === 'overview') params.delete('view');
-			else params.set('view', view);
-		}, true);
-	}
-
-	function setErrorFilter(name: 'operation' | 'kind' | 'httpStatus', value: string | null) {
-		navigate((params) => {
-			if (value === null) params.delete(name);
-			else params.set(name, value);
-		}, true);
-	}
-
-	function clearErrorFilters() {
-		navigate((params) => {
-			params.delete('operation');
-			params.delete('kind');
-			params.delete('httpStatus');
-		}, true);
+		const url = new URL(page.url);
+		setTimeRangeParams(url.searchParams, next);
+		void goto(url, { keepFocus: true, noScroll: true });
 	}
 
 	function brushRange(startTs: number, endTs: number) {
 		setRange({ type: 'absolute', start: startTs, end: endTs });
 	}
 
-	function handleTabKeydown(event: KeyboardEvent) {
-		if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-		const tablist = event.currentTarget as HTMLElement;
-		const buttons = Array.from(tablist.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-		const current = (event.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
-		const index = current === null ? -1 : buttons.indexOf(current);
-		if (index < 0) return;
-		event.preventDefault();
-		const nextIndex =
-			event.key === 'Home'
-				? 0
-				: event.key === 'End'
-					? buttons.length - 1
-					: event.key === 'ArrowRight'
-						? (index + 1) % buttons.length
-						: (index - 1 + buttons.length) % buttons.length;
-		const next = buttons[nextIndex];
-		setView(next.dataset.view as DetailView);
-		next.focus();
+	function openService(service: string) {
+		if (service !== '') void goto(servicesHref(page.url, service));
 	}
 </script>
 
 {#snippet toolbar(serviceNames: string[])}
 	<PageToolbar>
-		<ServicePicker
-			services={serviceNames}
-			value={data.service}
-			onChange={setService}
-			showLabel={false}
-		/>
+		<ServicePicker services={serviceNames} value={null} onChange={openService} showLabel={false} />
 		<div class="ml-auto flex items-center gap-2">
 			<TimeRangePicker value={data.timeRange} onChange={setRange} />
-			<a class="btn btn-sm" href={exploreHref(page.url, { service: data.service })}>
+			<a class="btn btn-sm" href={exploreHref(page.url, {})}>
 				<ChartNoAxesGantt class="size-3.5" aria-hidden="true" />View traces
 			</a>
 		</div>
@@ -168,167 +62,69 @@
 		{@render toolbar([])}
 	{/await}
 
-	<div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-8 py-6 lg:px-10 lg:py-8">
+	<div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-5">
 		{#await data.health}
 			<div class="flex flex-col gap-5" role="status" aria-label="Loading service health">
 				<div class="skeleton h-24 w-full"></div>
-				<div class="skeleton h-9 w-full"></div>
-				<div class="grid gap-4 lg:grid-cols-2">
-					<div class="skeleton h-64"></div>
-					<div class="skeleton h-64"></div>
-				</div>
+				<div class="skeleton h-48 w-full"></div>
+				<div class="skeleton h-64 w-full"></div>
 				<span class="sr-only">Loading service health</span>
 			</div>
 		{:then health}
-			<div class="flex flex-col gap-5">
-				{#if health.telemetryStatus === 'span_store_missing'}
-					<EmptyPanel title="Trace telemetry unavailable">
-						The configured span store could not be found. Check trace storage configuration and
-						ingestion.
-					</EmptyPanel>
-				{:else}
-					{@const noTraffic =
-						health.summary.requests === 0 &&
-						health.dependencies.length === 0 &&
-						health.summary.errorSpans === 0}
-					{@const tabs = detailTabs(data.service, health)}
-					{@const currentView = tabs.some((tab) => tab.id === activeView) ? activeView : 'overview'}
-					<ApmSummary
-						service={data.service}
-						services={health.services}
-						summary={health.summary}
-						{xRange}
-					/>
+			{#if health.telemetryStatus === 'span_store_missing'}
+				<EmptyPanel title="Trace telemetry unavailable">
+					The configured span store could not be found. Check trace storage configuration and
+					ingestion.
+				</EmptyPanel>
+			{:else}
+				<div class="flex flex-col gap-5">
+					<ApmSummary service={null} services={health.services} summary={health.summary} {xRange} />
 
-					{#if data.service === null && health.servicesTruncated}
+					{#if health.servicesTruncated}
 						<p class="text-warning-ink -mt-3 text-xs">
 							Showing the {health.services.length} most active services.
 						</p>
 					{/if}
 
-					<div
-						class="border-b-line flex min-w-0 overflow-x-auto border-b"
-						role="tablist"
-						aria-label="Service details"
-						tabindex={-1}
-						onkeydown={handleTabKeydown}
-					>
-						{#each tabs as tab (tab.id)}
-							<button
-								type="button"
-								role="tab"
-								id={`${tabsetId}-${tab.id}`}
-								data-view={tab.id}
-								aria-controls={panelId}
-								aria-selected={currentView === tab.id}
-								tabindex={currentView === tab.id ? 0 : -1}
-								class="tab-underline h-9 shrink-0 px-3 text-xs"
-								onclick={() => setView(tab.id)}
-							>
-								{tab.label}
-								{#if tab.count !== undefined}
-									<span class={['ml-1 tabular-nums', tab.error ? 'text-error' : 'text-subtle']}
-										>{tab.count}</span
-									>
-								{/if}
-							</button>
-						{/each}
-					</div>
-
-					<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${currentView}`}>
-						{#if currentView === 'overview'}
-							{#if noTraffic}
-								<EmptyPanel title="No request traffic">
-									{#if data.service === null}
-										No server spans were received in this time range. Try a wider range or verify
-										trace ingestion.
-									{:else}
-										No server spans were received for <span class="font-mono">{data.service}</span> in
-										this time range.
-									{/if}
-								</EmptyPanel>
-							{:else if data.service === null}
-								<div class="flex flex-col gap-4">
-									<ServiceLatencyChart
-										services={health.serviceLatencies}
-										keysMs={health.latencyKeysMs}
-										{xRange}
-										syncKey={SYNC_KEY}
-										onBrush={brushRange}
-										height={190}
-									/>
-									<div class="grid gap-4 lg:grid-cols-2">
-										<RequestRateChart
-											buckets={health.buckets}
-											summary={health.summary}
-											intervalSeconds={health.intervalSeconds}
-											{xRange}
-											syncKey={SYNC_KEY}
-											onBrush={brushRange}
-											height={180}
-										/>
-										<ErrorRateChart
-											buckets={health.buckets}
-											summary={health.summary}
-											{xRange}
-											syncKey={SYNC_KEY}
-											onBrush={brushRange}
-											height={180}
-										/>
-									</div>
-								</div>
-							{:else}
-								<div class="grid gap-4 xl:grid-cols-3">
-									<RequestRateChart
-										buckets={health.buckets}
-										summary={health.summary}
-										intervalSeconds={health.intervalSeconds}
-										{xRange}
-										syncKey={SYNC_KEY}
-										onBrush={brushRange}
-										height={190}
-									/>
-									<ErrorRateChart
-										buckets={health.buckets}
-										summary={health.summary}
-										{xRange}
-										syncKey={SYNC_KEY}
-										onBrush={brushRange}
-										height={190}
-									/>
-									<RequestLatencyChart
-										buckets={health.buckets}
-										summary={health.summary}
-										{xRange}
-										syncKey={SYNC_KEY}
-										onBrush={brushRange}
-										height={190}
-									/>
-								</div>
-							{/if}
-						{:else if currentView === 'services' && data.service === null}
-							<ServiceTable services={health.services} onSelect={setService} />
-						{:else if currentView === 'endpoints'}
-							<EndpointTable endpoints={health.endpoints} showService={data.service === null} />
-						{:else if currentView === 'dependencies' && data.service !== null}
-							<DependencyTable dependencies={health.dependencies} service={data.service} />
-						{:else if currentView === 'errors'}
-							<ErrorList
-								operations={health.failingOperations}
-								service={data.service}
-								startTs={data.startTs}
-								endTs={data.endTs}
-								showService={data.service === null}
-								operation={errorOperation}
-								kind={errorKind}
-								httpStatus={errorHttpStatus}
-								onFilterChange={setErrorFilter}
-								onClearFilters={clearErrorFilters}
+					{#if health.summary.requests === 0}
+						<EmptyPanel title="No request traffic">
+							No requests were received in this time range. Try a wider range or verify trace
+							ingestion.
+						</EmptyPanel>
+					{:else}
+						<div class="flex flex-col gap-4">
+							<ServiceLatencyChart
+								services={health.serviceLatencies}
+								keysMs={health.latencyKeysMs}
+								{xRange}
+								syncKey={SYNC_KEY}
+								onBrush={brushRange}
+								height={190}
 							/>
-						{/if}
-					</div>
-				{/if}
-			</div>
+							<div class="grid gap-4 lg:grid-cols-2">
+								<RequestRateChart
+									buckets={health.buckets}
+									summary={health.summary}
+									intervalSeconds={health.intervalSeconds}
+									{xRange}
+									syncKey={SYNC_KEY}
+									onBrush={brushRange}
+									height={180}
+								/>
+								<ErrorRateChart
+									buckets={health.buckets}
+									summary={health.summary}
+									{xRange}
+									syncKey={SYNC_KEY}
+									onBrush={brushRange}
+									height={180}
+								/>
+							</div>
+						</div>
+						<ServiceTable services={health.services} />
+					{/if}
+				</div>
+			{/if}
 		{:catch error}
 			<PanelError message="Couldn't load service health" {error} />
 		{/await}

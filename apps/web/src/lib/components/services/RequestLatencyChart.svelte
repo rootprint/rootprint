@@ -25,7 +25,7 @@
 
 <UplotLinePanel
 	title="Request latency"
-	description="Duration distribution for server spans in each interval."
+	description="Request duration distribution in each interval."
 	summary={`p95 ${formatDurationMs(summary.p95)}`}
 	{xs}
 	{xRange}

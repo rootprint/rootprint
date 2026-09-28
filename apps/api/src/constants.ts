@@ -54,6 +54,8 @@ export const ERROR_HTTP_STATUS_CLAUSES: Record<(typeof ERROR_HTTP_STATUSES)[numb
 	none: `NOT (${HTTP_RESPONSE_STATUS_FIELD}:* OR ${HTTP_STATUS_FIELD}:*)`
 };
 
+export const DEPENDENCY_SPANS = 'span_kind:IN [3 4]';
+
 export const ERROR_PAGE_SIZE = 50;
 export const MAX_ERROR_LIMIT = 100;
 

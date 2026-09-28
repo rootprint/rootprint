@@ -39,7 +39,7 @@
 
 <UplotLinePanel
 	title="Request rate"
-	description="Server spans normalized to requests per minute."
+	description="Requests per minute."
 	summary={`avg ${formatPerMin(averageRate)}`}
 	{xs}
 	{xRange}

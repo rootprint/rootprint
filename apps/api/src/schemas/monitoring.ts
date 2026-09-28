@@ -35,8 +35,9 @@ export const ServiceHealthQuery = v.pipe(
 		startTs: v.pipe(intParam({ min: 0, label: 'startTs' }), v.description(EPOCH_SECONDS)),
 		endTs: v.pipe(intParam({ min: 0, label: 'endTs' }), v.description(EPOCH_SECONDS)),
 		interval: intervalParam,
+		/** 0 skips the endpoint searches, for views that don't show endpoints. */
 		endpointLimit: v.optional(
-			intParam({ min: 1, max: MAX_ENDPOINT_LIMIT, label: 'endpointLimit' }),
+			intParam({ min: 0, max: MAX_ENDPOINT_LIMIT, label: 'endpointLimit' }),
 			'10'
 		)
 	}),

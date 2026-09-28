@@ -1799,6 +1799,9 @@
 			},
 			"MonitoringEndpoint": {
 				"properties": {
+					"errors": {
+						"type": "number"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -1852,6 +1855,7 @@
 					"operation",
 					"query",
 					"requests",
+					"errors",
 					"totalMillis",
 					"p50",
 					"p95"
@@ -15253,7 +15257,7 @@
 						"schema": {
 							"default": "10",
 							"maximum": 100,
-							"minimum": 1,
+							"minimum": 0,
 							"pattern": "^\\d+$",
 							"type": "integer"
 						}

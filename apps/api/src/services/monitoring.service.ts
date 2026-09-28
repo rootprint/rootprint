@@ -7,7 +7,7 @@ import type {
 	SearchResponse
 } from 'quickwit-js';
 
-import { ERROR_HTTP_STATUS_CLAUSES, ERROR_KIND_CLAUSES } from '../constants.js';
+import { DEPENDENCY_SPANS, ERROR_HTTP_STATUS_CLAUSES, ERROR_KIND_CLAUSES } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { escapeFilterValue } from '../lib/quickwit/query.js';
 import {
@@ -46,14 +46,17 @@ import {
 	NAME_FIELD,
 	NANOS_PER_MILLI,
 	orEmptyStore,
+	ROOT_SPANS,
 	SERVICE_FIELD,
 	SPAN_KIND_TAGS,
 	TIMESTAMP_FIELD
 } from './trace.service.js';
 
-/** SpanKind 2 is SERVER: one span per inbound request. */
-const SERVER_SPANS = 'span_kind:2';
-const DEPENDENCY_SPANS = 'span_kind:IN [3 4]';
+/**
+ * One span per request a service handles: an inbound call (SERVER, 2), a consumed message
+ * (CONSUMER, 5), or a trace the service starts itself (root).
+ */
+const ENTRY_SPANS = `(span_kind:IN [2 5] OR ${ROOT_SPANS})`;
 
 const HTTP_ROUTE_FIELD = 'span_attributes.http.route';
 const URL_PATH_FIELD = 'span_attributes.url.path';
@@ -196,12 +199,14 @@ function endpointRow(
 	field: string,
 	value: string,
 	spanName: string,
-	nameBucket: AggregationBucket
+	nameBucket: AggregationBucket,
+	errorCounts: Map<string, number>
 ): MonitoringEndpoint {
 	const sourceIndex = ENDPOINT_SOURCES.findIndex((source) => source.field === field);
-	const sourceQuery = endpointSourceQuery(SERVER_SPANS, sourceIndex);
+	const sourceQuery = endpointSourceQuery(ENTRY_SPANS, sourceIndex);
+	const id = JSON.stringify([service, field, value, spanName]);
 	return {
-		id: JSON.stringify([service, field, value, spanName]),
+		id,
 		service,
 		name: endpointLabel(field, value, spanName),
 		routeAvailable: field !== NAME_FIELD || !isHttpMethod(spanName),
@@ -211,6 +216,7 @@ function endpointRow(
 				? sourceQuery
 				: `${sourceQuery} AND ${field}:${escapeFilterValue(value)}`,
 		requests: nameBucket.doc_count,
+		errors: Math.min(nameBucket.doc_count, errorCounts.get(id) ?? 0),
 		totalMillis: metric(nameBucket, 'total') ?? 0,
 		p50: percentile(nameBucket, P50),
 		p95: percentile(nameBucket, P95)
@@ -220,7 +226,8 @@ function endpointRow(
 function endpointRows(
 	field: string,
 	buckets: AggregationBucket[],
-	service: string | undefined
+	service: string | undefined,
+	errorCounts: Map<string, number>
 ): MonitoringEndpoint[] {
 	return buckets.flatMap((endpoint) => {
 		const value = String(endpoint.key);
@@ -234,9 +241,9 @@ function endpointRows(
 				: [[service, endpoint]];
 		return perService.flatMap(([serviceName, bucket]) =>
 			field === NAME_FIELD
-				? [endpointRow(serviceName, field, value, value, bucket)]
+				? [endpointRow(serviceName, field, value, value, bucket, errorCounts)]
 				: asBuckets(bucket['names'] as BucketAggregationResult | undefined).map((name) =>
-						endpointRow(serviceName, field, value, String(name.key), name)
+						endpointRow(serviceName, field, value, String(name.key), name, errorCounts)
 					)
 		);
 	});
@@ -244,19 +251,25 @@ function endpointRows(
 
 function preferredEndpoints(
 	responses: SearchResponse[],
+	errorResponses: SearchResponse[],
 	service: string | undefined,
 	limit: number
 ): MonitoringEndpoint[] {
-	const rows = ENDPOINT_SOURCES.flatMap((source, index) =>
-		endpointRows(
-			source.field,
-			asBuckets(
-				responses[index]?.aggregations?.[source.key] as BucketAggregationResult | undefined
-			),
-			service
-		)
+	const rowsOf = (results: SearchResponse[], errorCounts: Map<string, number>) =>
+		ENDPOINT_SOURCES.flatMap((source, index) =>
+			endpointRows(
+				source.field,
+				asBuckets(
+					results[index]?.aggregations?.[source.key] as BucketAggregationResult | undefined
+				),
+				service,
+				errorCounts
+			)
+		);
+	const errorCounts = new Map(
+		rowsOf(errorResponses, new Map()).map((row) => [row.id, row.requests])
 	);
-	return rows
+	return rowsOf(responses, errorCounts)
 		.filter((endpoint) => endpoint.service !== '' && endpoint.name !== '')
 		.toSorted((a, b) => b.totalMillis - a.totalMillis)
 		.slice(0, limit);
@@ -323,8 +336,8 @@ function serviceLatenciesOf(services: AggregationBucket[]): MonitoringServiceLat
 
 export function serviceHealthQuery(service: string | undefined): string {
 	return service === undefined
-		? SERVER_SPANS
-		: `${SERVER_SPANS} AND ${SERVICE_FIELD}:${escapeFilterValue(service)}`;
+		? ENTRY_SPANS
+		: `${ENTRY_SPANS} AND ${SERVICE_FIELD}:${escapeFilterValue(service)}`;
 }
 
 export function serviceErrorsQuery(
@@ -379,40 +392,36 @@ export async function getServiceHealth(
 		extendedBounds: { min: startTs * 1000, max: endTs * 1000 }
 	};
 
+	// One service's row is its `summary`, so its page searches only every name, for the picker.
 	const servicesQuery = idx
-		.query(scope)
+		.query(service === undefined ? scope : ENTRY_SPANS)
 		.limit(0)
-		.agg(
-			'services',
-			AggregationBuilder.terms(SERVICE_FIELD, {
-				size: SERVICE_LIMIT,
-				shardSize: SERVICE_LIMIT,
-				aggs: durations
-			})
-		)
 		.timeRange(...timeRange);
-	const serviceNamesQuery =
-		service === undefined
-			? undefined
-			: idx
-					.query(SERVER_SPANS)
-					.limit(0)
-					.agg('service_names', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
-					.timeRange(...timeRange);
 	if (service === undefined) {
-		servicesQuery.agg(
-			'service_time',
-			AggregationBuilder.terms(SERVICE_FIELD, {
-				size: SERVICE_CHART_LIMIT,
-				shardSize: SERVICE_CHART_LIMIT,
-				aggs: {
-					time: AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, {
-						...histogramBounds,
-						aggs: durations
-					})
-				}
-			})
-		);
+		servicesQuery
+			.agg(
+				'services',
+				AggregationBuilder.terms(SERVICE_FIELD, {
+					size: SERVICE_LIMIT,
+					shardSize: SERVICE_LIMIT,
+					aggs: durations
+				})
+			)
+			.agg(
+				'service_time',
+				AggregationBuilder.terms(SERVICE_FIELD, {
+					size: SERVICE_CHART_LIMIT,
+					shardSize: SERVICE_CHART_LIMIT,
+					aggs: {
+						time: AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, {
+							...histogramBounds,
+							aggs: durations
+						})
+					}
+				})
+			);
+	} else {
+		servicesQuery.agg('services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT));
 	}
 	// The all-services view charts p95 per service instead, so aggregate latency would be discarded.
 	const totalsQuery = idx
@@ -442,8 +451,10 @@ export async function getServiceHealth(
 		.query(errorScope)
 		.limit(0)
 		.agg('time', AggregationBuilder.dateHistogram(TIMESTAMP_FIELD, interval, histogramBounds))
-		.agg('error_services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT))
 		.timeRange(...timeRange);
+	if (service === undefined) {
+		errorsQuery.agg('error_services', termsAgg(SERVICE_FIELD, SERVICE_LIMIT));
+	}
 	// Deliberately service-scoped only: this is the unfiltered total the Errors tab narrows down
 	// from, so it must not follow the tab's own kind/httpStatus/operation filters.
 	// why: num_hits becomes summary.errorSpans, which gates the Errors tab's badge and empty state,
@@ -474,18 +485,24 @@ export async function getServiceHealth(
 						})
 					)
 					.timeRange(...timeRange);
-	const endpointQueries = ENDPOINT_SOURCES.map((source, index) =>
-		idx
-			.query(endpointSourceQuery(scope, index))
-			.limit(0)
-			.agg(source.key, endpointAggregation(source.field, service === undefined))
-			.timeRange(...timeRange)
-	);
+	const endpointSearches = (base: string) =>
+		(params.endpointLimit === 0 ? [] : ENDPOINT_SOURCES).map((source, index) =>
+			idx
+				.query(endpointSourceQuery(base, index))
+				.limit(0)
+				.agg(source.key, endpointAggregation(source.field, service === undefined))
+				.timeRange(...timeRange)
+		);
+	const endpointQueries = endpointSearches(scope);
+	// Quickwit has no `filter` aggregation, so each operation's errors come from the same searches
+	// over failing spans only, matched back to rows by id.
+	// ponytail: a row outside its source's top 100 failing values (by time) reads 0 errors.
+	const endpointErrorQueries = endpointSearches(errorScope);
 
 	const responses = await Promise.all([
 		idx.search(servicesQuery),
-		serviceNamesQuery === undefined ? undefined : idx.search(serviceNamesQuery),
 		Promise.all(endpointQueries.map((query) => idx.search(query))),
+		Promise.all(endpointErrorQueries.map((query) => idx.search(query))),
 		idx.search(errorsQuery),
 		idx.search(totalsQuery),
 		dependencyQuery === undefined ? undefined : idx.search(dependencyQuery),
@@ -510,8 +527,8 @@ export async function getServiceHealth(
 
 	const [
 		servicesResponse,
-		serviceNamesResponse,
 		endpointResponses,
+		endpointErrorResponses,
 		errorsResponse,
 		totalsResponse,
 		dependencyResponse,
@@ -519,11 +536,6 @@ export async function getServiceHealth(
 	] = responses;
 	const servicesAgg = servicesResponse.aggregations?.['services'] as
 		BucketAggregationResult | undefined;
-	const serviceNamesAgg =
-		service === undefined
-			? servicesAgg
-			: (serviceNamesResponse?.aggregations?.['service_names'] as
-					BucketAggregationResult | undefined);
 	const totalBuckets = asBuckets(
 		totalsResponse.aggregations?.['time'] as BucketAggregationResult | undefined
 	);
@@ -531,39 +543,55 @@ export async function getServiceHealth(
 		errorsResponse.aggregations?.['time'] as BucketAggregationResult | undefined
 	);
 	const buckets = mergeTimeBuckets(totalBuckets, errorBuckets);
-	const summary = totalsResponse.aggregations?.['summary'] as
+	const summaryPct = totalsResponse.aggregations?.['summary'] as
 		PercentilesAggregationResult | undefined;
-	const services = asBuckets(servicesAgg);
+	const summary = {
+		requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
+		errors: buckets.reduce((sum, bucket) => sum + bucket.errors, 0),
+		errorSpans: allErrorsResponse.num_hits,
+		p50: summaryPercentile(summaryPct, P50),
+		p95: summaryPercentile(summaryPct, P95)
+	};
 	const serviceTimeBuckets = asBuckets(
 		servicesResponse.aggregations?.['service_time'] as BucketAggregationResult | undefined
 	);
 
 	return {
 		telemetryStatus: 'available',
-		services: serviceRowsOf(
-			services,
-			asBuckets(
-				errorsResponse.aggregations?.['error_services'] as BucketAggregationResult | undefined
-			)
-		),
-		serviceNames: asBuckets(serviceNamesAgg)
+		services:
+			service === undefined
+				? serviceRowsOf(
+						asBuckets(servicesAgg),
+						asBuckets(
+							errorsResponse.aggregations?.['error_services'] as BucketAggregationResult | undefined
+						)
+					)
+				: [
+						{
+							name: service,
+							requests: summary.requests,
+							errors: summary.errors,
+							p50: summary.p50,
+							p95: summary.p95
+						}
+					],
+		serviceNames: asBuckets(servicesAgg)
 			.map((entry) => String(entry.key))
 			.filter((name) => name !== ''),
-		servicesTruncated: (serviceNamesAgg?.sum_other_doc_count ?? 0) > 0,
+		servicesTruncated: (servicesAgg?.sum_other_doc_count ?? 0) > 0,
 		intervalSeconds: intervalSec,
-		summary: {
-			requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
-			errors: buckets.reduce((sum, bucket) => sum + bucket.errors, 0),
-			errorSpans: allErrorsResponse.num_hits,
-			p50: summaryPercentile(summary, P50),
-			p95: summaryPercentile(summary, P95)
-		},
+		summary,
 		buckets,
 		latencyKeysMs: asBuckets(
 			serviceTimeBuckets[0]?.['time'] as BucketAggregationResult | undefined
 		).map((bucket) => Number(bucket.key)),
 		serviceLatencies: serviceLatenciesOf(serviceTimeBuckets),
-		endpoints: preferredEndpoints(endpointResponses, service, params.endpointLimit),
+		endpoints: preferredEndpoints(
+			endpointResponses,
+			endpointErrorResponses,
+			service,
+			params.endpointLimit
+		),
 		failingOperations: failingOperationsOf(
 			asBuckets(
 				allErrorsResponse.aggregations?.['error_ops'] as BucketAggregationResult | undefined

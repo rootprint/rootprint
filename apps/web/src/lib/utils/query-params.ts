@@ -140,3 +140,26 @@ export function buildQueryUrl(
 	const str = params.toString();
 	return str ? `?${str}` : '?';
 }
+
+/** A fresh param set holding only the current `from`/`to`, for links that keep the time range. */
+export function timeRangeParams(current: URL): URLSearchParams {
+	const params = new URLSearchParams();
+	for (const key of ['from', 'to']) {
+		const value = current.searchParams.get(key);
+		if (value !== null) params.set(key, value);
+	}
+	return params;
+}
+
+/** The Services catalog, or one service's page, keeping the current time range. */
+export function servicesHref(
+	current: URL,
+	service: string | null,
+	tab: string | null = null
+): string {
+	const params = timeRangeParams(current);
+	if (tab !== null) params.set('tab', tab);
+	const path = service === null ? '/services' : `/services/${encodeURIComponent(service)}`;
+	const query = params.toString();
+	return query ? `${path}?${query}` : path;
+}

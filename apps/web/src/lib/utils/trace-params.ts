@@ -1,5 +1,7 @@
 import type { ExploreStatus } from 'api/constants';
 
+import { timeRangeParams } from '$lib/utils/query-params';
+
 export type TraceOrigin = 'traces' | 'services' | 'logs';
 
 /** The page a trace was opened from, by its `returnTo`; anything else is the log explorer. */
@@ -40,11 +42,7 @@ export type ExploreLinkFilters = Partial<Record<'service' | 'operation' | 'q', s
 };
 
 export function exploreHref(current: URL, filters: ExploreLinkFilters): string {
-	const params = new URLSearchParams();
-	for (const key of ['from', 'to']) {
-		const value = current.searchParams.get(key);
-		if (value !== null) params.set(key, value);
-	}
+	const params = timeRangeParams(current);
 	for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
 	const query = params.toString();
 	return query ? `/traces?${query}` : '/traces';

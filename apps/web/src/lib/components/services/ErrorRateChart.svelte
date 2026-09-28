@@ -31,7 +31,7 @@
 
 <UplotLinePanel
 	title="Error rate"
-	description="Share of server spans reporting an error status."
+	description="Share of requests reporting an error status."
 	summary={formatPercent(errorRate)}
 	{xs}
 	{xRange}

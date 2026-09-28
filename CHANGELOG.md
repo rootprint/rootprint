@@ -9,6 +9,8 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 ### Added
 
 - **GitHub** link in the sidebar, below Help, with the repository's star count. The count is baked in when the image is built, so the app never contacts GitHub.
+- **Service pages.** Each service has its own page at `/services/<name>` with Overview, Operations, Dependencies and Errors tabs. Operations and dependencies link to matching traces.
+- **Error rate per operation** on a service's Operations tab.
 
 ### Changed
 
@@ -17,6 +19,12 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Send data** (formerly **Settings → Send logs & traces**) is a sidebar entry for admins, at `/send-data`.
 - **Send data guides start with the ingest key.** You pick or create the key in step 1, and the snippets use it. The last step opens Logs or the trace explorer, and the catalog groups the nine integrations by kind.
 - **Settings is admin-only.** Members no longer see it in the sidebar.
+- **Services counts consumer and root spans as requests**, not only server spans, so queue workers and scheduled jobs appear. `GET /api/monitoring/services` numbers change accordingly; its response shape does not.
+- **The Services catalog is a sortable table**, worst error rate first, below the summary and charts. Links to `/services?service=<name>` redirect to the service's page.
+
+### Removed
+
+- **Cross-service Endpoints and Errors tabs** on Services. Use the trace explorer's Operations tab, or a service's Errors tab.
 
 ### Fixed
 

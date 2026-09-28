@@ -28,6 +28,7 @@ export const MonitoringEndpointSchema = named(
 		/** Quickwit clause for exactly the spans this row counts, beyond its service and operation. */
 		query: v.string(),
 		requests: v.number(),
+		errors: v.number(),
 		totalMillis: v.number(),
 		p50: v.nullable(v.number()),
 		p95: v.nullable(v.number())

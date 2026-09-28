@@ -3,17 +3,15 @@
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
 	import TracesLink from '$lib/components/ui/TracesLink.svelte';
-	import { formatCount, formatDurationMs } from '$lib/utils/format';
+	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
 	import { readString, writeString } from '$lib/utils/safe-storage';
 
 	type Props = {
 		/** Already ranked and capped at `LIMITS`' largest entry by the API. */
 		endpoints: ServiceHealthEndpoint[];
-		/** Off when the view is already scoped to one service. */
-		showService: boolean;
 	};
 
-	let { endpoints, showService }: Props = $props();
+	let { endpoints }: Props = $props();
 
 	const LIMITS = [10, 20, 30] as const;
 	const STORAGE_KEY = 'rootprint:endpoint-rows';
@@ -32,7 +30,7 @@
 <section class="flex flex-col gap-2" aria-labelledby="endpoint-heading">
 	<div class="flex flex-wrap items-end justify-between gap-3">
 		<div>
-			<h2 id="endpoint-heading" class="section-label">Highest-impact endpoints</h2>
+			<h2 id="endpoint-heading" class="section-label">Operations</h2>
 			<p class="text-muted mt-1 text-xs">
 				Ranked by total time spent handling requests in the selected range.
 			</p>
@@ -40,17 +38,18 @@
 		<RowLimitSelector value={limit} options={LIMITS} onChange={selectLimit} />
 	</div>
 	{#if endpoints.length === 0}
-		<EmptyPanel title="Endpoint data unavailable">
-			Server spans were found, but no endpoint operation names were recorded.
+		<EmptyPanel title="No request traffic">
+			No requests were received in this time range.
 		</EmptyPanel>
 	{:else}
 		<div class="border-line rounded-box overflow-x-auto border">
-			<table class="table-xs table min-w-[680px] text-xs">
+			<table class="table-xs table min-w-[760px] text-xs">
 				<thead>
 					<tr class="bg-base-200/70 text-muted font-medium">
 						<th scope="col" class="w-10 text-right" aria-label="Rank">#</th>
-						<th scope="col">Endpoint</th>
+						<th scope="col">Operation</th>
 						<th scope="col" class="text-right">Requests</th>
+						<th scope="col" class="text-right">Error rate</th>
 						<th scope="col" class="text-right">p50 latency</th>
 						<th scope="col" class="text-right">p95 latency</th>
 						<th scope="col" class="text-right">Total time</th>
@@ -75,13 +74,11 @@
 										</span>
 									{/if}
 								</div>
-								{#if showService}
-									<div class="text-subtle mt-0.5 truncate" title={endpoint.service}>
-										{endpoint.service}
-									</div>
-								{/if}
 							</td>
 							<td class="text-right tabular-nums">{formatCount(endpoint.requests)}</td>
+							<td class="text-right tabular-nums" class:text-warning-ink={endpoint.errors > 0}>
+								{formatPercent(endpoint.requests === 0 ? 0 : endpoint.errors / endpoint.requests)}
+							</td>
 							<td class="text-right whitespace-nowrap tabular-nums">
 								{formatDurationMs(endpoint.p50)}
 							</td>

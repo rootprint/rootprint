@@ -29,7 +29,6 @@
 		service: string | null;
 		startTs: number;
 		endTs: number;
-		showService: boolean;
 		operation: string | null;
 		kind: ServiceErrorKind | null;
 		httpStatus: ServiceErrorHttpStatus | null;
@@ -42,7 +41,6 @@
 		service,
 		startTs,
 		endTs,
-		showService,
 		operation,
 		kind,
 		httpStatus,
@@ -78,12 +76,8 @@
 	let inflight: AbortController | null = null;
 	let seenKeys = new Set<string>();
 
-	const columns = $derived(
-		showService
-			? 'grid-cols-[7rem_9rem_minmax(0,1fr)_3.5rem_4.5rem_1.5rem]'
-			: 'grid-cols-[7rem_minmax(0,1fr)_3.5rem_4.5rem_1.5rem]'
-	);
-	const minWidth = $derived(showService ? 'min-w-[31.25rem]' : 'min-w-[21.5rem]');
+	const columns = 'grid-cols-[7rem_minmax(0,1fr)_3.5rem_4.5rem_1.5rem]';
+	const minWidth = 'min-w-[21.5rem]';
 	const operationInTop = $derived(
 		operation === null || operations.some((candidate) => candidate.name === operation)
 	);
@@ -163,7 +157,7 @@
 		<div>
 			<h2 id="error-list-heading" class="section-label">Failing spans</h2>
 			<p class="text-subtle mt-1 text-xs">
-				Newest first across all span kinds. Error rate measures inbound server spans only.
+				Newest first across all span kinds. Error rate counts requests only.
 			</p>
 		</div>
 		<div class="flex flex-wrap items-center gap-3">
@@ -264,7 +258,6 @@
 			<div class="divide-line divide-y {minWidth}">
 				<div class="bg-base-200/70 section-label grid {columns} gap-3 px-4 py-2">
 					<span>Time</span>
-					{#if showService}<span>Service</span>{/if}
 					<span>Operation / message</span>
 					<span class="text-right whitespace-nowrap">
 						<span aria-hidden="true">HTTP</span><span class="sr-only">HTTP status</span>
@@ -286,9 +279,6 @@
 						<span class="text-muted font-mono text-xs tabular-nums"
 							>{formatTimestamp(row.timestampMs)}</span
 						>
-						{#if showService}
-							<span class="truncate font-mono text-xs" title={row.service}>{row.service}</span>
-						{/if}
 						<span class="min-w-0">
 							<span class="flex min-w-0 items-center gap-1.5">
 								<span
