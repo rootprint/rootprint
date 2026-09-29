@@ -54,11 +54,16 @@ export class SearchStore {
 	numHits = $state<number | null>(null);
 	elapsedTimeMicros = $state(0);
 	loading = $state<'idle' | 'fresh'>('idle');
-	#prefetching = $state(false);
+	loadingMore = $state(false);
 	#lastBatchFull = $state(false);
 	searchError = $state<string | null>(null);
 	hasSearched = $state(false);
-	#refreshRevision = $state(0);
+	/** Invalidates search-data caches when Run refreshes an unchanged query. */
+	refreshRevision = $state(0);
+	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
+	resolvedStartTs = $state<number | undefined>();
+	/** Absolute end of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
+	resolvedEndTs = $state<number | undefined>();
 
 	fieldConfig = $state<FieldConfig | null>(null);
 	configError = $state<string | null>(null);
@@ -68,16 +73,13 @@ export class SearchStore {
 	histogramError = $state<string | null>(null);
 
 	#schemaFields = $state.raw<LogField[]>([]);
-	#sample = $state.raw<FieldSample>({ counts: new Map(), total: 0 });
 
 	/**
 	 * How much of the current search's first page carries each field path. `_field_caps` answers per
 	 * split and never sees the query, so this is the panel's only query-aware signal: it ranks the
 	 * sections and gates which json leaves earn a row.
 	 */
-	get fieldSample(): FieldSample {
-		return this.#sample;
-	}
+	fieldSample = $state.raw<FieldSample>({ counts: new Map(), total: 0 });
 
 	// The json parents stay out of the list: `_field_caps` reports their leaves as entries of their
 	// own. The hits fill the gap for a leaf too fresh to be in a published split.
@@ -96,7 +98,7 @@ export class SearchStore {
 			.filter((f) => f.type === 'json')
 			.map((f) => `${f.name}.`);
 		const extra: LogField[] = [];
-		for (const name of this.#sample.counts.keys()) {
+		for (const name of this.fieldSample.counts.keys()) {
 			if (known.has(name)) continue;
 			if (!jsonPrefixes.some((p) => name.startsWith(p))) continue;
 			extra.push({ name, displayName: displayNameFor(name, cfg.isOtel), type: 'text' });
@@ -110,7 +112,7 @@ export class SearchStore {
 	fieldsReady = $derived(
 		!this.fieldsLoading &&
 			this.#fieldsLoadedFor ===
-				`${this.selectedIndex}|${serializeTimeRange(this.timeRange)}|${this.#refreshRevision}`
+				`${this.selectedIndex}|${serializeTimeRange(this.timeRange)}|${this.refreshRevision}`
 	);
 
 	columnFields = $derived.by<LogField[]>(() => {
@@ -129,12 +131,8 @@ export class SearchStore {
 	lineWrap = $state(false);
 	displayMode = $state<DisplayMode>('table');
 
-	#levelsRoster = $state<LevelBucket[]>([]);
+	levels = $state<LevelBucket[]>([]);
 	#levelsRosterKey: string | null = null;
-
-	get levels(): LevelBucket[] {
-		return this.#levelsRoster;
-	}
 
 	#normalized = new WeakMap<Record<string, unknown>, LogHit>();
 	#normalizedFor: FieldConfig | null = null;
@@ -190,8 +188,6 @@ export class SearchStore {
 	#disposed = false;
 	#searchAbort?: AbortController;
 	#searchGuard = new RequestGuard();
-	#snapshotStartTs: number | undefined = $state(undefined);
-	#snapshotEndTs: number | undefined = $state(undefined);
 	#configGuard = new RequestGuard();
 	#configFetchedFor: string | null = null;
 	#histogramAbort?: AbortController;
@@ -241,21 +237,6 @@ export class SearchStore {
 		return composeQuery(this.query, this.filters);
 	}
 
-	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
-	get resolvedStartTs(): number | undefined {
-		return this.#snapshotStartTs;
-	}
-
-	/** Absolute end of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
-	get resolvedEndTs(): number | undefined {
-		return this.#snapshotEndTs;
-	}
-
-	/** Invalidates search-data caches when Run refreshes an unchanged query. */
-	get refreshRevision(): number {
-		return this.#refreshRevision;
-	}
-
 	navigateQuery(partial: Partial<ParsedQuery>, opts?: { push?: boolean }): void {
 		this.#searchAbort?.abort();
 		this.#histogramAbort?.abort();
@@ -268,7 +249,7 @@ export class SearchStore {
 	runQuery(query: string): void {
 		if (this.#disposed || this.selectedIndex === null) return;
 		if (query === this.query) {
-			this.#refreshRevision += 1;
+			this.refreshRevision += 1;
 			this.#runFreshSearch(true);
 			return;
 		}
@@ -318,7 +299,7 @@ export class SearchStore {
 		}
 
 		// UNKNOWN is display-only, so it never counts toward "every level is selected".
-		const known = this.#levelsRoster.map((l) => l.name).filter((n) => n !== UNKNOWN_LEVEL);
+		const known = this.levels.map((l) => l.name).filter((n) => n !== UNKNOWN_LEVEL);
 		if (known.length >= 2 && this.#wouldSelectAllLevels(known, levelField, value)) {
 			this.#clearLevelFilters(levelField);
 			return;
@@ -358,8 +339,8 @@ export class SearchStore {
 		// Counts belong to the index that produced them; kept, they would rank the next index's fields.
 		this.#countPaths([]);
 		this.#lastBatchFull = false;
-		this.#snapshotStartTs = undefined;
-		this.#snapshotEndTs = undefined;
+		this.resolvedStartTs = undefined;
+		this.resolvedEndTs = undefined;
 		this.searchError = null;
 		this.navigateQuery({ index: indexId, query: '', filters: [] }, { push: true });
 	}
@@ -425,7 +406,7 @@ export class SearchStore {
 			const cfg = this.fieldConfig;
 			if (active === null || cfg === null) return;
 
-			const key = `${active}|${cfg.isOtel ? '1' : '0'}|${cfg.timestampField}|${cfg.messageField}|${serializeTimeRange(this.timeRange)}|${this.#refreshRevision}`;
+			const key = `${active}|${cfg.isOtel ? '1' : '0'}|${cfg.timestampField}|${cfg.messageField}|${serializeTimeRange(this.timeRange)}|${this.refreshRevision}`;
 			if (key === this.#fieldsFetchedFor) return;
 			this.#fieldsFetchedFor = key;
 			this.#loadFields(active, cfg);
@@ -452,7 +433,7 @@ export class SearchStore {
 
 		// Appending happens ahead of the viewport, so it stays silent.
 		if (append) {
-			this.#prefetching = true;
+			this.loadingMore = true;
 		} else {
 			this.loading = 'fresh';
 			this.searchError = null;
@@ -463,14 +444,14 @@ export class SearchStore {
 			let endTs: number | undefined;
 
 			if (append) {
-				startTs = this.#snapshotStartTs;
-				endTs = this.#snapshotEndTs;
+				startTs = this.resolvedStartTs;
+				endTs = this.resolvedEndTs;
 			} else {
 				const resolved = timeWindow ?? resolveWindow(this.timeRange);
 				startTs = resolved.startTs;
 				endTs = resolved.endTs;
-				this.#snapshotStartTs = startTs;
-				this.#snapshotEndTs = endTs;
+				this.resolvedStartTs = startTs;
+				this.resolvedEndTs = endTs;
 			}
 
 			const result = await searchLogs(
@@ -513,7 +494,7 @@ export class SearchStore {
 			this.#lastBatchFull = false;
 		} finally {
 			if (this.#searchGuard.isCurrent(requestId)) {
-				this.#prefetching = false;
+				this.loadingMore = false;
 				if (!append) this.loading = 'idle';
 			}
 		}
@@ -522,7 +503,7 @@ export class SearchStore {
 	#canFetchMore(): boolean {
 		return (
 			this.loading === 'idle' &&
-			!this.#prefetching &&
+			!this.loadingMore &&
 			this.#lastBatchFull &&
 			this.rawHits.length < MAX_OFFSET &&
 			(this.numHits === null || this.rawHits.length < this.numHits)
@@ -532,10 +513,6 @@ export class SearchStore {
 	maybeLoadMore(): void {
 		if (!this.#canFetchMore()) return;
 		void this.#runSearch(true);
-	}
-
-	get loadingMore(): boolean {
-		return this.#prefetching;
 	}
 
 	get listEnd(): 'more' | 'end' | 'capped' {
@@ -585,9 +562,9 @@ export class SearchStore {
 			const fresh = this.#computeLevelTotals(result.buckets);
 			if (newKey !== this.#levelsRosterKey) {
 				this.#levelsRosterKey = newKey;
-				this.#levelsRoster = fresh;
+				this.levels = fresh;
 			} else {
-				this.#levelsRoster = this.#mergeLevels(this.#levelsRoster, fresh);
+				this.levels = this.#mergeLevels(this.levels, fresh);
 			}
 		} catch (e) {
 			if (isAbortError(e)) return;
@@ -632,7 +609,7 @@ export class SearchStore {
 	/** One fixed slice — the first page. Accumulating across scroll pages would reorder the panel. */
 	#countPaths(hits: Record<string, unknown>[]): void {
 		try {
-			this.#sample = countFieldPaths(hits);
+			this.fieldSample = countFieldPaths(hits);
 		} catch (e) {
 			console.warn('[search] field-path sampling failed', e);
 		}
@@ -644,7 +621,7 @@ export class SearchStore {
 		const controller = new AbortController();
 		this.#fieldsAbort = controller;
 		const requestId = this.#fieldsGuard.next();
-		const loadedFor = `${indexId}|${serializeTimeRange(this.timeRange)}|${this.#refreshRevision}`;
+		const loadedFor = `${indexId}|${serializeTimeRange(this.timeRange)}|${this.refreshRevision}`;
 		this.fieldsLoading = true;
 		this.fieldsError = null;
 		try {
