@@ -6,6 +6,10 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 
 ## [Unreleased]
 
+### ⚠️ Breaking
+
+- **`GET /api/monitoring/services` returns `endpoints: []` without `service`.** Pass `service` for a service's operations; the response shape is unchanged.
+
 ### Added
 
 - **GitHub** link in the sidebar, below Help, with the repository's star count. The count is baked in when the image is built, so the app never contacts GitHub.

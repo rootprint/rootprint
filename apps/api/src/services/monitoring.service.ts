@@ -119,7 +119,6 @@ const ENDPOINT_SOURCES = [
 ] as const;
 
 const ENDPOINT_CANDIDATE_LIMIT = 100;
-const ENDPOINT_SERVICE_LIMIT = 10;
 const NAMES_PER_ENDPOINT_LIMIT = 3;
 /** Each series gets its own color, so raising this past the web's `--trace-service-*` palette size repeats colors. */
 const SERVICE_CHART_LIMIT = 10;
@@ -155,34 +154,23 @@ function endpointMetrics() {
 	};
 }
 
-function endpointAggregation(field: string, acrossServices: boolean) {
-	const leaf =
-		field === NAME_FIELD
-			? endpointMetrics()
-			: {
-					total: AggregationBuilder.sum(DURATION_FIELD),
-					names: AggregationBuilder.terms(NAME_FIELD, {
-						size: NAMES_PER_ENDPOINT_LIMIT,
-						shardSize: NAMES_PER_ENDPOINT_LIMIT,
-						order: { total: 'desc' },
-						aggs: endpointMetrics()
-					})
-				};
+function endpointAggregation(field: string) {
 	return AggregationBuilder.terms(field, {
 		size: ENDPOINT_CANDIDATE_LIMIT,
 		shardSize: ENDPOINT_CANDIDATE_LIMIT,
 		order: { total: 'desc' },
-		aggs: acrossServices
-			? {
-					total: AggregationBuilder.sum(DURATION_FIELD),
-					services: AggregationBuilder.terms(SERVICE_FIELD, {
-						size: ENDPOINT_SERVICE_LIMIT,
-						shardSize: ENDPOINT_SERVICE_LIMIT,
-						order: { total: 'desc' },
-						aggs: leaf
-					})
-				}
-			: leaf
+		aggs:
+			field === NAME_FIELD
+				? endpointMetrics()
+				: {
+						total: AggregationBuilder.sum(DURATION_FIELD),
+						names: AggregationBuilder.terms(NAME_FIELD, {
+							size: NAMES_PER_ENDPOINT_LIMIT,
+							shardSize: NAMES_PER_ENDPOINT_LIMIT,
+							order: { total: 'desc' },
+							aggs: endpointMetrics()
+						})
+					}
 	});
 }
 
@@ -226,33 +214,23 @@ function endpointRow(
 function endpointRows(
 	field: string,
 	buckets: AggregationBucket[],
-	service: string | undefined,
+	service: string,
 	errorCounts: Map<string, number>
 ): MonitoringEndpoint[] {
 	return buckets.flatMap((endpoint) => {
 		const value = String(endpoint.key);
-		// Scoped to one service, the endpoint bucket itself holds the metrics.
-		const perService: [string, AggregationBucket][] =
-			service === undefined
-				? asBuckets(endpoint['services'] as BucketAggregationResult | undefined).map((bucket) => [
-						String(bucket.key),
-						bucket
-					])
-				: [[service, endpoint]];
-		return perService.flatMap(([serviceName, bucket]) =>
-			field === NAME_FIELD
-				? [endpointRow(serviceName, field, value, value, bucket, errorCounts)]
-				: asBuckets(bucket['names'] as BucketAggregationResult | undefined).map((name) =>
-						endpointRow(serviceName, field, value, String(name.key), name, errorCounts)
-					)
-		);
+		return field === NAME_FIELD
+			? [endpointRow(service, field, value, value, endpoint, errorCounts)]
+			: asBuckets(endpoint['names'] as BucketAggregationResult | undefined).map((name) =>
+					endpointRow(service, field, value, String(name.key), name, errorCounts)
+				);
 	});
 }
 
 function preferredEndpoints(
 	responses: SearchResponse[],
 	errorResponses: SearchResponse[],
-	service: string | undefined,
+	service: string,
 	limit: number
 ): MonitoringEndpoint[] {
 	const rowsOf = (results: SearchResponse[], errorCounts: Map<string, number>) =>
@@ -270,7 +248,7 @@ function preferredEndpoints(
 		rowsOf(errorResponses, new Map()).map((row) => [row.id, row.requests])
 	);
 	return rowsOf(responses, errorCounts)
-		.filter((endpoint) => endpoint.service !== '' && endpoint.name !== '')
+		.filter((endpoint) => endpoint.name !== '')
 		.toSorted((a, b) => b.totalMillis - a.totalMillis)
 		.slice(0, limit);
 }
@@ -486,12 +464,13 @@ export async function getServiceHealth(
 					)
 					.timeRange(...timeRange);
 	const endpointSearches = (base: string) =>
-		(params.endpointLimit === 0 ? [] : ENDPOINT_SOURCES).map((source, index) =>
-			idx
-				.query(endpointSourceQuery(base, index))
-				.limit(0)
-				.agg(source.key, endpointAggregation(source.field, service === undefined))
-				.timeRange(...timeRange)
+		(service === undefined || params.endpointLimit === 0 ? [] : ENDPOINT_SOURCES).map(
+			(source, index) =>
+				idx
+					.query(endpointSourceQuery(base, index))
+					.limit(0)
+					.agg(source.key, endpointAggregation(source.field))
+					.timeRange(...timeRange)
 		);
 	const endpointQueries = endpointSearches(scope);
 	// Quickwit has no `filter` aggregation, so each operation's errors come from the same searches
@@ -586,12 +565,15 @@ export async function getServiceHealth(
 			serviceTimeBuckets[0]?.['time'] as BucketAggregationResult | undefined
 		).map((bucket) => Number(bucket.key)),
 		serviceLatencies: serviceLatenciesOf(serviceTimeBuckets),
-		endpoints: preferredEndpoints(
-			endpointResponses,
-			endpointErrorResponses,
-			service,
-			params.endpointLimit
-		),
+		endpoints:
+			service === undefined
+				? []
+				: preferredEndpoints(
+						endpointResponses,
+						endpointErrorResponses,
+						service,
+						params.endpointLimit
+					),
 		failingOperations: failingOperationsOf(
 			asBuckets(
 				allErrorsResponse.aggregations?.['error_ops'] as BucketAggregationResult | undefined
