@@ -15,10 +15,11 @@ export const ndjsonRouter = new Hono<KeyedEnv>().post(
 		tag: 'Log ingest',
 		summary: 'Ingest NDJSON log documents',
 		description:
-			'Proxies an NDJSON (or JSON array) log payload to Quickwit for the index associated with the ingest API key. ' +
+			'Proxies an NDJSON log payload (one JSON object per line) to Quickwit for the index associated with the ingest API key. ' +
 			'Accepts application/x-ndjson or application/json content-type. ' +
-			'Success and 4xx responses are passed through from Quickwit (400 bodies carry per-document parse errors); ' +
-			'upstream 5xx responses are mapped to the standard 503 error contract.',
+			'Success and 4xx responses are passed through from Quickwit; lines that fail to parse or match the schema ' +
+			'are counted in num_rejected_docs of a 200 response. ' +
+			'Upstream 5xx responses are mapped to the standard 503 error contract.',
 		security: [{ ingestBearer: [] }],
 		errors: [413, 429],
 		rawResponses: {
@@ -30,7 +31,9 @@ export const ndjsonRouter = new Hono<KeyedEnv>().post(
 							type: 'object',
 							description: 'Quickwit ingest acknowledgement',
 							properties: {
-								num_docs_for_processing: { type: 'integer' }
+								num_docs_for_processing: { type: 'integer' },
+								num_ingested_docs: { type: 'integer' },
+								num_rejected_docs: { type: 'integer' }
 							}
 						}
 					}
