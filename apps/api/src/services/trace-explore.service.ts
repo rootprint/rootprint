@@ -7,7 +7,7 @@ import {
 	type SearchResponse
 } from '@rootprint-io/quickwit-js';
 
-import type { ExploreSort } from '../constants.js';
+import { OPERATION_LIMIT, type ExploreSort } from '../constants.js';
 import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { escapeFilterValue } from '../lib/quickwit/query.js';
 import type { ExploreFilters, ExploreOverviewInput, ExploreSpansInput } from '../schemas/traces.js';
@@ -121,7 +121,6 @@ export async function getExploreSpans(
 }
 
 const PERCENTS = [50, 95, 99];
-const OPERATION_LIMIT = 200;
 const SERVICES_PER_OPERATION = 10;
 const SPARK_POINTS = 30;
 const FACET_SERVICE_LIMIT = 100;

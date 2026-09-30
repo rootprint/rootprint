@@ -1,11 +1,11 @@
 meta {
-  name: Get Service Health
+  name: Get Service Errors
   type: http
-  seq: 1
+  seq: 2
 }
 
 get {
-  url: {{baseUrl}}/api/monitoring/services
+  url: {{baseUrl}}/api/services/errors
   body: none
   auth: bearer
 }
@@ -13,9 +13,12 @@ get {
 params:query {
   startTs: 1723989600
   endTs: 1723990500
-  interval: 10s
   ~service: api
-  ~endpointLimit: 10
+  ~operation: GET /api/users
+  ~kind: server
+  ~httpStatus: 5xx
+  limit: 50
+  offset: 0
 }
 
 auth:bearer {

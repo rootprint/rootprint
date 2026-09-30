@@ -7,26 +7,26 @@ import { describe, validator } from '../lib/openapi/describe.js';
 import { quickwit } from '../lib/quickwit/client.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { LOGS_READ, requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
-import { ServiceErrorsQuery, ServiceHealthQuery } from '../schemas/monitoring.js';
+import { ServiceErrorsQuery, ServiceHealthQuery } from '../schemas/services.js';
 import {
 	ServiceErrorsResponseSchema,
 	ServiceHealthResponseSchema
-} from '../schemas/responses/monitoring.js';
+} from '../schemas/responses/services.js';
 import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
 import {
 	getServiceErrors,
 	getServiceHealth,
 	serviceErrorsQuery,
 	serviceHealthQuery
-} from '../services/monitoring.service.js';
+} from '../services/service-health.service.js';
 
-export const monitoringRouter = new Hono<AuthedEnv>()
+export const servicesRouter = new Hono<AuthedEnv>()
 	.use('*', requireUserOrPersonalKey(LOGS_READ))
 	.use('*', readLimiter)
 	.get(
-		'/services',
+		'/',
 		describe({
-			tag: 'Monitoring',
+			tag: 'Services',
 			summary: 'Get service health panels',
 			ok: ServiceHealthResponseSchema,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],
@@ -53,7 +53,7 @@ export const monitoringRouter = new Hono<AuthedEnv>()
 	.get(
 		'/errors',
 		describe({
-			tag: 'Monitoring',
+			tag: 'Services',
 			summary: 'List failing spans',
 			ok: ServiceErrorsResponseSchema,
 			security: [{ personalBearer: [] }, { cookieAuth: [] }],

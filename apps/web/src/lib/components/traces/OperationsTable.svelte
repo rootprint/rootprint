@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { OPERATION_LIMIT } from 'api/constants';
+
 	import type { ExploreOperation } from '$lib/api/traces';
 	import { rowActivate } from '$lib/attachments/row-activate';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
@@ -166,7 +168,7 @@
 			</table>
 		</div>
 		{#if truncated}
-			<p class="text-subtle text-xs">Showing the top 200 operations by volume.</p>
+			<p class="text-subtle text-xs">Showing the top {OPERATION_LIMIT} operations by volume.</p>
 		{/if}
 	</section>
 {/if}

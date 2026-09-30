@@ -15,7 +15,7 @@
 		type ServiceErrorKind,
 		type ServiceErrorRow,
 		type ServiceHealthFailingOperation
-	} from '$lib/api/monitoring';
+	} from '$lib/api/services';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import PanelError from '$lib/components/ui/PanelError.svelte';
 	import { RequestGuard } from '$lib/stores/request-guard';

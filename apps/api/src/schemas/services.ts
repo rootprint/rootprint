@@ -44,7 +44,7 @@ export const ServiceHealthQuery = v.pipe(
 	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
 	v.check(
 		(input) => input.endTs - input.startTs <= MAX_RANGE_SECONDS,
-		'Monitoring range cannot exceed 30 days'
+		'Range cannot exceed 30 days'
 	),
 	v.check(
 		(input) => (input.endTs - input.startTs) / intervalSeconds(input.interval) <= MAX_BUCKETS,
@@ -71,7 +71,7 @@ export const ServiceErrorsQuery = v.pipe(
 	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
 	v.check(
 		(input) => input.endTs - input.startTs <= MAX_RANGE_SECONDS,
-		'Monitoring range cannot exceed 30 days'
+		'Range cannot exceed 30 days'
 	)
 );
 

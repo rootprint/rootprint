@@ -3,8 +3,8 @@ import * as v from 'valibot';
 import { SPAN_KINDS } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
 
-export const MonitoringBucketSchema = named(
-	'MonitoringBucket',
+export const ServiceHealthBucketSchema = named(
+	'ServiceHealthBucket',
 	v.object({
 		keyMs: v.number(),
 		requests: v.number(),
@@ -15,8 +15,8 @@ export const MonitoringBucketSchema = named(
 	})
 );
 
-export const MonitoringEndpointSchema = named(
-	'MonitoringEndpoint',
+export const ServiceHealthEndpointSchema = named(
+	'ServiceHealthEndpoint',
 	v.object({
 		/** Unique across the whole list — service included — so clients can key rows on it alone. */
 		id: v.string(),
@@ -35,8 +35,8 @@ export const MonitoringEndpointSchema = named(
 	})
 );
 
-export const MonitoringServiceRowSchema = named(
-	'MonitoringServiceRow',
+export const ServiceHealthServiceRowSchema = named(
+	'ServiceHealthServiceRow',
 	v.object({
 		name: v.string(),
 		requests: v.number(),
@@ -46,16 +46,16 @@ export const MonitoringServiceRowSchema = named(
 	})
 );
 
-export const MonitoringFailingOperationSchema = named(
-	'MonitoringFailingOperation',
+export const ServiceHealthFailingOperationSchema = named(
+	'ServiceHealthFailingOperation',
 	v.object({
 		name: v.string(),
 		errors: v.number()
 	})
 );
 
-export const MonitoringErrorRowSchema = named(
-	'MonitoringErrorRow',
+export const ServiceErrorRowSchema = named(
+	'ServiceErrorRow',
 	v.object({
 		traceId: v.string(),
 		spanId: v.string(),
@@ -70,8 +70,8 @@ export const MonitoringErrorRowSchema = named(
 	})
 );
 
-export const MonitoringDependencySchema = named(
-	'MonitoringDependency',
+export const ServiceHealthDependencySchema = named(
+	'ServiceHealthDependency',
 	v.object({
 		name: v.string(),
 		peers: v.array(v.string()),
@@ -82,8 +82,8 @@ export const MonitoringDependencySchema = named(
 	})
 );
 
-export const MonitoringServiceLatencySchema = named(
-	'MonitoringServiceLatency',
+export const ServiceLatencySchema = named(
+	'ServiceLatency',
 	v.object({
 		name: v.string(),
 		/** One entry per `latencyKeysMs` timestamp. */
@@ -91,8 +91,8 @@ export const MonitoringServiceLatencySchema = named(
 	})
 );
 
-export const MonitoringSummarySchema = named(
-	'MonitoringSummary',
+export const ServiceHealthSummarySchema = named(
+	'ServiceHealthSummary',
 	v.object({
 		requests: v.number(),
 		errors: v.number(),
@@ -105,7 +105,7 @@ export const MonitoringSummarySchema = named(
 export const ServiceErrorsResponseSchema = named(
 	'ServiceErrorsResponse',
 	v.object({
-		rows: v.array(MonitoringErrorRowSchema),
+		rows: v.array(ServiceErrorRowSchema),
 		/** True when the raw hit count (before dropping rows with no ids) equals the requested limit. */
 		hasMore: v.boolean()
 	})
@@ -115,34 +115,36 @@ export const ServiceHealthResponseSchema = named(
 	'ServiceHealthResponse',
 	v.object({
 		telemetryStatus: v.picklist(['available', 'span_store_missing']),
-		services: v.array(MonitoringServiceRowSchema),
+		services: v.array(ServiceHealthServiceRowSchema),
 		serviceNames: v.array(v.string()),
 		servicesTruncated: v.boolean(),
 		intervalSeconds: v.number(),
-		summary: MonitoringSummarySchema,
-		buckets: v.array(MonitoringBucketSchema),
+		summary: ServiceHealthSummarySchema,
+		buckets: v.array(ServiceHealthBucketSchema),
 		/** Shared histogram grid for every entry in `serviceLatencies`. */
 		latencyKeysMs: v.array(v.number()),
-		serviceLatencies: v.array(MonitoringServiceLatencySchema),
-		endpoints: v.array(MonitoringEndpointSchema),
-		failingOperations: v.array(MonitoringFailingOperationSchema),
-		dependencies: v.array(MonitoringDependencySchema)
+		serviceLatencies: v.array(ServiceLatencySchema),
+		endpoints: v.array(ServiceHealthEndpointSchema),
+		failingOperations: v.array(ServiceHealthFailingOperationSchema),
+		dependencies: v.array(ServiceHealthDependencySchema)
 	})
 );
 
-export type MonitoringBucket = v.InferOutput<typeof MonitoringBucketSchema>;
+export type ServiceHealthBucket = v.InferOutput<typeof ServiceHealthBucketSchema>;
 
-export type MonitoringEndpoint = v.InferOutput<typeof MonitoringEndpointSchema>;
+export type ServiceHealthEndpoint = v.InferOutput<typeof ServiceHealthEndpointSchema>;
 
-export type MonitoringServiceLatency = v.InferOutput<typeof MonitoringServiceLatencySchema>;
+export type ServiceLatency = v.InferOutput<typeof ServiceLatencySchema>;
 
-export type MonitoringServiceRow = v.InferOutput<typeof MonitoringServiceRowSchema>;
+export type ServiceHealthServiceRow = v.InferOutput<typeof ServiceHealthServiceRowSchema>;
 
-export type MonitoringFailingOperation = v.InferOutput<typeof MonitoringFailingOperationSchema>;
+export type ServiceHealthFailingOperation = v.InferOutput<
+	typeof ServiceHealthFailingOperationSchema
+>;
 
-export type MonitoringErrorRow = v.InferOutput<typeof MonitoringErrorRowSchema>;
+export type ServiceErrorRow = v.InferOutput<typeof ServiceErrorRowSchema>;
 
-export type MonitoringDependency = v.InferOutput<typeof MonitoringDependencySchema>;
+export type ServiceHealthDependency = v.InferOutput<typeof ServiceHealthDependencySchema>;
 
 export type ServiceHealthResponse = v.InferOutput<typeof ServiceHealthResponseSchema>;
 

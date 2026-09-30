@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ServiceLatency } from '$lib/api/monitoring';
+	import type { ServiceLatency } from '$lib/api/services';
 	import UplotLinePanel from '$lib/components/ui/uplot/UplotLinePanel.svelte';
 	import type { ChartSeries } from '$lib/components/ui/uplot/UplotLinePanel.svelte';
 	import { formatDurationMs } from '$lib/utils/format';

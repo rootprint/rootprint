@@ -8,7 +8,8 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 
 ### ⚠️ Breaking
 
-- **`GET /api/monitoring/services` returns `endpoints: []` without `service`.** Pass `service` for a service's operations; the response shape is unchanged.
+- **The Services API moved from `/api/monitoring` to `/api/services`.** `GET /api/monitoring/services` is now `GET /api/services`, and `GET /api/monitoring/errors` is now `GET /api/services/errors`. The old paths return `404`. Responses keep their shape, but the OpenAPI schema names drop the `Monitoring` prefix (`MonitoringSummary` is now `ServiceHealthSummary`) and the endpoints move from the `Monitoring` tag to `Services`.
+- **`GET /api/services` returns `endpoints: []` without `service`.** Pass `service` for a service's operations; the response shape is unchanged.
 
 ### Added
 
@@ -23,7 +24,7 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 - **Send data** (formerly **Settings → Send logs & traces**) is a sidebar entry for admins, at `/send-data`.
 - **Send data guides start with the ingest key.** You pick or create the key in step 1, and the snippets use it. The last step opens Logs or the trace explorer, and the catalog groups the nine integrations by kind.
 - **Settings is admin-only.** Members no longer see it in the sidebar.
-- **Services counts consumer and root spans as requests**, not only server spans, so queue workers and scheduled jobs appear. `GET /api/monitoring/services` numbers change accordingly; its response shape does not.
+- **Services counts consumer and root spans as requests**, not only server spans, so queue workers and scheduled jobs appear. `GET /api/services` numbers change accordingly; its response shape does not.
 - **The Services catalog is a sortable table**, worst error rate first, below the summary and charts. Links to `/services?service=<name>` redirect to the service's page.
 - **The Quickwit client is now `@rootprint-io/quickwit-js` 0.5**, the renamed `quickwit-js`. Every search now goes to Quickwit as a POST.
 
@@ -33,6 +34,7 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 
 ### Fixed
 
+- **`GET /api/services/errors` returns an empty list when the span store is missing**, as the other trace endpoints do, instead of `404`.
 - **Log API calls with a fractional `endTs` no longer drop the last partial second.** The log search, histogram, field, field-values and export endpoints now round `endTs` up to the next whole second instead of truncating it. The web app always sends whole seconds and was not affected.
 - **Send data guides deliver data as written.** Logs arrive with a service name and keep their own severity, and the snippets use current component names and APIs. The guides offer ingest keys on `otel-` indexes and hide the rest: Quickwit answers 200 to OTLP logs sent to any other index and discards them.
 

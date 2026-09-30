@@ -3,7 +3,7 @@
 
 	import { page } from '$app/state';
 
-	import type { ServiceHealthServiceRow } from '$lib/api/monitoring';
+	import type { ServiceHealthServiceRow } from '$lib/api/services';
 	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
 	import SortButton from '$lib/components/ui/SortButton.svelte';
 	import TracesLink from '$lib/components/ui/TracesLink.svelte';

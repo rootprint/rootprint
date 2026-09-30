@@ -23,7 +23,7 @@ export const P99 = '99.0';
 const finite = (value: unknown): number | null =>
 	typeof value === 'number' && Number.isFinite(value) ? value : null;
 
-// Every percentile here, and the monitoring average, is over `span_duration_millis`, which is
+// Every percentile here, and the service-health average, is over `span_duration_millis`, which is
 // floored, so a value p means somewhere in [p, p+1) ms: report the midpoint, which also lets an
 // all-sub-ms value read "<1 ms" instead of "0 ms".
 export const unfloor = (ms: number | null): number | null => (ms === null ? null : ms + 0.5);

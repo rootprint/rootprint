@@ -14,18 +14,18 @@ import {
 	intervalSeconds,
 	type ServiceErrorsInput,
 	type ServiceHealthInput
-} from '../schemas/monitoring.js';
+} from '../schemas/services.js';
 import type {
-	MonitoringBucket,
-	MonitoringDependency,
-	MonitoringEndpoint,
-	MonitoringErrorRow,
-	MonitoringFailingOperation,
-	MonitoringServiceLatency,
-	MonitoringServiceRow,
+	ServiceHealthBucket,
+	ServiceHealthDependency,
+	ServiceHealthEndpoint,
+	ServiceErrorRow,
+	ServiceHealthFailingOperation,
+	ServiceLatency,
+	ServiceHealthServiceRow,
 	ServiceErrorsResponse,
 	ServiceHealthResponse
-} from '../schemas/responses/monitoring.js';
+} from '../schemas/responses/services.js';
 import {
 	asBuckets,
 	metric,
@@ -36,7 +36,6 @@ import {
 	termsAgg,
 	unfloor
 } from '../lib/quickwit/aggregations.js';
-import { translateQuickwitError } from '../lib/quickwit/errors.js';
 import {
 	asRecord,
 	asText,
@@ -81,7 +80,7 @@ function exceptionAttributes(events: unknown): Record<string, unknown> {
 	return {};
 }
 
-export function toErrorRow(hit: Record<string, unknown>): MonitoringErrorRow | null {
+export function toErrorRow(hit: Record<string, unknown>): ServiceErrorRow | null {
 	const traceId = asText(hit['trace_id'], '');
 	const spanId = asText(hit['span_id'], '');
 	if (traceId === '' || spanId === '') return null;
@@ -135,7 +134,7 @@ const isHttpMethod = (value: string): boolean =>
 function mergeTimeBuckets(
 	totals: AggregationBucket[],
 	errors: AggregationBucket[]
-): MonitoringBucket[] {
+): ServiceHealthBucket[] {
 	const errorCounts = new Map(errors.map((bucket) => [Number(bucket.key), bucket.doc_count]));
 	return totals.map((bucket) => ({
 		keyMs: Number(bucket.key),
@@ -189,7 +188,7 @@ function endpointRow(
 	spanName: string,
 	nameBucket: AggregationBucket,
 	errorCounts: Map<string, number>
-): MonitoringEndpoint {
+): ServiceHealthEndpoint {
 	const sourceIndex = ENDPOINT_SOURCES.findIndex((source) => source.field === field);
 	const sourceQuery = endpointSourceQuery(ENTRY_SPANS, sourceIndex);
 	const id = JSON.stringify([service, field, value, spanName]);
@@ -216,7 +215,7 @@ function endpointRows(
 	buckets: AggregationBucket[],
 	service: string,
 	errorCounts: Map<string, number>
-): MonitoringEndpoint[] {
+): ServiceHealthEndpoint[] {
 	return buckets.flatMap((endpoint) => {
 		const value = String(endpoint.key);
 		return field === NAME_FIELD
@@ -232,7 +231,7 @@ function preferredEndpoints(
 	errorResponses: SearchResponse[],
 	service: string,
 	limit: number
-): MonitoringEndpoint[] {
+): ServiceHealthEndpoint[] {
 	const rowsOf = (results: SearchResponse[], errorCounts: Map<string, number>) =>
 		ENDPOINT_SOURCES.flatMap((source, index) =>
 			endpointRows(
@@ -263,7 +262,7 @@ function endpointSourceQuery(scope: string, sourceIndex: number): string {
 function serviceRowsOf(
 	services: AggregationBucket[],
 	errors: AggregationBucket[]
-): MonitoringServiceRow[] {
+): ServiceHealthServiceRow[] {
 	const errorCounts = new Map(errors.map((bucket) => [String(bucket.key), bucket.doc_count]));
 	return services
 		.map((bucket) => {
@@ -279,13 +278,13 @@ function serviceRowsOf(
 		.filter((row) => row.name !== '');
 }
 
-function failingOperationsOf(operations: AggregationBucket[]): MonitoringFailingOperation[] {
+function failingOperationsOf(operations: AggregationBucket[]): ServiceHealthFailingOperation[] {
 	return operations
 		.map((bucket) => ({ name: String(bucket.key), errors: bucket.doc_count }))
 		.filter((operation) => operation.name !== '');
 }
 
-function dependenciesOf(calls: AggregationBucket[]): MonitoringDependency[] {
+function dependenciesOf(calls: AggregationBucket[]): ServiceHealthDependency[] {
 	return calls
 		.map((bucket) => ({
 			name: String(bucket.key),
@@ -300,7 +299,7 @@ function dependenciesOf(calls: AggregationBucket[]): MonitoringDependency[] {
 		.filter((dependency) => dependency.name !== '');
 }
 
-function serviceLatenciesOf(services: AggregationBucket[]): MonitoringServiceLatency[] {
+function serviceLatenciesOf(services: AggregationBucket[]): ServiceLatency[] {
 	return services
 		.map((bucket) => ({
 			name: String(bucket.key),
@@ -342,7 +341,8 @@ export async function getServiceErrors(
 		.offset(params.offset)
 		.sortBy(TIMESTAMP_FIELD, 'desc')
 		.timeRange(toQuickwitTimestamp(params.startTs), toQuickwitTimestamp(params.endTs));
-	const response = await idx.search(builder).catch(translateQuickwitError);
+	const response = await idx.search(builder).catch(orEmptyStore(traceIndexId, 'service errors'));
+	if (response === null) return { rows: [], hasMore: false };
 	return {
 		rows: response.hits
 			.map((hit) => toErrorRow(hit as Record<string, unknown>))
@@ -486,7 +486,7 @@ export async function getServiceHealth(
 		idx.search(totalsQuery),
 		dependencyQuery === undefined ? undefined : idx.search(dependencyQuery),
 		idx.search(allErrorsQuery)
-	]).catch(orEmptyStore(traceIndexId, 'monitoring'));
+	]).catch(orEmptyStore(traceIndexId, 'services'));
 	if (responses === null) {
 		return {
 			telemetryStatus: 'span_store_missing',

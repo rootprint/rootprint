@@ -5,9 +5,9 @@ import { client } from '$lib/api/client';
 import { readApiError } from '$lib/api/errors';
 import { computeHistogramIntervalSeconds, formatInterval } from '$lib/utils/histogram';
 
-const monitoring = client.api.monitoring;
+const services = client.api.services;
 
-export type ServiceHealth = InferResponseType<typeof monitoring.services.$get, 200>;
+export type ServiceHealth = InferResponseType<typeof services.$get, 200>;
 export type ServiceHealthBucket = ServiceHealth['buckets'][number];
 export type ServiceHealthSummary = ServiceHealth['summary'];
 export type ServiceHealthEndpoint = ServiceHealth['endpoints'][number];
@@ -22,7 +22,7 @@ export async function getServiceHealth(input: {
 	endTs: number;
 	endpointLimit: number;
 }): Promise<ServiceHealth> {
-	const res = await monitoring.services.$get({
+	const res = await services.$get({
 		query: {
 			service: input.service ?? undefined,
 			startTs: String(input.startTs),
@@ -35,7 +35,7 @@ export async function getServiceHealth(input: {
 	return res.json();
 }
 
-export type ServiceErrors = InferResponseType<typeof monitoring.errors.$get, 200>;
+export type ServiceErrors = InferResponseType<typeof services.errors.$get, 200>;
 export type ServiceErrorRow = ServiceErrors['rows'][number];
 export type ServiceErrorKind = ServiceErrorRow['kind'];
 export type ServiceErrorHttpStatus = (typeof ERROR_HTTP_STATUSES)[number];
@@ -51,7 +51,7 @@ export async function getServiceErrors(input: {
 	offset: number;
 	signal?: AbortSignal;
 }): Promise<ServiceErrors> {
-	const res = await monitoring.errors.$get(
+	const res = await services.errors.$get(
 		{
 			query: {
 				service: input.service ?? undefined,

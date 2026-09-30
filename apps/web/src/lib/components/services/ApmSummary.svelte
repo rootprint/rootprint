@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ServiceHealthServiceRow, ServiceHealthSummary } from '$lib/api/monitoring';
+	import type { ServiceHealthServiceRow, ServiceHealthSummary } from '$lib/api/services';
 	import { formatCount, formatDurationMs, formatPercent, formatRate } from '$lib/utils/format';
 
 	type Props = {

@@ -8,7 +8,7 @@ import {
 	MAX_EXPLORE_OFFSET
 } from '../constants.js';
 import { boolParam, EPOCH_SECONDS, intParam } from '../utils/valibot.js';
-import { intervalParam, intervalSeconds, MAX_BUCKETS, MAX_RANGE_SECONDS } from './monitoring.js';
+import { intervalParam, intervalSeconds, MAX_BUCKETS, MAX_RANGE_SECONDS } from './services.js';
 
 // Rejects the all-zeros id: OTLP writes it on logs that carry no trace context.
 const TRACE_ID_RE = /^(?!0{32}$)[0-9a-f]{32}$/;

@@ -30,7 +30,7 @@ export const FIELD_VALUES_MAX = 65_000;
 /** Fallback `limit` for the field-values endpoint when the caller doesn't pass one. */
 export const FIELD_VALUES_DEFAULT = 100;
 
-// Monitoring errors
+// Service errors
 export const SPAN_KINDS = ['server', 'client', 'producer', 'consumer', 'internal'] as const;
 export type SpanKind = (typeof SPAN_KINDS)[number];
 export const ERROR_HTTP_STATUSES = ['4xx', '5xx', 'none'] as const;
@@ -69,6 +69,8 @@ export const EXPLORE_SORTS = ['-start', 'start', '-duration', 'duration'] as con
 export type ExploreSort = (typeof EXPLORE_SORTS)[number];
 export const EXPLORE_PAGE_SIZE = 50;
 export const MAX_EXPLORE_LIMIT = 100;
+/** The overview's operations table lists at most this many, busiest first. */
+export const OPERATION_LIMIT = 200;
 
 /** Quickwit rejects a start_offset above 10k, so the web list stops paginating here too. */
 export const MAX_EXPLORE_OFFSET = 10_000;

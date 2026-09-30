@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ServiceHealthEndpoint } from '$lib/api/monitoring';
+	import type { ServiceHealthEndpoint } from '$lib/api/services';
 	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
 	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
 	import TracesLink from '$lib/components/ui/TracesLink.svelte';

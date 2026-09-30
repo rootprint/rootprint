@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ServiceHealthBucket, ServiceHealthSummary } from '$lib/api/monitoring';
+	import type { ServiceHealthBucket, ServiceHealthSummary } from '$lib/api/services';
 	import UplotLinePanel from '$lib/components/ui/uplot/UplotLinePanel.svelte';
 	import type { ChartSeries } from '$lib/components/ui/uplot/UplotLinePanel.svelte';
 	import { formatRate } from '$lib/utils/format';

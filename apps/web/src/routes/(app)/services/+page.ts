@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-import { getServiceHealth } from '$lib/api/monitoring';
+import { getServiceHealth } from '$lib/api/services';
 import { parseTimeRange } from '$lib/utils/query-params';
 import { resolveWindow } from '$lib/utils/time-range';
 
