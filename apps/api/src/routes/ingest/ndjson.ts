@@ -7,6 +7,7 @@ import { describe } from '../../lib/openapi/describe.js';
 import { quickwitUrl } from '../../lib/quickwit/client.js';
 import { proxyToQuickwit } from '../../lib/quickwit/proxy.js';
 import { requireIngestKey } from '../../middleware/require-api-key.js';
+import { NdjsonIngestResponse } from '../../schemas/responses/ingest.js';
 import { badRequest } from '../../utils/http-error.js';
 
 export const ndjsonRouter = new Hono<KeyedEnv>().post(
@@ -20,26 +21,10 @@ export const ndjsonRouter = new Hono<KeyedEnv>().post(
 			'Success and 4xx responses are passed through from Quickwit; lines that fail to parse or match the schema ' +
 			'are counted in num_rejected_docs of a 200 response. ' +
 			'Upstream 5xx responses are mapped to the standard 503 error contract.',
+		ok: NdjsonIngestResponse,
+		okDescription: 'Documents accepted for processing',
 		security: [{ ingestBearer: [] }],
-		errors: [413, 429],
-		rawResponses: {
-			'200': {
-				description: 'Documents accepted for processing',
-				content: {
-					'application/json': {
-						schema: {
-							type: 'object',
-							description: 'Quickwit ingest acknowledgement',
-							properties: {
-								num_docs_for_processing: { type: 'integer' },
-								num_ingested_docs: { type: 'integer' },
-								num_rejected_docs: { type: 'integer' }
-							}
-						}
-					}
-				}
-			}
-		}
+		errors: [413, 429]
 	}),
 	requireIngestKey,
 	async (c) => {

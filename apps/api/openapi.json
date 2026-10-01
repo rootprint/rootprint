@@ -1697,6 +1697,23 @@
 				],
 				"type": "object"
 			},
+			"NdjsonIngestResponse": {
+				"properties": {
+					"num_docs_for_processing": {
+						"type": "integer"
+					},
+					"num_ingested_docs": {
+						"type": "integer"
+					},
+					"num_rejected_docs": {
+						"type": "integer"
+					}
+				},
+				"required": [
+					"num_docs_for_processing"
+				],
+				"type": "object"
+			},
 			"OidcAuthSettingsResponse": {
 				"properties": {
 					"configured": {
@@ -15019,19 +15036,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"description": "Quickwit ingest acknowledgement",
-									"properties": {
-										"num_docs_for_processing": {
-											"type": "integer"
-										},
-										"num_ingested_docs": {
-											"type": "integer"
-										},
-										"num_rejected_docs": {
-											"type": "integer"
-										}
-									},
-									"type": "object"
+									"$ref": "#/components/schemas/NdjsonIngestResponse"
 								}
 							}
 						},
