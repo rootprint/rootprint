@@ -51,8 +51,10 @@ function getPath(obj: unknown, path: string): unknown {
 
 function formatTimestamp(v: unknown): string {
 	if (typeof v !== 'number') return formatScalar(v);
-	// Above 1e15 can't be epoch milliseconds (year 33658+), so it's Quickwit's nanoseconds.
-	return new Date(v > 1e15 ? v / 1e6 : v).toISOString();
+	// Quickwit emits the index's configured unit; for any date after 1973 the magnitude alone
+	// tells seconds, milliseconds, microseconds and nanoseconds apart.
+	const ms = v < 1e11 ? v * 1e3 : v < 1e14 ? v : v < 1e17 ? v / 1e3 : v / 1e6;
+	return new Date(ms).toISOString();
 }
 
 function formatTextBatch(rows: Record<string, unknown>[], cfg: IndexConfig): Uint8Array {
