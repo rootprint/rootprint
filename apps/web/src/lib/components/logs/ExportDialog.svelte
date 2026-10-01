@@ -148,6 +148,11 @@
 					</button>
 				{/each}
 			</div>
+			{#if format === 'text'}
+				<p class="text-muted mt-1 text-xs">
+					Timestamp, level and message only. Choose JSON or CSV to export every field.
+				</p>
+			{/if}
 		</div>
 
 		{#if lockedNumHits !== null}
