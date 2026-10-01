@@ -72,12 +72,12 @@ const latencyPercentiles = {
 
 export const ExploreBucketSchema = named(
 	'ExploreBucket',
-	v.object({ keyMs: v.number(), requests: v.number(), errors: v.number(), ...latencyPercentiles })
+	v.object({ keyMs: v.number(), spans: v.number(), errors: v.number(), ...latencyPercentiles })
 );
 
 export const ExploreSummarySchema = named(
 	'ExploreSummary',
-	v.object({ requests: v.number(), errors: v.number(), ...latencyPercentiles })
+	v.object({ spans: v.number(), errors: v.number(), ...latencyPercentiles })
 );
 
 export const ExploreOperationSchema = named(
@@ -85,11 +85,11 @@ export const ExploreOperationSchema = named(
 	v.object({
 		operation: v.string(),
 		services: v.array(v.string()),
-		requests: v.number(),
+		spans: v.number(),
 		ratePerSec: v.number(),
 		errors: v.number(),
 		...latencyPercentiles,
-		/** Request counts on one grid shared by every operation in the response. */
+		/** Span counts on one grid shared by every operation in the response. */
 		spark: v.array(v.number())
 	})
 );

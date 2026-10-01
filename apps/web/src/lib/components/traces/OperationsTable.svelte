@@ -16,16 +16,16 @@
 
 	let { operations, truncated, onSelect }: Props = $props();
 
-	type SortKey = 'operation' | 'requests' | 'errorRate' | 'p95';
+	type SortKey = 'operation' | 'spans' | 'errorRate' | 'p95';
 
-	let sortKey = $state<SortKey>('requests');
+	let sortKey = $state<SortKey>('spans');
 	let descending = $state(true);
 
-	const errorRate = (op: ExploreOperation) => (op.requests === 0 ? 0 : op.errors / op.requests);
+	const errorRate = (op: ExploreOperation) => (op.spans === 0 ? 0 : op.errors / op.spans);
 
 	const SORT_VALUE: Record<SortKey, (op: ExploreOperation) => number | string> = {
 		operation: (op) => op.operation.toLowerCase(),
-		requests: (op) => op.requests,
+		spans: (op) => op.spans,
 		errorRate,
 		p95: (op) => op.p95 ?? -1
 	};
@@ -81,11 +81,11 @@
 							/>
 						</th>
 						<th scope="col">Services</th>
-						<th scope="col" class="text-right" aria-sort={ariaSort('requests')}>
+						<th scope="col" class="text-right" aria-sort={ariaSort('spans')}>
 							<SortButton
-								label="Requests"
-								direction={ariaSort('requests')}
-								onclick={() => sortBy('requests')}
+								label="Spans"
+								direction={ariaSort('spans')}
+								onclick={() => sortBy('spans')}
 							/>
 						</th>
 						<th scope="col" class="text-right" aria-sort={ariaSort('errorRate')}>
@@ -151,7 +151,7 @@
 										/>
 									</svg>
 									<span class="w-14 tabular-nums">
-										{formatCount(op.requests)}
+										{formatCount(op.spans)}
 										<span class="text-subtle block">
 											{formatRate(op.ratePerSec * 60)}/min
 										</span>

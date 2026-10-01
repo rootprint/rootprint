@@ -142,7 +142,7 @@
 				<div class="skeleton h-44"></div>
 				<div class="skeleton h-44"></div>
 			</div>
-		{:else if overview !== null && overview.summary.requests > 0}
+		{:else if overview !== null && overview.summary.spans > 0}
 			<div class={['transition-opacity', loading && 'opacity-60']}>
 				<ExploreCharts
 					buckets={overview.buckets}

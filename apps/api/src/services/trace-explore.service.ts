@@ -127,7 +127,7 @@ const FACET_SERVICE_LIMIT = 100;
 
 const emptyOverview = (): ExploreOverviewResponse => ({
 	buckets: [],
-	summary: { requests: 0, errors: 0, p50: null, p95: null, p99: null },
+	summary: { spans: 0, errors: 0, p50: null, p95: null, p99: null },
 	operations: [],
 	operationsTruncated: false,
 	facets: { services: [] }
@@ -216,7 +216,7 @@ export async function getExploreOverview(
 
 	const buckets = bucketsOf(totals, 'time').map((bucket) => ({
 		keyMs: Number(bucket.key),
-		requests: bucket.doc_count,
+		spans: bucket.doc_count,
 		errors: errorCount(errorsAt, Number(bucket.key), bucket.doc_count),
 		...percentilesOf(bucket)
 	}));
@@ -230,7 +230,7 @@ export async function getExploreOverview(
 				services: asBuckets(bucket['services'] as BucketAggregationResult | undefined)
 					.map((service) => String(service.key))
 					.filter((name) => name !== ''),
-				requests: bucket.doc_count,
+				spans: bucket.doc_count,
 				ratePerSec: bucket.doc_count / (endTs - startTs),
 				errors: errorCount(errorsFor, operation, bucket.doc_count),
 				...percentilesOf(bucket),
@@ -245,7 +245,7 @@ export async function getExploreOverview(
 	return {
 		buckets,
 		summary: {
-			requests: buckets.reduce((sum, bucket) => sum + bucket.requests, 0),
+			spans: buckets.reduce((sum, bucket) => sum + bucket.spans, 0),
 			errors: buckets.reduce((sum, bucket) => sum + bucket.errors, 0),
 			p50: summaryPercentile(summaryPct, P50),
 			p95: summaryPercentile(summaryPct, P95),

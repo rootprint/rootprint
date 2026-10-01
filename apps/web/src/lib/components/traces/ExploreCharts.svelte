@@ -27,15 +27,15 @@
 			key: 'errorRate',
 			label: 'Error rate',
 			cssVar: 'var(--color-error)',
-			values: buckets.map((b) => (b.requests === 0 ? null : b.errors / b.requests))
+			values: buckets.map((b) => (b.spans === 0 ? null : b.errors / b.spans))
 		}
 	]);
-	const requests = $derived<ChartSeries[]>([
+	const spans = $derived<ChartSeries[]>([
 		{
-			key: 'requests',
-			label: 'Requests',
+			key: 'spans',
+			label: 'Spans',
 			cssVar: 'var(--chart-1)',
-			values: buckets.map((b) => b.requests)
+			values: buckets.map((b) => b.spans)
 		}
 	]);
 </script>
@@ -66,11 +66,11 @@
 		{onBrush}
 	/>
 	<UplotLinePanel
-		title="Requests"
-		summary={formatCount(summary.requests)}
+		title="Spans"
+		summary={formatCount(summary.spans)}
 		{xs}
 		{xRange}
-		series={requests}
+		series={spans}
 		formatValue={formatCount}
 		height={HEIGHT}
 		bars

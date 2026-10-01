@@ -754,13 +754,13 @@
 							}
 						]
 					},
-					"requests": {
+					"spans": {
 						"type": "number"
 					}
 				},
 				"required": [
 					"keyMs",
-					"requests",
+					"spans",
 					"errors",
 					"p50",
 					"p95",
@@ -809,14 +809,14 @@
 					"ratePerSec": {
 						"type": "number"
 					},
-					"requests": {
-						"type": "number"
-					},
 					"services": {
 						"items": {
 							"type": "string"
 						},
 						"type": "array"
+					},
+					"spans": {
+						"type": "number"
 					},
 					"spark": {
 						"items": {
@@ -828,7 +828,7 @@
 				"required": [
 					"operation",
 					"services",
-					"requests",
+					"spans",
 					"ratePerSec",
 					"errors",
 					"p50",
@@ -981,12 +981,12 @@
 							}
 						]
 					},
-					"requests": {
+					"spans": {
 						"type": "number"
 					}
 				},
 				"required": [
-					"requests",
+					"spans",
 					"errors",
 					"p50",
 					"p95",
