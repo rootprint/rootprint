@@ -207,7 +207,7 @@ Pick the DaisyUI component by behavior:
 Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default size in modal footers and on auth pages. `btn-ghost` for secondary actions, `btn-primary` for the one primary action, `btn-error` only to confirm a destructive action (`FormModal` takes `destructive` for that).
 
 - Three exceptions keep a border or fill: provider sign-in buttons on the filled auth card are `btn-outline` (ghost vanishes on `base-200`), the button that opens a destructive confirm is `btn-outline btn-error`, and a control floating over content keeps the default fill (the trace minimap's reset zoom).
-- Toggles and segmented controls mark the on state with `btn-soft`: `btn-neutral`, or the status color when the option is a status (`ExploreToolbar`). Never `btn-primary`; green is for the action.
+- Toggles and segmented controls mark the on state with `aria-pressed` (`aria-current` on links), which DaisyUI styles as `btn-active`, plus `btn-neutral`, or the status color when the option is a status (`ExploreToolbar`). Never `btn-primary`; green is for the action.
 
 ### Shared Components
 

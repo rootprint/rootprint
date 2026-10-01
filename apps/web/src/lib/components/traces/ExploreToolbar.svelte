@@ -137,7 +137,7 @@
 	<div class="join shrink-0" role="group" aria-label="Span status">
 		<button
 			type="button"
-			class={['btn btn-sm join-item', filters.status === 'error' && 'btn-error btn-soft']}
+			class={['btn btn-sm join-item', filters.status === 'error' && 'btn-error']}
 			aria-pressed={filters.status === 'error'}
 			onclick={() => toggleStatus('error')}
 		>
@@ -145,7 +145,7 @@
 		</button>
 		<button
 			type="button"
-			class={['btn btn-sm join-item', filters.status === 'ok' && 'btn-success btn-soft']}
+			class={['btn btn-sm join-item', filters.status === 'ok' && 'btn-success']}
 			aria-pressed={filters.status === 'ok'}
 			onclick={() => toggleStatus('ok')}
 		>
@@ -154,7 +154,7 @@
 	</div>
 	<button
 		type="button"
-		class={['btn btn-sm shrink-0', filters.root && 'btn-neutral btn-soft']}
+		class={['btn btn-sm shrink-0', filters.root && 'btn-neutral']}
 		aria-pressed={filters.root}
 		title="Only each trace's root span"
 		onclick={() => onFilter('root', filters.root ? null : 'true')}

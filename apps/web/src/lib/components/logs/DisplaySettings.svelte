@@ -180,17 +180,16 @@
 			<div class="join w-full">
 				<button
 					type="button"
-					class={['btn join-item btn-xs flex-1', displayMode === 'table' && 'btn-neutral btn-soft']}
+					class={['btn join-item btn-xs flex-1', displayMode === 'table' && 'btn-neutral']}
+					aria-pressed={displayMode === 'table'}
 					onclick={() => onDisplayModeChange('table')}
 				>
 					Table
 				</button>
 				<button
 					type="button"
-					class={[
-						'btn join-item btn-xs flex-1',
-						displayMode === 'inline' && 'btn-neutral btn-soft'
-					]}
+					class={['btn join-item btn-xs flex-1', displayMode === 'inline' && 'btn-neutral']}
+					aria-pressed={displayMode === 'inline'}
 					onclick={() => onDisplayModeChange('inline')}
 				>
 					Inline
