@@ -2,11 +2,11 @@
 	import { untrack } from 'svelte';
 	import type uPlotLib from 'uplot';
 
-	import { browser } from '$app/environment';
-	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
-	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
-	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '$lib/utils/chart-colors';
-	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
+	import { browser } from '$app/env';
+	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
+	import UplotLegend from '#lib/components/ui/uplot/UplotLegend.svelte';
+	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '#lib/utils/chart-colors.js';
+	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
 
 	export type ChartSeries = {
 		key: string;

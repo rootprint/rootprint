@@ -1,5 +1,5 @@
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
 import type { AuthProvidersInfo } from 'api/types';
 import type { SetupAdminInput, SetupPasswordInput } from 'api/schemas';
 

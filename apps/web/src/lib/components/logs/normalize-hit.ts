@@ -1,6 +1,6 @@
 import { getUnixTime, isValid, parseISO } from 'date-fns';
 
-import type { FieldConfig, LogHit } from '$lib/types';
+import type { FieldConfig, LogHit } from '#lib/types.js';
 import { getByPath } from './get-by-path';
 
 export function normalizeHit(raw: Record<string, unknown>, index: number, fc: FieldConfig): LogHit {

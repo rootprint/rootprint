@@ -1,5 +1,5 @@
-import type { Filter, TimeRange } from '$lib/types';
-import { serialize } from '$lib/utils/query-params';
+import type { Filter, TimeRange } from '#lib/types.js';
+import { serialize } from '#lib/utils/query-params.js';
 
 const PAD_SECONDS = 2;
 

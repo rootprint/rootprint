@@ -3,13 +3,13 @@
 	import { untrack } from 'svelte';
 	import type uPlotLib from 'uplot';
 
-	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
-	import UplotLegend from '$lib/components/ui/uplot/UplotLegend.svelte';
-	import { baseContentAt } from '$lib/utils/chart-colors';
-	import { formatBytes } from '$lib/utils/format';
-	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
-	import type { Window } from '$lib/utils/time-range';
-	import TimeRangeTabs from '$lib/components/ui/TimeRangeTabs.svelte';
+	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
+	import UplotLegend from '#lib/components/ui/uplot/UplotLegend.svelte';
+	import { baseContentAt } from '#lib/utils/chart-colors.js';
+	import { formatBytes } from '#lib/utils/format.js';
+	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
+	import type { Window } from '#lib/utils/time-range.js';
+	import TimeRangeTabs from '#lib/components/ui/TimeRangeTabs.svelte';
 
 	type IndexInfo = { indexId: string; displayName: string | null; sizeBytes: number | null };
 	type SeriesDef = { key: string; label: string; color: string };

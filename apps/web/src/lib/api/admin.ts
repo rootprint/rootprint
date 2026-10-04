@@ -1,6 +1,6 @@
 import type { InferResponseType } from 'hono/client';
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
 
 export type ClusterOverview = InferResponseType<typeof client.api.admin.cluster.$get, 200>;
 export type ClusterDocumentStatus = InferResponseType<

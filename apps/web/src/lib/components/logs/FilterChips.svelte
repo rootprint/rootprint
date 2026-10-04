@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
-	import { filterKey } from '$lib/utils/query-params';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
+	import { filterKey } from '#lib/utils/query-params.js';
 
 	let { store }: { store: SearchStore } = $props();
 

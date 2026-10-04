@@ -1,4 +1,4 @@
-import { readString, writeString } from '$lib/utils/safe-storage';
+import { readString, writeString } from '#lib/utils/safe-storage.js';
 
 const STORAGE_KEY = 'rootprint:seen-version';
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { createUser } from '$lib/api/users';
-	import CopyableField from '$lib/components/ui/CopyableField.svelte';
-	import Field from '$lib/components/ui/Field.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
-	import SelectField from '$lib/components/ui/SelectField.svelte';
+	import { createUser } from '#lib/api/users.js';
+	import CopyableField from '#lib/components/ui/CopyableField.svelte';
+	import Field from '#lib/components/ui/Field.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
+	import SelectField from '#lib/components/ui/SelectField.svelte';
 	import { createUserSchema } from 'api/schemas';
 
 	let {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { pluralize } from '$lib/utils/format';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import { pluralize } from '#lib/utils/format.js';
 
 	let { value }: { value: unknown } = $props();
 

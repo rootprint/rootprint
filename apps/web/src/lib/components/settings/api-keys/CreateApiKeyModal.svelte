@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { createApiKey, type ApiKeyView } from '$lib/api/api-keys';
-	import Field from '$lib/components/ui/Field.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
-	import SecretReveal from '$lib/components/ui/SecretReveal.svelte';
-	import SelectField from '$lib/components/ui/SelectField.svelte';
+	import { createApiKey, type ApiKeyView } from '#lib/api/api-keys.js';
+	import Field from '#lib/components/ui/Field.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
+	import SecretReveal from '#lib/components/ui/SecretReveal.svelte';
+	import SelectField from '#lib/components/ui/SelectField.svelte';
 	import { createApiKeySchema } from 'api/schemas';
 	import type { IndexSummary } from 'api/types';
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { ExploreBucket, ExploreSummary } from '$lib/api/traces';
-	import UplotLinePanel from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import type { ChartSeries } from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
+	import type { ExploreBucket, ExploreSummary } from '#lib/api/traces.js';
+	import UplotLinePanel from '#lib/components/ui/uplot/UplotLinePanel.svelte';
+	import type { ChartSeries } from '#lib/components/ui/uplot/UplotLinePanel.svelte';
+	import { formatCount, formatDurationMs, formatPercent } from '#lib/utils/format.js';
 
 	type Props = {
 		buckets: ExploreBucket[];

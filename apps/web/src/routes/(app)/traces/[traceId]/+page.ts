@@ -2,13 +2,13 @@ import { error, redirect } from '@sveltejs/kit';
 import { isTraceId } from 'api/schemas';
 
 import type { PageLoad } from './$types';
-import { ApiError } from '$lib/api/errors';
-import { getIndexConfig, listIndexes, toLogIndexOptions } from '$lib/api/indexes';
-import { fetchTrace } from '$lib/api/traces';
-import { SpanLogCounts } from '$lib/components/traces/span-log-counts.svelte';
-import { buildTraceModel } from '$lib/components/traces/trace-model';
-import { safeReturnTo } from '$lib/return-to';
-import type { TraceLogsTarget } from '$lib/utils/trace-logs';
+import { ApiError } from '#lib/api/errors.js';
+import { getIndexConfig, listIndexes, toLogIndexOptions } from '#lib/api/indexes.js';
+import { fetchTrace } from '#lib/api/traces.js';
+import { SpanLogCounts } from '#lib/components/traces/span-log-counts.svelte.js';
+import { buildTraceModel } from '#lib/components/traces/trace-model.js';
+import { safeReturnTo } from '#lib/return-to.js';
+import type { TraceLogsTarget } from '#lib/utils/trace-logs.js';
 
 export const load: PageLoad = async ({ params, url }) => {
 	if (!isTraceId(params.traceId)) error(400, 'Not a valid trace id');

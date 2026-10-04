@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { resetUserPassword } from '$lib/api/users';
-	import CopyableField from '$lib/components/ui/CopyableField.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
+	import { resetUserPassword } from '#lib/api/users.js';
+	import CopyableField from '#lib/components/ui/CopyableField.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
 
 	let {
 		open = $bindable(false),

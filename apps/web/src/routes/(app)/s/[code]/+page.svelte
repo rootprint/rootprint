@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CircleX } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
-	import { serialize } from '$lib/utils/query-params';
+	import { serialize } from '#lib/utils/query-params.js';
 
 	let { data } = $props();
 
@@ -27,7 +27,7 @@
 			filters
 		});
 		void goto(`/logs?${params.toString()}`, {
-			replaceState: true,
+			replace: true,
 			state: { openHit: hit }
 		});
 	});

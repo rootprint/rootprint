@@ -1,7 +1,7 @@
 import type { PageLoad } from './$types';
-import { getClusterDocumentStatus } from '$lib/api/admin';
-import { listIndexes, toLogIndexOptions } from '$lib/api/indexes';
-import { readString, writeString } from '$lib/utils/safe-storage';
+import { getClusterDocumentStatus } from '#lib/api/admin.js';
+import { listIndexes, toLogIndexOptions } from '#lib/api/indexes.js';
+import { readString, writeString } from '#lib/utils/safe-storage.js';
 
 const HAS_SEEN_DOCUMENTS_KEY = 'rootprint:has-seen-documents';
 

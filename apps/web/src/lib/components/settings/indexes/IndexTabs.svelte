@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { IndexTabId } from '$lib/types';
+	import type { IndexTabId } from '#lib/types.js';
 
 	let {
 		activeTab,

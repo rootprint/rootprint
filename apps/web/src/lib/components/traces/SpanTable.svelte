@@ -9,18 +9,18 @@
 		queryErrorOf,
 		type ExploreFilters,
 		type ExploreSpanRow
-	} from '$lib/api/traces';
-	import { rowActivate } from '$lib/attachments/row-activate';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import SortButton from '$lib/components/ui/SortButton.svelte';
-	import { RequestGuard } from '$lib/stores/request-guard';
-	import { formatDurationMicros } from '$lib/utils/format';
-	import { readLastIndex } from '$lib/utils/last-index';
-	import { serviceColor } from '$lib/utils/service-color';
-	import { formatTimestamp } from '$lib/utils/time';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	} from '#lib/api/traces.js';
+	import { rowActivate } from '#lib/attachments/row-activate.js';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import SortButton from '#lib/components/ui/SortButton.svelte';
+	import { RequestGuard } from '#lib/stores/request-guard.js';
+	import { formatDurationMicros } from '#lib/utils/format.js';
+	import { readLastIndex } from '#lib/utils/last-index.js';
+	import { serviceColor } from '#lib/utils/service-color.js';
+	import { formatTimestamp } from '#lib/utils/time.js';
+	import { traceDetailHref } from '#lib/utils/trace-params.js';
 
 	type SortField = 'start' | 'duration';
 

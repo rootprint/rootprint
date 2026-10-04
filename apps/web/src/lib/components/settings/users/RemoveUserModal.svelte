@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { removeUser } from '$lib/api/users';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
+	import { removeUser } from '#lib/api/users.js';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
 
 	let {
 		open = $bindable(false),

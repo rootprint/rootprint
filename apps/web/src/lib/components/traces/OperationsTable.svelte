@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { OPERATION_LIMIT } from 'api/constants';
 
-	import type { ExploreOperation } from '$lib/api/traces';
-	import { rowActivate } from '$lib/attachments/row-activate';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import SortButton from '$lib/components/ui/SortButton.svelte';
-	import { formatCount, formatDurationMs, formatPercent, formatRate } from '$lib/utils/format';
-	import { serviceColor } from '$lib/utils/service-color';
+	import type { ExploreOperation } from '#lib/api/traces.js';
+	import { rowActivate } from '#lib/attachments/row-activate.js';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import SortButton from '#lib/components/ui/SortButton.svelte';
+	import { formatCount, formatDurationMs, formatPercent, formatRate } from '#lib/utils/format.js';
+	import { serviceColor } from '#lib/utils/service-color.js';
 
 	type Props = {
 		operations: ExploreOperation[];

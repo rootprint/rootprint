@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ChevronDown } from 'lucide-svelte';
 
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import FieldRow from '$lib/components/ui/FieldRow.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import type { FieldGroup, FieldGroupId } from '$lib/components/logs/drawer/hit-fields';
-	import { groupHitFields } from '$lib/components/logs/drawer/hit-fields';
-	import type { FieldRowData, LogHit } from '$lib/types';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import FieldRow from '#lib/components/ui/FieldRow.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import type { FieldGroup, FieldGroupId } from '#lib/components/logs/drawer/hit-fields.js';
+	import { groupHitFields } from '#lib/components/logs/drawer/hit-fields.js';
+	import type { FieldRowData, LogHit } from '#lib/types.js';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 
 	let {
 		hit,

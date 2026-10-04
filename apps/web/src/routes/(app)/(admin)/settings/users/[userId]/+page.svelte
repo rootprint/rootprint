@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 
-	import AccountDetails from '$lib/components/profile/AccountDetails.svelte';
-	import ActivityPanel from '$lib/components/settings/activity/ActivityPanel.svelte';
-	import MemberActionsMenu from '$lib/components/settings/users/MemberActionsMenu.svelte';
-	import RemoveUserModal from '$lib/components/settings/users/RemoveUserModal.svelte';
-	import ResetPasswordModal from '$lib/components/settings/users/ResetPasswordModal.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import AccountDetails from '#lib/components/profile/AccountDetails.svelte';
+	import ActivityPanel from '#lib/components/settings/activity/ActivityPanel.svelte';
+	import MemberActionsMenu from '#lib/components/settings/users/MemberActionsMenu.svelte';
+	import RemoveUserModal from '#lib/components/settings/users/RemoveUserModal.svelte';
+	import ResetPasswordModal from '#lib/components/settings/users/ResetPasswordModal.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 	import { refreshUsers, regenerateInvite, toggleUserRole } from '../user-actions';
-	import type { UserView } from '$lib/api/users';
-	import { setSearchParam } from '$lib/components/settings/search-params';
+	import type { UserView } from '#lib/api/users.js';
+	import { setSearchParam } from '#lib/components/settings/search-params.js';
 
 	let { data } = $props();
 	const user = $derived(data.user);

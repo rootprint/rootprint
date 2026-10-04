@@ -1,8 +1,8 @@
 <script lang="ts">
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { highlightCode } from '$lib/utils/code-highlight';
-	import { pluralize } from '$lib/utils/format';
-	import { resolveEmbeddedJson } from '$lib/components/logs/resolve-embedded-json';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import { highlightCode } from '#lib/utils/code-highlight.js';
+	import { pluralize } from '#lib/utils/format.js';
+	import { resolveEmbeddedJson } from '#lib/components/logs/resolve-embedded-json.js';
 
 	let {
 		raw

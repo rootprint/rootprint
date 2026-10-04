@@ -1,6 +1,6 @@
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import type { SearchInput, SearchResult } from '$lib/types';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { SearchInput, SearchResult } from '#lib/types.js';
 
 export async function searchLogs(input: SearchInput, signal?: AbortSignal): Promise<SearchResult> {
 	const res = await client.api.indexes[':indexId'].logs.$get(

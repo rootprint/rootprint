@@ -1,4 +1,4 @@
-import { NBSP } from '$lib/utils/format';
+import { NBSP } from '#lib/utils/format.js';
 
 const TICK_TARGET = 6;
 

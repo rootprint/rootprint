@@ -1,6 +1,6 @@
 import { format, fromUnixTime, getUnixTime, isSameDay, isSameYear } from 'date-fns';
 
-import type { TimeRange } from '$lib/types';
+import type { TimeRange } from '#lib/types.js';
 import { PRESET_OPTIONS } from 'api/constants';
 import type { Preset } from 'api/types';
 

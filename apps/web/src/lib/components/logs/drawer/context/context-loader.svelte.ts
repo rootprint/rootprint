@@ -1,9 +1,9 @@
-import { searchLogs } from '$lib/api/log-search';
-import { isAbortError } from '$lib/api/errors';
-import { getByPath } from '$lib/components/logs/get-by-path';
+import { searchLogs } from '#lib/api/log-search.js';
+import { isAbortError } from '#lib/api/errors.js';
+import { getByPath } from '#lib/components/logs/get-by-path.js';
 import { escapeFilterValue } from 'api/query';
-import { hitTimestampSeconds, normalizeHit } from '$lib/components/logs/normalize-hit';
-import type { ContextChip, ContextEntry, FieldConfig, LogHit, SearchInput } from '$lib/types';
+import { hitTimestampSeconds, normalizeHit } from '#lib/components/logs/normalize-hit.js';
+import type { ContextChip, ContextEntry, FieldConfig, LogHit, SearchInput } from '#lib/types.js';
 
 const PAGE_SIZE = 200;
 const WINDOW_SECONDS = 15 * 60;

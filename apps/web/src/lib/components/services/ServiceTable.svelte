@@ -3,13 +3,13 @@
 
 	import { page } from '$app/state';
 
-	import type { ServiceHealthServiceRow } from '$lib/api/services';
-	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
-	import SortButton from '$lib/components/ui/SortButton.svelte';
-	import TracesLink from '$lib/components/ui/TracesLink.svelte';
-	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
-	import { servicesHref } from '$lib/utils/query-params';
-	import { readString, writeString } from '$lib/utils/safe-storage';
+	import type { ServiceHealthServiceRow } from '#lib/api/services.js';
+	import RowLimitSelector from '#lib/components/ui/RowLimitSelector.svelte';
+	import SortButton from '#lib/components/ui/SortButton.svelte';
+	import TracesLink from '#lib/components/ui/TracesLink.svelte';
+	import { formatCount, formatDurationMs, formatPercent } from '#lib/utils/format.js';
+	import { servicesHref } from '#lib/utils/query-params.js';
+	import { readString, writeString } from '#lib/utils/safe-storage.js';
 
 	type Props = {
 		services: ServiceHealthServiceRow[];

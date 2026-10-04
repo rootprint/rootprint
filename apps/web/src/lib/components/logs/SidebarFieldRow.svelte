@@ -5,8 +5,8 @@
 
 <script lang="ts">
 	import { ChevronDown, ChevronRight, Minus, Pin, Plus } from 'lucide-svelte';
-	import type { LogField, LogFieldValueBucket } from '$lib/types';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
+	import type { LogField, LogFieldValueBucket } from '#lib/types.js';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 
 	/** Rows revealed per "Show more" click after the initial collapsed view. */
 	const FIELD_VALUES_SHOW_MORE_STEP = 50;

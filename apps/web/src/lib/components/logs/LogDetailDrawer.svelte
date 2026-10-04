@@ -9,19 +9,19 @@
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
-	import SpanDetailPane from '$lib/components/traces/SpanDetailPane.svelte';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import TracePane from '$lib/components/traces/TracePane.svelte';
-	import { buildTraceModel } from '$lib/components/traces/trace-model';
-	import { fetchTrace } from '$lib/api/traces';
-	import { createShare } from '$lib/api/shares';
-	import { ApiError } from '$lib/api/errors';
-	import { getByPath } from '$lib/components/logs/get-by-path';
-	import { readString, removeKey, writeString } from '$lib/utils/safe-storage';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	import SpanDetailPane from '#lib/components/traces/SpanDetailPane.svelte';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import TracePane from '#lib/components/traces/TracePane.svelte';
+	import { buildTraceModel } from '#lib/components/traces/trace-model.js';
+	import { fetchTrace } from '#lib/api/traces.js';
+	import { createShare } from '#lib/api/shares.js';
+	import { ApiError } from '#lib/api/errors.js';
+	import { getByPath } from '#lib/components/logs/get-by-path.js';
+	import { readString, removeKey, writeString } from '#lib/utils/safe-storage.js';
+	import { traceDetailHref } from '#lib/utils/trace-params.js';
 	import { isTraceId } from 'api/schemas';
-	import type { LogHit, TraceModel } from '$lib/types';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
+	import type { LogHit, TraceModel } from '#lib/types.js';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 
 	const MAX_SHARE_PAYLOAD_BYTES = 64 * 1024;
 

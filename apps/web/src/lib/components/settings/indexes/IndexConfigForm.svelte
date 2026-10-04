@@ -4,11 +4,11 @@
 	import * as v from 'valibot';
 
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
-	import { saveIndexConfig } from '$lib/api/indexes';
-	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
-	import TagInput from '$lib/components/ui/TagInput.svelte';
+	import { DEP } from '#lib/api/deps.js';
+	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
+	import { saveIndexConfig } from '#lib/api/indexes.js';
+	import SettingsRow from '#lib/components/ui/SettingsRow.svelte';
+	import TagInput from '#lib/components/ui/TagInput.svelte';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
 	import type { IndexDetail } from 'api/types';
 

@@ -1,26 +1,26 @@
 <script lang="ts">
 	import { CircleX, ExternalLink, SearchX, Send } from 'lucide-svelte';
-	import { readString, writeString } from '$lib/utils/safe-storage';
+	import { readString, writeString } from '#lib/utils/safe-storage.js';
 
-	import FieldPanel from '$lib/components/logs/FieldPanel.svelte';
-	import LogDetailDrawer from '$lib/components/logs/LogDetailDrawer.svelte';
-	import LogFrequencyChart from '$lib/components/logs/LogFrequencyChart.svelte';
-	import VirtualLogList from '$lib/components/logs/VirtualLogList.svelte';
-	import SearchToolbar from '$lib/components/logs/SearchToolbar.svelte';
-	import FilterChips from '$lib/components/logs/FilterChips.svelte';
-	import ResultsBar from '$lib/components/logs/ResultsBar.svelte';
-	import { SearchStore } from '$lib/components/logs/search.svelte';
-	import { shell } from '$lib/stores/shell.svelte';
+	import FieldPanel from '#lib/components/logs/FieldPanel.svelte';
+	import LogDetailDrawer from '#lib/components/logs/LogDetailDrawer.svelte';
+	import LogFrequencyChart from '#lib/components/logs/LogFrequencyChart.svelte';
+	import VirtualLogList from '#lib/components/logs/VirtualLogList.svelte';
+	import SearchToolbar from '#lib/components/logs/SearchToolbar.svelte';
+	import FilterChips from '#lib/components/logs/FilterChips.svelte';
+	import ResultsBar from '#lib/components/logs/ResultsBar.svelte';
+	import { SearchStore } from '#lib/components/logs/search.svelte.js';
+	import { shell } from '#lib/stores/shell.svelte.js';
 	import {
 		buildGridTemplate,
 		computeColumnWidths,
 		computeFieldWidth
-	} from '$lib/components/logs/column-width';
+	} from '#lib/components/logs/column-width.js';
 	import { page } from '$app/state';
-	import { replaceState } from '$app/navigation';
-	import { deserialize } from '$lib/utils/query-params';
-	import { normalizeHit } from '$lib/components/logs/normalize-hit';
-	import type { LogHit } from '$lib/types';
+	import { goto } from '$app/navigation';
+	import { deserialize } from '#lib/utils/query-params.js';
+	import { normalizeHit } from '#lib/components/logs/normalize-hit.js';
+	import type { LogHit } from '#lib/types.js';
 
 	const SCROLL_TRIGGER_PX = 1500;
 
@@ -85,7 +85,12 @@
 		const openHit = page.state.openHit;
 		if (!openHit || !store.fieldConfig) return;
 		selectedLog = normalizeHit(openHit, 0, store.fieldConfig);
-		replaceState('', { ...page.state, openHit: undefined });
+
+		goto('', {
+			shallow: true,
+			replace: true,
+			state: { ...page.state, openHit: undefined }
+		});
 	});
 
 	function openRow(hit: LogHit) {

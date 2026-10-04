@@ -3,7 +3,7 @@
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import { Check, Copy } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { copyToClipboard } from '#lib/utils/clipboard.js';
 
 	let {
 		text,

@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-import { getServiceHealth } from '$lib/api/services';
-import { parseTimeRange } from '$lib/utils/query-params';
-import { resolveWindow } from '$lib/utils/time-range';
+import { getServiceHealth } from '#lib/api/services.js';
+import { parseTimeRange } from '#lib/utils/query-params.js';
+import { resolveWindow } from '#lib/utils/time-range.js';
 
 export const load: PageLoad = ({ url }) => {
 	// `?service=` scoped this page before each service had its own; keeps those links working.

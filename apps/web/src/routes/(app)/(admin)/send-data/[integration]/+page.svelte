@@ -2,15 +2,15 @@
 	import { untrack } from 'svelte';
 	import { ExternalLink } from 'lucide-svelte';
 	import { page } from '$app/state';
-	import Callout from '$lib/components/send-data/Callout.svelte';
-	import CodeBlock from '$lib/components/send-data/CodeBlock.svelte';
-	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/components/send-data/constants';
-	import { integrationById } from '$lib/components/send-data/integrations';
-	import KeyStep from '$lib/components/send-data/KeyStep.svelte';
-	import { SIGNAL_TABS, signalFromUrl } from '$lib/components/send-data/signal';
-	import StepBlock from '$lib/components/send-data/StepBlock.svelte';
-	import TabLinks from '$lib/components/send-data/TabLinks.svelte';
-	import WizardHeader from '$lib/components/send-data/WizardHeader.svelte';
+	import Callout from '#lib/components/send-data/Callout.svelte';
+	import CodeBlock from '#lib/components/send-data/CodeBlock.svelte';
+	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '#lib/components/send-data/constants.js';
+	import { integrationById } from '#lib/components/send-data/integrations.js';
+	import KeyStep from '#lib/components/send-data/KeyStep.svelte';
+	import { SIGNAL_TABS, signalFromUrl } from '#lib/components/send-data/signal.js';
+	import StepBlock from '#lib/components/send-data/StepBlock.svelte';
+	import TabLinks from '#lib/components/send-data/TabLinks.svelte';
+	import WizardHeader from '#lib/components/send-data/WizardHeader.svelte';
 
 	let { data } = $props();
 

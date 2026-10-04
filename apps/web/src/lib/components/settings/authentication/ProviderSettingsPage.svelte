@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Trash2 } from 'lucide-svelte';
 
-	import type { OAuthProviderDescriptor } from '$lib/components/settings/authentication/oauth-providers';
-	import OAuthProviderAuthForm from '$lib/components/settings/authentication/OAuthProviderAuthForm.svelte';
-	import RemoveProviderAuthModal from '$lib/components/settings/authentication/RemoveProviderAuthModal.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import type { OAuthProviderDescriptor } from '#lib/components/settings/authentication/oauth-providers.js';
+	import OAuthProviderAuthForm from '#lib/components/settings/authentication/OAuthProviderAuthForm.svelte';
+	import RemoveProviderAuthModal from '#lib/components/settings/authentication/RemoveProviderAuthModal.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 
 	let {
 		provider,

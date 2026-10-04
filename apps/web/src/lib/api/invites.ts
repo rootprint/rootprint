@@ -1,5 +1,5 @@
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
 
 export async function resendInvite(userId: string): Promise<void> {
 	const res = await client.api.users[':userId'].invites.$post({ param: { userId } });

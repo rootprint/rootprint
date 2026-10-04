@@ -7,7 +7,7 @@ import {
 	Users,
 	ShieldCheck
 } from 'lucide-svelte';
-import type { BreadcrumbSegment } from '$lib/types';
+import type { BreadcrumbSegment } from '#lib/types.js';
 
 export type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 export type NavGroup = { label: string; items: NavItem[] };

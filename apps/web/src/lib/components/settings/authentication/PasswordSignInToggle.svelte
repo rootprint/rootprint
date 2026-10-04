@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 
-	import { invalidateAll } from '$app/navigation';
-	import { savePasswordSignIn } from '$lib/api/auth-config';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
+	import { refreshAll } from '$app/navigation';
+	import { savePasswordSignIn } from '#lib/api/auth-config.js';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
 
 	let { enabled }: { enabled: boolean } = $props();
 
@@ -16,7 +16,7 @@
 		try {
 			await savePasswordSignIn({ enabled: next });
 			toast.success(next ? 'Password sign-in enabled' : 'Password sign-in disabled');
-			await invalidateAll();
+			await refreshAll();
 		} finally {
 			saving = false;
 		}

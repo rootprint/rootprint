@@ -1,8 +1,8 @@
-import type { FieldConfig, FieldRowData } from '$lib/types';
-import { formatCell } from '$lib/components/logs/column-width';
-import { getByPath } from '$lib/components/logs/get-by-path';
-import { stripOtelPrefix } from '$lib/utils/fields';
-import { isPlainObject } from '$lib/utils/object';
+import type { FieldConfig, FieldRowData } from '#lib/types.js';
+import { formatCell } from '#lib/components/logs/column-width.js';
+import { getByPath } from '#lib/components/logs/get-by-path.js';
+import { stripOtelPrefix } from '#lib/utils/fields.js';
+import { isPlainObject } from '#lib/utils/object.js';
 
 export type FieldGroupId = 'attributes' | 'resource_attributes' | 'other' | 'all';
 

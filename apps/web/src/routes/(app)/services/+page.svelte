@@ -4,19 +4,19 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import ApmSummary from '$lib/components/services/ApmSummary.svelte';
-	import ErrorRateChart from '$lib/components/services/ErrorRateChart.svelte';
-	import RequestRateChart from '$lib/components/services/RequestRateChart.svelte';
-	import ServiceLatencyChart from '$lib/components/services/ServiceLatencyChart.svelte';
-	import ServicePicker from '$lib/components/services/ServicePicker.svelte';
-	import ServiceTable from '$lib/components/services/ServiceTable.svelte';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
-	import type { TimeRange } from '$lib/types';
-	import { servicesHref, setTimeRangeParams } from '$lib/utils/query-params';
-	import { exploreHref } from '$lib/utils/trace-params';
+	import ApmSummary from '#lib/components/services/ApmSummary.svelte';
+	import ErrorRateChart from '#lib/components/services/ErrorRateChart.svelte';
+	import RequestRateChart from '#lib/components/services/RequestRateChart.svelte';
+	import ServiceLatencyChart from '#lib/components/services/ServiceLatencyChart.svelte';
+	import ServicePicker from '#lib/components/services/ServicePicker.svelte';
+	import ServiceTable from '#lib/components/services/ServiceTable.svelte';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import PageToolbar from '#lib/components/ui/PageToolbar.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import TimeRangePicker from '#lib/components/ui/TimeRangePicker.svelte';
+	import type { TimeRange } from '#lib/types.js';
+	import { servicesHref, setTimeRangeParams } from '#lib/utils/query-params.js';
+	import { exploreHref } from '#lib/utils/trace-params.js';
 
 	let { data } = $props();
 
@@ -26,9 +26,9 @@
 	const xRange = $derived<[number, number]>([data.startTs, data.endTs]);
 
 	function setRange(next: TimeRange) {
-		const url = new URL(page.url);
+		const url = new URL(page.url.href);
 		setTimeRangeParams(url.searchParams, next);
-		void goto(url, { keepFocus: true, noScroll: true });
+		void goto(url, { reset: false });
 	}
 
 	function brushRange(startTs: number, endTs: number) {

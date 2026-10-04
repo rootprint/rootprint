@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { goto, invalidateAll, replaceState } from '$app/navigation';
+	import { goto, refreshAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { ArrowLeft, ScrollText } from 'lucide-svelte';
 
-	import SpanDetailPane from '$lib/components/traces/SpanDetailPane.svelte';
-	import TracePane from '$lib/components/traces/TracePane.svelte';
-	import { spanSearchText } from '$lib/components/traces/trace-model';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import { formatDurationMicros, pluralize } from '$lib/utils/format';
-	import { writeLastIndex } from '$lib/utils/last-index';
-	import { serviceColor } from '$lib/utils/service-color';
-	import { firstErrorSpan, spansInTreeOrder } from '$lib/components/traces/span-stats';
-	import { traceLogsHref } from '$lib/utils/trace-logs';
-	import { formatTimestamp } from '$lib/utils/time';
-	import { traceOrigin, type TraceOrigin } from '$lib/utils/trace-params';
-	import type { SpanNode } from '$lib/types';
+	import SpanDetailPane from '#lib/components/traces/SpanDetailPane.svelte';
+	import TracePane from '#lib/components/traces/TracePane.svelte';
+	import { spanSearchText } from '#lib/components/traces/trace-model.js';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import { formatDurationMicros, pluralize } from '#lib/utils/format.js';
+	import { writeLastIndex } from '#lib/utils/last-index.js';
+	import { serviceColor } from '#lib/utils/service-color.js';
+	import { firstErrorSpan, spansInTreeOrder } from '#lib/components/traces/span-stats.js';
+	import { traceLogsHref } from '#lib/utils/trace-logs.js';
+	import { formatTimestamp } from '#lib/utils/time.js';
+	import { traceOrigin, type TraceOrigin } from '#lib/utils/trace-params.js';
+	import type { SpanNode } from '#lib/types.js';
 
 	let { data } = $props();
 
@@ -30,9 +30,8 @@
 		}
 		const query = params.toString();
 		void goto(`/traces/${data.traceId}${query ? `?${query}` : ''}`, {
-			replaceState: true,
-			keepFocus: true,
-			noScroll: true
+			replace: true,
+			reset: false
 		});
 	}
 
@@ -63,9 +62,11 @@
 	function selectSpan(spanId: string | null): void {
 		selection = { traceId: data.traceId, spanId };
 		const url = new URL(location.href);
+
 		if (spanId === null) url.searchParams.delete('span');
 		else url.searchParams.set('span', spanId);
-		replaceState(url, page.state);
+
+		goto(url, { shallow: true, replace: true, state: page.state });
 	}
 
 	const firstError = $derived(firstErrorSpan(model.byId.values()));
@@ -231,7 +232,7 @@
 				{model.orphanCount === 1 ? 'span is' : 'spans are'} waiting on a parent that hasn't finished yet
 				— a span only arrives once it ends, so this trace fills in as they complete.
 			</span>
-			<button class="btn btn-ghost btn-xs" onclick={() => invalidateAll()}>Reload</button>
+			<button class="btn btn-ghost btn-xs" onclick={() => refreshAll()}>Reload</button>
 		</div>
 	{/if}
 
@@ -280,7 +281,7 @@
 					onSelectSpan={selectSpan}
 					{spanLogs}
 					minimap
-					onReload={invalidateAll}
+					onReload={refreshAll}
 				/>
 			{/key}
 		</div>

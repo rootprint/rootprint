@@ -1,5 +1,5 @@
-import type { LogField } from '$lib/types';
-import { isOtelAttr, isOtelResourceAttr } from '$lib/utils/fields';
+import type { LogField } from '#lib/types.js';
+import { isOtelAttr, isOtelResourceAttr } from '#lib/utils/fields.js';
 
 export type SectionKey = 'pinned' | 'top' | 'attributes' | 'resource_attributes';
 

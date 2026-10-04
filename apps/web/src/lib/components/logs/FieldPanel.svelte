@@ -3,18 +3,18 @@
 	import { get } from 'svelte/store';
 	import { createVirtualizer } from '@tanstack/svelte-virtual';
 	import { ChevronDown, ChevronRight, Search } from 'lucide-svelte';
-	import type { LevelBucket, LogField, LogFieldValueBucket } from '$lib/types';
-	import { serializeTimeRange } from '$lib/utils/fields';
-	import { buildFieldSections, type SectionKey } from '$lib/components/logs/field-list';
-	import { sortBySeverity } from '$lib/components/logs/severity';
-	import { levelColor, UNKNOWN_LEVEL } from '$lib/constants/level-colors';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
-	import { fetchFieldValuesBulk } from '$lib/api/field-values';
-	import { filterKey } from '$lib/utils/query-params';
+	import type { LevelBucket, LogField, LogFieldValueBucket } from '#lib/types.js';
+	import { serializeTimeRange } from '#lib/utils/fields.js';
+	import { buildFieldSections, type SectionKey } from '#lib/components/logs/field-list.js';
+	import { sortBySeverity } from '#lib/components/logs/severity.js';
+	import { levelColor, UNKNOWN_LEVEL } from '#lib/constants/level-colors.js';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
+	import { fetchFieldValuesBulk } from '#lib/api/field-values.js';
+	import { filterKey } from '#lib/utils/query-params.js';
 
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-	import { readStringArray, writeJSON } from '$lib/utils/safe-storage';
+	import { readStringArray, writeJSON } from '#lib/utils/safe-storage.js';
 	import SidebarFieldRow, { FIELD_VALUES_INITIAL_SHOW } from './SidebarFieldRow.svelte';
 
 	let { store }: { store: SearchStore } = $props();

@@ -3,17 +3,17 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { deleteApiKey, getApiKey } from '$lib/api/api-keys';
-	import CreateApiKeyModal from '$lib/components/settings/api-keys/CreateApiKeyModal.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import SecretReveal from '$lib/components/ui/SecretReveal.svelte';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { pluralize } from '$lib/utils/format';
-	import { formatRelativeTime } from '$lib/utils/time';
+	import { DEP } from '#lib/api/deps.js';
+	import { deleteApiKey, getApiKey } from '#lib/api/api-keys.js';
+	import CreateApiKeyModal from '#lib/components/settings/api-keys/CreateApiKeyModal.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import SecretReveal from '#lib/components/ui/SecretReveal.svelte';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import Modal from '#lib/components/ui/Modal.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import { pluralize } from '#lib/utils/format.js';
+	import { formatRelativeTime } from '#lib/utils/time.js';
 
 	let { data } = $props();
 	const keys = $derived(data.keys);

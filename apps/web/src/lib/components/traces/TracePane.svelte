@@ -4,13 +4,13 @@
 
 	import { SvelteSet } from 'svelte/reactivity';
 
-	import { formatDurationMicros, pluralize } from '$lib/utils/format';
-	import { serviceColor } from '$lib/utils/service-color';
-	import { traceAxis } from '$lib/components/traces/trace-axis';
+	import { formatDurationMicros, pluralize } from '#lib/utils/format.js';
+	import { serviceColor } from '#lib/utils/service-color.js';
+	import { traceAxis } from '#lib/components/traces/trace-axis.js';
 	import TraceAxisTicks from './TraceAxisTicks.svelte';
 	import TraceMinimap from './TraceMinimap.svelte';
 	import { fullView } from './trace-model';
-	import type { SpanNode, TraceModel, ViewRange } from '$lib/types';
+	import type { SpanNode, TraceModel, ViewRange } from '#lib/types.js';
 
 	let {
 		model,

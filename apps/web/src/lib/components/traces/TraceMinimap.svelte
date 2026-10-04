@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { ZoomOut } from 'lucide-svelte';
 
-	import { serviceColor } from '$lib/utils/service-color';
-	import { traceAxis } from '$lib/components/traces/trace-axis';
+	import { serviceColor } from '#lib/utils/service-color.js';
+	import { traceAxis } from '#lib/components/traces/trace-axis.js';
 	import TraceAxisTicks from './TraceAxisTicks.svelte';
 	import { fullView } from './trace-model';
-	import type { SpanNode, ViewRange } from '$lib/types';
+	import type { SpanNode, ViewRange } from '#lib/types.js';
 
 	let {
 		spans,

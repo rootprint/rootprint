@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ServiceHealthServiceRow, ServiceHealthSummary } from '$lib/api/services';
-	import { formatCount, formatDurationMs, formatPercent, formatRate } from '$lib/utils/format';
+	import type { ServiceHealthServiceRow, ServiceHealthSummary } from '#lib/api/services.js';
+	import { formatCount, formatDurationMs, formatPercent, formatRate } from '#lib/utils/format.js';
 
 	type Props = {
 		service: string | null;

@@ -1,7 +1,7 @@
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import type { FieldConfig, LogField } from '$lib/types';
-import { displayNameFor } from '$lib/utils/fields';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { FieldConfig, LogField } from '#lib/types.js';
+import { displayNameFor } from '#lib/utils/fields.js';
 
 /** Quickwit synthetic fields (`_dynamic` from dynamic mapping, `_source`) — noise, hide from the panel. */
 const SYNTHETIC_FIELDS = new Set(['_dynamic', '_source']);

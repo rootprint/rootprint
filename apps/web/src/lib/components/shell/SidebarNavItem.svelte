@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NavItem } from '$lib/admin-nav';
+	import type { NavItem } from '#lib/admin-nav.js';
 
 	let {
 		href,

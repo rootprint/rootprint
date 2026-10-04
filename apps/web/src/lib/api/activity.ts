@@ -1,7 +1,7 @@
 import type { InferResponseType } from 'hono/client';
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import type { Window } from '$lib/utils/time-range';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { Window } from '#lib/utils/time-range.js';
 
 const activity = client.api.admin.activity;
 const users = activity.users;

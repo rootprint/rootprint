@@ -4,15 +4,15 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import { DEP } from '$lib/api/deps';
-	import { queryErrorOf, type ExploreOperation, type ExploreOverview } from '$lib/api/traces';
-	import ExploreCharts from '$lib/components/traces/ExploreCharts.svelte';
-	import ExploreToolbar from '$lib/components/traces/ExploreToolbar.svelte';
-	import OperationsTable from '$lib/components/traces/OperationsTable.svelte';
-	import SpanTable from '$lib/components/traces/SpanTable.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import type { TimeRange } from '$lib/types';
-	import { paramOneOf, setTimeRangeParams } from '$lib/utils/query-params';
+	import { DEP } from '#lib/api/deps.js';
+	import { queryErrorOf, type ExploreOperation, type ExploreOverview } from '#lib/api/traces.js';
+	import ExploreCharts from '#lib/components/traces/ExploreCharts.svelte';
+	import ExploreToolbar from '#lib/components/traces/ExploreToolbar.svelte';
+	import OperationsTable from '#lib/components/traces/OperationsTable.svelte';
+	import SpanTable from '#lib/components/traces/SpanTable.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import type { TimeRange } from '#lib/types.js';
+	import { paramOneOf, setTimeRangeParams } from '#lib/utils/query-params.js';
 
 	let { data } = $props();
 
@@ -60,10 +60,10 @@
 	const overviewFailed = $derived(overviewError !== null && queryError === null);
 	const xRange = $derived<[number, number]>([data.filters.startTs, data.filters.endTs]);
 
-	function navigate(mutate: (params: URLSearchParams) => void, replaceState = false) {
-		const url = new URL(page.url);
+	function navigate(mutate: (params: URLSearchParams) => void, replace = false) {
+		const url = new URL(page.url.href);
 		mutate(url.searchParams);
-		void goto(url, { keepFocus: true, noScroll: true, replaceState });
+		void goto(url, { reset: false, replace });
 	}
 
 	function setParam(params: URLSearchParams, name: string, value: string | null) {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import CreateSourceForm from '$lib/components/settings/indexes/CreateSourceForm.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import CreateSourceForm from '#lib/components/settings/indexes/CreateSourceForm.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 
 	let { data } = $props();
 	const detail = $derived(data.detail);

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import SettingsNav from '$lib/components/shell/SettingsNav.svelte';
-	import PageScroll from '$lib/components/ui/PageScroll.svelte';
+	import SettingsNav from '#lib/components/shell/SettingsNav.svelte';
+	import PageScroll from '#lib/components/ui/PageScroll.svelte';
 
 	let { children } = $props();
 </script>

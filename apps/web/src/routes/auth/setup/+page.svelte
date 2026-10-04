@@ -3,10 +3,10 @@
 	import { setupPasswordSchema } from 'api/schemas';
 
 	import { goto } from '$app/navigation';
-	import { setupPassword } from '$lib/api/auth';
-	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
-	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-	import Field from '$lib/components/ui/Field.svelte';
+	import { setupPassword } from '#lib/api/auth.js';
+	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
+	import AuthHeader from '#lib/components/auth/AuthHeader.svelte';
+	import Field from '#lib/components/ui/Field.svelte';
 
 	let { data } = $props();
 

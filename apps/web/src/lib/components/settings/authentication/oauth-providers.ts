@@ -15,8 +15,8 @@ import {
 	saveGoogleAllowedDomains,
 	saveGoogleCredentials,
 	saveOidcCredentials
-} from '$lib/api/auth-config';
-import { issuesToFieldErrors } from '$lib/api/errors';
+} from '#lib/api/auth-config.js';
+import { issuesToFieldErrors } from '#lib/api/errors.js';
 import type { ExternalProviderId } from 'api/types';
 
 /** `issuerUrl` is empty for providers without an issuer row; their schemas strip it. */

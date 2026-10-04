@@ -5,15 +5,15 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import type { ExploreFilters } from '$lib/api/traces';
-	import ServicePicker from '$lib/components/services/ServicePicker.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
-	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
-	import type { TimeRange } from '$lib/types';
-	import { readLastIndex } from '$lib/utils/last-index';
-	import { paramWholeNumber } from '$lib/utils/query-params';
-	import { traceDetailHref } from '$lib/utils/trace-params';
+	import type { ExploreFilters } from '#lib/api/traces.js';
+	import ServicePicker from '#lib/components/services/ServicePicker.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import TimeRangePicker from '#lib/components/ui/TimeRangePicker.svelte';
+	import PageToolbar from '#lib/components/ui/PageToolbar.svelte';
+	import type { TimeRange } from '#lib/types.js';
+	import { readLastIndex } from '#lib/utils/last-index.js';
+	import { paramWholeNumber } from '#lib/utils/query-params.js';
+	import { traceDetailHref } from '#lib/utils/trace-params.js';
 
 	type FilterName = 'service' | 'operation' | 'status' | 'root' | 'q';
 

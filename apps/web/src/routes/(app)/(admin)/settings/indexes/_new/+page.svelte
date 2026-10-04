@@ -1,6 +1,6 @@
 <script lang="ts">
-	import CreateIndexForm from '$lib/components/settings/indexes/CreateIndexForm.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import CreateIndexForm from '#lib/components/settings/indexes/CreateIndexForm.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 </script>
 
 <div class="settings-page flex flex-col gap-6">

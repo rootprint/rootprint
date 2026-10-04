@@ -3,11 +3,11 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { authClient } from '$lib/auth-client';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import { formatRelativeTime } from '$lib/utils/time';
-	import type { PersonalApiKey } from '$lib/types';
+	import { DEP } from '#lib/api/deps.js';
+	import { authClient } from '#lib/auth-client.js';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
+	import { formatRelativeTime } from '#lib/utils/time.js';
+	import type { PersonalApiKey } from '#lib/types.js';
 	import CreatePersonalKeyModal from './CreatePersonalKeyModal.svelte';
 
 	let { keys }: { keys: PersonalApiKey[] | null } = $props();

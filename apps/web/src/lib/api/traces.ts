@@ -3,17 +3,17 @@ import { composeQuery } from 'api/query';
 import type { ExploreSort, ExploreStatus } from 'api/constants';
 import type { InferResponseType } from 'hono/client';
 
-import { client } from '$lib/api/client';
-import { ApiError, readApiError, toFieldErrors } from '$lib/api/errors';
-import { searchLogs } from '$lib/api/log-search';
-import { chartIntervalSeconds, formatInterval } from '$lib/utils/histogram';
-import { resolveWindow } from '$lib/utils/time-range';
+import { client } from '#lib/api/client.js';
+import { ApiError, readApiError, toFieldErrors } from '#lib/api/errors.js';
+import { searchLogs } from '#lib/api/log-search.js';
+import { chartIntervalSeconds, formatInterval } from '#lib/utils/histogram.js';
+import { resolveWindow } from '#lib/utils/time-range.js';
 import {
 	SPAN_ID_FIELD,
 	traceLogsFilters,
 	traceLogsWindow,
 	type TraceLogsTarget
-} from '$lib/utils/trace-logs';
+} from '#lib/utils/trace-logs.js';
 
 export async function fetchTrace(traceId: string, opts: { signal?: AbortSignal } = {}) {
 	const res = await client.api.traces[':traceId'].$get(

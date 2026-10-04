@@ -1,7 +1,7 @@
 import type { InferResponseType } from 'hono/client';
 
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
 import type { CreateApiKeyInput } from 'api/types';
 
 const apiKeys = client.api['api-keys'];

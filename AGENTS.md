@@ -17,7 +17,7 @@ Rootprint is a Bun-workspace monorepo. Workspaces live under `apps/`. The Hono b
 
 - Toolchain and root scripts: `package.json`.
 - Formatting: `.prettierrc`.
-- TS base config: `tsconfig.base.json` (`apps/api` extends it; `apps/web` extends the generated `.svelte-kit/tsconfig.json`).
+- TS base config: `tsconfig.base.json` (`apps/api` extends it; `apps/web` extends SvelteKit's `$app/tsconfig`).
 - CI: `.github/workflows/ci.yml`.
 - Stack-specific rules: each workspace's `AGENTS.md`.
 
@@ -84,7 +84,7 @@ bun --filter api db:studio       # open Drizzle Studio
 ## Import Conventions
 
 - Keep imports at top of file.
-- In Svelte workspaces, prefer SvelteKit aliases (`$lib`, `$app`, `$env`) over deep relative paths.
+- In Svelte workspaces, prefer the `#lib` subpath import and SvelteKit's `$app` modules over deep relative paths.
 - In `apps/api`, relative imports use `.js` extensions (NodeNext module resolution).
 - Add new imports to the nearest logical group instead of reordering entire files.
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import type { FoldSummaryRow } from '$lib/components/logs/fold-hits';
+	import type { FoldSummaryRow } from '#lib/components/logs/fold-hits.js';
 
 	let {
 		fold = null,

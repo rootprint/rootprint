@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { parseISO } from 'date-fns';
 
-	import UplotLinePanel from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import type { ChartSeries } from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import { formatDurationMs } from '$lib/utils/format';
-	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
+	import UplotLinePanel from '#lib/components/ui/uplot/UplotLinePanel.svelte';
+	import type { ChartSeries } from '#lib/components/ui/uplot/UplotLinePanel.svelte';
+	import { formatDurationMs } from '#lib/utils/format.js';
+	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
 
 	type Bucket = {
 		t: string;

@@ -8,12 +8,12 @@ import {
 	getUserRecent,
 	getUserSummary,
 	getUserVolume
-} from '$lib/api/activity';
-import { parseWindow } from '$lib/utils/time-range';
-import { DEP } from '$lib/api/deps';
-import { ApiError } from '$lib/api/errors';
-import { getUser } from '$lib/api/users';
-import { parseOffset } from '$lib/components/settings/search-params';
+} from '#lib/api/activity.js';
+import { parseWindow } from '#lib/utils/time-range.js';
+import { DEP } from '#lib/api/deps.js';
+import { ApiError } from '#lib/api/errors.js';
+import { getUser } from '#lib/api/users.js';
+import { parseOffset } from '#lib/components/settings/search-params.js';
 
 export const load: PageLoad = async ({ url, params, depends, parent }) => {
 	depends(DEP.users);

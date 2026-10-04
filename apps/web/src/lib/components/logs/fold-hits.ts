@@ -1,4 +1,4 @@
-import type { LogHit } from '$lib/types';
+import type { LogHit } from '#lib/types.js';
 import { formatCell } from './column-width';
 import { getByPath } from './get-by-path';
 

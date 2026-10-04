@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { BreadcrumbSegment } from '$lib/types';
+	import type { BreadcrumbSegment } from '#lib/types.js';
 
 	let { segments }: { segments: BreadcrumbSegment[] } = $props();
 </script>

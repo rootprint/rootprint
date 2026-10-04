@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { ChevronRight, ScrollText, X } from 'lucide-svelte';
 
-	import FieldRow from '$lib/components/ui/FieldRow.svelte';
-	import { formatDurationMicros, pluralize } from '$lib/utils/format';
-	import { serviceColor } from '$lib/utils/service-color';
+	import FieldRow from '#lib/components/ui/FieldRow.svelte';
+	import { formatDurationMicros, pluralize } from '#lib/utils/format.js';
+	import { serviceColor } from '#lib/utils/service-color.js';
 	import {
 		dbRollups,
 		describeSpan,
@@ -12,9 +12,9 @@
 		selfMicros,
 		spansInTreeOrder,
 		topOperations
-	} from '$lib/components/traces/span-stats';
-	import { formatTimestamp } from '$lib/utils/time';
-	import type { FieldRowData, SpanNode } from '$lib/types';
+	} from '#lib/components/traces/span-stats.js';
+	import { formatTimestamp } from '#lib/utils/time.js';
+	import type { FieldRowData, SpanNode } from '#lib/types.js';
 
 	type SpanTab = 'overview' | 'parameters' | 'database' | 'events';
 

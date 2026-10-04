@@ -6,9 +6,9 @@ import {
 	getApiKeyRecent,
 	getApiKeySummary,
 	getApiKeyVolume
-} from '$lib/api/activity';
-import { parseWindow } from '$lib/utils/time-range';
-import { parseOffset } from '$lib/components/settings/search-params';
+} from '#lib/api/activity.js';
+import { parseWindow } from '#lib/utils/time-range.js';
+import { parseOffset } from '#lib/components/settings/search-params.js';
 
 export const load: PageLoad = async ({ url, params }) => {
 	const window = parseWindow(url.searchParams.get('window'));

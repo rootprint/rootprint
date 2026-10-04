@@ -1,9 +1,9 @@
 import type { ERROR_HTTP_STATUSES } from 'api/constants';
 import type { InferResponseType } from 'hono/client';
 
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import { computeHistogramIntervalSeconds, formatInterval } from '$lib/utils/histogram';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import { computeHistogramIntervalSeconds, formatInterval } from '#lib/utils/histogram.js';
 
 const services = client.api.services;
 

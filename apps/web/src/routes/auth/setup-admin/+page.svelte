@@ -1,12 +1,12 @@
 <script lang="ts">
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
-	import { setupAdmin } from '$lib/api/auth';
-	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
+	import { setupAdmin } from '#lib/api/auth.js';
+	import { DEP } from '#lib/api/deps.js';
+	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
 	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
-	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-	import Field from '$lib/components/ui/Field.svelte';
+	import AuthHeader from '#lib/components/auth/AuthHeader.svelte';
+	import Field from '#lib/components/ui/Field.svelte';
 
 	let name = $state('');
 	let email = $state('');

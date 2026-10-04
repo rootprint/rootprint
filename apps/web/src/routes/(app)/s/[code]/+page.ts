@@ -1,5 +1,5 @@
-import { ApiError } from '$lib/api/errors';
-import { getShare, type ShareView } from '$lib/api/shares';
+import { ApiError } from '#lib/api/errors.js';
+import { getShare, type ShareView } from '#lib/api/shares.js';
 import type { PageLoad } from './$types';
 
 export type ShareError = 'not_found' | 'unknown';

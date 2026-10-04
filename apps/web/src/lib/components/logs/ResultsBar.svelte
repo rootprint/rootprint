@@ -2,8 +2,8 @@
 	import { Download, ListCollapse } from 'lucide-svelte';
 	import ExportDialog from './ExportDialog.svelte';
 	import DisplaySettings from './DisplaySettings.svelte';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
-	import { formatDurationMicros } from '$lib/utils/format';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
+	import { formatDurationMicros } from '#lib/utils/format.js';
 
 	let { store }: { store: SearchStore } = $props();
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import type { TabItem } from '$lib/components/send-data/types';
+	import type { TabItem } from '#lib/components/send-data/types.js';
 
 	let {
 		items,
@@ -18,7 +18,7 @@
 	} = $props();
 
 	function hrefFor(id: string): string {
-		const url = new URL(page.url);
+		const url = new URL(page.url.href);
 		url.searchParams.set(param, id);
 		return url.pathname + url.search;
 	}

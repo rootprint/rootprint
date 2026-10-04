@@ -1,4 +1,4 @@
-import { isPlainObject } from '$lib/utils/object';
+import { isPlainObject } from '#lib/utils/object.js';
 
 const MAX_DEPTH = 8;
 

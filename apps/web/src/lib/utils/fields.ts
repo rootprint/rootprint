@@ -1,4 +1,4 @@
-import type { TimeRange } from '$lib/types';
+import type { TimeRange } from '#lib/types.js';
 import { isPlainObject } from './object';
 
 const OTEL_ATTR_PREFIX = 'attributes.';

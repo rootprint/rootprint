@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SecretReveal from '$lib/components/ui/SecretReveal.svelte';
+	import SecretReveal from '#lib/components/ui/SecretReveal.svelte';
 
 	let { value, label }: { value: string; label: string } = $props();
 </script>

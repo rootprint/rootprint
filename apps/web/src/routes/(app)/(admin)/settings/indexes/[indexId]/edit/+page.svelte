@@ -1,6 +1,6 @@
 <script lang="ts">
-	import EditIndexForm from '$lib/components/settings/indexes/EditIndexForm.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import EditIndexForm from '#lib/components/settings/indexes/EditIndexForm.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 
 	let { data } = $props();
 </script>

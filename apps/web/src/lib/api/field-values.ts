@@ -1,7 +1,7 @@
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import type { Filter, LogFieldValueBucket, TimeRange } from '$lib/types';
-import { resolveWindow } from '$lib/utils/time-range';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { Filter, LogFieldValueBucket, TimeRange } from '#lib/types.js';
+import { resolveWindow } from '#lib/utils/time-range.js';
 import { FIELD_VALUES_MAX } from 'api/constants';
 
 export type FetchFieldValuesBulkInput = {

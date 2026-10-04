@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { navGroups } from '$lib/admin-nav';
+	import { navGroups } from '#lib/admin-nav.js';
 
 	const path = $derived(page.url.pathname);
 </script>

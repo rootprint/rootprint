@@ -1,21 +1,21 @@
 <script lang="ts">
-	import KpiStrip from '$lib/components/settings/activity/KpiStrip.svelte';
-	import LatencyChart from '$lib/components/settings/activity/LatencyChart.svelte';
-	import TimeRangeTabs from '$lib/components/ui/TimeRangeTabs.svelte';
-	import VolumeChart from '$lib/components/settings/activity/VolumeChart.svelte';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import { ACTIVITY_PAGE_SIZE } from '$lib/api/activity';
+	import KpiStrip from '#lib/components/settings/activity/KpiStrip.svelte';
+	import LatencyChart from '#lib/components/settings/activity/LatencyChart.svelte';
+	import TimeRangeTabs from '#lib/components/ui/TimeRangeTabs.svelte';
+	import VolumeChart from '#lib/components/settings/activity/VolumeChart.svelte';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import { ACTIVITY_PAGE_SIZE } from '#lib/api/activity.js';
 	import type {
 		ActorIndexes,
 		ActorSummary,
 		LatencyBuckets,
 		RecentResult,
 		VolumeBuckets
-	} from '$lib/api/activity';
-	import type { Window } from '$lib/utils/time-range';
-	import { formatCount, formatDurationMs, formatOrDash } from '$lib/utils/format';
-	import { formatActivityTimestamp } from '$lib/utils/time';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
+	} from '#lib/api/activity.js';
+	import type { Window } from '#lib/utils/time-range.js';
+	import { formatCount, formatDurationMs, formatOrDash } from '#lib/utils/format.js';
+	import { formatActivityTimestamp } from '#lib/utils/time.js';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
 
 	type Props = {
 		window: Window;

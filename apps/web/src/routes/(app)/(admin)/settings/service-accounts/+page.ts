@@ -1,7 +1,7 @@
 import type { PageLoad } from './$types';
-import { listServiceAccountKeys } from '$lib/api/api-keys';
-import { DEP } from '$lib/api/deps';
-import { listServiceAccounts } from '$lib/api/service-accounts';
+import { listServiceAccountKeys } from '#lib/api/api-keys.js';
+import { DEP } from '#lib/api/deps.js';
+import { listServiceAccounts } from '#lib/api/service-accounts.js';
 
 export const load: PageLoad = async ({ depends }) => {
 	depends(DEP.serviceAccountSettings);

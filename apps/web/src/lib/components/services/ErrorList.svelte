@@ -15,14 +15,14 @@
 		type ServiceErrorKind,
 		type ServiceErrorRow,
 		type ServiceHealthFailingOperation
-	} from '$lib/api/services';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import { RequestGuard } from '$lib/stores/request-guard';
-	import { formatCount, formatDurationMs } from '$lib/utils/format';
-	import { readLastIndex } from '$lib/utils/last-index';
-	import { formatTimestamp } from '$lib/utils/time';
-	import { exploreHref, traceDetailHref } from '$lib/utils/trace-params';
+	} from '#lib/api/services.js';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import { RequestGuard } from '#lib/stores/request-guard.js';
+	import { formatCount, formatDurationMs } from '#lib/utils/format.js';
+	import { readLastIndex } from '#lib/utils/last-index.js';
+	import { formatTimestamp } from '#lib/utils/time.js';
+	import { exploreHref, traceDetailHref } from '#lib/utils/trace-params.js';
 
 	type Props = {
 		operations: ServiceHealthFailingOperation[];

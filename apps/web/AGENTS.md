@@ -8,7 +8,7 @@ For repo-wide rules (Bun, Prettier, TS strict, tests policy), see the root `AGEN
 
 ## Stack
 
-- SvelteKit 2 + Svelte 5
+- SvelteKit 3 + Svelte 5
 - `@sveltejs/adapter-static`
 - Tailwind v4 via `@tailwindcss/vite`
 - DaisyUI 5 (custom `rootprint` theme — see Design System below)
@@ -29,25 +29,25 @@ bun --filter web lint             # oxlint
 
 ## Source Layout
 
-| Path                                 | Purpose                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/routes/`                        | SvelteKit pages and layouts                                                                                                                                                                                                                                                                                                                                              |
-| `src/routes/(app)/`                  | Authenticated product routes (group layout)                                                                                                                                                                                                                                                                                                                              |
-| `src/routes/(app)/(admin)/`          | Admin-only routes (settings, send data) behind one role guard                                                                                                                                                                                                                                                                                                            |
-| `src/routes/auth/`                   | Sign-in, first-time admin setup                                                                                                                                                                                                                                                                                                                                          |
-| `src/lib/api/client.ts`              | Hono RPC client (`hc<AppType>`)                                                                                                                                                                                                                                                                                                                                          |
-| `src/lib/api/<resource>.ts`          | Typed wrappers per API resource; throw `ApiError`                                                                                                                                                                                                                                                                                                                        |
-| `src/lib/auth-client.ts`             | Better Auth client                                                                                                                                                                                                                                                                                                                                                       |
-| `src/lib/components/ui/`             | Shared UI kit (see [Shared Components](#shared-components))                                                                                                                                                                                                                                                                                                              |
-| `src/lib/components/<feature>/`      | Feature components and the helpers only that feature uses, named after UI sections: `logs`, `traces`, `services`, `profile`, `settings`, `send-data`                                                                                                                                                                                                                     |
-| `src/lib/attachments/`               | Shared `{@attach}` DOM behaviour                                                                                                                                                                                                                                                                                                                                         |
-| `src/lib/stores/`                    | Shared state (`shell.svelte.ts`, request guards)                                                                                                                                                                                                                                                                                                                         |
-| `src/lib/utils/`                     | Helpers not owned by one feature: used by two or more features, by `ui/` or `shell/`, by `lib/api/`, or by another shared helper (formatting, query params, time ranges, colors). A helper used only by one feature lives in that feature's folder, in the deepest subfolder holding all its importers; `lib/api/` counts as its own area, so what it imports stays here |
-| `src/lib/admin-nav.ts`               | Nav tree and breadcrumb trails for the `(admin)` route group (Settings, Send data)                                                                                                                                                                                                                                                                                       |
-| `src/lib/types.ts`                   | App-local types (pure types only)                                                                                                                                                                                                                                                                                                                                        |
-| `src/app.html`                       | HTML shell + boot loader                                                                                                                                                                                                                                                                                                                                                 |
-| `src/app.css`                        | Tailwind entry, DaisyUI theme, tokens, named classes                                                                                                                                                                                                                                                                                                                     |
-| `svelte.config.js`, `vite.config.ts` | Tooling configs                                                                                                                                                                                                                                                                                                                                                          |
+| Path                            | Purpose                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/routes/`                   | SvelteKit pages and layouts                                                                                                                                                                                                                                                                                                                                              |
+| `src/routes/(app)/`             | Authenticated product routes (group layout)                                                                                                                                                                                                                                                                                                                              |
+| `src/routes/(app)/(admin)/`     | Admin-only routes (settings, send data) behind one role guard                                                                                                                                                                                                                                                                                                            |
+| `src/routes/auth/`              | Sign-in, first-time admin setup                                                                                                                                                                                                                                                                                                                                          |
+| `src/lib/api/client.ts`         | Hono RPC client (`hc<AppType>`)                                                                                                                                                                                                                                                                                                                                          |
+| `src/lib/api/<resource>.ts`     | Typed wrappers per API resource; throw `ApiError`                                                                                                                                                                                                                                                                                                                        |
+| `src/lib/auth-client.ts`        | Better Auth client                                                                                                                                                                                                                                                                                                                                                       |
+| `src/lib/components/ui/`        | Shared UI kit (see [Shared Components](#shared-components))                                                                                                                                                                                                                                                                                                              |
+| `src/lib/components/<feature>/` | Feature components and the helpers only that feature uses, named after UI sections: `logs`, `traces`, `services`, `profile`, `settings`, `send-data`                                                                                                                                                                                                                     |
+| `src/lib/attachments/`          | Shared `{@attach}` DOM behaviour                                                                                                                                                                                                                                                                                                                                         |
+| `src/lib/stores/`               | Shared state (`shell.svelte.ts`, request guards)                                                                                                                                                                                                                                                                                                                         |
+| `src/lib/utils/`                | Helpers not owned by one feature: used by two or more features, by `ui/` or `shell/`, by `lib/api/`, or by another shared helper (formatting, query params, time ranges, colors). A helper used only by one feature lives in that feature's folder, in the deepest subfolder holding all its importers; `lib/api/` counts as its own area, so what it imports stays here |
+| `src/lib/admin-nav.ts`          | Nav tree and breadcrumb trails for the `(admin)` route group (Settings, Send data)                                                                                                                                                                                                                                                                                       |
+| `src/lib/types.ts`              | App-local types (pure types only)                                                                                                                                                                                                                                                                                                                                        |
+| `src/app.html`                  | HTML shell + boot loader                                                                                                                                                                                                                                                                                                                                                 |
+| `src/app.css`                   | Tailwind entry, DaisyUI theme, tokens, named classes                                                                                                                                                                                                                                                                                                                     |
+| `vite.config.ts`                | Tooling config, including the SvelteKit plugin options                                                                                                                                                                                                                                                                                                                   |
 
 ## Data Loading
 
@@ -55,8 +55,8 @@ bun --filter web lint             # oxlint
 
 - All data loading lives in `+page.ts` / `+layout.ts`.
 - Do **not** add `+page.server.ts` or `hooks.server.ts` — `adapter-static` has no server.
-- Auth: `authClient` from `$lib/auth-client`.
-- API: call the wrappers in `$lib/api/<resource>.ts`. Each one calls the typed Hono RPC `client` and throws `ApiError` through `readApiError` on a non-2xx response. Add a wrapper there instead of calling `client` from a page or component.
+- Auth: `authClient` from `#lib/auth-client`.
+- API: call the wrappers in `#lib/api/<resource>.ts`. Each one calls the typed Hono RPC `client` and throws `ApiError` through `readApiError` on a non-2xx response. Add a wrapper there instead of calling `client` from a page or component.
 - Cookies are same-origin in both dev (Vite proxy → api) and prod (api serves the SPA).
 
 ### Error handling
@@ -64,7 +64,7 @@ bun --filter web lint             # oxlint
 Loaders (`+page.ts` / `+layout.ts`) follow one of three conventions, chosen by intent:
 
 - **Bubble (default):** let the error propagate to the root `+error.svelte`. Use for generic failures with no special handling.
-- **`error(status, msg)`:** call it, don't `throw` it (SvelteKit 2 throws internally). Use only to surface a _meaningful_ HTTP status/message (e.g. mapping an `ApiError` 404 to "Index not found"). See `routes/(app)/(admin)/settings/indexes/[indexId]/+page.ts`.
+- **`error(status, msg)`:** call it, don't `throw` it (it throws internally). Use only to surface a _meaningful_ HTTP status/message (e.g. mapping an `ApiError` 404 to "Index not found"). See `routes/(app)/(admin)/settings/indexes/[indexId]/+page.ts`.
 - **Return a discriminated result** (e.g. `{ error: 'not_found' | 'forbidden' | 'unknown' }`): use only when the page renders its own inline error UI instead of the global error page. See `routes/(app)/s/[code]/+page.ts`.
 
 Do not add `try/catch` to a loader unless it implements one of the two non-default conventions for a deliberate reason.
@@ -73,8 +73,8 @@ Do not add `try/catch` to a loader unless it implements one of the two non-defau
 
 - Use runes: `$props`, `$state`, `$derived`, `$effect`, `$bindable`.
 - `<script lang="ts">` everywhere.
-- Use `{@attach ...}`, not `use:`, for your own DOM behaviour. `use:` is reserved for third-party actions that ship no attachment (currently only `svelte-dnd-action`). Shared attachments go in `$lib/attachments/`; one-offs stay local to the component.
-- Attachments are fully reactive — `{@attach foo(bar)}` tears down and re-runs whenever `bar` changes. When the value changes often (a keystroke) or the caller passes a fresh closure each render (a virtualised row), take a **getter** and read it inside the attachment instead: `{@attach foo(() => bar)}`. See `$lib/attachments/row-activate.ts`.
+- Use `{@attach ...}`, not `use:`, for your own DOM behaviour. `use:` is reserved for third-party actions that ship no attachment (currently only `svelte-dnd-action`). Shared attachments go in `#lib/attachments/`; one-offs stay local to the component.
+- Attachments are fully reactive — `{@attach foo(bar)}` tears down and re-runs whenever `bar` changes. When the value changes often (a keystroke) or the caller passes a fresh closure each render (a virtualised row), take a **getter** and read it inside the attachment instead: `{@attach foo(() => bar)}`. See `#lib/attachments/row-activate.ts`.
 - For deeper Svelte 5 / SvelteKit guidance, use the Svelte MCP server: call `list-sections` first, then `get-documentation` for every section whose `use_cases` match the task.
 
 ## Design System
@@ -142,7 +142,7 @@ Use semantic classes (`bg-base-100`, `text-muted`, `btn-primary`, …), never ra
 - A control inside a coloured badge (a filter chip's invert or remove button) may rest at `opacity-60` and go to full on hover: a text token would drop the badge's tint.
 - `info`, `accent` and `warning` are fills. For text on light surfaces use the `-ink` variants.
 - Color never carries meaning alone. Pair a status color with text, an icon or a shape.
-- Fixed palettes are for data only: `--chart-N` for chart series in order, `--trace-service-N` through `serviceColor()` for spans, and `$lib/constants/level-colors.ts` for log levels.
+- Fixed palettes are for data only: `--chart-N` for chart series in order, `--trace-service-N` through `serviceColor()` for spans, and `#lib/constants/level-colors.ts` for log levels.
 
 ### Typography
 
@@ -211,7 +211,7 @@ Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default si
 
 ### Shared Components
 
-Check `$lib/components/ui/` before writing markup. The second time a pattern appears, move it there instead of copying it.
+Check `#lib/components/ui/` before writing markup. The second time a pattern appears, move it there instead of copying it.
 
 | Component                                                  | Use for                                                               |
 | ---------------------------------------------------------- | --------------------------------------------------------------------- |
@@ -267,7 +267,7 @@ Defined in `src/app.css`. Add one only when DaisyUI plus utilities can't express
 ## Error Handling
 
 - SvelteKit `+error.svelte` at the root catches uncaught route errors. Match its heading pattern if you add nested error boundaries.
-- API errors: the `$lib/api` wrappers throw `ApiError` carrying the parsed `ApiErrorBody`. Surface `error.message`, and map `details[].path` to fields with `toFormErrors` from `$lib/api/errors` (`issuesToFieldErrors` does the same for client-side Valibot issues). See `routes/auth/setup-admin/+page.svelte` for the canonical flow.
+- API errors: the `#lib/api` wrappers throw `ApiError` carrying the parsed `ApiErrorBody`. Surface `error.message`, and map `details[].path` to fields with `toFormErrors` from `#lib/api/errors` (`issuesToFieldErrors` does the same for client-side Valibot issues). See `routes/auth/setup-admin/+page.svelte` for the canonical flow.
 - Validate inputs with the Valibot schemas re-exported from `api/schemas` so client and server agree on shape.
 
 ## Tests
@@ -276,12 +276,12 @@ No automated tests in this workspace. Authentication is covered by the API suite
 
 ## Conventions
 
-- TS strict, set in `tsconfig.json` (it extends the generated `.svelte-kit/tsconfig.json`, not `tsconfig.base.json`).
+- TS strict, set in `tsconfig.json` (it extends SvelteKit's `$app/tsconfig`, not `tsconfig.base.json`).
 - Single quotes, tabs, no trailing commas (Prettier).
 - `prettier-plugin-svelte` + `prettier-plugin-tailwindcss` normalize Svelte files and class-attribute order — let them.
-- Use SvelteKit aliases (`$lib`, `$app`, `$env`) over deep relative paths.
+- Use the `#lib` subpath import and SvelteKit's `$app` modules over deep relative paths. `#lib` imports carry the file extension: `.js` for a `.ts` module, `.svelte` for a component.
 - Cross-workspace types: `import type { ... } from 'api/types'`. Schemas: `import { ... } from 'api/schemas'`.
 - Component callback props are camelCase (`onSave`, `onToggleSort`); lowercase only when the prop mirrors a native DOM event on an element the component wraps (`Modal`'s `onclose`/`oncancel`).
 - `.svelte.ts` modules are kebab-case (`metrics-poller.svelte.ts`), like all other `.ts` files.
-- Numbers go through `$lib/utils/format`: `formatDurationMs` for whole-millisecond values (percentiles, averages), `formatDurationMicros` for span durations and the log search's elapsed time, `formatRate` for rates, always per minute. Counts are compact (`formatCount`) in tables, KPIs and chart axes, and exact (`toLocaleString()`) where the number itself is the answer: result totals, export, pagination, facet counts, and bar-chart tooltips (`LogFrequencyChart`, `VolumeChart`). `uplot/UplotLinePanel` tooltips reuse the panel's `formatValue`.
-- Timestamps go through `$lib/utils/time`: `formatTimestamp` (milliseconds) for log and span times, `formatActivityTimestamp` (seconds) in the activity tables, `formatRelativeTime` for last active and last used, `formatDate` / `formatDateTime` for account dates, `formatTickDate` on chart axes and `formatTooltipDate` in chart tooltips. Time-range labels live in `$lib/utils/time-range`.
+- Numbers go through `#lib/utils/format`: `formatDurationMs` for whole-millisecond values (percentiles, averages), `formatDurationMicros` for span durations and the log search's elapsed time, `formatRate` for rates, always per minute. Counts are compact (`formatCount`) in tables, KPIs and chart axes, and exact (`toLocaleString()`) where the number itself is the answer: result totals, export, pagination, facet counts, and bar-chart tooltips (`LogFrequencyChart`, `VolumeChart`). `uplot/UplotLinePanel` tooltips reuse the panel's `formatValue`.
+- Timestamps go through `#lib/utils/time`: `formatTimestamp` (milliseconds) for log and span times, `formatActivityTimestamp` (seconds) in the activity tables, `formatRelativeTime` for last active and last used, `formatDate` / `formatDateTime` for account dates, `formatTickDate` on chart axes and `formatTooltipDate` in chart tooltips. Time-range labels live in `#lib/utils/time-range`.

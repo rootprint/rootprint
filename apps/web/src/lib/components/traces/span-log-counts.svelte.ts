@@ -1,5 +1,5 @@
-import { fetchSpanLogCounts } from '$lib/api/traces';
-import type { TraceLogsTarget } from '$lib/utils/trace-logs';
+import { fetchSpanLogCounts } from '#lib/api/traces.js';
+import type { TraceLogsTarget } from '#lib/utils/trace-logs.js';
 
 /** `undefined` while in flight, `null` when unavailable; callers must tell them apart. */
 export class SpanLogCounts {

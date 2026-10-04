@@ -5,22 +5,22 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
-	import ApmSummary from '$lib/components/services/ApmSummary.svelte';
-	import DependencyTable from '$lib/components/services/DependencyTable.svelte';
-	import EndpointTable from '$lib/components/services/EndpointTable.svelte';
-	import ErrorList from '$lib/components/services/ErrorList.svelte';
-	import ErrorRateChart from '$lib/components/services/ErrorRateChart.svelte';
-	import RequestLatencyChart from '$lib/components/services/RequestLatencyChart.svelte';
-	import RequestRateChart from '$lib/components/services/RequestRateChart.svelte';
-	import ServicePicker from '$lib/components/services/ServicePicker.svelte';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
-	import type { TimeRange } from '$lib/types';
-	import { formatCount } from '$lib/utils/format';
-	import { paramOneOf, servicesHref, setTimeRangeParams } from '$lib/utils/query-params';
-	import { exploreHref } from '$lib/utils/trace-params';
+	import ApmSummary from '#lib/components/services/ApmSummary.svelte';
+	import DependencyTable from '#lib/components/services/DependencyTable.svelte';
+	import EndpointTable from '#lib/components/services/EndpointTable.svelte';
+	import ErrorList from '#lib/components/services/ErrorList.svelte';
+	import ErrorRateChart from '#lib/components/services/ErrorRateChart.svelte';
+	import RequestLatencyChart from '#lib/components/services/RequestLatencyChart.svelte';
+	import RequestRateChart from '#lib/components/services/RequestRateChart.svelte';
+	import ServicePicker from '#lib/components/services/ServicePicker.svelte';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import PageToolbar from '#lib/components/ui/PageToolbar.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import TimeRangePicker from '#lib/components/ui/TimeRangePicker.svelte';
+	import type { TimeRange } from '#lib/types.js';
+	import { formatCount } from '#lib/utils/format.js';
+	import { paramOneOf, servicesHref, setTimeRangeParams } from '#lib/utils/query-params.js';
+	import { exploreHref } from '#lib/utils/trace-params.js';
 
 	let { data } = $props();
 
@@ -47,10 +47,10 @@
 	const tabsetId = $props.id();
 	const panelId = `${tabsetId}-panel`;
 
-	function navigate(mutate: (params: URLSearchParams) => void, replaceState = false) {
-		const url = new URL(page.url);
+	function navigate(mutate: (params: URLSearchParams) => void, replace = false) {
+		const url = new URL(page.url.href);
 		mutate(url.searchParams);
-		void goto(url, { keepFocus: true, noScroll: true, replaceState });
+		void goto(url, { reset: false, replace });
 	}
 
 	function setRange(next: TimeRange) {

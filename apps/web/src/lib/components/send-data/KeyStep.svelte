@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Plus } from 'lucide-svelte';
-	import { getApiKey, type ApiKeyView } from '$lib/api/api-keys';
-	import { DEP } from '$lib/api/deps';
-	import CreateApiKeyModal from '$lib/components/settings/api-keys/CreateApiKeyModal.svelte';
-	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '$lib/components/send-data/constants';
-	import type { Signal } from '$lib/components/send-data/types';
+	import { getApiKey, type ApiKeyView } from '#lib/api/api-keys.js';
+	import { DEP } from '#lib/api/deps.js';
+	import CreateApiKeyModal from '#lib/components/settings/api-keys/CreateApiKeyModal.svelte';
+	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '#lib/components/send-data/constants.js';
+	import type { Signal } from '#lib/components/send-data/types.js';
 	import type { IndexSummary } from 'api/types';
 
 	let {

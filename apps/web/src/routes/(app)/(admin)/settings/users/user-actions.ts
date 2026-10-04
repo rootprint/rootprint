@@ -1,10 +1,10 @@
 import { toast } from 'svelte-sonner';
 
 import { invalidate } from '$app/navigation';
-import { DEP } from '$lib/api/deps';
-import { ApiError } from '$lib/api/errors';
-import { resendInvite } from '$lib/api/invites';
-import { setUserRole, type UserView } from '$lib/api/users';
+import { DEP } from '#lib/api/deps.js';
+import { ApiError } from '#lib/api/errors.js';
+import { resendInvite } from '#lib/api/invites.js';
+import { setUserRole, type UserView } from '#lib/api/users.js';
 
 export async function refreshUsers(): Promise<void> {
 	await invalidate(DEP.users);

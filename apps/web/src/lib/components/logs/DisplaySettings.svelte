@@ -2,7 +2,7 @@
 	import { ChevronLeft, GripVertical, Plus, Settings, X } from 'lucide-svelte';
 	import { dndzone } from 'svelte-dnd-action';
 
-	import type { LogField } from '$lib/types';
+	import type { LogField } from '#lib/types.js';
 	import type { DisplayMode } from 'api/types';
 
 	let {

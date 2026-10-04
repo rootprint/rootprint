@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ArrowDown, ArrowUp } from 'lucide-svelte';
-	import type { FieldConfig, SortDirection } from '$lib/types';
+	import type { FieldConfig, SortDirection } from '#lib/types.js';
 
 	let {
 		fieldConfig,

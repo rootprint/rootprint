@@ -1,8 +1,8 @@
 import type { InferResponseType } from 'hono/client';
 
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import type { Filter } from '$lib/types';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { Filter } from '#lib/types.js';
 
 export type ShareView = InferResponseType<(typeof client.api.shares)[':code']['$get'], 200>;
 

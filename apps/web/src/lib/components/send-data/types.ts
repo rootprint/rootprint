@@ -1,5 +1,5 @@
-import type { IconComponent } from '$lib/types';
-import type { HighlightLang } from '$lib/utils/code-highlight';
+import type { IconComponent } from '#lib/types.js';
+import type { HighlightLang } from '#lib/utils/code-highlight.js';
 
 export type SnippetLang = Exclude<HighlightLang, 'json'>;
 

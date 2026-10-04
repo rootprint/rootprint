@@ -4,17 +4,17 @@
 
 	import ContextScopeBar from './context/ContextScopeBar.svelte';
 	import LogRow from '../LogRow.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
 	import { ContextLoader, seedChipsFromIndex } from './context/context-loader.svelte';
-	import { getByPath } from '$lib/components/logs/get-by-path';
+	import { getByPath } from '#lib/components/logs/get-by-path.js';
 	import {
 		buildGridTemplate,
 		computeColumnWidths,
 		computeFieldWidth
-	} from '$lib/components/logs/column-width';
-	import { readStringArray, writeJSON } from '$lib/utils/safe-storage';
-	import type { LogHit } from '$lib/types';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
+	} from '#lib/components/logs/column-width.js';
+	import { readStringArray, writeJSON } from '#lib/utils/safe-storage.js';
+	import type { LogHit } from '#lib/types.js';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 
 	let {
 		hit,

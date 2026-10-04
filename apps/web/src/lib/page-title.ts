@@ -1,4 +1,4 @@
-import { resolveBreadcrumbs, routeKey } from '$lib/admin-nav';
+import { resolveBreadcrumbs, routeKey } from '#lib/admin-nav.js';
 
 const APP_NAME = 'Rootprint';
 

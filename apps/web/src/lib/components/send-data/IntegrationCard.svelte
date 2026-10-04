@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ChevronRight } from 'lucide-svelte';
-	import type { Integration, Signal } from '$lib/components/send-data/types';
+	import type { Integration, Signal } from '#lib/components/send-data/types.js';
 
 	let { integration, signal }: { integration: Integration; signal: Signal } = $props();
 	const Icon = $derived(integration.icon);

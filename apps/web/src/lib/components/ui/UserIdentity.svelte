@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
+	import { avatarColor, avatarInitials } from '#lib/utils/avatar.js';
 
 	type Size = 'sm' | 'md' | 'lg';
 

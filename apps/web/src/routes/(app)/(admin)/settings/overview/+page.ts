@@ -1,4 +1,4 @@
-import { getClusterOverview } from '$lib/api/admin';
+import { getClusterOverview } from '#lib/api/admin.js';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {

@@ -2,8 +2,8 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
-	import type { OAuthProviderDescriptor } from '$lib/components/settings/authentication/oauth-providers';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
+	import type { OAuthProviderDescriptor } from '#lib/components/settings/authentication/oauth-providers.js';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
 
 	let { open = $bindable(false), provider }: { open: boolean; provider: OAuthProviderDescriptor } =
 		$props();
@@ -11,7 +11,7 @@
 	async function onConfirm() {
 		await provider.removeCredentials();
 		toast.success(`${provider.name} authentication removed`);
-		await goto(`/settings/authentication?saved=${provider.id}`, { invalidateAll: true });
+		await goto(`/settings/authentication?saved=${provider.id}`, { refreshAll: true });
 	}
 </script>
 

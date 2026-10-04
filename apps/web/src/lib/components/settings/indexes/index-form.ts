@@ -9,7 +9,7 @@ import {
 import type { CreateIndexInput, FieldMappingInput } from 'api/schemas';
 import type { DynamicMapping } from 'api/types';
 
-import { lines } from '$lib/components/settings/indexes/lines';
+import { lines } from '#lib/components/settings/indexes/lines.js';
 
 export type FieldType = (typeof FIELD_TYPES)[number];
 type Tokenizer = (typeof TOKENIZERS)[number];

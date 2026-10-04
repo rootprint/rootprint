@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ActivityPanel from '$lib/components/settings/activity/ActivityPanel.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { setSearchParam } from '$lib/components/settings/search-params';
+	import ActivityPanel from '#lib/components/settings/activity/ActivityPanel.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import { setSearchParam } from '#lib/components/settings/search-params.js';
 
 	let { data } = $props();
 </script>

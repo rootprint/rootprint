@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConnectionState } from '$lib/types';
+	import type { ConnectionState } from '#lib/types.js';
 
 	type Props = {
 		state: ConnectionState;

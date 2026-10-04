@@ -4,17 +4,17 @@
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { deleteIndex } from '$lib/api/indexes';
-	import IndexConfigForm from '$lib/components/settings/indexes/IndexConfigForm.svelte';
-	import IndexTabs from '$lib/components/settings/indexes/IndexTabs.svelte';
-	import { sourceTypeLabel } from '$lib/components/settings/indexes/source-form';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import ListRow from '$lib/components/ui/ListRow.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import TypeToConfirmModal from '$lib/components/ui/TypeToConfirmModal.svelte';
-	import { pluralize } from '$lib/utils/format';
-	import type { IndexTabId } from '$lib/types';
+	import { deleteIndex } from '#lib/api/indexes.js';
+	import IndexConfigForm from '#lib/components/settings/indexes/IndexConfigForm.svelte';
+	import IndexTabs from '#lib/components/settings/indexes/IndexTabs.svelte';
+	import { sourceTypeLabel } from '#lib/components/settings/indexes/source-form.js';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import ListRow from '#lib/components/ui/ListRow.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import TypeToConfirmModal from '#lib/components/ui/TypeToConfirmModal.svelte';
+	import { pluralize } from '#lib/utils/format.js';
+	import type { IndexTabId } from '#lib/types.js';
 
 	let { data } = $props();
 	const detail = $derived(data.detail);

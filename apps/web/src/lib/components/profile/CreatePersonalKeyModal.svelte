@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { authClient } from '$lib/auth-client';
-	import Field from '$lib/components/ui/Field.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
-	import OneTimeKeyReveal from '$lib/components/ui/OneTimeKeyReveal.svelte';
+	import { DEP } from '#lib/api/deps.js';
+	import { authClient } from '#lib/auth-client.js';
+	import Field from '#lib/components/ui/Field.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
+	import OneTimeKeyReveal from '#lib/components/ui/OneTimeKeyReveal.svelte';
 	import { personalKeyNameSchema } from 'api/schemas';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();

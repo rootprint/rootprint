@@ -2,10 +2,10 @@ import { EXPLORE_STATUSES } from 'api/constants';
 
 import type { PageLoad } from './$types';
 
-import { DEP } from '$lib/api/deps';
-import { fetchExploreOverview, type ExploreFilters } from '$lib/api/traces';
-import { paramOneOf, paramWholeNumber, parseTimeRange } from '$lib/utils/query-params';
-import { resolveWindow } from '$lib/utils/time-range';
+import { DEP } from '#lib/api/deps.js';
+import { fetchExploreOverview, type ExploreFilters } from '#lib/api/traces.js';
+import { paramOneOf, paramWholeNumber, parseTimeRange } from '#lib/utils/query-params.js';
+import { resolveWindow } from '#lib/utils/time-range.js';
 
 export const load: PageLoad = ({ url, depends }) => {
 	depends(DEP.traceExplore);

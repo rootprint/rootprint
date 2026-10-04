@@ -1,6 +1,6 @@
-import { DEP } from '$lib/api/deps';
-import { authClient } from '$lib/auth-client';
-import type { PersonalApiKey } from '$lib/types';
+import { DEP } from '#lib/api/deps.js';
+import { authClient } from '#lib/auth-client.js';
+import type { PersonalApiKey } from '#lib/types.js';
 import type { PageLoad } from './$types';
 
 async function loadHasPassword(): Promise<boolean | 'unknown'> {

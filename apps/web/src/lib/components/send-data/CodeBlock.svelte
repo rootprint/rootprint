@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { CodeXml } from 'lucide-svelte';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { highlightCode } from '$lib/utils/code-highlight';
-	import { apiKeyDecorations } from '$lib/components/send-data/snippet-utils';
-	import type { SnippetLang } from '$lib/components/send-data/types';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import { highlightCode } from '#lib/utils/code-highlight.js';
+	import { apiKeyDecorations } from '#lib/components/send-data/snippet-utils.js';
+	import type { SnippetLang } from '#lib/components/send-data/types.js';
 
 	let {
 		code,

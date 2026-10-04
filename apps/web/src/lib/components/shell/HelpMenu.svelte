@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CircleHelp, BookOpen, Sparkles, Tag } from 'lucide-svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
+	import Modal from '#lib/components/ui/Modal.svelte';
 	import { whatsNew, version, highlights, openWhatsNew } from './whats-new.svelte';
 
 	let { collapsed = false }: { collapsed?: boolean } = $props();

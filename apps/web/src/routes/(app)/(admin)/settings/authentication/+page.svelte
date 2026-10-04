@@ -1,9 +1,9 @@
 <script lang="ts">
-	import AuthProviderRow from '$lib/components/settings/authentication/AuthProviderRow.svelte';
-	import PasswordSignInToggle from '$lib/components/settings/authentication/PasswordSignInToggle.svelte';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { pluralize } from '$lib/utils/format';
+	import AuthProviderRow from '#lib/components/settings/authentication/AuthProviderRow.svelte';
+	import PasswordSignInToggle from '#lib/components/settings/authentication/PasswordSignInToggle.svelte';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import { pluralize } from '#lib/utils/format.js';
 
 	let { data } = $props();
 

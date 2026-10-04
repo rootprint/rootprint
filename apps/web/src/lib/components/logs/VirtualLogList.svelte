@@ -4,8 +4,8 @@
 	import LogHeader from './LogHeader.svelte';
 	import LogRow from './LogRow.svelte';
 	import InlineLogRow from './InlineLogRow.svelte';
-	import type { FieldConfig, LogHit, SortDirection } from '$lib/types';
-	import type { LogListRow } from '$lib/components/logs/fold-hits';
+	import type { FieldConfig, LogHit, SortDirection } from '#lib/types.js';
+	import type { LogListRow } from '#lib/components/logs/fold-hits.js';
 	import type { DisplayMode } from 'api/types';
 
 	const ROW_ESTIMATE = 25;

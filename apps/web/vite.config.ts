@@ -1,3 +1,5 @@
+import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { readFileSync } from 'node:fs';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
@@ -24,10 +26,14 @@ function whatsNew() {
 }
 
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
-	define: {
-		WHATS_NEW: JSON.stringify(whatsNew())
-	},
+	plugins: [
+		tailwindcss(),
+		sveltekit({
+			preprocess: vitePreprocess(),
+			adapter: adapter({ fallback: 'index.html', strict: false })
+		})
+	],
+	define: { WHATS_NEW: JSON.stringify(whatsNew()) },
 	server: {
 		proxy: {
 			'/api': {

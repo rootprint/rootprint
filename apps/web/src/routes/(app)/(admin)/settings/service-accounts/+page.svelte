@@ -3,16 +3,16 @@
 	import { toast } from 'svelte-sonner';
 
 	import { invalidate } from '$app/navigation';
-	import { deleteServiceAccountKey } from '$lib/api/api-keys';
-	import { DEP } from '$lib/api/deps';
-	import { deleteServiceAccount } from '$lib/api/service-accounts';
-	import CreateServiceAccountKeyModal from '$lib/components/settings/service-accounts/CreateServiceAccountKeyModal.svelte';
-	import CreateServiceAccountModal from '$lib/components/settings/service-accounts/CreateServiceAccountModal.svelte';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import { pluralize } from '$lib/utils/format';
-	import { formatRelativeTime } from '$lib/utils/time';
+	import { deleteServiceAccountKey } from '#lib/api/api-keys.js';
+	import { DEP } from '#lib/api/deps.js';
+	import { deleteServiceAccount } from '#lib/api/service-accounts.js';
+	import CreateServiceAccountKeyModal from '#lib/components/settings/service-accounts/CreateServiceAccountKeyModal.svelte';
+	import CreateServiceAccountModal from '#lib/components/settings/service-accounts/CreateServiceAccountModal.svelte';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import { pluralize } from '#lib/utils/format.js';
+	import { formatRelativeTime } from '#lib/utils/time.js';
 
 	let { data } = $props();
 	const serviceAccountKeys = $derived(data.serviceAccountKeys);

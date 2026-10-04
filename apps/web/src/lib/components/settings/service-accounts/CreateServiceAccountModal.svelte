@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { createServiceAccount } from '$lib/api/service-accounts';
+	import { DEP } from '#lib/api/deps.js';
+	import { createServiceAccount } from '#lib/api/service-accounts.js';
 	import { createServiceAccountSchema } from 'api/schemas';
-	import Field from '$lib/components/ui/Field.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
+	import Field from '#lib/components/ui/Field.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 

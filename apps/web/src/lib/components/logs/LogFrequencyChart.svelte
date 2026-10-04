@@ -3,13 +3,13 @@
 
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 
-	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
-	import { levelColor, UNKNOWN_LEVEL } from '$lib/constants/level-colors';
-	import type { HistogramBucket } from '$lib/types';
-	import { baseContentAt } from '$lib/utils/chart-colors';
-	import { formatInterval } from '$lib/utils/histogram';
-	import { sortBySeverity } from '$lib/components/logs/severity';
-	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
+	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
+	import { levelColor, UNKNOWN_LEVEL } from '#lib/constants/level-colors.js';
+	import type { HistogramBucket } from '#lib/types.js';
+	import { baseContentAt } from '#lib/utils/chart-colors.js';
+	import { formatInterval } from '#lib/utils/histogram.js';
+	import { sortBySeverity } from '#lib/components/logs/severity.js';
+	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
 
 	type Props = {
 		buckets: HistogramBucket[];

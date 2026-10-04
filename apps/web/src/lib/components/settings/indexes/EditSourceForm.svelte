@@ -5,9 +5,9 @@
 	import * as v from 'valibot';
 
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
-	import { updateSource } from '$lib/api/indexes';
+	import { DEP } from '#lib/api/deps.js';
+	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
+	import { updateSource } from '#lib/api/indexes.js';
 	import { updateSourceSchema } from 'api/schemas';
 	import type { SourceDetail } from 'api/types';
 	import SourceFields from './SourceFields.svelte';

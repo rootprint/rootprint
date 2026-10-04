@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { DEPENDENCY_SPANS } from 'api/constants';
 
-	import type { ServiceHealthDependency } from '$lib/api/services';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import TracesLink from '$lib/components/ui/TracesLink.svelte';
-	import { formatCount, formatDurationMs } from '$lib/utils/format';
+	import type { ServiceHealthDependency } from '#lib/api/services.js';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import TracesLink from '#lib/components/ui/TracesLink.svelte';
+	import { formatCount, formatDurationMs } from '#lib/utils/format.js';
 
 	type Props = {
 		dependencies: ServiceHealthDependency[];

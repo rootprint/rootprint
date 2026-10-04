@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
-import { safeReturnTo } from '$lib/return-to';
+import { safeReturnTo } from '#lib/return-to.js';
 
 export const load: LayoutLoad = async ({ parent, url }) => {
 	const { session } = await parent();

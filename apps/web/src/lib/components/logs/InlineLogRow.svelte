@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { LogHit } from '$lib/types';
-	import { levelColor } from '$lib/constants/level-colors';
-	import { formatTimestamp } from '$lib/utils/time';
-	import { getByPath } from '$lib/components/logs/get-by-path';
-	import { formatCell } from '$lib/components/logs/column-width';
-	import { rowActivate } from '$lib/attachments/row-activate';
-	import type { FoldSummaryRow } from '$lib/components/logs/fold-hits';
+	import type { LogHit } from '#lib/types.js';
+	import { levelColor } from '#lib/constants/level-colors.js';
+	import { formatTimestamp } from '#lib/utils/time.js';
+	import { getByPath } from '#lib/components/logs/get-by-path.js';
+	import { formatCell } from '#lib/components/logs/column-width.js';
+	import { rowActivate } from '#lib/attachments/row-activate.js';
+	import type { FoldSummaryRow } from '#lib/components/logs/fold-hits.js';
 	import FoldGutter from './FoldGutter.svelte';
 
 	let {

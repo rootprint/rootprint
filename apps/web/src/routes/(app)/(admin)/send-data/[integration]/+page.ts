@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { listApiKeys } from '$lib/api/api-keys';
-import { ApiError } from '$lib/api/errors';
-import { listIndexes } from '$lib/api/indexes';
-import { integrationById } from '$lib/components/send-data/integrations';
-import { DEP } from '$lib/api/deps';
+import { listApiKeys } from '#lib/api/api-keys.js';
+import { ApiError } from '#lib/api/errors.js';
+import { listIndexes } from '#lib/api/indexes.js';
+import { integrationById } from '#lib/components/send-data/integrations.js';
+import { DEP } from '#lib/api/deps.js';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, depends }) => {

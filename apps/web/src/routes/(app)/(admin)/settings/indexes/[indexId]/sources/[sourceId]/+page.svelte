@@ -3,17 +3,17 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto, invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { setSourceEnabled, resetSourceCheckpoint, deleteSource } from '$lib/api/indexes';
-	import EditSourceForm from '$lib/components/settings/indexes/EditSourceForm.svelte';
-	import SourceSummary from '$lib/components/settings/indexes/SourceSummary.svelte';
+	import { DEP } from '#lib/api/deps.js';
+	import { setSourceEnabled, resetSourceCheckpoint, deleteSource } from '#lib/api/indexes.js';
+	import EditSourceForm from '#lib/components/settings/indexes/EditSourceForm.svelte';
+	import SourceSummary from '#lib/components/settings/indexes/SourceSummary.svelte';
 	import {
 		isEditableSourceType,
 		isManagedSource,
 		sourceTypeLabel
-	} from '$lib/components/settings/indexes/source-form';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	} from '#lib/components/settings/indexes/source-form.js';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 
 	let { data } = $props();
 	const indexId = $derived(data.indexId);

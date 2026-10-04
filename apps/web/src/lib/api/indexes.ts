@@ -1,8 +1,8 @@
 import type { InferResponseType } from 'hono/client';
 
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
-import type { FieldConfig, IndexOption } from '$lib/types';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { FieldConfig, IndexOption } from '#lib/types.js';
 import type { IndexDetail, IndexSource, SourceDetail, IndexSummary } from 'api/types';
 import type {
 	CreateIndexInput,

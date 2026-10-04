@@ -3,7 +3,7 @@
 
 	import { page } from '$app/state';
 
-	import { exploreHref, type ExploreLinkFilters } from '$lib/utils/trace-params';
+	import { exploreHref, type ExploreLinkFilters } from '#lib/utils/trace-params.js';
 
 	type Props = {
 		filters: ExploreLinkFilters;

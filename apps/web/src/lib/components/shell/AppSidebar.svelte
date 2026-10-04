@@ -16,10 +16,10 @@
 	import UserMenu from './UserMenu.svelte';
 	import HelpMenu from './HelpMenu.svelte';
 	import WhatsNew from './WhatsNew.svelte';
-	import { shell } from '$lib/stores/shell.svelte';
-	import { traceOrigin } from '$lib/utils/trace-params';
-	import { readString, writeString } from '$lib/utils/safe-storage';
-	import { formatCount } from '$lib/utils/format';
+	import { shell } from '#lib/stores/shell.svelte.js';
+	import { traceOrigin } from '#lib/utils/trace-params.js';
+	import { readString, writeString } from '#lib/utils/safe-storage.js';
+	import { formatCount } from '#lib/utils/format.js';
 
 	type User = { id: string; name: string | null; email: string };
 

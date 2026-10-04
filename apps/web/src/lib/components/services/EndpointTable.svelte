@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { ServiceHealthEndpoint } from '$lib/api/services';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import RowLimitSelector from '$lib/components/ui/RowLimitSelector.svelte';
-	import TracesLink from '$lib/components/ui/TracesLink.svelte';
-	import { formatCount, formatDurationMs, formatPercent } from '$lib/utils/format';
-	import { readString, writeString } from '$lib/utils/safe-storage';
+	import type { ServiceHealthEndpoint } from '#lib/api/services.js';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import RowLimitSelector from '#lib/components/ui/RowLimitSelector.svelte';
+	import TracesLink from '#lib/components/ui/TracesLink.svelte';
+	import { formatCount, formatDurationMs, formatPercent } from '#lib/utils/format.js';
+	import { readString, writeString } from '#lib/utils/safe-storage.js';
 
 	type Props = {
 		/** Already ranked and capped at `LIMITS`' largest entry by the API. */

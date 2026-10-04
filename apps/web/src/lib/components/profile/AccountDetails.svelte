@@ -1,6 +1,6 @@
 <script lang="ts">
-	import CopyableField from '$lib/components/ui/CopyableField.svelte';
-	import { formatDate, formatDateTime, formatRelativeTime } from '$lib/utils/time';
+	import CopyableField from '#lib/components/ui/CopyableField.svelte';
+	import { formatDate, formatDateTime, formatRelativeTime } from '#lib/utils/time.js';
 	import type { UserStatus } from 'api/types';
 
 	type Props = {

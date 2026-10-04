@@ -1,4 +1,4 @@
-import type { SpanNode, TraceModel, ViewRange } from '$lib/types';
+import type { SpanNode, TraceModel, ViewRange } from '#lib/types.js';
 import type { TraceResponse } from 'api/types';
 
 export function buildTraceModel(trace: TraceResponse): TraceModel {

@@ -1,5 +1,5 @@
 import type { PageLoad } from './$types';
-import { listAuthProviders, verifyInvite } from '$lib/api/auth';
+import { listAuthProviders, verifyInvite } from '#lib/api/auth.js';
 
 export const load: PageLoad = async ({ url }) => {
 	const token = url.searchParams.get('token') ?? '';

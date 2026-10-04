@@ -2,9 +2,9 @@
 	import { ChevronsUpDown, LogOut, UserRound } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidate } from '$app/navigation';
-	import { authClient } from '$lib/auth-client';
-	import { DEP } from '$lib/api/deps';
-	import { avatarColor, avatarInitials } from '$lib/utils/avatar';
+	import { authClient } from '#lib/auth-client.js';
+	import { DEP } from '#lib/api/deps.js';
+	import { avatarColor, avatarInitials } from '#lib/utils/avatar.js';
 
 	type User = { id: string; name: string | null; email: string };
 

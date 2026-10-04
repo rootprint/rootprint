@@ -2,18 +2,18 @@
 	import * as v from 'valibot';
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { DEP } from '$lib/api/deps';
-	import { issuesToFieldErrors } from '$lib/api/errors';
-	import { authClient } from '$lib/auth-client';
-	import { safeReturnTo } from '$lib/return-to';
+	import { DEP } from '#lib/api/deps.js';
+	import { issuesToFieldErrors } from '#lib/api/errors.js';
+	import { authClient } from '#lib/auth-client.js';
+	import { safeReturnTo } from '#lib/return-to.js';
 	import { signInSchema } from 'api/schemas';
 	import GoogleIcon from '@iconify-svelte/logos/google-icon';
 	import GitHubIcon from '@iconify-svelte/logos/github-icon';
 	import { KeyRound } from 'lucide-svelte';
 	import type { ExternalProviderId } from 'api/types';
-	import AuthHeader from '$lib/components/auth/AuthHeader.svelte';
-	import Field from '$lib/components/ui/Field.svelte';
-	import type { IconComponent } from '$lib/types';
+	import AuthHeader from '#lib/components/auth/AuthHeader.svelte';
+	import Field from '#lib/components/ui/Field.svelte';
+	import type { IconComponent } from '#lib/types.js';
 
 	let { data } = $props();
 

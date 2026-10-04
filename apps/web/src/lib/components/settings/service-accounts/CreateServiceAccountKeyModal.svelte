@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { createServiceAccountKey } from '$lib/api/api-keys';
-	import type { ServiceAccountView } from '$lib/api/service-accounts';
-	import Field from '$lib/components/ui/Field.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
-	import OneTimeKeyReveal from '$lib/components/ui/OneTimeKeyReveal.svelte';
-	import SelectField from '$lib/components/ui/SelectField.svelte';
+	import { DEP } from '#lib/api/deps.js';
+	import { createServiceAccountKey } from '#lib/api/api-keys.js';
+	import type { ServiceAccountView } from '#lib/api/service-accounts.js';
+	import Field from '#lib/components/ui/Field.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
+	import OneTimeKeyReveal from '#lib/components/ui/OneTimeKeyReveal.svelte';
+	import SelectField from '#lib/components/ui/SelectField.svelte';
 	import { createServiceAccountKeySchema } from 'api/schemas';
 
 	let {

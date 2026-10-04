@@ -1,4 +1,4 @@
-import { getAdminMetrics, type AdminMetrics } from '$lib/api/admin';
+import { getAdminMetrics, type AdminMetrics } from '#lib/api/admin.js';
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_FAILURES = 3;

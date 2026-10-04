@@ -4,11 +4,11 @@
 	import * as v from 'valibot';
 
 	import { goto, invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { issuesToPathErrors, toFormErrors } from '$lib/api/errors';
-	import { updateQuickwitConfig } from '$lib/api/indexes';
-	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
-	import TagInput from '$lib/components/ui/TagInput.svelte';
+	import { DEP } from '#lib/api/deps.js';
+	import { issuesToPathErrors, toFormErrors } from '#lib/api/errors.js';
+	import { updateQuickwitConfig } from '#lib/api/indexes.js';
+	import SettingsRow from '#lib/components/ui/SettingsRow.svelte';
+	import TagInput from '#lib/components/ui/TagInput.svelte';
 	import {
 		INDEX_MODES,
 		updateQuickwitConfigSchema,

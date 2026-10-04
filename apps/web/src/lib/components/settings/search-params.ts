@@ -7,10 +7,10 @@ export function setSearchParam(
 	opts: { resetOffset?: boolean } = {}
 ): void {
 	const { resetOffset = true } = opts;
-	const url = new URL(page.url);
+	const url = new URL(page.url.href);
 	url.searchParams.set(key, val);
 	if (resetOffset && key !== 'offset') url.searchParams.set('offset', '0');
-	goto(url, { replaceState: false, keepFocus: true, noScroll: true });
+	goto(url, { reset: false });
 }
 
 export function parseOffset(url: URL): number {

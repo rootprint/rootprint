@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatBytes, formatCount, formatOrDash, formatPercent } from '$lib/utils/format';
+	import { formatBytes, formatCount, formatOrDash, formatPercent } from '#lib/utils/format.js';
 
 	type Props = {
 		totals: {

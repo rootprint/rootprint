@@ -3,9 +3,9 @@
 	import { Download, Info } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
-	import { buildExportUrl, preflightExport } from '$lib/api/exports';
-	import { isAbortError } from '$lib/api/errors';
-	import Modal from '$lib/components/ui/Modal.svelte';
+	import { buildExportUrl, preflightExport } from '#lib/api/exports.js';
+	import { isAbortError } from '#lib/api/errors.js';
+	import Modal from '#lib/components/ui/Modal.svelte';
 	import { EXPORT_MAX_ROWS } from 'api/constants';
 	import type { ExportFormat } from 'api/types';
 

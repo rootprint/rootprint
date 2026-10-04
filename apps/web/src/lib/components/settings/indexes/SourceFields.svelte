@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
+	import SettingsRow from '#lib/components/ui/SettingsRow.svelte';
 	import type { SourceFormState } from './source-form';
 
 	let {

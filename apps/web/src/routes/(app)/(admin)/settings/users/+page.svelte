@@ -2,17 +2,17 @@
 	import { UserPlus } from 'lucide-svelte';
 
 	import { refreshUsers, regenerateInvite, toggleUserRole } from './user-actions';
-	import CreateUserModal from '$lib/components/settings/users/CreateUserModal.svelte';
-	import MemberActionsMenu from '$lib/components/settings/users/MemberActionsMenu.svelte';
-	import RemoveUserModal from '$lib/components/settings/users/RemoveUserModal.svelte';
-	import ResetPasswordModal from '$lib/components/settings/users/ResetPasswordModal.svelte';
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import UserIdentity from '$lib/components/ui/UserIdentity.svelte';
-	import type { UserView } from '$lib/api/users';
-	import { pluralize } from '$lib/utils/format';
-	import { formatRelativeTime } from '$lib/utils/time';
+	import CreateUserModal from '#lib/components/settings/users/CreateUserModal.svelte';
+	import MemberActionsMenu from '#lib/components/settings/users/MemberActionsMenu.svelte';
+	import RemoveUserModal from '#lib/components/settings/users/RemoveUserModal.svelte';
+	import ResetPasswordModal from '#lib/components/settings/users/ResetPasswordModal.svelte';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import UserIdentity from '#lib/components/ui/UserIdentity.svelte';
+	import type { UserView } from '#lib/api/users.js';
+	import { pluralize } from '#lib/utils/format.js';
+	import { formatRelativeTime } from '#lib/utils/time.js';
 
 	type Filter = 'all' | 'admin' | 'pending';
 

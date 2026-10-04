@@ -1,5 +1,6 @@
-import type { Filter, ParsedQuery, SortDirection, TimeRange } from '$lib/types';
-import { isPreset, type Preset } from '$lib/utils/time-range';
+import type { ReadonlyURL, ReadonlyURLSearchParams } from '$app/state';
+import type { Filter, ParsedQuery, SortDirection, TimeRange } from '#lib/types.js';
+import { isPreset, type Preset } from '#lib/utils/time-range.js';
 
 const DEFAULTS = {
 	query: '',
@@ -92,7 +93,7 @@ export function serialize(state: ParsedQuery): URLSearchParams {
 }
 
 /** Reads only `from`/`to`, so a load function using it doesn't rerun on unrelated params. */
-export function parseTimeRange(params: URLSearchParams): TimeRange {
+export function parseTimeRange(params: ReadonlyURLSearchParams): TimeRange {
 	const from = params.get('from');
 	const to = params.get('to');
 
@@ -108,7 +109,7 @@ export function parseTimeRange(params: URLSearchParams): TimeRange {
 	return { type: 'relative', preset: DEFAULTS.timeRangePreset };
 }
 
-export function deserialize(params: URLSearchParams): ParsedQuery {
+export function deserialize(params: ReadonlyURLSearchParams): ParsedQuery {
 	const index = params.get('index');
 	const query = params.get('q') ?? DEFAULTS.query;
 	const timeRange = parseTimeRange(params);
@@ -128,7 +129,7 @@ export function deserialize(params: URLSearchParams): ParsedQuery {
 
 /** Merge a partial query update into existing URL params, returning the new search string. */
 export function buildQueryUrl(
-	current: URLSearchParams,
+	current: ReadonlyURLSearchParams,
 	partial: Partial<ParsedQuery>,
 	fold: boolean = current.get('fold') === '1'
 ): string {
@@ -142,7 +143,7 @@ export function buildQueryUrl(
 }
 
 /** A fresh param set holding only the current `from`/`to`, for links that keep the time range. */
-export function timeRangeParams(current: URL): URLSearchParams {
+export function timeRangeParams(current: ReadonlyURL): URLSearchParams {
 	const params = new URLSearchParams();
 	for (const key of ['from', 'to']) {
 		const value = current.searchParams.get(key);
@@ -153,7 +154,7 @@ export function timeRangeParams(current: URL): URLSearchParams {
 
 /** The Services catalog, or one service's page, keeping the current time range. */
 export function servicesHref(
-	current: URL,
+	current: ReadonlyURL,
 	service: string | null,
 	tab: string | null = null
 ): string {

@@ -3,8 +3,7 @@
 	import 'uplot/dist/uPlot.min.css';
 
 	import { untrack, type Snippet } from 'svelte';
-
-	import { browser } from '$app/environment';
+	import { browser } from '$app/env';
 
 	let {
 		data,

@@ -1,4 +1,4 @@
-import type { SpanNode } from '$lib/types';
+import type { SpanNode } from '#lib/types.js';
 
 /** Semconv ≥1.26 renamed `db.system`→`db.system.name` and `db.statement`→`db.query.text`. */
 const DB_SYSTEM_KEYS = ['db.system', 'db.system.name'];

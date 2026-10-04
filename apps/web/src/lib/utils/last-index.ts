@@ -1,4 +1,4 @@
-import { readString, writeString, removeKey } from '$lib/utils/safe-storage';
+import { readString, writeString, removeKey } from '#lib/utils/safe-storage.js';
 
 const KEY = 'rootprint:last-index';
 

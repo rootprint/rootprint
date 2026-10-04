@@ -1,5 +1,5 @@
 <script lang="ts">
-	import AuthBackdrop from '$lib/components/auth/AuthBackdrop.svelte';
+	import AuthBackdrop from '#lib/components/auth/AuthBackdrop.svelte';
 
 	let { children } = $props();
 </script>

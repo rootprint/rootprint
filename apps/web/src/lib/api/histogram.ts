@@ -1,12 +1,12 @@
-import { client } from '$lib/api/client';
-import { UNKNOWN_LEVEL } from '$lib/constants/level-colors';
-import { readApiError } from '$lib/api/errors';
-import type { HistogramBucket, HistogramInput, HistogramResult } from '$lib/types';
+import { client } from '#lib/api/client.js';
+import { UNKNOWN_LEVEL } from '#lib/constants/level-colors.js';
+import { readApiError } from '#lib/api/errors.js';
+import type { HistogramBucket, HistogramInput, HistogramResult } from '#lib/types.js';
 import {
 	computeHistogramIntervalSeconds,
 	formatInterval,
 	padHistogramBuckets
-} from '$lib/utils/histogram';
+} from '#lib/utils/histogram.js';
 
 export async function fetchHistogram(
 	input: HistogramInput,

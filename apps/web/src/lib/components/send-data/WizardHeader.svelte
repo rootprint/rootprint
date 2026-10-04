@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { ExternalLink } from 'lucide-svelte';
 	import { page } from '$app/state';
-	import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
-	import { resolveBreadcrumbs } from '$lib/admin-nav';
-	import type { Integration } from '$lib/components/send-data/types';
+	import Breadcrumb from '#lib/components/ui/Breadcrumb.svelte';
+	import { resolveBreadcrumbs } from '#lib/admin-nav.js';
+	import type { Integration } from '#lib/components/send-data/types.js';
 
 	let { integration }: { integration: Integration } = $props();
 

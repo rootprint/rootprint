@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-import { DEP } from '$lib/api/deps';
-import { ApiError } from '$lib/api/errors';
-import { getIndex } from '$lib/api/indexes';
+import { DEP } from '#lib/api/deps.js';
+import { ApiError } from '#lib/api/errors.js';
+import { getIndex } from '#lib/api/indexes.js';
 
 export const load: PageLoad = async ({ params, depends }) => {
 	depends(DEP.index(params.indexId));

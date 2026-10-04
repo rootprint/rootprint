@@ -8,9 +8,9 @@
 		PRESET_OPTIONS,
 		resolveWindow,
 		type Preset
-	} from '$lib/utils/time-range';
-	import { parseLocalDateTime } from '$lib/utils/time';
-	import type { TimeRange } from '$lib/types';
+	} from '#lib/utils/time-range.js';
+	import { parseLocalDateTime } from '#lib/utils/time.js';
+	import type { TimeRange } from '#lib/types.js';
 
 	let {
 		value,

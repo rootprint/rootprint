@@ -1,6 +1,6 @@
 import type { InferResponseType } from 'hono/client';
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
 import type { UserRole } from 'api/types';
 import type { CreateUserInput } from 'api/schemas';
 

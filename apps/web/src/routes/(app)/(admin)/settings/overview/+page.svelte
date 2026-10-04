@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 
-	import { getClusterOverview, getAdminMetricsRaw, type ClusterOverview } from '$lib/api/admin';
-	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
-	import { getIndexStats } from '$lib/api/indexes';
-	import ClusterIdentityStrip from '$lib/components/settings/overview/ClusterIdentityStrip.svelte';
-	import HeadlineNumbers from '$lib/components/settings/overview/HeadlineNumbers.svelte';
-	import StorageTrendChart from '$lib/components/settings/overview/StorageTrendChart.svelte';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import EmptyPanel from '$lib/components/ui/EmptyPanel.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import PanelError from '$lib/components/ui/PanelError.svelte';
-	import type { ConnectionState } from '$lib/types';
+	import { getClusterOverview, getAdminMetricsRaw, type ClusterOverview } from '#lib/api/admin.js';
+	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
+	import { getIndexStats } from '#lib/api/indexes.js';
+	import ClusterIdentityStrip from '#lib/components/settings/overview/ClusterIdentityStrip.svelte';
+	import HeadlineNumbers from '#lib/components/settings/overview/HeadlineNumbers.svelte';
+	import StorageTrendChart from '#lib/components/settings/overview/StorageTrendChart.svelte';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import type { ConnectionState } from '#lib/types.js';
 	import { MetricsPoller } from './metrics-poller.svelte';
 
 	type StatsPoint = Awaited<ReturnType<typeof getIndexStats>>['points'][number];

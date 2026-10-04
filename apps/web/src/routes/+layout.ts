@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
-import { getBootstrap } from '$lib/api/auth';
-import { authClient } from '$lib/auth-client';
-import { DEP } from '$lib/api/deps';
+import { getBootstrap } from '#lib/api/auth.js';
+import { authClient } from '#lib/auth-client.js';
+import { DEP } from '#lib/api/deps.js';
 
 export const ssr = false;
 export const prerender = false;

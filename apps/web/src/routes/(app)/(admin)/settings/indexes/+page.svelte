@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { ChevronRight, Plus, Waypoints } from 'lucide-svelte';
 
-	import ListCard from '$lib/components/ui/ListCard.svelte';
-	import ListRow from '$lib/components/ui/ListRow.svelte';
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import { pluralize } from '$lib/utils/format';
+	import ListCard from '#lib/components/ui/ListCard.svelte';
+	import ListRow from '#lib/components/ui/ListRow.svelte';
+	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import { pluralize } from '#lib/utils/format.js';
 
 	let { data } = $props();
 	const indexes = $derived(data.indexes);

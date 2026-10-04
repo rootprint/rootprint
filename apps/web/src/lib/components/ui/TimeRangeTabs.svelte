@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Window } from '$lib/utils/time-range';
+	import type { Window } from '#lib/utils/time-range.js';
 
 	type Props = {
 		value: Window;

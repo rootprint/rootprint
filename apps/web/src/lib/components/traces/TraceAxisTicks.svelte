@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TraceAxis } from '$lib/components/traces/trace-axis';
+	import type { TraceAxis } from '#lib/components/traces/trace-axis.js';
 
 	let { ticks }: { ticks: TraceAxis['ticks'] } = $props();
 </script>

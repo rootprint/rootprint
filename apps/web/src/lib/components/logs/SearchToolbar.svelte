@@ -4,18 +4,18 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
-	import { traceDetailHref } from '$lib/utils/trace-params';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import TimeRangePicker from '$lib/components/ui/TimeRangePicker.svelte';
-	import PageToolbar from '$lib/components/ui/PageToolbar.svelte';
+	import { traceDetailHref } from '#lib/utils/trace-params.js';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import TimeRangePicker from '#lib/components/ui/TimeRangePicker.svelte';
+	import PageToolbar from '#lib/components/ui/PageToolbar.svelte';
 	import ViewsDropdown from './ViewsDropdown.svelte';
 	import QuerySuggestDropdown from './QuerySuggestDropdown.svelte';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
-	import type { LogFieldValueBucket, QuerySuggestion } from '$lib/types';
-	import { tokenAtCaret, type CaretToken } from '$lib/components/logs/query-token';
-	import { serializeTimeRange } from '$lib/utils/fields';
-	import { fetchFieldValuesBulk } from '$lib/api/field-values';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
+	import type { LogFieldValueBucket, QuerySuggestion } from '#lib/types.js';
+	import { tokenAtCaret, type CaretToken } from '#lib/components/logs/query-token.js';
+	import { serializeTimeRange } from '#lib/utils/fields.js';
+	import { fetchFieldValuesBulk } from '#lib/api/field-values.js';
 	import { escapeFilterValue } from 'api/query';
 
 	const SUGGEST_LIMIT = 50;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import AppSidebar from '$lib/components/shell/AppSidebar.svelte';
+	import AppSidebar from '#lib/components/shell/AppSidebar.svelte';
 
 	let { data, children } = $props();
 

@@ -2,12 +2,12 @@
 	import { parseISO } from 'date-fns';
 	import type uPlotLib from 'uplot';
 
-	import { browser } from '$app/environment';
-	import UplotChart from '$lib/components/ui/uplot/UplotChart.svelte';
-	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '$lib/utils/chart-colors';
-	import { formatCount } from '$lib/utils/format';
-	import { formatTickDate, formatTooltipDate } from '$lib/utils/time';
-	import { windowToSpanMs, type Window } from '$lib/utils/time-range';
+	import { browser } from '$app/env';
+	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
+	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '#lib/utils/chart-colors.js';
+	import { formatCount } from '#lib/utils/format.js';
+	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
+	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
 
 	type Bucket = { t: string; count: number };
 	type Props = { buckets: Bucket[]; window?: Window };

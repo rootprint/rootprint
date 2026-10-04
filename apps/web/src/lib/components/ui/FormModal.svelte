@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import * as v from 'valibot';
 
-	import { issuesToFieldErrors, toFormErrors } from '$lib/api/errors';
+	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
 	import Modal from './Modal.svelte';
 
 	let {

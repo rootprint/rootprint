@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Tag, Text } from 'lucide-svelte';
 
-	import type { QuerySuggestion } from '$lib/types';
+	import type { QuerySuggestion } from '#lib/types.js';
 
 	let {
 		items,

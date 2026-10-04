@@ -4,12 +4,12 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
-	import { toFormErrors } from '$lib/api/errors';
-	import type { OAuthProviderDescriptor } from '$lib/components/settings/authentication/oauth-providers';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import DisplayField from '$lib/components/ui/DisplayField.svelte';
-	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
-	import TagInput from '$lib/components/ui/TagInput.svelte';
+	import { toFormErrors } from '#lib/api/errors.js';
+	import type { OAuthProviderDescriptor } from '#lib/components/settings/authentication/oauth-providers.js';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import DisplayField from '#lib/components/ui/DisplayField.svelte';
+	import SettingsRow from '#lib/components/ui/SettingsRow.svelte';
+	import TagInput from '#lib/components/ui/TagInput.svelte';
 
 	type CredKey = 'issuerUrl' | 'clientId' | 'clientSecret';
 
@@ -142,7 +142,7 @@
 				}
 			}
 			toast.success(provider.successToast);
-			await goto('/settings/authentication', { invalidateAll: true });
+			await goto('/settings/authentication', { refreshAll: true });
 		} finally {
 			submitting = false;
 		}

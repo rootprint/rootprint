@@ -12,27 +12,27 @@ import type {
 	LogField,
 	LogHit,
 	ParsedQuery
-} from '$lib/types';
+} from '#lib/types.js';
 import { composeQuery } from 'api/query';
-import { searchLogs } from '$lib/api/log-search';
-import { fetchHistogram } from '$lib/api/histogram';
-import { loadFields } from '$lib/api/fields';
-import { getIndexConfig } from '$lib/api/indexes';
-import { getPreferences, setPreferences } from '$lib/api/preferences';
-import { buildQueryUrl, serialize } from '$lib/utils/query-params';
-import { foldRuns, groupConsecutiveHits, type LogListRow } from '$lib/components/logs/fold-hits';
-import { normalizeHit } from '$lib/components/logs/normalize-hit';
-import { readLastIndex, writeLastIndex, clearLastIndex } from '$lib/utils/last-index';
-import { resolveWindow } from '$lib/utils/time-range';
-import { UNKNOWN_LEVEL } from '$lib/constants/level-colors';
+import { searchLogs } from '#lib/api/log-search.js';
+import { fetchHistogram } from '#lib/api/histogram.js';
+import { loadFields } from '#lib/api/fields.js';
+import { getIndexConfig } from '#lib/api/indexes.js';
+import { getPreferences, setPreferences } from '#lib/api/preferences.js';
+import { buildQueryUrl, serialize } from '#lib/utils/query-params.js';
+import { foldRuns, groupConsecutiveHits, type LogListRow } from '#lib/components/logs/fold-hits.js';
+import { normalizeHit } from '#lib/components/logs/normalize-hit.js';
+import { readLastIndex, writeLastIndex, clearLastIndex } from '#lib/utils/last-index.js';
+import { resolveWindow } from '#lib/utils/time-range.js';
+import { UNKNOWN_LEVEL } from '#lib/constants/level-colors.js';
 import {
 	countFieldPaths,
 	displayNameFor,
 	serializeTimeRange,
 	type FieldSample
-} from '$lib/utils/fields';
-import { RequestGuard } from '$lib/stores/request-guard';
-import { isAbortError } from '$lib/api/errors';
+} from '#lib/utils/fields.js';
+import { RequestGuard } from '#lib/stores/request-guard.js';
+import { isAbortError } from '#lib/api/errors.js';
 import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
@@ -174,7 +174,7 @@ export class SearchStore {
 
 	setFoldEnabled(next: boolean): void {
 		const url = buildQueryUrl(page.url.searchParams, {}, next);
-		goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+		goto(url, { replace: true, reset: false });
 	}
 
 	toggleFold(id: string): void {
@@ -243,7 +243,7 @@ export class SearchStore {
 		// Re-search even when the URL is unchanged; only the fold toggle skips it.
 		this.#autoSearchSig = null;
 		const url = buildQueryUrl(page.url.searchParams, partial);
-		goto(url, { replaceState: !opts?.push, keepFocus: true, noScroll: true });
+		goto(url, { replace: !opts?.push, reset: false });
 	}
 
 	runQuery(query: string): void {

@@ -2,10 +2,10 @@
 	import type { Snippet } from 'svelte';
 	import { Share2, X } from 'lucide-svelte';
 
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import { levelColor } from '$lib/constants/level-colors';
-	import { formatTimestamp } from '$lib/utils/time';
-	import type { LogHit } from '$lib/types';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import { levelColor } from '#lib/constants/level-colors.js';
+	import { formatTimestamp } from '#lib/utils/time.js';
+	import type { LogHit } from '#lib/types.js';
 
 	export type DrawerTab = 'parameters' | 'traceback' | 'trace' | 'json' | 'context';
 

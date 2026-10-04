@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Minus, Plus } from 'lucide-svelte';
 	import CopyButton from './CopyButton.svelte';
-	import type { FieldRowData } from '$lib/types';
+	import type { FieldRowData } from '#lib/types.js';
 
 	let {
 		field,

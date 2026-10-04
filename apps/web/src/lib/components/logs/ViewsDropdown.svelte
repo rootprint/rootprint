@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ArrowLeft, ChevronDown, Layers, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-svelte';
 	import * as v from 'valibot';
-	import { ApiError, issuesToFieldErrors } from '$lib/api/errors';
-	import { listViews, createView, updateView, deleteView } from '$lib/api/views';
-	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
-	import SearchInput from '$lib/components/ui/SearchInput.svelte';
-	import type { SearchStore } from '$lib/components/logs/search.svelte';
-	import { RequestGuard } from '$lib/stores/request-guard';
-	import { formatTimeRangeLabel } from '$lib/utils/time-range';
+	import { ApiError, issuesToFieldErrors } from '#lib/api/errors.js';
+	import { listViews, createView, updateView, deleteView } from '#lib/api/views.js';
+	import ConfirmModal from '#lib/components/ui/ConfirmModal.svelte';
+	import SearchInput from '#lib/components/ui/SearchInput.svelte';
+	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
+	import { RequestGuard } from '#lib/stores/request-guard.js';
+	import { formatTimeRangeLabel } from '#lib/utils/time-range.js';
 	import { createViewSchema, patchViewSchema } from 'api/schemas';
 	import type { SavedView } from 'api/types';
 

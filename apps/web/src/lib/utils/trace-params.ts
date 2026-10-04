@@ -1,6 +1,7 @@
+import type { ReadonlyURL } from '$app/state';
 import type { ExploreStatus } from 'api/constants';
 
-import { timeRangeParams } from '$lib/utils/query-params';
+import { timeRangeParams } from '#lib/utils/query-params.js';
 
 export type TraceOrigin = 'traces' | 'services' | 'logs';
 
@@ -41,7 +42,7 @@ export type ExploreLinkFilters = Partial<Record<'service' | 'operation' | 'q', s
 	status?: ExploreStatus;
 };
 
-export function exploreHref(current: URL, filters: ExploreLinkFilters): string {
+export function exploreHref(current: ReadonlyURL, filters: ExploreLinkFilters): string {
 	const params = timeRangeParams(current);
 	for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
 	const query = params.toString();

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ServiceLatency } from '$lib/api/services';
-	import UplotLinePanel from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import type { ChartSeries } from '$lib/components/ui/uplot/UplotLinePanel.svelte';
-	import { formatDurationMs } from '$lib/utils/format';
-	import { serviceColorAt } from '$lib/utils/service-color';
+	import type { ServiceLatency } from '#lib/api/services.js';
+	import UplotLinePanel from '#lib/components/ui/uplot/UplotLinePanel.svelte';
+	import type { ChartSeries } from '#lib/components/ui/uplot/UplotLinePanel.svelte';
+	import { formatDurationMs } from '#lib/utils/format.js';
+	import { serviceColorAt } from '#lib/utils/service-color.js';
 
 	type Props = {
 		services: ServiceLatency[];

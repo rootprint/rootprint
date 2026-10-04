@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { refreshAll } from '$app/navigation';
 
 	let {
 		message,
 		error,
-		retry = () => void invalidateAll()
+		retry = () => void refreshAll()
 	}: {
 		message: string;
 		error?: unknown;

@@ -1,7 +1,7 @@
-import { client } from '$lib/api/client';
-import { readApiError } from '$lib/api/errors';
+import { client } from '#lib/api/client.js';
+import { readApiError } from '#lib/api/errors.js';
 import type { SavedView } from 'api/types';
-import type { Filter, SortDirection, TimeRange } from '$lib/types';
+import type { Filter, SortDirection, TimeRange } from '#lib/types.js';
 
 export type ViewCreateInput = {
 	name: string;

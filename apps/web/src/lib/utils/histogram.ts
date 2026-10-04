@@ -1,4 +1,4 @@
-import type { HistogramBucket } from '$lib/types';
+import type { HistogramBucket } from '#lib/types.js';
 
 const INTERVAL_THRESHOLDS: [number, number][] = [
 	[10 * 60 - 1, 1], // <10m → 1s

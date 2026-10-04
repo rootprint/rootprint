@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import * as v from 'valibot';
-	import Field from '$lib/components/ui/Field.svelte';
-	import FormModal from '$lib/components/ui/FormModal.svelte';
-	import { authClient } from '$lib/auth-client';
+	import Field from '#lib/components/ui/Field.svelte';
+	import FormModal from '#lib/components/ui/FormModal.svelte';
+	import { authClient } from '#lib/auth-client.js';
 
 	const changePasswordSchema = v.pipe(
 		v.object({

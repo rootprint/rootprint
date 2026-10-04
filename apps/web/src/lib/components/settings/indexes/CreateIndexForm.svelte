@@ -4,10 +4,10 @@
 	import * as v from 'valibot';
 
 	import { goto, invalidate } from '$app/navigation';
-	import { DEP } from '$lib/api/deps';
-	import { issuesToPathErrors, toFormErrors } from '$lib/api/errors';
-	import { createIndex } from '$lib/api/indexes';
-	import SettingsRow from '$lib/components/ui/SettingsRow.svelte';
+	import { DEP } from '#lib/api/deps.js';
+	import { issuesToPathErrors, toFormErrors } from '#lib/api/errors.js';
+	import { createIndex } from '#lib/api/indexes.js';
+	import SettingsRow from '#lib/components/ui/SettingsRow.svelte';
 	import { createIndexSchema, INDEX_MODES } from 'api/schemas';
 	import DynamicMappingFields from './DynamicMappingFields.svelte';
 	import FieldMappingsEditor from './FieldMappingsEditor.svelte';

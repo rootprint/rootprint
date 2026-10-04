@@ -8,8 +8,8 @@
 		ShieldOff,
 		Trash2
 	} from 'lucide-svelte';
-	import CopyButton from '$lib/components/ui/CopyButton.svelte';
-	import type { UserView } from '$lib/api/users';
+	import CopyButton from '#lib/components/ui/CopyButton.svelte';
+	import type { UserView } from '#lib/api/users.js';
 
 	let {
 		user,
