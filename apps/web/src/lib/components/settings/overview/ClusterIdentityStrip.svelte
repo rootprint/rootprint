@@ -23,19 +23,15 @@
 
 	const meta = $derived(STATE_META[state]);
 	// Strip scheme so the ribbon stays calm; full endpoint is in the title (hover).
-	const endpointShort = $derived(endpoint ? endpoint.replace(/^https?:\/\//, '') : null);
-	const versionTooltip = $derived.by(() => {
-		const parts: string[] = [];
-		if (commitHash) parts.push(`commit ${commitHash}`);
-		if (buildDate) parts.push(`built ${buildDate}`);
-		return parts.length > 0 ? parts.join(' · ') : null;
-	});
-	const endpointTooltip = $derived.by(() => {
-		const parts: string[] = [];
-		if (endpoint) parts.push(endpoint);
-		if (clusterId) parts.push(`cluster ${clusterId}`);
-		return parts.length > 0 ? parts.join(' · ') : undefined;
-	});
+	const endpointShort = $derived(endpoint?.replace(/^https?:\/\//, ''));
+	const versionTooltip = $derived(
+		[commitHash && `commit ${commitHash}`, buildDate && `built ${buildDate}`]
+			.filter(Boolean)
+			.join(' · ') || undefined
+	);
+	const endpointTooltip = $derived(
+		[endpoint, clusterId && `cluster ${clusterId}`].filter(Boolean).join(' · ') || undefined
+	);
 </script>
 
 <div
@@ -52,14 +48,14 @@
 			? 'opacity-50'
 			: ''}"
 	>
-		{#if versionTooltip}
-			<span
-				class="text-muted decoration-base-content/30 cursor-help font-mono underline decoration-dotted underline-offset-2"
-				title={versionTooltip}>{version ?? '—'}</span
-			>
-		{:else}
-			<span class="text-muted font-mono">{version ?? '—'}</span>
-		{/if}
+		<span
+			class={[
+				'text-muted font-mono',
+				versionTooltip &&
+					'decoration-base-content/30 cursor-help underline decoration-dotted underline-offset-2'
+			]}
+			title={versionTooltip}>{version ?? '—'}</span
+		>
 		<span class="text-subtle">·</span>
 		<span class="text-muted font-mono" title={endpointTooltip}>{endpointShort ?? '—'}</span>
 		{#if liveNodes !== null}

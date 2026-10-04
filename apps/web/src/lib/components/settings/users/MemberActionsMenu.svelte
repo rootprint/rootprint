@@ -40,21 +40,14 @@
 	const isSelf = $derived(user.id === currentUserId);
 	const isPendingOrExpired = $derived(user.status === 'pending' || user.status === 'expired');
 	const canResetPassword = $derived(passwordEnabled && user.status === 'active' && !isSelf);
+	const triggerLabel = $derived(
+		isSelf ? 'No actions available on your own account' : `Actions for ${user.name}`
+	);
 
-	async function handleRegenerate() {
-		pending = 'regenerate';
+	async function run(kind: NonNullable<typeof pending>, action: (user: UserView) => Promise<void>) {
+		pending = kind;
 		try {
-			await onRegenerate(user);
-		} finally {
-			pending = null;
-			close();
-		}
-	}
-
-	async function handleToggleRole() {
-		pending = 'toggle-role';
-		try {
-			await onToggleRole(user);
+			await action(user);
 		} finally {
 			pending = null;
 			close();
@@ -62,27 +55,18 @@
 	}
 </script>
 
-{#if isSelf}
-	<button
-		type="button"
-		class="btn btn-square btn-ghost btn-sm"
-		disabled
-		aria-label="No actions available on your own account"
-		title="No actions available on your own account"
-	>
-		<MoreHorizontal class="size-3.5" aria-hidden="true" />
-	</button>
-{:else}
-	<button
-		type="button"
-		popovertarget={dd}
-		style="anchor-name:--{dd}"
-		class="btn btn-square btn-ghost btn-sm"
-		aria-label="Actions for {user.name}"
-		title="Actions for {user.name}"
-	>
-		<MoreHorizontal class="size-3.5" aria-hidden="true" />
-	</button>
+<button
+	type="button"
+	popovertarget={dd}
+	style="anchor-name:--{dd}"
+	class="btn btn-square btn-ghost btn-sm"
+	disabled={isSelf}
+	aria-label={triggerLabel}
+	title={triggerLabel}
+>
+	<MoreHorizontal class="size-3.5" aria-hidden="true" />
+</button>
+{#if !isSelf}
 	<ul
 		bind:this={panelEl}
 		popover
@@ -106,7 +90,7 @@
 				<button
 					type="button"
 					class="hover:bg-base-200 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left"
-					onclick={handleRegenerate}
+					onclick={() => run('regenerate', onRegenerate)}
 					disabled={pending === 'regenerate'}
 				>
 					{#if pending === 'regenerate'}
@@ -123,7 +107,7 @@
 			<button
 				type="button"
 				class="hover:bg-base-200 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left"
-				onclick={handleToggleRole}
+				onclick={() => run('toggle-role', onToggleRole)}
 				disabled={pending === 'toggle-role'}
 			>
 				{#if pending === 'toggle-role'}
