@@ -13,20 +13,7 @@
 	const pretty = $derived(JSON.stringify(resolveEmbeddedJson(raw), null, 2));
 	const lineCount = $derived(pretty.split('\n').length);
 
-	let html = $state<string | null>(null);
-
-	$effect(() => {
-		let cancelled = false;
-		html = null;
-		highlightCode(pretty, 'json')
-			.then((result) => {
-				if (!cancelled) html = result;
-			})
-			.catch(() => {});
-		return () => {
-			cancelled = true;
-		};
-	});
+	const highlighted = $derived(highlightCode(pretty, 'json'));
 </script>
 
 <div class="flex h-full min-h-0 flex-col p-3">
@@ -50,11 +37,13 @@
 			</CopyButton>
 		</div>
 		<div class="json-pane min-h-0 flex-1 overflow-auto px-3 py-2 text-xs leading-relaxed">
-			{#if html}
-				{@html html}
-			{:else}
+			{#await highlighted}
 				<pre class="text-muted font-mono">{pretty}</pre>
-			{/if}
+			{:then html}
+				{@html html}
+			{:catch}
+				<pre class="text-muted font-mono">{pretty}</pre>
+			{/await}
 		</div>
 	</div>
 </div>

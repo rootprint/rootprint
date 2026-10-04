@@ -19,25 +19,11 @@
 
 	const langLabel = $derived(lang.charAt(0).toUpperCase() + lang.slice(1));
 
-	let html = $state<string | null>(null);
-
-	$effect(() => {
-		let cancelled = false;
-		html = null;
-		(async () => {
-			try {
-				const decorations = highlightValue ? apiKeyDecorations(code, highlightValue) : undefined;
-				const highlighted = await highlightCode(code, lang, { decorations });
-				if (cancelled) return;
-				html = highlighted;
-			} catch {
-				if (!cancelled) html = null;
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-	});
+	const highlighted = $derived(
+		highlightCode(code, lang, {
+			decorations: highlightValue ? apiKeyDecorations(code, highlightValue) : undefined
+		})
+	);
 </script>
 
 <div class="border-line rounded-box overflow-hidden border">
@@ -51,12 +37,14 @@
 	<div
 		class="bg-base-100 overflow-x-auto text-sm leading-relaxed [&_pre]:px-4 [&_pre]:py-3 [&_pre]:whitespace-pre"
 	>
-		{#if html}
+		{#await highlighted}
+			<pre><code>{code}</code></pre>
+		{:then html}
 			<!-- html is Shiki output with substituted API keys wrapped via decorations. -->
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html html}
-		{:else}
+		{:catch}
 			<pre><code>{code}</code></pre>
-		{/if}
+		{/await}
 	</div>
 </div>

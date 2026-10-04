@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { Eye, Plus, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -12,6 +13,7 @@
 	import ListCard from '#lib/components/ui/ListCard.svelte';
 	import Modal from '#lib/components/ui/Modal.svelte';
 	import PageHeader from '#lib/components/ui/PageHeader.svelte';
+	import { RequestGuard } from '#lib/stores/request-guard.js';
 	import { pluralize } from '#lib/utils/format.js';
 	import { formatRelativeTime } from '#lib/utils/time.js';
 
@@ -31,45 +33,32 @@
 
 	let viewOpen = $state(false);
 	let viewTarget = $state<(typeof keys)[number] | null>(null);
-	let viewTokenValue = $state('');
-	let viewLoading = $state(false);
+	let viewToken = $state<Promise<string | void>>();
+	const viewGuard = new RequestGuard();
+
+	onDestroy(() => {
+		viewGuard.next();
+	});
 
 	function openView(key: (typeof keys)[number]) {
+		const request = viewGuard.next();
 		viewTarget = key;
-		viewTokenValue = '';
-		viewLoading = false;
+		viewToken = getApiKey(key.id).then(
+			(result) => result.token,
+			(e: unknown) => {
+				if (!viewGuard.isCurrent(request) || !viewOpen) return;
+				toast.error(e instanceof Error ? e.message : 'Failed to load API key');
+				viewOpen = false;
+			}
+		);
 		viewOpen = true;
 	}
 
 	function handleViewClose() {
+		viewGuard.next();
 		viewTarget = null;
-		viewTokenValue = '';
-		viewLoading = false;
+		viewToken = undefined;
 	}
-
-	$effect(() => {
-		if (!viewOpen || !viewTarget) return;
-		const target = viewTarget;
-		let cancelled = false;
-		viewTokenValue = '';
-		viewLoading = true;
-		(async () => {
-			try {
-				const result = await getApiKey(target.id);
-				if (cancelled) return;
-				viewTokenValue = result.token;
-			} catch (e) {
-				if (cancelled) return;
-				toast.error(e instanceof Error ? e.message : 'Failed to load API key');
-				viewOpen = false;
-			} finally {
-				if (!cancelled) viewLoading = false;
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-	});
 
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<(typeof keys)[number] | null>(null);
@@ -175,14 +164,16 @@
 />
 
 <Modal bind:open={viewOpen} title="API key: {viewTarget?.name ?? ''}" onclose={handleViewClose}>
-	{#if viewLoading}
+	{#await viewToken}
 		<div role="status" class="text-muted flex items-center gap-2 py-4 text-sm">
 			<span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
 			Loading...
 		</div>
-	{:else if viewTokenValue}
-		<SecretReveal value={viewTokenValue} label="Ingest key" />
-	{/if}
+	{:then token}
+		{#if token}
+			<SecretReveal value={token} label="Ingest key" />
+		{/if}
+	{/await}
 	{#snippet actions()}
 		<button type="button" class="btn btn-primary" onclick={() => (viewOpen = false)}>Close</button>
 	{/snippet}
