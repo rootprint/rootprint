@@ -17,7 +17,6 @@ import {
 } from '../db/schema.js';
 import { config } from '../config.js';
 import { conflict, internal, notFound } from '../utils/http-error.js';
-import { translateQuickwitError } from '../lib/quickwit/errors.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type {
 	CreateIndexInput,
@@ -263,7 +262,7 @@ export async function createIndex(
 				]);
 			}
 		}
-		translateQuickwitError(err);
+		throw err;
 	}
 
 	return toIndexSummary(input.indexId, DEFAULT_SETTINGS);

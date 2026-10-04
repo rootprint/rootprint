@@ -21,21 +21,16 @@ export function removeKey(key: string): void {
 	} catch {}
 }
 
-export function readJSON<T>(key: string, fallback: T): T {
-	const raw = readString(key);
-	if (raw === null) return fallback;
-	try {
-		return JSON.parse(raw) as T;
-	} catch {
-		return fallback;
-	}
-}
-
-// readJSON's generic is an unchecked cast — stored null/{}/42 parse fine, so guard the shape.
 export function readStringArray(key: string): string[] {
-	const parsed = readJSON<unknown>(key, []);
-	if (!Array.isArray(parsed)) return [];
-	return parsed.filter((v): v is string => typeof v === 'string');
+	const raw = readString(key);
+	if (raw === null) return [];
+	try {
+		const parsed: unknown = JSON.parse(raw);
+		if (!Array.isArray(parsed)) return [];
+		return parsed.filter((v): v is string => typeof v === 'string');
+	} catch {
+		return [];
+	}
 }
 
 export function writeJSON(key: string, value: unknown): void {

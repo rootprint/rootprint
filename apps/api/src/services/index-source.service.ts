@@ -1,5 +1,4 @@
 import {
-	NotFoundError,
 	QuickwitError,
 	QuickwitErrorCode,
 	type QuickwitClient,
@@ -10,7 +9,7 @@ import {
 import type { IndexSource, SourceDetail } from '../types.js';
 import type { QuickwitIndexMetadata } from './quickwit-index.service.js';
 import { conflict, notFound } from '../utils/http-error.js';
-import { translateQuickwitError, withNotFound } from '../lib/quickwit/errors.js';
+import { withNotFound } from '../lib/quickwit/errors.js';
 import type { CreateSourceInput, UpdateSourceInput } from '../schemas/sources.js';
 import { getIndex as qwGetIndex } from './quickwit-index.service.js';
 
@@ -116,7 +115,7 @@ export async function createSource(
 				{ path: 'sourceId', message: 'A source with this ID already exists.' }
 			]);
 		}
-		translateQuickwitError(err);
+		throw err;
 	}
 
 	return {
@@ -210,12 +209,10 @@ export async function updateSource(
 	input: UpdateSourceInput
 ): Promise<SourceDetail> {
 	const current = await getRawSourceConfig(qw, indexId, sourceId);
-	try {
-		await qw.index(indexId).updateSource(sourceId, toSourceConfigRequest(sourceId, input, current));
-	} catch (err) {
-		if (err instanceof NotFoundError) throw notFound('Source not found');
-		translateQuickwitError(err);
-	}
+	await withNotFound(
+		() => qw.index(indexId).updateSource(sourceId, toSourceConfigRequest(sourceId, input, current)),
+		'Source not found'
+	);
 	const index = await qwGetIndex(qw, indexId);
 	if (!index) throw notFound('Index not found');
 	return projectSource(index, sourceId);

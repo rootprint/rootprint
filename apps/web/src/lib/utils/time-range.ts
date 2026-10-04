@@ -1,4 +1,4 @@
-import { format, fromUnixTime, getUnixTime, isSameDay, isSameYear } from 'date-fns';
+import { format, fromUnixTime, getUnixTime, isSameDay } from 'date-fns';
 
 import type { TimeRange } from '#lib/types.js';
 import { PRESET_OPTIONS } from 'api/constants';
@@ -60,7 +60,7 @@ export function formatTimeRangeLabel(r: TimeRange): string {
 	const startMd = format(start, 'MM-dd');
 	const startHm = format(start, 'HH:mm');
 	const endHm = format(end, 'HH:mm');
-	if (isSameDay(start, end) && isSameYear(start, end)) {
+	if (isSameDay(start, end)) {
 		return `${startMd} ${startHm} → ${endHm}`;
 	}
 	const endMd = format(end, 'MM-dd');

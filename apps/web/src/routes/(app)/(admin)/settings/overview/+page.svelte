@@ -54,7 +54,7 @@
 		await Promise.all(
 			cluster.perIndex.map(async (i) => {
 				try {
-					const body = await getIndexStats(i.indexId, { startTs, endTs, limit: 10000 });
+					const body = await getIndexStats(i.indexId, { startTs, endTs });
 					next[i.indexId] = body.points;
 				} catch (err) {
 					newErrors[i.indexId] = err instanceof Error ? err.message : String(err);

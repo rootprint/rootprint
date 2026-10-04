@@ -132,14 +132,14 @@ export async function resetSourceCheckpoint(indexId: string, sourceId: string): 
 
 export async function getIndexStats(
 	indexId: string,
-	range: { startTs: number; endTs: number; limit?: number }
+	range: { startTs: number; endTs: number }
 ): Promise<IndexStatsResponse> {
 	const res = await client.api.indexes[':indexId'].stats.$get({
 		param: { indexId },
 		query: {
 			startTs: String(range.startTs),
 			endTs: String(range.endTs),
-			limit: String(range.limit ?? 10000)
+			limit: '10000'
 		}
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load index stats');
