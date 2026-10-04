@@ -4,6 +4,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { toFormErrors } from '#lib/api/errors.js';
 	import type { OAuthProviderDescriptor } from '#lib/components/settings/authentication/oauth-providers.js';
 	import CopyButton from '#lib/components/ui/CopyButton.svelte';
@@ -17,14 +18,12 @@
 		provider,
 		configured,
 		initialItems = [],
-		initialIssuerUrl = '',
-		origin
+		initialIssuerUrl = ''
 	}: {
 		provider: OAuthProviderDescriptor;
 		configured: boolean;
 		initialItems?: string[];
 		initialIssuerUrl?: string;
-		origin: string;
 	} = $props();
 
 	const emptyCreds = () => ({ issuerUrl: '', clientId: '', clientSecret: '' });
@@ -40,7 +39,7 @@
 	let fieldErrors = $state<Record<string, string>>({});
 	let editingCredentials = $state(false);
 
-	const callbackUrl = $derived(`${origin}/api/auth/callback/${provider.id}`);
+	const callbackUrl = $derived(`${page.url.origin}/api/auth/callback/${provider.id}`);
 	const locked = $derived(configured && !editingCredentials);
 
 	function credentialHint(unconfiguredHint: string): string {

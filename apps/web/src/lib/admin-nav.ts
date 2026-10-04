@@ -45,6 +45,11 @@ const INDEXES: BreadcrumbSegment = { label: 'Indexes', href: '/settings/indexes'
 const SEND_DATA: BreadcrumbSegment = { label: 'Send data', href: '/send-data' };
 const AUTH: BreadcrumbSegment = { label: 'Authentication', href: '/settings/authentication' };
 const USERS: BreadcrumbSegment = { label: 'Users', href: '/settings/users' };
+const AUTH_PROVIDER_LABELS: Record<string, string> = {
+	github: 'GitHub',
+	google: 'Google',
+	oidc: 'OpenID Connect'
+};
 
 type Params = Record<string, string | undefined>;
 
@@ -84,9 +89,11 @@ const TRAILS: Record<string, (params: Params) => BreadcrumbSegment[]> = {
 	'/settings/users/[userId]': () => [ROOT, USERS, { label: 'User' }],
 	'/settings/service-accounts': () => [ROOT, { label: 'Service accounts' }],
 	'/settings/authentication': () => [ROOT, { label: 'Authentication' }],
-	'/settings/authentication/github': () => [ROOT, AUTH, { label: 'GitHub' }],
-	'/settings/authentication/google': () => [ROOT, AUTH, { label: 'Google' }],
-	'/settings/authentication/oidc': () => [ROOT, AUTH, { label: 'OpenID Connect' }]
+	'/settings/authentication/[provider]': (p) => [
+		ROOT,
+		AUTH,
+		{ label: AUTH_PROVIDER_LABELS[p.provider ?? ''] ?? 'Provider' }
+	]
 };
 
 export function routeKey(routeId: string): string {

@@ -7,6 +7,9 @@ import {
 } from 'api/schemas';
 
 import {
+	getGitHubAuth,
+	getGoogleAuth,
+	getOidcAuth,
 	removeGitHubCredentials,
 	removeGoogleCredentials,
 	removeOidcCredentials,
@@ -35,6 +38,7 @@ export type OAuthProviderDescriptor = {
 	clientSecretHint: string;
 	successToast: string;
 	issuer?: { hint: string; placeholder: string };
+	load: () => Promise<{ configured: boolean; initialItems?: string[]; initialIssuerUrl?: string }>;
 	/** Returns `fieldErrors` on schema failure, null when valid. */
 	validateCredentials: (input: CredentialInput) => Record<string, string> | null;
 	saveCredentials: (input: CredentialInput) => Promise<void>;
@@ -68,7 +72,7 @@ function schemaErrors<TSchema extends v.GenericSchema>(
 // GitHub org login: 1–39 chars, alphanumeric or single hyphens, no leading/trailing hyphen.
 const orgPattern = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 
-export const githubProvider: OAuthProviderDescriptor = {
+const githubProvider: OAuthProviderDescriptor = {
 	id: 'github',
 	name: 'GitHub',
 	pageDescription: 'Configure GitHub OAuth so members of approved organizations can sign in.',
@@ -77,6 +81,10 @@ export const githubProvider: OAuthProviderDescriptor = {
 	clientIdHint: 'From your GitHub OAuth App.',
 	clientSecretHint: 'Server-side secret from your GitHub OAuth App.',
 	successToast: 'GitHub authentication settings saved',
+	load: async () => {
+		const s = await getGitHubAuth();
+		return { configured: s.configured, initialItems: s.allowedOrgs };
+	},
 	validateCredentials: (input) => schemaErrors(oauthCredentialsSchema, input),
 	saveCredentials: saveGitHubCredentials,
 	removeCredentials: removeGitHubCredentials,
@@ -98,7 +106,7 @@ export const githubProvider: OAuthProviderDescriptor = {
 
 const domainPattern = /^[a-z0-9.-]+\.[a-z]{2,}$/;
 
-export const googleProvider: OAuthProviderDescriptor = {
+const googleProvider: OAuthProviderDescriptor = {
 	id: 'google',
 	name: 'Google',
 	pageDescription: 'Configure Google OAuth so users from approved domains can sign in.',
@@ -107,6 +115,10 @@ export const googleProvider: OAuthProviderDescriptor = {
 	clientIdHint: 'From Google Cloud Console.',
 	clientSecretHint: 'Server-side secret from Google Cloud Console.',
 	successToast: 'Google authentication settings saved',
+	load: async () => {
+		const s = await getGoogleAuth();
+		return { configured: s.configured, initialItems: s.allowedDomains };
+	},
 	validateCredentials: (input) => schemaErrors(oauthCredentialsSchema, input),
 	saveCredentials: saveGoogleCredentials,
 	removeCredentials: removeGoogleCredentials,
@@ -126,7 +138,7 @@ export const googleProvider: OAuthProviderDescriptor = {
 	}
 };
 
-export const oidcProvider: OAuthProviderDescriptor = {
+const oidcProvider: OAuthProviderDescriptor = {
 	id: 'oidc',
 	name: 'OpenID Connect',
 	pageDescription:
@@ -142,7 +154,15 @@ export const oidcProvider: OAuthProviderDescriptor = {
 		hint: 'The issuer URL, e.g. https://auth.example.com/realms/main. Discovery is fetched from <issuer>/.well-known/openid-configuration when you save. Changing it later unlinks every OpenID Connect account and signs those users out.',
 		placeholder: 'https://auth.example.com/realms/main'
 	},
+	load: async () => {
+		const s = await getOidcAuth();
+		return { configured: s.configured, initialIssuerUrl: s.issuerUrl ?? '' };
+	},
 	validateCredentials: (input) => schemaErrors(oidcCredentialsSchema, input),
 	saveCredentials: saveOidcCredentials,
 	removeCredentials: removeOidcCredentials
 };
+
+export const providerById = new Map<string, OAuthProviderDescriptor>(
+	[githubProvider, googleProvider, oidcProvider].map((p) => [p.id, p])
+);
