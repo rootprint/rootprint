@@ -3,7 +3,6 @@
 	import 'uplot/dist/uPlot.min.css';
 
 	import { untrack, type Snippet } from 'svelte';
-	import { browser } from '$app/env';
 
 	let {
 		data,
@@ -60,7 +59,7 @@
 	}
 
 	$effect(() => {
-		if (!browser || ctor) return;
+		if (ctor) return;
 		let cancelled = false;
 		import('uplot').then((mod) => {
 			if (!cancelled) ctor = mod.default;
@@ -71,7 +70,7 @@
 	});
 
 	$effect(() => {
-		if (!browser || !containerEl) return;
+		if (!containerEl) return;
 		const ro = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const w = entry.contentRect.width;
@@ -119,7 +118,6 @@
 	});
 
 	$effect(() => {
-		if (!browser) return;
 		const handle = () => {
 			if (document.visibilityState === 'visible' && chart && containerEl) {
 				const w = containerEl.clientWidth;

@@ -108,13 +108,13 @@ export async function createSource(
 	try {
 		created = await qw.index(indexId).createSource(toSourceConfigRequest(input.sourceId, input));
 	} catch (err) {
-		if (err instanceof NotFoundError) throw notFound('Index not found');
-		if (err instanceof QuickwitError) {
-			if (err.code === QuickwitErrorCode.CONFLICT || /already (exists|used)/i.test(err.message)) {
-				throw conflict('A source with this ID already exists.', 'SOURCE_EXISTS', [
-					{ path: 'sourceId', message: 'A source with this ID already exists.' }
-				]);
-			}
+		if (
+			err instanceof QuickwitError &&
+			(err.code === QuickwitErrorCode.CONFLICT || /already (exists|used)/i.test(err.message))
+		) {
+			throw conflict('A source with this ID already exists.', 'SOURCE_EXISTS', [
+				{ path: 'sourceId', message: 'A source with this ID already exists.' }
+			]);
 		}
 		translateQuickwitError(err);
 	}
@@ -197,7 +197,7 @@ async function getRawSourceConfig(
 	indexId: string,
 	sourceId: string
 ): Promise<SourceConfig> {
-	const meta = await withNotFound(() => qw.getIndex(indexId), 'Index not found');
+	const meta = await qw.getIndex(indexId);
 	const source = (meta.sources ?? []).find((s) => s.source_id === sourceId);
 	if (!source) throw notFound('Source not found');
 	return source;

@@ -42,7 +42,7 @@
 
 {#snippet toolbar(serviceNames: string[])}
 	<PageToolbar>
-		<ServicePicker services={serviceNames} value={null} onChange={openService} showLabel={false} />
+		<ServicePicker services={serviceNames} value={null} onChange={openService} />
 		<div class="ml-auto flex items-center gap-2">
 			<TimeRangePicker value={data.timeRange} onChange={setRange} />
 			<a class="btn btn-ghost btn-sm" href={exploreHref(page.url, {})}>

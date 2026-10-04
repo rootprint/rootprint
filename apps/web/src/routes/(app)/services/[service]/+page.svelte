@@ -119,12 +119,7 @@
 		<a class="btn btn-ghost btn-sm" href={servicesHref(page.url, null)}>
 			<ArrowLeft class="size-3.5" aria-hidden="true" />Services
 		</a>
-		<ServicePicker
-			services={serviceNames}
-			value={data.service}
-			onChange={switchService}
-			showLabel={false}
-		/>
+		<ServicePicker services={serviceNames} value={data.service} onChange={switchService} />
 		<div class="ml-auto flex items-center gap-2">
 			<TimeRangePicker value={data.timeRange} onChange={setRange} />
 			<a class="btn btn-ghost btn-sm" href={exploreHref(page.url, { service: data.service })}>

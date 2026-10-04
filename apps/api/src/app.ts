@@ -212,7 +212,7 @@ async function main(): Promise<void> {
 	logger.info('booting api');
 	await boot();
 
-	const statsCollector = startStatsCollector(db, quickwit);
+	startStatsCollector(db, quickwit);
 
 	const server = Bun.serve({
 		fetch: app.fetch,
@@ -224,7 +224,6 @@ async function main(): Promise<void> {
 
 	const shutdown = () => {
 		logger.info('shutting down api');
-		statsCollector.stop();
 		server.stop(true);
 		process.exit(0);
 	};

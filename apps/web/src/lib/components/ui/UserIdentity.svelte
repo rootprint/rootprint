@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { avatarColor, avatarInitials } from '#lib/utils/avatar.js';
 
-	type Size = 'sm' | 'md' | 'lg';
+	type Size = 'sm' | 'lg';
 
 	type Props = {
 		id: string;
 		name: string | null;
 		email?: string | null;
-		size?: Size;
+		size: Size;
 		href?: string | null;
 	};
 
-	let { id, name, email = null, size = 'md', href = null }: Props = $props();
+	let { id, name, email = null, size, href = null }: Props = $props();
 
 	const display = $derived(name ?? email ?? id);
 
@@ -19,12 +19,6 @@
 		sm: {
 			box: 'gap-2',
 			circle: 'h-7 w-7 text-xs',
-			name: 'text-sm',
-			email: 'font-mono text-xs'
-		},
-		md: {
-			box: 'gap-3',
-			circle: 'h-9 w-9 text-xs',
 			name: 'text-sm',
 			email: 'font-mono text-xs'
 		},

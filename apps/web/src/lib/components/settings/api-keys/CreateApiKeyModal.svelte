@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { createApiKey, type ApiKeyView } from '#lib/api/api-keys.js';
+	import { DEP } from '#lib/api/deps.js';
 	import Field from '#lib/components/ui/Field.svelte';
 	import FormModal from '#lib/components/ui/FormModal.svelte';
 	import SecretReveal from '#lib/components/ui/SecretReveal.svelte';
@@ -13,7 +14,6 @@
 		indexes,
 		defaultIndexId,
 		traceIndexId,
-		invalidateKey,
 		revealOnCreate = true,
 		onCreated
 	}: {
@@ -23,7 +23,6 @@
 		defaultIndexId?: string;
 		/** Null when the span store does not exist in Quickwit. */
 		traceIndexId: string | null;
-		invalidateKey?: string;
 		revealOnCreate?: boolean;
 		onCreated?: (summary: ApiKeyView, secret: string) => void;
 	} = $props();
@@ -61,7 +60,7 @@
 		revealedKey = result.token;
 		// awaited so onCreated observers see the refreshed list — the send-telemetry wizard
 		// derives its index from it; caught so a failed refresh cannot strand the one-time token
-		if (invalidateKey) await invalidate(invalidateKey).catch(() => {});
+		await invalidate(DEP.apiKeys).catch(() => {});
 		onCreated?.(result.summary, result.token);
 	}}
 >

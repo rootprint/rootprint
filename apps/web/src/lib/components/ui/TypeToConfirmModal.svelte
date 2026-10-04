@@ -8,8 +8,6 @@
 		open = $bindable(false),
 		title,
 		confirmValue,
-		confirmLabel = 'Delete',
-		confirmingLabel = 'Deleting…',
 		errorFallback = 'Something went wrong',
 		onConfirm,
 		message
@@ -17,8 +15,6 @@
 		open: boolean;
 		title: string;
 		confirmValue: string;
-		confirmLabel?: string;
-		confirmingLabel?: string;
 		errorFallback?: string;
 		onConfirm: () => void | Promise<void>;
 		message: Snippet;
@@ -70,7 +66,7 @@
 			Cancel
 		</button>
 		<button type="button" class="btn btn-error" disabled={!canConfirm || loading} onclick={confirm}>
-			{loading ? confirmingLabel : confirmLabel}
+			{loading ? 'Deleting…' : 'Delete'}
 		</button>
 	{/snippet}
 </Modal>

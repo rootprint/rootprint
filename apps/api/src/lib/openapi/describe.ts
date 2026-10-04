@@ -107,6 +107,7 @@ function describe(args: DescribeArgs) {
 
 	const successResponses: Record<string, unknown> = {};
 	if (ok) successResponses[String(okStatus)] = jsonResponse(ok, okDescription);
+	else if (okStatus === 204) successResponses['204'] = { description: 'No content' };
 
 	const responses = {
 		...successResponses,

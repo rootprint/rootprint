@@ -140,7 +140,6 @@
 											{field}
 											onFilterFor={(f) => applyFilter(f, false)}
 											onFilterOut={(f) => applyFilter(f, true)}
-											copyable
 										/>
 									{/each}
 								</tbody>

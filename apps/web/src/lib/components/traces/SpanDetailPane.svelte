@@ -134,7 +134,7 @@
 		<table class="w-full table-fixed border-collapse">
 			<tbody>
 				{#each fields as f (f.name)}
-					<FieldRow field={f} keyClass="w-40 max-w-40" copyable />
+					<FieldRow field={f} keyClass="w-40 max-w-40" />
 				{/each}
 			</tbody>
 		</table>
@@ -472,92 +472,88 @@
 					</section>
 				{/each}
 			{:else if activeTab === 'events'}
-				{#if span.events.length > 0}
-					<section>
-						<h3 class="section-label mb-2">Event timeline</h3>
+				<section>
+					<h3 class="section-label mb-2">Event timeline</h3>
 
-						<!-- Row-start offset lines the dot up with the card header's first text line. -->
-						<ol class="timeline timeline-vertical timeline-compact">
-							{#each span.events as event, i (i)}
-								{@const isException = event.name === 'exception'}
-								{@const stacktrace = isException ? event.fields['exception.stacktrace'] : ''}
-								{@const headline = isException ? exceptionHeadline(event.fields) : ''}
-								{@const fields = toFields(event.fields).filter(
-									(f) => !isException || !EXCEPTION_KEYS.includes(f.name)
-								)}
-								{@const isLast = i === span.events.length - 1}
-								<li class="[--timeline-row-start:1rem]">
-									{#if i > 0}
-										<hr class="bg-line w-px" aria-hidden="true" />
-									{/if}
-									<div
-										class={[
-											'timeline-middle size-2 rounded-full',
-											isException ? 'bg-error' : 'bg-base-content'
-										]}
-										aria-hidden="true"
-									></div>
+					<!-- Row-start offset lines the dot up with the card header's first text line. -->
+					<ol class="timeline timeline-vertical timeline-compact">
+						{#each span.events as event, i (i)}
+							{@const isException = event.name === 'exception'}
+							{@const stacktrace = isException ? event.fields['exception.stacktrace'] : ''}
+							{@const headline = isException ? exceptionHeadline(event.fields) : ''}
+							{@const fields = toFields(event.fields).filter(
+								(f) => !isException || !EXCEPTION_KEYS.includes(f.name)
+							)}
+							{@const isLast = i === span.events.length - 1}
+							<li class="[--timeline-row-start:1rem]">
+								{#if i > 0}
+									<hr class="bg-line w-px" aria-hidden="true" />
+								{/if}
+								<div
+									class={[
+										'timeline-middle size-2 rounded-full',
+										isException ? 'bg-error' : 'bg-base-content'
+									]}
+									aria-hidden="true"
+								></div>
 
-									<article
-										class={[
-											'timeline-end border-line rounded-box m-0 ms-2.5 min-w-0 justify-self-stretch overflow-hidden border',
-											!isLast && 'mb-3'
-										]}
-									>
-										<header class="flex min-w-0 items-start justify-between gap-3 px-3 py-2.5">
-											<div class="min-w-0">
-												<h4
-													class={[
-														'truncate font-mono text-xs leading-5',
-														isException && 'text-error'
-													]}
-													title={event.name}
-												>
-													{event.name}
-												</h4>
-												{#if headline}
-													<p class="text-error mt-0.5 text-xs leading-5 break-words">
-														{headline}
-													</p>
-												{/if}
-											</div>
-											<time
-												class="bg-base-200 shrink-0 rounded px-1.5 font-mono text-xs tabular-nums"
+								<article
+									class={[
+										'timeline-end border-line rounded-box m-0 ms-2.5 min-w-0 justify-self-stretch overflow-hidden border',
+										!isLast && 'mb-3'
+									]}
+								>
+									<header class="flex min-w-0 items-start justify-between gap-3 px-3 py-2.5">
+										<div class="min-w-0">
+											<h4
+												class={[
+													'truncate font-mono text-xs leading-5',
+													isException && 'text-error'
+												]}
+												title={event.name}
 											>
-												{formatOffset(event.timeOffsetMicros - span.startOffsetMicros)}
-											</time>
-										</header>
+												{event.name}
+											</h4>
+											{#if headline}
+												<p class="text-error mt-0.5 text-xs leading-5 break-words">
+													{headline}
+												</p>
+											{/if}
+										</div>
+										<time
+											class="bg-base-200 shrink-0 rounded px-1.5 font-mono text-xs tabular-nums"
+										>
+											{formatOffset(event.timeOffsetMicros - span.startOffsetMicros)}
+										</time>
+									</header>
 
-										{#if fields.length > 0}
-											<div class="border-line border-t px-3 py-2.5">
-												<div class="mb-1.5 flex items-baseline justify-between gap-3">
-													<p class="section-label">Attributes</p>
-													<p class="text-subtle text-xs tabular-nums">
-														{pluralize(fields.length, 'field')}
-													</p>
-												</div>
-												{@render table(fields)}
+									{#if fields.length > 0}
+										<div class="border-line border-t px-3 py-2.5">
+											<div class="mb-1.5 flex items-baseline justify-between gap-3">
+												<p class="section-label">Attributes</p>
+												<p class="text-subtle text-xs tabular-nums">
+													{pluralize(fields.length, 'field')}
+												</p>
 											</div>
-										{/if}
-
-										{#if stacktrace}
-											<div class="border-line border-t px-3 py-2.5">
-												<p class="section-label mb-1.5">Stack trace</p>
-												<pre
-													class="bg-base-200 text-muted max-h-80 overflow-auto rounded p-2 font-mono text-xs whitespace-pre">{stacktrace}</pre>
-											</div>
-										{/if}
-									</article>
-									{#if !isLast}
-										<hr class="bg-line w-px" aria-hidden="true" />
+											{@render table(fields)}
+										</div>
 									{/if}
-								</li>
-							{/each}
-						</ol>
-					</section>
-				{:else}
-					{@render empty('No events for this span')}
-				{/if}
+
+									{#if stacktrace}
+										<div class="border-line border-t px-3 py-2.5">
+											<p class="section-label mb-1.5">Stack trace</p>
+											<pre
+												class="bg-base-200 text-muted max-h-80 overflow-auto rounded p-2 font-mono text-xs whitespace-pre">{stacktrace}</pre>
+										</div>
+									{/if}
+								</article>
+								{#if !isLast}
+									<hr class="bg-line w-px" aria-hidden="true" />
+								{/if}
+							</li>
+						{/each}
+					</ol>
+				</section>
 			{/if}
 		</div>
 	</div>
