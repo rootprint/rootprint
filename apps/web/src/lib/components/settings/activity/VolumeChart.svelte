@@ -2,9 +2,8 @@
 	import { parseISO } from 'date-fns';
 	import type uPlotLib from 'uplot';
 
-	import { browser } from '$app/env';
 	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
-	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '#lib/utils/chart-colors.js';
+	import { baseContentAt, cssVarColor } from '#lib/utils/chart-colors.js';
 	import { formatCount } from '#lib/utils/format.js';
 	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
 	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
@@ -39,7 +38,7 @@
 		return [entries.map(([t]) => Math.floor(t / 1000)), entries.map(([, c]) => c)];
 	});
 
-	const barColor = $derived(browser ? cssVarColor('var(--chart-3)') : CANVAS_FALLBACK_COLOR);
+	const barColor = cssVarColor('var(--chart-3)');
 
 	const HEIGHT = 288;
 

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Plus } from 'lucide-svelte';
 	import { getApiKey, type ApiKeyView } from '#lib/api/api-keys.js';
-	import { DEP } from '#lib/api/deps.js';
 	import CreateApiKeyModal from '#lib/components/settings/api-keys/CreateApiKeyModal.svelte';
 	import { DEFAULT_OTEL_LOGS_INDEX_ID } from '#lib/components/send-data/constants.js';
 	import type { Signal } from '#lib/components/send-data/types.js';
@@ -113,7 +112,6 @@
 	{indexes}
 	defaultIndexId={DEFAULT_OTEL_LOGS_INDEX_ID}
 	{traceIndexId}
-	invalidateKey={DEP.sendTelemetryApiKeys}
 	revealOnCreate={false}
 	onCreated={(summary, secret) => {
 		selectedApiKeyId = summary.id;

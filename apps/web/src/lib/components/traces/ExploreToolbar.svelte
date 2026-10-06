@@ -109,7 +109,6 @@
 		{services}
 		value={filters.service}
 		onChange={(value) => onFilter('service', value || null)}
-		showLabel={false}
 	/>
 	<form class="min-w-0 flex-1" onsubmit={applyQuery}>
 		<SearchInput

@@ -6,10 +6,10 @@
 		ariaLabel
 	}: {
 		value: string;
-		ariaLabel?: string;
+		ariaLabel: string;
 	} = $props();
 
-	const buttonAriaLabel = $derived(`Copy ${(ariaLabel ?? 'value').toLowerCase()}`);
+	const buttonAriaLabel = $derived(`Copy ${ariaLabel.toLowerCase()}`);
 </script>
 
 <div class="flex items-center gap-2">

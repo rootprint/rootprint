@@ -12262,6 +12262,9 @@
 					}
 				],
 				"responses": {
+					"204": {
+						"description": "No content"
+					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
 					},
@@ -12411,6 +12414,9 @@
 					"required": true
 				},
 				"responses": {
+					"204": {
+						"description": "No content"
+					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
 					},
@@ -13800,6 +13806,9 @@
 					"required": true
 				},
 				"responses": {
+					"204": {
+						"description": "No content"
+					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
 					},
@@ -14068,6 +14077,9 @@
 					}
 				],
 				"responses": {
+					"204": {
+						"description": "No content"
+					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
 					},
@@ -14193,6 +14205,9 @@
 					"required": true
 				},
 				"responses": {
+					"204": {
+						"description": "No content"
+					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
 					},
@@ -14450,6 +14465,9 @@
 					}
 				],
 				"responses": {
+					"204": {
+						"description": "No content"
+					},
 					"400": {
 						"$ref": "#/components/responses/BadRequest"
 					},

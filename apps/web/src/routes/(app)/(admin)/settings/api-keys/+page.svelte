@@ -156,12 +156,7 @@
 	</div>
 </div>
 
-<CreateApiKeyModal
-	bind:open={createOpen}
-	{indexes}
-	traceIndexId={data.traceIndexId}
-	invalidateKey={DEP.apiKeys}
-/>
+<CreateApiKeyModal bind:open={createOpen} {indexes} traceIndexId={data.traceIndexId} />
 
 <Modal bind:open={viewOpen} title="API key: {viewTarget?.name ?? ''}" onclose={handleViewClose}>
 	{#await viewToken}

@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 
-	type Props = Omit<HTMLInputAttributes, 'value'> & {
+	type Props = Omit<HTMLInputAttributes, 'value' | 'id'> & {
 		label: string;
 		value?: string;
 		error?: string;
@@ -11,11 +11,10 @@
 		control?: Snippet<[{ id: string; invalid: boolean; describedBy: string | undefined }]>;
 	};
 
-	let { label, value = $bindable(''), error, hint, id, control, ...rest }: Props = $props();
+	let { label, value = $bindable(''), error, hint, control, ...rest }: Props = $props();
 
-	const uid = $props.id();
-	const inputId = $derived(id ?? uid);
-	const msgId = $derived(`${inputId}-msg`);
+	const inputId = $props.id();
+	const msgId = `${inputId}-msg`;
 	const describedBy = $derived(error || hint ? msgId : undefined);
 </script>
 

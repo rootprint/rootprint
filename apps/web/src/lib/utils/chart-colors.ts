@@ -1,7 +1,6 @@
-export const CANVAS_FALLBACK_COLOR = '#0a0a0a';
+const CANVAS_FALLBACK_COLOR = '#0a0a0a';
 
 export function baseContentAt(alpha: number): string {
-	if (typeof document === 'undefined') return '';
 	const v =
 		getComputedStyle(document.documentElement).getPropertyValue('--color-base-content').trim() ||
 		CANVAS_FALLBACK_COLOR;
@@ -11,7 +10,6 @@ export function baseContentAt(alpha: number): string {
 const resolvedColors = new Map<string, string>();
 
 export function cssVarColor(value: string): string {
-	if (typeof document === 'undefined') return value;
 	const cached = resolvedColors.get(value);
 	if (cached !== undefined) return cached;
 	const probe = document.createElement('span');

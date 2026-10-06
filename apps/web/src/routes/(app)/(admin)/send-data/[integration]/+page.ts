@@ -7,7 +7,7 @@ import { DEP } from '#lib/api/deps.js';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, depends }) => {
-	depends(DEP.sendTelemetryApiKeys);
+	depends(DEP.apiKeys);
 	depends(DEP.indexes);
 
 	if (!integrationById.has(params.integration)) {

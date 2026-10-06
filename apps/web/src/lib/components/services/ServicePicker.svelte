@@ -5,13 +5,11 @@
 	let {
 		services,
 		value,
-		onChange,
-		showLabel = true
+		onChange
 	}: {
 		services: string[];
 		value: string | null;
 		onChange: (service: string) => void;
-		showLabel?: boolean;
 	} = $props();
 
 	const dd = $props.id();
@@ -84,7 +82,7 @@
 </script>
 
 <div class="grid w-fit min-w-0 gap-1.5">
-	<span id={`${dd}-label`} class={showLabel ? 'text-muted text-xs' : 'sr-only'}>Service</span>
+	<span id={`${dd}-label`} class="sr-only">Service</span>
 	<button
 		type="button"
 		popovertarget={dd}

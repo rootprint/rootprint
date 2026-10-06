@@ -24,7 +24,7 @@
 		model: TraceModel;
 		matchedSpanIds?: ReadonlySet<string> | null;
 		selectedSpanId?: string | null;
-		onSelectSpan?: (spanId: string) => void;
+		onSelectSpan: (spanId: string) => void;
 		spanLogs?: (span: SpanNode) => { href: string; count: number | null } | null;
 		minimap?: boolean;
 		onReload?: () => void;
@@ -137,21 +137,18 @@
 			: [...ancestorRails, { x: parentX, color: parentColor }]}
 	{@const dimmed = matchedSpanIds !== null && !matchedSpanIds.has(node.spanId)}
 	{@const isSelected = node.spanId === selectedSpanId}
-	{@const labelClass = 'flex min-w-0 items-center gap-1.5 py-1.5 pr-3'}
-	{@const labelStyle = `padding-left:calc(${nodeX} + ${TREE_LABEL_GAP_PX}px)`}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div
 		role="listitem"
 		aria-current={isSelected ? 'true' : undefined}
 		class={[
-			'grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)]',
+			'grid cursor-pointer grid-cols-[minmax(0,2fr)_minmax(0,3fr)]',
 			!isSelected && 'even:bg-base-200/50',
 			isSelected && 'bg-base-300',
-			dimmed && 'opacity-35',
-			onSelectSpan && 'cursor-pointer'
+			dimmed && 'opacity-35'
 		]}
-		onclick={() => onSelectSpan?.(node.spanId)}
+		onclick={() => onSelectSpan(node.spanId)}
 	>
 		<div class="relative flex min-w-0 items-stretch overflow-hidden text-xs">
 			{#each ancestorRails as rail, i (i)}
@@ -200,20 +197,14 @@
 					style={`left:${nodeX};background-color:${node.isError ? 'var(--color-error)' : color}`}
 				></span>
 			{/if}
-			{#if onSelectSpan}
-				<button
-					type="button"
-					id={`span-btn-${node.spanId}`}
-					class={[labelClass, 'text-left']}
-					style={labelStyle}
-				>
-					{@render spanLabel(node)}
-				</button>
-			{:else}
-				<span class={labelClass} style={labelStyle}>
-					{@render spanLabel(node)}
-				</span>
-			{/if}
+			<button
+				type="button"
+				id={`span-btn-${node.spanId}`}
+				class="flex min-w-0 items-center gap-1.5 py-1.5 pr-3 text-left"
+				style={`padding-left:calc(${nodeX} + ${TREE_LABEL_GAP_PX}px)`}
+			>
+				{@render spanLabel(node)}
+			</button>
 			{#if logs}
 				<a
 					href={logs.href}

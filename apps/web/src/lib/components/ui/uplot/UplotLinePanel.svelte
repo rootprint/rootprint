@@ -2,10 +2,9 @@
 	import { untrack } from 'svelte';
 	import type uPlotLib from 'uplot';
 
-	import { browser } from '$app/env';
 	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
 	import UplotLegend from '#lib/components/ui/uplot/UplotLegend.svelte';
-	import { baseContentAt, cssVarColor, CANVAS_FALLBACK_COLOR } from '#lib/utils/chart-colors.js';
+	import { baseContentAt, cssVarColor } from '#lib/utils/chart-colors.js';
 	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
 
 	export type ChartSeries = {
@@ -57,9 +56,7 @@
 		onBrush
 	}: Props = $props();
 
-	const colors = $derived(
-		browser ? series.map((s) => cssVarColor(s.cssVar)) : series.map(() => CANVAS_FALLBACK_COLOR)
-	);
+	const colors = $derived(series.map((s) => cssVarColor(s.cssVar)));
 
 	const data = $derived.by<uPlotLib.AlignedData | null>(() =>
 		xs.length === 0 ? null : [xs, ...series.map((s) => s.values)]

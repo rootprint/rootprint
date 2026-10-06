@@ -2,12 +2,7 @@ import { eq, inArray } from 'drizzle-orm';
 
 import type { IndexDetail, IndexSummary } from '../types.js';
 import type { IndexField, IndexViewConfig } from '../schemas/responses/indexes.js';
-import {
-	NotFoundError,
-	QuickwitError,
-	QuickwitErrorCode,
-	type QuickwitClient
-} from '@rootprint-io/quickwit-js';
+import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import type { Db } from '../lib/db.js';
 import { fetchFieldCaps } from '../lib/quickwit/field-caps.js';
@@ -22,7 +17,6 @@ import {
 } from '../db/schema.js';
 import { config } from '../config.js';
 import { conflict, internal, notFound } from '../utils/http-error.js';
-import { translateQuickwitError, withNotFound } from '../lib/quickwit/errors.js';
 import { invalidateApiKeyCache } from './api-key.service.js';
 import type {
 	CreateIndexInput,
@@ -239,7 +233,7 @@ export async function listIndexFields(
 }
 
 export async function deleteIndex(db: Db, qw: QuickwitClient, indexId: string): Promise<void> {
-	await withNotFound(() => qw.deleteIndex(indexId), 'Index not found');
+	await qw.deleteIndex(indexId);
 
 	await db.transaction(async (tx) => {
 		await tx.delete(indexSettings).where(eq(indexSettings.indexId, indexId));
@@ -268,7 +262,7 @@ export async function createIndex(
 				]);
 			}
 		}
-		translateQuickwitError(err);
+		throw err;
 	}
 
 	return toIndexSummary(input.indexId, DEFAULT_SETTINGS);
@@ -280,7 +274,7 @@ export async function updateIndexConfig(
 	existingFields: IndexField[],
 	input: UpdateQuickwitConfigInput
 ): Promise<void> {
-	const meta = await withNotFound(() => qw.getIndex(indexId), 'Index not found');
+	const meta = await qw.getIndex(indexId);
 
 	const collisions = findFieldCollisions(meta.index_config, existingFields, input.newFieldMappings);
 	if (collisions.length > 0) {
@@ -294,10 +288,5 @@ export async function updateIndexConfig(
 		);
 	}
 
-	try {
-		await qw.updateIndex(indexId, toUpdateIndexRequest(meta.index_config, input));
-	} catch (err) {
-		if (err instanceof NotFoundError) throw notFound('Index not found');
-		translateQuickwitError(err);
-	}
+	await qw.updateIndex(indexId, toUpdateIndexRequest(meta.index_config, input));
 }

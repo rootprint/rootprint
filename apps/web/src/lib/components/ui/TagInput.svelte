@@ -3,9 +3,7 @@
 
 	let {
 		tags = $bindable(),
-		input = $bindable(''),
 		placeholderEmpty,
-		placeholderMore = 'Add another…',
 		addLabel,
 		normalize,
 		validate,
@@ -14,9 +12,7 @@
 		onError
 	}: {
 		tags: string[];
-		input?: string;
 		placeholderEmpty: string;
-		placeholderMore?: string;
 		addLabel: string;
 		normalize?: (raw: string) => string;
 		validate?: (value: string) => string | null;
@@ -25,6 +21,8 @@
 		error?: boolean;
 		onError?: (message: string | null) => void;
 	} = $props();
+
+	let input = $state('');
 
 	function add() {
 		const raw = input.trim();
@@ -83,7 +81,7 @@
 	{/each}
 	<input
 		bind:value={input}
-		placeholder={tags.length === 0 ? placeholderEmpty : placeholderMore}
+		placeholder={tags.length === 0 ? placeholderEmpty : 'Add another…'}
 		autocomplete="off"
 		aria-label={addLabel}
 		class="placeholder:text-subtle min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"

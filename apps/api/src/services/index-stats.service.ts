@@ -71,44 +71,26 @@ async function captureSnapshots(
 	return { captured: rows.length, failed };
 }
 
-export function startStatsCollector(db: Db, qw: QuickwitClient): { stop: () => void } {
-	let timeout: ReturnType<typeof setTimeout> | null = null;
-	let stopped = false;
-
+export function startStatsCollector(db: Db, qw: QuickwitClient): void {
 	const tick = async () => {
-		try {
-			const [snapshots, retention] = await Promise.allSettled([
-				captureSnapshots(db, qw),
-				pruneSearchAudit(db, config.searchAuditRetentionDays)
-			]);
-			if (snapshots.status === 'fulfilled') {
-				if (snapshots.value.failed > 0) {
-					logger.warn(snapshots.value, 'index stats snapshot partially failed');
-				}
-			} else {
-				logger.warn({ err: snapshots.reason }, 'index stats snapshot failed');
+		const [snapshots, retention] = await Promise.allSettled([
+			captureSnapshots(db, qw),
+			pruneSearchAudit(db, config.searchAuditRetentionDays)
+		]);
+		if (snapshots.status === 'fulfilled') {
+			if (snapshots.value.failed > 0) {
+				logger.warn(snapshots.value, 'index stats snapshot partially failed');
 			}
-			if (retention.status === 'rejected') {
-				logger.warn({ err: retention.reason }, 'search audit retention failed');
-			}
-		} catch (err) {
-			logger.warn({ err }, 'stats collector tick failed');
-		} finally {
-			if (!stopped) {
-				timeout = setTimeout(() => void tick(), INDEX_STATS_INTERVAL_MS);
-			}
+		} else {
+			logger.warn({ err: snapshots.reason }, 'index stats snapshot failed');
 		}
+		if (retention.status === 'rejected') {
+			logger.warn({ err: retention.reason }, 'search audit retention failed');
+		}
+		setTimeout(() => void tick(), INDEX_STATS_INTERVAL_MS);
 	};
 
 	void tick();
-
-	return {
-		stop: () => {
-			stopped = true;
-			if (timeout) clearTimeout(timeout);
-			timeout = null;
-		}
-	};
 }
 
 export async function getStatsHistory(
