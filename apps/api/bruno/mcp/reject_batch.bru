@@ -1,0 +1,38 @@
+meta {
+  name: Reject MCP Batch
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/mcp
+  body: json
+  auth: bearer
+}
+
+headers {
+  accept: application/json, text/event-stream
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}
+
+body:json {
+  [
+    { "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "list_indexes", "arguments": {} } },
+    { "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": "list_indexes", "arguments": {} } }
+  ]
+}
+
+tests {
+  test("Batches are rejected before any tool runs", function () {
+    expect(res.getStatus()).to.equal(400);
+    expect(res.getBody().error.code).to.equal(-32600);
+  });
+}
+
+docs {
+  Batches are rejected because the read rate limit counts HTTP requests, not messages.
+  Send each tool call as its own POST so it consumes its own quota slot.
+}

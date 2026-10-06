@@ -1,0 +1,38 @@
+meta {
+  name: Call MCP Tool
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/mcp
+  body: json
+  auth: bearer
+}
+
+headers {
+  accept: application/json, text/event-stream
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "search_logs",
+      "arguments": { "indexId": "{{indexId}}", "start": "now-1h", "limit": 5 }
+    }
+  }
+}
+
+docs {
+  Tool failures come back as HTTP 200 with result.isError: true and the message as text.
+  Auth failures (no bearer, bad key) are plain HTTP 401/403 before MCP runs.
+  Send one JSON-RPC message per POST. Batches return HTTP 400 with code -32600;
+  no tools in the batch run. Each POST consumes one slot of the shared actor read quota.
+}

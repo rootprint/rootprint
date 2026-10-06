@@ -30,7 +30,7 @@ export const TraceParams = v.object({
 const MAX_QUERY_CHARS = 2_000;
 
 /** `q` is spliced in as `(${q})`, so a stray `)` would close that group and escape the other filters. */
-function hasBalancedParens(query: string): boolean {
+export function hasBalancedParens(query: string): boolean {
 	let depth = 0;
 	let quoted = false;
 	for (let i = 0; i < query.length; i++) {
