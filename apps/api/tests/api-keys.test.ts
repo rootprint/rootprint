@@ -102,6 +102,24 @@ test('a bearer token wins over a valid cookie', async () => {
 	expect((await admin.get('/api/indexes', bearer(k.token))).status).toBe(403);
 });
 
+test('MCP takes a logs:read bearer key but refuses the session cookie', async () => {
+	const admin = await seedAdmin();
+	const toolsList = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
+	// The transport answers 406 unless Accept lists both types.
+	const accept = 'application/json, text/event-stream';
+
+	const cookie = await admin.post('/api/mcp', toolsList, { headers: { accept } });
+	expect(cookie.status).toBe(401);
+	expect(await errorCode(cookie)).toBe('BEARER_REQUIRED');
+
+	const k = await serviceKey(admin);
+	const res = await new Jar().post('/api/mcp', toolsList, {
+		headers: { accept, authorization: `Bearer ${k.token}` }
+	});
+	expect(res.status).toBe(200);
+	expect(await json(res)).toHaveProperty('result.tools');
+});
+
 test('ingest and personal keys are not interchangeable', async () => {
 	const admin = await seedAdmin();
 	await ensureAppLogsIndex(admin);

@@ -86,27 +86,25 @@ async function runTool(
 	}
 }
 
-/** ISO 8601 with a timezone, `now`, or `now-<n><s|m|h|d>` as epoch seconds; null otherwise. */
+/** ISO 8601 with a timezone, `now`, or `now-<n><s|m|h|d>` as epoch ms; null otherwise. */
 function parseTime(value: string, nowMs: number): number | null {
 	const relative = /^now(?:-([1-9]\d*[smhd]))?$/.exec(value);
-	if (relative) {
-		return Math.floor(nowMs / 1000) - (relative[1] ? intervalSeconds(relative[1]) : 0);
-	}
+	if (relative) return nowMs - (relative[1] ? intervalSeconds(relative[1]) * 1000 : 0);
 	// Date.parse alone takes "1" as the year 2000 and "10/06/2026" as US-ordered server-local time.
 	if (!v.is(isoTimestampString, value)) return null;
 	const ms = Date.parse(value);
-	return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+	return Number.isNaN(ms) ? null : ms;
 }
 
 // Agents get epoch arithmetic wrong, so tools take readable times and convert them here.
 function timeRange(start: string, end: string): { startTs: number; endTs: number } {
 	const nowMs = Date.now();
-	const startTs = parseTime(start, nowMs);
-	const endTs = parseTime(end, nowMs);
-	if (startTs === null) throw badRequest(`start ${TIME_FORMAT}`);
-	if (endTs === null) throw badRequest(`end ${TIME_FORMAT}`);
-	if (startTs >= endTs) throw badRequest('start must be before end');
-	return { startTs, endTs };
+	const startMs = parseTime(start, nowMs);
+	const endMs = parseTime(end, nowMs);
+	if (startMs === null) throw badRequest(`start ${TIME_FORMAT}`);
+	if (endMs === null) throw badRequest(`end ${TIME_FORMAT}`);
+	if (startMs >= endMs) throw badRequest('start must be before end');
+	return { startTs: Math.floor(startMs / 1000), endTs: Math.ceil(endMs / 1000) };
 }
 
 // Agents pick bad intervals (1s over a week overflows Quickwit's request-wide bucket limit), so an
@@ -131,6 +129,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		{
 			description:
 				'List the indexes you can search. Log tools take an indexId from here. The entry with isTraceIndex: true is the span store: query it with search_spans and get_trace, not the log tools.',
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(ListIndexesInput)
 		},
 		() => runTool(ctx, 'list_indexes', () => listIndexes(db, quickwit))
@@ -141,6 +140,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		{
 			description:
 				'Fields seen in an index during a time window, with their type and whether they can be aggregated (fast), plus which fields hold the timestamp, log level, message and trace ID. Call this before writing a query so you use real field names. Also works on the span store, to learn span field names for search_spans.',
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(GetIndexFieldsInput)
 		},
 		({ indexId, start, end }) =>
@@ -167,6 +167,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 				'Query syntax (Quickwit, Lucene-like): field:value, field:"exact phrase", AND / OR / NOT, parentheses, ranges field:[400 TO 499] or field:>=500, prefix field:abc*, presence field:*, any of field:IN [a b c]. Fields like service names and log levels are usually exact-match and case-sensitive: check real values with field_values. Phrase queries fail on fields indexed without positions; combine terms with AND instead. Omit query to match everything. Call get_index_fields first for real field names.',
 				"To read the first errors of an incident, find its start with log_histogram, then search that window with sort: asc. To find a trace's logs, query the index's traceIdField with the trace ID."
 			].join('\n\n'),
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(SearchLogsInput)
 		},
 		({ indexId, query, start, end, limit, sort }) =>
@@ -198,6 +199,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		{
 			description:
 				'Count logs over time, split by log level. Use it to find when a problem started or spiked before reading raw logs: a few hundred tokens instead of thousands of hits. Then search_logs that window with sort: asc to read the first errors. The interval is picked for about 60 buckets unless you pass one.',
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(LogHistogramInput)
 		},
 		({ indexId, query, start, end, interval }) =>
@@ -227,6 +229,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		{
 			description:
 				'Top values with counts for up to 10 fields at once, within a query and time window. Use it to see which service, host, endpoint or version dominates the matching logs, to learn the exact casing of a value before querying it, or to compare before and after a spike.',
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(FieldValuesInput)
 		},
 		({ indexId, fields, query, start, end, limit }) =>
@@ -254,6 +257,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		{
 			description:
 				'Search spans in the span store. Filter by service, operation (span name), status, duration (minMs/maxMs), root spans only, or a free Quickwit query on span fields (get_index_fields on the span store lists them). sort: -duration returns the slowest spans first; status: error returns failing spans. Follow a traceId with get_trace. Time range is at most 30 days.',
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(SearchSpansInput)
 		},
 		({ query, start, end, ...filters }) =>
@@ -301,6 +305,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		'get_trace',
 		{
 			description: `All spans of one trace in start order, timed in ms from the trace start. At most ${MAX_TOOL_SPANS} spans are returned (truncated says when some are missing), and only the first ${MAX_DETAILED_ERRORS} error spans carry attributes and events. To find this trace's logs, call search_logs with query <traceIdField>:<traceId>, taking traceIdField from get_index_fields.`,
+			annotations: { readOnlyHint: true },
 			inputSchema: toStandardJsonSchema(GetTraceInput)
 		},
 		({ traceId }) =>
