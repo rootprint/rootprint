@@ -97,14 +97,21 @@ function parseTime(value: string, nowMs: number): number | null {
 }
 
 // Agents get epoch arithmetic wrong, so tools take readable times and convert them here.
-function timeRange(start: string, end: string): { startTs: number; endTs: number } {
+function timeRange(
+	start: string,
+	end: string
+): { startTs: number; endTs: number; rangeSeconds: number } {
 	const nowMs = Date.now();
 	const startMs = parseTime(start, nowMs);
 	const endMs = parseTime(end, nowMs);
 	if (startMs === null) throw badRequest(`start ${TIME_FORMAT}`);
 	if (endMs === null) throw badRequest(`end ${TIME_FORMAT}`);
 	if (startMs >= endMs) throw badRequest('start must be before end');
-	return { startTs: Math.floor(startMs / 1000), endTs: Math.ceil(endMs / 1000) };
+	return {
+		startTs: Math.floor(startMs / 1000),
+		endTs: Math.ceil(endMs / 1000),
+		rangeSeconds: (endMs - startMs) / 1000
+	};
 }
 
 // Agents pick bad intervals (1s over a week overflows Quickwit's request-wide bucket limit), so an
@@ -262,8 +269,8 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		},
 		({ query, start, end, ...filters }) =>
 			runTool(ctx, 'search_spans', async () => {
-				const { startTs, endTs } = timeRange(start, end);
-				if (endTs - startTs > MAX_RANGE_SECONDS) {
+				const { startTs, endTs, rangeSeconds } = timeRange(start, end);
+				if (rangeSeconds > MAX_RANGE_SECONDS) {
 					throw badRequest('Trace range cannot exceed 30 days');
 				}
 				if (
