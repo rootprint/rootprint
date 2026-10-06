@@ -1,4 +1,7 @@
-import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/server';
+import {
+	readRequestBody,
+	WebStandardStreamableHTTPServerTransport
+} from '@modelcontextprotocol/server';
 import { Hono } from 'hono';
 
 import type { AuthedEnv } from '../env.js';
@@ -7,6 +10,12 @@ import { LOGS_READ, requireUserOrPersonalKey } from '../middleware/require-user-
 import { buildMcpServer } from '../services/mcp.service.js';
 import { extractBearerToken } from '../utils/bearer.js';
 import { unauthorized } from '../utils/http-error.js';
+
+const rpcError = (code: number, message: string) => ({
+	jsonrpc: '2.0',
+	error: { code, message },
+	id: null
+});
 
 export const mcpRouter = new Hono<AuthedEnv>()
 	// requireUserOrPersonalKey falls back to the session cookie; an agent endpoint has no use for
@@ -19,8 +28,15 @@ export const mcpRouter = new Hono<AuthedEnv>()
 	})
 	.use('*', requireUserOrPersonalKey(LOGS_READ))
 	.use('*', readLimiter)
-	// Stateless: a fresh server per request needs no session store, so any replica can answer.
 	.all('/', async (c) => {
+		if (c.req.method !== 'POST') {
+			c.header('Allow', 'POST');
+			return c.json(rpcError(-32000, 'Method not allowed.'), 405);
+		}
+		const peek = await readRequestBody(c.req.raw.clone());
+		if (!peek.tooLarge && /^\s*\[/.test(peek.text)) {
+			return c.json(rpcError(-32600, 'Invalid Request: send one JSON-RPC message per POST'), 400);
+		}
 		const server = buildMcpServer({
 			userId: c.get('session').user.id,
 			apiKeyId: c.get('apiKeyActor')?.keyId,
