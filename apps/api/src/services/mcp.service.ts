@@ -1,6 +1,7 @@
 import { McpServer, type CallToolResult } from '@modelcontextprotocol/server';
 import { QuickwitError } from '@rootprint-io/quickwit-js';
 import { toStandardJsonSchema } from '@valibot/to-json-schema';
+import * as v from 'valibot';
 
 import { config } from '../config.js';
 import { db } from '../lib/db.js';
@@ -19,6 +20,7 @@ import {
 import { intervalSeconds, MAX_BUCKETS, MAX_RANGE_SECONDS } from '../schemas/services.js';
 import { hasBalancedParens, type ExploreSpansInput } from '../schemas/traces.js';
 import { badRequest, HttpError, isPublicError } from '../utils/http-error.js';
+import { isoTimestampString } from '../utils/valibot.js';
 import {
 	getIndexConfig,
 	getIndexMeta,
@@ -38,7 +40,7 @@ const MAX_STRING_CHARS = 2_000;
 const MAX_OUTPUT_CHARS = 80_000;
 const TARGET_BUCKETS = 60;
 const AUTO_INTERVALS = ['1m', '5m', '15m', '30m', '1h', '3h', '6h', '12h', '1d', '7d'];
-const TIME_FORMAT = 'must be ISO 8601 or now-<n>[smhd]';
+const TIME_FORMAT = 'must be ISO 8601 with a timezone (2026-10-06T14:30:00Z) or now-<n>[smhd]';
 // The immortal flagd traces carry ~1,000 spans; capping keeps one trace from filling the context.
 const MAX_TOOL_SPANS = 200;
 // Error detail is the bulky part, and a few examples show what failed.
@@ -84,12 +86,14 @@ async function runTool(
 	}
 }
 
-/** ISO 8601, `now`, or `now-<n><s|m|h|d>` as epoch seconds; null when unparseable. */
+/** ISO 8601 with a timezone, `now`, or `now-<n><s|m|h|d>` as epoch seconds; null otherwise. */
 function parseTime(value: string, nowMs: number): number | null {
 	const relative = /^now(?:-([1-9]\d*[smhd]))?$/.exec(value);
 	if (relative) {
 		return Math.floor(nowMs / 1000) - (relative[1] ? intervalSeconds(relative[1]) : 0);
 	}
+	// Date.parse alone takes "1" as the year 2000 and "10/06/2026" as US-ordered server-local time.
+	if (!v.is(isoTimestampString, value)) return null;
 	const ms = Date.parse(value);
 	return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
 }
