@@ -6,6 +6,8 @@ import { intervalParam } from './services.js';
 import { TraceParams } from './traces.js';
 
 const trimmed = v.transform((s: string) => s.trim());
+// Not minLength after `trimmed`: actions past a transform drop out of the published JSON Schema.
+const notBlank = v.regex(/\S/, 'Must not be blank');
 
 const time = (fallback: string) =>
 	v.optional(
@@ -65,11 +67,7 @@ export const LogHistogramInput = v.strictObject({
 
 export const FieldValuesInput = v.strictObject({
 	indexId,
-	fields: v.pipe(
-		v.array(v.pipe(v.string(), v.minLength(1), trimmed)),
-		v.minLength(1),
-		v.maxLength(10)
-	),
+	fields: v.pipe(v.array(v.pipe(v.string(), notBlank, trimmed)), v.minLength(1), v.maxLength(10)),
 	query: logQuery,
 	start: time('now-1h'),
 	end: time('now'),
@@ -77,9 +75,9 @@ export const FieldValuesInput = v.strictObject({
 });
 
 export const SearchSpansInput = v.strictObject({
-	service: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200), trimmed)),
+	service: v.optional(v.pipe(v.string(), notBlank, v.maxLength(200), trimmed)),
 	operation: v.optional(
-		v.pipe(v.string(), v.minLength(1), v.maxLength(500), v.description('Span name'), trimmed)
+		v.pipe(v.string(), notBlank, v.maxLength(500), v.description('Span name'), trimmed)
 	),
 	status: v.optional(v.picklist(EXPLORE_STATUSES), 'all'),
 	minMs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
