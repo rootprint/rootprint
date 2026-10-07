@@ -31,12 +31,13 @@ import { otlpRouter } from './routes/ingest/otlp.js';
 import { settingsRouter } from './routes/settings.js';
 import { sharesRouter } from './routes/shares.js';
 import { apiKeysRouter } from './routes/api-keys.js';
+import { mcpRouter } from './routes/mcp.js';
 import { servicesRouter } from './routes/services.js';
 import { tracesRouter } from './routes/traces.js';
 import { usersRouter } from './routes/users.js';
 import { serviceAccountsRouter } from './routes/service-accounts.js';
 import type { ApiErrorBody } from './types.js';
-import { HttpError } from './utils/http-error.js';
+import { HttpError, isPublicError } from './utils/http-error.js';
 import { quickwitErrorToHttp } from './lib/quickwit/errors.js';
 import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 import { getBetterAuthSecret } from './lib/secret.js';
@@ -118,7 +119,7 @@ app.onError((rawErr, c) => {
 		} else if (isServerError) {
 			logger.error(logMeta, 'request failed');
 		}
-		const maskMessage = isServerError && !isTransient;
+		const maskMessage = !isPublicError(err);
 		return errorJson(
 			c,
 			{
@@ -162,6 +163,7 @@ export const routes = app
 	.route('/api/indexes', indexesRouter)
 	.route('/api/traces', tracesRouter)
 	.route('/api/services', servicesRouter)
+	.route('/api/mcp', mcpRouter)
 	.route('/api/admin/metrics', withAuth(metricsRouter))
 	.route('/api/admin/cluster', withAuth(clusterRouter))
 	.route('/api/admin/activity', withAuth(adminActivityRouter))

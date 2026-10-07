@@ -1,0 +1,32 @@
+meta {
+  name: List MCP Tools
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/mcp
+  body: json
+  auth: bearer
+}
+
+headers {
+  accept: application/json, text/event-stream
+}
+
+auth:bearer {
+  token: {{personalApiKey}}
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list"
+  }
+}
+
+docs {
+  Stateless Streamable HTTP: every POST stands alone, so tools/list and tools/call need no
+  initialize first. The Accept header must list both types or the server answers 406.
+}

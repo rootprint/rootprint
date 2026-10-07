@@ -14,6 +14,11 @@ export class HttpError extends Error {
 	}
 }
 
+/** A client may see this error's message: any 4xx, or a 5xx that `retryAfter` marks transient. */
+export function isPublicError(err: HttpError): boolean {
+	return err.statusCode < 500 || err.retryAfter != null;
+}
+
 export const badRequest = (message: string, code = 'BAD_REQUEST', details?: ApiErrorDetail[]) =>
 	new HttpError(400, code, message, details);
 export const unauthorized = (message: string, code = 'UNAUTHORIZED') =>
