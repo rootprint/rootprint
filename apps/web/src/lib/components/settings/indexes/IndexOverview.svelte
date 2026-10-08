@@ -1,16 +1,10 @@
 <script lang="ts">
 	import type { IndexDetail } from 'api/types';
-	import { onMount } from 'svelte';
 
 	import { goto } from '$app/navigation';
 	import type { LatencyBuckets, Summary, TopActors, VolumeBuckets } from '#lib/api/activity.js';
 	import type { ApiKeyView } from '#lib/api/api-keys.js';
-	import {
-		getIndexDescribe,
-		getIndexStats,
-		type IndexDescribe,
-		type IndexStatsResponse
-	} from '#lib/api/indexes.js';
+	import { getIndexStats, type IndexDescribe } from '#lib/api/indexes.js';
 	import LogFrequencyChart from '#lib/components/logs/LogFrequencyChart.svelte';
 	import ActivityPanel from '#lib/components/settings/activity/ActivityPanel.svelte';
 	import StorageTrendChart from '#lib/components/settings/overview/StorageTrendChart.svelte';
@@ -40,50 +34,15 @@
 	let { detail, describe, histogram, ingestKeys, window, activity }: Props = $props();
 
 	const LIVE_WINDOW_S = 5 * 60;
-	const STATS_POLL_MS = 30_000;
 	let volumeCollapsed = $state(false);
 
-	// Re-described while open so the counts and live dot follow ingestion. A plain value skips the
-	// await block's pending branch, so a refresh doesn't flash the skeleton.
-	let stats: Promise<IndexDescribe> | IndexDescribe = $derived(describe);
-
-	// Component state, not a URL param, so a range change doesn't re-run the page loader. The chart
-	// stays mounted while a range loads and shows its own spinner.
 	let growthRange = $state<Window>('7d');
-	let growthPoints = $state<IndexStatsResponse['points']>([]);
-	let growthLoading = $state(true);
-	let growthError = $state<unknown>(null);
-	let growthSeq = 0;
-
-	async function loadGrowth() {
-		const seq = ++growthSeq;
-		growthLoading = true;
+	function fetchGrowth() {
 		const endTs = Math.floor(Date.now() / 1000);
 		const startTs = endTs - windowToSpanMs(growthRange) / 1000;
-		try {
-			const { points } = await getIndexStats(detail.indexId, { startTs, endTs });
-			if (seq !== growthSeq) return;
-			growthPoints = points;
-			growthError = null;
-		} catch (e) {
-			if (seq !== growthSeq) return;
-			growthError = e;
-		}
-		growthLoading = false;
+		return getIndexStats(detail.indexId, { startTs, endTs });
 	}
-
-	// The page keys this component on the index id, so mount-time is per index.
-	onMount(() => {
-		void loadGrowth();
-		const timer = setInterval(() => {
-			// ponytail: a failed refresh keeps the last stats; the next tick tries again
-			getIndexDescribe(detail.indexId).then(
-				(d) => (stats = d),
-				() => {}
-			);
-		}, STATS_POLL_MS);
-		return () => clearInterval(timer);
-	});
+	let growth = $derived(fetchGrowth());
 
 	type StatCell = { label: string; value: string; live?: boolean };
 
@@ -123,7 +82,7 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	{#await stats}
+	{#await describe}
 		<div class="skeleton rounded-box h-[4.5rem]"></div>
 	{:then d}
 		<dl class="border-line rounded-box grid grid-cols-6 overflow-hidden border">
@@ -175,21 +134,24 @@
 		</section>
 	{/if}
 
-	{#if growthError}
-		<PanelError message="Couldn't load size history" error={growthError} retry={loadGrowth} />
-	{:else}
+	{#await growth}
+		<div class="skeleton rounded-box h-[22rem]"></div>
+	{:then g}
 		<StorageTrendChart
 			title="Index size"
 			indexes={[{ indexId: detail.indexId, displayName: detail.displayName, sizeBytes: null }]}
-			histories={{ [detail.indexId]: growthPoints }}
+			histories={{ [detail.indexId]: g.points }}
 			range={growthRange}
-			onRangeChange={(r) => {
-				growthRange = r;
-				void loadGrowth();
-			}}
-			loading={growthLoading}
+			onRangeChange={(r) => (growthRange = r)}
+			loading={false}
 		/>
-	{/if}
+	{:catch e}
+		<PanelError
+			message="Couldn't load size history"
+			error={e}
+			retry={() => (growth = fetchGrowth())}
+		/>
+	{/await}
 
 	<section class="flex flex-col gap-2">
 		<p class="section-label">Ingest keys</p>

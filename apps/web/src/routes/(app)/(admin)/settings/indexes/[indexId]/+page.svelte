@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { deleteIndex } from '#lib/api/indexes.js';
 	import IndexConfigForm from '#lib/components/settings/indexes/IndexConfigForm.svelte';
 	import IndexOverview from '#lib/components/settings/indexes/IndexOverview.svelte';
@@ -14,10 +15,16 @@
 	import SearchInput from '#lib/components/ui/SearchInput.svelte';
 	import TypeToConfirmModal from '#lib/components/ui/TypeToConfirmModal.svelte';
 	import { pluralize } from '#lib/utils/format.js';
+	import type { IndexTabId } from '#lib/types.js';
 
 	let { data } = $props();
 	const detail = $derived(data.detail);
-	const activeTab = $derived(data.activeTab);
+	// Client-side, so tab clicks don't re-run the page loader.
+	const activeTab: IndexTabId = $derived.by(() => {
+		const tab = page.url.searchParams.get('tab');
+		if (tab === 'config' || tab === 'fields' || tab === 'sources') return tab;
+		return 'overview';
+	});
 
 	const explorerHref = $derived(
 		detail.isTraceIndex ? '/traces' : `/logs?${new URLSearchParams({ index: detail.indexId })}`
@@ -77,11 +84,14 @@
 
 	<IndexTabs {activeTab} fieldCount={detail.fields.length} sourceCount={detail.sources.length} />
 
-	{#if activeTab === 'overview' && data.overview}
+	<!-- Hidden rather than unmounted, so switching back keeps its data and chart state. -->
+	<div hidden={activeTab !== 'overview'}>
 		{#key detail.indexId}
 			<IndexOverview {detail} {...data.overview} />
 		{/key}
-	{:else if activeTab === 'config'}
+	</div>
+
+	{#if activeTab === 'config'}
 		{#key detail.indexId}
 			<IndexConfigForm {detail} />
 		{/key}

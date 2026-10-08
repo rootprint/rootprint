@@ -1,11 +1,10 @@
 import { error } from '@sveltejs/kit';
-import type { PageLoad } from './$types';
-
-import { DEP } from '#lib/api/deps.js';
+import type { LayoutLoad } from './$types';
 import { ApiError } from '#lib/api/errors.js';
 import { getIndex } from '#lib/api/indexes.js';
+import { DEP } from '#lib/api/deps.js';
 
-export const load: PageLoad = async ({ params, depends }) => {
+export const load: LayoutLoad = async ({ params, depends }) => {
 	depends(DEP.index(params.indexId));
 	try {
 		const detail = await getIndex(params.indexId);
