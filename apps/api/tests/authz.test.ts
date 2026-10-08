@@ -45,6 +45,7 @@ test('every admin-only route is 403 for a member', async () => {
 		['POST', '/api/service-accounts', { name: 'evil' }],
 		['GET', '/api/api-keys'],
 		['POST', '/api/api-keys', { name: 'evil', indexId: 'app-logs' }],
+		['GET', '/api/indexes/app-logs/describe'],
 		['GET', '/api/settings/auth/oidc'],
 		['PUT', '/api/settings/auth/password', { enabled: false }],
 		[

@@ -73,7 +73,7 @@
 	<div class="ml-auto flex items-center gap-1">
 		{#if isAdmin}
 			<a
-				href="/settings/indexes/{indexId}"
+				href="/settings/indexes/{indexId}?tab=config"
 				class="btn btn-ghost btn-xs btn-square"
 				title="Configure context fields"
 				aria-label="Configure context fields"

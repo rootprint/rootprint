@@ -23,7 +23,7 @@ import {
 	getTopActors,
 	getUserIndexes
 } from '../../services/search-activity.service.js';
-import { PersonalApiKeyIdParams, UserIdParams } from '../../utils/params.js';
+import { IndexIdParams, PersonalApiKeyIdParams, UserIdParams } from '../../utils/params.js';
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const adminActivityRouter = new Hono<AuthedEnv>()
@@ -200,5 +200,50 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			const { apiKeyId } = c.req.valid('param');
 			const q = c.req.valid('query');
 			return c.json(await getActorRecent(db, q.window, { kind: 'apiKey', apiKeyId }, q));
+		}
+	)
+	.get(
+		'/indexes/:indexId/summary',
+		describe({
+			tag: 'System monitoring',
+			summary: 'Get search activity summary for an index',
+			ok: SummaryRowResponse
+		}),
+		validator('param', IndexIdParams),
+		validator('query', WindowQuery),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			const q = c.req.valid('query');
+			return c.json(await getSummary(db, q.window, { kind: 'index', indexId }));
+		}
+	)
+	.get(
+		'/indexes/:indexId/latency',
+		describe({
+			tag: 'System monitoring',
+			summary: 'Get latency time series for an index',
+			ok: LatencyBucketsResponse
+		}),
+		validator('param', IndexIdParams),
+		validator('query', WindowQuery),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			const q = c.req.valid('query');
+			return c.json(await getLatencyBuckets(db, q.window, { kind: 'index', indexId }));
+		}
+	)
+	.get(
+		'/indexes/:indexId/actors',
+		describe({
+			tag: 'System monitoring',
+			summary: 'Get top actors for an index',
+			ok: TopActorsResponse
+		}),
+		validator('param', IndexIdParams),
+		validator('query', TopActorsQuery),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			const q = c.req.valid('query');
+			return c.json(await getTopActors(db, q.window, q.limit, { kind: 'index', indexId }));
 		}
 	);

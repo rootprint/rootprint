@@ -1154,6 +1154,51 @@
 				],
 				"type": "object"
 			},
+			"IndexDescribeResponse": {
+				"properties": {
+					"maxTimestamp": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"minTimestamp": {
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"numDocs": {
+						"type": "number"
+					},
+					"numSplits": {
+						"type": "number"
+					},
+					"sizeBytes": {
+						"type": "number"
+					},
+					"uncompressedBytes": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"numDocs",
+					"sizeBytes",
+					"uncompressedBytes",
+					"numSplits",
+					"minTimestamp",
+					"maxTimestamp"
+				],
+				"type": "object"
+			},
 			"IndexDetailResponse": {
 				"properties": {
 					"commitTimeoutSecs": {
@@ -3767,6 +3812,209 @@
 					}
 				},
 				"summary": "Get volume time series for an API key",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/indexes/{indexId}/actors": {
+			"get": {
+				"operationId": "getApiAdminActivityIndexesByIndexIdActors",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"default": 10,
+							"maximum": 50,
+							"minimum": 1,
+							"pattern": "^\\d+$",
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/TopActorRowResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get top actors for an index",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/indexes/{indexId}/latency": {
+			"get": {
+				"operationId": "getApiAdminActivityIndexesByIndexIdLatency",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/LatencyBucketResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get latency time series for an index",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/indexes/{indexId}/summary": {
+			"get": {
+				"operationId": "getApiAdminActivityIndexesByIndexIdSummary",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SummaryRowResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get search activity summary for an index",
 				"tags": [
 					"System monitoring"
 				]
@@ -12495,6 +12743,56 @@
 					}
 				],
 				"summary": "Get index view config",
+				"tags": [
+					"Index management"
+				]
+			}
+		},
+		"/api/indexes/{indexId}/describe": {
+			"get": {
+				"operationId": "getApiIndexesByIndexIdDescribe",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "indexId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexDescribeResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get live index storage stats",
 				"tags": [
 					"Index management"
 				]

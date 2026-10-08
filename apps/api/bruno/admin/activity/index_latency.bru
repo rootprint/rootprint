@@ -1,0 +1,15 @@
+meta {
+  name: Index Latency
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/indexes/{{indexId}}/latency
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}

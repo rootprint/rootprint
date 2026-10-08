@@ -17,9 +17,19 @@
 		error: string | null;
 		collapsed: boolean;
 		onBrush: (startTs: number, endTs: number) => void;
+		label?: string;
+		emptyHint?: string;
 	};
 
-	let { buckets, loading, error, collapsed = $bindable(false), onBrush }: Props = $props();
+	let {
+		buckets,
+		loading,
+		error,
+		collapsed = $bindable(false),
+		onBrush,
+		label = 'Frequency',
+		emptyHint = 'Try adjusting your time range or query filters'
+	}: Props = $props();
 
 	const HEIGHT = 150;
 
@@ -161,7 +171,7 @@
 			{:else}
 				<ChevronDown class="text-subtle size-3" aria-hidden="true" />
 			{/if}
-			<span class="section-label text-left"> Frequency </span>
+			<span class="section-label text-left">{label}</span>
 		</button>
 		<div class="text-subtle flex items-center gap-1.5 text-xs tabular-nums">
 			{#if loading}
@@ -189,7 +199,7 @@
 				{:else if !columnarData}
 					<div class="flex h-[150px] flex-col items-center justify-center gap-1">
 						<p class="text-muted text-xs">No frequency data</p>
-						<p class="text-subtle text-xs">Try adjusting your time range or query filters</p>
+						<p class="text-subtle text-xs">{emptyHint}</p>
 					</div>
 				{:else}
 					<UplotChart data={columnarData.uplot} height={HEIGHT} {makeOpts}>

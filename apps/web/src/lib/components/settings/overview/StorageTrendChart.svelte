@@ -20,8 +20,16 @@
 		range: Window;
 		onRangeChange: (next: Window) => void;
 		loading: boolean;
+		title?: string;
 	};
-	let { indexes, histories, range, onRangeChange, loading }: Props = $props();
+	let {
+		indexes,
+		histories,
+		range,
+		onRangeChange,
+		loading,
+		title = 'Storage by index'
+	}: Props = $props();
 
 	// mid-lightness/low-chroma palette so series stay distinct without overwhelming the page
 	const PALETTE = [
@@ -157,7 +165,7 @@
 
 <div class="border-line bg-base-100 rounded-box flex w-full flex-col border">
 	<header class="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-3">
-		<p class="section-label">Storage by index</p>
+		<p class="section-label">{title}</p>
 		<TimeRangeTabs value={range} onChange={onRangeChange} />
 	</header>
 

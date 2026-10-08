@@ -1,15 +1,17 @@
 <script lang="ts">
 	import KpiStrip from '#lib/components/settings/activity/KpiStrip.svelte';
 	import LatencyChart from '#lib/components/settings/activity/LatencyChart.svelte';
+	import TopActorsTable from '#lib/components/settings/activity/TopActorsTable.svelte';
 	import TimeRangeTabs from '#lib/components/ui/TimeRangeTabs.svelte';
 	import VolumeChart from '#lib/components/settings/activity/VolumeChart.svelte';
 	import ListCard from '#lib/components/ui/ListCard.svelte';
 	import { ACTIVITY_PAGE_SIZE } from '#lib/api/activity.js';
 	import type {
 		ActorIndexes,
-		ActorSummary,
 		LatencyBuckets,
 		RecentResult,
+		Summary,
+		TopActors,
 		VolumeBuckets
 	} from '#lib/api/activity.js';
 	import type { Window } from '#lib/utils/time-range.js';
@@ -19,16 +21,27 @@
 
 	type Props = {
 		window: Window;
-		offset: number;
-		summary: Promise<ActorSummary>;
+		offset?: number;
+		summary: Promise<Summary>;
 		volume: Promise<VolumeBuckets>;
 		latency: Promise<LatencyBuckets>;
 		indexes?: Promise<ActorIndexes>;
-		recent: Promise<RecentResult>;
+		actors?: Promise<TopActors>;
+		recent?: Promise<RecentResult>;
 		onSetParam: (key: string, val: string) => void;
 	};
 
-	let { window, offset, summary, volume, latency, indexes, recent, onSetParam }: Props = $props();
+	let {
+		window,
+		offset = 0,
+		summary,
+		volume,
+		latency,
+		indexes,
+		actors,
+		recent,
+		onSetParam
+	}: Props = $props();
 </script>
 
 <div class="flex flex-col gap-4">
@@ -89,65 +102,75 @@
 		{/await}
 	{/if}
 
-	<div class="flex flex-col gap-2">
-		<p class="section-label">Recent activity</p>
-
-		{#await recent}
-			<div class="bg-base-200 rounded-box h-24 animate-pulse"></div>
-		{:then rec}
-			<ListCard
-				cols="auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)"
-				empty={rec.rows.length === 0}
-				emptyMessage="No activity in this window."
-			>
-				<div class="section-label col-span-full grid grid-cols-subgrid items-center px-4 py-2.5">
-					<span>Time</span>
-					<span class="text-center">Index</span>
-					<span class="text-right">Duration</span>
-					<span class="text-center">Hits</span>
-					<span>Query</span>
-				</div>
-				{#each rec.rows as r (r.id)}
-					<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
-						<span class="text-muted font-mono text-xs whitespace-nowrap">
-							{formatActivityTimestamp(r.executedAt)}
-						</span>
-						<span class="min-w-0 truncate text-center">{r.indexId}</span>
-						<span class="text-right whitespace-nowrap tabular-nums">
-							{formatDurationMs(r.durationMs)}
-						</span>
-						<span class="text-center tabular-nums">
-							{formatOrDash(r.numHits, formatCount)}
-						</span>
-						<span class="min-w-0 truncate">
-							{r.query.length > 80 ? r.query.slice(0, 80) + '…' : r.query}
-						</span>
-					</div>
-				{/each}
-			</ListCard>
-			<div class="flex items-center justify-between pt-1 text-xs">
-				<span class="text-muted">
-					{Math.min(offset + rec.rows.length, rec.total).toLocaleString()} / {rec.total.toLocaleString()}
-				</span>
-				<div class="flex gap-2">
-					<button
-						class="btn btn-ghost btn-xs"
-						disabled={offset === 0}
-						onclick={() => onSetParam('offset', String(Math.max(0, offset - ACTIVITY_PAGE_SIZE)))}
-					>
-						Prev
-					</button>
-					<button
-						class="btn btn-ghost btn-xs"
-						disabled={offset + rec.rows.length >= rec.total}
-						onclick={() => onSetParam('offset', String(offset + ACTIVITY_PAGE_SIZE))}
-					>
-						Next
-					</button>
-				</div>
-			</div>
+	{#if actors}
+		{#await actors then rows}
+			<TopActorsTable {rows} {window} />
 		{:catch e}
-			<PanelError message="Couldn't load recent activity" error={e} />
+			<PanelError message="Couldn't load top actors" error={e} />
 		{/await}
-	</div>
+	{/if}
+
+	{#if recent}
+		<div class="flex flex-col gap-2">
+			<p class="section-label">Recent activity</p>
+
+			{#await recent}
+				<div class="bg-base-200 rounded-box h-24 animate-pulse"></div>
+			{:then rec}
+				<ListCard
+					cols="auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)"
+					empty={rec.rows.length === 0}
+					emptyMessage="No activity in this window."
+				>
+					<div class="section-label col-span-full grid grid-cols-subgrid items-center px-4 py-2.5">
+						<span>Time</span>
+						<span class="text-center">Index</span>
+						<span class="text-right">Duration</span>
+						<span class="text-center">Hits</span>
+						<span>Query</span>
+					</div>
+					{#each rec.rows as r (r.id)}
+						<div class="col-span-full grid grid-cols-subgrid items-center px-4 py-3.5 text-sm">
+							<span class="text-muted font-mono text-xs whitespace-nowrap">
+								{formatActivityTimestamp(r.executedAt)}
+							</span>
+							<span class="min-w-0 truncate text-center">{r.indexId}</span>
+							<span class="text-right whitespace-nowrap tabular-nums">
+								{formatDurationMs(r.durationMs)}
+							</span>
+							<span class="text-center tabular-nums">
+								{formatOrDash(r.numHits, formatCount)}
+							</span>
+							<span class="min-w-0 truncate">
+								{r.query.length > 80 ? r.query.slice(0, 80) + '…' : r.query}
+							</span>
+						</div>
+					{/each}
+				</ListCard>
+				<div class="flex items-center justify-between pt-1 text-xs">
+					<span class="text-muted">
+						{Math.min(offset + rec.rows.length, rec.total).toLocaleString()} / {rec.total.toLocaleString()}
+					</span>
+					<div class="flex gap-2">
+						<button
+							class="btn btn-ghost btn-xs"
+							disabled={offset === 0}
+							onclick={() => onSetParam('offset', String(Math.max(0, offset - ACTIVITY_PAGE_SIZE)))}
+						>
+							Prev
+						</button>
+						<button
+							class="btn btn-ghost btn-xs"
+							disabled={offset + rec.rows.length >= rec.total}
+							onclick={() => onSetParam('offset', String(offset + ACTIVITY_PAGE_SIZE))}
+						>
+							Next
+						</button>
+					</div>
+				</div>
+			{:catch e}
+				<PanelError message="Couldn't load recent activity" error={e} />
+			{/await}
+		</div>
+	{/if}
 </div>

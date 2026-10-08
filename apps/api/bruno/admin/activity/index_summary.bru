@@ -1,0 +1,15 @@
+meta {
+  name: Index Summary
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/admin/activity/indexes/{{indexId}}/summary
+  body: none
+  auth: none
+}
+
+params:query {
+  ~window: 24h
+}
