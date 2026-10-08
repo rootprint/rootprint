@@ -12,17 +12,17 @@
 		"lint": "oxlint"
 	},
 	"dependencies": {
-		"@better-auth/api-key": "^1.7.6",
-		"@shikijs/langs": "^4.4.3",
-		"@shikijs/themes": "^4.4.3",
+		"@better-auth/api-key": "^1.7.7",
+		"@shikijs/langs": "^4.5.0",
+		"@shikijs/themes": "^4.5.0",
 		"@tanstack/svelte-virtual": "^3.13.39",
 		"api": "workspace:*",
-		"better-auth": "^1.7.6",
+		"better-auth": "^1.7.7",
 		"date-fns": "^4.4.0",
-		"hono": "^4.13.9",
+		"hono": "^4.13.13",
 		"lucide-svelte": "^1.0.1",
-		"shiki": "^4.4.3",
-		"svelte-dnd-action": "^0.9.79",
+		"shiki": "^4.5.0",
+		"svelte-dnd-action": "^0.9.80",
 		"svelte-sonner": "^1.2.1",
 		"uplot": "^1.6.32",
 		"valibot": "^1.5.0"
@@ -35,15 +35,15 @@
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"bun-types": "^1.4.2",
-		"daisyui": "^5.7.46",
-		"oxlint": "^1.85.0",
+		"daisyui": "^5.7.47",
+		"oxlint": "^1.86.0",
 		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.8.1",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.7.6",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^6.0.3",
-		"vite": "^8.3.1"
+		"vite": "^8.3.2"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",
