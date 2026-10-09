@@ -14,6 +14,7 @@
 	type TabDef = { id: IndexTabId; label: string; count: number | null };
 
 	const tabs: TabDef[] = $derived([
+		{ id: 'overview', label: 'Overview', count: null },
 		{ id: 'config', label: 'Configuration', count: null },
 		{ id: 'fields', label: 'Fields', count: fieldCount },
 		{ id: 'sources', label: 'Sources', count: sourceCount }

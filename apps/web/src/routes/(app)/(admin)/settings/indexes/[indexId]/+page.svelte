@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { ChevronRight, Pencil, Plus, Trash2 } from 'lucide-svelte';
+	import { ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { deleteIndex } from '#lib/api/indexes.js';
 	import IndexConfigForm from '#lib/components/settings/indexes/IndexConfigForm.svelte';
+	import IndexOverview from '#lib/components/settings/indexes/IndexOverview.svelte';
 	import IndexTabs from '#lib/components/settings/indexes/IndexTabs.svelte';
 	import { sourceTypeLabel } from '#lib/components/settings/indexes/source-form.js';
 	import ListCard from '#lib/components/ui/ListCard.svelte';
@@ -18,12 +19,16 @@
 
 	let { data } = $props();
 	const detail = $derived(data.detail);
-
+	// Client-side, so tab clicks don't re-run the page loader.
 	const activeTab: IndexTabId = $derived.by(() => {
 		const tab = page.url.searchParams.get('tab');
-		if (tab === 'fields' || tab === 'sources') return tab;
-		return 'config';
+		if (tab === 'config' || tab === 'fields' || tab === 'sources') return tab;
+		return 'overview';
 	});
+
+	const explorerHref = $derived(
+		detail.isTraceIndex ? '/traces' : `/logs?${new URLSearchParams({ index: detail.indexId })}`
+	);
 
 	let fieldFilter = $state('');
 	const filteredFields = $derived.by(() => {
@@ -54,6 +59,10 @@
 		<header class="mt-3 flex flex-wrap items-start justify-between gap-4">
 			<h1 class="text-h1 font-mono break-all">{detail.indexId}</h1>
 			<div class="flex shrink-0 gap-2">
+				<a href={explorerHref} class="btn btn-ghost btn-sm">
+					<Search class="size-3.5" aria-hidden="true" />
+					{detail.isTraceIndex ? 'Open in Traces' : 'Open in Logs'}
+				</a>
 				<a
 					href="/settings/indexes/{encodeURIComponent(detail.indexId)}/edit"
 					class="btn btn-ghost btn-sm"
@@ -74,6 +83,13 @@
 	</PageHeader>
 
 	<IndexTabs {activeTab} fieldCount={detail.fields.length} sourceCount={detail.sources.length} />
+
+	<!-- Hidden rather than unmounted, so switching back keeps its data and chart state. -->
+	<div hidden={activeTab !== 'overview'}>
+		{#key detail.indexId}
+			<IndexOverview {detail} {...data.overview} />
+		{/key}
+	</div>
 
 	{#if activeTab === 'config'}
 		{#key detail.indexId}

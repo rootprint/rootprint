@@ -125,23 +125,27 @@ export const IndexFieldsResponse = named(
 	v.object({ fields: v.array(IndexFieldSchema) })
 );
 
+const indexStatsEntries = {
+	numDocs: v.number(),
+	sizeBytes: v.number(),
+	uncompressedBytes: v.number(),
+	numSplits: v.number(),
+	/** Event-time bounds in Unix seconds; null until the index has docs. */
+	minTimestamp: v.nullable(v.number()),
+	maxTimestamp: v.nullable(v.number())
+};
+
 export const IndexStatsPointSchema = named(
 	'IndexStatsPointSchema',
-	v.object({
-		capturedAt: isoTimestampString,
-		numDocs: v.number(),
-		sizeBytes: v.number(),
-		uncompressedBytes: v.number(),
-		numSplits: v.number(),
-		minTimestamp: v.nullable(v.number()),
-		maxTimestamp: v.nullable(v.number())
-	})
+	v.object({ capturedAt: isoTimestampString, ...indexStatsEntries })
 );
 
 export const IndexStatsResponse = named(
 	'IndexStatsResponse',
 	v.object({ indexId: v.string(), points: v.array(IndexStatsPointSchema) })
 );
+
+export const IndexDescribeResponse = named('IndexDescribeResponse', v.object(indexStatsEntries));
 
 // hits are opaque Quickwit passthrough payloads.
 export const LogSearchResponse = named(
@@ -196,6 +200,8 @@ export type IndexField = v.InferOutput<typeof IndexFieldSchema>;
 export type IndexViewConfig = v.InferOutput<typeof IndexViewConfigResponse>;
 
 export type IndexStatsPoint = v.InferOutput<typeof IndexStatsPointSchema>;
+
+export type IndexDescribe = v.InferOutput<typeof IndexDescribeResponse>;
 
 export type LogSearchResponse = v.InferOutput<typeof LogSearchResponse>;
 

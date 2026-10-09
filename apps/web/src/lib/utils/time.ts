@@ -18,6 +18,24 @@ export function formatRelativeTime(input: string | Date): string {
 	return formatDistanceToNow(d, { addSuffix: true });
 }
 
+const AGE_UNITS = [
+	['y', 365 * 86_400],
+	['mo', 30 * 86_400],
+	['d', 86_400],
+	['h', 3600],
+	['m', 60]
+] as const;
+
+/** "just now", "4m ago", "in 6mo" — compact for dense tables. */
+export function formatAge(input: Date): string {
+	const seconds = (Date.now() - input.getTime()) / 1000;
+	const abs = Math.abs(seconds);
+	const unit = AGE_UNITS.find(([, size]) => abs >= size);
+	if (!unit) return 'just now';
+	const n = `${Math.floor(abs / unit[1])}${unit[0]}`;
+	return seconds < 0 ? `in ${n}` : `${n} ago`;
+}
+
 /** "June 10, 2026" — locale-aware, date only. */
 export function formatDate(input: string | Date): string {
 	const d = typeof input === 'string' ? parseISO(input) : input;

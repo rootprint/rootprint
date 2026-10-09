@@ -26,7 +26,7 @@ export interface PersonalApiKey {
 	lastRequest: string | Date | null;
 }
 
-export type IndexTabId = 'config' | 'fields' | 'sources';
+export type IndexTabId = 'overview' | 'config' | 'fields' | 'sources';
 
 export type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 

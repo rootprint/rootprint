@@ -1,11 +1,12 @@
 import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
-import { QuickwitError, type QuickwitClient } from '@rootprint-io/quickwit-js';
+import { QuickwitError, type IndexStats, type QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import { config } from '../config.js';
 import type { Db } from '../lib/db.js';
 import { indexStatsSnapshot } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
-import type { IndexStatsPoint } from '../schemas/responses/indexes.js';
+import { translateQuickwitError } from '../lib/quickwit/errors.js';
+import type { IndexDescribe, IndexStatsPoint } from '../schemas/responses/indexes.js';
 import { listIndexes } from './quickwit-index.service.js';
 import { pruneSearchAudit } from './search-audit.service.js';
 
@@ -45,16 +46,7 @@ async function captureSnapshots(
 
 		for (const { indexId, stats, err } of results) {
 			if (stats) {
-				rows.push({
-					indexId,
-					capturedAt: now,
-					numDocs: stats.num_published_docs,
-					sizeBytes: stats.size_published_splits,
-					uncompressedBytes: stats.size_published_docs_uncompressed,
-					numSplits: stats.num_published_splits,
-					minTimestamp: stats.min_timestamp ?? null,
-					maxTimestamp: stats.max_timestamp ?? null
-				});
+				rows.push({ indexId, capturedAt: now, ...toIndexDescribe(stats) });
 			} else {
 				failed += 1;
 				const code = err instanceof QuickwitError ? err.code : 'UNKNOWN';
@@ -151,4 +143,22 @@ export async function getLatestSnapshotsByIndex(db: Db): Promise<LatestIndexSnap
 		minTimestamp: r.min_timestamp === null ? null : Number(r.min_timestamp),
 		maxTimestamp: r.max_timestamp === null ? null : Number(r.max_timestamp)
 	}));
+}
+
+function toIndexDescribe(d: IndexStats): IndexDescribe {
+	return {
+		numDocs: d.num_published_docs,
+		sizeBytes: d.size_published_splits,
+		uncompressedBytes: d.size_published_docs_uncompressed,
+		numSplits: d.num_published_splits,
+		minTimestamp: d.min_timestamp ?? null,
+		maxTimestamp: d.max_timestamp ?? null
+	};
+}
+
+export async function describeIndexStats(
+	qw: QuickwitClient,
+	indexId: string
+): Promise<IndexDescribe> {
+	return toIndexDescribe(await qw.describeIndex(indexId).catch(translateQuickwitError));
 }

@@ -17,6 +17,11 @@ export type IndexStatsResponse = InferResponseType<
 	200
 >;
 
+export type IndexDescribe = InferResponseType<
+	(typeof client.api.indexes)[':indexId']['describe']['$get'],
+	200
+>;
+
 export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 	const res = await client.api.indexes[':indexId'].config.$get({
 		param: { indexId }
@@ -49,6 +54,12 @@ export function toLogIndexOptions(summaries: IndexSummary[]): IndexOption[] {
 export async function getIndex(indexId: string): Promise<IndexDetail> {
 	const res = await client.api.indexes[':indexId'].$get({ param: { indexId } });
 	if (!res.ok) throw await readApiError(res, 'Failed to load index');
+	return res.json();
+}
+
+export async function getIndexDescribe(indexId: string): Promise<IndexDescribe> {
+	const res = await client.api.indexes[':indexId'].describe.$get({ param: { indexId } });
+	if (!res.ok) throw await readApiError(res, 'Failed to load index stats');
 	return res.json();
 }
 

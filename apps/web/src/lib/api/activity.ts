@@ -6,6 +6,7 @@ import type { Window } from '#lib/utils/time-range.js';
 const activity = client.api.admin.activity;
 const users = activity.users;
 const apiKeys = activity['api-keys'];
+const indexes = activity.indexes;
 
 export const ACTIVITY_PAGE_SIZE = 50;
 
@@ -113,5 +114,33 @@ export async function getApiKeyRecent(
 		query
 	});
 	if (!res.ok) throw await readApiError(res, 'Failed to load API key activity');
+	return res.json();
+}
+
+export async function getIndexActivitySummary(indexId: string, window: Window): Promise<Summary> {
+	const res = await indexes[':indexId'].summary.$get({ param: { indexId }, query: { window } });
+	if (!res.ok) throw await readApiError(res, 'Failed to load index summary');
+	return res.json();
+}
+
+export async function getIndexActivityLatency(
+	indexId: string,
+	window: Window
+): Promise<LatencyBuckets> {
+	const res = await indexes[':indexId'].latency.$get({ param: { indexId }, query: { window } });
+	if (!res.ok) throw await readApiError(res, 'Failed to load index latency');
+	return res.json();
+}
+
+export async function getIndexActivityActors(
+	indexId: string,
+	window: Window,
+	limit = 10
+): Promise<TopActors> {
+	const res = await indexes[':indexId'].actors.$get({
+		param: { indexId },
+		query: { window, limit: String(limit) }
+	});
+	if (!res.ok) throw await readApiError(res, 'Failed to load index actors');
 	return res.json();
 }

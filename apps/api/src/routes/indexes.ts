@@ -32,6 +32,7 @@ import {
 	FieldValuesBulkResponse,
 	FieldValuesResponse,
 	HistogramResponse,
+	IndexDescribeResponse,
 	IndexDetailResponse,
 	IndexFieldsResponse,
 	IndexListResponse,
@@ -62,7 +63,7 @@ import {
 	setSourceEnabled,
 	updateSource
 } from '../services/index-source.service.js';
-import { getStatsHistory } from '../services/index-stats.service.js';
+import { describeIndexStats, getStatsHistory } from '../services/index-stats.service.js';
 import {
 	fieldValues,
 	fieldValuesBulk,
@@ -169,6 +170,21 @@ export const indexesRouter = new Hono<AuthedEnv>()
 			const { indexId } = c.req.valid('param');
 			const points = await getStatsHistory(db, indexId, c.req.valid('query'));
 			return c.json({ indexId, points });
+		}
+	)
+	.get(
+		'/:indexId/describe',
+		describe({
+			tag: 'Index management',
+			summary: 'Get live index storage stats',
+			ok: IndexDescribeResponse
+		}),
+		requireUser,
+		requireAdmin,
+		validator('param', IndexIdParams),
+		async (c) => {
+			const { indexId } = c.req.valid('param');
+			return c.json(await describeIndexStats(quickwit, indexId));
 		}
 	)
 	.patch(

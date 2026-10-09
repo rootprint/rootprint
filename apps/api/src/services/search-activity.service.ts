@@ -52,7 +52,7 @@ function num(x: string | null | undefined): number | null {
 export async function getSummary(
 	db: Db,
 	window: ActivityWindow | undefined,
-	actor?: ActorFilter
+	actor?: ActivityScope
 ): Promise<SummaryRow> {
 	const { interval } = resolveWindow(window);
 	const result = await db.execute<{
@@ -68,7 +68,7 @@ export async function getSummary(
 			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
-			${actor ? sql`AND ${actorPredicate(actor)}` : sql``}
+			${actor ? sql`AND ${scopePredicate(actor)}` : sql``}
 	`);
 	const r = result.rows[0];
 	if (!r) return { totalSearches: 0, errorCount: 0, p50: null, p95: null, p99: null };
@@ -84,7 +84,7 @@ export async function getSummary(
 export async function getLatencyBuckets(
 	db: Db,
 	window: ActivityWindow | undefined,
-	actor?: ActorFilter
+	actor?: ActivityScope
 ): Promise<LatencyBucket[]> {
 	const { interval, bucketSeconds } = resolveWindow(window);
 	const result = await db.execute<{
@@ -100,7 +100,7 @@ export async function getLatencyBuckets(
 			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
-			${actor ? sql`AND ${actorPredicate(actor)}` : sql``}
+			${actor ? sql`AND ${scopePredicate(actor)}` : sql``}
 		GROUP BY bucket
 		ORDER BY bucket ASC
 	`);
@@ -116,7 +116,8 @@ export async function getLatencyBuckets(
 export async function getTopActors(
 	db: Db,
 	window: ActivityWindow | undefined,
-	limit: number
+	limit: number,
+	scope?: ActivityScope
 ): Promise<TopActorRow[]> {
 	const { interval } = resolveWindow(window);
 	const result = await db.execute<{
@@ -136,6 +137,7 @@ export async function getTopActors(
 			ARRAY_AGG(DISTINCT index_id)                    AS indexes
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+			${scope ? sql`AND ${scopePredicate(scope)}` : sql``}
 		GROUP BY source, actor_id
 		ORDER BY COUNT(*) DESC
 		LIMIT ${limit}
@@ -177,9 +179,17 @@ export async function getTopActors(
 }
 
 type ActorFilter = { kind: 'user'; userId: string } | { kind: 'apiKey'; apiKeyId: string };
+type ActivityScope = ActorFilter | { kind: 'index'; indexId: string };
 
-function actorPredicate(a: ActorFilter) {
-	return a.kind === 'user' ? sql`user_id = ${a.userId}` : sql`api_key_id = ${a.apiKeyId}`;
+function scopePredicate(s: ActivityScope) {
+	switch (s.kind) {
+		case 'user':
+			return sql`user_id = ${s.userId}`;
+		case 'apiKey':
+			return sql`api_key_id = ${s.apiKeyId}`;
+		case 'index':
+			return sql`index_id = ${s.indexId}`;
+	}
 }
 
 async function resolveActorIdentity(
@@ -230,7 +240,7 @@ export async function getActorVolumeBuckets(
 			COUNT(*)::text AS count
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
-		  AND ${actorPredicate(actor)}
+		  AND ${scopePredicate(actor)}
 		GROUP BY bucket
 		ORDER BY bucket ASC
 	`);
@@ -282,7 +292,7 @@ export async function getActorRecent(
 			SELECT COUNT(*)::text AS total
 			FROM search_audit
 			WHERE executed_at >= ${sinceWindow(interval)}
-			  AND ${actorPredicate(actor)}
+			  AND ${scopePredicate(actor)}
 			  AND ${statusPred}
 		`),
 		db.execute<{
@@ -299,7 +309,7 @@ export async function getActorRecent(
 				start_ts::text, end_ts::text
 			FROM search_audit
 			WHERE executed_at >= ${sinceWindow(interval)}
-			  AND ${actorPredicate(actor)}
+			  AND ${scopePredicate(actor)}
 			  AND ${statusPred}
 			ORDER BY executed_at DESC
 			LIMIT ${opts.limit} OFFSET ${opts.offset}
