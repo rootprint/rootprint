@@ -20,6 +20,8 @@ PROTO_ROOT=apps/api/proto
 OTEL_BASE=https://raw.githubusercontent.com/open-telemetry/opentelemetry-proto/<TAG>/opentelemetry/proto
 curl -sf -o $PROTO_ROOT/opentelemetry/proto/collector/logs/v1/logs_service.proto $OTEL_BASE/collector/logs/v1/logs_service.proto
 curl -sf -o $PROTO_ROOT/opentelemetry/proto/logs/v1/logs.proto                  $OTEL_BASE/logs/v1/logs.proto
+curl -sf -o $PROTO_ROOT/opentelemetry/proto/collector/trace/v1/trace_service.proto $OTEL_BASE/collector/trace/v1/trace_service.proto
+curl -sf -o $PROTO_ROOT/opentelemetry/proto/trace/v1/trace.proto                $OTEL_BASE/trace/v1/trace.proto
 curl -sf -o $PROTO_ROOT/opentelemetry/proto/common/v1/common.proto              $OTEL_BASE/common/v1/common.proto
 curl -sf -o $PROTO_ROOT/opentelemetry/proto/resource/v1/resource.proto          $OTEL_BASE/resource/v1/resource.proto
 

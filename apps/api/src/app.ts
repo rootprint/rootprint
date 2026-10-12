@@ -39,7 +39,7 @@ import { serviceAccountsRouter } from './routes/service-accounts.js';
 import type { ApiErrorBody } from './types.js';
 import { HttpError, isPublicError } from './utils/http-error.js';
 import { quickwitErrorToHttp } from './lib/quickwit/errors.js';
-import { Code, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
+import { Code, otlpEncoding, otlpError, otlpErrorFromHttpError } from './utils/otlp-response.js';
 import { getBetterAuthSecret } from './lib/secret.js';
 import { startStatsCollector } from './services/index-stats.service.js';
 import { buildSpec } from './lib/openapi/spec.js';
@@ -98,15 +98,16 @@ app.onError((rawErr, c) => {
 				};
 
 	if (c.req.path.startsWith('/v1/')) {
+		const json = otlpEncoding(c.req.header('content-type')) === 'json';
 		if (err instanceof HttpError) {
 			logger[err.retryAfter == null && err.statusCode >= 500 ? 'error' : 'warn'](
 				logMeta,
 				'request failed'
 			);
-			return otlpErrorFromHttpError(err);
+			return otlpErrorFromHttpError(err, json);
 		}
 		logger.error(logMeta, 'request failed');
-		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', 5);
+		return otlpError(503, Code.UNAVAILABLE, 'Upstream unavailable', json, 5);
 	}
 
 	if (err instanceof HttpError) {
@@ -143,7 +144,8 @@ app.onError((rawErr, c) => {
 
 app.notFound((c) => {
 	if (c.req.path.startsWith('/v1/')) {
-		return otlpError(404, Code.NOT_FOUND, 'Route not found');
+		const json = otlpEncoding(c.req.header('content-type')) === 'json';
+		return otlpError(404, Code.NOT_FOUND, 'Route not found', json);
 	}
 	return errorJson(
 		c,

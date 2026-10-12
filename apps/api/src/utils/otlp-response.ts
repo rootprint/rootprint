@@ -1,12 +1,20 @@
 import { create, toBinary, toJson } from '@bufbuild/protobuf';
+import type { DescMessage, MessageShape } from '@bufbuild/protobuf';
 
 import { CONTENT_TYPE_JSON, CONTENT_TYPE_PROTOBUF } from '../constants.js';
 import { Code } from '../gen/google/rpc/code_pb.js';
 import { StatusSchema } from '../gen/google/rpc/status_pb.js';
 import { ExportLogsServiceResponseSchema } from '../gen/opentelemetry/proto/collector/logs/v1/logs_service_pb.js';
+import { ExportTraceServiceResponseSchema } from '../gen/opentelemetry/proto/collector/trace/v1/trace_service_pb.js';
 import { HttpError } from './http-error.js';
 
 export { Code };
+
+export function otlpEncoding(contentType: string | undefined): 'json' | 'protobuf' | null {
+	const base = contentType?.split(';')[0]?.trim().toLowerCase();
+	if (base === CONTENT_TYPE_JSON) return 'json';
+	return base === CONTENT_TYPE_PROTOBUF ? 'protobuf' : null;
+}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === 'object' && v !== null;
@@ -21,7 +29,7 @@ function toCount(v: unknown): number {
 function readPartialSuccess(
 	signal: 'logs' | 'traces',
 	bodyBytes: ArrayBuffer
-): { rejectedLogRecords: bigint; errorMessage: string } | null {
+): { rejected: bigint; errorMessage: string } | null {
 	const text = new TextDecoder().decode(bodyBytes).trim();
 	if (!text) return null;
 
@@ -46,44 +54,61 @@ function readPartialSuccess(
 
 	// Quickwit sends partial_success even on a full success, and OTLP treats an empty one as unset.
 	if (rejected === 0 && errorMessage === '') return null;
-	return { rejectedLogRecords: BigInt(rejected), errorMessage };
+	return { rejected: BigInt(rejected), errorMessage };
+}
+
+function encode<Desc extends DescMessage>(
+	schema: Desc,
+	message: MessageShape<Desc>,
+	json: boolean,
+	status: number,
+	retryAfter?: number | string
+): Response {
+	const headers: Record<string, string> = {
+		'content-type': json ? CONTENT_TYPE_JSON : CONTENT_TYPE_PROTOBUF
+	};
+	if (retryAfter !== undefined) headers['retry-after'] = String(retryAfter);
+	const body = json ? JSON.stringify(toJson(schema, message)) : toBinary(schema, message);
+	return new Response(body, { status, headers });
 }
 
 /**
- * Quickwit answers OTLP/HTTP with JSON, which a protobuf exporter cannot decode, so re-encode while
- * carrying over its rejected-record count. One schema covers both signals: ExportLogsServiceResponse
- * and ExportTraceServiceResponse have identical wire shapes.
+ * Quickwit answers OTLP/HTTP with its own JSON, which an exporter cannot decode, so re-encode while
+ * carrying over its rejected-record count.
  */
-export function otlpSuccess(signal: 'logs' | 'traces', bodyBytes: ArrayBuffer): Response {
-	const partialSuccess = readPartialSuccess(signal, bodyBytes);
-	const body = toBinary(
-		ExportLogsServiceResponseSchema,
-		create(ExportLogsServiceResponseSchema, partialSuccess ? { partialSuccess } : {})
-	);
-	return new Response(body, {
-		status: 200,
-		headers: { 'content-type': CONTENT_TYPE_PROTOBUF }
-	});
+export function otlpSuccess(
+	signal: 'logs' | 'traces',
+	bodyBytes: ArrayBuffer,
+	json: boolean
+): Response {
+	const ps = readPartialSuccess(signal, bodyBytes);
+	if (signal === 'traces') {
+		const partialSuccess = ps && { rejectedSpans: ps.rejected, errorMessage: ps.errorMessage };
+		const message = create(
+			ExportTraceServiceResponseSchema,
+			partialSuccess ? { partialSuccess } : {}
+		);
+		return encode(ExportTraceServiceResponseSchema, message, json, 200);
+	}
+	const partialSuccess = ps && { rejectedLogRecords: ps.rejected, errorMessage: ps.errorMessage };
+	const message = create(ExportLogsServiceResponseSchema, partialSuccess ? { partialSuccess } : {});
+	return encode(ExportLogsServiceResponseSchema, message, json, 200);
 }
 
 export function otlpError(
 	httpStatus: number,
 	code: number,
 	message: string,
+	json: boolean,
 	retryAfter?: number | string
 ): Response {
-	const body = toBinary(StatusSchema, create(StatusSchema, { code, message }));
-	const headers: Record<string, string> = { 'content-type': CONTENT_TYPE_PROTOBUF };
-	if (retryAfter !== undefined) headers['retry-after'] = String(retryAfter);
-	return new Response(body, { status: httpStatus, headers });
-}
-
-export function unsupportedContentType(message: string): Response {
-	const json = toJson(StatusSchema, create(StatusSchema, { code: Code.INVALID_ARGUMENT, message }));
-	return new Response(JSON.stringify(json), {
-		status: 415,
-		headers: { 'content-type': CONTENT_TYPE_JSON }
-	});
+	return encode(
+		StatusSchema,
+		create(StatusSchema, { code, message }),
+		json,
+		httpStatus,
+		retryAfter
+	);
 }
 
 function statusToGrpcCode(status: number): number {
@@ -95,15 +120,14 @@ function statusToGrpcCode(status: number): number {
 	return Code.UNAVAILABLE;
 }
 
-export function otlpErrorFromHttpError(err: HttpError): Response {
-	if (err.statusCode === 415 && err.code === 'CONTENT_TYPE_UNSUPPORTED') {
-		return unsupportedContentType(err.message);
-	}
+export function otlpErrorFromHttpError(err: HttpError, json: boolean): Response {
+	// An exporter sending the wrong content-type may not decode protobuf back.
+	const asJson = json || err.code === 'CONTENT_TYPE_UNSUPPORTED';
 	const grpcCode = statusToGrpcCode(err.statusCode);
 	const retryAfter =
 		err.retryAfter ?? (err.statusCode === 429 || err.statusCode >= 500 ? 5 : undefined);
 	const message = err.statusCode >= 500 ? 'Upstream unavailable' : err.message;
 	// Clamp 5xx to 503 — semantically retryable for OTLP clients.
 	const httpStatus = err.statusCode >= 500 ? 503 : err.statusCode;
-	return otlpError(httpStatus, grpcCode, message, retryAfter);
+	return otlpError(httpStatus, grpcCode, message, asJson, retryAfter);
 }

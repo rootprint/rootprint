@@ -1,0 +1,46 @@
+meta {
+  name: Ingest OTLP Logs (JSON)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/logs
+  body: json
+  auth: none
+}
+
+headers {
+  authorization: Bearer {{ingestApiKey}}
+}
+
+body:json {
+  {
+    "resourceLogs": [
+      {
+        "resource": {
+          "attributes": [{ "key": "service.name", "value": { "stringValue": "bruno" } }]
+        },
+        "scopeLogs": [
+          {
+            "logRecords": [
+              {
+                "timeUnixNano": "1778580000000000000",
+                "severityNumber": 9,
+                "severityText": "INFO",
+                "body": { "stringValue": "Hello from Bruno over OTLP/JSON" },
+                "traceId": "5b8efff798038103d269b633813fc60c",
+                "spanId": "eee19b7ec3c1b174"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  OTLP/JSON is transcoded to protobuf by the API. Trace and span ids are hex, as the OTLP/JSON
+  spec requires. Add `content-encoding: gzip` only with a gzipped body.
+}

@@ -32,6 +32,7 @@ export function readUpstreamMessage(bodyBytes: ArrayBuffer, fallback: string): s
 type ProxyOpts = {
 	upstreamUrl: string;
 	headers: Record<string, string>;
+	body?: Uint8Array;
 };
 
 function parseContentLength(header: string | undefined): number | null {
@@ -42,11 +43,12 @@ function parseContentLength(header: string | undefined): number | null {
 }
 
 export async function proxyToQuickwit(c: Context, opts: ProxyOpts): Promise<ProxyResult> {
-	const reqBody = c.req.raw.body;
+	const reqBody = opts.body ?? c.req.raw.body;
 	if (!reqBody) throw badRequest('Request body is required', 'EMPTY_BODY');
 
 	// Quickwit answers 200 with num_docs_for_processing: 0 to an empty body, which reads as success.
-	if (parseContentLength(c.req.header('content-length')) === 0) {
+	const length = opts.body ? opts.body.length : parseContentLength(c.req.header('content-length'));
+	if (length === 0) {
 		throw badRequest('Request body is required', 'EMPTY_BODY');
 	}
 
