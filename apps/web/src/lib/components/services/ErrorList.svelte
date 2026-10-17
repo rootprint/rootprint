@@ -187,7 +187,7 @@
 					<option value="none">No HTTP status</option>
 				</select>
 			</label>
-			<a class="btn btn-ghost btn-xs" href={tracesHref}>
+			<a class="btn btn-ghost btn-xs" href={tracesHref} data-sveltekit-preload-data="tap">
 				<ChartNoAxesGantt class="size-3" aria-hidden="true" />Open in Traces
 			</a>
 		</div>

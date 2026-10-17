@@ -174,7 +174,7 @@ export const searchAudit = pgTable(
 		query: text('query').notNull().default(''),
 		startTs: bigint('start_ts', { mode: 'number' }),
 		endTs: bigint('end_ts', { mode: 'number' }),
-		status: text('status').$type<'success' | 'error'>().notNull(),
+		status: text('status').$type<'success' | 'error' | 'cancelled'>().notNull(),
 		durationMs: integer('duration_ms').notNull(),
 		numHits: bigint('num_hits', { mode: 'number' }),
 		errorCode: text('error_code'),

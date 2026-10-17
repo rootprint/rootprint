@@ -17,6 +17,7 @@
 
 <a
 	href={exploreHref(page.url, filters)}
+	data-sveltekit-preload-data="tap"
 	class="btn btn-ghost btn-xs btn-square"
 	aria-label={label}
 	title={label}

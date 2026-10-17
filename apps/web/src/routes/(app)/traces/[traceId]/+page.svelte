@@ -114,7 +114,11 @@
 <div class="flex h-full min-h-0 w-full flex-col">
 	<header class="border-line border-b px-4 py-3">
 		<div class="flex flex-wrap items-center justify-between gap-2">
-			<a href={data.returnTo} class="btn btn-ghost btn-xs -ml-2 gap-1.5">
+			<a
+				href={data.returnTo}
+				data-sveltekit-preload-data="tap"
+				class="btn btn-ghost btn-xs -ml-2 gap-1.5"
+			>
 				<ArrowLeft class="size-3" aria-hidden="true" />
 				{backLabel}
 			</a>

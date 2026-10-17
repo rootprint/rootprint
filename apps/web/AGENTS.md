@@ -58,6 +58,7 @@ bun --filter web lint             # oxlint
 - Auth: `authClient` from `#lib/auth-client`.
 - API: call the wrappers in `#lib/api/<resource>.ts`. Each one calls the typed Hono RPC `client` and throws `ApiError` through `readApiError` on a non-2xx response. Add a wrapper there instead of calling `client` from a page or component.
 - Cookies are same-origin in both dev (Vite proxy → api) and prod (api serves the SPA).
+- SvelteKit never aborts a load. A loader that streams a search promise also returns `cancel` (aborting that request's `AbortController`), and the page returns it from an `$effect` so new data or leaving the page stops the search (see `routes/(app)/services/+page.ts`). Links into those pages set `data-sveltekit-preload-data="tap"`: a hover preload that never navigates has no page to cancel its search.
 
 ### Error handling
 

@@ -26,5 +26,12 @@ export const load: PageLoad = ({ url, depends }) => {
 		q: params.get('q')?.trim() ?? ''
 	};
 
-	return { timeRange, filters, overview: fetchExploreOverview(filters) };
+	const controller = new AbortController();
+	return {
+		timeRange,
+		filters,
+		overview: fetchExploreOverview(filters, controller.signal),
+		// SvelteKit never aborts a load; the page cancels when it replaces or leaves this data.
+		cancel: () => controller.abort()
+	};
 };

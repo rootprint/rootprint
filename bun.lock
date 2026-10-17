@@ -21,7 +21,7 @@
         "@better-auth/api-key": "^1.7.6",
         "@bufbuild/protobuf": "^2.15.0",
         "@modelcontextprotocol/server": "^2.3.1",
-        "@rootprint-io/quickwit-js": "^0.5.0",
+        "@rootprint-io/quickwit-js": "^0.5.1",
         "@valibot/to-json-schema": "^1.8.0",
         "better-auth": "^1.7.6",
         "dotenv": "^17.4.2",
@@ -299,7 +299,7 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@rootprint-io/quickwit-js": ["@rootprint-io/quickwit-js@0.5.0", "", {}, "sha512-oDzRfF0p8FAXNn6zT2UCkl2CEKwGf51zUUNExq46kT/5wL+yJPvM/vcd2MUdhdOTRJbCdnQmDo4lcPglmrwM0A=="],
+    "@rootprint-io/quickwit-js": ["@rootprint-io/quickwit-js@0.5.1", "", {}, "sha512-vM6Hsy2fe1kkWaKewIw20b9/FdKJMVfRt43G3L8vm/eLLKsAvtzV32UHbHnZ2Wp/zDKBXru7knujhp9xkRVW/Q=="],
 
     "@shikijs/core": ["@shikijs/core@4.4.3", "", { "dependencies": { "@shikijs/primitive": "4.4.3", "@shikijs/types": "4.4.3", "@shikijs/vscode-textmate": "^10.0.2", "@types/hast": "^3.0.5", "hast-util-to-html": "^9.0.5" } }, "sha512-QCR4q2ZO/ILJEuwiBMel4wdcTDb1JGwfjKTxPDF6x8ixOaluPrVqIn06C99AcRPhmYlBR56d/Fb+GN58GzExpg=="],
 

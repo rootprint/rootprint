@@ -8,7 +8,7 @@ import {
 } from '@rootprint-io/quickwit-js';
 
 import { OPERATION_LIMIT, type ExploreSort } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { escapeFilterValue } from '../lib/quickwit/query.js';
 import type { ExploreFilters, ExploreOverviewInput, ExploreSpansInput } from '../schemas/traces.js';
 import type {
@@ -107,7 +107,7 @@ export async function getExploreSpans(
 	// Floored millis tie a lot; the tiebreak keeps those ties in the same order on every page.
 	if (byDuration) builder.sortBy(TIMESTAMP_FIELD, 'desc');
 	const response = await idx
-		.search<Record<string, unknown>>(builder)
+		.search<Record<string, unknown>>(builder, { signal: requestSignal() })
 		.catch(orEmptyStore(traceIndexId, 'the trace explorer'));
 	if (response === null) return { rows: [], total: 0 };
 	const rows = response.hits.map(toSpanRow).filter((row) => row !== null);
@@ -201,10 +201,11 @@ export async function getExploreOverview(
 				.agg('services', serviceFacet)
 				.timeRange(...timeRange);
 
+	const opts = { signal: requestSignal() };
 	const responses = await Promise.all([
-		idx.search(totalsQuery),
-		errorsQuery === undefined ? undefined : idx.search(errorsQuery),
-		facetsQuery === undefined ? undefined : idx.search(facetsQuery)
+		idx.search(totalsQuery, opts),
+		errorsQuery === undefined ? undefined : idx.search(errorsQuery, opts),
+		facetsQuery === undefined ? undefined : idx.search(facetsQuery, opts)
 	]).catch(orEmptyStore(traceIndexId, 'the trace explorer'));
 	if (responses === null) return emptyOverview();
 	const [totals, errors, facets] = responses;

@@ -18,7 +18,7 @@ import type { AppEnv, AuthedEnv } from './env.js';
 import { initAuth } from './lib/auth.js';
 import { connectDb, db, runMigrations } from './lib/db.js';
 import { logger } from './lib/logger.js';
-import { probeQuickwit, quickwit } from './lib/quickwit/client.js';
+import { isHangup, probeQuickwit, quickwit } from './lib/quickwit/client.js';
 import { addLogAttrs, isApiPath, requestLogging } from './middleware/request-logging.js';
 import { requireUser } from './middleware/require-user.js';
 import { adminActivityRouter } from './routes/admin/activity.js';
@@ -76,6 +76,9 @@ app.use(
 );
 
 app.onError((rawErr, c) => {
+	// The client hung up and its aborted search threw: not a fault, and nobody reads this response.
+	// 499 is nginx's "client closed request".
+	if (isHangup(rawErr)) return new Response(null, { status: 499 });
 	const requestId = c.get('requestId');
 	let err: Error = rawErr;
 	if (rawErr instanceof QuickwitError) {

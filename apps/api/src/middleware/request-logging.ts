@@ -17,6 +17,8 @@ export function addLogAttrs(c: Context, attrs: Record<string, unknown>): void {
 
 function levelFor(path: string, statusCode: number, attrs: Record<string, unknown>): Level {
 	if ('err' in attrs) return 'error';
+	// A client that hung up is ordinary traffic, not a failed request.
+	if (statusCode === 499) return 'info';
 	const rejected = attrs['rootprint.ingest.rejected'];
 	if (statusCode >= 400 || (typeof rejected === 'number' && rejected > 0)) return 'warn';
 	return path === '/api/health' ? 'debug' : 'info';

@@ -6,7 +6,7 @@ import * as v from 'valibot';
 import { config } from '../config.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
-import { quickwit } from '../lib/quickwit/client.js';
+import { isHangup, quickwit } from '../lib/quickwit/client.js';
 import { quickwitErrorToHttp } from '../lib/quickwit/errors.js';
 import {
 	FieldValuesInput,
@@ -73,6 +73,8 @@ async function runTool(tool: string, run: () => Promise<unknown>): Promise<CallT
 		}
 		return { content: [{ type: 'text', text }] };
 	} catch (raw) {
+		// The agent hung up: nobody reads this result, and its aborted search isn't a fault.
+		if (isHangup(raw)) return { content: [], isError: true };
 		const err = raw instanceof QuickwitError ? quickwitErrorToHttp(raw) : raw;
 		if (err instanceof HttpError && isPublicError(err)) {
 			return { content: [{ type: 'text', text: err.message }], isError: true };

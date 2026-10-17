@@ -77,13 +77,14 @@ Sibling top-level dirs:
   - Paths under `/v1/` get OTLP-style error responses (`otlpError`, `otlpErrorFromHttpError`).
   - Other paths get JSON `{ error: { code, message, statusCode, requestId } }`.
 - Never return raw 500s with internal messages or stack traces.
+- Every Quickwit search passes `{ signal: requestSignal() }` (`lib/quickwit/client.ts`), so it stops when the client hangs up and rejects with the signal's own reason. `isHangup(err)` matches exactly that error: `app.onError` answers it with 499 and no fault, `withSearchAudit` records it as `cancelled` with no error (kept out of every activity stat) and `runTool` stays quiet. A real fault that lands while the client leaves is still a fault.
 
 ## Logging
 
 pino on stdout, configured in `src/lib/logger.ts`: ISO `time`, string `level`, `service.name` and `service.version` on every line. A mixin adds `http.request.id` to any line written during a request (Hono `contextStorage()`), so never pass a request id by hand.
 
 - One line per API request, and per failed page or asset request, written by `requestLogging` (`src/middleware/request-logging.ts`). To put something on it (an index, counts, an error code), call `addLogAttrs(c, { … })`; don't write a second line for the same request. `app.onError` adds `error.type`, `err` for faults (a 5xx without `retryAfter`, or a non-`HttpError` throw) and `error.message` from a transient error's `cause`.
-- Level follows the line: `err` → `error`; status ≥ 400 or rejected ingest records → `warn`; `/api/health` → `debug`; else `info`.
+- Level follows the line: `err` → `error`; 499 (client hung up) → `info`; status ≥ 400 or rejected ingest records → `warn`; `/api/health` → `debug`; else `info`.
 - Field names: the OpenTelemetry semantic-convention name when one exists (`http.route`, `user.id`, `error.type`, `url.full`), else ECS (`http.request.id`), else a `rootprint.` prefix (`rootprint.index.id`). Durations are `duration_ms`. Errors stay under pino's `err`. A field keeps one type everywhere (`rootprint.api_key.id` is always a string).
 - Messages outside the request line are short lowercase event phrases (`field caps failed — falling back to schema`).
 - When wrapping an upstream failure in an `HttpError`, attach the original as `cause` (`internal` and `serviceUnavailable` take one) so the line says why.

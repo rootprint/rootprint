@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { Db } from '../lib/db.js';
 import { searchAudit } from '../db/schema.js';
 import { logger } from '../lib/logger.js';
+import { isHangup } from '../lib/quickwit/client.js';
 import { HttpError } from '../utils/http-error.js';
 
 const MAX_MSG = 500;
@@ -40,7 +41,8 @@ type SearchAuditMetadata = {
 };
 
 /**
- * Runs a search, timing it and recording a success/error row in search_audit.
+ * Runs a search, timing it and recording a success, error or cancelled row in search_audit.
+ * Cancelled means the client hung up; its row carries no error and stays out of activity stats.
  * The audit insert is fire-and-forget so it never blocks or fails the request.
  */
 export async function withSearchAudit<Result>(
@@ -76,14 +78,14 @@ export async function withSearchAudit<Result>(
 			);
 		return result;
 	} catch (err) {
-		const { code, message } = extractAuditError(err);
+		const failure = isHangup(err) ? null : extractAuditError(err);
 		db.insert(searchAudit)
 			.values({
 				...base,
-				status: 'error',
+				status: failure ? 'error' : 'cancelled',
 				durationMs: Math.round(performance.now() - start),
-				errorCode: code,
-				errorMessage: message
+				errorCode: failure?.code,
+				errorMessage: failure?.message
 			})
 			.catch((insertErr) =>
 				logger.error(

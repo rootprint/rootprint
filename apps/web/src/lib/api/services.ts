@@ -16,21 +16,27 @@ export type ServiceHealthServiceRow = ServiceHealth['services'][number];
 export type ServiceHealthFailingOperation = ServiceHealth['failingOperations'][number];
 export type ServiceHealthDependency = ServiceHealth['dependencies'][number];
 
-export async function getServiceHealth(input: {
-	service: string | null;
-	startTs: number;
-	endTs: number;
-	endpointLimit: number;
-}): Promise<ServiceHealth> {
-	const res = await services.$get({
-		query: {
-			service: input.service ?? undefined,
-			startTs: String(input.startTs),
-			endTs: String(input.endTs),
-			interval: formatInterval(computeHistogramIntervalSeconds(input.endTs - input.startTs)),
-			endpointLimit: String(input.endpointLimit)
-		}
-	});
+export async function getServiceHealth(
+	input: {
+		service: string | null;
+		startTs: number;
+		endTs: number;
+		endpointLimit: number;
+	},
+	signal?: AbortSignal
+): Promise<ServiceHealth> {
+	const res = await services.$get(
+		{
+			query: {
+				service: input.service ?? undefined,
+				startTs: String(input.startTs),
+				endTs: String(input.endTs),
+				interval: formatInterval(computeHistogramIntervalSeconds(input.endTs - input.startTs)),
+				endpointLimit: String(input.endpointLimit)
+			}
+		},
+		{ init: { signal } }
+	);
 	if (!res.ok) throw await readApiError(res, 'Failed to load service health');
 	return res.json();
 }

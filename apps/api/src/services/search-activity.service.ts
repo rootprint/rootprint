@@ -36,6 +36,10 @@ function resolveWindow(w: ActivityWindow | undefined): WindowResolved {
 	return WINDOWS[w ?? '7d'];
 }
 
+// A cancelled search was abandoned by its client: its duration is when the client gave up, and it is
+// neither a result nor a failure, so no activity stat counts it.
+const COUNTED = sql`status <> 'cancelled'`;
+
 const PCTL = sql`
 	percentile_cont(0.5)  WITHIN GROUP (ORDER BY duration_ms)::text AS p50,
 	percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::text AS p95,
@@ -68,6 +72,7 @@ export async function getSummary(
 			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+		  AND ${COUNTED}
 			${actor ? sql`AND ${scopePredicate(actor)}` : sql``}
 	`);
 	const r = result.rows[0];
@@ -100,6 +105,7 @@ export async function getLatencyBuckets(
 			${PCTL}
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+		  AND ${COUNTED}
 			${actor ? sql`AND ${scopePredicate(actor)}` : sql``}
 		GROUP BY bucket
 		ORDER BY bucket ASC
@@ -137,6 +143,7 @@ export async function getTopActors(
 			ARRAY_AGG(DISTINCT index_id)                    AS indexes
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+		  AND ${COUNTED}
 			${scope ? sql`AND ${scopePredicate(scope)}` : sql``}
 		GROUP BY source, actor_id
 		ORDER BY COUNT(*) DESC
@@ -240,6 +247,7 @@ export async function getActorVolumeBuckets(
 			COUNT(*)::text AS count
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+		  AND ${COUNTED}
 		  AND ${scopePredicate(actor)}
 		GROUP BY bucket
 		ORDER BY bucket ASC
@@ -266,6 +274,7 @@ export async function getUserIndexes(
 			COUNT(*) FILTER (WHERE status = 'error')::text  AS errors
 		FROM search_audit
 		WHERE executed_at >= ${sinceWindow(interval)}
+		  AND ${COUNTED}
 		  AND user_id = ${userId}
 		GROUP BY index_id
 		ORDER BY COUNT(*) DESC
@@ -292,6 +301,7 @@ export async function getActorRecent(
 			SELECT COUNT(*)::text AS total
 			FROM search_audit
 			WHERE executed_at >= ${sinceWindow(interval)}
+			  AND ${COUNTED}
 			  AND ${scopePredicate(actor)}
 			  AND ${statusPred}
 		`),
@@ -309,6 +319,7 @@ export async function getActorRecent(
 				start_ts::text, end_ts::text
 			FROM search_audit
 			WHERE executed_at >= ${sinceWindow(interval)}
+			  AND ${COUNTED}
 			  AND ${scopePredicate(actor)}
 			  AND ${statusPred}
 			ORDER BY executed_at DESC

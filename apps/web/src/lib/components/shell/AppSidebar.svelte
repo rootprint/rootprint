@@ -67,7 +67,11 @@
 		</a>
 	</div>
 
-	<nav aria-label="Primary" class="flex flex-1 flex-col gap-0.5 px-2 py-3">
+	<nav
+		aria-label="Primary"
+		data-sveltekit-preload-data="tap"
+		class="flex flex-1 flex-col gap-0.5 px-2 py-3"
+	>
 		<SidebarNavItem href="/logs" label="Logs" icon={Search} active={onLogs} {collapsed} />
 		<SidebarNavItem
 			href="/traces"

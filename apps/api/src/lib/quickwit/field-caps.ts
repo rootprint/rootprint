@@ -1,6 +1,6 @@
 import type { IndexField } from '../../schemas/responses/indexes.js';
 import { logger } from '../logger.js';
-import { quickwitUrl } from './client.js';
+import { isHangup, quickwitUrl, requestSignal } from './client.js';
 
 type FieldCap = { type: string; aggregatable?: boolean };
 type FieldCapsBody = { fields?: Record<string, Record<string, FieldCap>> };
@@ -36,8 +36,10 @@ export async function fetchFieldCaps(
 		`/api/v1/_elastic/${encodeURIComponent(indexId)}/_field_caps?${params.toString()}`
 	);
 
+	const hangup = requestSignal();
+	const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
 	try {
-		const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+		const res = await fetch(url, { signal: hangup ? AbortSignal.any([hangup, timeout]) : timeout });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const body = (await res.json()) as FieldCapsBody;
 
@@ -55,6 +57,7 @@ export async function fetchFieldCaps(
 
 		return [...byName.values()];
 	} catch (err) {
+		if (isHangup(err)) throw err;
 		logger.warn(
 			{ err, 'rootprint.index.id': indexId, 'url.full': url },
 			'field caps failed — falling back to schema'

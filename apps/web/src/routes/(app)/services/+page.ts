@@ -18,11 +18,17 @@ export const load: PageLoad = ({ url }) => {
 
 	const timeRange = parseTimeRange(url.searchParams);
 	const { startTs, endTs } = resolveWindow(timeRange);
+	const controller = new AbortController();
 
 	return {
 		timeRange,
 		startTs,
 		endTs,
-		health: getServiceHealth({ service: null, startTs, endTs, endpointLimit: 0 })
+		health: getServiceHealth(
+			{ service: null, startTs, endTs, endpointLimit: 0 },
+			controller.signal
+		),
+		// SvelteKit never aborts a load; the page cancels when it replaces or leaves this data.
+		cancel: () => controller.abort()
 	};
 };

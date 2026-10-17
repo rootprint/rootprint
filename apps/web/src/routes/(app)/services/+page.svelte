@@ -20,6 +20,10 @@
 
 	let { data } = $props();
 
+	// Returning cancel makes it the teardown: the health request stops when new data replaces it
+	// or the page closes.
+	$effect(() => data.cancel);
+
 	// One cursor group: hovering or brushing any panel drives all of them.
 	const SYNC_KEY = 'service-health';
 
@@ -45,7 +49,11 @@
 		<ServicePicker services={serviceNames} value={null} onChange={openService} />
 		<div class="ml-auto flex items-center gap-2">
 			<TimeRangePicker value={data.timeRange} onChange={setRange} />
-			<a class="btn btn-ghost btn-sm" href={exploreHref(page.url, {})}>
+			<a
+				class="btn btn-ghost btn-sm"
+				href={exploreHref(page.url, {})}
+				data-sveltekit-preload-data="tap"
+			>
 				<ChartNoAxesGantt class="size-3.5" aria-hidden="true" />View traces
 			</a>
 		</div>

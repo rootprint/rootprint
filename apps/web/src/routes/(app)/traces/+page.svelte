@@ -34,8 +34,10 @@
 	let loading = $state(true);
 
 	// Keeps the last good overview on screen while a new one loads or when the query box is invalid.
+	// Teardown cancels the request, so new filters or leaving the page stop its searches.
 	$effect(() => {
 		const pending = data.overview;
+		const cancel = data.cancel;
 		let stale = false;
 		loading = true;
 		pending
@@ -52,6 +54,7 @@
 			});
 		return () => {
 			stale = true;
+			cancel();
 		};
 	});
 

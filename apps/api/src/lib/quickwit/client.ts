@@ -1,11 +1,22 @@
 import { QuickwitClient, QuickwitError } from '@rootprint-io/quickwit-js';
+import { tryGetContext } from 'hono/context-storage';
 
 import { config } from '../../config.js';
+import type { AppEnv } from '../../env.js';
 
 export const quickwit = new QuickwitClient({ endpoint: config.quickwitUrl });
 
 export function quickwitUrl(path: string): string {
 	return quickwit.endpoint + path;
+}
+
+export function requestSignal(): AbortSignal | undefined {
+	return tryGetContext<AppEnv>()?.req.raw.signal;
+}
+
+export function isHangup(err: unknown): boolean {
+	const signal = requestSignal();
+	return signal?.aborted === true && err === signal.reason;
 }
 
 /** Quickwit's search REST API accepts only i64 Unix seconds. */

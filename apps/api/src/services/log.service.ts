@@ -3,7 +3,7 @@ import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { composeQuery } from '../lib/quickwit/query.js';
 import { asBuckets, termsAgg } from '../lib/quickwit/aggregations.js';
 import { translateQuickwitError } from '../lib/quickwit/errors.js';
@@ -65,7 +65,9 @@ export async function searchLogs(
 		.sortBy(indexConfig.timestampField, q.sortOrder ?? 'desc')
 		.countAll(q.countAll ?? false)
 		.timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs));
-	const response = await idx.search(builder).catch(translateQuickwitError);
+	const response = await idx
+		.search(builder, { signal: requestSignal() })
+		.catch(translateQuickwitError);
 	return {
 		hits: response.hits,
 		numHits: response.num_hits,
@@ -91,7 +93,7 @@ export async function histogramLogs(
 			AggregationBuilder.dateHistogram(indexConfig.timestampField, interval, histogramOptions)
 		)
 		.timeRange(toQuickwitTimestamp(startTs), toQuickwitTimestamp(endTs));
-	const response = await idx.search(builder);
+	const response = await idx.search(builder, { signal: requestSignal() });
 	const agg = response.aggregations?.['histogram'] as BucketAggregationResult | undefined;
 	return {
 		buckets: asBuckets(agg).map((b) => {
@@ -124,7 +126,7 @@ export async function fieldValues(
 		.limit(0)
 		.agg('values', termsAgg(field, limit))
 		.timeRange(toQuickwitTimestamp(startTs), toQuickwitTimestamp(endTs));
-	const response = await idx.search(builder);
+	const response = await idx.search(builder, { signal: requestSignal() });
 	const agg = response.aggregations?.['values'] as BucketAggregationResult | undefined;
 	return {
 		values: bucketsToEntries(agg),
@@ -190,7 +192,7 @@ export async function fieldValuesBulk(
 			for (const field of group.fields) {
 				builder.agg(field, termsAgg(field, limit));
 			}
-			const response = await idx.search(builder);
+			const response = await idx.search(builder, { signal: requestSignal() });
 			return { group, response };
 		})
 	);

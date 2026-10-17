@@ -97,13 +97,19 @@ function filterQuery(filters: ExploreFilters) {
 	};
 }
 
-export async function fetchExploreOverview(filters: ExploreFilters): Promise<ExploreOverview> {
-	const res = await explore.overview.$get({
-		query: {
-			...filterQuery(filters),
-			interval: formatInterval(chartIntervalSeconds(filters.endTs - filters.startTs))
-		}
-	});
+export async function fetchExploreOverview(
+	filters: ExploreFilters,
+	signal?: AbortSignal
+): Promise<ExploreOverview> {
+	const res = await explore.overview.$get(
+		{
+			query: {
+				...filterQuery(filters),
+				interval: formatInterval(chartIntervalSeconds(filters.endTs - filters.startTs))
+			}
+		},
+		{ init: { signal } }
+	);
 	if (!res.ok) throw await readApiError(res, 'Failed to load trace overview');
 	return res.json();
 }

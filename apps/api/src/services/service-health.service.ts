@@ -8,7 +8,7 @@ import type {
 } from '@rootprint-io/quickwit-js';
 
 import { DEPENDENCY_SPANS, ERROR_HTTP_STATUS_CLAUSES, ERROR_KIND_CLAUSES } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { escapeFilterValue } from '../lib/quickwit/query.js';
 import {
 	intervalSeconds,
@@ -342,7 +342,9 @@ export async function getServiceErrors(
 		.sortBy(TIMESTAMP_FIELD, 'desc')
 		.countAll(false)
 		.timeRange(toQuickwitTimestamp(params.startTs), toQuickwitTimestamp(params.endTs));
-	const response = await idx.search(builder).catch(orEmptyStore(traceIndexId, 'service errors'));
+	const response = await idx
+		.search(builder, { signal: requestSignal() })
+		.catch(orEmptyStore(traceIndexId, 'service errors'));
 	if (response === null) return { rows: [], hasMore: false };
 	return {
 		rows: response.hits
@@ -479,14 +481,15 @@ export async function getServiceHealth(
 	// ponytail: a row outside its source's top 100 failing values (by time) reads 0 errors.
 	const endpointErrorQueries = endpointSearches(errorScope);
 
+	const opts = { signal: requestSignal() };
 	const responses = await Promise.all([
-		idx.search(servicesQuery),
-		Promise.all(endpointQueries.map((query) => idx.search(query))),
-		Promise.all(endpointErrorQueries.map((query) => idx.search(query))),
-		idx.search(errorsQuery),
-		idx.search(totalsQuery),
-		dependencyQuery === undefined ? undefined : idx.search(dependencyQuery),
-		idx.search(allErrorsQuery)
+		idx.search(servicesQuery, opts),
+		Promise.all(endpointQueries.map((query) => idx.search(query, opts))),
+		Promise.all(endpointErrorQueries.map((query) => idx.search(query, opts))),
+		idx.search(errorsQuery, opts),
+		idx.search(totalsQuery, opts),
+		dependencyQuery === undefined ? undefined : idx.search(dependencyQuery, opts),
+		idx.search(allErrorsQuery, opts)
 	]).catch(orEmptyStore(traceIndexId, 'services'));
 	if (responses === null) {
 		return {

@@ -4,7 +4,7 @@ import type { IndexConfig } from './index.service.js';
 import { type QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import { EXPORT_MAX_ROWS } from '../constants.js';
-import { toQuickwitTimestamp } from '../lib/quickwit/client.js';
+import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
 
 export type ExportPreflightResult = {
@@ -157,7 +157,8 @@ export async function buildExportBody(
 			.limit(EXPORT_MAX_ROWS)
 			.sortBy(indexConfig.timestampField, 'asc')
 			.countAll(false)
-			.timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs))
+			.timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs)),
+		{ signal: requestSignal() }
 	);
 
 	return {
@@ -175,7 +176,8 @@ export async function preflightExport(
 ): Promise<ExportPreflightResult> {
 	const idx = qw.index(indexConfig.indexId);
 	const numHits = await idx.count(
-		idx.query(q.q || '*').timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs))
+		idx.query(q.q || '*').timeRange(toQuickwitTimestamp(q.startTs), toQuickwitTimestamp(q.endTs)),
+		{ signal: requestSignal() }
 	);
 	return {
 		total: Math.min(numHits, EXPORT_MAX_ROWS),

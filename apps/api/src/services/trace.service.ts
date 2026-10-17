@@ -2,6 +2,7 @@ import { QuickwitError, QuickwitErrorCode, type QuickwitClient } from '@rootprin
 
 import { logger } from '../lib/logger.js';
 import type { TraceResponse, TraceSpan } from '../types.js';
+import { requestSignal } from '../lib/quickwit/client.js';
 import { translateQuickwitError } from '../lib/quickwit/errors.js';
 
 export const NANOS_PER_MICRO = 1_000;
@@ -134,7 +135,7 @@ export async function getTrace(
 		.sortBy('span_start_timestamp_nanos', 'asc')
 		.limit(MAX_TRACE_SPANS);
 	const response = await idx
-		.search<RawSpanHit>(builder)
+		.search<RawSpanHit>(builder, { signal: requestSignal() })
 		.catch(orEmptyStore(traceIndexId, 'every trace'));
 	if (response === null || response.hits.length === 0) return emptyTrace();
 
