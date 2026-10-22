@@ -1,83 +1,33 @@
-import type { PromMetric, PromSample } from '../lib/quickwit/metrics.js';
-import type {
-	QuickwitBuildInfo,
-	QuickwitSnapshot,
-	ResourceSnapshot,
-	SaturationSnapshot
-} from '../schemas/responses/admin.js';
+import type { QuickwitClient } from '@rootprint-io/quickwit-js';
+
+import type { QuickwitSnapshot } from '../schemas/responses/admin.js';
 import { fetchQuickwitMetrics } from '../lib/quickwit/metrics.js';
 
-function findMetric(metrics: PromMetric[], name: string): PromMetric | null {
-	return metrics.find((m) => m.name === name) ?? null;
+const MEMORY_RESIDENT = /^quickwit_memory_resident_bytes (\S+)/m;
+const WAL_DISK_USED = /^quickwit_ingest_wal_disk_used_bytes (\S+)/m;
+const CPU_BUSY = /^quickwit_runtime_tokio_worker_busy_ratio\{runtime_type="blocking"\} (\S+)/m;
+
+function sample(text: string, series: RegExp): number | null {
+	const value = Number(series.exec(text)?.[1]);
+	return Number.isFinite(value) ? value : null;
 }
 
-function sampleValue(s: PromSample): number | null {
-	return Number.isFinite(s.value) ? s.value : null;
-}
-
-// First sample's value, or null if the metric is missing or has no finite samples.
-function gaugeValue(m: PromMetric | null): number | null {
-	if (!m) return null;
-	for (const s of m.samples) {
-		const v = sampleValue(s);
-		if (v !== null) return v;
-	}
-	return null;
-}
-
-function buildInfo(metrics: PromMetric[]): QuickwitBuildInfo {
-	// Quickwit emits an unlabelled `quickwit_build_info 0` alongside the labelled sample.
-	const labels =
-		findMetric(metrics, 'quickwit_build_info')?.samples.find(
-			(s) => Object.keys(s.labels).length > 0
-		)?.labels ?? {};
+export async function getQuickwitMetrics(qw: QuickwitClient): Promise<QuickwitSnapshot> {
+	const [raw, { build }] = await Promise.all([
+		fetchQuickwitMetrics(),
+		qw.getVersion({ timeout: 5000 })
+	]);
 	return {
-		version: labels.version ?? null,
-		commitHash: labels.commit_hash ?? null,
-		buildDate: labels.build_date ?? null
+		fetchedAt: new Date().toISOString(),
+		build: {
+			version: build.version,
+			commitHash: build.commit_short_hash,
+			buildDate: build.build_date
+		},
+		resources: {
+			memoryResidentBytes: sample(raw, MEMORY_RESIDENT),
+			walDiskBytes: sample(raw, WAL_DISK_USED)
+		},
+		saturation: { cpuBusyRatio: sample(raw, CPU_BUSY) }
 	};
-}
-
-function resources(metrics: PromMetric[]): ResourceSnapshot {
-	const memoryResidentBytes = gaugeValue(
-		findMetric(metrics, 'quickwit_memory_resident_bytes') ??
-			findMetric(metrics, 'process_resident_memory_bytes')
-	);
-	return {
-		memoryResidentBytes,
-		walDiskBytes: gaugeValue(findMetric(metrics, 'quickwit_ingest_wal_disk_used_bytes'))
-	};
-}
-
-function saturation(metrics: PromMetric[]): SaturationSnapshot {
-	// CPU busy: take max across main and non_blocking runtimes (skip blocking,
-	// which is IO-bound and can be high without indicating CPU pressure).
-	const busyMetric = findMetric(metrics, 'quickwit_runtime_tokio_worker_busy_ratio');
-	let cpuBusyRatio: number | null = null;
-	if (busyMetric) {
-		for (const s of busyMetric.samples) {
-			if (s.labels.runtime_type === 'blocking') continue;
-			const v = sampleValue(s);
-			if (v === null) continue;
-			if (cpuBusyRatio === null || v > cpuBusyRatio) cpuBusyRatio = v;
-		}
-	}
-	return { cpuBusyRatio };
-}
-
-export async function getQuickwitMetrics(): Promise<QuickwitSnapshot> {
-	const { metrics } = await fetchQuickwitMetrics();
-	const now = Date.now();
-
-	return {
-		fetchedAt: new Date(now).toISOString(),
-		build: buildInfo(metrics),
-		resources: resources(metrics),
-		saturation: saturation(metrics)
-	};
-}
-
-export async function getQuickwitMetricsRaw(): Promise<string> {
-	const { raw } = await fetchQuickwitMetrics();
-	return raw;
 }

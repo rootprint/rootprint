@@ -61,7 +61,7 @@ Sibling top-level dirs:
 
 - `src/types.ts` holds the types `apps/web` imports, exported via `exports['./types']` in `package.json`. Consumers import as `import type { IndexSummary } from 'api/types'`; server code imports those same types from `src/types.ts`. Request-input types inferred from request schemas (`CreateIndexInput`, `CreateUserInput`, …) are the exception: the web imports them from `api/schemas`.
 - `src/types.ts` is pure types only — no runtime exports.
-- A server-only type lives where it is produced. A type inferred from a Valibot schema is exported from that schema's file (`export type X = v.InferOutput<typeof XSchema>`); a hand-written type is exported from the module that builds the value (`VerifiedApiKey` in `services/api-key.service.ts`, `PromMetric` in `lib/quickwit/metrics.ts`). Move a type into `src/types.ts` only when `apps/web` needs it.
+- A server-only type lives where it is produced. A type inferred from a Valibot schema is exported from that schema's file (`export type X = v.InferOutput<typeof XSchema>`); a hand-written type is exported from the module that builds the value (`VerifiedApiKey` in `services/api-key.service.ts`). Move a type into `src/types.ts` only when `apps/web` needs it.
 - The web also imports `api` (`AppType`), `api/schemas` (`src/schemas/index.ts`), `api/constants` (`src/constants.ts`), `api/query` (`src/lib/quickwit/query.ts`) and `api/time` (`src/lib/time.ts`). The last four are bundled into the browser build, so nothing they import at runtime may reach server-only modules (`config`, `lib/db`, `lib/quickwit/client`, …).
 
 ## Routing & Request Handling
