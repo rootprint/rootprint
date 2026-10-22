@@ -50,7 +50,7 @@
 		"typescript": "^6.0.3"
 	},
 	"overrides": {
-		"vite": "^8.1.4"
+		"vite": "^8.3.4"
 	},
 	"packageManager": "bun@1.4.0"
 }
