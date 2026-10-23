@@ -1,7 +1,7 @@
 import { generateId } from 'better-auth';
 import { and, eq } from 'drizzle-orm';
 
-import type { UserRole, UserStatus } from '../types.js';
+import type { UserRole } from '../types.js';
 import type { User } from '../schemas/responses/users.js';
 
 import { config } from '../config.js';
@@ -18,7 +18,7 @@ const humanUser = (userId: string) => and(eq(user.id, userId), eq(user.isService
 type InviteInfo = { url: string; expiresAt: Date };
 
 function toUser(u: typeof user.$inferSelect, invite: InviteInfo | undefined): User {
-	const status: UserStatus = !invite
+	const status = !invite
 		? 'active'
 		: invite.expiresAt.getTime() < Date.now()
 			? 'expired'

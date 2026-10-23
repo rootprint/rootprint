@@ -99,11 +99,11 @@ export async function validateInviteToken(
 		throw badRequest('Invalid invite token', 'INVITE_INVALID');
 	}
 
-	if (rows[0]!.expiresAt < new Date()) {
+	if (rows[0].expiresAt < new Date()) {
 		throw badRequest('Invite token expired', 'INVITE_EXPIRED');
 	}
 
-	return { userId: rows[0]!.userId, email: rows[0]!.email };
+	return { userId: rows[0].userId, email: rows[0].email };
 }
 
 export async function setupPassword(

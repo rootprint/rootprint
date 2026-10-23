@@ -121,9 +121,7 @@ export async function listIndexes(db: Db, qw: QuickwitClient): Promise<IndexSumm
 	const rows = ids.length
 		? await db.select().from(indexSettings).where(inArray(indexSettings.indexId, ids))
 		: [];
-	const settingsMap = new Map<string, IndexSettings>(
-		rows.map((r) => [r.indexId, toIndexSettings(r)])
-	);
+	const settingsMap = new Map(rows.map((r) => [r.indexId, toIndexSettings(r)]));
 
 	return indexes.map((m) =>
 		toIndexSummary(m.indexId, settingsMap.get(m.indexId) ?? DEFAULT_SETTINGS)

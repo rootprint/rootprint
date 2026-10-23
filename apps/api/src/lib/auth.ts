@@ -232,10 +232,10 @@ async function buildReadyAuth(secret: string, cfg: AuthConfig) {
 	return { instance, cfg };
 }
 
-type AuthInstanceInternal = ReturnType<typeof buildAuth>;
+export type AuthInstance = ReturnType<typeof buildAuth>;
 
 const holder: {
-	instance: AuthInstanceInternal | null;
+	instance: AuthInstance | null;
 	secret: string | null;
 	cfg: AuthConfig | null;
 } = {
@@ -256,7 +256,7 @@ export async function initAuth(secret: string): Promise<void> {
 	await rebuild();
 }
 
-export const auth = (): AuthInstanceInternal => {
+export const auth = (): AuthInstance => {
 	if (holder.instance === null) {
 		throw new Error('auth() called before initAuth(); ensure boot sequence ran');
 	}
@@ -280,15 +280,13 @@ async function rebuild(): Promise<void> {
 	holder.instance = ready.instance;
 }
 
-let reloading: Promise<void> = Promise.resolve();
+let reloading = Promise.resolve();
 
 /** Serialized so two admin writes cannot finish their reloads out of order. */
 export function reloadAuth(): Promise<void> {
 	reloading = reloading.catch(() => undefined).then(rebuild);
 	return reloading;
 }
-
-export type AuthInstance = AuthInstanceInternal;
 
 export async function authOpenAPISchema() {
 	const instance = betterAuth({

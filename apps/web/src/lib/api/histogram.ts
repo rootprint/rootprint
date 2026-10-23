@@ -3,7 +3,7 @@ import { bucketSeconds, formatInterval } from 'api/time';
 import { client } from '#lib/api/client.js';
 import { UNKNOWN_LEVEL } from '#lib/constants/level-colors.js';
 import { readApiError } from '#lib/api/errors.js';
-import type { HistogramBucket, HistogramInput, HistogramResult } from '#lib/types.js';
+import type { HistogramInput, HistogramResult } from '#lib/types.js';
 import { padHistogramBuckets } from '#lib/utils/histogram.js';
 
 export async function fetchHistogram(
@@ -48,6 +48,6 @@ export async function fetchHistogram(
 		totalDocCount += b.docCount;
 	}
 
-	const buckets: HistogramBucket[] = padHistogramBuckets(bucketMap, startSec, endSec, intervalSec);
+	const buckets = padHistogramBuckets(bucketMap, startSec, endSec, intervalSec);
 	return { buckets, totalDocCount, intervalSec };
 }

@@ -20,7 +20,6 @@
 	import {
 		fieldToMapping,
 		toDynamicMappingForm,
-		type DynamicMappingForm,
 		type FieldRow,
 		type IndexMode
 	} from './index-form';
@@ -28,9 +27,9 @@
 	let { detail }: { detail: IndexDetail } = $props();
 
 	const initial = detail;
-	let mode = $state<IndexMode>((initial.mode as IndexMode) ?? 'dynamic');
-	let defaultSearchFields = $state<string[]>([...(initial.defaultSearchFields ?? [])]);
-	let tagFields = $state<string[]>([...(initial.tagFields ?? [])]);
+	let mode = $state((initial.mode as IndexMode) ?? 'dynamic');
+	let defaultSearchFields = $state([...(initial.defaultSearchFields ?? [])]);
+	let tagFields = $state([...(initial.tagFields ?? [])]);
 	let storeSource = $state(initial.storeSource ?? false);
 	let indexFieldPresence = $state(initial.indexFieldPresence ?? false);
 	let commitTimeoutSecs = $state(
@@ -39,7 +38,7 @@
 	let retentionEnabled = $state(initial.retention != null);
 	let retentionPeriod = $state(initial.retention?.period ?? '');
 	let retentionSchedule = $state(initial.retention?.schedule ?? '');
-	let dynamic = $state<DynamicMappingForm>(toDynamicMappingForm(initial.dynamicMapping));
+	let dynamic = $state(toDynamicMappingForm(initial.dynamicMapping));
 	let partitionKey = $state(initial.partitionKey ?? '');
 	let maxNumPartitions = $state(
 		initial.maxNumPartitions != null ? String(initial.maxNumPartitions) : ''

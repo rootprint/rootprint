@@ -10,7 +10,7 @@
 	import TraceAxisTicks from './TraceAxisTicks.svelte';
 	import TraceMinimap from './TraceMinimap.svelte';
 	import { fullView } from './trace-model';
-	import type { SpanNode, TraceModel, ViewRange } from '#lib/types.js';
+	import type { SpanNode, TraceModel } from '#lib/types.js';
 
 	let {
 		model,
@@ -44,7 +44,7 @@
 	}
 
 	// Not reset on `model` change: the page keys this by trace id, so that's only a reload.
-	let view = $state<ViewRange>(fullView());
+	let view = $state(fullView());
 
 	const win = $derived.by(() => {
 		const total = Math.max(model.durationMicros, 1);

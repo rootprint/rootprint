@@ -78,7 +78,7 @@ export async function createActiveMember(
 }
 
 export async function providers(): Promise<AuthProvidersInfo> {
-	return json<AuthProvidersInfo>(await new Jar().get('/api/auth/providers'));
+	return json(await new Jar().get('/api/auth/providers'));
 }
 
 /** @better-auth/api-key ships no types for `api.createApiKey`; mint keys the HTTP routes won't. */

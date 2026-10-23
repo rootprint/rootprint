@@ -1,19 +1,13 @@
 <script lang="ts">
 	import { parseISO } from 'date-fns';
 
+	import type { LatencyBuckets } from '#lib/api/activity.js';
 	import UplotLinePanel from '#lib/components/ui/uplot/UplotLinePanel.svelte';
 	import type { ChartSeries } from '#lib/components/ui/uplot/UplotLinePanel.svelte';
 	import { formatDurationMs } from '#lib/utils/format.js';
 	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
 
-	type Bucket = {
-		t: string;
-		count: number;
-		p50: number | null;
-		p95: number | null;
-		p99: number | null;
-	};
-	type Props = { buckets: Bucket[]; window?: Window };
+	type Props = { buckets: LatencyBuckets; window?: Window };
 	let { buckets, window = '7d' }: Props = $props();
 
 	const xs = $derived(buckets.map((b) => Math.floor(parseISO(b.t).getTime() / 1000)));

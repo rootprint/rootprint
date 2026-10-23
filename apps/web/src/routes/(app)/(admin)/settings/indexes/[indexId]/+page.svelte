@@ -15,12 +15,11 @@
 	import SearchInput from '#lib/components/ui/SearchInput.svelte';
 	import TypeToConfirmModal from '#lib/components/ui/TypeToConfirmModal.svelte';
 	import { pluralize } from '#lib/utils/format.js';
-	import type { IndexTabId } from '#lib/types.js';
 
 	let { data } = $props();
 	const detail = $derived(data.detail);
 	// Client-side, so tab clicks don't re-run the page loader.
-	const activeTab: IndexTabId = $derived.by(() => {
+	const activeTab = $derived.by(() => {
 		const tab = page.url.searchParams.get('tab');
 		if (tab === 'config' || tab === 'fields' || tab === 'sources') return tab;
 		return 'overview';

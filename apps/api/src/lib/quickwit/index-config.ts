@@ -18,7 +18,7 @@ import { normalizeDynamicMapping } from '../../services/quickwit-index.service.j
 
 const QUICKWIT_INDEX_CONFIG_VERSION = '0.9';
 
-const DYNAMIC_MAPPING_DEFAULTS: DynamicMapping = {
+const DYNAMIC_MAPPING_DEFAULTS = {
 	indexed: true,
 	stored: true,
 	fast: true,
@@ -133,7 +133,7 @@ export function findFieldCollisions(
 	existingFields: IndexField[],
 	newFieldMappings: FieldMappingInput[]
 ): number[] {
-	const existingNames = new Set<string>([
+	const existingNames = new Set([
 		...(cfg.doc_mapping.field_mappings ?? []).map((f) => f.name),
 		...existingFields.map((f) => f.name)
 	]);

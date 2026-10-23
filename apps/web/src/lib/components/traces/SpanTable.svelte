@@ -57,7 +57,7 @@
 	// Callers must pass the request guard first. A page-0 response replaces the list in one
 	// assignment so a new filter's rows never mix with the previous filter's.
 	function applyPage(result: ExploreSpans, pageOffset: number) {
-		if (pageOffset === 0) seenKeys = new Set<string>();
+		if (pageOffset === 0) seenKeys = new Set();
 		const fresh = result.rows.filter((row) => {
 			const key = row.traceId + row.spanId;
 			if (seenKeys.has(key)) return false;

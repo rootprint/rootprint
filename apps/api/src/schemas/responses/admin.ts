@@ -174,8 +174,6 @@ export const ClusterDocumentStatusResponse = named(
 	v.object({ hasDocuments: v.boolean() })
 );
 
-export type PerIndexOverview = v.InferOutput<typeof PerIndexOverviewResponse>;
-
 export type ClusterOverview = v.InferOutput<typeof ClusterOverviewResponse>;
 
 export type QuickwitBuildInfo = v.InferOutput<typeof QuickwitBuildInfoResponse>;

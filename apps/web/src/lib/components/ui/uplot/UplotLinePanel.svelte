@@ -63,7 +63,7 @@
 	);
 
 	// Each panel passes a fixed set of series, so the visibility flags never need to resize.
-	let visible = $state<boolean[]>(untrack(() => series).map(() => true));
+	let visible = $state(untrack(() => series).map(() => true));
 	let chart: uPlotLib | null = null;
 
 	const legendItems = $derived(
@@ -112,7 +112,7 @@
 				points: { show: false },
 				...(syncKey === undefined
 					? {}
-					: { sync: { key: syncKey, setSeries: false, scales: ['x', null] as [string, null] } })
+					: { sync: { key: syncKey, setSeries: false, scales: ['x', null] } })
 			},
 			select: { show: brush !== undefined, left: 0, top: 0, width: 0, height: 0 },
 			hooks:
@@ -120,7 +120,7 @@
 					? {}
 					: {
 							setSelect: [
-								(u: uPlotLib) => {
+								(u) => {
 									const { left, width } = u.select;
 									if (width > 2 && u.cursor.event != null) {
 										const startTs = Math.floor(u.posToVal(left, 'x'));

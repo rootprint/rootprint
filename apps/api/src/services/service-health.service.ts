@@ -347,9 +347,7 @@ export async function getServiceErrors(
 		.catch(orEmptyStore(traceIndexId, 'service errors'));
 	if (response === null) return { rows: [], hasMore: false };
 	return {
-		rows: response.hits
-			.map((hit) => toErrorRow(hit as Record<string, unknown>))
-			.filter((row) => row !== null),
+		rows: response.hits.map((hit) => toErrorRow(hit)).filter((row) => row !== null),
 		hasMore: response.hits.length === params.limit
 	};
 }

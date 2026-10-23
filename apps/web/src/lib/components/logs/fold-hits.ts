@@ -61,8 +61,7 @@ export function foldRuns(
 		const isExpanded = expanded.has(first.key);
 		rows.push({ kind: 'fold', id: first.key, hit: first, count: run.length, expanded: isExpanded });
 		if (isExpanded) {
-			for (let i = 1; i < run.length; i++)
-				rows.push({ kind: 'hit', hit: run[i]!, foldChild: true });
+			for (let i = 1; i < run.length; i++) rows.push({ kind: 'hit', hit: run[i], foldChild: true });
 		}
 	}
 	return rows;

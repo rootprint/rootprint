@@ -74,6 +74,12 @@ export type ExternalProviderId = Exclude<keyof AuthProvidersInfo, 'password'>;
 
 export type ExportFormat = v.InferOutput<typeof ExportFormatSchema>;
 
+export type ExportPreflightResult = {
+	total: number;
+	capped: boolean;
+	numHits: number;
+};
+
 export type TraceSpan = v.InferOutput<typeof TraceSpanSchema>;
 
 export type TraceResponse = v.InferOutput<typeof TraceResponseSchema>;

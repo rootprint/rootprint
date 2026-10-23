@@ -2,7 +2,7 @@ import type { QuickwitClient } from '@rootprint-io/quickwit-js';
 
 import { config } from '../config.js';
 import type { Db } from '../lib/db.js';
-import type { ClusterOverview, PerIndexOverview } from '../schemas/responses/admin.js';
+import type { ClusterOverview } from '../schemas/responses/admin.js';
 import { getLatestSnapshotsByIndex } from './index-stats.service.js';
 import { listIndexes } from './index.service.js';
 import { listIndexes as listQuickwitIndexes } from './quickwit-index.service.js';
@@ -28,7 +28,7 @@ export async function getClusterOverview(db: Db, qw: QuickwitClient): Promise<Cl
 
 	const byIndex = new Map(snapshots.map((s) => [s.indexId, s]));
 
-	const perIndex: PerIndexOverview[] = indexes.map((i) => {
+	const perIndex = indexes.map((i) => {
 		const snap = byIndex.get(i.indexId);
 		return {
 			indexId: i.indexId,

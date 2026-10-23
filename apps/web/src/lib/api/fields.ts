@@ -22,7 +22,7 @@ export async function loadFields(
 	if (!res.ok) throw await readApiError(res, 'Failed to load fields');
 	const json = await res.json();
 
-	const hidden = new Set<string>([
+	const hidden = new Set([
 		fieldConfig.timestampField,
 		fieldConfig.messageField,
 		fieldConfig.levelField,

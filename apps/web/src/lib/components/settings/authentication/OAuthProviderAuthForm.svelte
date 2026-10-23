@@ -33,7 +33,7 @@
 		clientId: null,
 		clientSecret: null
 	});
-	let items = $state<string[]>(untrack(() => [...initialItems]));
+	let items = $state(untrack(() => [...initialItems]));
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});

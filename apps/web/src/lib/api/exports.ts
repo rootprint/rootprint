@@ -1,6 +1,6 @@
 import { client } from '#lib/api/client.js';
 import { readApiError } from '#lib/api/errors.js';
-import type { ExportFormat } from 'api/types';
+import type { ExportFormat, ExportPreflightResult } from 'api/types';
 
 export type ExportPreflightInput = {
 	indexId: string;
@@ -8,12 +8,6 @@ export type ExportPreflightInput = {
 	startTs: number;
 	endTs: number;
 	format: ExportFormat;
-};
-
-export type ExportPreflightResult = {
-	total: number;
-	capped: boolean;
-	numHits: number;
 };
 
 export async function preflightExport(

@@ -72,7 +72,7 @@
 		prevIndexId = idx;
 	});
 
-	const displayState: 'loading' | 'error' | 'empty' | 'logs' = $derived.by(() => {
+	const displayState = $derived.by(() => {
 		if (store.configError || store.searchError) return 'error';
 		if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
 		if (store.logs.length === 0) return 'empty';

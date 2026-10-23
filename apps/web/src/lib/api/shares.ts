@@ -2,22 +2,11 @@ import type { InferResponseType } from 'hono/client';
 
 import { client } from '#lib/api/client.js';
 import { readApiError } from '#lib/api/errors.js';
-import type { Filter } from '#lib/types.js';
+import type { ShareCreateInput } from 'api/schemas';
 
 export type ShareView = InferResponseType<(typeof client.api.shares)[':code']['$get'], 200>;
 
-export interface CreateShareInput {
-	indexId: string;
-	query: string;
-	/** Seconds-since-epoch. */
-	startTime: number;
-	/** Seconds-since-epoch. */
-	endTime: number;
-	hit: Record<string, unknown>;
-	filters: Filter[];
-}
-
-export async function createShare(input: CreateShareInput): Promise<{ code: string }> {
+export async function createShare(input: ShareCreateInput): Promise<{ code: string }> {
 	const res = await client.api.shares.$post({ json: input });
 	if (!res.ok) throw await readApiError(res, 'Failed to create share link');
 	return res.json();

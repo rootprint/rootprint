@@ -92,9 +92,7 @@ export function parseClientParams(text: string): {
 }
 
 export function sourceDetailToForm(detail: SourceDetail): SourceFormState {
-	const sourceType: SourceType = isEditableSourceType(detail.sourceType)
-		? detail.sourceType
-		: 'kinesis';
+	const sourceType = isEditableSourceType(detail.sourceType) ? detail.sourceType : 'kinesis';
 	return {
 		sourceId: detail.sourceId,
 		sourceType,

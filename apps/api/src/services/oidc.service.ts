@@ -75,8 +75,7 @@ export async function verifyOidcIssuer(issuerUrl: string): Promise<{ tokenAuth: 
 		throw discoveryFailed('OpenID provider does not support PKCE with S256');
 	}
 	const authMethods = parsed.output.token_endpoint_auth_methods_supported;
-	const tokenAuth: OidcTokenAuth =
-		authMethods && !authMethods.includes('client_secret_basic') ? 'post' : 'basic';
+	const tokenAuth = authMethods && !authMethods.includes('client_secret_basic') ? 'post' : 'basic';
 	if (authMethods && tokenAuth === 'post' && !authMethods.includes('client_secret_post')) {
 		throw discoveryFailed(
 			'OpenID provider accepts neither client_secret_basic nor client_secret_post'

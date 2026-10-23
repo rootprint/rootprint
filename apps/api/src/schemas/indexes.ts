@@ -71,7 +71,7 @@ export const FieldValuesBulkQuery = v.object({
 				.filter(Boolean)
 		),
 		v.array(v.pipe(v.string(), v.minLength(1))),
-		v.check((arr: string[]) => arr.length > 0, 'fields must include at least one field name')
+		v.check((arr) => arr.length > 0, 'fields must include at least one field name')
 	),
 	q: v.optional(v.string()),
 	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
