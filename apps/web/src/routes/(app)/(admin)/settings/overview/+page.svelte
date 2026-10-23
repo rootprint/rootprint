@@ -1,7 +1,13 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
-	import { getClusterOverview, getAdminMetricsRaw, type ClusterOverview } from '#lib/api/admin.js';
+	import {
+		getAdminMetrics,
+		getAdminMetricsRaw,
+		getClusterOverview,
+		type AdminMetrics,
+		type ClusterOverview
+	} from '#lib/api/admin.js';
 	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
 	import { getIndexStats } from '#lib/api/indexes.js';
 	import ClusterIdentityStrip from '#lib/components/settings/overview/ClusterIdentityStrip.svelte';
@@ -12,9 +18,10 @@
 	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
 	import type { ConnectionState } from '#lib/types.js';
-	import { MetricsPoller } from './metrics-poller.svelte';
 
 	type StatsPoint = Awaited<ReturnType<typeof getIndexStats>>['points'][number];
+
+	const METRICS_POLL_MS = 5000;
 
 	let { data } = $props();
 
@@ -27,7 +34,8 @@
 	let historiesLoading = $state(false);
 	let historiesToken = 0;
 
-	const poller = new MetricsPoller();
+	let metrics = $state<AdminMetrics | null>(null);
+	let metricsError = $state<string | null>(null);
 
 	let rawFilter = $state('');
 	let rawText = $state<string | null>(null);
@@ -68,6 +76,15 @@
 		historiesLoading = false;
 	}
 
+	async function pollMetrics(): Promise<void> {
+		try {
+			metrics = await getAdminMetrics();
+			metricsError = null;
+		} catch (err) {
+			metricsError = err instanceof Error ? err.message : String(err);
+		}
+	}
+
 	async function refresh(): Promise<void> {
 		await loadCluster();
 		await loadHistories();
@@ -80,18 +97,14 @@
 
 	onMount(() => {
 		void loadHistories();
-		poller.start();
-	});
-
-	onDestroy(() => {
-		poller.stop();
+		void pollMetrics();
+		// ponytail: polls a hidden tab too and lets slow polls overlap; fine for 3 gauges
+		const timer = setInterval(pollMetrics, METRICS_POLL_MS);
+		return () => clearInterval(timer);
 	});
 
 	const connectionState = $derived.by<ConnectionState>(() => {
-		// Disconnected wins: explicit cluster-fetch error, or the poller has hit its
-		// consecutive-failure threshold. A single transient poll miss stays "connected" —
-		// the separate stale banner covers that in-between.
-		if (clusterError !== null || poller.unavailable) return 'disconnected';
+		if (clusterError !== null || metricsError !== null) return 'disconnected';
 		// Before the first cluster response lands, or during a retry, endpoint/version are unknown.
 		if (cluster === null) return 'connecting';
 		return 'connected';
@@ -137,25 +150,21 @@
 		<ClusterIdentityStrip
 			state={connectionState}
 			endpoint={cluster?.health.endpoint ?? null}
-			version={poller.metrics?.build.version ?? null}
-			commitHash={poller.metrics?.build.commitHash ?? null}
-			buildDate={poller.metrics?.build.buildDate ?? null}
+			version={metrics?.build.version ?? null}
+			commitHash={metrics?.build.commitHash ?? null}
+			buildDate={metrics?.build.buildDate ?? null}
 			clusterId={cluster?.health.clusterId ?? null}
 			liveNodes={cluster?.health.liveNodes ?? null}
 			deadNodes={cluster?.health.deadNodes ?? null}
 		/>
 
-		<HeadlineNumbers totals={cluster?.totals ?? null} live={poller.liveSummary} />
+		<HeadlineNumbers
+			totals={cluster?.totals ?? null}
+			live={metrics && { ...metrics.resources, ...metrics.saturation }}
+		/>
 
-		{#if poller.unavailable}
-			<PanelError
-				message={`Quickwit metrics unavailable (${poller.failures} consecutive failures)`}
-				retry={() => poller.poll()}
-			/>
-		{:else if poller.stale}
-			<div class="text-muted text-xs">
-				Live metrics stale — last update {poller.staleSeconds}s ago.
-			</div>
+		{#if metricsError}
+			<PanelError message={`Quickwit metrics unavailable: ${metricsError}`} retry={pollMetrics} />
 		{/if}
 
 		{#if clusterError}
