@@ -55,7 +55,6 @@
 			window={data.window}
 			offset={data.offset}
 			summary={data.summary}
-			volume={data.volume}
 			latency={data.latency}
 			indexes={data.indexes}
 			recent={data.recent}

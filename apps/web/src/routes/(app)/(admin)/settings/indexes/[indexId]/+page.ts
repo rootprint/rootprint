@@ -1,9 +1,5 @@
 import type { PageLoad } from './$types';
-import {
-	getIndexActivityActors,
-	getIndexActivityLatency,
-	getIndexActivitySummary
-} from '#lib/api/activity.js';
+import { getLatency, getSummary, getTopActors } from '#lib/api/activity.js';
 import { listApiKeys } from '#lib/api/api-keys.js';
 import { fetchHistogram } from '#lib/api/histogram.js';
 import { getIndexDescribe } from '#lib/api/indexes.js';
@@ -16,7 +12,7 @@ export const load: PageLoad = async ({ params, url, parent }) => {
 	const { isTraceIndex } = (await parent()).detail;
 	const window = parseWindow(url.searchParams.get('window'));
 	const now = Math.floor(Date.now() / 1000);
-	const latency = getIndexActivityLatency(indexId, window);
+	const activityQuery = { window, index: indexId };
 	return {
 		overview: {
 			describe: getIndexDescribe(indexId),
@@ -30,10 +26,9 @@ export const load: PageLoad = async ({ params, url, parent }) => {
 			),
 			window,
 			activity: {
-				summary: getIndexActivitySummary(indexId, window),
-				volume: latency.then((buckets) => buckets.map(({ t, count }) => ({ t, count }))),
-				latency,
-				actors: getIndexActivityActors(indexId, window)
+				summary: getSummary(activityQuery),
+				latency: getLatency(activityQuery),
+				actors: getTopActors(activityQuery)
 			}
 		}
 	};
