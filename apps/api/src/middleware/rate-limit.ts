@@ -12,7 +12,7 @@ const RETRY_AFTER_SECONDS = Math.ceil(config.rateLimitWindowMs / 1000);
 export function pickForwardedIp(xff: string | undefined, peerIp: string, hops: number): string {
 	if (hops > 0 && xff) {
 		const entries = xff.split(',').map((h) => h.trim());
-		return entries[entries.length - hops] ?? entries[0]!;
+		return entries[entries.length - hops] ?? entries[0];
 	}
 	return peerIp;
 }

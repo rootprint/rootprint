@@ -58,7 +58,7 @@ export function buildFieldSections(input: BuildFieldSectionsInput): FieldSection
 			continue;
 		}
 
-		const key: SectionKey = pinned.has(field.name)
+		const key = pinned.has(field.name)
 			? 'pinned'
 			: isOtel && isOtelResourceAttr(field.name)
 				? 'resource_attributes'

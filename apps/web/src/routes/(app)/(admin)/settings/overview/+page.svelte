@@ -5,8 +5,7 @@
 		getAdminMetrics,
 		getAdminMetricsRaw,
 		getClusterOverview,
-		type AdminMetrics,
-		type ClusterOverview
+		type AdminMetrics
 	} from '#lib/api/admin.js';
 	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
 	import { getIndexStats } from '#lib/api/indexes.js';
@@ -27,8 +26,8 @@
 
 	let range = $state<Window>('7d');
 
-	let cluster = $state<ClusterOverview | null>(data.cluster);
-	let clusterError = $state<string | null>(data.clusterError);
+	let cluster = $state(data.cluster);
+	let clusterError = $state(data.clusterError);
 	let histories = $state<Record<string, StatsPoint[]>>({});
 	let historyErrors = $state<Record<string, string>>({});
 	let historiesLoading = $state(false);

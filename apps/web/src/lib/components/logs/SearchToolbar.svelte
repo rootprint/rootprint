@@ -124,7 +124,7 @@
 		return [...head, ...tail];
 	}
 
-	const matched = $derived.by<QuerySuggestion[]>(() => {
+	const matched = $derived.by(() => {
 		const t = token;
 		if (t === null || dismissed) return [];
 		const q = t.prefix.toLowerCase();

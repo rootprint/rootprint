@@ -67,7 +67,7 @@ export const authRouter = new Hono<AppEnv>()
 		async (c) => {
 			const { token } = c.req.valid('json');
 			const { email } = await validateInviteToken(db, token);
-			return c.json({ valid: true as const, email });
+			return c.json({ valid: true, email });
 		}
 	)
 	.post(
@@ -84,7 +84,7 @@ export const authRouter = new Hono<AppEnv>()
 		async (c) => {
 			const body = c.req.valid('json');
 			await setupPassword(db, auth(), body.token, body.password);
-			return c.json({ success: true as const });
+			return c.json({ success: true });
 		}
 	)
 	.get(

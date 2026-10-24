@@ -47,7 +47,7 @@
 	 * Read from storage once at mount: safe because the drawer unmounts on index change
 	 * (+page.svelte clears selectedLog), so this component never survives an index switch.
 	 */
-	let selectedFields = $state<string[]>(readStoredFields(untrack(() => store.selectedIndex)));
+	let selectedFields = $state(readStoredFields(untrack(() => store.selectedIndex)));
 
 	function hasValue(field: string): boolean {
 		const v = getByPath(hit.raw, field);

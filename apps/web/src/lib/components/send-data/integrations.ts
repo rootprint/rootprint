@@ -7,9 +7,8 @@ import { nodejs } from './integrations/nodejs';
 import { otelCollector } from './integrations/otel-collector';
 import { python } from './integrations/python';
 import { vector } from './integrations/vector';
-import type { Integration } from './types';
 
-export const integrations: Integration[] = [
+export const integrations = [
 	otelCollector,
 	kubernetes,
 	python,
@@ -21,4 +20,4 @@ export const integrations: Integration[] = [
 	vector
 ];
 
-export const integrationById = new Map<string, Integration>(integrations.map((i) => [i.id, i]));
+export const integrationById = new Map(integrations.map((i) => [i.id, i]));

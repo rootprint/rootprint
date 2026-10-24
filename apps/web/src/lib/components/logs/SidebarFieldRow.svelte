@@ -62,7 +62,7 @@
 	const includedSet = $derived(new Set(fieldFilters.filter((f) => !f.exclude).map((f) => f.value)));
 	const excludedSet = $derived(new Set(fieldFilters.filter((f) => f.exclude).map((f) => f.value)));
 
-	const ghostValues = $derived.by<LogFieldValueBucket[]>(() => {
+	const ghostValues = $derived.by(() => {
 		if (fieldFilters.length === 0) return [];
 		const seen = new Set(resolvedValues.map((b) => b.value));
 		const ghosts: LogFieldValueBucket[] = [];
@@ -78,7 +78,7 @@
 	const ghostSet = $derived(new Set(ghostValues.map((g) => g.value)));
 
 	// Pinned = ghosts plus user-filtered in-result values; always fully shown (only the unpinned list truncates).
-	const pinnedVisible = $derived.by<LogFieldValueBucket[]>(() => {
+	const pinnedVisible = $derived.by(() => {
 		const ghosts = normalizedValueSearch
 			? ghostValues.filter((g) => g.value.toLowerCase().includes(normalizedValueSearch))
 			: ghostValues;

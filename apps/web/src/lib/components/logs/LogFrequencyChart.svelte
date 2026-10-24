@@ -39,7 +39,7 @@
 		buckets.length > 0 && intervalSec ? formatInterval(intervalSec) : null
 	);
 
-	const levels = $derived.by<string[]>(() => {
+	const levels = $derived.by(() => {
 		const seen = new Set<string>();
 		for (const b of buckets) {
 			for (const k of Object.keys(b.levels)) {
@@ -50,7 +50,7 @@
 		return sortBySeverity([...seen]);
 	});
 
-	const levelColors = $derived.by<Record<string, string>>(() => {
+	const levelColors = $derived.by(() => {
 		const map: Record<string, string> = {};
 		for (const level of levels) map[level] = levelColor(level);
 		return map;
@@ -59,9 +59,9 @@
 	const columnarData = $derived.by(() => {
 		if (buckets.length === 0) return null;
 
-		const timestamps: number[] = buckets.map((b) => b.timestamp);
+		const timestamps = buckets.map((b) => b.timestamp);
 
-		const upperBuckets: Record<string, number>[] = buckets.map((b) => {
+		const upperBuckets = buckets.map((b) => {
 			const out: Record<string, number> = {};
 			for (const [k, n] of Object.entries(b.levels)) {
 				const level = k.toUpperCase();
@@ -70,7 +70,7 @@
 			return out;
 		});
 
-		const rawSeries: number[][] = levels.map((level) => upperBuckets.map((u) => u[level] ?? 0));
+		const rawSeries = levels.map((level) => upperBuckets.map((u) => u[level] ?? 0));
 
 		const stackedSeries: number[][] = [];
 		for (let i = 0; i < rawSeries.length; i++) {
@@ -104,7 +104,7 @@
 				points: { show: false }
 			});
 			if (i > 0) {
-				bands.push({ series: [i + 1, i] as [number, number], fill: color });
+				bands.push({ series: [i + 1, i], fill: color });
 			}
 		}
 
@@ -122,7 +122,7 @@
 			select: { show: true, left: 0, top: 0, width: 0, height: 0 },
 			hooks: {
 				setSelect: [
-					(u: uPlotLib) => {
+					(u) => {
 						const left = u.select.left;
 						const selWidth = u.select.width;
 						if (selWidth > 2) {

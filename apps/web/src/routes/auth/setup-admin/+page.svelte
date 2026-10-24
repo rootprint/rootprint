@@ -4,7 +4,7 @@
 	import { setupAdmin } from '#lib/api/auth.js';
 	import { DEP } from '#lib/api/deps.js';
 	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
-	import { setupAdminSchema, type SetupAdminInput } from 'api/schemas';
+	import { setupAdminSchema } from 'api/schemas';
 	import AuthHeader from '#lib/components/auth/AuthHeader.svelte';
 	import Field from '#lib/components/ui/Field.svelte';
 
@@ -27,10 +27,8 @@
 				fieldErrors = issuesToFieldErrors(parsed.issues);
 				return;
 			}
-			const input: SetupAdminInput = parsed.output;
-
 			try {
-				await setupAdmin(input);
+				await setupAdmin(parsed.output);
 			} catch (err) {
 				const formErrors = toFormErrors(err, 'Failed to create admin');
 				formError = formErrors.message;

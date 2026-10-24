@@ -211,7 +211,7 @@
 		})
 	);
 
-	const items = $derived.by<PanelItem[]>(() => {
+	const items = $derived.by(() => {
 		const out: PanelItem[] = [];
 		for (const section of sections) {
 			if (section.fields.length === 0) continue;

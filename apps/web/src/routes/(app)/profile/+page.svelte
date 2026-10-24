@@ -8,7 +8,7 @@
 
 	let { data } = $props();
 
-	const sessionUser = $derived(page.data.session!.user);
+	const sessionUser = $derived(page.data.session.user);
 
 	const isAdmin = $derived(sessionUser.role === 'admin');
 	let passwordOpen = $state(false);

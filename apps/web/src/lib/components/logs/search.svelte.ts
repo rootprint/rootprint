@@ -89,7 +89,7 @@ export class SearchStore {
 
 	// The json parents stay out of the list: `_field_caps` reports their leaves as entries of their
 	// own. The hits fill the gap for a leaf too fresh to be in a published split.
-	fields = $derived.by<LogField[]>(() => {
+	fields = $derived.by(() => {
 		const listed = this.#schemaFields.filter((f) => f.type !== 'json');
 		const cfg = this.fieldConfig;
 		if (cfg === null) return listed;
@@ -116,7 +116,7 @@ export class SearchStore {
 	#fieldsLoadedFor = $state<string | null>(null);
 	#fieldsReload = $state(0);
 
-	columnFields = $derived.by<LogField[]>(() => {
+	columnFields = $derived.by(() => {
 		const cfg = this.fieldConfig;
 		if (!cfg) return this.fields;
 		const msg = cfg.messageField;
@@ -138,7 +138,7 @@ export class SearchStore {
 	#normalized = new WeakMap<Record<string, unknown>, LogHit>();
 	#normalizedFor: FieldConfig | null = null;
 
-	logs: LogHit[] = $derived.by(() => {
+	logs = $derived.by(() => {
 		const fc = this.fieldConfig;
 		if (!fc) return [];
 		if (fc !== this.#normalizedFor) {
@@ -168,7 +168,7 @@ export class SearchStore {
 
 	rows: LogListRow[] = $derived.by(() => {
 		const runs = this.#runs;
-		if (runs === null) return this.logs.map((hit) => ({ kind: 'hit' as const, hit }));
+		if (runs === null) return this.logs.map((hit) => ({ kind: 'hit', hit }));
 		return foldRuns(runs, this.#expandedFolds);
 	});
 
@@ -627,7 +627,7 @@ export class SearchStore {
 		const indexId = this.selectedIndex;
 		if (indexId === null) return;
 		const seq = ++this.#prefSaveSeq;
-		const snapshot: Preferences = {
+		const snapshot = {
 			displayFields: this.#savedFields,
 			lineWrap: this.lineWrap,
 			displayMode: this.displayMode

@@ -20,7 +20,7 @@ type SnapshotInsert = typeof indexStatsSnapshot.$inferInsert;
 async function captureSnapshots(
 	db: Db,
 	qw: QuickwitClient,
-	now: Date = new Date()
+	now = new Date()
 ): Promise<{ captured: number; failed: number }> {
 	const indexes = await listIndexes(qw);
 	if (indexes.length === 0) {

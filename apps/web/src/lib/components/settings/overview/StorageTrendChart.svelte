@@ -71,9 +71,7 @@
 		}
 		const xs = [...allTs].toSorted((a, b) => a - b);
 		if (xs.length === 0) return null;
-		const cols: number[][] = sortedIndexes.map((idx) =>
-			xs.map((ts) => byIndex[idx.indexId]?.get(ts) ?? 0)
-		);
+		const cols = sortedIndexes.map((idx) => xs.map((ts) => byIndex[idx.indexId]?.get(ts) ?? 0));
 		return [xs, ...cols];
 	});
 

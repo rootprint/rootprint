@@ -8,7 +8,6 @@
 	import ResetPasswordModal from '#lib/components/settings/users/ResetPasswordModal.svelte';
 	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 	import { refreshUsers, regenerateInvite, toggleUserRole } from '../user-actions';
-	import type { UserView } from '#lib/api/users.js';
 	import { setSearchParam } from '#lib/components/settings/search-params.js';
 
 	let { data } = $props();
@@ -28,8 +27,8 @@
 				passwordEnabled={data.providers.password.enabled}
 				onRegenerate={regenerateInvite}
 				onToggleRole={toggleUserRole}
-				onResetPassword={(_u: UserView) => (resetOpen = true)}
-				onRemove={(_u: UserView) => (removeOpen = true)}
+				onResetPassword={() => (resetOpen = true)}
+				onRemove={() => (removeOpen = true)}
 			/>
 		{/snippet}
 		<div class="mt-3 flex items-center gap-2">

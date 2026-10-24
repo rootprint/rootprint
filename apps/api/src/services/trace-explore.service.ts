@@ -12,7 +12,6 @@ import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { escapeFilterValue } from '../lib/quickwit/query.js';
 import type { ExploreFilters, ExploreOverviewInput, ExploreSpansInput } from '../schemas/traces.js';
 import type {
-	ExploreOperation,
 	ExploreOverviewResponse,
 	ExploreSpanRow,
 	ExploreSpansResponse
@@ -107,7 +106,7 @@ export async function getExploreSpans(
 	// Floored millis tie a lot; the tiebreak keeps those ties in the same order on every page.
 	if (byDuration) builder.sortBy(TIMESTAMP_FIELD, 'desc');
 	const response = await idx
-		.search<Record<string, unknown>>(builder, { signal: requestSignal() })
+		.search(builder, { signal: requestSignal() })
 		.catch(orEmptyStore(traceIndexId, 'the trace explorer'));
 	if (response === null) return { rows: [], total: 0 };
 	const rows = response.hits.map(toSpanRow).filter((row) => row !== null);
@@ -223,7 +222,7 @@ export async function getExploreOverview(
 	}));
 
 	const opsAgg = totals.aggregations?.['ops'] as BucketAggregationResult | undefined;
-	const operations: ExploreOperation[] = asBuckets(opsAgg)
+	const operations = asBuckets(opsAgg)
 		.map((bucket) => {
 			const operation = String(bucket.key);
 			return {

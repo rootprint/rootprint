@@ -20,7 +20,7 @@
 	let levelField = $state(initial.levelField);
 	let messageField = $state(initial.messageField);
 	let tracebackField = $state(initial.tracebackField ?? '');
-	let contextFieldTags = $state<string[]>([...(initial.contextFields ?? [])]);
+	let contextFieldTags = $state([...(initial.contextFields ?? [])]);
 	let traceIdField = $state(initial.traceIdField);
 
 	let submitting = $state(false);

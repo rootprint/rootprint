@@ -47,7 +47,7 @@
 <div class="flex flex-col gap-4">
 	<div class="flex items-center justify-between">
 		<p class="section-label">Activity</p>
-		<TimeRangeTabs value={window} onChange={(w: Window) => onSetParam('window', w)} />
+		<TimeRangeTabs value={window} onChange={(w) => onSetParam('window', w)} />
 	</div>
 
 	{#await summary}

@@ -115,8 +115,7 @@ export function deserialize(params: ReadonlyURLSearchParams): ParsedQuery {
 	const timeRange = parseTimeRange(params);
 
 	const sort = params.get('sort');
-	const sortDirection: SortDirection =
-		sort === 'asc' || sort === 'desc' ? sort : DEFAULTS.sortDirection;
+	const sortDirection = sort === 'asc' || sort === 'desc' ? sort : DEFAULTS.sortDirection;
 
 	const filters: Filter[] = [];
 	for (const raw of params.getAll('f')) {
@@ -131,7 +130,7 @@ export function deserialize(params: ReadonlyURLSearchParams): ParsedQuery {
 export function buildQueryUrl(
 	current: ReadonlyURLSearchParams,
 	partial: Partial<ParsedQuery>,
-	fold: boolean = current.get('fold') === '1'
+	fold = current.get('fold') === '1'
 ): string {
 	const prev = deserialize(current);
 	const merged: ParsedQuery = { ...prev, ...partial };

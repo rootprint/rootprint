@@ -41,7 +41,7 @@
 	// $state, not $derived. We re-sync from `activeFields` via $effect.
 	let dndItems = $state<DndItem[]>([]);
 
-	const pinnedSet = $derived(new Set<string>(pinnedStart));
+	const pinnedSet = $derived(new Set(pinnedStart));
 
 	$effect(() => {
 		dndItems = activeFields.filter((name) => !pinnedSet.has(name)).map((name) => ({ id: name }));
@@ -89,7 +89,7 @@
 		}
 	});
 
-	const activeSet = $derived(new Set<string>([...activeFields, ...pinnedStart]));
+	const activeSet = $derived(new Set([...activeFields, ...pinnedStart]));
 
 	const availableFields = $derived.by(() => {
 		let fields = allFields.filter((f) => !activeSet.has(f.name));

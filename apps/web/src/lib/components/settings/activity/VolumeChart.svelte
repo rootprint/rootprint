@@ -2,14 +2,14 @@
 	import { parseISO } from 'date-fns';
 	import type uPlotLib from 'uplot';
 
+	import type { VolumeBuckets } from '#lib/api/activity.js';
 	import UplotChart from '#lib/components/ui/uplot/UplotChart.svelte';
 	import { baseContentAt, cssVarColor } from '#lib/utils/chart-colors.js';
 	import { formatCount } from '#lib/utils/format.js';
 	import { formatTickDate, formatTooltipDate } from '#lib/utils/time.js';
 	import { windowToSpanMs, type Window } from '#lib/utils/time-range.js';
 
-	type Bucket = { t: string; count: number };
-	type Props = { buckets: Bucket[]; window?: Window };
+	type Props = { buckets: VolumeBuckets; window?: Window };
 	let { buckets, window = '7d' }: Props = $props();
 
 	const BAR_BUCKET_MS: Record<Window, number> = {

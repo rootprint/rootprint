@@ -17,6 +17,7 @@ export {
 } from './indexes.js';
 export * from './service-accounts.js';
 export * from './settings.js';
+export * from './shares.js';
 export * from './sources.js';
 export * from './traces.js';
 export * from './users.js';

@@ -1,4 +1,4 @@
-import type { ExportFormat } from '../types.js';
+import type { ExportFormat, ExportPreflightResult } from '../types.js';
 import type { IndexConfig } from './index.service.js';
 
 import { type QuickwitClient } from '@rootprint-io/quickwit-js';
@@ -7,12 +7,6 @@ import { EXPORT_MAX_ROWS } from '../constants.js';
 import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { epochToMs } from '../lib/time.js';
 import type { ExportLogsQueryInput } from '../schemas/export.js';
-
-export type ExportPreflightResult = {
-	total: number;
-	capped: boolean;
-	numHits: number;
-};
 
 const NEWLINE = '\n';
 const TEXT_ENCODER = new TextEncoder();

@@ -11,5 +11,5 @@ export const healthRouter = new Hono<AppEnv>().get(
 		summary: 'Health check',
 		ok: HealthResponse
 	}),
-	(c) => c.json({ status: 'ok' as const })
+	(c) => c.json({ status: 'ok' })
 );

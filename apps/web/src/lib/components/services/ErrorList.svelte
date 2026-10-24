@@ -139,7 +139,7 @@
 		failure = null;
 		offset = 0;
 		rows = [];
-		seenKeys = new Set<string>();
+		seenKeys = new Set();
 		void fetchPage(0, scope);
 		return () => inflight?.abort();
 	});
