@@ -1,3 +1,4 @@
+export type { ActivityQueryInput } from './admin-activity.js';
 export * from './api-keys.js';
 export * from './auth.js';
 export {
