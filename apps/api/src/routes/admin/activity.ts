@@ -4,26 +4,21 @@ import type { AuthedEnv } from '../../env.js';
 import { db } from '../../lib/db.js';
 import { describe, validator } from '../../lib/openapi/describe.js';
 import { requireAdmin } from '../../middleware/require-admin.js';
-import { RecentQuery, TopActorsQuery, WindowQuery } from '../../schemas/admin-activity.js';
+import { ActivityQuery, RecentQuery, TopActorsQuery } from '../../schemas/admin-activity.js';
 import {
 	ActorIndexesResponse,
-	ActorSummaryRowResponse,
 	LatencyBucketsResponse,
 	RecentResultResponse,
 	SummaryRowResponse,
-	TopActorsResponse,
-	VolumeBucketsResponse
+	TopActorsResponse
 } from '../../schemas/responses/admin.js';
 import {
-	getActorRecent,
-	getActorSummary,
-	getActorVolumeBuckets,
+	getIndexUsage,
 	getLatencyBuckets,
+	getRecent,
 	getSummary,
-	getTopActors,
-	getUserIndexes
+	getTopActors
 } from '../../services/search-activity.service.js';
-import { IndexIdParams, PersonalApiKeyIdParams, UserIdParams } from '../../utils/params.js';
 
 // Routes are chained so Hono propagates request/response types for the RPC client.
 export const adminActivityRouter = new Hono<AuthedEnv>()
@@ -32,27 +27,31 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		'/summary',
 		describe({
 			tag: 'System monitoring',
-			summary: 'Get global search activity summary',
+			summary: 'Get search activity summary',
 			ok: SummaryRowResponse
 		}),
-		validator('query', WindowQuery),
-		async (c) => {
-			const q = c.req.valid('query');
-			return c.json(await getSummary(db, q.window));
-		}
+		validator('query', ActivityQuery),
+		async (c) => c.json(await getSummary(db, c.req.valid('query')))
 	)
 	.get(
 		'/latency',
 		describe({
 			tag: 'System monitoring',
-			summary: 'Get global latency time series',
+			summary: 'Get latency time series',
 			ok: LatencyBucketsResponse
 		}),
-		validator('query', WindowQuery),
-		async (c) => {
-			const q = c.req.valid('query');
-			return c.json(await getLatencyBuckets(db, q.window));
-		}
+		validator('query', ActivityQuery),
+		async (c) => c.json(await getLatencyBuckets(db, c.req.valid('query')))
+	)
+	.get(
+		'/indexes',
+		describe({
+			tag: 'System monitoring',
+			summary: 'Get per-index usage breakdown',
+			ok: ActorIndexesResponse
+		}),
+		validator('query', ActivityQuery),
+		async (c) => c.json(await getIndexUsage(db, c.req.valid('query')))
 	)
 	.get(
 		'/top-actors',
@@ -62,188 +61,15 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			ok: TopActorsResponse
 		}),
 		validator('query', TopActorsQuery),
-		async (c) => {
-			const q = c.req.valid('query');
-			return c.json(await getTopActors(db, q.window, q.limit));
-		}
+		async (c) => c.json(await getTopActors(db, c.req.valid('query')))
 	)
 	.get(
-		'/users/:userId/summary',
+		'/recent',
 		describe({
 			tag: 'System monitoring',
-			summary: 'Get search activity summary for a user',
-			ok: ActorSummaryRowResponse
-		}),
-		validator('param', UserIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { userId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getActorSummary(db, q.window, { kind: 'user', userId }));
-		}
-	)
-	.get(
-		'/users/:userId/volume',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get volume time series for a user',
-			ok: VolumeBucketsResponse
-		}),
-		validator('param', UserIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { userId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getActorVolumeBuckets(db, q.window, { kind: 'user', userId }));
-		}
-	)
-	.get(
-		'/users/:userId/latency',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get latency time series for a user',
-			ok: LatencyBucketsResponse
-		}),
-		validator('param', UserIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { userId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getLatencyBuckets(db, q.window, { kind: 'user', userId }));
-		}
-	)
-	.get(
-		'/users/:userId/indexes',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get per-index usage breakdown for a user',
-			ok: ActorIndexesResponse
-		}),
-		validator('param', UserIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { userId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getUserIndexes(db, q.window, userId));
-		}
-	)
-	.get(
-		'/users/:userId/recent',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get recent searches for a user',
+			summary: 'Get recent searches',
 			ok: RecentResultResponse
 		}),
-		validator('param', UserIdParams),
 		validator('query', RecentQuery),
-		async (c) => {
-			const { userId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getActorRecent(db, q.window, { kind: 'user', userId }, q));
-		}
-	)
-	.get(
-		'/api-keys/:apiKeyId/summary',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get search activity summary for an API key',
-			ok: ActorSummaryRowResponse
-		}),
-		validator('param', PersonalApiKeyIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { apiKeyId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getActorSummary(db, q.window, { kind: 'apiKey', apiKeyId }));
-		}
-	)
-	.get(
-		'/api-keys/:apiKeyId/volume',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get volume time series for an API key',
-			ok: VolumeBucketsResponse
-		}),
-		validator('param', PersonalApiKeyIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { apiKeyId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getActorVolumeBuckets(db, q.window, { kind: 'apiKey', apiKeyId }));
-		}
-	)
-	.get(
-		'/api-keys/:apiKeyId/latency',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get latency time series for an API key',
-			ok: LatencyBucketsResponse
-		}),
-		validator('param', PersonalApiKeyIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { apiKeyId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getLatencyBuckets(db, q.window, { kind: 'apiKey', apiKeyId }));
-		}
-	)
-	.get(
-		'/api-keys/:apiKeyId/recent',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get recent searches for an API key',
-			ok: RecentResultResponse
-		}),
-		validator('param', PersonalApiKeyIdParams),
-		validator('query', RecentQuery),
-		async (c) => {
-			const { apiKeyId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getActorRecent(db, q.window, { kind: 'apiKey', apiKeyId }, q));
-		}
-	)
-	.get(
-		'/indexes/:indexId/summary',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get search activity summary for an index',
-			ok: SummaryRowResponse
-		}),
-		validator('param', IndexIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { indexId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getSummary(db, q.window, { kind: 'index', indexId }));
-		}
-	)
-	.get(
-		'/indexes/:indexId/latency',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get latency time series for an index',
-			ok: LatencyBucketsResponse
-		}),
-		validator('param', IndexIdParams),
-		validator('query', WindowQuery),
-		async (c) => {
-			const { indexId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getLatencyBuckets(db, q.window, { kind: 'index', indexId }));
-		}
-	)
-	.get(
-		'/indexes/:indexId/actors',
-		describe({
-			tag: 'System monitoring',
-			summary: 'Get top actors for an index',
-			ok: TopActorsResponse
-		}),
-		validator('param', IndexIdParams),
-		validator('query', TopActorsQuery),
-		async (c) => {
-			const { indexId } = c.req.valid('param');
-			const q = c.req.valid('query');
-			return c.json(await getTopActors(db, q.window, q.limit, { kind: 'index', indexId }));
-		}
+		async (c) => c.json(await getRecent(db, c.req.valid('query')))
 	);

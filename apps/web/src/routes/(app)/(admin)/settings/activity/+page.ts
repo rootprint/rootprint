@@ -8,8 +8,8 @@ export const load: PageLoad = async ({ url }) => {
 	// Issue all panel requests in parallel; the page consumes them with {#await}.
 	return {
 		window,
-		summary: getSummary(window),
-		latency: getLatency(window),
-		topActors: getTopActors(window)
+		summary: getSummary({ window }),
+		latency: getLatency({ window }),
+		topActors: getTopActors({ window })
 	};
 };

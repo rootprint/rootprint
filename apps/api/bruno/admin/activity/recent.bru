@@ -1,17 +1,20 @@
 meta {
-  name: User Recent Searches
+  name: Recent Searches
   type: http
-  seq: 8
+  seq: 5
 }
 
 get {
-  url: {{baseUrl}}/api/admin/activity/users/{{userId}}/recent
+  url: {{baseUrl}}/api/admin/activity/recent
   body: none
   auth: none
 }
 
 params:query {
   ~window: 24h
+  ~user: {{userId}}
+  ~apiKey: {{apiKeyId}}
+  ~index: {{indexId}}
   ~offset: 0
   ~limit: 100
   ~status: any

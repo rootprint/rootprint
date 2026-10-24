@@ -23,7 +23,6 @@
 			window={data.window}
 			offset={data.offset}
 			summary={data.summary}
-			volume={data.volume}
 			latency={data.latency}
 			recent={data.recent}
 			onSetParam={setSearchParam}

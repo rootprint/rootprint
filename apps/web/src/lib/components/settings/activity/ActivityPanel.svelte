@@ -11,8 +11,7 @@
 		LatencyBuckets,
 		RecentResult,
 		Summary,
-		TopActors,
-		VolumeBuckets
+		TopActors
 	} from '#lib/api/activity.js';
 	import type { Window } from '#lib/utils/time-range.js';
 	import { formatCount, formatDurationMs, formatOrDash } from '#lib/utils/format.js';
@@ -23,7 +22,6 @@
 		window: Window;
 		offset?: number;
 		summary: Promise<Summary>;
-		volume: Promise<VolumeBuckets>;
 		latency: Promise<LatencyBuckets>;
 		indexes?: Promise<ActorIndexes>;
 		actors?: Promise<TopActors>;
@@ -35,7 +33,6 @@
 		window,
 		offset = 0,
 		summary,
-		volume,
 		latency,
 		indexes,
 		actors,
@@ -58,19 +55,14 @@
 		<PanelError message="Couldn't load the summary" error={e} />
 	{/await}
 
-	<div class="grid grid-cols-2 gap-4">
-		{#await volume then buckets}
+	{#await latency then buckets}
+		<div class="grid grid-cols-2 gap-4">
 			<VolumeChart {buckets} {window} />
-		{:catch e}
-			<PanelError message="Couldn't load search volume" error={e} />
-		{/await}
-
-		{#await latency then buckets}
 			<LatencyChart {buckets} {window} />
-		{:catch e}
-			<PanelError message="Couldn't load latency" error={e} />
-		{/await}
-	</div>
+		</div>
+	{:catch e}
+		<PanelError message="Couldn't load search volume and latency" error={e} />
+	{/await}
 
 	{#if indexes}
 		{#await indexes then rows}

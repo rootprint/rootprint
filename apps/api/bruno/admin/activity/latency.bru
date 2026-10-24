@@ -1,5 +1,5 @@
 meta {
-  name: Global Latency
+  name: Latency
   type: http
   seq: 2
 }
@@ -12,4 +12,7 @@ get {
 
 params:query {
   ~window: 24h
+  ~user: {{userId}}
+  ~apiKey: {{apiKeyId}}
+  ~index: {{indexId}}
 }

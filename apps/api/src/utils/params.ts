@@ -10,11 +10,7 @@ export const UserIdParams = v.object({
 	userId: v.pipe(v.string(), v.minLength(1))
 });
 
-// Ingest keys live in `api_key` (serial id); personal keys in Better Auth's `apikey` (text id).
+// Ingest keys live in `api_key`, whose id is serial.
 export const ApiKeyIdParams = v.object({
 	apiKeyId: positiveInt('apiKeyId')
-});
-
-export const PersonalApiKeyIdParams = v.object({
-	apiKeyId: v.pipe(v.string(), v.minLength(1))
 });
