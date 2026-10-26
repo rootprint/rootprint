@@ -58,12 +58,8 @@ function num(x: string | null | undefined): number | null {
 
 export async function getSummary(db: Db, f: ActivityFilter): Promise<SummaryRow> {
 	const { interval } = resolveWindow(f.window);
-	const [names, result] = await Promise.all([
-		f.apiKey
-			? db.select({ name: apikey.name }).from(apikey).where(eq(apikey.id, f.apiKey))
-			: f.user
-				? db.select({ name: user.name }).from(user).where(eq(user.id, f.user))
-				: [],
+	const [keys, result] = await Promise.all([
+		f.apiKey ? db.select({ name: apikey.name }).from(apikey).where(eq(apikey.id, f.apiKey)) : [],
 		db.execute<{
 			total: string;
 			errors: string;
@@ -88,7 +84,7 @@ export async function getSummary(db: Db, f: ActivityFilter): Promise<SummaryRow>
 		p50: num(r?.p50),
 		p95: num(r?.p95),
 		p99: num(r?.p99),
-		displayName: names[0]?.name ?? null
+		displayName: keys[0]?.name ?? null
 	};
 }
 

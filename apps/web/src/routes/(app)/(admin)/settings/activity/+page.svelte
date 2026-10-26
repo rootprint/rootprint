@@ -2,6 +2,7 @@
 	import KpiStrip from '#lib/components/settings/activity/KpiStrip.svelte';
 	import LatencyChart from '#lib/components/settings/activity/LatencyChart.svelte';
 	import TopActorsTable from '#lib/components/settings/activity/TopActorsTable.svelte';
+	import VolumeChart from '#lib/components/settings/activity/VolumeChart.svelte';
 	import TimeRangeTabs from '#lib/components/ui/TimeRangeTabs.svelte';
 	import PageHeader from '#lib/components/ui/PageHeader.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
@@ -34,9 +35,12 @@
 		{#await data.latency}
 			<div class="bg-base-200 rounded-box h-72 animate-pulse"></div>
 		{:then buckets}
-			<LatencyChart {buckets} window={data.window} />
+			<div class="grid grid-cols-2 gap-4">
+				<VolumeChart {buckets} window={data.window} />
+				<LatencyChart {buckets} window={data.window} />
+			</div>
 		{:catch e}
-			<PanelError message="Couldn't load latency" error={e} />
+			<PanelError message="Couldn't load search volume and latency" error={e} />
 		{/await}
 
 		{#await data.topActors then rows}

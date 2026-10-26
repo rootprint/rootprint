@@ -4,13 +4,7 @@ import type { AuthedEnv } from '../../env.js';
 import { db } from '../../lib/db.js';
 import { describe, validator } from '../../lib/openapi/describe.js';
 import { requireAdmin } from '../../middleware/require-admin.js';
-import {
-	ActivityQuery,
-	IndexUsageQuery,
-	RecentQuery,
-	SCOPE_REQUIRED,
-	TopActorsQuery
-} from '../../schemas/admin-activity.js';
+import { ActivityQuery, RecentQuery, TopActorsQuery } from '../../schemas/admin-activity.js';
 import {
 	IndexUsageResponse,
 	LatencyBucketsResponse,
@@ -54,10 +48,9 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get per-index usage breakdown',
-			description: SCOPE_REQUIRED,
 			ok: IndexUsageResponse
 		}),
-		validator('query', IndexUsageQuery),
+		validator('query', ActivityQuery),
 		async (c) => c.json(await getIndexUsage(db, c.req.valid('query')))
 	)
 	.get(
@@ -75,7 +68,6 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get recent searches',
-			description: SCOPE_REQUIRED,
 			ok: RecentResultResponse
 		}),
 		validator('query', RecentQuery),

@@ -3464,7 +3464,6 @@
 	"paths": {
 		"/api/admin/activity/indexes": {
 			"get": {
-				"description": "At least one of user, apiKey or index is required.",
 				"operationId": "getApiAdminActivityIndexes",
 				"parameters": [
 					{
@@ -3625,7 +3624,6 @@
 		},
 		"/api/admin/activity/recent": {
 			"get": {
-				"description": "At least one of user, apiKey or index is required.",
 				"operationId": "getApiAdminActivityRecent",
 				"parameters": [
 					{

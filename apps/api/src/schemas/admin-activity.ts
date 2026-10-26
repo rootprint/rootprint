@@ -12,28 +12,17 @@ export const ActivityQuery = v.object({
 	index: v.optional(idParam)
 });
 
-const hasScope = (q: ActivityFilter) => Boolean(q.user || q.apiKey || q.index);
-export const SCOPE_REQUIRED = 'At least one of user, apiKey or index is required.';
-
-export const IndexUsageQuery = v.pipe(
-	ActivityQuery,
-	v.check((q) => hasScope(q), SCOPE_REQUIRED)
-);
-
 export const TopActorsQuery = v.object({
 	...ActivityQuery.entries,
 	limit: v.optional(intParam({ min: 1, max: 50, label: 'limit' }), '10')
 });
 
-export const RecentQuery = v.pipe(
-	v.object({
-		...ActivityQuery.entries,
-		offset: v.optional(intParam({ min: 0, label: 'offset' }), '0'),
-		limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' }), '100'),
-		status: v.optional(v.picklist(['any', 'success', 'error']), 'any')
-	}),
-	v.check((q) => hasScope(q), SCOPE_REQUIRED)
-);
+export const RecentQuery = v.object({
+	...ActivityQuery.entries,
+	offset: v.optional(intParam({ min: 0, label: 'offset' }), '0'),
+	limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' }), '100'),
+	status: v.optional(v.picklist(['any', 'success', 'error']), 'any')
+});
 
 export type ActivityWindow = (typeof ActivityWindowValues)[number];
 export type ActivityQueryInput = v.InferInput<typeof ActivityQuery>;

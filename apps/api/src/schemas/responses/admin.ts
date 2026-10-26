@@ -17,7 +17,7 @@ export const SummaryRowResponse = named(
 		totalSearches: v.number(),
 		errorCount: v.number(),
 		...percentiles,
-		// Name of the API key or user the activity is scoped to.
+		// Name of the API key the activity is scoped to.
 		displayName: v.nullable(v.string())
 	})
 );
