@@ -13,7 +13,7 @@ export const ActivityQuery = v.object({
 });
 
 const hasScope = (q: ActivityFilter) => Boolean(q.user || q.apiKey || q.index);
-const SCOPE_REQUIRED = 'user, apiKey or index is required';
+export const SCOPE_REQUIRED = 'At least one of user, apiKey or index is required.';
 
 export const IndexUsageQuery = v.pipe(
 	ActivityQuery,

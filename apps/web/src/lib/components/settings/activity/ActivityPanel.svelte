@@ -7,7 +7,7 @@
 	import ListCard from '#lib/components/ui/ListCard.svelte';
 	import { ACTIVITY_PAGE_SIZE } from '#lib/api/activity.js';
 	import type {
-		ActorIndexes,
+		IndexUsage,
 		LatencyBuckets,
 		RecentResult,
 		Summary,
@@ -23,7 +23,7 @@
 		offset?: number;
 		summary: Promise<Summary>;
 		latency: Promise<LatencyBuckets>;
-		indexes?: Promise<ActorIndexes>;
+		indexes?: Promise<IndexUsage>;
 		actors?: Promise<TopActors>;
 		recent?: Promise<RecentResult>;
 		onSetParam: (key: string, val: string) => void;

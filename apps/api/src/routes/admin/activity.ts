@@ -8,10 +8,11 @@ import {
 	ActivityQuery,
 	IndexUsageQuery,
 	RecentQuery,
+	SCOPE_REQUIRED,
 	TopActorsQuery
 } from '../../schemas/admin-activity.js';
 import {
-	ActorIndexesResponse,
+	IndexUsageResponse,
 	LatencyBucketsResponse,
 	RecentResultResponse,
 	SummaryRowResponse,
@@ -53,7 +54,8 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get per-index usage breakdown',
-			ok: ActorIndexesResponse
+			description: SCOPE_REQUIRED,
+			ok: IndexUsageResponse
 		}),
 		validator('query', IndexUsageQuery),
 		async (c) => c.json(await getIndexUsage(db, c.req.valid('query')))
@@ -73,6 +75,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'System monitoring',
 			summary: 'Get recent searches',
+			description: SCOPE_REQUIRED,
 			ok: RecentResultResponse
 		}),
 		validator('query', RecentQuery),

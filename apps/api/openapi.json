@@ -170,29 +170,6 @@
 				],
 				"type": "object"
 			},
-			"ActorIndexRowResponse": {
-				"properties": {
-					"avgDurationMs": {
-						"type": "number"
-					},
-					"count": {
-						"type": "number"
-					},
-					"errorCount": {
-						"type": "number"
-					},
-					"indexId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"indexId",
-					"count",
-					"avgDurationMs",
-					"errorCount"
-				],
-				"type": "object"
-			},
 			"ApiErrorBody": {
 				"properties": {
 					"error": {
@@ -1524,6 +1501,29 @@
 					"indexId",
 					"displayName",
 					"isTraceIndex"
+				],
+				"type": "object"
+			},
+			"IndexUsageRowResponse": {
+				"properties": {
+					"avgDurationMs": {
+						"type": "number"
+					},
+					"count": {
+						"type": "number"
+					},
+					"errorCount": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexId",
+					"count",
+					"avgDurationMs",
+					"errorCount"
 				],
 				"type": "object"
 			},
@@ -3464,6 +3464,7 @@
 	"paths": {
 		"/api/admin/activity/indexes": {
 			"get": {
+				"description": "At least one of user, apiKey or index is required.",
 				"operationId": "getApiAdminActivityIndexes",
 				"parameters": [
 					{
@@ -3509,7 +3510,7 @@
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/ActorIndexRowResponse"
+										"$ref": "#/components/schemas/IndexUsageRowResponse"
 									},
 									"type": "array"
 								}
@@ -3624,6 +3625,7 @@
 		},
 		"/api/admin/activity/recent": {
 			"get": {
+				"description": "At least one of user, apiKey or index is required.",
 				"operationId": "getApiAdminActivityRecent",
 				"parameters": [
 					{

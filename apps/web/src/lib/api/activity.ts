@@ -9,7 +9,7 @@ export const ACTIVITY_PAGE_SIZE = 50;
 
 export type Summary = InferResponseType<typeof activity.summary.$get, 200>;
 export type LatencyBuckets = InferResponseType<typeof activity.latency.$get, 200>;
-export type ActorIndexes = InferResponseType<typeof activity.indexes.$get, 200>;
+export type IndexUsage = InferResponseType<typeof activity.indexes.$get, 200>;
 export type TopActors = InferResponseType<(typeof activity)['top-actors']['$get'], 200>;
 export type RecentResult = InferResponseType<typeof activity.recent.$get, 200>;
 
@@ -25,7 +25,7 @@ export async function getLatency(query: ActivityQuery): Promise<LatencyBuckets> 
 	return res.json();
 }
 
-export async function getIndexUsage(query: ActivityQuery): Promise<ActorIndexes> {
+export async function getIndexUsage(query: ActivityQuery): Promise<IndexUsage> {
 	const res = await activity.indexes.$get({ query });
 	if (!res.ok) throw await readApiError(res, 'Failed to load index usage');
 	return res.json();

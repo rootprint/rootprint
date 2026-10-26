@@ -9,7 +9,7 @@ import type {
 	TopActorsFilter
 } from '../schemas/admin-activity.js';
 import type {
-	ActorIndexRow,
+	IndexUsageRow,
 	LatencyBucket,
 	RecentResult,
 	SummaryRow,
@@ -58,8 +58,12 @@ function num(x: string | null | undefined): number | null {
 
 export async function getSummary(db: Db, f: ActivityFilter): Promise<SummaryRow> {
 	const { interval } = resolveWindow(f.window);
-	const [keys, result] = await Promise.all([
-		f.apiKey ? db.select({ name: apikey.name }).from(apikey).where(eq(apikey.id, f.apiKey)) : [],
+	const [names, result] = await Promise.all([
+		f.apiKey
+			? db.select({ name: apikey.name }).from(apikey).where(eq(apikey.id, f.apiKey))
+			: f.user
+				? db.select({ name: user.name }).from(user).where(eq(user.id, f.user))
+				: [],
 		db.execute<{
 			total: string;
 			errors: string;
@@ -84,7 +88,7 @@ export async function getSummary(db: Db, f: ActivityFilter): Promise<SummaryRow>
 		p50: num(r?.p50),
 		p95: num(r?.p95),
 		p99: num(r?.p99),
-		displayName: keys[0]?.name ?? null
+		displayName: names[0]?.name ?? null
 	};
 }
 
@@ -155,26 +159,23 @@ export async function getTopActors(db: Db, f: TopActorsFilter): Promise<TopActor
 
 	const userIds = rows.filter((r) => r.kind === 'user').map((r) => r.id);
 	const apiKeyIds = rows.filter((r) => r.kind === 'apiKey').map((r) => r.id);
-	const userLabels = new Map<string, string>();
-	const apiKeyLabels = new Map<string, string>();
-	if (userIds.length > 0) {
-		const rs = await db
-			.select({ id: user.id, email: user.email })
-			.from(user)
-			.where(inArray(user.id, userIds));
-		for (const r of rs) userLabels.set(r.id, r.email);
-	}
-	if (apiKeyIds.length > 0) {
-		const rs = await db
-			.select({ id: apikey.id, name: apikey.name })
-			.from(apikey)
-			.where(inArray(apikey.id, apiKeyIds));
-		for (const r of rs) if (r.name) apiKeyLabels.set(r.id, r.name);
-	}
+	const [users, keys] = await Promise.all([
+		userIds.length > 0
+			? db.select({ id: user.id, label: user.email }).from(user).where(inArray(user.id, userIds))
+			: [],
+		apiKeyIds.length > 0
+			? db
+					.select({ id: apikey.id, label: apikey.name })
+					.from(apikey)
+					.where(inArray(apikey.id, apiKeyIds))
+			: []
+	]);
+	const userLabels = new Map(users.map((u) => [u.id, u.label]));
+	const apiKeyLabels = new Map(keys.map((k) => [k.id, k.label]));
 
 	return rows.map((r) => ({
 		...r,
-		label: r.kind === 'user' ? (userLabels.get(r.id) ?? null) : (apiKeyLabels.get(r.id) ?? null)
+		label: (r.kind === 'user' ? userLabels : apiKeyLabels).get(r.id) ?? null
 	}));
 }
 
@@ -186,7 +187,7 @@ function scopePredicate(f: ActivityFilter) {
 	return sql.join(preds, sql` AND `);
 }
 
-export async function getIndexUsage(db: Db, f: ActivityFilter): Promise<ActorIndexRow[]> {
+export async function getIndexUsage(db: Db, f: ActivityFilter): Promise<IndexUsageRow[]> {
 	const { interval } = resolveWindow(f.window);
 	const result = await db.execute<{
 		index_id: string;
