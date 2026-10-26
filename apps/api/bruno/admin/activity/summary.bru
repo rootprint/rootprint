@@ -1,5 +1,5 @@
 meta {
-  name: Global Summary
+  name: Summary
   type: http
   seq: 1
 }
@@ -12,8 +12,12 @@ get {
 
 params:query {
   ~window: 24h
+  ~user: {{userId}}
+  ~apiKey: {{personalKeyId}}
+  ~index: {{indexId}}
 }
 
 docs {
   window is one of 24h, 7d, 30d (defaults server-side when omitted).
+  user, apiKey and index narrow the activity; several combine with AND.
 }

@@ -1,7 +1,7 @@
 meta {
   name: Top Actors
   type: http
-  seq: 3
+  seq: 4
 }
 
 get {
@@ -12,5 +12,8 @@ get {
 
 params:query {
   ~window: 24h
+  ~user: {{userId}}
+  ~apiKey: {{personalKeyId}}
+  ~index: {{indexId}}
   ~limit: 10
 }

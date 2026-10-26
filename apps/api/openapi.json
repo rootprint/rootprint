@@ -170,99 +170,6 @@
 				],
 				"type": "object"
 			},
-			"ActorIndexRowResponse": {
-				"properties": {
-					"avgDurationMs": {
-						"type": "number"
-					},
-					"count": {
-						"type": "number"
-					},
-					"errorCount": {
-						"type": "number"
-					},
-					"indexId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"indexId",
-					"count",
-					"avgDurationMs",
-					"errorCount"
-				],
-				"type": "object"
-			},
-			"ActorSummaryRowResponse": {
-				"properties": {
-					"displayName": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"email": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"errorCount": {
-						"type": "number"
-					},
-					"p50": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"p95": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"p99": {
-						"anyOf": [
-							{
-								"type": "number"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"totalSearches": {
-						"type": "number"
-					}
-				},
-				"required": [
-					"totalSearches",
-					"errorCount",
-					"p50",
-					"p95",
-					"p99",
-					"displayName",
-					"email"
-				],
-				"type": "object"
-			},
 			"ApiErrorBody": {
 				"properties": {
 					"error": {
@@ -1594,6 +1501,29 @@
 					"indexId",
 					"displayName",
 					"isTraceIndex"
+				],
+				"type": "object"
+			},
+			"IndexUsageRowResponse": {
+				"properties": {
+					"avgDurationMs": {
+						"type": "number"
+					},
+					"count": {
+						"type": "number"
+					},
+					"errorCount": {
+						"type": "number"
+					},
+					"indexId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"indexId",
+					"count",
+					"avgDurationMs",
+					"errorCount"
 				],
 				"type": "object"
 			},
@@ -3106,6 +3036,16 @@
 			},
 			"SummaryRowResponse": {
 				"properties": {
+					"displayName": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"errorCount": {
 						"type": "number"
 					},
@@ -3148,7 +3088,8 @@
 					"errorCount",
 					"p50",
 					"p95",
-					"p99"
+					"p99",
+					"displayName"
 				],
 				"type": "object"
 			},
@@ -3483,21 +3424,6 @@
 					"email"
 				],
 				"type": "object"
-			},
-			"VolumeBucketResponse": {
-				"properties": {
-					"count": {
-						"type": "number"
-					},
-					"t": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"t",
-					"count"
-				],
-				"type": "object"
 			}
 		},
 		"securitySchemes": {
@@ -3536,19 +3462,10 @@
 	},
 	"openapi": "3.1.0",
 	"paths": {
-		"/api/admin/activity/api-keys/{apiKeyId}/latency": {
+		"/api/admin/activity/indexes": {
 			"get": {
-				"operationId": "getApiAdminActivityApiKeysByApiKeyIdLatency",
+				"operationId": "getApiAdminActivityIndexes",
 				"parameters": [
-					{
-						"in": "path",
-						"name": "apiKeyId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
 					{
 						"in": "query",
 						"name": "window",
@@ -3558,6 +3475,110 @@
 								"7d",
 								"30d"
 							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "user",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "apiKey",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/IndexUsageRowResponse"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Successful response"
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				},
+				"summary": "Get per-index usage breakdown",
+				"tags": [
+					"System monitoring"
+				]
+			}
+		},
+		"/api/admin/activity/latency": {
+			"get": {
+				"operationId": "getApiAdminActivityLatency",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "window",
+						"schema": {
+							"enum": [
+								"24h",
+								"7d",
+								"30d"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "user",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "apiKey",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"schema": {
+							"minLength": 1,
 							"type": "string"
 						}
 					}
@@ -3595,25 +3616,16 @@
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				},
-				"summary": "Get latency time series for an API key",
+				"summary": "Get latency time series",
 				"tags": [
 					"System monitoring"
 				]
 			}
 		},
-		"/api/admin/activity/api-keys/{apiKeyId}/recent": {
+		"/api/admin/activity/recent": {
 			"get": {
-				"operationId": "getApiAdminActivityApiKeysByApiKeyIdRecent",
+				"operationId": "getApiAdminActivityRecent",
 				"parameters": [
-					{
-						"in": "path",
-						"name": "apiKeyId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
 					{
 						"in": "query",
 						"name": "window",
@@ -3623,6 +3635,30 @@
 								"7d",
 								"30d"
 							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "user",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "apiKey",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"schema": {
+							"minLength": 1,
 							"type": "string"
 						}
 					},
@@ -3691,393 +3727,7 @@
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				},
-				"summary": "Get recent searches for an API key",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/api-keys/{apiKeyId}/summary": {
-			"get": {
-				"operationId": "getApiAdminActivityApiKeysByApiKeyIdSummary",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "apiKeyId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ActorSummaryRowResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get search activity summary for an API key",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/api-keys/{apiKeyId}/volume": {
-			"get": {
-				"operationId": "getApiAdminActivityApiKeysByApiKeyIdVolume",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "apiKeyId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/VolumeBucketResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get volume time series for an API key",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/indexes/{indexId}/actors": {
-			"get": {
-				"operationId": "getApiAdminActivityIndexesByIndexIdActors",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "limit",
-						"schema": {
-							"default": 10,
-							"maximum": 50,
-							"minimum": 1,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/TopActorRowResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get top actors for an index",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/indexes/{indexId}/latency": {
-			"get": {
-				"operationId": "getApiAdminActivityIndexesByIndexIdLatency",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/LatencyBucketResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get latency time series for an index",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/indexes/{indexId}/summary": {
-			"get": {
-				"operationId": "getApiAdminActivityIndexesByIndexIdSummary",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "indexId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SummaryRowResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get search activity summary for an index",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/latency": {
-			"get": {
-				"operationId": "getApiAdminActivityLatency",
-				"parameters": [
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/LatencyBucketResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get global latency time series",
+				"summary": "Get recent searches",
 				"tags": [
 					"System monitoring"
 				]
@@ -4098,6 +3748,30 @@
 							],
 							"type": "string"
 						}
+					},
+					{
+						"in": "query",
+						"name": "user",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "apiKey",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
 					}
 				],
 				"responses": {
@@ -4130,7 +3804,7 @@
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				},
-				"summary": "Get global search activity summary",
+				"summary": "Get search activity summary",
 				"tags": [
 					"System monitoring"
 				]
@@ -4149,6 +3823,30 @@
 								"7d",
 								"30d"
 							],
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "user",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "apiKey",
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"schema": {
+							"minLength": 1,
 							"type": "string"
 						}
 					},
@@ -4198,359 +3896,6 @@
 					}
 				},
 				"summary": "Get top actors by search count",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/users/{userId}/indexes": {
-			"get": {
-				"operationId": "getApiAdminActivityUsersByUserIdIndexes",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ActorIndexRowResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get per-index usage breakdown for a user",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/users/{userId}/latency": {
-			"get": {
-				"operationId": "getApiAdminActivityUsersByUserIdLatency",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/LatencyBucketResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get latency time series for a user",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/users/{userId}/recent": {
-			"get": {
-				"operationId": "getApiAdminActivityUsersByUserIdRecent",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "offset",
-						"schema": {
-							"default": 0,
-							"minimum": 0,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					},
-					{
-						"in": "query",
-						"name": "limit",
-						"schema": {
-							"default": 100,
-							"maximum": 500,
-							"minimum": 1,
-							"pattern": "^\\d+$",
-							"type": "integer"
-						}
-					},
-					{
-						"in": "query",
-						"name": "status",
-						"schema": {
-							"default": "any",
-							"enum": [
-								"any",
-								"success",
-								"error"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/RecentResultResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get recent searches for a user",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/users/{userId}/summary": {
-			"get": {
-				"operationId": "getApiAdminActivityUsersByUserIdSummary",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ActorSummaryRowResponse"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get search activity summary for a user",
-				"tags": [
-					"System monitoring"
-				]
-			}
-		},
-		"/api/admin/activity/users/{userId}/volume": {
-			"get": {
-				"operationId": "getApiAdminActivityUsersByUserIdVolume",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"minLength": 1,
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "window",
-						"schema": {
-							"enum": [
-								"24h",
-								"7d",
-								"30d"
-							],
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/VolumeBucketResponse"
-									},
-									"type": "array"
-								}
-							}
-						},
-						"description": "Successful response"
-					},
-					"400": {
-						"$ref": "#/components/responses/BadRequest"
-					},
-					"401": {
-						"$ref": "#/components/responses/Unauthorized"
-					},
-					"403": {
-						"$ref": "#/components/responses/Forbidden"
-					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					},
-					"503": {
-						"$ref": "#/components/responses/ServiceUnavailable"
-					}
-				},
-				"summary": "Get volume time series for a user",
 				"tags": [
 					"System monitoring"
 				]

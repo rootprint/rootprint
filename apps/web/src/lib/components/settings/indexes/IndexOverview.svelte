@@ -2,7 +2,7 @@
 	import type { IndexDetail } from 'api/types';
 
 	import { goto } from '$app/navigation';
-	import type { LatencyBuckets, Summary, TopActors, VolumeBuckets } from '#lib/api/activity.js';
+	import type { LatencyBuckets, Summary, TopActors } from '#lib/api/activity.js';
 	import type { ApiKeyView } from '#lib/api/api-keys.js';
 	import { getIndexStats, type IndexDescribe } from '#lib/api/indexes.js';
 	import LogFrequencyChart from '#lib/components/logs/LogFrequencyChart.svelte';
@@ -25,7 +25,6 @@
 		window: Window;
 		activity: {
 			summary: Promise<Summary>;
-			volume: Promise<VolumeBuckets>;
 			latency: Promise<LatencyBuckets>;
 			actors: Promise<TopActors>;
 		};
@@ -194,7 +193,6 @@
 	<ActivityPanel
 		{window}
 		summary={activity.summary}
-		volume={activity.volume}
 		latency={activity.latency}
 		actors={activity.actors}
 		onSetParam={setSearchParam}

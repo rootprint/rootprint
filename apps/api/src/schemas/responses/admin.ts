@@ -11,20 +11,14 @@ const percentiles = {
 	p99: v.nullable(v.number())
 };
 
-const summaryRowEntries = {
-	totalSearches: v.number(),
-	errorCount: v.number(),
-	...percentiles
-};
-
-export const SummaryRowResponse = named('SummaryRowResponse', v.object(summaryRowEntries));
-
-export const ActorSummaryRowResponse = named(
-	'ActorSummaryRowResponse',
+export const SummaryRowResponse = named(
+	'SummaryRowResponse',
 	v.object({
-		...summaryRowEntries,
-		displayName: v.nullable(v.string()),
-		email: v.nullable(v.string())
+		totalSearches: v.number(),
+		errorCount: v.number(),
+		...percentiles,
+		// Name of the API key the activity is scoped to.
+		displayName: v.nullable(v.string())
 	})
 );
 
@@ -34,13 +28,6 @@ export const LatencyBucketResponse = named(
 );
 
 export const LatencyBucketsResponse = v.array(LatencyBucketResponse);
-
-export const VolumeBucketResponse = named(
-	'VolumeBucketResponse',
-	v.object({ t: v.string(), count: v.number() })
-);
-
-export const VolumeBucketsResponse = v.array(VolumeBucketResponse);
 
 export const TopActorRowResponse = named(
 	'TopActorRowResponse',
@@ -57,8 +44,8 @@ export const TopActorRowResponse = named(
 
 export const TopActorsResponse = v.array(TopActorRowResponse);
 
-export const ActorIndexRowResponse = named(
-	'ActorIndexRowResponse',
+export const IndexUsageRowResponse = named(
+	'IndexUsageRowResponse',
 	v.object({
 		indexId: v.string(),
 		count: v.number(),
@@ -67,7 +54,7 @@ export const ActorIndexRowResponse = named(
 	})
 );
 
-export const ActorIndexesResponse = v.array(ActorIndexRowResponse);
+export const IndexUsageResponse = v.array(IndexUsageRowResponse);
 
 export const RecentRowResponse = named(
 	'RecentRowResponse',
@@ -193,10 +180,6 @@ export type LatencyBucket = v.InferOutput<typeof LatencyBucketResponse>;
 
 export type TopActorRow = v.InferOutput<typeof TopActorRowResponse>;
 
-export type ActorSummaryRow = v.InferOutput<typeof ActorSummaryRowResponse>;
-
-export type VolumeBucket = v.InferOutput<typeof VolumeBucketResponse>;
-
-export type ActorIndexRow = v.InferOutput<typeof ActorIndexRowResponse>;
+export type IndexUsageRow = v.InferOutput<typeof IndexUsageRowResponse>;
 
 export type RecentResult = v.InferOutput<typeof RecentResultResponse>;
