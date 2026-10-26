@@ -23,7 +23,11 @@
 		return `Allowed ${pluralize(n, 'organization')}: ${github.allowedOrgs.join(', ')}`;
 	});
 
-	const oidcStatus = $derived(oidc.issuerUrl ? `Issuer: ${new URL(oidc.issuerUrl).host}` : null);
+	const oidcStatus = $derived.by(() => {
+		if (!oidc.issuerUrl) return null;
+		const issuer = `Issuer: ${new URL(oidc.issuerUrl).host}`;
+		return oidc.managedByEnv ? `${issuer} · set by environment` : issuer;
+	});
 
 	const providers = $derived([
 		{
@@ -47,6 +51,7 @@
 			name: 'OpenID Connect',
 			description: 'Sign in with SSO through your own OpenID Connect identity provider.',
 			configured: oidc.configured,
+			readOnly: oidc.managedByEnv,
 			statusLine: oidcStatus,
 			editHref: '/settings/authentication/oidc'
 		}

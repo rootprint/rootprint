@@ -24,7 +24,8 @@ export const OidcAuthSettingsResponse = named(
 	'OidcAuthSettingsResponse',
 	v.object({
 		configured: v.boolean(),
-		issuerUrl: v.nullable(v.string())
+		issuerUrl: v.nullable(v.string()),
+		managedByEnv: v.boolean()
 	})
 );
 

@@ -9,6 +9,7 @@
 		description: string;
 		statusLine: string | null;
 		configured: boolean;
+		readOnly?: boolean;
 		editHref: string;
 	};
 
@@ -37,6 +38,6 @@
 	</div>
 
 	<a class="btn btn-ghost btn-sm" href={provider.editHref}>
-		{provider.configured ? 'Edit' : 'Configure'}
+		{provider.readOnly ? 'View' : provider.configured ? 'Edit' : 'Configure'}
 	</a>
 </div>

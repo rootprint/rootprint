@@ -1,4 +1,5 @@
 import { eq, inArray } from 'drizzle-orm';
+import * as v from 'valibot';
 
 import type { Db, Tx } from '../lib/db.js';
 import { account, appSettings, session } from '../db/schema.js';
@@ -8,7 +9,12 @@ import type {
 	GoogleAuthSettings,
 	OidcAuthSettings
 } from '../schemas/responses/settings.js';
-import type { OAuthCredentialsInput, OidcCredentialsInput } from '../schemas/settings.js';
+import {
+	oidcCredentialsSchema,
+	type OAuthCredentialsInput,
+	type OidcCredentialsInput
+} from '../schemas/settings.js';
+import { conflict } from '../utils/http-error.js';
 import type { OidcTokenAuth } from './oidc.service.js';
 
 /** Everything Better Auth is built from, plus the effective password policy. */
@@ -31,6 +37,8 @@ const GITHUB_ALLOWED_ORGS = 'github_allowed_orgs';
 const OIDC_ISSUER_URL = 'oidc_issuer_url';
 const OIDC_CLIENT_ID = 'oidc_client_id';
 const OIDC_CLIENT_SECRET = 'oidc_client_secret';
+const OIDC_CREDENTIAL_KEYS = [OIDC_ISSUER_URL, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET];
+const OIDC_ENV_IDENTITY = 'oidc_env_identity';
 
 const PASSWORD_SIGN_IN_DISABLED = 'password_sign_in_disabled';
 
@@ -108,6 +116,34 @@ function credentialsFrom(
 	return clientId && clientSecret ? { clientId, clientSecret } : undefined;
 }
 
+/**
+ * The OIDC provider from `OIDC_*`, which wins over anything saved in the admin UI. Read on
+ * every call, like BETTER_AUTH_SECRET; an empty value counts as unset.
+ */
+export function oidcFromEnv(): OidcCredentialsInput | undefined {
+	const input = {
+		issuerUrl: process.env.OIDC_ISSUER_URL ?? '',
+		clientId: process.env.OIDC_CLIENT_ID ?? '',
+		clientSecret: process.env.OIDC_CLIENT_SECRET ?? ''
+	};
+	const values = Object.values(input);
+	if (values.every((value) => value === '')) return undefined;
+	if (values.some((value) => value === '')) {
+		throw new Error('OIDC_ISSUER_URL, OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must be set together');
+	}
+	const parsed = v.safeParse(oidcCredentialsSchema, input);
+	if (!parsed.success) {
+		throw new Error(`OIDC_* environment variables are invalid: ${parsed.issues[0].message}`);
+	}
+	return parsed.output;
+}
+
+export function assertOidcNotManagedByEnv(): void {
+	if (oidcFromEnv()) {
+		throw conflict('OpenID Connect is configured by environment variables', 'OIDC_MANAGED_BY_ENV');
+	}
+}
+
 export async function loadAuthConfig(db: Db): Promise<AuthConfig> {
 	const byKey = await loadSettings(db, AUTH_KEYS);
 	const oidcCredentials = credentialsFrom(byKey, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET);
@@ -115,7 +151,9 @@ export async function loadAuthConfig(db: Db): Promise<AuthConfig> {
 	return {
 		google: credentialsFrom(byKey, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
 		github: credentialsFrom(byKey, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET),
-		oidc: oidcCredentials && issuerUrl ? { ...oidcCredentials, issuerUrl } : undefined,
+		oidc:
+			oidcFromEnv() ??
+			(oidcCredentials && issuerUrl ? { ...oidcCredentials, issuerUrl } : undefined),
 		passwordSignInDisabled: byKey.get(PASSWORD_SIGN_IN_DISABLED) === 'true'
 	};
 }
@@ -192,12 +230,42 @@ export async function putGitHubAuthAllowedOrgs(
 
 export async function getOidcAuthStatus(db: Db): Promise<OidcAuthSettings> {
 	const { oidc } = await loadAuthConfig(db);
-	return { configured: !!oidc, issuerUrl: oidc?.issuerUrl ?? null };
+	return {
+		configured: !!oidc,
+		issuerUrl: oidc?.issuerUrl ?? null,
+		managedByEnv: oidcFromEnv() !== undefined
+	};
 }
 
 async function unlinkOidc(tx: Tx): Promise<void> {
 	await revokeSessionsLinkedTo(tx, 'oidc');
 	await tx.delete(account).where(eq(account.providerId, 'oidc'));
+}
+
+let syncedEnvIdentity: string | null | undefined;
+
+/**
+ * Env changes land at the next auth build, outside any settings write, so the build compares
+ * the env identity with the one it last saw and unlinks like `putOidcAuthCredentials` does.
+ * Env also drops credentials saved in the UI, so removing the vars turns OIDC off instead of
+ * quietly reviving an older provider.
+ */
+// moving from UI config to env with the same issuer and client ID still unlinks
+// once; those users sign in again. Syncing once per process keeps a rolling update's old pod
+// from undoing the new one; an old pod that restarts mid-rollout still unlinks once more.
+export async function syncOidcEnvIdentity(db: Db): Promise<void> {
+	const env = oidcFromEnv();
+	const current = env ? `${env.issuerUrl}|${env.clientId}` : null;
+	if (current === syncedEnvIdentity) return;
+	await db.transaction(async (tx) => {
+		if (env) await tx.delete(appSettings).where(inArray(appSettings.key, OIDC_CREDENTIAL_KEYS));
+		const stored = (await loadSettings(tx, [OIDC_ENV_IDENTITY])).get(OIDC_ENV_IDENTITY) ?? null;
+		if (stored === current) return;
+		await unlinkOidc(tx);
+		if (current) await upsertValues(tx, { [OIDC_ENV_IDENTITY]: current });
+		else await tx.delete(appSettings).where(eq(appSettings.key, OIDC_ENV_IDENTITY));
+	});
+	syncedEnvIdentity = current;
 }
 
 export async function putOidcAuthCredentials(db: Db, input: OidcCredentialsInput): Promise<void> {
@@ -218,11 +286,7 @@ export async function putOidcAuthCredentials(db: Db, input: OidcCredentialsInput
 }
 
 export async function deleteOidcAuthCredentials(db: Db): Promise<void> {
-	await deleteProviderCredentials(
-		db,
-		[OIDC_ISSUER_URL, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET],
-		unlinkOidc
-	);
+	await deleteProviderCredentials(db, OIDC_CREDENTIAL_KEYS, unlinkOidc);
 }
 
 // ponytail: no interlock — an admin who turns this off with no working provider

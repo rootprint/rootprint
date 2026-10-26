@@ -18,12 +18,14 @@
 		provider,
 		configured,
 		initialItems = [],
-		initialIssuerUrl = ''
+		initialIssuerUrl = '',
+		managedByEnv = false
 	}: {
 		provider: OAuthProviderDescriptor;
 		configured: boolean;
 		initialItems?: string[];
 		initialIssuerUrl?: string;
+		managedByEnv?: boolean;
 	} = $props();
 
 	const emptyCreds = () => ({ issuerUrl: '', clientId: '', clientSecret: '' });
@@ -40,9 +42,10 @@
 	let editingCredentials = $state(false);
 
 	const callbackUrl = $derived(`${page.url.origin}/api/auth/callback/${provider.id}`);
-	const locked = $derived(configured && !editingCredentials);
+	const locked = $derived(managedByEnv || (configured && !editingCredentials));
 
-	function credentialHint(unconfiguredHint: string): string {
+	function credentialHint(key: CredKey, unconfiguredHint: string): string {
+		if (managedByEnv) return `Set by ${provider.envVars?.[key] ?? 'environment variable'}.`;
 		if (!configured) return unconfiguredHint;
 		if (editingCredentials) {
 			return provider.issuer
@@ -160,22 +163,24 @@
 		plain={locked}
 		id="cfg-{provider.id}-{key}"
 		{label}
-		hint={credentialHint(unconfiguredHint)}
+		hint={credentialHint(key, unconfiguredHint)}
 		error={fieldErrors[key]}
 	>
 		{#snippet children({ id, invalid, describedBy })}
 			{#if locked}
 				<DisplayField value={lockedValue} ariaLabel="{label} (configured)">
 					{#snippet action()}
-						<button
-							type="button"
-							class="badge badge-ghost badge-sm cursor-pointer"
-							aria-label="Edit {label}"
-							title="Edit {label}"
-							onclick={() => startEditCredentials(key)}
-						>
-							<Pencil class="size-3" aria-hidden="true" />
-						</button>
+						{#if !managedByEnv}
+							<button
+								type="button"
+								class="badge badge-ghost badge-sm cursor-pointer"
+								aria-label="Edit {label}"
+								title="Edit {label}"
+								onclick={() => startEditCredentials(key)}
+							>
+								<Pencil class="size-3" aria-hidden="true" />
+							</button>
+						{/if}
 					{/snippet}
 				</DisplayField>
 			{:else}
@@ -275,14 +280,16 @@
 		</SettingsRow>
 	{/if}
 
-	<div class="flex justify-end px-4 py-3">
-		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>
-			{#if submitting}
-				<span class="loading loading-spinner loading-xs"></span>
-				Saving…
-			{:else}
-				Save
-			{/if}
-		</button>
-	</div>
+	{#if !managedByEnv}
+		<div class="flex justify-end px-4 py-3">
+			<button type="submit" class="btn btn-primary btn-sm" disabled={submitting}>
+				{#if submitting}
+					<span class="loading loading-spinner loading-xs"></span>
+					Saving…
+				{:else}
+					Save
+				{/if}
+			</button>
+		</div>
+	{/if}
 </form>
