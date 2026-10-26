@@ -1,29 +1,39 @@
 import * as v from 'valibot';
 
-import { intParam } from '../utils/valibot.js';
+import { idParam, intParam } from '../utils/valibot.js';
 
 const ActivityWindowValues = ['24h', '7d', '30d'] as const;
-const ScopeId = v.optional(v.pipe(v.string(), v.minLength(1)));
 
 // Each scope param narrows the activity to one user, API key or index; several combine with AND.
 export const ActivityQuery = v.object({
 	window: v.optional(v.picklist(ActivityWindowValues)),
-	user: ScopeId,
-	apiKey: ScopeId,
-	index: ScopeId
+	user: v.optional(idParam),
+	apiKey: v.optional(idParam),
+	index: v.optional(idParam)
 });
+
+const hasScope = (q: ActivityFilter) => Boolean(q.user || q.apiKey || q.index);
+const SCOPE_REQUIRED = 'user, apiKey or index is required';
+
+export const IndexUsageQuery = v.pipe(
+	ActivityQuery,
+	v.check((q) => hasScope(q), SCOPE_REQUIRED)
+);
 
 export const TopActorsQuery = v.object({
 	...ActivityQuery.entries,
 	limit: v.optional(intParam({ min: 1, max: 50, label: 'limit' }), '10')
 });
 
-export const RecentQuery = v.object({
-	...ActivityQuery.entries,
-	offset: v.optional(intParam({ min: 0, label: 'offset' }), '0'),
-	limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' }), '100'),
-	status: v.optional(v.picklist(['any', 'success', 'error']), 'any')
-});
+export const RecentQuery = v.pipe(
+	v.object({
+		...ActivityQuery.entries,
+		offset: v.optional(intParam({ min: 0, label: 'offset' }), '0'),
+		limit: v.optional(intParam({ min: 1, max: 500, label: 'limit' }), '100'),
+		status: v.optional(v.picklist(['any', 'success', 'error']), 'any')
+	}),
+	v.check((q) => hasScope(q), SCOPE_REQUIRED)
+);
 
 export type ActivityWindow = (typeof ActivityWindowValues)[number];
 export type ActivityQueryInput = v.InferInput<typeof ActivityQuery>;

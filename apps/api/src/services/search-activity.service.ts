@@ -58,8 +58,8 @@ function num(x: string | null | undefined): number | null {
 
 export async function getSummary(db: Db, f: ActivityFilter): Promise<SummaryRow> {
 	const { interval } = resolveWindow(f.window);
-	const [identity, result] = await Promise.all([
-		resolveIdentity(db, f),
+	const [keys, result] = await Promise.all([
+		f.apiKey ? db.select({ name: apikey.name }).from(apikey).where(eq(apikey.id, f.apiKey)) : [],
 		db.execute<{
 			total: string;
 			errors: string;
@@ -84,8 +84,7 @@ export async function getSummary(db: Db, f: ActivityFilter): Promise<SummaryRow>
 		p50: num(r?.p50),
 		p95: num(r?.p95),
 		p99: num(r?.p99),
-		displayName: identity?.displayName ?? null,
-		email: identity?.email ?? null
+		displayName: keys[0]?.name ?? null
 	};
 }
 
@@ -185,27 +184,6 @@ function scopePredicate(f: ActivityFilter) {
 	if (f.apiKey) preds.push(sql`api_key_id = ${f.apiKey}`);
 	if (f.index) preds.push(sql`index_id = ${f.index}`);
 	return sql.join(preds, sql` AND `);
-}
-
-async function resolveIdentity(
-	db: Db,
-	f: ActivityFilter
-): Promise<{ displayName: string | null; email: string | null } | null> {
-	if (f.user) {
-		const rows = await db
-			.select({ id: user.id, name: user.name, email: user.email })
-			.from(user)
-			.where(eq(user.id, f.user));
-		const u = rows[0];
-		return u ? { displayName: u.name ?? null, email: u.email ?? null } : null;
-	}
-	if (!f.apiKey) return null;
-	const rows = await db
-		.select({ id: apikey.id, name: apikey.name })
-		.from(apikey)
-		.where(eq(apikey.id, f.apiKey));
-	const t = rows[0];
-	return t ? { displayName: t.name ?? null, email: null } : null;
 }
 
 export async function getIndexUsage(db: Db, f: ActivityFilter): Promise<ActorIndexRow[]> {

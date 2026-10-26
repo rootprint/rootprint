@@ -3046,16 +3046,6 @@
 							}
 						]
 					},
-					"email": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"errorCount": {
 						"type": "number"
 					},
@@ -3099,8 +3089,7 @@
 					"p50",
 					"p95",
 					"p99",
-					"displayName",
-					"email"
+					"displayName"
 				],
 				"type": "object"
 			},

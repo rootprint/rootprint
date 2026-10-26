@@ -17,8 +17,7 @@ export const SummaryRowResponse = named(
 		totalSearches: v.number(),
 		errorCount: v.number(),
 		...percentiles,
-		displayName: v.nullable(v.string()),
-		email: v.nullable(v.string())
+		displayName: v.nullable(v.string())
 	})
 );
 

@@ -4,7 +4,12 @@ import type { AuthedEnv } from '../../env.js';
 import { db } from '../../lib/db.js';
 import { describe, validator } from '../../lib/openapi/describe.js';
 import { requireAdmin } from '../../middleware/require-admin.js';
-import { ActivityQuery, RecentQuery, TopActorsQuery } from '../../schemas/admin-activity.js';
+import {
+	ActivityQuery,
+	IndexUsageQuery,
+	RecentQuery,
+	TopActorsQuery
+} from '../../schemas/admin-activity.js';
 import {
 	ActorIndexesResponse,
 	LatencyBucketsResponse,
@@ -50,7 +55,7 @@ export const adminActivityRouter = new Hono<AuthedEnv>()
 			summary: 'Get per-index usage breakdown',
 			ok: ActorIndexesResponse
 		}),
-		validator('query', ActivityQuery),
+		validator('query', IndexUsageQuery),
 		async (c) => c.json(await getIndexUsage(db, c.req.valid('query')))
 	)
 	.get(
