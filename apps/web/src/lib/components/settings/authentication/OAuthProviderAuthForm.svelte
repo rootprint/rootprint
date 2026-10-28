@@ -45,7 +45,7 @@
 	const locked = $derived(managedByEnv || (configured && !editingCredentials));
 
 	function credentialHint(key: CredKey, unconfiguredHint: string): string {
-		if (managedByEnv) return `Set by ${provider.envVars?.[key] ?? 'environment variable'}.`;
+		if (managedByEnv) return `Set by ${provider.envVars?.[key]}.`;
 		if (!configured) return unconfiguredHint;
 		if (editingCredentials) {
 			return provider.issuer

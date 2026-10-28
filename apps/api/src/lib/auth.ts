@@ -253,6 +253,7 @@ export async function initAuth(secret: string): Promise<void> {
 		throw new Error('initAuth has already been called');
 	}
 	holder.secret = secret;
+	await syncOidcEnvIdentity(db);
 	await rebuild();
 }
 
@@ -275,7 +276,6 @@ async function rebuild(): Promise<void> {
 	if (holder.secret === null) {
 		throw new Error('reloadAuth called before initAuth');
 	}
-	await syncOidcEnvIdentity(db);
 	const ready = await buildReadyAuth(holder.secret, await loadReachableAuthConfig());
 	holder.cfg = ready.cfg;
 	holder.instance = ready.instance;

@@ -4,6 +4,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { account, appSettings } from '../src/db/schema.js';
 import { reloadAuth } from '../src/lib/auth.js';
 import { db } from '../src/lib/db.js';
+import { syncOidcEnvIdentity } from '../src/services/settings.service.js';
 import { resetDb } from './helpers/db.js';
 import { startFakeIdp, type FakeIdp } from './helpers/fake-idp.js';
 import { ADMIN, providers, seedAdmin, sessionUser, waitFor } from './helpers/fixtures.js';
@@ -19,6 +20,12 @@ function setOidcEnv(issuerUrl: string, clientId = 'rootprint', clientSecret = 'o
 	process.env.OIDC_ISSUER_URL = issuerUrl;
 	process.env.OIDC_CLIENT_ID = clientId;
 	process.env.OIDC_CLIENT_SECRET = clientSecret;
+}
+
+/** What booting with the current `OIDC_*` values runs; a plain reloadAuth() skips the sync. */
+async function restart() {
+	await syncOidcEnvIdentity(db);
+	await reloadAuth();
 }
 
 let idp: FakeIdp;
@@ -39,7 +46,7 @@ afterEach(async () => {
 test('env credentials enable oidc with no settings write', async () => {
 	const admin = await seedAdmin();
 	setOidcEnv(idp.issuer);
-	await reloadAuth();
+	await restart();
 	expect((await providers()).oidc.enabled).toBe(true);
 
 	const jar = new Jar();
@@ -57,7 +64,7 @@ test('env replaces credentials saved in the UI, and removing it turns oidc off',
 	const envIdp = await startFakeIdp();
 	try {
 		setOidcEnv(envIdp.issuer);
-		await reloadAuth();
+		await restart();
 		expect(redirectError(await oidcSignIn(new Jar()))).toBeNull();
 		expect((await oidcAccounts())[0]?.accountId).toBe(`${envIdp.issuer}|idp-user-1`);
 		expect(await dbOidcRows()).toHaveLength(0);
@@ -66,14 +73,14 @@ test('env replaces credentials saved in the UI, and removing it turns oidc off',
 	}
 
 	setOidcEnv('', '', '');
-	await reloadAuth();
+	await restart();
 	expect((await providers()).oidc.enabled).toBe(false);
 });
 
 test('the admin API refuses to change or remove env-managed credentials', async () => {
 	const admin = await seedAdmin();
 	setOidcEnv(idp.issuer);
-	await reloadAuth();
+	await restart();
 
 	// Unreachable on purpose: a guard that ran after discovery would answer 400 instead.
 	const put = await admin.put('/api/settings/auth/oidc/credentials', {
@@ -118,7 +125,7 @@ test('blank env values count as unset', async () => {
 
 test('env values are trimmed and the issuer trailing slash dropped', async () => {
 	setOidcEnv(` ${idp.issuer}/ `, ' rootprint ', ' oidc-secret ');
-	await reloadAuth();
+	await restart();
 
 	expect(redirectError(await oidcSignIn(new Jar()))).toBeNull();
 	expect((await oidcAccounts())[0]?.accountId).toBe(`${idp.issuer}|idp-user-1`);
@@ -127,7 +134,7 @@ test('env values are trimmed and the issuer trailing slash dropped', async () =>
 test('an unreachable env issuer at boot disables oidc until the retry succeeds', async () => {
 	setOidcEnv(idp.issuer);
 	idp.down();
-	await reloadAuth();
+	await restart();
 	expect((await providers()).oidc.enabled).toBe(false);
 
 	idp.up();
@@ -137,7 +144,7 @@ test('an unreachable env issuer at boot disables oidc until the retry succeeds',
 async function signedInThroughEnvOidc(): Promise<{ admin: Jar; sso: Jar }> {
 	const admin = await seedAdmin();
 	setOidcEnv(idp.issuer);
-	await reloadAuth();
+	await restart();
 	const sso = new Jar();
 	expect(redirectError(await oidcSignIn(sso))).toBeNull();
 	expect(await sessionUser(sso)).not.toBeNull();
@@ -148,7 +155,7 @@ test('changing the env client ID revokes oidc sessions and accounts; password se
 	const { admin, sso } = await signedInThroughEnvOidc();
 
 	setOidcEnv(idp.issuer, 'rootprint-2');
-	await reloadAuth();
+	await restart();
 
 	expect(await sessionUser(sso)).toBeNull();
 	expect(await oidcAccounts()).toHaveLength(0);
@@ -159,7 +166,7 @@ test('removing the env vars revokes oidc sessions and accounts', async () => {
 	const { sso } = await signedInThroughEnvOidc();
 
 	setOidcEnv('', '', '');
-	await reloadAuth();
+	await restart();
 
 	expect(await sessionUser(sso)).toBeNull();
 	expect(await oidcAccounts()).toHaveLength(0);

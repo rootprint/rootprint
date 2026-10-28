@@ -9,11 +9,8 @@ import type {
 	GoogleAuthSettings,
 	OidcAuthSettings
 } from '../schemas/responses/settings.js';
-import {
-	oidcCredentialsSchema,
-	type OAuthCredentialsInput,
-	type OidcCredentialsInput
-} from '../schemas/settings.js';
+import { oidcCredentialsSchema } from '../schemas/settings.js';
+import type { OAuthCredentialsInput, OidcCredentialsInput } from '../schemas/settings.js';
 import { conflict } from '../utils/http-error.js';
 import type { OidcTokenAuth } from './oidc.service.js';
 
@@ -229,12 +226,10 @@ export async function putGitHubAuthAllowedOrgs(
 }
 
 export async function getOidcAuthStatus(db: Db): Promise<OidcAuthSettings> {
+	const env = oidcFromEnv();
+	if (env) return { configured: true, issuerUrl: env.issuerUrl, managedByEnv: true };
 	const { oidc } = await loadAuthConfig(db);
-	return {
-		configured: !!oidc,
-		issuerUrl: oidc?.issuerUrl ?? null,
-		managedByEnv: oidcFromEnv() !== undefined
-	};
+	return { configured: !!oidc, issuerUrl: oidc?.issuerUrl ?? null, managedByEnv: false };
 }
 
 async function unlinkOidc(tx: Tx): Promise<void> {
@@ -242,21 +237,18 @@ async function unlinkOidc(tx: Tx): Promise<void> {
 	await tx.delete(account).where(eq(account.providerId, 'oidc'));
 }
 
-let syncedEnvIdentity: string | null | undefined;
-
 /**
- * Env changes land at the next auth build, outside any settings write, so the build compares
- * the env identity with the one it last saw and unlinks like `putOidcAuthCredentials` does.
- * Env also drops credentials saved in the UI, so removing the vars turns OIDC off instead of
- * quietly reviving an older provider.
+ * Env changes land at boot, outside any settings write, so boot compares the env identity with
+ * the one it last saw and unlinks like `putOidcAuthCredentials` does. Env also drops credentials
+ * saved in the UI, so removing the vars turns OIDC off instead of quietly reviving an older
+ * provider.
  */
-// moving from UI config to env with the same issuer and client ID still unlinks
-// once; those users sign in again. Syncing once per process keeps a rolling update's old pod
+// ponytail: moving from UI config to env with the same issuer and client ID still unlinks
+// once; those users sign in again. Running only at boot keeps a rolling update's old pod
 // from undoing the new one; an old pod that restarts mid-rollout still unlinks once more.
 export async function syncOidcEnvIdentity(db: Db): Promise<void> {
 	const env = oidcFromEnv();
 	const current = env ? `${env.issuerUrl}|${env.clientId}` : null;
-	if (current === syncedEnvIdentity) return;
 	await db.transaction(async (tx) => {
 		if (env) await tx.delete(appSettings).where(inArray(appSettings.key, OIDC_CREDENTIAL_KEYS));
 		const stored = (await loadSettings(tx, [OIDC_ENV_IDENTITY])).get(OIDC_ENV_IDENTITY) ?? null;
@@ -265,7 +257,6 @@ export async function syncOidcEnvIdentity(db: Db): Promise<void> {
 		if (current) await upsertValues(tx, { [OIDC_ENV_IDENTITY]: current });
 		else await tx.delete(appSettings).where(eq(appSettings.key, OIDC_ENV_IDENTITY));
 	});
-	syncedEnvIdentity = current;
 }
 
 export async function putOidcAuthCredentials(db: Db, input: OidcCredentialsInput): Promise<void> {
