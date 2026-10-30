@@ -11,7 +11,7 @@ import * as authSchema from '../db/auth.schema.js';
 import { inviteToken } from '../db/schema.js';
 import { githubTokenIsAllowed, googleEmailIsAllowed } from '../services/auth.service.js';
 import { discoveryUrl, verifyOidcIssuer } from '../services/oidc.service.js';
-import { loadAuthConfig } from '../services/settings.service.js';
+import { loadAuthConfig, syncOidcEnvIdentity } from '../services/settings.service.js';
 import type { AuthConfig } from '../services/settings.service.js';
 import { db } from './db.js';
 import { logger } from './logger.js';
@@ -253,6 +253,7 @@ export async function initAuth(secret: string): Promise<void> {
 		throw new Error('initAuth has already been called');
 	}
 	holder.secret = secret;
+	await syncOidcEnvIdentity(db);
 	await rebuild();
 }
 

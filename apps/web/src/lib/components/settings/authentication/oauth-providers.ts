@@ -38,7 +38,14 @@ export type OAuthProviderDescriptor = {
 	clientSecretHint: string;
 	successToast: string;
 	issuer?: { hint: string; placeholder: string };
-	load: () => Promise<{ configured: boolean; initialItems?: string[]; initialIssuerUrl?: string }>;
+	/** Env var behind each credential field, shown when env configures the provider. */
+	envVars?: Record<keyof CredentialInput, string>;
+	load: () => Promise<{
+		configured: boolean;
+		initialItems?: string[];
+		initialIssuerUrl?: string;
+		managedByEnv?: boolean;
+	}>;
 	/** Returns `fieldErrors` on schema failure, null when valid. */
 	validateCredentials: (input: CredentialInput) => Record<string, string> | null;
 	saveCredentials: (input: CredentialInput) => Promise<void>;
@@ -154,9 +161,18 @@ const oidcProvider: OAuthProviderDescriptor = {
 		hint: 'The issuer URL, e.g. https://auth.example.com/realms/main. Discovery is fetched from <issuer>/.well-known/openid-configuration when you save. Changing it later unlinks every OpenID Connect account and signs those users out.',
 		placeholder: 'https://auth.example.com/realms/main'
 	},
+	envVars: {
+		issuerUrl: 'OIDC_ISSUER_URL',
+		clientId: 'OIDC_CLIENT_ID',
+		clientSecret: 'OIDC_CLIENT_SECRET'
+	},
 	load: async () => {
 		const s = await getOidcAuth();
-		return { configured: s.configured, initialIssuerUrl: s.issuerUrl ?? '' };
+		return {
+			configured: s.configured,
+			initialIssuerUrl: s.issuerUrl ?? '',
+			managedByEnv: s.managedByEnv
+		};
 	},
 	validateCredentials: (input) => schemaErrors(oidcCredentialsSchema, input),
 	saveCredentials: saveOidcCredentials,

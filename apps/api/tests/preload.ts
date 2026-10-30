@@ -12,8 +12,11 @@ process.env.TRUST_PROXY_HOPS = '1';
 // Shorten both OIDC timers so the outage and slow-discovery tests don't wait out production values.
 process.env.OIDC_RETRY_MS = '200';
 process.env.OIDC_DISCOVERY_TIMEOUT_MS = '1000';
-// Empty, not deleted: dotenv would otherwise fill it from the repo .env.
+// Empty, not deleted: dotenv would otherwise fill these from the repo .env.
 process.env.BETTER_AUTH_SECRET = '';
+process.env.OIDC_ISSUER_URL = '';
+process.env.OIDC_CLIENT_ID = '';
+process.env.OIDC_CLIENT_SECRET = '';
 process.env.LOG_LEVEL = 'silent';
 // bun test sets NODE_ENV=test, and Better Auth silently disables its origin/CSRF check under
 // that value. The Docker image runs production, so the suite must too.

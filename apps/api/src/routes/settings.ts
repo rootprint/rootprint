@@ -19,6 +19,7 @@ import {
 } from '../schemas/responses/settings.js';
 import { verifyOidcIssuer } from '../services/oidc.service.js';
 import {
+	assertOidcNotManagedByEnv,
 	deleteGoogleAuthCredentials,
 	getGoogleAuthStatus,
 	putGoogleAuthAllowedDomains,
@@ -155,11 +156,13 @@ export const settingsRouter = new Hono<AuthedEnv>()
 			tag: 'Auth settings',
 			summary: 'Set OpenID Connect issuer and credentials',
 			description:
-				'Fetches <issuer>/.well-known/openid-configuration before saving. A 400 with code OIDC_DISCOVERY_FAILED means nothing was written.',
+				'Fetches <issuer>/.well-known/openid-configuration before saving. A 400 with code OIDC_DISCOVERY_FAILED means nothing was written. A 409 with code OIDC_MANAGED_BY_ENV means the OIDC_* environment variables are set.',
+			errors: [409],
 			rawResponses: { '204': { description: 'Credentials saved' } }
 		}),
 		validator('json', oidcCredentialsSchema),
 		async (c) => {
+			assertOidcNotManagedByEnv();
 			const body = c.req.valid('json');
 			await verifyOidcIssuer(body.issuerUrl);
 			await putOidcAuthCredentials(db, body);
@@ -172,9 +175,11 @@ export const settingsRouter = new Hono<AuthedEnv>()
 		describe({
 			tag: 'Auth settings',
 			summary: 'Delete OpenID Connect credentials',
+			errors: [409],
 			rawResponses: { '204': { description: 'Credentials deleted' } }
 		}),
 		async (c) => {
+			assertOidcNotManagedByEnv();
 			await deleteOidcAuthCredentials(db);
 			await reloadAuth();
 			return c.body(null, 204);

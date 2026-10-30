@@ -1710,11 +1710,15 @@
 								"type": "null"
 							}
 						]
+					},
+					"managedByEnv": {
+						"type": "boolean"
 					}
 				},
 				"required": [
 					"configured",
-					"issuerUrl"
+					"issuerUrl",
+					"managedByEnv"
 				],
 				"type": "object"
 			},
@@ -15549,6 +15553,9 @@
 					"404": {
 						"$ref": "#/components/responses/NotFound"
 					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
 					},
@@ -15562,7 +15569,7 @@
 				]
 			},
 			"put": {
-				"description": "Fetches <issuer>/.well-known/openid-configuration before saving. A 400 with code OIDC_DISCOVERY_FAILED means nothing was written.",
+				"description": "Fetches <issuer>/.well-known/openid-configuration before saving. A 400 with code OIDC_DISCOVERY_FAILED means nothing was written. A 409 with code OIDC_MANAGED_BY_ENV means the OIDC_* environment variables are set.",
 				"operationId": "putApiSettingsAuthOidcCredentials",
 				"requestBody": {
 					"content": {
@@ -15608,6 +15615,9 @@
 					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"

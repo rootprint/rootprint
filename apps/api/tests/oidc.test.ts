@@ -88,7 +88,7 @@ describe('save-time discovery rejections leave the previous config intact', () =
 				expect(res.status).toBe(400);
 				expect(await errorCode(res)).toBe('OIDC_DISCOVERY_FAILED');
 				const settings = await json(await admin.get('/api/settings/auth/oidc'));
-				expect(settings).toEqual({ configured: true, issuerUrl: idp.issuer });
+				expect(settings).toEqual({ configured: true, issuerUrl: idp.issuer, managedByEnv: false });
 				expect((await providers()).oidc.enabled).toBe(true);
 				const signInRes = await oidcSignIn(new Jar());
 				expect(signInRes.status).toBe(302);
