@@ -50,6 +50,14 @@ export const tsEndParam = v.pipe(
 	v.description(EPOCH_SECONDS)
 );
 
+/**
+ * For `v.transform` on a query with an optional `endTs`: a missing end becomes now, rounded up like
+ * a passed one, once per request so the checks, the search and the audit all see the same end.
+ */
+export function withEndNow<T extends { endTs?: number }>(input: T): T & { endTs: number } {
+	return { ...input, endTs: input.endTs ?? Math.ceil(Date.now() / 1000) };
+}
+
 /** JSON-body timestamp in epoch seconds. */
 export const epochSeconds = v.pipe(
 	v.number(),

@@ -18,7 +18,11 @@ const TARGET_BUCKETS = 60;
 
 /** Smallest round bucket width, in seconds, that keeps a time range at 60 buckets or fewer. */
 export function bucketSeconds(rangeSeconds: number): number {
-	return BUCKET_WIDTHS.find((s) => rangeSeconds / s <= TARGET_BUCKETS) ?? 604_800;
+	const week = 604_800;
+	return (
+		BUCKET_WIDTHS.find((s) => rangeSeconds / s <= TARGET_BUCKETS) ??
+		Math.ceil(rangeSeconds / TARGET_BUCKETS / week) * week
+	);
 }
 
 /** Picks the largest whole-number unit Quickwit accepts. */

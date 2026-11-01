@@ -18,11 +18,13 @@ export async function fetchFieldValuesBulk(
 	input: FetchFieldValuesBulkInput
 ): Promise<Record<string, LogFieldValueBucket[]>> {
 	const { indexId, fields, query, filters, timeRange, limit = FIELD_VALUES_MAX, signal } = input;
-	// The panel can have more open fields than one request may carry.
+	// The panel can have more open fields than one request may carry. Halves, not 50 + the rest: the
+	// server splits its value budget per request, so even batches give every field a similar cap.
 	if (fields.length > MAX_BULK_FIELDS) {
+		const mid = Math.ceil(fields.length / 2);
 		const [head, tail] = await Promise.all([
-			fetchFieldValuesBulk({ ...input, fields: fields.slice(0, MAX_BULK_FIELDS) }),
-			fetchFieldValuesBulk({ ...input, fields: fields.slice(MAX_BULK_FIELDS) })
+			fetchFieldValuesBulk({ ...input, fields: fields.slice(0, mid) }),
+			fetchFieldValuesBulk({ ...input, fields: fields.slice(mid) })
 		]);
 		return { ...head, ...tail };
 	}
