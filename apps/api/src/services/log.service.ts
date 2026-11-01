@@ -2,7 +2,7 @@ import type { BucketAggregationResult, QuickwitClient } from '@rootprint-io/quic
 import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 
 import type { SearchQueryInput } from '../schemas/search.js';
-import { FIELD_VALUES_DEFAULT } from '../constants.js';
+import { FIELD_VALUES_DEFAULT, FIELD_VALUES_MAX } from '../constants.js';
 import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { composeQuery } from '../lib/quickwit/query.js';
 import { asBuckets, termsAgg } from '../lib/quickwit/aggregations.js';
@@ -181,6 +181,8 @@ export async function fieldValuesBulk(
 
 	const groups = groupFieldsForBulk(fields, filters);
 	const idx = qw.index(indexConfig.indexId);
+	// Split across the whole request, not per search: filtered fields each run their own search.
+	const size = Math.min(limit, Math.floor(FIELD_VALUES_MAX / new Set(fields).size));
 
 	const groupResults = await Promise.all(
 		groups.map(async (group) => {
@@ -190,7 +192,7 @@ export async function fieldValuesBulk(
 				.limit(0)
 				.timeRange(toQuickwitTimestamp(startTs), toQuickwitTimestamp(endTs));
 			for (const field of group.fields) {
-				builder.agg(field, termsAgg(field, limit));
+				builder.agg(field, termsAgg(field, size));
 			}
 			const response = await idx.search(builder, { signal: requestSignal() });
 			return { group, response };

@@ -395,7 +395,8 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		withIndexConfig,
 		validator('query', HistogramQuery),
 		async (c) => {
-			const { q, startTs, endTs, interval } = c.req.valid('query');
+			const { q, startTs, endTs = Math.ceil(Date.now() / 1000), interval } = c.req.valid('query');
+			// The bucket check in HistogramQuery assumes this same end; future-dated logs would pass it.
 			return c.json(
 				await histogramLogs(quickwit, c.get('indexConfig'), { query: q, startTs, endTs, interval })
 			);

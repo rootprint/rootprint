@@ -12,8 +12,8 @@ import { EPOCH_SECONDS, intParam } from '../utils/valibot.js';
 export const MAX_BUCKETS = 2_000;
 const MAX_ENDPOINT_LIMIT = 100;
 
-// Narrower than the log histogram's interval (which also takes w, M, y): the bucket-count check
-// below needs a fixed second count, and weeks/months/years don't have one.
+// No w, M or y: Quickwit's date histogram rejects them, and the bucket-count checks need a fixed
+// second count.
 export const intervalParam = v.pipe(
 	v.string(),
 	v.regex(/^[1-9]\d*[smhd]$/, 'interval must use seconds, minutes, hours, or days')

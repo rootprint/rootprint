@@ -12241,6 +12241,7 @@
 								"minLength": 1,
 								"type": "string"
 							},
+							"maxItems": 50,
 							"type": "array"
 						}
 					},
@@ -12751,7 +12752,7 @@
 						"name": "interval",
 						"required": true,
 						"schema": {
-							"pattern": "^[1-9]\\d*[smhdwMy]$",
+							"pattern": "^[1-9]\\d*[smhd]$",
 							"type": "string"
 						}
 					},
