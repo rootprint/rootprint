@@ -25,7 +25,11 @@ export const CONTENT_TYPE_JSON = 'application/json';
 /** The log search `limit` ceiling; the trace page's per-span log counts read up to it. */
 export const SEARCH_MAX_LIMIT = 1000;
 
+/** Quickwit's default aggregation bucket limit, shared by every terms agg in one search. */
 export const FIELD_VALUES_MAX = 65_000;
+
+/** Per bulk field-values request: each requested field that is also filtered runs its own search. */
+export const MAX_BULK_FILTERS = 50;
 
 /** Fallback `limit` for the field-values endpoint when the caller doesn't pass one. */
 export const FIELD_VALUES_DEFAULT = 100;

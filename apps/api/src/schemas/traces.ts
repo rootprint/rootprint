@@ -8,7 +8,7 @@ import {
 	MAX_EXPLORE_OFFSET
 } from '../constants.js';
 import { boolParam, EPOCH_SECONDS, intParam } from '../utils/valibot.js';
-import { intervalParam, intervalSeconds, MAX_BUCKETS } from './services.js';
+import { intervalParam, withinBucketCap } from './services.js';
 
 // Rejects the all-zeros id: OTLP writes it on logs that carry no trace context.
 const TRACE_ID_RE = /^(?!0{32}$)[0-9a-f]{32}$/;
@@ -89,7 +89,7 @@ export const ExploreOverviewQuery = v.pipe(
 		'minMs must be below maxMs'
 	),
 	v.check(
-		(input) => (input.endTs - input.startTs) / intervalSeconds(input.interval) <= MAX_BUCKETS,
+		(input) => withinBucketCap(input.endTs - input.startTs, input.interval),
 		'interval produces too many buckets'
 	)
 );

@@ -1,10 +1,11 @@
 import * as v from 'valibot';
 
-import { FIELD_VALUES_MAX } from '../constants.js';
+import { FIELD_VALUES_MAX, MAX_BULK_FILTERS } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
 import { DisplayModeSchema } from './display-mode.js';
 import { IndexIdParams } from '../utils/params.js';
 import { intParam, tsEndParam, tsParam } from '../utils/valibot.js';
+import { intervalParam, withinBucketCap } from './services.js';
 
 const dedupedStrings = v.pipe(
 	v.array(v.pipe(v.string(), v.minLength(1))),
@@ -40,18 +41,22 @@ export const IndexFieldsQuery = v.object({
 	endTs: tsEndParam
 });
 
-export const HistogramQuery = v.object({
-	q: v.optional(v.string()),
-	startTs: v.optional(tsParam),
-	endTs: v.optional(tsEndParam),
-	interval: v.pipe(
-		v.string(),
-		v.regex(
-			/^[1-9]\d*[smhdwMy]$/,
-			'interval must be a positive integer followed by s, m, h, d, w, M, or y'
-		)
+/** Required range: the bucket-count check needs both ends. */
+export const HistogramQuery = v.pipe(
+	v.object({
+		q: v.optional(v.string()),
+		startTs: tsParam,
+		endTs: tsEndParam,
+		interval: intervalParam
+	}),
+	v.check(({ startTs, endTs }) => startTs < endTs, 'startTs must be before endTs'),
+	v.check(
+		({ startTs, endTs, interval }) => withinBucketCap(endTs - startTs, interval),
+		'interval produces too many buckets'
 	)
-});
+);
+
+export type HistogramQueryInput = v.InferOutput<typeof HistogramQuery>;
 
 export const FieldValuesQuery = v.object({
 	q: v.optional(v.string()),
@@ -74,11 +79,20 @@ export const FieldValuesBulkQuery = v.object({
 		v.check((arr) => arr.length > 0, 'fields must include at least one field name')
 	),
 	q: v.optional(v.string()),
-	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
+	filters: v.optional(
+		v.pipe(
+			v.string(),
+			v.parseJson(),
+			v.array(FilterSchema),
+			v.maxLength(MAX_BULK_FILTERS, `filters must list at most ${MAX_BULK_FILTERS} filters`)
+		)
+	),
 	startTs: v.optional(tsParam),
 	endTs: v.optional(tsEndParam),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
 });
+
+export type FieldValuesBulkQueryInput = v.InferOutput<typeof FieldValuesBulkQuery>;
 
 export const StatsQuery = v.object({
 	startTs: v.optional(tsParam),

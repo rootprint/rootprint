@@ -9,11 +9,11 @@ import {
 } from '../constants.js';
 import { EPOCH_SECONDS, intParam } from '../utils/valibot.js';
 
-export const MAX_BUCKETS = 2_000;
+const MAX_BUCKETS = 2_000;
 const MAX_ENDPOINT_LIMIT = 100;
 
-// Narrower than the log histogram's interval (which also takes w, M, y): the bucket-count check
-// below needs a fixed second count, and weeks/months/years don't have one.
+// No w, M or y: Quickwit's date histogram rejects them, and the bucket-count checks need a fixed
+// second count.
 export const intervalParam = v.pipe(
 	v.string(),
 	v.regex(/^[1-9]\d*[smhd]$/, 'interval must use seconds, minutes, hours, or days')
@@ -26,6 +26,10 @@ export function intervalSeconds(value: string): number {
 	if (unit === 'h') return amount * 3_600;
 	if (unit === 'm') return amount * 60;
 	return amount;
+}
+
+export function withinBucketCap(rangeSeconds: number, interval: string): boolean {
+	return rangeSeconds / intervalSeconds(interval) <= MAX_BUCKETS;
 }
 
 export const ServiceHealthQuery = v.pipe(
@@ -42,7 +46,7 @@ export const ServiceHealthQuery = v.pipe(
 	}),
 	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
 	v.check(
-		(input) => (input.endTs - input.startTs) / intervalSeconds(input.interval) <= MAX_BUCKETS,
+		(input) => withinBucketCap(input.endTs - input.startTs, input.interval),
 		'interval produces too many buckets'
 	)
 );

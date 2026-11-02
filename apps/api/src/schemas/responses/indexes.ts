@@ -190,8 +190,7 @@ export const FieldValuesBulkResponse = named(
 	'FieldValuesBulkResponse',
 	v.object({
 		values: v.record(v.string(), v.array(FieldValueEntrySchema)),
-		truncated: v.record(v.string(), v.boolean()),
-		elapsedTimeMicros: v.optional(v.number())
+		truncated: v.record(v.string(), v.boolean())
 	})
 );
 
