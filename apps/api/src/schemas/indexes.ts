@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { FIELD_VALUES_MAX, MAX_BULK_FIELDS } from '../constants.js';
+import { FIELD_VALUES_MAX, MAX_BULK_FILTERS } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
 import { DisplayModeSchema } from './display-mode.js';
 import { IndexIdParams } from '../utils/params.js';
@@ -76,11 +76,17 @@ export const FieldValuesBulkQuery = v.object({
 				.filter(Boolean)
 		),
 		v.array(v.pipe(v.string(), v.minLength(1))),
-		v.check((arr) => arr.length > 0, 'fields must include at least one field name'),
-		v.maxLength(MAX_BULK_FIELDS, `fields must list at most ${MAX_BULK_FIELDS} field names`)
+		v.check((arr) => arr.length > 0, 'fields must include at least one field name')
 	),
 	q: v.optional(v.string()),
-	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
+	filters: v.optional(
+		v.pipe(
+			v.string(),
+			v.parseJson(),
+			v.array(FilterSchema),
+			v.maxLength(MAX_BULK_FILTERS, `filters must list at most ${MAX_BULK_FILTERS} filters`)
+		)
+	),
 	startTs: v.optional(tsParam),
 	endTs: v.optional(tsEndParam),
 	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
