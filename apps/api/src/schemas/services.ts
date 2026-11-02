@@ -9,7 +9,7 @@ import {
 } from '../constants.js';
 import { EPOCH_SECONDS, intParam } from '../utils/valibot.js';
 
-export const MAX_BUCKETS = 2_000;
+const MAX_BUCKETS = 2_000;
 const MAX_ENDPOINT_LIMIT = 100;
 
 // No w, M or y: Quickwit's date histogram rejects them, and the bucket-count checks need a fixed
@@ -28,6 +28,10 @@ export function intervalSeconds(value: string): number {
 	return amount;
 }
 
+export function withinBucketCap(rangeSeconds: number, interval: string): boolean {
+	return rangeSeconds / intervalSeconds(interval) <= MAX_BUCKETS;
+}
+
 export const ServiceHealthQuery = v.pipe(
 	v.object({
 		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
@@ -42,7 +46,7 @@ export const ServiceHealthQuery = v.pipe(
 	}),
 	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
 	v.check(
-		(input) => (input.endTs - input.startTs) / intervalSeconds(input.interval) <= MAX_BUCKETS,
+		(input) => withinBucketCap(input.endTs - input.startTs, input.interval),
 		'interval produces too many buckets'
 	)
 );

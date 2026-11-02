@@ -394,12 +394,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		readLimiter,
 		withIndexConfig,
 		validator('query', HistogramQuery),
-		async (c) => {
-			const { q, startTs, endTs, interval } = c.req.valid('query');
-			return c.json(
-				await histogramLogs(quickwit, c.get('indexConfig'), { query: q, startTs, endTs, interval })
-			);
-		}
+		async (c) => c.json(await histogramLogs(quickwit, c.get('indexConfig'), c.req.valid('query')))
 	)
 	.get(
 		'/:indexId/fields/values',
@@ -414,19 +409,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		readLimiter,
 		withIndexConfig,
 		validator('query', FieldValuesBulkQuery),
-		async (c) => {
-			const { fields, q, filters, startTs, endTs, limit } = c.req.valid('query');
-			return c.json(
-				await fieldValuesBulk(quickwit, c.get('indexConfig'), {
-					fields,
-					query: q,
-					filters,
-					startTs,
-					endTs,
-					limit
-				})
-			);
-		}
+		async (c) => c.json(await fieldValuesBulk(quickwit, c.get('indexConfig'), c.req.valid('query')))
 	)
 	.get(
 		'/:indexId/fields/:field/values',

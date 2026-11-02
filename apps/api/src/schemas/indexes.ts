@@ -4,8 +4,8 @@ import { FIELD_VALUES_MAX, MAX_BULK_FIELDS } from '../constants.js';
 import { FilterSchema, fieldName } from './filters.js';
 import { DisplayModeSchema } from './display-mode.js';
 import { IndexIdParams } from '../utils/params.js';
-import { intParam, tsEndParam, tsParam, withEndNow } from '../utils/valibot.js';
-import { intervalParam, intervalSeconds, MAX_BUCKETS } from './services.js';
+import { intParam, tsEndParam, tsParam } from '../utils/valibot.js';
+import { intervalParam, withinBucketCap } from './services.js';
 
 const dedupedStrings = v.pipe(
 	v.array(v.pipe(v.string(), v.minLength(1))),
@@ -41,59 +41,52 @@ export const IndexFieldsQuery = v.object({
 	endTs: tsEndParam
 });
 
+/** Required range: the bucket-count check needs both ends. */
 export const HistogramQuery = v.pipe(
 	v.object({
 		q: v.optional(v.string()),
-		startTs: v.optional(tsParam),
-		endTs: v.optional(tsEndParam),
+		startTs: tsParam,
+		endTs: tsEndParam,
 		interval: intervalParam
 	}),
-	v.transform(withEndNow),
+	v.check(({ startTs, endTs }) => startTs < endTs, 'startTs must be before endTs'),
 	v.check(
-		({ startTs, endTs }) => startTs === undefined || startTs < endTs,
-		'startTs must be before endTs'
-	),
-	// ponytail: no startTs goes unchecked; Quickwit's own 65k bucket limit still stops it.
-	v.check(
-		({ startTs, endTs, interval }) =>
-			startTs === undefined || (endTs - startTs) / intervalSeconds(interval) <= MAX_BUCKETS,
+		({ startTs, endTs, interval }) => withinBucketCap(endTs - startTs, interval),
 		'interval produces too many buckets'
 	)
 );
 
-export const FieldValuesQuery = v.pipe(
-	v.object({
-		q: v.optional(v.string()),
-		startTs: v.optional(tsParam),
-		endTs: v.optional(tsEndParam),
-		limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
-	}),
-	v.transform(withEndNow)
-);
+export type HistogramQueryInput = v.InferOutput<typeof HistogramQuery>;
 
-export const FieldValuesBulkQuery = v.pipe(
-	v.object({
-		fields: v.pipe(
-			v.string(),
-			v.minLength(1),
-			v.transform((s) =>
-				s
-					.split(',')
-					.map((x) => x.trim())
-					.filter(Boolean)
-			),
-			v.array(v.pipe(v.string(), v.minLength(1))),
-			v.check((arr) => arr.length > 0, 'fields must include at least one field name'),
-			v.maxLength(MAX_BULK_FIELDS, `fields must list at most ${MAX_BULK_FIELDS} field names`)
+export const FieldValuesQuery = v.object({
+	q: v.optional(v.string()),
+	startTs: v.optional(tsParam),
+	endTs: v.optional(tsEndParam),
+	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
+});
+
+export const FieldValuesBulkQuery = v.object({
+	fields: v.pipe(
+		v.string(),
+		v.minLength(1),
+		v.transform((s) =>
+			s
+				.split(',')
+				.map((x) => x.trim())
+				.filter(Boolean)
 		),
-		q: v.optional(v.string()),
-		filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
-		startTs: v.optional(tsParam),
-		endTs: v.optional(tsEndParam),
-		limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
-	}),
-	v.transform(withEndNow)
-);
+		v.array(v.pipe(v.string(), v.minLength(1))),
+		v.check((arr) => arr.length > 0, 'fields must include at least one field name'),
+		v.maxLength(MAX_BULK_FIELDS, `fields must list at most ${MAX_BULK_FIELDS} field names`)
+	),
+	q: v.optional(v.string()),
+	filters: v.optional(v.pipe(v.string(), v.parseJson(), v.array(FilterSchema))),
+	startTs: v.optional(tsParam),
+	endTs: v.optional(tsEndParam),
+	limit: v.optional(intParam({ min: 1, max: FIELD_VALUES_MAX, label: 'limit' }))
+});
+
+export type FieldValuesBulkQueryInput = v.InferOutput<typeof FieldValuesBulkQuery>;
 
 export const StatsQuery = v.object({
 	startTs: v.optional(tsParam),

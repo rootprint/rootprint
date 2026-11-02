@@ -1,6 +1,7 @@
 import type { BucketAggregationResult, QuickwitClient } from '@rootprint-io/quickwit-js';
 import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 
+import type { FieldValuesBulkQueryInput, HistogramQueryInput } from '../schemas/indexes.js';
 import type { SearchQueryInput } from '../schemas/search.js';
 import { FIELD_VALUES_DEFAULT, FIELD_VALUES_MAX } from '../constants.js';
 import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
@@ -38,13 +39,6 @@ function bucketsToEntries(agg: BucketAggregationResult | undefined): FieldValueE
 		.toSorted((a, b) => b.count - a.count);
 }
 
-type HistogramParams = {
-	query?: string;
-	startTs?: number;
-	endTs?: number;
-	interval: string;
-};
-
 type FieldValuesParams = {
 	query?: string;
 	startTs?: number;
@@ -78,9 +72,9 @@ export async function searchLogs(
 export async function histogramLogs(
 	qw: QuickwitClient,
 	indexConfig: IndexConfig,
-	params: HistogramParams
+	params: HistogramQueryInput
 ): Promise<HistogramResponse> {
-	const { query = '*', startTs, endTs, interval } = params;
+	const { q: query = '*', startTs, endTs, interval } = params;
 	const idx = qw.index(indexConfig.indexId);
 	const histogramOptions = indexConfig.levelField
 		? { aggs: { levels: AggregationBuilder.terms(indexConfig.levelField, { size: 16 }) } }
@@ -134,51 +128,37 @@ export async function fieldValues(
 	};
 }
 
-type FieldValuesBulkParams = {
-	fields: string[];
-	query?: string;
-	filters?: Filter[];
-	startTs?: number;
-	endTs?: number;
-	limit?: number;
-};
-
 type BulkGroup = { fields: string[]; effectiveFilters: Filter[] };
 
+/** Unfiltered fields share one search; a filtered field runs alone, without its own filters. */
 function groupFieldsForBulk(fields: string[], filters: Filter[]): BulkGroup[] {
-	const uniqueFields = [...new Set(fields)];
-	const filterFieldSet = new Set(filters.map((f) => f.field));
-	const filteredFields = new Set<string>();
-	for (const f of uniqueFields) {
-		if (filterFieldSet.has(f)) filteredFields.add(f);
-	}
-
-	const unfiltered = uniqueFields.filter((f) => !filteredFields.has(f));
-
-	const groups: BulkGroup[] = [];
-	if (unfiltered.length > 0) {
-		groups.push({ fields: unfiltered, effectiveFilters: filters });
-	}
-	for (const field of filteredFields) {
-		groups.push({
-			fields: [field],
-			effectiveFilters: filters.filter((f) => f.field !== field)
-		});
-	}
-	return groups;
+	const filtered = new Set(filters.map((f) => f.field));
+	const unique = [...new Set(fields)];
+	const unfiltered = unique.filter((f) => !filtered.has(f));
+	return [
+		...(unfiltered.length > 0 ? [{ fields: unfiltered, effectiveFilters: filters }] : []),
+		...unique
+			.filter((f) => filtered.has(f))
+			.map((field) => ({
+				fields: [field],
+				effectiveFilters: filters.filter((f) => f.field !== field)
+			}))
+	];
 }
 
 export async function fieldValuesBulk(
 	qw: QuickwitClient,
 	indexConfig: IndexConfig,
-	params: FieldValuesBulkParams
+	params: FieldValuesBulkQueryInput
 ): Promise<FieldValuesBulkResponse> {
-	const { fields, query = '', filters = [], startTs, endTs, limit = FIELD_VALUES_DEFAULT } = params;
-
-	if (fields.length === 0) {
-		return { values: {}, truncated: {} };
-	}
-
+	const {
+		fields,
+		q: query = '',
+		filters = [],
+		startTs,
+		endTs,
+		limit = FIELD_VALUES_DEFAULT
+	} = params;
 	const groups = groupFieldsForBulk(fields, filters);
 	const idx = qw.index(indexConfig.indexId);
 	// Split across the whole request, not per search: filtered fields each run their own search.
@@ -201,9 +181,7 @@ export async function fieldValuesBulk(
 
 	const values: Record<string, FieldValueEntry[]> = {};
 	const truncated: Record<string, boolean> = {};
-	let elapsedTimeMicros = 0;
 	for (const { group, response } of groupResults) {
-		elapsedTimeMicros += response.elapsed_time_micros ?? 0;
 		for (const field of group.fields) {
 			const agg = response.aggregations?.[field] as BucketAggregationResult | undefined;
 			values[field] = bucketsToEntries(agg);
@@ -211,5 +189,5 @@ export async function fieldValuesBulk(
 		}
 	}
 
-	return { values, truncated, elapsedTimeMicros };
+	return { values, truncated };
 }

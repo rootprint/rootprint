@@ -18,7 +18,7 @@ import {
 	SearchLogsInput,
 	SearchSpansInput
 } from '../schemas/mcp.js';
-import { intervalSeconds, MAX_BUCKETS } from '../schemas/services.js';
+import { intervalSeconds, withinBucketCap } from '../schemas/services.js';
 import { hasBalancedParens, type ExploreSpansInput } from '../schemas/traces.js';
 import { badRequest, HttpError, isPublicError } from '../utils/http-error.js';
 import { isoTimestampString } from '../utils/valibot.js';
@@ -115,7 +115,7 @@ function timeRange(
 // absent one auto-sizes to about 60 buckets and an explicit one is capped like the REST routes.
 function histogramInterval(requested: string | undefined, rangeSeconds: number): string {
 	const interval = requested ?? formatInterval(bucketSeconds(rangeSeconds));
-	if (rangeSeconds / intervalSeconds(interval) > MAX_BUCKETS) {
+	if (!withinBucketCap(rangeSeconds, interval)) {
 		throw badRequest('interval produces too many buckets; use a wider interval or a shorter range');
 	}
 	return interval;
@@ -209,7 +209,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 				const chosen = histogramInterval(interval, endTs - startTs);
 				const indexConfig = await getIndexConfig(db, quickwit, indexId);
 				const { buckets } = await histogramLogs(quickwit, indexConfig, {
-					query,
+					q: query,
 					startTs,
 					endTs,
 					interval: chosen
@@ -239,7 +239,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 				const indexConfig = await getIndexConfig(db, quickwit, indexId);
 				const { values, truncated } = await fieldValuesBulk(quickwit, indexConfig, {
 					fields,
-					query,
+					q: query,
 					startTs,
 					endTs,
 					limit
