@@ -12,7 +12,7 @@
 	const counting = $derived(store.loading === 'fresh' || store.histogramLoading);
 	const numClass = $derived(counting ? 'text-subtle' : 'text-base-content');
 	const exportDisabled = $derived(
-		store.loading !== 'idle' ||
+		store.loading === 'fresh' ||
 			store.numHits === 0 ||
 			store.selectedIndex === null ||
 			store.resolvedStartTs === undefined ||
@@ -24,6 +24,17 @@
 	class="border-line bg-base-100 text-muted flex items-center gap-1.5 border-b px-3 py-1.5 text-xs tabular-nums"
 >
 	<span class="loading loading-spinner loading-xs {counting ? '' : 'invisible'}"></span>
+	{#if store.activeLiveSeconds !== null}
+		<span
+			class="bg-success/10 text-success mr-1 inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 font-medium"
+		>
+			<!-- Re-keyed per tick so the flash replays; no tick, no flash, which reads as paused. -->
+			{#key store.ticks}
+				<span class="live-dot" aria-hidden="true"></span>
+			{/key}
+			Live
+		</span>
+	{/if}
 	<span class={numClass}>{store.numHits?.toLocaleString() ?? '—'}</span>
 	<span>logs found</span>
 	{#if store.hasSearched && store.elapsedTimeMicros > 0}
@@ -75,3 +86,28 @@
 	numHits={store.numHits}
 	bind:open={exportOpen}
 />
+
+<style>
+	.live-dot {
+		width: 0.4375rem;
+		height: 0.4375rem;
+		border-radius: 9999px;
+		background: currentColor;
+		animation: live-tick 1.1s ease-out;
+	}
+
+	@keyframes live-tick {
+		from {
+			box-shadow: 0 0 0 0 currentColor;
+		}
+		to {
+			box-shadow: 0 0 0 0.35rem transparent;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.live-dot {
+			animation: none;
+		}
+	}
+</style>

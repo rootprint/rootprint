@@ -36,6 +36,17 @@
 
 	store.setupAutoSearch();
 
+	// ponytail: ticks only while the list sits at the top, so scrolling down pauses live tail and
+	// scrolling back up resumes it. Add a visible paused state if users miss that.
+	$effect(() => {
+		const seconds = store.activeLiveSeconds;
+		if (seconds === null) return;
+		const id = setInterval(() => {
+			if (viewport?.scrollTop === 0 && !document.hidden) store.tick();
+		}, seconds * 1000);
+		return () => clearInterval(id);
+	});
+
 	const messageField = $derived(store.fieldConfig?.messageField);
 	const columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
 	const messageWidth = $derived(

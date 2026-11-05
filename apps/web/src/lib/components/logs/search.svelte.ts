@@ -38,6 +38,19 @@ import type { DisplayMode, Preferences } from 'api/types';
 const BATCH_SIZE = 200;
 const MAX_OFFSET = 10_000;
 
+// Well past any legitimate query. Without it a request that never settles leaves `loading` or
+// `#histogramRunning` set, and auto-refresh waits on it forever.
+const REQUEST_TIMEOUT_MS = 30_000;
+
+function deadline(signal: AbortSignal): AbortSignal {
+	return AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
+}
+
+function requestError(e: unknown, fallback: string): string {
+	if (e instanceof DOMException && e.name === 'TimeoutError') return 'Request timed out';
+	return e instanceof Error ? e.message : fallback;
+}
+
 // Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
 const PREF_SAVE_DEBOUNCE_MS = 300;
 const DEFAULT_PREFS: Preferences = { displayFields: null, lineWrap: false, displayMode: 'table' };
@@ -54,13 +67,22 @@ export class SearchStore {
 	rawHits = $state.raw<Record<string, unknown>[]>([]);
 	numHits = $state<number | null>(null);
 	elapsedTimeMicros = $state(0);
-	loading = $state<'idle' | 'fresh'>('idle');
+	/** `'refresh'` is an auto-refresh tick: the rows stay on screen, but load-more and the next tick wait. */
+	loading = $state<'idle' | 'fresh' | 'refresh'>('idle');
 	loadingMore = $state(false);
 	#lastBatchFull = $state(false);
 	searchError = $state<string | null>(null);
 	hasSearched = $state(false);
 	/** Invalidates search-data caches when the view already shown is asked for again (Run, a re-picked range). */
 	refreshRevision = $state(0);
+	/** Auto-refresh interval picked in the toolbar, in seconds; `null` when off. */
+	liveSeconds = $state<number | null>(null);
+	/** The interval in force, which the logs page calls `tick()` on: an absolute range never moves. */
+	activeLiveSeconds = $derived(this.timeRange.type === 'relative' ? this.liveSeconds : null);
+	#tick = $state(0);
+	// The tick each request effect last ran for: a rerun with a newer one came from `tick()`.
+	#searchTick = 0;
+	#histogramTick = 0;
 	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
 		return this.#input?.startTs;
@@ -77,6 +99,9 @@ export class SearchStore {
 	histogramIntervalSec = $state<number | undefined>();
 	histogramLoading = $state(false);
 	histogramError = $state<string | null>(null);
+	// A refresh tick leaves `histogramLoading` false to keep the chart on screen, so the overlap
+	// guard needs its own flag: without it every tick aborts the last one and the count never lands.
+	#histogramRunning = false;
 
 	#schemaFields = $state.raw<LogField[]>([]);
 
@@ -173,6 +198,9 @@ export class SearchStore {
 	});
 
 	setFoldEnabled(next: boolean): void {
+		// Expansions are row positions inside a grouping that this toggle throws away. Leaving them
+		// behind would also keep `tick()` paused with no fold on screen to explain it.
+		this.#expandedFolds.clear();
 		const url = buildQueryUrl(page.url.searchParams, {}, next);
 		goto(url, { replace: true, reset: false });
 	}
@@ -212,6 +240,7 @@ export class SearchStore {
 		const query = this.#composedQuery;
 		void this.#rangeKey;
 		void this.refreshRevision;
+		void this.#tick;
 		if (indexId === null) return null;
 		return { indexId, query, ...untrack(() => resolveWindow(this.timeRange)) };
 	});
@@ -220,6 +249,22 @@ export class SearchStore {
 		this.#indexes = opts.indexes;
 		this.#parsedQuery = opts.parsedQuery;
 		this.#onFreshSearch = opts.onFreshSearch;
+	}
+
+	/**
+	 * Re-resolves a relative window against now. Unlike Run, it doesn't reload the field schema.
+	 * Skipped while a search or a histogram runs, so a slow one isn't aborted by every tick, and
+	 * while a fold is open: fold ids are row positions, so a refresh would snap the group shut.
+	 */
+	tick(): void {
+		if (this.loading !== 'idle' || this.#histogramRunning) return;
+		if (this.#expandedFolds.size > 0) return;
+		this.#tick += 1;
+	}
+
+	/** Counts the auto-refresh ticks that ran, so the toolbar can flash its live dot on each one. */
+	get ticks(): number {
+		return this.#tick;
 	}
 
 	get indexes(): IndexOption[] {
@@ -396,6 +441,9 @@ export class SearchStore {
 		$effect(() => {
 			const input = this.#input;
 			const sortDirection = this.#sort;
+			const tick = this.#tick;
+			const refresh = tick !== this.#searchTick;
+			this.#searchTick = tick;
 			if (input === null) {
 				this.loading = 'idle';
 				this.loadingMore = false;
@@ -404,24 +452,26 @@ export class SearchStore {
 			const controller = new AbortController();
 			const request: SearchInput = { ...input, sortDirection, limit: BATCH_SIZE, offset: 0 };
 			this.#searchRun = { signal: controller.signal, request };
-			this.loading = 'fresh';
+			this.loading = refresh ? 'refresh' : 'fresh';
 			// An aborted page never clears its own flag.
 			this.loadingMore = false;
 			this.searchError = null;
-			searchLogs(request, controller.signal)
+			searchLogs(request, deadline(controller.signal))
 				.then((result) => {
 					if (controller.signal.aborted) return;
 					this.rawHits = result.rawHits;
 					this.#expandedFolds.clear();
 					this.hasSearched = true;
-					this.#onFreshSearch?.();
+					// A tick keeps the scroll position: the list only jumps back to the top for a search
+					// the user asked for.
+					if (!refresh) this.#onFreshSearch?.();
 					this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
 					this.elapsedTimeMicros = result.elapsedTimeMicros;
 					this.#countPaths(result.rawHits);
 				})
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
-					this.searchError = e instanceof Error ? e.message : 'Search failed';
+					this.searchError = requestError(e, 'Search failed');
 					this.rawHits = [];
 					this.#countPaths([]);
 					this.elapsedTimeMicros = 0;
@@ -435,15 +485,22 @@ export class SearchStore {
 
 		$effect(() => {
 			const input = this.#input;
+			const tick = this.#tick;
+			const refresh = tick !== this.#histogramTick;
+			this.#histogramTick = tick;
 			if (input === null) {
 				this.histogramLoading = false;
+				this.#histogramRunning = false;
 				return;
 			}
 			const controller = new AbortController();
-			this.histogramLoading = true;
 			this.histogramError = null;
-			this.numHits = null;
-			fetchHistogram(input, controller.signal)
+			this.#histogramRunning = true;
+			if (!refresh) {
+				this.histogramLoading = true;
+				this.numHits = null;
+			}
+			fetchHistogram(input, deadline(controller.signal))
 				.then((result) => {
 					if (controller.signal.aborted) return;
 					this.histogramBuckets = result.buckets;
@@ -461,12 +518,16 @@ export class SearchStore {
 				})
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
-					this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
+					this.histogramError = requestError(e, 'Histogram fetch failed');
 					this.histogramBuckets = [];
-					this.numHits = null;
+					// A tick keeps the last count: the rows on screen are still good, and the chart
+					// already shows the error.
+					if (!refresh) this.numHits = null;
 				})
 				.finally(() => {
-					if (!controller.signal.aborted) this.histogramLoading = false;
+					if (controller.signal.aborted) return;
+					this.histogramLoading = false;
+					this.#histogramRunning = false;
 				});
 			return () => controller.abort();
 		});

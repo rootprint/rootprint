@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { Play, Share2 } from 'lucide-svelte';
+	import { ChevronDown, Play, Share2 } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
@@ -19,8 +19,24 @@
 	import { escapeFilterValue } from 'api/query';
 
 	const SUGGEST_LIMIT = 50;
+	const LIVE_OPTIONS = [null, 5, 10, 15, 30, 60] as const;
 
 	let { store }: { store: SearchStore } = $props();
+
+	const liveMenu = $props.id();
+	// Three states, not two: a fixed time range holds the chosen interval without running it.
+	const liveLabel = $derived(
+		store.activeLiveSeconds !== null
+			? `Auto-refresh every ${store.activeLiveSeconds}s`
+			: store.liveSeconds !== null
+				? 'Auto-refresh held for a fixed time range'
+				: 'Auto-refresh: off'
+	);
+	const liveTitle = $derived(
+		store.activeLiveSeconds === null
+			? liveLabel
+			: `${liveLabel}, paused while scrolled down or in the background`
+	);
 
 	let queryInput = $state(store.query);
 	let focused = $state(false);
@@ -31,6 +47,7 @@
 	let dismissed = $state(false);
 
 	const unrun = $derived(queryInput !== store.query);
+	const runStyle = $derived(unrun ? 'btn-primary' : 'btn-ghost');
 
 	const valueCache = new Map<string, LogFieldValueBucket[]>();
 	let valueCacheRevision = -1;
@@ -270,18 +287,56 @@
 			aria-label="Copy link"
 			title="Copy link"
 		/>
-		<button
-			type="button"
-			class="btn btn-sm {unrun ? 'btn-primary' : 'btn-ghost'}"
-			aria-label="Run query"
-			title="Run query"
-			onmousedown={(e) => {
-				e.preventDefault();
-			}}
-			onclick={runQuery}
-		>
-			<Play class="size-3.5" aria-hidden="true" />
-			Run
-		</button>
+		<div class="join">
+			<button
+				type="button"
+				class="btn btn-sm join-item {runStyle}"
+				aria-label="Run query"
+				title="Run query"
+				onmousedown={(e) => {
+					e.preventDefault();
+				}}
+				onclick={runQuery}
+			>
+				<Play class="size-3.5" aria-hidden="true" />
+				Run
+			</button>
+			<button
+				type="button"
+				popovertarget={liveMenu}
+				style="anchor-name:--{liveMenu}"
+				class="btn btn-sm join-item px-1.5 {runStyle}"
+				aria-label={liveLabel}
+				title={liveTitle}
+			>
+				{#if store.activeLiveSeconds !== null}{store.activeLiveSeconds}s{/if}
+				<ChevronDown class="size-3" aria-hidden="true" />
+			</button>
+		</div>
 	</div>
+	<ul
+		popover
+		id={liveMenu}
+		style="position-anchor:--{liveMenu}"
+		class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 w-36 border p-1 text-sm shadow-lg"
+	>
+		<li class="section-label px-2 py-1">Auto-refresh</li>
+		{#each LIVE_OPTIONS as seconds (seconds)}
+			{@const active = store.liveSeconds === seconds}
+			<li>
+				<button
+					type="button"
+					class="flex w-full rounded px-2 py-1.5 text-left transition-colors {active
+						? 'bg-base-content text-base-100'
+						: 'hover:bg-base-200'}"
+					aria-pressed={active}
+					popovertarget={liveMenu}
+					popovertargetaction="hide"
+					onclick={() => (store.liveSeconds = seconds)}
+				>
+					{seconds === null ? 'Off' : `Every ${seconds}s`}
+				</button>
+			</li>
+		{/each}
+	</ul>
 </PageToolbar>
