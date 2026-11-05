@@ -29,7 +29,7 @@
 			<!-- Re-keyed per tick so the halo replays; no tick, no flash, which reads as paused. -->
 			{#key store.ticks}
 				<span
-					class="status status-success animate-live-tick motion-reduce:animate-none"
+					class="status status-success status-sm animate-live-tick motion-reduce:animate-none"
 					aria-hidden="true"
 				></span>
 			{/key}
