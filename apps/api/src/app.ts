@@ -216,9 +216,9 @@ async function main(): Promise<void> {
 		port: config.port,
 		idleTimeout: 255
 	});
-	const shutdown = (signal: NodeJS.Signals) => {
+	const shutdown = async (signal: NodeJS.Signals) => {
 		logger.info({ signal }, 'shutting down api');
-		server.stop(true);
+		await server.stop();
 		process.exit(0);
 	};
 	process.on('SIGTERM', shutdown);
