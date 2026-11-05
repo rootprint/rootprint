@@ -25,12 +25,13 @@
 >
 	<span class="loading loading-spinner loading-xs {counting ? '' : 'invisible'}"></span>
 	{#if store.activeLiveSeconds !== null}
-		<span
-			class="bg-success/10 text-success mr-1 inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 font-medium"
-		>
-			<!-- Re-keyed per tick so the flash replays; no tick, no flash, which reads as paused. -->
+		<span class="badge badge-sm badge-soft badge-success mr-1 gap-1.5">
+			<!-- Re-keyed per tick so the halo replays; no tick, no flash, which reads as paused. -->
 			{#key store.ticks}
-				<span class="live-dot" aria-hidden="true"></span>
+				<span
+					class="status status-success animate-live-tick motion-reduce:animate-none"
+					aria-hidden="true"
+				></span>
 			{/key}
 			Live
 		</span>
@@ -86,28 +87,3 @@
 	numHits={store.numHits}
 	bind:open={exportOpen}
 />
-
-<style>
-	.live-dot {
-		width: 0.4375rem;
-		height: 0.4375rem;
-		border-radius: 9999px;
-		background: currentColor;
-		animation: live-tick 1.1s ease-out;
-	}
-
-	@keyframes live-tick {
-		from {
-			box-shadow: 0 0 0 0 currentColor;
-		}
-		to {
-			box-shadow: 0 0 0 0.35rem transparent;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.live-dot {
-			animation: none;
-		}
-	}
-</style>
