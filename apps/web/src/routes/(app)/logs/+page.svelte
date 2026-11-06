@@ -36,13 +36,14 @@
 
 	store.setupAutoSearch();
 
-	// Sampled at tick time rather than tracked: scrolling down pauses live tail and scrolling back up
-	// resumes it, with no scroll listener to keep in sync. `tick` reports the gate on `store.liveState`.
+	// Sampled at tick time rather than tracked: scrolling down pauses auto-refresh and scrolling back
+	// up resumes it, with no scroll listener to keep in sync. `tick` reports the gate on
+	// `store.liveState`. An open log pauses it too, so the drawer's share link keeps the hit's window.
 	$effect(() => {
 		const seconds = store.activeLiveSeconds;
 		if (seconds === null) return;
 		const id = setInterval(() => {
-			store.tick(viewport?.scrollTop === 0 && !document.hidden);
+			store.tick(viewport?.scrollTop === 0 && !document.hidden && selectedLog === null);
 		}, seconds * 1000);
 		return () => clearInterval(id);
 	});
@@ -165,7 +166,7 @@
 				buckets={store.histogramBuckets}
 				intervalSec={store.histogramIntervalSec}
 				loading={store.histogramLoading}
-				error={store.histogramError}
+				error={store.histogramBuckets.length === 0 ? store.histogramError : null}
 				bind:collapsed={chartCollapsed}
 				onBrush={(start, end) =>
 					store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}

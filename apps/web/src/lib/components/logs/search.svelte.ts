@@ -77,6 +77,7 @@ export class SearchStore {
 	loadingMore = $state(false);
 	#lastBatchFull = $state(false);
 	searchError = $state<string | null>(null);
+	histogramError = $state<string | null>(null);
 	hasSearched = $state(false);
 	/** Invalidates search-data caches when the view already shown is asked for again (Run, a re-picked range). */
 	refreshRevision = $state(0);
@@ -94,7 +95,11 @@ export class SearchStore {
 	 * `'retrying'` after a failed tick, `'paused'` when the last tick was gated, else `'live'`.
 	 */
 	liveState = $derived<'live' | 'paused' | 'retrying'>(
-		this.searchError !== null ? 'retrying' : this.#livePaused ? 'paused' : 'live'
+		this.searchError !== null || this.histogramError !== null
+			? 'retrying'
+			: this.#livePaused
+				? 'paused'
+				: 'live'
 	);
 	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
@@ -111,7 +116,6 @@ export class SearchStore {
 	histogramBuckets = $state.raw<HistogramBucket[]>([]);
 	histogramIntervalSec = $state<number | undefined>();
 	histogramLoading = $state(false);
-	histogramError = $state<string | null>(null);
 	/**
 	 * The window `numHits` was counted over, written with it so the two are never read apart. A tick
 	 * moves `resolvedStartTs`/`resolvedEndTs` the moment it fires, well before the new count lands,
@@ -233,8 +237,11 @@ export class SearchStore {
 	#indexes: () => IndexOption[];
 	#onFreshSearch?: () => void;
 	#disposed = false;
-	// The fresh search a load-more page extends; aborted when the next one starts.
-	#searchRun?: { signal: AbortSignal; request: SearchInput };
+	// Load-more extends the request whose rows are on screen, not the latest one: a failed refresh
+	// leaves its predecessor's rows behind. It takes the latest search's signal so the next search
+	// still aborts it.
+	#shownRequest?: SearchInput;
+	#searchSignal?: AbortSignal;
 	#confirmedPrefs = DEFAULT_PREFS;
 	#prefSave: { timer: ReturnType<typeof setTimeout>; commit: () => void } | null = null;
 	#prefSaveSeq = 0;
@@ -273,14 +280,14 @@ export class SearchStore {
 	/**
 	 * Re-resolves a relative window against now. Unlike Run, it doesn't reload the field schema.
 	 *
-	 * Gated on `atTop` (the caller's "the list is in view" test) plus the reasons only the store
-	 * knows: a search or histogram still running, so a slow one isn't aborted by every tick, and an
-	 * open fold, whose id is a row position that a refresh would invalidate. Every gate lands in
-	 * `#livePaused` so `liveState` can say so without a second copy of the rules.
+	 * Gated on `inView` (the caller's "the list is on screen and uncovered" test) plus the reasons
+	 * only the store knows: a search or histogram still running, so a slow one isn't aborted by
+	 * every tick, and an open fold, whose id is a row position that a refresh would invalidate.
+	 * Every gate lands in `#livePaused` so `liveState` can say so without a second copy of the rules.
 	 */
-	tick(atTop: boolean): void {
+	tick(inView: boolean): void {
 		const gated =
-			!atTop || this.loading !== 'idle' || this.#histogramRunning || this.#expandedFolds.size > 0;
+			!inView || this.loading !== 'idle' || this.#histogramRunning || this.#expandedFolds.size > 0;
 		this.#livePaused = gated;
 		if (!gated) this.#tick += 1;
 	}
@@ -487,7 +494,7 @@ export class SearchStore {
 			}
 			const controller = new AbortController();
 			const request: SearchInput = { ...input, sortDirection, limit: BATCH_SIZE, offset: 0 };
-			this.#searchRun = { signal: controller.signal, request };
+			this.#searchSignal = controller.signal;
 			this.loading = refresh ? 'refresh' : 'fresh';
 			// An aborted page never clears its own flag.
 			this.loadingMore = false;
@@ -496,6 +503,7 @@ export class SearchStore {
 				.then((result) => {
 					if (controller.signal.aborted) return;
 					this.rawHits = result.rawHits;
+					this.#shownRequest = request;
 					this.#expandedFolds.clear();
 					this.hasSearched = true;
 					// A tick keeps the scroll position: the list only jumps back to the top for a search
@@ -560,10 +568,10 @@ export class SearchStore {
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
 					this.histogramError = requestError(e, 'Histogram fetch failed');
-					this.histogramBuckets = [];
-					// A tick keeps the last count and the window it was counted over: the rows on screen
-					// are still good, and the chart already shows the error.
+					// A tick keeps the last chart, count and the window it was counted over, as the rows
+					// do; the live chip reports the failure and the next tick retries.
 					if (!refresh) {
+						this.histogramBuckets = [];
 						this.numHits = null;
 						this.countedWindow = null;
 					}
@@ -667,32 +675,32 @@ export class SearchStore {
 			this.loading === 'idle' &&
 			!this.loadingMore &&
 			this.#lastBatchFull &&
-			this.rawHits.length < MAX_OFFSET &&
-			(this.numHits === null || this.rawHits.length < this.numHits)
+			this.rawHits.length < MAX_OFFSET
 		);
 	}
 
 	/** Appends the next page of the current search, on its window; a new search aborts it. */
 	maybeLoadMore(): void {
-		const run = this.#searchRun;
-		if (run === undefined || !this.#canFetchMore()) return;
+		const request = this.#shownRequest;
+		const signal = this.#searchSignal;
+		if (request === undefined || signal === undefined || !this.#canFetchMore()) return;
 		// Appending happens ahead of the viewport, so it stays silent.
 		this.loadingMore = true;
-		searchLogs({ ...run.request, offset: this.rawHits.length }, run.signal)
+		searchLogs({ ...request, offset: this.rawHits.length }, signal)
 			.then((result) => {
-				if (run.signal.aborted) return;
+				if (signal.aborted) return;
 				this.rawHits = [...this.rawHits, ...result.rawHits];
 				this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
 			})
 			// A failed page leaves the list as it is; the next scroll retries it.
 			.catch(() => {})
 			.finally(() => {
-				if (!run.signal.aborted) this.loadingMore = false;
+				if (!signal.aborted) this.loadingMore = false;
 			});
 	}
 
+	// Never compared with `numHits`: a failed refresh can leave the total counted over another window.
 	get listEnd(): 'more' | 'end' | 'capped' {
-		if (this.numHits !== null && this.rawHits.length >= this.numHits) return 'end';
 		if (this.rawHits.length >= MAX_OFFSET) return 'capped';
 		return this.#lastBatchFull ? 'more' : 'end';
 	}

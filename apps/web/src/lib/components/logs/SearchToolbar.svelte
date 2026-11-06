@@ -35,7 +35,7 @@
 	const liveTitle = $derived(
 		store.activeLiveSeconds === null
 			? liveLabel
-			: `${liveLabel}, paused while scrolled down or in the background`
+			: `${liveLabel}, paused while scrolled down, in the background or while a log is open`
 	);
 
 	let queryInput = $state(store.query);

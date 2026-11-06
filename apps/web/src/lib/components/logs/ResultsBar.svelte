@@ -34,7 +34,10 @@
 	<span class="loading loading-spinner loading-xs {counting ? '' : 'invisible'}"></span>
 	{#if store.activeLiveSeconds !== null}
 		<!-- The label carries the state; the halo only replays per tick, so reduced motion loses nothing. -->
-		<span class="badge badge-sm badge-soft {liveChip.tone} mr-1 gap-1.5" title={store.searchError}>
+		<span
+			class="badge badge-sm badge-soft {liveChip.tone} mr-1 gap-1.5"
+			title={store.searchError ?? store.histogramError}
+		>
 			{#key store.ticks}
 				<span
 					class="status status-sm animate-live-tick bg-current motion-reduce:animate-none"
