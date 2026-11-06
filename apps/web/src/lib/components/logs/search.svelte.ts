@@ -38,23 +38,6 @@ import type { DisplayMode, Preferences } from 'api/types';
 const BATCH_SIZE = 200;
 const MAX_OFFSET = 10_000;
 
-// Quickwit's default searcher timeout: past it the upstream gives up anyway.
-const REQUEST_TIMEOUT_MS = 30_000;
-
-/**
- * Adds the deadline to a caller's signal. A request that never settles would leave `loading` or
- * `#histogramRunning` set, and auto-refresh would wait on it forever.
- */
-function deadline(signal: AbortSignal): AbortSignal {
-	return AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
-}
-
-/** Message for a failed request; a deadline rejection reads as a timeout rather than "signal timed out". */
-function requestError(e: unknown, fallback: string): string {
-	if (e instanceof DOMException && e.name === 'TimeoutError') return 'Request timed out';
-	return e instanceof Error ? e.message : fallback;
-}
-
 // Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
 const PREF_SAVE_DEBOUNCE_MS = 300;
 const DEFAULT_PREFS: Preferences = { displayFields: null, lineWrap: false, displayMode: 'table' };
@@ -97,13 +80,13 @@ export class SearchStore {
 		if (!this.#inView || this.#expandedFolds.size > 0) return 'paused';
 		return this.searchError !== null || this.histogramError !== null ? 'retrying' : 'on';
 	});
-	/** Start of the window the rows on screen came from, in epoch seconds. `undefined` until one lands. */
+	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
-		return this.#shownRequest?.startTs;
+		return this.#input?.startTs;
 	}
-	/** End of the window the rows on screen came from, in epoch seconds. `undefined` until one lands. */
+	/** Absolute end of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedEndTs(): number | undefined {
-		return this.#shownRequest?.endTs;
+		return this.#input?.endTs;
 	}
 
 	fieldConfig = $state<FieldConfig | null>(null);
@@ -112,11 +95,6 @@ export class SearchStore {
 	histogramBuckets = $state.raw<HistogramBucket[]>([]);
 	histogramIntervalSec = $state<number | undefined>();
 	histogramLoading = $state(false);
-	/**
-	 * The window `numHits` counts. A tick moves the search window the moment it fires, well before the
-	 * new count lands, so export reads this and never pairs a fresh window with a stale total.
-	 */
-	countedWindow = $state.raw<{ startTs: number; endTs: number } | null>(null);
 	// A refresh tick leaves `histogramLoading` false to keep the chart on screen, so the overlap
 	// guard needs its own flag: without it every tick aborts the last one and the count never lands.
 	#histogramRunning = false;
@@ -232,11 +210,8 @@ export class SearchStore {
 	#indexes: () => IndexOption[];
 	#onFreshSearch?: () => void;
 	#disposed = false;
-	// Load-more extends the request whose rows are on screen, not the latest one: a failed refresh
-	// leaves its predecessor's rows behind. It takes the latest search's signal so the next search
-	// still aborts it.
-	#shownRequest?: SearchInput;
-	#searchSignal?: AbortSignal;
+	// The fresh search a load-more page extends; aborted when the next one starts.
+	#searchRun?: { signal: AbortSignal; request: SearchInput };
 	#confirmedPrefs = DEFAULT_PREFS;
 	#prefSave: { timer: ReturnType<typeof setTimeout>; commit: () => void } | null = null;
 	#prefSaveSeq = 0;
@@ -426,7 +401,6 @@ export class SearchStore {
 
 	handleIndexChange(indexId: string): void {
 		this.numHits = null;
-		this.countedWindow = null;
 		this.elapsedTimeMicros = 0;
 		this.rawHits = [];
 		// Counts belong to the index that produced them; kept, they would rank the next index's fields.
@@ -484,19 +458,18 @@ export class SearchStore {
 			}
 			const controller = new AbortController();
 			const request: SearchInput = { ...input, sortDirection, limit: BATCH_SIZE, offset: 0 };
-			this.#searchSignal = controller.signal;
+			this.#searchRun = { signal: controller.signal, request };
 			this.loading = refresh ? 'refresh' : 'fresh';
 			// An aborted page never clears its own flag.
 			this.loadingMore = false;
 			// A tick leaves the last error up until it succeeds: a failed search with no rows would
 			// otherwise flip to the empty state on every retry.
 			if (!refresh) this.searchError = null;
-			searchLogs(request, deadline(controller.signal))
+			searchLogs(request, controller.signal)
 				.then((result) => {
 					if (controller.signal.aborted) return;
 					this.searchError = null;
 					this.rawHits = result.rawHits;
-					this.#shownRequest = request;
 					this.#expandedFolds.clear();
 					this.hasSearched = true;
 					// A tick keeps the scroll position: the list only jumps back to the top for a search
@@ -508,7 +481,7 @@ export class SearchStore {
 				})
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
-					this.searchError = requestError(e, 'Search failed');
+					this.searchError = e instanceof Error ? e.message : 'Search failed';
 					// A tick keeps the rows it already has: a blip shouldn't clear the list being read.
 					// The chip reports the failure and the next tick retries.
 					if (refresh) return;
@@ -539,16 +512,14 @@ export class SearchStore {
 				this.histogramError = null;
 				this.histogramLoading = true;
 				this.numHits = null;
-				this.countedWindow = { startTs: input.startTs, endTs: input.endTs };
 			}
-			fetchHistogram(input, deadline(controller.signal))
+			fetchHistogram(input, controller.signal)
 				.then((result) => {
 					if (controller.signal.aborted) return;
 					this.histogramError = null;
 					this.histogramBuckets = result.buckets;
 					this.histogramIntervalSec = result.intervalSec;
 					this.numHits = result.totalDocCount;
-					this.countedWindow = { startTs: input.startTs, endTs: input.endTs };
 					// The raw query, not the composed one: a filter change merges into the roster.
 					const rosterKey = `${input.indexId}|${this.query}|${this.#rangeKey}`;
 					const fresh = this.#computeLevelTotals(result.buckets);
@@ -561,7 +532,7 @@ export class SearchStore {
 				})
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
-					this.histogramError = requestError(e, 'Histogram fetch failed');
+					this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
 					// A tick keeps the last chart and count, as the search keeps its rows.
 					if (!refresh) {
 						this.histogramBuckets = [];
@@ -662,49 +633,37 @@ export class SearchStore {
 		});
 	}
 
-	/** `numHits` if it counts the rows' own window; a failed refresh can leave the two apart. */
-	#shownTotal(): number | null {
-		const counted = this.countedWindow;
-		const shown = this.#shownRequest;
-		return counted?.startTs === shown?.startTs && counted?.endTs === shown?.endTs
-			? this.numHits
-			: null;
-	}
-
 	#canFetchMore(): boolean {
-		const total = this.#shownTotal();
 		return (
 			this.loading === 'idle' &&
 			!this.loadingMore &&
 			this.#lastBatchFull &&
 			this.rawHits.length < MAX_OFFSET &&
-			(total === null || this.rawHits.length < total)
+			(this.numHits === null || this.rawHits.length < this.numHits)
 		);
 	}
 
 	/** Appends the next page of the current search, on its window; a new search aborts it. */
 	maybeLoadMore(): void {
-		const request = this.#shownRequest;
-		const signal = this.#searchSignal;
-		if (request === undefined || signal === undefined || !this.#canFetchMore()) return;
+		const run = this.#searchRun;
+		if (run === undefined || !this.#canFetchMore()) return;
 		// Appending happens ahead of the viewport, so it stays silent.
 		this.loadingMore = true;
-		searchLogs({ ...request, offset: this.rawHits.length }, signal)
+		searchLogs({ ...run.request, offset: this.rawHits.length }, run.signal)
 			.then((result) => {
-				if (signal.aborted) return;
+				if (run.signal.aborted) return;
 				this.rawHits = [...this.rawHits, ...result.rawHits];
 				this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
 			})
 			// A failed page leaves the list as it is; the next scroll retries it.
 			.catch(() => {})
 			.finally(() => {
-				if (!signal.aborted) this.loadingMore = false;
+				if (!run.signal.aborted) this.loadingMore = false;
 			});
 	}
 
 	get listEnd(): 'more' | 'end' | 'capped' {
-		const total = this.#shownTotal();
-		if (total !== null && this.rawHits.length >= total) return 'end';
+		if (this.numHits !== null && this.rawHits.length >= this.numHits) return 'end';
 		if (this.rawHits.length >= MAX_OFFSET) return 'capped';
 		return this.#lastBatchFull ? 'more' : 'end';
 	}

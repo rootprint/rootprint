@@ -15,7 +15,8 @@
 		store.loading === 'fresh' ||
 			store.numHits === 0 ||
 			store.selectedIndex === null ||
-			store.countedWindow === null
+			store.resolvedStartTs === undefined ||
+			store.resolvedEndTs === undefined
 	);
 
 	const AUTO_REFRESH_CHIP = {
@@ -85,8 +86,8 @@
 <ExportDialog
 	indexId={store.selectedIndex}
 	composedQuery={store.composedQuery}
-	startTs={store.countedWindow?.startTs}
-	endTs={store.countedWindow?.endTs}
+	startTs={store.resolvedStartTs}
+	endTs={store.resolvedEndTs}
 	numHits={store.numHits}
 	bind:open={exportOpen}
 />
