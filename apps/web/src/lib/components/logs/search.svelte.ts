@@ -81,22 +81,22 @@ export class SearchStore {
 	/** Invalidates search-data caches when the view already shown is asked for again (Run, a re-picked range). */
 	refreshRevision = $state(0);
 	/** Auto-refresh interval picked in the toolbar, in seconds; `null` when off. */
-	liveSeconds = $state<number | null>(null);
+	autoRefreshSeconds = $state<number | null>(null);
 	/** The interval in force, which the logs page calls `tick()` on: an absolute range never moves. */
-	activeLiveSeconds = $derived(this.timeRange.type === 'relative' ? this.liveSeconds : null);
+	activeAutoRefreshSeconds = $derived(
+		this.timeRange.type === 'relative' ? this.autoRefreshSeconds : null
+	);
 	#tick = $state(0);
-	#livePaused = $state(false);
+	// Sampled by `tick()`, so the chip trails a scroll by up to one interval.
+	#inView = $state(true);
 	// The tick each request effect last ran for: a rerun with a newer one came from `tick()`.
 	#searchTick = 0;
 	#histogramTick = 0;
-	/** The live chip's state. `'paused'` is the last tick's gate, so it trails a scroll by one interval. */
-	liveState = $derived<'live' | 'paused' | 'retrying'>(
-		this.searchError !== null || this.histogramError !== null
-			? 'retrying'
-			: this.#livePaused
-				? 'paused'
-				: 'live'
-	);
+	/** The auto-refresh chip's state. A request still in flight isn't a pause: the next tick runs once it lands. */
+	autoRefreshState = $derived.by<'on' | 'paused' | 'retrying'>(() => {
+		if (!this.#inView || this.#expandedFolds.size > 0) return 'paused';
+		return this.searchError !== null || this.histogramError !== null ? 'retrying' : 'on';
+	});
 	/** Start of the window the rows on screen came from, in epoch seconds. `undefined` until one lands. */
 	get resolvedStartTs(): number | undefined {
 		return this.#shownRequest?.startTs;
@@ -275,26 +275,25 @@ export class SearchStore {
 	/**
 	 * Re-resolves a relative window against now. Unlike Run, it doesn't reload the field schema.
 	 *
-	 * Gated on `inView` (the caller's "the list is on screen and uncovered" test) plus the reasons
-	 * only the store knows: a search or histogram still running, so a slow one isn't aborted by
-	 * every tick, and an open fold, whose id is a row position that a refresh would invalidate.
-	 * Every gate lands in `#livePaused` so `liveState` can say so without a second copy of the rules.
+	 * Skipped while paused: `inView` is the caller's "the list is on screen and uncovered" test, and
+	 * an open fold's id is a row position that a refresh would invalidate. Also skipped while a
+	 * search or histogram is still running, so a slow one isn't aborted by every tick.
 	 */
 	tick(inView: boolean): void {
-		const gated =
-			!inView || this.loading !== 'idle' || this.#histogramRunning || this.#expandedFolds.size > 0;
-		this.#livePaused = gated;
-		if (!gated) this.#tick += 1;
+		this.#inView = inView;
+		if (this.autoRefreshState === 'paused' || this.loading !== 'idle' || this.#histogramRunning)
+			return;
+		this.#tick += 1;
 	}
 
 	/**
-	 * Picks the auto-refresh interval, putting the list newest-first as it does. Oldest-first tails
-	 * from the wrong end: each tick would refetch the oldest page of a window that keeps sliding
-	 * forward, so the rows age out of the top and new logs never arrive.
+	 * Picks the auto-refresh interval, putting the list newest-first as it does. Oldest-first
+	 * refreshes the wrong end: each tick would refetch the oldest page of a window that keeps
+	 * sliding forward, so the rows age out of the top and new logs never arrive.
 	 */
-	setLiveSeconds(seconds: number | null): void {
-		this.liveSeconds = seconds;
-		this.#livePaused = false;
+	setAutoRefreshSeconds(seconds: number | null): void {
+		this.autoRefreshSeconds = seconds;
+		this.#inView = true;
 		if (seconds !== null && this.sortDirection === 'asc') {
 			this.navigateQuery({ sortDirection: 'desc' });
 		}
@@ -489,10 +488,13 @@ export class SearchStore {
 			this.loading = refresh ? 'refresh' : 'fresh';
 			// An aborted page never clears its own flag.
 			this.loadingMore = false;
-			this.searchError = null;
+			// A tick leaves the last error up until it succeeds: a failed search with no rows would
+			// otherwise flip to the empty state on every retry.
+			if (!refresh) this.searchError = null;
 			searchLogs(request, deadline(controller.signal))
 				.then((result) => {
 					if (controller.signal.aborted) return;
+					this.searchError = null;
 					this.rawHits = result.rawHits;
 					this.#shownRequest = request;
 					this.#expandedFolds.clear();
@@ -507,8 +509,8 @@ export class SearchStore {
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
 					this.searchError = requestError(e, 'Search failed');
-					// A tick keeps the rows it already has: a blip mid-tail shouldn't clear the list
-					// being read. The chip reports the failure and the next tick retries.
+					// A tick keeps the rows it already has: a blip shouldn't clear the list being read.
+					// The chip reports the failure and the next tick retries.
 					if (refresh) return;
 					this.rawHits = [];
 					this.#countPaths([]);
@@ -532,9 +534,9 @@ export class SearchStore {
 				return;
 			}
 			const controller = new AbortController();
-			this.histogramError = null;
 			this.#histogramRunning = true;
 			if (!refresh) {
+				this.histogramError = null;
 				this.histogramLoading = true;
 				this.numHits = null;
 				this.countedWindow = { startTs: input.startTs, endTs: input.endTs };
@@ -542,6 +544,7 @@ export class SearchStore {
 			fetchHistogram(input, deadline(controller.signal))
 				.then((result) => {
 					if (controller.signal.aborted) return;
+					this.histogramError = null;
 					this.histogramBuckets = result.buckets;
 					this.histogramIntervalSec = result.intervalSec;
 					this.numHits = result.totalDocCount;

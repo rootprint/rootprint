@@ -19,23 +19,23 @@
 	import { escapeFilterValue } from 'api/query';
 
 	const SUGGEST_LIMIT = 50;
-	const LIVE_OPTIONS = [null, 5, 10, 15, 30, 60] as const;
+	const AUTO_REFRESH_OPTIONS = [null, 5, 10, 15, 30, 60] as const;
 
 	let { store }: { store: SearchStore } = $props();
 
-	const liveMenu = $props.id();
+	const autoRefreshMenu = $props.id();
 	// Three states, not two: a fixed time range holds the chosen interval without running it.
-	const liveLabel = $derived(
-		store.activeLiveSeconds !== null
-			? `Auto-refresh every ${store.activeLiveSeconds}s`
-			: store.liveSeconds !== null
+	const autoRefreshLabel = $derived(
+		store.activeAutoRefreshSeconds !== null
+			? `Auto-refresh every ${store.activeAutoRefreshSeconds}s`
+			: store.autoRefreshSeconds !== null
 				? 'Auto-refresh held for a fixed time range'
 				: 'Auto-refresh: off'
 	);
-	const liveTitle = $derived(
-		store.activeLiveSeconds === null
-			? liveLabel
-			: `${liveLabel}, paused while scrolled down, in the background or while a log is open`
+	const autoRefreshTitle = $derived(
+		store.activeAutoRefreshSeconds === null
+			? autoRefreshLabel
+			: `${autoRefreshLabel}, paused while scrolled down, in the background or while a fold or a log is open`
 	);
 
 	let queryInput = $state(store.query);
@@ -303,26 +303,26 @@
 			</button>
 			<button
 				type="button"
-				popovertarget={liveMenu}
-				style="anchor-name:--{liveMenu}"
+				popovertarget={autoRefreshMenu}
+				style="anchor-name:--{autoRefreshMenu}"
 				class="btn btn-sm join-item px-1.5 {runStyle}"
-				aria-label={liveLabel}
-				title={liveTitle}
+				aria-label={autoRefreshLabel}
+				title={autoRefreshTitle}
 			>
-				{#if store.activeLiveSeconds !== null}{store.activeLiveSeconds}s{/if}
+				{#if store.activeAutoRefreshSeconds !== null}{store.activeAutoRefreshSeconds}s{/if}
 				<ChevronDown class="size-3" aria-hidden="true" />
 			</button>
 		</div>
 	</div>
 	<ul
 		popover
-		id={liveMenu}
-		style="position-anchor:--{liveMenu}"
+		id={autoRefreshMenu}
+		style="position-anchor:--{autoRefreshMenu}"
 		class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 w-36 border p-1 text-sm shadow-lg"
 	>
 		<li class="section-label px-2 py-1">Auto-refresh</li>
-		{#each LIVE_OPTIONS as seconds (seconds)}
-			{@const active = store.liveSeconds === seconds}
+		{#each AUTO_REFRESH_OPTIONS as seconds (seconds)}
+			{@const active = store.autoRefreshSeconds === seconds}
 			<li>
 				<button
 					type="button"
@@ -330,9 +330,9 @@
 						? 'bg-base-content text-base-100'
 						: 'hover:bg-base-200'}"
 					aria-pressed={active}
-					popovertarget={liveMenu}
+					popovertarget={autoRefreshMenu}
 					popovertargetaction="hide"
-					onclick={() => store.setLiveSeconds(seconds)}
+					onclick={() => store.setAutoRefreshSeconds(seconds)}
 				>
 					{seconds === null ? 'Off' : `Every ${seconds}s`}
 				</button>
