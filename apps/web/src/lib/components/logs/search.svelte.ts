@@ -42,10 +42,15 @@ const MAX_OFFSET = 10_000;
 // `#histogramRunning` set, and auto-refresh waits on it forever.
 const REQUEST_TIMEOUT_MS = 30_000;
 
+/**
+ * Combines a caller's abort signal with the request deadline, so a stalled request rejects instead
+ * of leaving its in-flight flag set forever.
+ */
 function deadline(signal: AbortSignal): AbortSignal {
 	return AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
 }
 
+/** Message for a failed request; a deadline rejection reads as a timeout rather than "signal timed out". */
 function requestError(e: unknown, fallback: string): string {
 	if (e instanceof DOMException && e.name === 'TimeoutError') return 'Request timed out';
 	return e instanceof Error ? e.message : fallback;
@@ -80,9 +85,17 @@ export class SearchStore {
 	/** The interval in force, which the logs page calls `tick()` on: an absolute range never moves. */
 	activeLiveSeconds = $derived(this.timeRange.type === 'relative' ? this.liveSeconds : null);
 	#tick = $state(0);
+	#livePaused = $state(false);
 	// The tick each request effect last ran for: a rerun with a newer one came from `tick()`.
 	#searchTick = 0;
 	#histogramTick = 0;
+	/**
+	 * What the live chip reports, so the state is readable without watching for the dot's flash:
+	 * `'retrying'` after a failed tick, `'paused'` when the last tick was gated, else `'live'`.
+	 */
+	liveState = $derived<'live' | 'paused' | 'retrying'>(
+		this.searchError !== null ? 'retrying' : this.#livePaused ? 'paused' : 'live'
+	);
 	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
 		return this.#input?.startTs;
@@ -99,6 +112,12 @@ export class SearchStore {
 	histogramIntervalSec = $state<number | undefined>();
 	histogramLoading = $state(false);
 	histogramError = $state<string | null>(null);
+	/**
+	 * The window `numHits` was counted over, written with it so the two are never read apart. A tick
+	 * moves `resolvedStartTs`/`resolvedEndTs` the moment it fires, well before the new count lands,
+	 * so export reads this instead and never pairs a fresh window with a stale total.
+	 */
+	countedWindow = $state.raw<{ startTs: number; endTs: number } | null>(null);
 	// A refresh tick leaves `histogramLoading` false to keep the chart on screen, so the overlap
 	// guard needs its own flag: without it every tick aborts the last one and the count never lands.
 	#histogramRunning = false;
@@ -253,18 +272,34 @@ export class SearchStore {
 
 	/**
 	 * Re-resolves a relative window against now. Unlike Run, it doesn't reload the field schema.
-	 * Skipped while a search or a histogram runs, so a slow one isn't aborted by every tick, and
-	 * while a fold is open: fold ids are row positions, so a refresh would snap the group shut.
+	 *
+	 * Gated on `atTop` (the caller's "the list is in view" test) plus the reasons only the store
+	 * knows: a search or histogram still running, so a slow one isn't aborted by every tick, and an
+	 * open fold, whose id is a row position that a refresh would invalidate. Every gate lands in
+	 * `#livePaused` so `liveState` can say so without a second copy of the rules.
 	 */
-	tick(): void {
-		if (this.loading !== 'idle' || this.#histogramRunning) return;
-		if (this.#expandedFolds.size > 0) return;
-		this.#tick += 1;
+	tick(atTop: boolean): void {
+		const gated =
+			!atTop || this.loading !== 'idle' || this.#histogramRunning || this.#expandedFolds.size > 0;
+		this.#livePaused = gated;
+		if (!gated) this.#tick += 1;
 	}
 
 	/** Counts the auto-refresh ticks that ran, so the toolbar can flash its live dot on each one. */
 	get ticks(): number {
 		return this.#tick;
+	}
+
+	/**
+	 * Picks the auto-refresh interval, putting the list newest-first as it does. Oldest-first tails
+	 * from the wrong end: each tick would refetch the oldest page of a window that keeps sliding
+	 * forward, so the rows age out of the top and new logs never arrive.
+	 */
+	setLiveSeconds(seconds: number | null): void {
+		this.liveSeconds = seconds;
+		if (seconds !== null && this.sortDirection === 'asc') {
+			this.navigateQuery({ sortDirection: 'desc' });
+		}
 	}
 
 	get indexes(): IndexOption[] {
@@ -394,6 +429,7 @@ export class SearchStore {
 
 	handleIndexChange(indexId: string): void {
 		this.numHits = null;
+		this.countedWindow = null;
 		this.elapsedTimeMicros = 0;
 		this.rawHits = [];
 		// Counts belong to the index that produced them; kept, they would rank the next index's fields.
@@ -472,6 +508,9 @@ export class SearchStore {
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
 					this.searchError = requestError(e, 'Search failed');
+					// A tick keeps the rows it already has: a blip mid-tail shouldn't clear the list
+					// being read. The chip reports the failure and the next tick retries.
+					if (refresh) return;
 					this.rawHits = [];
 					this.#countPaths([]);
 					this.elapsedTimeMicros = 0;
@@ -499,6 +538,7 @@ export class SearchStore {
 			if (!refresh) {
 				this.histogramLoading = true;
 				this.numHits = null;
+				this.countedWindow = null;
 			}
 			fetchHistogram(input, deadline(controller.signal))
 				.then((result) => {
@@ -506,6 +546,7 @@ export class SearchStore {
 					this.histogramBuckets = result.buckets;
 					this.histogramIntervalSec = result.intervalSec;
 					this.numHits = result.totalDocCount;
+					this.countedWindow = { startTs: input.startTs, endTs: input.endTs };
 					// The raw query, not the composed one: a filter change merges into the roster.
 					const rosterKey = `${input.indexId}|${this.query}|${this.#rangeKey}`;
 					const fresh = this.#computeLevelTotals(result.buckets);
@@ -520,9 +561,12 @@ export class SearchStore {
 					if (controller.signal.aborted) return;
 					this.histogramError = requestError(e, 'Histogram fetch failed');
 					this.histogramBuckets = [];
-					// A tick keeps the last count: the rows on screen are still good, and the chart
-					// already shows the error.
-					if (!refresh) this.numHits = null;
+					// A tick keeps the last count and the window it was counted over: the rows on screen
+					// are still good, and the chart already shows the error.
+					if (!refresh) {
+						this.numHits = null;
+						this.countedWindow = null;
+					}
 				})
 				.finally(() => {
 					if (controller.signal.aborted) return;

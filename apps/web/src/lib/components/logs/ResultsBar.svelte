@@ -11,13 +11,21 @@
 
 	const counting = $derived(store.loading === 'fresh' || store.histogramLoading);
 	const numClass = $derived(counting ? 'text-subtle' : 'text-base-content');
+	// The counted window, never the in-flight one: a tick moves the window before the new count
+	// lands, and export must not offer a fresh window with the previous refresh's total.
 	const exportDisabled = $derived(
 		store.loading === 'fresh' ||
 			store.numHits === 0 ||
 			store.selectedIndex === null ||
-			store.resolvedStartTs === undefined ||
-			store.resolvedEndTs === undefined
+			store.countedWindow === null
 	);
+
+	const LIVE_CHIP = {
+		live: { tone: 'badge-success', label: 'Live' },
+		paused: { tone: 'badge-neutral', label: 'Paused' },
+		retrying: { tone: 'badge-warning', label: 'Retrying' }
+	} as const;
+	const liveChip = $derived(LIVE_CHIP[store.liveState]);
 </script>
 
 <div
@@ -25,15 +33,15 @@
 >
 	<span class="loading loading-spinner loading-xs {counting ? '' : 'invisible'}"></span>
 	{#if store.activeLiveSeconds !== null}
-		<span class="badge badge-sm badge-soft badge-success mr-1 gap-1.5">
-			<!-- Re-keyed per tick so the halo replays; no tick, no flash, which reads as paused. -->
+		<!-- The label carries the state; the halo only replays per tick, so reduced motion loses nothing. -->
+		<span class="badge badge-sm badge-soft {liveChip.tone} mr-1 gap-1.5" title={store.searchError}>
 			{#key store.ticks}
 				<span
-					class="status status-success status-sm animate-live-tick motion-reduce:animate-none"
+					class="status status-sm animate-live-tick bg-current motion-reduce:animate-none"
 					aria-hidden="true"
 				></span>
 			{/key}
-			Live
+			{liveChip.label}
 		</span>
 	{/if}
 	<span class={numClass}>{store.numHits?.toLocaleString() ?? '—'}</span>
@@ -82,8 +90,8 @@
 <ExportDialog
 	indexId={store.selectedIndex}
 	composedQuery={store.composedQuery}
-	startTs={store.resolvedStartTs}
-	endTs={store.resolvedEndTs}
+	startTs={store.countedWindow?.startTs}
+	endTs={store.countedWindow?.endTs}
 	numHits={store.numHits}
 	bind:open={exportOpen}
 />

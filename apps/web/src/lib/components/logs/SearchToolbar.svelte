@@ -332,7 +332,7 @@
 					aria-pressed={active}
 					popovertarget={liveMenu}
 					popovertargetaction="hide"
-					onclick={() => (store.liveSeconds = seconds)}
+					onclick={() => store.setLiveSeconds(seconds)}
 				>
 					{seconds === null ? 'Off' : `Every ${seconds}s`}
 				</button>

@@ -36,13 +36,13 @@
 
 	store.setupAutoSearch();
 
-	// ponytail: ticks only while the list sits at the top, so scrolling down pauses live tail and
-	// scrolling back up resumes it. Add a visible paused state if users miss that.
+	// Sampled at tick time rather than tracked: scrolling down pauses live tail and scrolling back up
+	// resumes it, with no scroll listener to keep in sync. `tick` reports the gate on `store.liveState`.
 	$effect(() => {
 		const seconds = store.activeLiveSeconds;
 		if (seconds === null) return;
 		const id = setInterval(() => {
-			if (viewport?.scrollTop === 0 && !document.hidden) store.tick();
+			store.tick(viewport?.scrollTop === 0 && !document.hidden);
 		}, seconds * 1000);
 		return () => clearInterval(id);
 	});
@@ -84,7 +84,10 @@
 	});
 
 	const displayState = $derived.by(() => {
-		if (store.configError || store.searchError) return 'error';
+		if (store.configError) return 'error';
+		// A failed auto-refresh keeps the rows it already had, so only a search with nothing left to
+		// show takes over the page; the live chip carries the error otherwise.
+		if (store.searchError && store.rawHits.length === 0) return 'error';
 		if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
 		if (store.logs.length === 0) return 'empty';
 		return 'logs';
