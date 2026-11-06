@@ -11,8 +11,6 @@
 
 	const counting = $derived(store.loading === 'fresh' || store.histogramLoading);
 	const numClass = $derived(counting ? 'text-subtle' : 'text-base-content');
-	// The counted window, never the in-flight one: a tick moves the window before the new count
-	// lands, and export must not offer a fresh window with the previous refresh's total.
 	const exportDisabled = $derived(
 		store.loading === 'fresh' ||
 			store.numHits === 0 ||
@@ -33,17 +31,11 @@
 >
 	<span class="loading loading-spinner loading-xs {counting ? '' : 'invisible'}"></span>
 	{#if store.activeLiveSeconds !== null}
-		<!-- The label carries the state; the halo only replays per tick, so reduced motion loses nothing. -->
 		<span
 			class="badge badge-sm badge-soft {liveChip.tone} mr-1 gap-1.5"
 			title={store.searchError ?? store.histogramError}
 		>
-			{#key store.ticks}
-				<span
-					class="status status-sm animate-live-tick bg-current motion-reduce:animate-none"
-					aria-hidden="true"
-				></span>
-			{/key}
+			<span class="status status-sm bg-current" aria-hidden="true"></span>
 			{liveChip.label}
 		</span>
 	{/if}

@@ -37,8 +37,8 @@
 	store.setupAutoSearch();
 
 	// Sampled at tick time rather than tracked: scrolling down pauses auto-refresh and scrolling back
-	// up resumes it, with no scroll listener to keep in sync. `tick` reports the gate on
-	// `store.liveState`. An open log pauses it too, so the drawer's share link keeps the hit's window.
+	// up resumes it, with no scroll listener to keep in sync. An open log pauses it too, so the
+	// drawer's share link keeps the hit's window.
 	$effect(() => {
 		const seconds = store.activeLiveSeconds;
 		if (seconds === null) return;

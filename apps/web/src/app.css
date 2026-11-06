@@ -89,17 +89,6 @@
 	--text-h3: 1.5rem;
 	--text-h3--line-height: 2rem;
 	--text-h3--letter-spacing: -0.015em;
-
-	/* One-shot halo on the log viewer's live-tail dot, replayed per auto-refresh tick. */
-	--animate-live-tick: live-tick 1.1s ease-out;
-	@keyframes live-tick {
-		from {
-			box-shadow: 0 0 0 0 currentColor;
-		}
-		to {
-			box-shadow: 0 0 0 0.35rem transparent;
-		}
-	}
 }
 
 @layer base {

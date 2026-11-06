@@ -38,13 +38,12 @@ import type { DisplayMode, Preferences } from 'api/types';
 const BATCH_SIZE = 200;
 const MAX_OFFSET = 10_000;
 
-// Well past any legitimate query. Without it a request that never settles leaves `loading` or
-// `#histogramRunning` set, and auto-refresh waits on it forever.
+// Quickwit's default searcher timeout: past it the upstream gives up anyway.
 const REQUEST_TIMEOUT_MS = 30_000;
 
 /**
- * Combines a caller's abort signal with the request deadline, so a stalled request rejects instead
- * of leaving its in-flight flag set forever.
+ * Adds the deadline to a caller's signal. A request that never settles would leave `loading` or
+ * `#histogramRunning` set, and auto-refresh would wait on it forever.
  */
 function deadline(signal: AbortSignal): AbortSignal {
 	return AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
@@ -90,10 +89,7 @@ export class SearchStore {
 	// The tick each request effect last ran for: a rerun with a newer one came from `tick()`.
 	#searchTick = 0;
 	#histogramTick = 0;
-	/**
-	 * What the live chip reports, so the state is readable without watching for the dot's flash:
-	 * `'retrying'` after a failed tick, `'paused'` when the last tick was gated, else `'live'`.
-	 */
+	/** The live chip's state. `'paused'` is the last tick's gate, so it trails a scroll by one interval. */
 	liveState = $derived<'live' | 'paused' | 'retrying'>(
 		this.searchError !== null || this.histogramError !== null
 			? 'retrying'
@@ -101,13 +97,13 @@ export class SearchStore {
 				? 'paused'
 				: 'live'
 	);
-	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
+	/** Start of the window the rows on screen came from, in epoch seconds. `undefined` until one lands. */
 	get resolvedStartTs(): number | undefined {
-		return this.#input?.startTs;
+		return this.#shownRequest?.startTs;
 	}
-	/** Absolute end of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
+	/** End of the window the rows on screen came from, in epoch seconds. `undefined` until one lands. */
 	get resolvedEndTs(): number | undefined {
-		return this.#input?.endTs;
+		return this.#shownRequest?.endTs;
 	}
 
 	fieldConfig = $state<FieldConfig | null>(null);
@@ -117,9 +113,8 @@ export class SearchStore {
 	histogramIntervalSec = $state<number | undefined>();
 	histogramLoading = $state(false);
 	/**
-	 * The window `numHits` was counted over, written with it so the two are never read apart. A tick
-	 * moves `resolvedStartTs`/`resolvedEndTs` the moment it fires, well before the new count lands,
-	 * so export reads this instead and never pairs a fresh window with a stale total.
+	 * The window `numHits` counts. A tick moves the search window the moment it fires, well before the
+	 * new count lands, so export reads this and never pairs a fresh window with a stale total.
 	 */
 	countedWindow = $state.raw<{ startTs: number; endTs: number } | null>(null);
 	// A refresh tick leaves `histogramLoading` false to keep the chart on screen, so the overlap
@@ -292,11 +287,6 @@ export class SearchStore {
 		if (!gated) this.#tick += 1;
 	}
 
-	/** Counts the auto-refresh ticks that ran, so the toolbar can flash its live dot on each one. */
-	get ticks(): number {
-		return this.#tick;
-	}
-
 	/**
 	 * Picks the auto-refresh interval, putting the list newest-first as it does. Oldest-first tails
 	 * from the wrong end: each tick would refetch the oldest page of a window that keeps sliding
@@ -304,6 +294,7 @@ export class SearchStore {
 	 */
 	setLiveSeconds(seconds: number | null): void {
 		this.liveSeconds = seconds;
+		this.#livePaused = false;
 		if (seconds !== null && this.sortDirection === 'asc') {
 			this.navigateQuery({ sortDirection: 'desc' });
 		}
@@ -546,7 +537,7 @@ export class SearchStore {
 			if (!refresh) {
 				this.histogramLoading = true;
 				this.numHits = null;
-				this.countedWindow = null;
+				this.countedWindow = { startTs: input.startTs, endTs: input.endTs };
 			}
 			fetchHistogram(input, deadline(controller.signal))
 				.then((result) => {
@@ -568,12 +559,10 @@ export class SearchStore {
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
 					this.histogramError = requestError(e, 'Histogram fetch failed');
-					// A tick keeps the last chart, count and the window it was counted over, as the rows
-					// do; the live chip reports the failure and the next tick retries.
+					// A tick keeps the last chart and count, as the search keeps its rows.
 					if (!refresh) {
 						this.histogramBuckets = [];
 						this.numHits = null;
-						this.countedWindow = null;
 					}
 				})
 				.finally(() => {
@@ -670,12 +659,23 @@ export class SearchStore {
 		});
 	}
 
+	/** `numHits` if it counts the rows' own window; a failed refresh can leave the two apart. */
+	#shownTotal(): number | null {
+		const counted = this.countedWindow;
+		const shown = this.#shownRequest;
+		return counted?.startTs === shown?.startTs && counted?.endTs === shown?.endTs
+			? this.numHits
+			: null;
+	}
+
 	#canFetchMore(): boolean {
+		const total = this.#shownTotal();
 		return (
 			this.loading === 'idle' &&
 			!this.loadingMore &&
 			this.#lastBatchFull &&
-			this.rawHits.length < MAX_OFFSET
+			this.rawHits.length < MAX_OFFSET &&
+			(total === null || this.rawHits.length < total)
 		);
 	}
 
@@ -699,8 +699,9 @@ export class SearchStore {
 			});
 	}
 
-	// Never compared with `numHits`: a failed refresh can leave the total counted over another window.
 	get listEnd(): 'more' | 'end' | 'capped' {
+		const total = this.#shownTotal();
+		if (total !== null && this.rawHits.length >= total) return 'end';
 		if (this.rawHits.length >= MAX_OFFSET) return 'capped';
 		return this.#lastBatchFull ? 'more' : 'end';
 	}
