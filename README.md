@@ -71,6 +71,11 @@ Open http://localhost:8282, then:
 
 Full install guide: https://docs.rootprint.io/install/docker-compose
 
+## One-Click Deploy
+
+<a href="https://repocloud.io/details/Rootprint/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+<a href="https://railway.com/deploy/rootprint"><img src="https://railway.com/button.svg" alt="Deploy on Railway" height="42"></a>
+
 ## Documentation
 
 - [Quickstart](https://docs.rootprint.io/quickstart)
