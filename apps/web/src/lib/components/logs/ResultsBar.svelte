@@ -12,18 +12,34 @@
 	const counting = $derived(store.loading === 'fresh' || store.histogramLoading);
 	const numClass = $derived(counting ? 'text-subtle' : 'text-base-content');
 	const exportDisabled = $derived(
-		store.loading !== 'idle' ||
+		store.loading === 'fresh' ||
 			store.numHits === 0 ||
 			store.selectedIndex === null ||
 			store.resolvedStartTs === undefined ||
 			store.resolvedEndTs === undefined
 	);
+
+	const AUTO_REFRESH_CHIP = {
+		on: { tone: 'badge-success', label: 'Auto-refresh' },
+		paused: { tone: 'badge-neutral', label: 'Paused' },
+		retrying: { tone: 'badge-warning', label: 'Retrying' }
+	} as const;
+	const autoRefreshChip = $derived(AUTO_REFRESH_CHIP[store.autoRefreshState]);
 </script>
 
 <div
 	class="border-line bg-base-100 text-muted flex items-center gap-1.5 border-b px-3 py-1.5 text-xs tabular-nums"
 >
 	<span class="loading loading-spinner loading-xs {counting ? '' : 'invisible'}"></span>
+	{#if store.activeAutoRefreshSeconds !== null}
+		<span
+			class="badge badge-sm badge-soft {autoRefreshChip.tone} mr-1 gap-1.5"
+			title={store.searchError ?? store.histogramError}
+		>
+			<span class="status status-sm bg-current" aria-hidden="true"></span>
+			{autoRefreshChip.label}
+		</span>
+	{/if}
 	<span class={numClass}>{store.numHits?.toLocaleString() ?? '—'}</span>
 	<span>logs found</span>
 	{#if store.hasSearched && store.elapsedTimeMicros > 0}

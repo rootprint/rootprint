@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { Play, Share2 } from 'lucide-svelte';
+	import { ChevronDown, Play, Share2 } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { isTraceId } from 'api/schemas';
@@ -19,8 +19,24 @@
 	import { escapeFilterValue } from 'api/query';
 
 	const SUGGEST_LIMIT = 50;
+	const AUTO_REFRESH_OPTIONS = [null, 5, 10, 15, 30, 60] as const;
 
 	let { store }: { store: SearchStore } = $props();
+
+	const autoRefreshMenu = $props.id();
+	// Three states, not two: a fixed time range holds the chosen interval without running it.
+	const autoRefreshLabel = $derived(
+		store.activeAutoRefreshSeconds !== null
+			? `Auto-refresh every ${store.activeAutoRefreshSeconds}s`
+			: store.autoRefreshSeconds !== null
+				? 'Auto-refresh held for a fixed time range'
+				: 'Auto-refresh: off'
+	);
+	const autoRefreshTitle = $derived(
+		store.activeAutoRefreshSeconds === null
+			? autoRefreshLabel
+			: `${autoRefreshLabel}, paused while scrolled down, in the background or while a fold or a log is open`
+	);
 
 	let queryInput = $state(store.query);
 	let focused = $state(false);
@@ -31,6 +47,7 @@
 	let dismissed = $state(false);
 
 	const unrun = $derived(queryInput !== store.query);
+	const runStyle = $derived(unrun ? 'btn-primary' : 'btn-ghost');
 
 	const valueCache = new Map<string, LogFieldValueBucket[]>();
 	let valueCacheRevision = -1;
@@ -270,18 +287,56 @@
 			aria-label="Copy link"
 			title="Copy link"
 		/>
-		<button
-			type="button"
-			class="btn btn-sm {unrun ? 'btn-primary' : 'btn-ghost'}"
-			aria-label="Run query"
-			title="Run query"
-			onmousedown={(e) => {
-				e.preventDefault();
-			}}
-			onclick={runQuery}
-		>
-			<Play class="size-3.5" aria-hidden="true" />
-			Run
-		</button>
+		<div class="join">
+			<button
+				type="button"
+				class="btn btn-sm join-item {runStyle}"
+				aria-label="Run query"
+				title="Run query"
+				onmousedown={(e) => {
+					e.preventDefault();
+				}}
+				onclick={runQuery}
+			>
+				<Play class="size-3.5" aria-hidden="true" />
+				Run
+			</button>
+			<button
+				type="button"
+				popovertarget={autoRefreshMenu}
+				style="anchor-name:--{autoRefreshMenu}"
+				class="btn btn-sm join-item px-1.5 {runStyle}"
+				aria-label={autoRefreshLabel}
+				title={autoRefreshTitle}
+			>
+				{#if store.activeAutoRefreshSeconds !== null}{store.activeAutoRefreshSeconds}s{/if}
+				<ChevronDown class="size-3" aria-hidden="true" />
+			</button>
+		</div>
 	</div>
+	<ul
+		popover
+		id={autoRefreshMenu}
+		style="position-anchor:--{autoRefreshMenu}"
+		class="dropdown dropdown-end border-line rounded-box bg-base-100 mt-1 w-36 border p-1 text-sm shadow-lg"
+	>
+		<li class="section-label px-2 py-1">Auto-refresh</li>
+		{#each AUTO_REFRESH_OPTIONS as seconds (seconds)}
+			{@const active = store.autoRefreshSeconds === seconds}
+			<li>
+				<button
+					type="button"
+					class="flex w-full rounded px-2 py-1.5 text-left transition-colors {active
+						? 'bg-base-content text-base-100'
+						: 'hover:bg-base-200'}"
+					aria-pressed={active}
+					popovertarget={autoRefreshMenu}
+					popovertargetaction="hide"
+					onclick={() => store.setAutoRefreshSeconds(seconds)}
+				>
+					{seconds === null ? 'Off' : `Every ${seconds}s`}
+				</button>
+			</li>
+		{/each}
+	</ul>
 </PageToolbar>

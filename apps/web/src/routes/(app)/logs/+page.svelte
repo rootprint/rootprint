@@ -36,6 +36,18 @@
 
 	store.setupAutoSearch();
 
+	// Sampled at tick time rather than tracked: scrolling down pauses auto-refresh and scrolling back
+	// up resumes it, with no scroll listener to keep in sync. An open log pauses it too, so the
+	// drawer's share link keeps the hit's window.
+	$effect(() => {
+		const seconds = store.activeAutoRefreshSeconds;
+		if (seconds === null) return;
+		const id = setInterval(() => {
+			store.tick(viewport?.scrollTop === 0 && !document.hidden && selectedLog === null);
+		}, seconds * 1000);
+		return () => clearInterval(id);
+	});
+
 	const messageField = $derived(store.fieldConfig?.messageField);
 	const columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
 	const messageWidth = $derived(
@@ -73,7 +85,10 @@
 	});
 
 	const displayState = $derived.by(() => {
-		if (store.configError || store.searchError) return 'error';
+		if (store.configError) return 'error';
+		// A failed auto-refresh keeps the rows it already had, so only a search with nothing left to
+		// show takes over the page; the auto-refresh chip carries the error otherwise.
+		if (store.searchError && store.rawHits.length === 0) return 'error';
 		if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
 		if (store.logs.length === 0) return 'empty';
 		return 'logs';
@@ -151,7 +166,7 @@
 				buckets={store.histogramBuckets}
 				intervalSec={store.histogramIntervalSec}
 				loading={store.histogramLoading}
-				error={store.histogramError}
+				error={store.histogramBuckets.length === 0 ? store.histogramError : null}
 				bind:collapsed={chartCollapsed}
 				onBrush={(start, end) =>
 					store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
