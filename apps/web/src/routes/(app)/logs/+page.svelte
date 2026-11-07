@@ -49,10 +49,11 @@
 	});
 
 	const messageField = $derived(store.fieldConfig?.messageField);
-	const columnWidths = $derived(computeColumnWidths(store.rawHits, store.activeFields));
+	const rawHits = $derived(store.hits?.rawHits ?? []);
+	const columnWidths = $derived(computeColumnWidths(rawHits, store.activeFields));
 	const messageWidth = $derived(
 		messageField && store.activeFields.includes(messageField)
-			? computeFieldWidth(store.rawHits, messageField)
+			? computeFieldWidth(rawHits, messageField)
 			: 0
 	);
 	const gridTemplate = $derived(
@@ -88,8 +89,8 @@
 		if (store.configError) return 'error';
 		// A failed auto-refresh keeps the rows it already had, so only a search with nothing left to
 		// show takes over the page; the auto-refresh chip carries the error otherwise.
-		if (store.searchError && store.rawHits.length === 0) return 'error';
-		if (store.loading === 'fresh' || !store.hasSearched || !store.fieldConfig) return 'loading';
+		if (store.hitsError && rawHits.length === 0) return 'error';
+		if (store.hitsStatus === 'fresh' || store.hits === null || !store.fieldConfig) return 'loading';
 		if (store.logs.length === 0) return 'empty';
 		return 'logs';
 	});
@@ -163,10 +164,10 @@
 			<FilterChips {store} />
 
 			<LogFrequencyChart
-				buckets={store.histogramBuckets}
-				intervalSec={store.histogramIntervalSec}
-				loading={store.histogramLoading}
-				error={store.histogramBuckets.length === 0 ? store.histogramError : null}
+				buckets={store.histogram?.buckets ?? []}
+				intervalSec={store.histogram?.intervalSec}
+				loading={store.histogramStatus === 'fresh'}
+				error={store.histogram === null ? store.histogramError : null}
 				bind:collapsed={chartCollapsed}
 				onBrush={(start, end) =>
 					store.navigateQuery({ timeRange: { type: 'absolute', start, end } }, { push: true })}
@@ -197,7 +198,7 @@
 							<div class="alert alert-error max-w-md" role="alert">
 								<CircleX class="size-3.5 shrink-0" aria-hidden="true" />
 								<span class="text-xs"
-									>{store.configError ?? store.searchError ?? 'Something went wrong.'}</span
+									>{store.configError ?? store.hitsError ?? 'Something went wrong.'}</span
 								>
 							</div>
 						</div>

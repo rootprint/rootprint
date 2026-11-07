@@ -8,12 +8,14 @@ import type {
 	Filter,
 	HistogramBucket,
 	HistogramInput,
+	HistogramResult,
 	IndexOption,
 	LevelBucket,
 	LogField,
 	LogHit,
 	ParsedQuery,
-	SearchInput
+	SearchInput,
+	SearchResult
 } from '#lib/types.js';
 import { composeQuery } from 'api/query';
 import { searchLogs } from '#lib/api/log-search.js';
@@ -37,6 +39,17 @@ import type { DisplayMode, Preferences } from 'api/types';
 
 const BATCH_SIZE = 200;
 const MAX_OFFSET = 10_000;
+const EMPTY_SAMPLE: FieldSample = { counts: new Map(), total: 0 };
+
+type RequestStatus = 'idle' | 'fresh' | 'refresh';
+
+/** The rows a search answered, with the request they answered so load-more extends that one. */
+interface Hits extends SearchResult {
+	input: SearchInput;
+	lastPageFull: boolean;
+	/** Field paths counted over the first page only: accumulating pages would reorder the panel. */
+	sample: FieldSample;
+}
 
 // Collapse rapid preference changes (toggles, drag-reorder) into a single PUT.
 const PREF_SAVE_DEBOUNCE_MS = 300;
@@ -51,18 +64,18 @@ export interface SearchStoreOptions {
 }
 
 export class SearchStore {
-	rawHits = $state.raw<Record<string, unknown>[]>([]);
-	numHits = $state<number | null>(null);
-	elapsedTimeMicros = $state(0);
+	// Each result changes only when its request settles: success replaces it, a failed fresh search
+	// clears it, and a failed refresh keeps it. The status says what is replacing it.
+	hits = $state.raw<Hits | null>(null);
 	/** `'refresh'` is an auto-refresh tick: the rows stay on screen, but load-more and the next tick wait. */
-	loading = $state<'idle' | 'fresh' | 'refresh'>('idle');
-	loadingMore = $state(false);
-	#lastBatchFull = $state(false);
-	searchError = $state<string | null>(null);
+	hitsStatus = $state<RequestStatus>('idle');
+	hitsError = $state<string | null>(null);
+	histogram = $state.raw<HistogramResult | null>(null);
+	histogramStatus = $state<RequestStatus>('idle');
 	histogramError = $state<string | null>(null);
-	hasSearched = $state(false);
+	loadingMore = $state(false);
 	/** Invalidates search-data caches when the view already shown is asked for again (Run, a re-picked range). */
-	refreshRevision = $state(0);
+	rerunRevision = $state(0);
 	/** Auto-refresh interval picked in the toolbar, in seconds; `null` when off. */
 	autoRefreshSeconds = $state<number | null>(null);
 	/** The interval in force, which the logs page calls `tick()` on: an absolute range never moves. */
@@ -78,7 +91,7 @@ export class SearchStore {
 	/** The auto-refresh chip's state. A request still in flight isn't a pause: the next tick runs once it lands. */
 	autoRefreshState = $derived.by<'on' | 'paused' | 'retrying'>(() => {
 		if (!this.#inView || this.#expandedFolds.size > 0) return 'paused';
-		return this.searchError !== null || this.histogramError !== null ? 'retrying' : 'on';
+		return this.hitsError !== null || this.histogramError !== null ? 'retrying' : 'on';
 	});
 	/** Absolute start of the in-flight search window, in seconds-since-epoch. `undefined` before the first search. */
 	get resolvedStartTs(): number | undefined {
@@ -92,21 +105,18 @@ export class SearchStore {
 	fieldConfig = $state<FieldConfig | null>(null);
 	configError = $state<string | null>(null);
 
-	histogramBuckets = $state.raw<HistogramBucket[]>([]);
-	histogramIntervalSec = $state<number | undefined>();
-	histogramLoading = $state(false);
-	// A refresh tick leaves `histogramLoading` false to keep the chart on screen, so the overlap
-	// guard needs its own flag: without it every tick aborts the last one and the count never lands.
-	#histogramRunning = false;
-
 	#schemaFields = $state.raw<LogField[]>([]);
 
 	/**
 	 * How much of the current search's first page carries each field path. `_field_caps` answers per
 	 * split and never sees the query, so this is the panel's only query-aware signal: it ranks the
-	 * sections and gates which json leaves earn a row.
+	 * sections and gates which json leaves earn a row. Another index's rows would rank this one's
+	 * fields, so they count for nothing while the new index loads.
 	 */
-	fieldSample = $state.raw<FieldSample>({ counts: new Map(), total: 0 });
+	get fieldSample(): FieldSample {
+		const hits = this.hits;
+		return hits !== null && hits.input.indexId === this.#index ? hits.sample : EMPTY_SAMPLE;
+	}
 
 	// The json parents stay out of the list: `_field_caps` reports their leaves as entries of their
 	// own. The hits fill the gap for a leaf too fresh to be in a published split.
@@ -166,7 +176,7 @@ export class SearchStore {
 			this.#normalizedFor = fc;
 			this.#normalized = new WeakMap();
 		}
-		return this.rawHits.map((raw, i) => {
+		return (this.hits?.rawHits ?? []).map((raw, i) => {
 			let hit = this.#normalized.get(raw);
 			if (hit === undefined) {
 				hit = normalizeHit(raw, i, fc);
@@ -210,8 +220,8 @@ export class SearchStore {
 	#indexes: () => IndexOption[];
 	#onFreshSearch?: () => void;
 	#disposed = false;
-	// The fresh search a load-more page extends; aborted when the next one starts.
-	#searchRun?: { signal: AbortSignal; request: SearchInput };
+	// The latest search's signal: load-more pages under it, so the next search aborts the page.
+	#searchSignal?: AbortSignal;
 	#confirmedPrefs = DEFAULT_PREFS;
 	#prefSave: { timer: ReturnType<typeof setTimeout>; commit: () => void } | null = null;
 	#prefSaveSeq = 0;
@@ -226,7 +236,7 @@ export class SearchStore {
 	#composedQuery = $derived(this.composedQuery);
 	#rangeKey = $derived(serializeTimeRange(this.timeRange));
 	#sort = $derived(this.sortDirection);
-	#fieldsKey = $derived(`${this.#index}|${this.#rangeKey}|${this.refreshRevision}`);
+	#fieldsKey = $derived(`${this.#index}|${this.#rangeKey}|${this.rerunRevision}`);
 	// The key match already implies a selected index and a loaded config: both are nulled with it.
 	fieldsReady = $derived(!this.fieldsLoading && this.#fieldsLoadedFor === this.#fieldsKey);
 
@@ -235,7 +245,7 @@ export class SearchStore {
 		const indexId = this.#index;
 		const query = this.#composedQuery;
 		void this.#rangeKey;
-		void this.refreshRevision;
+		void this.rerunRevision;
 		void this.#tick;
 		if (indexId === null) return null;
 		return { indexId, query, ...untrack(() => resolveWindow(this.timeRange)) };
@@ -256,7 +266,11 @@ export class SearchStore {
 	 */
 	tick(inView: boolean): void {
 		this.#inView = inView;
-		if (this.autoRefreshState === 'paused' || this.loading !== 'idle' || this.#histogramRunning)
+		if (
+			this.autoRefreshState === 'paused' ||
+			this.hitsStatus !== 'idle' ||
+			this.histogramStatus !== 'idle'
+		)
 			return;
 		this.#tick += 1;
 	}
@@ -308,7 +322,7 @@ export class SearchStore {
 		const url = buildQueryUrl(page.url.searchParams, partial);
 		// Both sides canonical, so a hand-edited URL spelling out defaults still counts as unchanged.
 		if (url === buildQueryUrl(page.url.searchParams, {})) {
-			this.refreshRevision += 1;
+			this.rerunRevision += 1;
 			return;
 		}
 		goto(url, { replace: !opts?.push, reset: false });
@@ -318,7 +332,7 @@ export class SearchStore {
 		if (this.selectedIndex === null) return;
 		// Equivalent text changes the URL without invalidating the request inputs.
 		if (query !== this.query && composeQuery(query, this.filters) === this.composedQuery) {
-			this.refreshRevision += 1;
+			this.rerunRevision += 1;
 		}
 		this.navigateQuery({ query }, { push: true });
 	}
@@ -400,13 +414,6 @@ export class SearchStore {
 	}
 
 	handleIndexChange(indexId: string): void {
-		this.numHits = null;
-		this.elapsedTimeMicros = 0;
-		this.rawHits = [];
-		// Counts belong to the index that produced them; kept, they would rank the next index's fields.
-		this.#countPaths([]);
-		this.#lastBatchFull = false;
-		this.searchError = null;
 		this.navigateQuery({ index: indexId, query: '', filters: [] }, { push: true });
 	}
 
@@ -452,46 +459,43 @@ export class SearchStore {
 			const refresh = tick !== this.#searchTick;
 			this.#searchTick = tick;
 			if (input === null) {
-				this.loading = 'idle';
+				this.hitsStatus = 'idle';
 				this.loadingMore = false;
 				return;
 			}
 			const controller = new AbortController();
 			const request: SearchInput = { ...input, sortDirection, limit: BATCH_SIZE, offset: 0 };
-			this.#searchRun = { signal: controller.signal, request };
-			this.loading = refresh ? 'refresh' : 'fresh';
+			this.#searchSignal = controller.signal;
+			this.hitsStatus = refresh ? 'refresh' : 'fresh';
 			// An aborted page never clears its own flag.
 			this.loadingMore = false;
 			// A tick leaves the last error up until it succeeds: a failed search with no rows would
 			// otherwise flip to the empty state on every retry.
-			if (!refresh) this.searchError = null;
+			if (!refresh) this.hitsError = null;
 			searchLogs(request, controller.signal)
 				.then((result) => {
 					if (controller.signal.aborted) return;
-					this.searchError = null;
-					this.rawHits = result.rawHits;
+					this.hitsError = null;
+					this.hits = {
+						...result,
+						input: request,
+						lastPageFull: result.rawHits.length === BATCH_SIZE,
+						sample: this.#sample(result.rawHits)
+					};
 					this.#expandedFolds.clear();
-					this.hasSearched = true;
 					// A tick keeps the scroll position: the list only jumps back to the top for a search
 					// the user asked for.
 					if (!refresh) this.#onFreshSearch?.();
-					this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
-					this.elapsedTimeMicros = result.elapsedTimeMicros;
-					this.#countPaths(result.rawHits);
 				})
 				.catch((e: unknown) => {
 					if (controller.signal.aborted) return;
-					this.searchError = e instanceof Error ? e.message : 'Search failed';
+					this.hitsError = e instanceof Error ? e.message : 'Search failed';
 					// A tick keeps the rows it already has: a blip shouldn't clear the list being read.
 					// The chip reports the failure and the next tick retries.
-					if (refresh) return;
-					this.rawHits = [];
-					this.#countPaths([]);
-					this.elapsedTimeMicros = 0;
-					this.#lastBatchFull = false;
+					if (!refresh) this.hits = null;
 				})
 				.finally(() => {
-					if (!controller.signal.aborted) this.loading = 'idle';
+					if (!controller.signal.aborted) this.hitsStatus = 'idle';
 				});
 			return () => controller.abort();
 		});
@@ -502,24 +506,17 @@ export class SearchStore {
 			const refresh = tick !== this.#histogramTick;
 			this.#histogramTick = tick;
 			if (input === null) {
-				this.histogramLoading = false;
-				this.#histogramRunning = false;
+				this.histogramStatus = 'idle';
 				return;
 			}
 			const controller = new AbortController();
-			this.#histogramRunning = true;
-			if (!refresh) {
-				this.histogramError = null;
-				this.histogramLoading = true;
-				this.numHits = null;
-			}
+			this.histogramStatus = refresh ? 'refresh' : 'fresh';
+			if (!refresh) this.histogramError = null;
 			fetchHistogram(input, controller.signal)
 				.then((result) => {
 					if (controller.signal.aborted) return;
 					this.histogramError = null;
-					this.histogramBuckets = result.buckets;
-					this.histogramIntervalSec = result.intervalSec;
-					this.numHits = result.totalDocCount;
+					this.histogram = result;
 					// The raw query, not the composed one: a filter change merges into the roster.
 					const rosterKey = `${input.indexId}|${this.query}|${this.#rangeKey}`;
 					const fresh = this.#computeLevelTotals(result.buckets);
@@ -534,15 +531,10 @@ export class SearchStore {
 					if (controller.signal.aborted) return;
 					this.histogramError = e instanceof Error ? e.message : 'Histogram fetch failed';
 					// A tick keeps the last chart and count, as the search keeps its rows.
-					if (!refresh) {
-						this.histogramBuckets = [];
-						this.numHits = null;
-					}
+					if (!refresh) this.histogram = null;
 				})
 				.finally(() => {
-					if (controller.signal.aborted) return;
-					this.histogramLoading = false;
-					this.#histogramRunning = false;
+					if (!controller.signal.aborted) this.histogramStatus = 'idle';
 				});
 			return () => controller.abort();
 		});
@@ -633,39 +625,37 @@ export class SearchStore {
 		});
 	}
 
-	#canFetchMore(): boolean {
-		return (
-			this.loading === 'idle' &&
-			!this.loadingMore &&
-			this.#lastBatchFull &&
-			this.rawHits.length < MAX_OFFSET &&
-			(this.numHits === null || this.rawHits.length < this.numHits)
-		);
-	}
-
-	/** Appends the next page of the current search, on its window; a new search aborts it. */
+	/** Appends the next page of the rows on screen, on their window; a new search aborts it. */
 	maybeLoadMore(): void {
-		const run = this.#searchRun;
-		if (run === undefined || !this.#canFetchMore()) return;
+		const hits = this.hits;
+		const signal = this.#searchSignal;
+		if (hits === null || signal === undefined) return;
+		if (this.hitsStatus !== 'idle' || this.loadingMore || this.listEnd !== 'more') return;
 		// Appending happens ahead of the viewport, so it stays silent.
 		this.loadingMore = true;
-		searchLogs({ ...run.request, offset: this.rawHits.length }, run.signal)
+		searchLogs({ ...hits.input, offset: hits.rawHits.length }, signal)
 			.then((result) => {
-				if (run.signal.aborted) return;
-				this.rawHits = [...this.rawHits, ...result.rawHits];
-				this.#lastBatchFull = result.rawHits.length === BATCH_SIZE;
+				if (signal.aborted) return;
+				this.hits = {
+					...hits,
+					rawHits: [...hits.rawHits, ...result.rawHits],
+					lastPageFull: result.rawHits.length === BATCH_SIZE
+				};
 			})
 			// A failed page leaves the list as it is; the next scroll retries it.
 			.catch(() => {})
 			.finally(() => {
-				if (!run.signal.aborted) this.loadingMore = false;
+				if (!signal.aborted) this.loadingMore = false;
 			});
 	}
 
 	get listEnd(): 'more' | 'end' | 'capped' {
-		if (this.numHits !== null && this.rawHits.length >= this.numHits) return 'end';
-		if (this.rawHits.length >= MAX_OFFSET) return 'capped';
-		return this.#lastBatchFull ? 'more' : 'end';
+		const hits = this.hits;
+		if (hits === null) return 'end';
+		if (this.histogram !== null && hits.rawHits.length >= this.histogram.totalDocCount)
+			return 'end';
+		if (hits.rawHits.length >= MAX_OFFSET) return 'capped';
+		return hits.lastPageFull ? 'more' : 'end';
 	}
 
 	/** Re-runs field discovery for the current index and range. */
@@ -673,12 +663,12 @@ export class SearchStore {
 		this.#fieldsReload += 1;
 	}
 
-	/** One fixed slice — the first page. Accumulating across scroll pages would reorder the panel. */
-	#countPaths(hits: Record<string, unknown>[]): void {
+	#sample(hits: Record<string, unknown>[]): FieldSample {
 		try {
-			this.fieldSample = countFieldPaths(hits);
+			return countFieldPaths(hits);
 		} catch (e) {
 			console.warn('[search] field-path sampling failed', e);
+			return EMPTY_SAMPLE;
 		}
 	}
 

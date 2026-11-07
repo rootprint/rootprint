@@ -79,11 +79,11 @@
 		const t = token;
 		const id = store.selectedIndex;
 		if (t === null || t.kind !== 'value' || id === null) return null;
-		return `${id}|${t.field}|${store.composedQuery}|${serializeTimeRange(store.timeRange)}|${store.refreshRevision}`;
+		return `${id}|${t.field}|${store.composedQuery}|${serializeTimeRange(store.timeRange)}|${store.rerunRevision}`;
 	});
 
 	$effect(() => {
-		const revision = store.refreshRevision;
+		const revision = store.rerunRevision;
 		if (revision !== valueCacheRevision) {
 			valueCache.clear();
 			valueCacheRevision = revision;

@@ -9,11 +9,15 @@
 
 	let exportOpen = $state(false);
 
-	const counting = $derived(store.loading === 'fresh' || store.histogramLoading);
+	const counting = $derived(store.hitsStatus === 'fresh' || store.histogramStatus === 'fresh');
 	const numClass = $derived(counting ? 'text-subtle' : 'text-base-content');
+	// A tick keeps the last total on screen; a fresh search has none until its own lands.
+	const total = $derived(
+		store.histogramStatus === 'fresh' ? null : (store.histogram?.totalDocCount ?? null)
+	);
 	const exportDisabled = $derived(
-		store.loading === 'fresh' ||
-			store.numHits === 0 ||
+		store.hitsStatus === 'fresh' ||
+			total === 0 ||
 			store.selectedIndex === null ||
 			store.resolvedStartTs === undefined ||
 			store.resolvedEndTs === undefined
@@ -34,17 +38,17 @@
 	{#if store.activeAutoRefreshSeconds !== null}
 		<span
 			class="badge badge-sm badge-soft {autoRefreshChip.tone} mr-1 gap-1.5"
-			title={store.searchError ?? store.histogramError}
+			title={store.hitsError ?? store.histogramError}
 		>
 			<span class="status status-sm bg-current" aria-hidden="true"></span>
 			{autoRefreshChip.label}
 		</span>
 	{/if}
-	<span class={numClass}>{store.numHits?.toLocaleString() ?? '—'}</span>
+	<span class={numClass}>{total?.toLocaleString() ?? '—'}</span>
 	<span>logs found</span>
-	{#if store.hasSearched && store.elapsedTimeMicros > 0}
+	{#if store.hits?.elapsedTimeMicros}
 		<span>in</span>
-		<span class={numClass}>{formatDurationMicros(store.elapsedTimeMicros)}</span>
+		<span class={numClass}>{formatDurationMicros(store.hits.elapsedTimeMicros)}</span>
 	{/if}
 	<div class="ml-auto flex items-center gap-1">
 		<button
@@ -88,6 +92,6 @@
 	composedQuery={store.composedQuery}
 	startTs={store.resolvedStartTs}
 	endTs={store.resolvedEndTs}
-	numHits={store.numHits}
+	numHits={total}
 	bind:open={exportOpen}
 />
