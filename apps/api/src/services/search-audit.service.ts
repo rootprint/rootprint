@@ -143,6 +143,8 @@ export function readLogs(
 	indexConfig: IndexConfig,
 	params: SearchQueryInput
 ): Promise<LogSearchResponse> {
+	const { startTs, endTs } = params;
+	if (startTs !== undefined && endTs !== undefined) checkWindow({ startTs, endTs });
 	return withSearchAudit(
 		actor,
 		indexConfig.indexId,
