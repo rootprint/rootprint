@@ -1,21 +1,34 @@
-# Rootprint
+<h1 align="center">Rootprint</h1>
 
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](#)
-[![Hono](https://img.shields.io/badge/Hono-%23E36002.svg?logo=hono&logoColor=white)](#)
-[![SvelteKit](https://img.shields.io/badge/SvelteKit-%23FF3E00.svg?logo=svelte&logoColor=white)](#)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%234169E1.svg?logo=postgresql&logoColor=white)](#)
-[![Release](https://img.shields.io/github/v/release/rootprint/rootprint)](https://github.com/rootprint/rootprint/releases)
-[![License](https://img.shields.io/github/license/rootprint/rootprint)](LICENSE)
+<p align="center">
+  <a href="#"><img src="https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white" alt="Bun"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/Hono-%23E36002.svg?logo=hono&logoColor=white" alt="Hono"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/SvelteKit-%23FF3E00.svg?logo=svelte&logoColor=white" alt="SvelteKit"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/PostgreSQL-%234169E1.svg?logo=postgresql&logoColor=white" alt="PostgreSQL"/></a>
+  <a href="https://github.com/rootprint/rootprint/releases"><img src="https://img.shields.io/github/v/release/rootprint/rootprint" alt="Release"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/rootprint/rootprint" alt="License"/></a>
+</p>
 
-### [Live demo](https://demo.rootprint.io) &nbsp;·&nbsp; [Quick start](#quick-start) &nbsp;·&nbsp; [Docs](https://docs.rootprint.io) &nbsp;·&nbsp; [Contributing](CONTRIBUTING.md) &nbsp;·&nbsp; [Changelog](CHANGELOG.md)
+<p align="center">
+  <a href="https://trendshift.io/repositories/126511?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-126511" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/126511/monthly?language=Svelte" alt="rootprint%2Frootprint | Trendshift" width="250" height="55"/></a>
+</p>
+
+<h3 align="center">
+  <a href="https://demo.rootprint.io">Live demo</a> &nbsp;·&nbsp;
+  <a href="#quick-start">Quick start</a> &nbsp;·&nbsp;
+  <a href="https://docs.rootprint.io">Docs</a> &nbsp;·&nbsp;
+  <a href="CONTRIBUTING.md">Contributing</a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Changelog</a>
+</h3>
 
 Open-source, self-hosted logs and traces with full-text search directly on S3-compatible object storage.
 
 Rootprint is open-source log and trace search that runs on your own object storage. Built on
-Quickwit, it indexes the full text of every log, so you can find any line without designing labels
-first. Indexes live in your S3, GCS, R2, MinIO or Azure Blob bucket, so a year of retention costs a
-year of storage. Send data over OpenTelemetry, open a trace from any log, and see request rate,
-errors and p95 latency for every service.
+Quickwit, it indexes every word of every log, so you can paste an error message and find every
+line that contains it, across all your services. Indexes live in your S3, GCS, R2, MinIO or Azure
+Blob bucket, so a year of retention costs a year of storage. Send logs and traces over
+OpenTelemetry, follow a request from a log line to its trace, and see which services are slow or
+failing.
 
 > [!TIP]
 > **Try it now at [demo.rootprint.io](https://demo.rootprint.io)** - live OpenTelemetry logs and
