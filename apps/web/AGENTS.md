@@ -4,7 +4,7 @@ Log viewer UI: a client-rendered SvelteKit SPA built with `@sveltejs/adapter-sta
 
 ## Where code goes
 
-- Routes: `src/routes/(app)/` holds the authenticated product, `(app)/(admin)/` the admin-only pages (settings, send data) behind one role guard, and `auth/` sign-in and first-time setup. A new admin page also gets an entry in `src/lib/admin-nav.ts`, which builds that group's nav and breadcrumbs.
+- Routes: `src/routes/(app)/` holds the authenticated product, `(app)/(admin)/` the admin-only pages (settings, send data) behind one role guard, and `auth/` sign-in and first-time setup. A new admin page also gets an entry in `src/lib/admin-nav.ts`, which builds that group's nav and breadcrumbs. A static route beside a user-named dynamic segment takes a name no ID can have (`settings/indexes/_new` beside `[indexId]`); otherwise it shadows that ID.
 - Feature code lives in `src/lib/components/<feature>/`, named after the UI section (`logs`, `traces`, `services`, `profile`, `settings`, `send-data`, `shell`, `auth`), together with the helpers only that feature uses. Put such a helper in the deepest subfolder that holds all its importers.
 - `src/lib/utils/` holds helpers used by two or more features, by `ui/` or `shell/`, by `lib/api/`, or by another shared helper. `lib/api/` counts as its own area, so what it imports stays in `utils/`.
 - Shared `{@attach}` behaviour goes in `src/lib/attachments/`, shared state in `src/lib/stores/`, app-local types in `src/lib/types.ts` (pure types only).
