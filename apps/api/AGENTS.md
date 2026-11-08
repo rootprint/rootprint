@@ -1,72 +1,25 @@
 # apps/api — Agent Guide
 
-## About
+Hono backend on Bun: log ingest (NDJSON + OTLP), search proxy to Quickwit, users and auth, admin operations, and API keys (ingest, personal, service-account). `apps/web` calls it over HTTP.
 
-Hono backend on Bun. Responsibilities: log ingest (NDJSON + OTLP), search proxy to Quickwit, user/auth, admin operations, and API keys (ingest, personal, and service-account).
+## Where code goes
 
-The frontend in `apps/web` calls this API over HTTP.
-
-For repo-wide rules (Bun, Prettier, TS strict, tests policy), see the root `AGENTS.md`.
-
-## Stack
-
-- Runtime: Bun
-- HTTP framework: Hono 4
-- ORM: Drizzle + `pg` (PostgreSQL)
-- Auth: Better Auth
-- Validation: Valibot
-- Quickwit client: `@rootprint-io/quickwit-js`
-- Protobuf codegen: buf + `@bufbuild/protoc-gen-es`
-
-## Run, Build, Check
-
-```bash
-bun --filter api dev         # hot-reload via `bun --hot`
-bun --filter api build       # bundle to dist/
-bun --filter api start       # run dist/app.js
-bun --filter api check       # tsc --noEmit
-bun --filter api lint        # oxlint
-```
-
-Root convenience: `bun run dev:api`, `bun run build:api`, `bun run start:api`.
-
-## Source Layout
-
-| Path               | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app.ts`       | Hono app composition, middleware mount, error handler, SPA static serving, boot (`main()`)                                                                                                                                                                                                                                                                                                                                                      |
-| `src/config.ts`    | Resolved runtime config object                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `src/env.ts`       | Hono context types: `AppEnv` (`requestId`, `session?`, `apiKey?`, `apiKeyActor?`, `logAttrs?`), `AuthedEnv`, `KeyedEnv`                                                                                                                                                                                                                                                                                                                         |
-| `src/types.ts`     | Types `apps/web` imports, exported as `api/types` (see [Types Contract](#types-contract))                                                                                                                                                                                                                                                                                                                                                       |
-| `src/index.ts`     | Package entry: exports `AppType` for the web's Hono RPC client                                                                                                                                                                                                                                                                                                                                                                                  |
-| `src/routes/`      | One file per resource (`api-keys`, `auth`, `exports`, `health`, `indexes`, `mcp`, `service-accounts`, `services`, `settings`, `shares`, `traces`, `users`, `views`); `routes/admin/` (`activity`, `cluster`, `metrics`); `routes/ingest/` (`ndjson`, `otlp`)                                                                                                                                                                                    |
-| `src/services/`    | `*.service.ts` — business logic called from routes                                                                                                                                                                                                                                                                                                                                                                                              |
-| `src/middleware/`  | `rate-limit`, `reject-trace-index`, `request-logging`, `require-admin`, `require-api-key`, `require-user`, `require-user-or-personal-key`, `with-index`                                                                                                                                                                                                                                                                                         |
-| `src/schemas/`     | Valibot request schemas per resource; response schemas under `schemas/responses/`. Each file also exports the server-only and request-input types inferred from its schemas                                                                                                                                                                                                                                                                     |
-| `src/db/`          | Drizzle schemas (`schema.ts`, `auth.schema.ts`); the client is `src/lib/db.ts`                                                                                                                                                                                                                                                                                                                                                                  |
-| `src/lib/`         | One module or folder per external system, whether or not it does IO: `auth` (Better Auth), `db` (Postgres client, migrations), `quickwit/` (`client`, `proxy`, `query`, `aggregations`, `errors`, `field-caps`, `metrics`, `index-config`), `openapi/`; plus `logger` (pino) and `secret` (Better Auth signing secret)                                                                                                                          |
-| `src/utils/`       | Helpers not built around one external system: `bearer`, `http-error`, `otlp-response`, `params`, `require-env`, `valibot`, `version` (`APP_VERSION` from the workspace-root `package.json`). Two carry system knowledge because the error handler needs it everywhere: `http-error` maps Postgres unique violations and Better Auth API errors to `HttpError`, and `otlp-response` renders ingest results and `HttpError` as OTLP protobuf/JSON |
-| `src/gen/`         | Generated protobuf code — **do not edit**                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `src/constants.ts` | Domain constants                                                                                                                                                                                                                                                                                                                                                                                                                                |
-
-Sibling top-level dirs:
-
-- `proto/` — vendored upstream `.proto` files (OTEL, googleapis). Don't edit; refresh via the recipe in `proto/README.md`.
-- `drizzle/` — generated SQL migrations.
-- `bruno/` — Bruno API request collections for manual testing.
-- `buf.yaml`, `buf.gen.yaml` — buf configuration.
-- `drizzle.config.ts` — Drizzle Kit configuration.
+- `src/routes/`: one Hono router per resource, mounted with `app.route('/path', router)` in `src/app.ts`. `src/services/*.service.ts` hold the business logic routes call.
+- `src/lib/`: one module or folder per external system, whether or not it does IO (Better Auth, Postgres, Quickwit, OpenAPI), plus `logger` and `secret`. `src/utils/`: helpers not built around one system. Two utils carry system knowledge because the error handler needs it everywhere: `http-error` maps Postgres unique violations and Better Auth API errors to `HttpError`, and `otlp-response` renders ingest results and `HttpError` as OTLP protobuf/JSON.
+- `src/gen/` (protobuf output) and `proto/` (vendored upstream `.proto` files) are regenerated, never hand-edited: refresh `proto/` with the recipe and version pins in `proto/README.md`, then run `bun --filter api proto:gen` and review the diff.
+- Database: app schema in `src/db/schema.ts`, Better Auth tables in `src/db/auth.schema.ts`, client in `src/lib/db.ts`, migrations in `drizzle/`. After a schema change, run `db:generate` and apply it locally with `db:migrate`.
+- `bruno/` holds Bruno request collections for manual testing. When you add or change an endpoint, update the collection.
 
 ## Types Contract
 
 - `src/types.ts` holds the types `apps/web` imports, exported via `exports['./types']` in `package.json`. Consumers import as `import type { IndexSummary } from 'api/types'`; server code imports those same types from `src/types.ts`. Request-input types inferred from request schemas (`CreateIndexInput`, `CreateUserInput`, …) are the exception: the web imports them from `api/schemas`.
-- `src/types.ts` is pure types only — no runtime exports.
+- `types.ts` files are pure types only — no runtime exports.
 - A server-only type lives where it is produced. A type inferred from a Valibot schema is exported from that schema's file (`export type X = v.InferOutput<typeof XSchema>`); a hand-written type is exported from the module that builds the value (`VerifiedApiKey` in `services/api-key.service.ts`). Move a type into `src/types.ts` only when `apps/web` needs it.
 - The web also imports `api` (`AppType`), `api/schemas` (`src/schemas/index.ts`), `api/constants` (`src/constants.ts`), `api/query` (`src/lib/quickwit/query.ts`) and `api/time` (`src/lib/time.ts`). The last four are bundled into the browser build, so nothing they import at runtime may reach server-only modules (`config`, `lib/db`, `lib/quickwit/client`, …).
+- Use `import type` for type-only imports.
 
 ## Routing & Request Handling
 
-- Each resource gets a `Hono` router and is mounted with `app.route('/path', router)` in `src/app.ts`.
 - Session-only routers (`admin/*`, `users`, `service-accounts`, `api-keys`, `shares`, `settings`) are wrapped in `withAuth()` in `app.ts`, which mounts `requireUser`; admin routers additionally mount `requireAdmin` themselves. Routers that mix session-only and bearer-key routes (`indexes`, `views`, `exports`, `traces`, `services`) mount `requireUser` or `requireUserOrPersonalKey` themselves, per router or per route. `mcp` mounts `requireUserOrPersonalKey` behind a bearer-only guard, so it never falls back to the cookie. Ingest routes use `requireIngestKey` from `require-api-key`.
 - Read context values via `c.get('requestId' | 'session' | 'apiKey')`. The env types (`AppEnv`, `AuthedEnv`, `KeyedEnv`) live in `src/env.ts`.
 
@@ -77,6 +30,7 @@ Sibling top-level dirs:
   - Paths under `/v1/` get OTLP-style error responses (`otlpError`, `otlpErrorFromHttpError`).
   - Other paths get JSON `{ error: { code, message, statusCode, requestId } }`.
 - Never return raw 500s with internal messages or stack traces.
+- Let a `QuickwitError` propagate: `app.onError` maps it with `quickwitErrorToHttp` (`lib/quickwit/errors.ts`). To map it earlier inside a catch, use `translateQuickwitError` or `withNotFound` from the same file; that file is the only Quickwit-to-HTTP mapper.
 - The web branches on `error.code` and `details[].path` (`queryErrorOf`, `toFieldErrors` in `apps/web/src/lib/api/`). Changing either for an endpoint is a contract change: find its web consumers.
 - Every Quickwit search passes `{ signal: requestSignal() }` (`lib/quickwit/client.ts`), so it stops when the client hangs up and rejects with the signal's own reason. `isHangup(err)` matches exactly that error: `app.onError` answers it with 499 and no fault, `withSearchAudit` records it as `cancelled` with no error (kept out of every activity stat) and `runTool` stays quiet. A real fault that lands while the client leaves is still a fault.
 
@@ -97,27 +51,6 @@ pino on stdout, configured in `src/lib/logger.ts`: ISO `time`, string `level`, `
 - Audited searches (log search and every span read) go through the `read*` operations in `services/search-audit.service.ts`, which the routes and the MCP tools share. Their cross-field checks live there, not in the schemas: `startTs < endTs`, `minMs < maxMs`, and balanced parentheses in the explore `q` (inside `exploreQuery`, where it is spliced). They answer `400 BAD_REQUEST` with the reason as the message (the parentheses check also carries a `q` entry in `details`, which the explorer's `queryErrorOf` needs to show it in the query box), and run before the audit, so a rejected search writes no audit row.
 - Infer TS types from Valibot schemas where possible (`v.InferOutput<typeof Schema>`).
 - Request schemas live in `src/schemas/<resource>.ts` (shared path-param schemas in `src/utils/params.ts`); response schemas in `src/schemas/responses/<resource>.ts`. Route files never define schemas inline — they import them.
-
-## Database
-
-- Schemas: `src/db/schema.ts` (app) and `src/db/auth.schema.ts` (Better Auth).
-- Migrations live in `apps/api/drizzle/`.
-- Commands (all via `bun --filter api`):
-  - `db:generate` — generate migration from schema diff.
-  - `db:migrate` — apply pending migrations.
-  - `db:studio` — open Drizzle Studio.
-- If you change schemas, regenerate and run `db:migrate` locally before opening a PR.
-
-## Protobuf / Codegen
-
-- `proto/` contains vendored upstream `.proto` files for OTEL ingest and googleapis status codes.
-- Generated output goes to `src/gen/` — never edit by hand.
-- Refresh recipe and version pins live in `proto/README.md`. After refreshing, run `bun --filter api proto:gen` and review the diff in `src/gen/`.
-
-## Bruno
-
-- `bruno/` holds Bruno API request collections for manual testing.
-- When you add or change endpoints, update the collection so the next person doesn't have to reverse-engineer the API.
 
 ## Authentication
 
@@ -147,45 +80,8 @@ pino on stdout, configured in `src/lib/logger.ts`: ISO `time`, string `level`, `
 
 ## Environment Variables
 
-Required:
-
-| Var            | Purpose                                                                       |
-| -------------- | ----------------------------------------------------------------------------- |
-| `DATABASE_URL` | Postgres connection string                                                    |
-| `ORIGIN`       | Canonical public URL used for auth callbacks, invite links, CORS, and cookies |
-| `QUICKWIT_URL` | Quickwit REST endpoint (e.g. `http://localhost:7280`)                         |
-
-Optional:
-
-| Var                           | Purpose                                                                                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET`          | Override the auto-generated Better Auth signing secret                                                                                         |
-| `FRONTEND_URL`                | Additional allowed CORS origin for split SPA + API deployments                                                                                 |
-| `PORT`                        | Override the HTTP listen port (default `8282`)                                                                                                 |
-| `TRACE_INDEX_ID`              | Quickwit index holding spans (default `otel-traces-v0_9`)                                                                                      |
-| `SEARCH_AUDIT_RETENTION_DAYS` | Search audit retention in days (minimum/default `30`)                                                                                          |
-| `LOG_LEVEL`                   | pino log level (default `info`)                                                                                                                |
-| `TRUST_PROXY_HOPS`            | Trusted proxies setting `X-Forwarded-For`; rate limits key on the client IP at that depth (default `0`, the TCP peer)                          |
-| `RATE_LIMIT_WINDOW_MS`        | Window shared by both rate limiters (default `60000`)                                                                                          |
-| `PUBLIC_AUTH_RATE_LIMIT`      | Requests per IP per window on unauthenticated auth routes (default `30`)                                                                       |
-| `READ_RATE_LIMIT`             | Requests per actor per window on search, histogram, field values, share resolve, `/api/traces`, `/api/services` and `/api/mcp` (default `300`) |
-| `OIDC_ISSUER_URL`             | OpenID Connect issuer; with the next two, configures OIDC and makes its admin UI read-only                                                     |
-| `OIDC_CLIENT_ID`              | OpenID Connect client ID (all three `OIDC_*` credentials or none)                                                                              |
-| `OIDC_CLIENT_SECRET`          | OpenID Connect client secret                                                                                                                   |
-| `OIDC_DISCOVERY_TIMEOUT_MS`   | How long an OIDC discovery fetch may take (default `5000`, minimum `100`)                                                                      |
-| `OIDC_RETRY_MS`               | Wait before rebuilding auth after an OIDC discovery failure (default `60000`, minimum `100`)                                                   |
-| `INGEST_PROXY_TIMEOUT_MS`     | How long an ingest POST waits on Quickwit before answering 503 (default `120000`, minimum `1000`)                                              |
-
-Defaults and examples live in the root `.env.example`.
+The root `.env.example` documents every variable and its default. Parse a new variable in `src/config.ts` and document it in `.env.example`.
 
 ## Tests
 
-`tests/` is an HTTP-level suite for authentication. `bun test` (via `bun --filter api test`) preloads `tests/preload.ts`, which boots the real app against `rootprint_test` on the local Postgres and the real Quickwit from `docker compose` (host port 7280), then serves it on port 18282. Each file calls `resetDb()` in `beforeEach`. Helpers live in `tests/helpers/`: `Jar` (cookie jar with its own client IP), `fixtures.ts` (admin, members, invites), `fake-idp.ts` (OIDC provider), `providers.ts` (Google/GitHub fetch mocks). The preload sets `NODE_ENV=production` because Better Auth disables its origin/CSRF check under `NODE_ENV=test`. A failing test against unchanged behaviour is a finding: report it, do not bend the assertion. No tests outside authentication unless asked.
-
-## Conventions
-
-- TS is strict (extends `tsconfig.base.json`).
-- Module resolution is NodeNext — relative imports use `.js` extensions (e.g. `import { x } from './lib/x.js'` even when the source is `.ts`).
-- Single quotes, tabs, no trailing commas.
-- `unknown` in catches; narrow with `instanceof` / type guards.
-- `import type` for type-only imports.
+`tests/` is an HTTP-level suite for authentication. `bun test` (via `bun --filter api test`) preloads `tests/preload.ts`, which boots the real app against `rootprint_test` on the local Postgres and the real Quickwit from `docker compose` (host port 7280), then serves it on port 18282. Each file calls `resetDb()` in `beforeEach`. Helpers live in `tests/helpers/`: `Jar` (cookie jar with its own client IP), `fixtures.ts` (admin, members, invites), `fake-idp.ts` (OIDC provider), `providers.ts` (Google/GitHub fetch mocks). The preload sets `NODE_ENV=production` because Better Auth disables its origin/CSRF check under `NODE_ENV=test`. A failing test against unchanged behaviour is a finding: report it, do not bend the assertion.

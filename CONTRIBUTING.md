@@ -38,7 +38,7 @@ bun run dev:web
 
 Notes:
 
-- The required env vars are documented in `.env.example` and in `apps/api/AGENTS.md`.
+- Every env var, required or optional, is documented in `.env.example`.
 - `FRONTEND_URL` (used by `apps/api` for CORS) defaults to `http://localhost:5173`. Override it when running behind a reverse proxy or under a non-default deployment.
 
 ## Repository layout

@@ -1,60 +1,18 @@
 # apps/web — Agent Guide
 
-## About
+Log viewer UI: a client-rendered SvelteKit SPA built with `@sveltejs/adapter-static` (`index.html` fallback, no SSR or prerendering). `apps/api` is its only backend.
 
-Log viewer UI served by the product. SvelteKit with `@sveltejs/adapter-static`, a client-rendered SPA (`index.html` fallback, no SSR or prerendering) with no server runtime. The Hono backend in `apps/api` is the only backend; `apps/web` talks to it over HTTP.
+## Where code goes
 
-For repo-wide rules (Bun, Prettier, TS strict, tests policy), see the root `AGENTS.md`. For Svelte 5 patterns and the Svelte MCP server, see [Svelte 5 Patterns](#svelte-5-patterns). For UI work and the DaisyUI MCP server, see [Design System](#design-system).
-
-## Stack
-
-- SvelteKit 3 + Svelte 5
-- `@sveltejs/adapter-static`
-- Tailwind v4 via `@tailwindcss/vite`
-- DaisyUI 5 (custom `rootprint` theme — see Design System below)
-- Better Auth client + Hono RPC client
-- Valibot for client-side validation (schemas re-exported from `api/schemas`)
-- `lucide-svelte` icons; `@iconify-svelte/logos` and `@iconify-svelte/simple-icons` for third-party brand marks only
-- `svelte-sonner` toasts, `uplot` charts (through `ui/uplot`), `shiki` code highlighting
-
-## Run, Build, Check
-
-```bash
-bun --filter web dev              # vite dev (proxies /api to apps/api)
-bun --filter web build            # static build
-bun --filter web preview          # preview the built SPA
-bun --filter web check            # svelte-kit sync && svelte-check
-bun --filter web lint             # oxlint
-```
-
-## Source Layout
-
-| Path                            | Purpose                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/routes/`                   | SvelteKit pages and layouts                                                                                                                                                                                                                                                                                                                                              |
-| `src/routes/(app)/`             | Authenticated product routes (group layout)                                                                                                                                                                                                                                                                                                                              |
-| `src/routes/(app)/(admin)/`     | Admin-only routes (settings, send data) behind one role guard                                                                                                                                                                                                                                                                                                            |
-| `src/routes/auth/`              | Sign-in, first-time admin setup                                                                                                                                                                                                                                                                                                                                          |
-| `src/lib/api/client.ts`         | Hono RPC client (`hc<AppType>`)                                                                                                                                                                                                                                                                                                                                          |
-| `src/lib/api/<resource>.ts`     | Typed wrappers per API resource; throw `ApiError`                                                                                                                                                                                                                                                                                                                        |
-| `src/lib/auth-client.ts`        | Better Auth client                                                                                                                                                                                                                                                                                                                                                       |
-| `src/lib/components/ui/`        | Shared UI kit (see [Shared Components](#shared-components))                                                                                                                                                                                                                                                                                                              |
-| `src/lib/components/<feature>/` | Feature components and the helpers only that feature uses, named after UI sections: `logs`, `traces`, `services`, `profile`, `settings`, `send-data`                                                                                                                                                                                                                     |
-| `src/lib/attachments/`          | Shared `{@attach}` DOM behaviour                                                                                                                                                                                                                                                                                                                                         |
-| `src/lib/stores/`               | Shared state (`shell.svelte.ts`, `time-zone.svelte.ts`, request guards)                                                                                                                                                                                                                                                                                                  |
-| `src/lib/utils/`                | Helpers not owned by one feature: used by two or more features, by `ui/` or `shell/`, by `lib/api/`, or by another shared helper (formatting, query params, time ranges, colors). A helper used only by one feature lives in that feature's folder, in the deepest subfolder holding all its importers; `lib/api/` counts as its own area, so what it imports stays here |
-| `src/lib/admin-nav.ts`          | Nav tree and breadcrumb trails for the `(admin)` route group (Settings, Send data)                                                                                                                                                                                                                                                                                       |
-| `src/lib/types.ts`              | App-local types (pure types only)                                                                                                                                                                                                                                                                                                                                        |
-| `src/app.html`                  | HTML shell + boot loader                                                                                                                                                                                                                                                                                                                                                 |
-| `src/app.css`                   | Tailwind entry, DaisyUI theme, tokens, named classes                                                                                                                                                                                                                                                                                                                     |
-| `vite.config.ts`                | Tooling config, including the SvelteKit plugin options                                                                                                                                                                                                                                                                                                                   |
+- Routes: `src/routes/(app)/` holds the authenticated product, `(app)/(admin)/` the admin-only pages (settings, send data) behind one role guard, and `auth/` sign-in and first-time setup. A new admin page also gets an entry in `src/lib/admin-nav.ts`, which builds that group's nav and breadcrumbs.
+- Feature code lives in `src/lib/components/<feature>/`, named after the UI section (`logs`, `traces`, `services`, `profile`, `settings`, `send-data`, `shell`, `auth`), together with the helpers only that feature uses. Put such a helper in the deepest subfolder that holds all its importers.
+- `src/lib/utils/` holds helpers used by two or more features, by `ui/` or `shell/`, by `lib/api/`, or by another shared helper. `lib/api/` counts as its own area, so what it imports stays in `utils/`.
+- Shared `{@attach}` behaviour goes in `src/lib/attachments/`, shared state in `src/lib/stores/`, app-local types in `src/lib/types.ts` (pure types only).
 
 ## Data Loading
 
-`apps/web` is an SPA built with `adapter-static`. There is no server runtime — `apps/api` is the only backend.
+There is no server runtime, so all data loading lives in `+page.ts` / `+layout.ts`; `+page.server.ts` and `hooks.server.ts` have nothing to run them.
 
-- All data loading lives in `+page.ts` / `+layout.ts`.
-- Do **not** add `+page.server.ts` or `hooks.server.ts` — `adapter-static` has no server.
 - Auth: `authClient` from `#lib/auth-client`.
 - API: call the wrappers in `#lib/api/<resource>.ts`. Each one calls the typed Hono RPC `client` and throws `ApiError` through `readApiError` on a non-2xx response. Add a wrapper there instead of calling `client` from a page or component.
 - Cookies are same-origin in both dev (Vite proxy → api) and prod (api serves the SPA).
@@ -65,11 +23,13 @@ bun --filter web lint             # oxlint
 
 Loaders (`+page.ts` / `+layout.ts`) follow one of three conventions, chosen by intent:
 
-- **Bubble (default):** let the error propagate to the root `+error.svelte`. Use for generic failures with no special handling.
+- **Bubble (default):** let the error propagate to the root `+error.svelte`. Use for generic failures with no special handling. Match that page's heading pattern if you add a nested error boundary.
 - **`error(status, msg)`:** call it, don't `throw` it (it throws internally). Use only to surface a _meaningful_ HTTP status/message (e.g. mapping an `ApiError` 404 to "Index not found"). See `routes/(app)/(admin)/settings/indexes/[indexId]/+layout.ts`.
-- **Return a discriminated result** (e.g. `{ error: 'not_found' | 'forbidden' | 'unknown' }`): use only when the page renders its own inline error UI instead of the global error page. See `routes/(app)/s/[code]/+page.ts`.
+- **Return a discriminated result** (e.g. `{ error: 'not_found' | 'unknown' }`): use only when the page renders its own inline error UI instead of the global error page. See `routes/(app)/s/[code]/+page.ts`.
 
-Do not add `try/catch` to a loader unless it implements one of the two non-default conventions for a deliberate reason.
+Add `try/catch` to a loader only to implement one of the two non-default conventions. Use `redirect(...)` for route guards.
+
+In components, surface an `ApiError`'s `error.message`, and map `details[].path` to fields with `toFormErrors` from `#lib/api/errors` (`issuesToFieldErrors` does the same for client-side Valibot issues). Validate input with the Valibot schemas re-exported from `api/schemas` so client and server agree on shape. See `routes/auth/setup-admin/+page.svelte` for the canonical flow.
 
 ## Svelte 5 Patterns
 
@@ -77,45 +37,14 @@ Do not add `try/catch` to a loader unless it implements one of the two non-defau
 - `<script lang="ts">` everywhere.
 - Use `{@attach ...}`, not `use:`, for your own DOM behaviour. `use:` is reserved for third-party actions that ship no attachment (currently only `svelte-dnd-action`). Shared attachments go in `#lib/attachments/`; one-offs stay local to the component.
 - Attachments are fully reactive — `{@attach foo(bar)}` tears down and re-runs whenever `bar` changes. When the value changes often (a keystroke) or the caller passes a fresh closure each render (a virtualised row), take a **getter** and read it inside the attachment instead: `{@attach foo(() => bar)}`. See `#lib/attachments/row-activate.ts`.
-- For deeper Svelte 5 / SvelteKit guidance, use the Svelte MCP server: call `list-sections` first, then `get-documentation` for every section whose `use_cases` match the task.
 
 ## Design System
 
-The style is **Clean UI** (the DaisyUI MCP trend of that name) applied to a data-dense work tool: a neutral white canvas, hairlines instead of shadows, one brand accent, status colors only for status, and hierarchy carried by size, spacing and alignment rather than decoration. Consistency beats novelty. Before adding a new pattern, reuse an existing one.
-
-### DaisyUI MCP
-
-Use the `daisyui-blueprint` MCP server for any new or changed DaisyUI markup:
-
-1. `daisyui_setup_expert`: `projectRoot` is the absolute path of `apps/web`, one `workflowId` per task. Leave `install` and `fonts` off; the theme and fonts already exist.
-2. `daisyui_rules_enforcer`.
-3. For a new complete page only: `daisyui_creative_director` with `trend: "Clean UI"`, then `daisyui_page_architect`.
-4. `daisyui_component_syntax_expert` with every component you will touch, before writing markup. Don't guess class names.
-5. `daisyui_quality_inspector` with `auditIntent: "fix_changes"` and paths relative to `apps/web`. If you aren't previewing in a browser, pass `renderedReview` as `unavailable` instead of starting a dev server for it.
-
-When Creative Director is active, the inspector requires `originalityEvidence`. Pass this instead of inventing one:
-
-```json
-{
-	"concept": "A calm, dense workbench for reading logs and traces; consistency across screens beats novelty.",
-	"domainAnchor": "Log lines, spans and fields are the content; chrome stays neutral so the data carries the page.",
-	"signatureElement": "Brand green appears once per surface, on the primary action or the active nav rail.",
-	"compositionRule": "PageHeader, then hairline panels on a 4px spacing grid; hierarchy by size and spacing, not color."
-}
-```
-
-**This file wins over the MCP's generic rules.** Known overrides:
-
-- One theme. No dark theme, `theme-controller` or `prefersdark`.
-- The tokens outside the DaisyUI theme (`muted`, `subtle`, `*-ink`, `line`, `--chart-N`, `--trace-service-N`) are sanctioned.
-- The [named classes](#named-classes) in `app.css` are sanctioned. The MCP's no-authored-CSS rule applies to everything else.
-- Creative Director's originality, imagery, editorial-layout, eyebrow and landing-page motion guidance doesn't apply. No heroes, asymmetry, handwriting fonts or signature flourishes.
-- The app is desktop-only (see [Page Composition](#page-composition)), so the MCP's mobile rules don't apply.
-- Icons go where they help scanning (navigation, familiar actions, search and filter controls, status), not on every label.
+The style is **Clean UI** applied to a data-dense work tool: a neutral white canvas, hairlines instead of shadows, one brand accent, status colors only for status, and hierarchy carried by size, spacing and alignment rather than decoration. Consistency beats novelty. Before adding a new pattern, reuse an existing one.
 
 ### Theme
 
-A single DaisyUI 5 custom theme named `rootprint` is the source of truth. It is declared in `src/app.css` via `@plugin "daisyui/theme"` and applied through `data-theme="rootprint"` in `src/app.html`. It is light and flat, with a single brand-green accent. Don't add a second theme or a `data-theme` override anywhere.
+A single DaisyUI 5 custom theme named `rootprint` is the source of truth. It is declared in `src/app.css` via `@plugin "daisyui/theme"` and applied through `data-theme="rootprint"` in `src/app.html`. It is light and flat, with a single brand-green accent. It is the only theme: no dark theme, `theme-controller`, `prefersdark` or `data-theme` override anywhere.
 
 ### Color
 
@@ -180,6 +109,7 @@ Use semantic classes (`bg-base-100`, `text-muted`, `btn-primary`, …), never ra
 ### Icons
 
 - `lucide-svelte` only. `@iconify-svelte/logos` is for third-party brand marks (integration logos), never for UI icons; `@iconify-svelte/simple-icons` covers a mark `logos` lacks (Fluent Bit).
+- Icons go where they help scanning (navigation, familiar actions, search and filter controls, status), not on every label.
 - Size with a `size-*` class, not the `size` prop: `size-3.5` by default, `size-3` inside `btn-xs`, table headers and dense rows, `size-4` for primary navigation (app sidebar, settings nav, help menu). Larger only for empty-state art and brand logos.
 - Icons inherit text color. Tone them with `text-muted`/`text-subtle`, not opacity.
 - Decorative icons get `aria-hidden="true"`. Icon-only buttons get an `aria-label` and a matching `title`.
@@ -206,38 +136,22 @@ Pick the DaisyUI component by behavior:
 | Loading                             | `loading loading-spinner loading-xs` inline, `skeleton` for panels                     |
 | Label on a collapsed sidebar item   | `tooltip tooltip-right` with `data-tip` (see `shell/SidebarNavItem`)                   |
 
+Tabs move focus with Tab and activate with Enter or Space, like any button or link: no arrow-key, Home/End or roving-tabindex handling.
+
 Buttons: `btn-sm` in toolbars and panels, `btn-xs` in dense rows, the default size in modal footers and on auth pages. `btn-ghost` for secondary actions, `btn-primary` for the one primary action, `btn-error` only to confirm a destructive action (`FormModal` takes `destructive` for that).
 
 - Three exceptions keep a border or fill: provider sign-in buttons on the filled auth card are `btn-outline` (ghost vanishes on `base-200`), the button that opens a destructive confirm is `btn-outline btn-error`, and a control floating over content keeps the default fill (the trace minimap's reset zoom).
-- Toggles and segmented controls mark the on state with `aria-pressed` (`aria-current` on links), which DaisyUI styles as `btn-active`, plus `btn-neutral`, or the status color when the option is a status (`ExploreToolbar`). Never `btn-primary`; green is for the action.
+- Toggles and segmented controls mark the on state with `aria-pressed` (`aria-current` on links), which DaisyUI styles as `btn-active`, plus `btn-neutral`, or the status color when the option is a status (`ExploreToolbar`). Never `btn-primary`; green is for the action. The export dialog's toggles stay `btn-ghost`: the owner rejected the dark fill there.
 
 ### Shared Components
 
-Check `#lib/components/ui/` before writing markup. The second time a pattern appears, move it there instead of copying it.
+List `src/lib/components/ui/` before writing markup, and use its component wherever one fits: every search box is `SearchInput`, every copy action `CopyButton` or `CopyableField` (the icon turns to a check, no toast), every dialog the `Modal` family, every page top `PageHeader` or `PageToolbar`. Admin pages scroll in `PageScroll`, which `.settings-page` queries; `PanelError` takes a retry.
 
-| Component                                                  | Use for                                                               |
-| ---------------------------------------------------------- | --------------------------------------------------------------------- |
-| `PageHeader`                                               | Breadcrumb, `h1`, description and actions at the page top             |
-| `PageToolbar`                                              | The `h-12` top bar every explorer page opens with                     |
-| `PageScroll`                                               | Scroll container around admin pages; `.settings-page` queries it      |
-| `SearchInput`                                              | Every search box                                                      |
-| `SortButton`                                               | Sortable table headers                                                |
-| `Field`, `SelectField`, `TagInput`                         | Stacked form fields with label, hint and error                        |
-| `SettingsRow`                                              | Label-left, control-right settings rows                               |
-| `Modal`, `FormModal`, `ConfirmModal`, `TypeToConfirmModal` | Dialogs, form dialogs, confirmations, destructive confirms            |
-| `ListCard`, `ListRow`                                      | Hairline lists of linked records                                      |
-| `EmptyPanel`, `PanelError`                                 | Empty and failed panels (`PanelError` retries)                        |
-| `CopyButton`, `CopyableField`, `DisplayField`              | Every copy action (icon turns to a check, no toast); read-only values |
-| `SecretReveal`, `OneTimeKeyReveal`                         | Secrets and newly created keys                                        |
-| `TimeRangePicker`, `TimeRangeTabs`, `RowLimitSelector`     | Time range and row limit controls                                     |
-| `FieldRow`                                                 | Key/value rows with filter and copy actions                           |
-| `TracesLink`                                               | Icon-only row link into the Traces explorer                           |
-| `UserIdentity`                                             | Avatar, name and email                                                |
-| `uplot/UplotLinePanel`                                     | Time-series charts (built on `UplotChart`, `UplotLegend`)             |
+The second time a pattern appears, move it into `ui/` instead of copying it. Fold only true duplicates, the same element with different data; look-alike markup stays separate rather than merging behind positional flags or lookup maps.
 
 ### Named Classes
 
-Defined in `src/app.css`. Add one only when DaisyUI plus utilities can't express it and several places need it.
+Defined in `src/app.css`. Add one only when DaisyUI plus utilities can't express it and several places need it; that is the only authored CSS.
 
 - `.section-label`: the 12px medium muted label from the type table.
 - `.field-label`: the label above a form control (`ui/Field`); reuse it for radio and checkbox `<legend>`s.
@@ -266,24 +180,10 @@ Defined in `src/app.css`. Add one only when DaisyUI plus utilities can't express
 - Metadata grid: sentence-case `<dt class="text-muted text-xs">` labels and sans values, reserving `<dd class="font-mono text-sm">` for IDs, timestamps and code.
 - The app is desktop-only: below `48rem` the root layout renders a desktop-size notice instead of route content. That is exactly Tailwind's `md` breakpoint, so **`sm:` and `md:` variants never apply** inside the app; their unprefixed values are dead code. Reach for `lg:`/`xl:` or a container query when a surface really needs to reflow.
 
-## Error Handling
-
-- SvelteKit `+error.svelte` at the root catches uncaught route errors. Match its heading pattern if you add nested error boundaries.
-- API errors: the `#lib/api` wrappers throw `ApiError` carrying the parsed `ApiErrorBody`. Surface `error.message`, and map `details[].path` to fields with `toFormErrors` from `#lib/api/errors` (`issuesToFieldErrors` does the same for client-side Valibot issues). See `routes/auth/setup-admin/+page.svelte` for the canonical flow.
-- Validate inputs with the Valibot schemas re-exported from `api/schemas` so client and server agree on shape.
-
-## Tests
-
-No automated tests in this workspace. Authentication is covered by the API suite in `apps/api/tests/`. Manual visual review remains `bun --filter web dev` or `bun --filter web preview`.
-
 ## Conventions
 
-- TS strict, set in `tsconfig.json` (it extends SvelteKit's `$app/tsconfig`, not `tsconfig.base.json`).
-- Single quotes, tabs, no trailing commas (Prettier).
-- `prettier-plugin-svelte` + `prettier-plugin-tailwindcss` normalize Svelte files and class-attribute order — let them.
-- Use the `#lib` subpath import and SvelteKit's `$app` modules over deep relative paths. `#lib` imports carry the file extension: `.js` for a `.ts` module, `.svelte` for a component.
-- Cross-workspace types: `import type { ... } from 'api/types'`. Schemas: `import { ... } from 'api/schemas'`.
-- Component callback props are camelCase (`onSave`, `onToggleSort`); lowercase only when the prop mirrors a native DOM event on an element the component wraps (`Modal`'s `onclose`/`oncancel`).
+- Prefer the `#lib` subpath import and SvelteKit's `$app` modules over deep relative paths. Cross-workspace types: `import type { ... } from 'api/types'`; schemas: `import { ... } from 'api/schemas'`.
+- Component callback props are camelCase (`onToggleSort`); lowercase only when the prop mirrors a native DOM event on an element the component wraps (`Modal`'s `onclose`/`oncancel`).
 - `.svelte.ts` modules are kebab-case (`time-zone.svelte.ts`), like all other `.ts` files.
 - Numbers go through `#lib/utils/format`: `formatDurationMs` for whole-millisecond values (percentiles, averages), `formatDurationMicros` for span durations and the log search's elapsed time, `formatRate` for rates, always per minute. Counts are compact (`formatCount`) in tables, KPIs and chart axes, and exact (`toLocaleString()`) where the number itself is the answer: result totals, export, pagination, facet counts, and bar-chart tooltips (`LogFrequencyChart`, `VolumeChart`). `uplot/UplotLinePanel` tooltips reuse the panel's `formatValue`.
 - Timestamps go through `#lib/utils/time`: `formatTimestamp` (milliseconds) for log and span times, `formatActivityTimestamp` (seconds) in the activity tables, `formatRelativeTime` (compact: `just now`, `2h ago`, `in 6mo`) for last active, last used and last event, `formatDate` / `formatDateTime` for account dates, `formatTickDate` on chart axes and `formatTooltipDate` in chart tooltips. Time-range labels live in `#lib/utils/time-range`. These follow the user-menu Local/UTC preference (`#lib/stores/time-zone.svelte`), so never call date-fns `format` on an absolute time directly: a new pattern goes through `formatInZone` (it must be a substring of `yyyy-MM-dd HH:mm:ss.SSS`), typed times are parsed with `parseRangeDateTime`, and `UplotChart` places chart ticks in the same zone. Only the date-only `formatDate` stays local. Chart bucket widths come from `bucketSeconds` in `api/time`, which the API's MCP histogram also uses, so one range gets one width everywhere.
