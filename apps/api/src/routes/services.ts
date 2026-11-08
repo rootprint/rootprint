@@ -1,10 +1,7 @@
 import { Hono } from 'hono';
 
-import { config } from '../config.js';
 import type { AuthedEnv } from '../env.js';
-import { db } from '../lib/db.js';
 import { describe, validator } from '../lib/openapi/describe.js';
-import { quickwit } from '../lib/quickwit/client.js';
 import { readLimiter } from '../middleware/rate-limit.js';
 import { LOGS_READ, requireUserOrPersonalKey } from '../middleware/require-user-or-personal-key.js';
 import { ServiceErrorsQuery, ServiceHealthQuery } from '../schemas/services.js';
@@ -12,13 +9,7 @@ import {
 	ServiceErrorsResponseSchema,
 	ServiceHealthResponseSchema
 } from '../schemas/responses/services.js';
-import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
-import {
-	getServiceErrors,
-	getServiceHealth,
-	serviceErrorsQuery,
-	serviceHealthQuery
-} from '../services/service-health.service.js';
+import { actorOf, readServiceErrors, readServiceHealth } from '../services/search-audit.service.js';
 
 export const servicesRouter = new Hono<AuthedEnv>()
 	.use('*', requireUserOrPersonalKey(LOGS_READ))
@@ -33,22 +24,7 @@ export const servicesRouter = new Hono<AuthedEnv>()
 			errors: [429]
 		}),
 		validator('query', ServiceHealthQuery),
-		async (c) => {
-			const params = c.req.valid('query');
-			const result = await withSearchAudit(
-				db,
-				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
-				config.traceIndexId,
-				{
-					query: serviceHealthQuery(params.service),
-					startTs: params.startTs,
-					endTs: params.endTs
-				},
-				() => getServiceHealth(quickwit, config.traceIndexId, params),
-				(r) => r.summary.requests
-			);
-			return c.json(result);
-		}
+		async (c) => c.json(await readServiceHealth(actorOf(c), c.req.valid('query')))
 	)
 	.get(
 		'/errors',
@@ -60,20 +36,5 @@ export const servicesRouter = new Hono<AuthedEnv>()
 			errors: [429]
 		}),
 		validator('query', ServiceErrorsQuery),
-		async (c) => {
-			const params = c.req.valid('query');
-			const result = await withSearchAudit(
-				db,
-				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
-				config.traceIndexId,
-				{
-					query: serviceErrorsQuery(params),
-					startTs: params.startTs,
-					endTs: params.endTs
-				},
-				() => getServiceErrors(quickwit, config.traceIndexId, params),
-				(r) => r.rows.length
-			);
-			return c.json(result);
-		}
+		async (c) => c.json(await readServiceErrors(actorOf(c), c.req.valid('query')))
 	);

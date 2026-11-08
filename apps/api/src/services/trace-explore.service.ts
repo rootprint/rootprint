@@ -11,6 +11,7 @@ import { OPERATION_LIMIT, type ExploreSort } from '../constants.js';
 import { requestSignal, toQuickwitTimestamp } from '../lib/quickwit/client.js';
 import { escapeFilterValue } from '../lib/quickwit/query.js';
 import type { ExploreFilters, ExploreOverviewInput, ExploreSpansInput } from '../schemas/traces.js';
+import { badRequest } from '../utils/http-error.js';
 import type {
 	ExploreOverviewResponse,
 	ExploreSpanRow,
@@ -48,6 +49,20 @@ const SORTS: Record<ExploreSort, [field: string, order: 'asc' | 'desc']> = {
 	duration: [DURATION_FIELD, 'asc']
 };
 
+/** `q` is spliced in as `(${q})`, so a stray `)` would close that group and escape the other filters. */
+function hasBalancedParens(query: string): boolean {
+	let depth = 0;
+	let quoted = false;
+	for (let i = 0; i < query.length; i++) {
+		const ch = query[i];
+		if (ch === '\\') i++;
+		else if (ch === '"') quoted = !quoted;
+		else if (!quoted && ch === '(') depth++;
+		else if (!quoted && ch === ')' && --depth < 0) return false;
+	}
+	return depth === 0 && !quoted;
+}
+
 export function exploreQuery(filters: ExploreFilters): string {
 	const clauses: string[] = [];
 	if (filters.service !== undefined) {
@@ -64,7 +79,14 @@ export function exploreQuery(filters: ExploreFilters): string {
 	if (filters.status === 'error') clauses.push(ERROR_SPANS);
 	if (filters.status === 'ok') clauses.push(`NOT ${ERROR_SPANS}`);
 	if (filters.root) clauses.push(ROOT_SPANS);
-	if (filters.q !== undefined && filters.q !== '') clauses.push(`(${filters.q})`);
+	if (filters.q !== undefined && filters.q !== '') {
+		if (!hasBalancedParens(filters.q)) {
+			const message = 'Query has unbalanced parentheses or quotes';
+			// The explorer shows a `q` detail inline in the query box instead of as a failed load.
+			throw badRequest(message, 'BAD_REQUEST', [{ path: 'q', message }]);
+		}
+		clauses.push(`(${filters.q})`);
+	}
 	return clauses.length === 0 ? '*' : clauses.join(' AND ');
 }
 

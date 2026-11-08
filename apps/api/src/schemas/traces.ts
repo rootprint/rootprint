@@ -29,20 +29,6 @@ export const TraceParams = v.object({
 
 const MAX_QUERY_CHARS = 2_000;
 
-/** `q` is spliced in as `(${q})`, so a stray `)` would close that group and escape the other filters. */
-export function hasBalancedParens(query: string): boolean {
-	let depth = 0;
-	let quoted = false;
-	for (let i = 0; i < query.length; i++) {
-		const ch = query[i];
-		if (ch === '\\') i++;
-		else if (ch === '"') quoted = !quoted;
-		else if (!quoted && ch === '(') depth++;
-		else if (!quoted && ch === ')' && --depth < 0) return false;
-	}
-	return depth === 0 && !quoted;
-}
-
 const exploreFilterEntries = {
 	startTs: v.pipe(intParam({ min: 0, label: 'startTs' }), v.description(EPOCH_SECONDS)),
 	endTs: v.pipe(intParam({ min: 0, label: 'endTs' }), v.description(EPOCH_SECONDS)),
@@ -52,42 +38,23 @@ const exploreFilterEntries = {
 	maxMs: v.optional(intParam({ min: 1, label: 'maxMs' })),
 	status: v.optional(v.picklist(EXPLORE_STATUSES), 'all'),
 	root: v.optional(boolParam),
-	q: v.optional(
-		v.pipe(
-			v.string(),
-			v.trim(),
-			v.maxLength(MAX_QUERY_CHARS),
-			v.check(hasBalancedParens, 'Query has unbalanced parentheses or quotes')
-		)
-	)
+	q: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(MAX_QUERY_CHARS)))
 };
 
-export const ExploreSpansQuery = v.pipe(
-	v.object({
-		...exploreFilterEntries,
-		sort: v.optional(v.picklist(EXPLORE_SORTS), '-start'),
-		limit: v.optional(
-			intParam({ min: 1, max: MAX_EXPLORE_LIMIT, label: 'limit' }),
-			String(EXPLORE_PAGE_SIZE)
-		),
-		offset: v.optional(intParam({ min: 0, max: MAX_EXPLORE_OFFSET, label: 'offset' }), '0')
-	}),
-	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
-	v.check(
-		(input) => input.minMs === undefined || input.maxMs === undefined || input.minMs < input.maxMs,
-		'minMs must be below maxMs'
-	)
-);
+export const ExploreSpansQuery = v.object({
+	...exploreFilterEntries,
+	sort: v.optional(v.picklist(EXPLORE_SORTS), '-start'),
+	limit: v.optional(
+		intParam({ min: 1, max: MAX_EXPLORE_LIMIT, label: 'limit' }),
+		String(EXPLORE_PAGE_SIZE)
+	),
+	offset: v.optional(intParam({ min: 0, max: MAX_EXPLORE_OFFSET, label: 'offset' }), '0')
+});
 export type ExploreSpansInput = v.InferOutput<typeof ExploreSpansQuery>;
 export type ExploreFilters = Omit<ExploreSpansInput, 'sort' | 'limit' | 'offset'>;
 
 export const ExploreOverviewQuery = v.pipe(
 	v.object({ ...exploreFilterEntries, interval: intervalParam }),
-	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
-	v.check(
-		(input) => input.minMs === undefined || input.maxMs === undefined || input.minMs < input.maxMs,
-		'minMs must be below maxMs'
-	),
 	v.check(
 		(input) => withinBucketCap(input.endTs - input.startTs, input.interval),
 		'interval produces too many buckets'

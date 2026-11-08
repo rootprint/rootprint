@@ -44,7 +44,6 @@ export const ServiceHealthQuery = v.pipe(
 			'10'
 		)
 	}),
-	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs'),
 	v.check(
 		(input) => withinBucketCap(input.endTs - input.startTs, input.interval),
 		'interval produces too many buckets'
@@ -53,21 +52,18 @@ export const ServiceHealthQuery = v.pipe(
 
 export type ServiceHealthInput = v.InferOutput<typeof ServiceHealthQuery>;
 
-export const ServiceErrorsQuery = v.pipe(
-	v.object({
-		service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
-		startTs: v.pipe(intParam({ min: 0, label: 'startTs' }), v.description(EPOCH_SECONDS)),
-		endTs: v.pipe(intParam({ min: 0, label: 'endTs' }), v.description(EPOCH_SECONDS)),
-		operation: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(500))),
-		kind: v.optional(v.picklist(SPAN_KINDS)),
-		httpStatus: v.optional(v.picklist(ERROR_HTTP_STATUSES)),
-		limit: v.optional(
-			intParam({ min: 1, max: MAX_ERROR_LIMIT, label: 'limit' }),
-			String(ERROR_PAGE_SIZE)
-		),
-		offset: v.optional(intParam({ min: 0, max: MAX_ERROR_OFFSET, label: 'offset' }), '0')
-	}),
-	v.check((input) => input.startTs < input.endTs, 'startTs must be before endTs')
-);
+export const ServiceErrorsQuery = v.object({
+	service: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200))),
+	startTs: v.pipe(intParam({ min: 0, label: 'startTs' }), v.description(EPOCH_SECONDS)),
+	endTs: v.pipe(intParam({ min: 0, label: 'endTs' }), v.description(EPOCH_SECONDS)),
+	operation: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(500))),
+	kind: v.optional(v.picklist(SPAN_KINDS)),
+	httpStatus: v.optional(v.picklist(ERROR_HTTP_STATUSES)),
+	limit: v.optional(
+		intParam({ min: 1, max: MAX_ERROR_LIMIT, label: 'limit' }),
+		String(ERROR_PAGE_SIZE)
+	),
+	offset: v.optional(intParam({ min: 0, max: MAX_ERROR_OFFSET, label: 'offset' }), '0')
+});
 
 export type ServiceErrorsInput = v.InferOutput<typeof ServiceErrorsQuery>;
