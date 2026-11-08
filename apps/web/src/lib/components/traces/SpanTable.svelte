@@ -16,7 +16,6 @@
 	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
 	import SortButton from '#lib/components/ui/SortButton.svelte';
-	import { RequestGuard } from '#lib/stores/request-guard.js';
 	import { formatDurationMicros } from '#lib/utils/format.js';
 	import { readLastIndex } from '#lib/utils/last-index.js';
 	import { serviceColor } from '#lib/utils/service-color.js';
@@ -40,7 +39,6 @@
 	let loadingMore = $state(false);
 	let failure = $state<unknown>(null);
 
-	const guard = new RequestGuard();
 	const logIndex = readLastIndex();
 	let inflight: AbortController | null = null;
 	const request = $derived({ ...filters, sort });
@@ -54,7 +52,7 @@
 		return traceDetailHref(row.traceId, { index: logIndex, span: row.spanId, returnTo: page.url });
 	}
 
-	// Callers must pass the request guard first. A page-0 response replaces the list in one
+	// Callers must skip aborted requests first. A page-0 response replaces the list in one
 	// assignment so a new filter's rows never mix with the previous filter's.
 	function applyPage(result: ExploreSpans, pageOffset: number) {
 		if (pageOffset === 0) seenKeys = new Set();
@@ -70,7 +68,6 @@
 	}
 
 	async function fetchPage(pageOffset: number, filtersAndSort = request) {
-		const token = guard.next();
 		failure = null;
 		inflight?.abort();
 		const controller = new AbortController();
@@ -82,16 +79,16 @@
 				offset: pageOffset,
 				signal: controller.signal
 			});
-			if (!guard.isCurrent(token)) return;
+			if (controller.signal.aborted) return;
 			applyPage(result, pageOffset);
 		} catch (error) {
-			if (!guard.isCurrent(token)) return;
+			if (controller.signal.aborted) return;
 			failure = error;
 			// A failed page-0 request must not leave a later retry appending onto rows from a
 			// previous, unrelated filter: mark "no page of the current request has loaded yet".
 			if (pageOffset === 0) offset = 0;
 		} finally {
-			if (guard.isCurrent(token)) {
+			if (!controller.signal.aborted) {
 				loading = false;
 				loadingMore = false;
 			}
@@ -107,7 +104,10 @@
 		return () => inflight?.abort();
 	});
 
-	/** Doubles as the retry handler: at offset 0 no page of the current request has loaded yet, so it reloads rather than appends. */
+	/**
+	 * Doubles as the retry handler: at offset 0 no page of the current request has loaded yet, so
+	 * it reloads rather than appends.
+	 */
 	function loadPage() {
 		if (offset === 0) loading = true;
 		else loadingMore = true;
