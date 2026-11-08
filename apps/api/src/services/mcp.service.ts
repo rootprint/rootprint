@@ -3,7 +3,6 @@ import { QuickwitError } from '@rootprint-io/quickwit-js';
 import { toStandardJsonSchema } from '@valibot/to-json-schema';
 import * as v from 'valibot';
 
-import { config } from '../config.js';
 import { db } from '../lib/db.js';
 import { logger } from '../lib/logger.js';
 import { isHangup, quickwit } from '../lib/quickwit/client.js';
@@ -19,7 +18,6 @@ import {
 	SearchSpansInput
 } from '../schemas/mcp.js';
 import { intervalSeconds, withinBucketCap } from '../schemas/services.js';
-import { hasBalancedParens, type ExploreSpansInput } from '../schemas/traces.js';
 import { badRequest, HttpError, isPublicError } from '../utils/http-error.js';
 import { isoTimestampString } from '../utils/valibot.js';
 import {
@@ -29,12 +27,8 @@ import {
 	listIndexes,
 	listIndexFields
 } from './index.service.js';
-import { fieldValuesBulk, histogramLogs, searchLogs } from './log.service.js';
-import { auditActor, withSearchAudit } from './search-audit.service.js';
-import { exploreQuery, getExploreSpans } from './trace-explore.service.js';
-import { getTrace } from './trace.service.js';
-
-export type McpContext = { userId: string; apiKeyId?: string };
+import { fieldValuesBulk, histogramLogs } from './log.service.js';
+import { readExploreSpans, readLogs, readTrace, type AuditActor } from './search-audit.service.js';
 
 const MAX_STRING_CHARS = 2_000;
 // Claude Code drops MCP results over ~25k tokens; an error that says how to narrow beats a lost call.
@@ -121,9 +115,8 @@ function histogramInterval(requested: string | undefined, rangeSeconds: number):
 	return interval;
 }
 
-export function buildMcpServer(ctx: McpContext): McpServer {
+export function buildMcpServer(actor: AuditActor): McpServer {
 	const server = new McpServer({ name: 'rootprint', version: '1.0.0' });
-	const actor = auditActor(ctx.userId, ctx.apiKeyId);
 
 	server.registerTool(
 		'list_indexes',
@@ -175,22 +168,14 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 			runTool('search_logs', async () => {
 				const { startTs, endTs } = timeRange(start, end);
 				const indexConfig = await getIndexConfig(db, quickwit, indexId);
-				const result = await withSearchAudit(
-					db,
-					actor,
-					indexId,
-					{ query: query ?? '', startTs, endTs },
-					() =>
-						searchLogs(quickwit, indexConfig, {
-							q: query,
-							limit,
-							sortOrder: sort,
-							startTs,
-							endTs,
-							countAll: true
-						}),
-					(r) => r.numHits
-				);
+				const result = await readLogs(actor, indexConfig, {
+					q: query,
+					limit,
+					sortOrder: sort,
+					startTs,
+					endTs,
+					countAll: true
+				});
 				return { totalHits: result.numHits, returned: result.hits.length, hits: result.hits };
 			})
 	);
@@ -264,25 +249,13 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		({ query, start, end, ...filters }) =>
 			runTool('search_spans', async () => {
 				const { startTs, endTs } = timeRange(start, end);
-				if (
-					filters.minMs !== undefined &&
-					filters.maxMs !== undefined &&
-					filters.minMs >= filters.maxMs
-				) {
-					throw badRequest('minMs must be below maxMs');
-				}
-				if (query !== undefined && !hasBalancedParens(query)) {
-					throw badRequest('Query has unbalanced parentheses or quotes');
-				}
-				const params: ExploreSpansInput = { ...filters, q: query, startTs, endTs, offset: 0 };
-				const { rows, total } = await withSearchAudit(
-					db,
-					actor,
-					config.traceIndexId,
-					{ query: exploreQuery(params), startTs, endTs },
-					() => getExploreSpans(quickwit, config.traceIndexId, params),
-					(r) => r.total
-				);
+				const { rows, total } = await readExploreSpans(actor, {
+					...filters,
+					q: query,
+					startTs,
+					endTs,
+					offset: 0
+				});
 				return {
 					total,
 					spans: rows.map((row) => ({
@@ -308,14 +281,7 @@ export function buildMcpServer(ctx: McpContext): McpServer {
 		},
 		({ traceId }) =>
 			runTool('get_trace', async () => {
-				const trace = await withSearchAudit(
-					db,
-					actor,
-					config.traceIndexId,
-					{ query: `trace_id:${traceId}` },
-					() => getTrace(quickwit, config.traceIndexId, traceId),
-					(r) => r.spans.length
-				);
+				const trace = await readTrace(actor, traceId);
 				const spans = trace.spans.slice(0, MAX_TOOL_SPANS);
 				const detailed = new Set(spans.filter((s) => s.isError).slice(0, MAX_DETAILED_ERRORS));
 				return {

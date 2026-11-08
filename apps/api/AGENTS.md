@@ -77,6 +77,7 @@ Sibling top-level dirs:
   - Paths under `/v1/` get OTLP-style error responses (`otlpError`, `otlpErrorFromHttpError`).
   - Other paths get JSON `{ error: { code, message, statusCode, requestId } }`.
 - Never return raw 500s with internal messages or stack traces.
+- The web branches on `error.code` and `details[].path` (`queryErrorOf`, `toFieldErrors` in `apps/web/src/lib/api/`). Changing either for an endpoint is a contract change: find its web consumers.
 - Every Quickwit search passes `{ signal: requestSignal() }` (`lib/quickwit/client.ts`), so it stops when the client hangs up and rejects with the signal's own reason. `isHangup(err)` matches exactly that error: `app.onError` answers it with 499 and no fault, `withSearchAudit` records it as `cancelled` with no error (kept out of every activity stat) and `runTool` stays quiet. A real fault that lands while the client leaves is still a fault.
 
 ## Logging
@@ -93,6 +94,7 @@ pino on stdout, configured in `src/lib/logger.ts`: ISO `time`, string `level`, `
 ## Validation
 
 - Use Valibot for all external input (request bodies, query params, headers). Routes validate through the `validator` wrapper in `lib/openapi/describe.ts`, which throws `HttpError(400, 'VALIDATION_FAILED')` with one `details` entry per issue.
+- Audited searches (log search and every span read) go through the `read*` operations in `services/search-audit.service.ts`, which the routes and the MCP tools share. Their cross-field checks live there, not in the schemas: `startTs < endTs`, `minMs < maxMs`, and balanced parentheses in the explore `q` (inside `exploreQuery`, where it is spliced). They answer `400 BAD_REQUEST` with the reason as the message (the parentheses check also carries a `q` entry in `details`, which the explorer's `queryErrorOf` needs to show it in the query box), and run before the audit, so a rejected search writes no audit row.
 - Infer TS types from Valibot schemas where possible (`v.InferOutput<typeof Schema>`).
 - Request schemas live in `src/schemas/<resource>.ts` (shared path-param schemas in `src/utils/params.ts`); response schemas in `src/schemas/responses/<resource>.ts`. Route files never define schemas inline — they import them.
 

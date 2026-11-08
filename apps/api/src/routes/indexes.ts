@@ -64,14 +64,9 @@ import {
 	updateSource
 } from '../services/index-source.service.js';
 import { describeIndexStats, getStatsHistory } from '../services/index-stats.service.js';
-import {
-	fieldValues,
-	fieldValuesBulk,
-	histogramLogs,
-	searchLogs
-} from '../services/log.service.js';
+import { fieldValues, fieldValuesBulk, histogramLogs } from '../services/log.service.js';
 import { getPreferences, putPreferences } from '../services/preference.service.js';
-import { auditActor, withSearchAudit } from '../services/search-audit.service.js';
+import { actorOf, readLogs } from '../services/search-audit.service.js';
 import { IndexIdParams } from '../utils/params.js';
 
 export const indexesRouter = new Hono<AuthedEnv>()
@@ -367,19 +362,7 @@ export const indexesRouter = new Hono<AuthedEnv>()
 		readLimiter,
 		withIndexConfig,
 		validator('query', SearchQuery),
-		async (c) => {
-			const q = c.req.valid('query');
-			const indexConfig = c.get('indexConfig');
-			const result = await withSearchAudit(
-				db,
-				auditActor(c.get('session').user.id, c.get('apiKeyActor')?.keyId),
-				indexConfig.indexId,
-				{ query: q.q ?? '', startTs: q.startTs, endTs: q.endTs },
-				() => searchLogs(quickwit, indexConfig, q),
-				(response) => (q.countAll ? response.numHits : null)
-			);
-			return c.json(result);
-		}
+		async (c) => c.json(await readLogs(actorOf(c), c.get('indexConfig'), c.req.valid('query')))
 	)
 	.get(
 		'/:indexId/logs/histogram',
