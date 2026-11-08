@@ -14,11 +14,11 @@
 		type ServiceErrorHttpStatus,
 		type ServiceErrorKind,
 		type ServiceErrorRow,
+		type ServiceErrors,
 		type ServiceHealthFailingOperation
 	} from '#lib/api/services.js';
 	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
-	import { RequestGuard } from '#lib/stores/request-guard.js';
 	import { formatCount, formatDurationMs } from '#lib/utils/format.js';
 	import { readLastIndex } from '#lib/utils/last-index.js';
 	import { formatTimestamp } from '#lib/utils/time.js';
@@ -71,7 +71,6 @@
 	let atEnd = $state(false);
 	let failure = $state<unknown>(null);
 
-	const guard = new RequestGuard();
 	const logIndex = readLastIndex();
 	let inflight: AbortController | null = null;
 	let seenKeys = new Set<string>();
@@ -94,18 +93,22 @@
 		})
 	);
 
-	function appendRows(newRows: ServiceErrorRow[]): void {
-		const fresh = newRows.filter((row) => {
+	// Callers must skip aborted requests first. A page-0 response replaces the list in one
+	// assignment so a new filter's rows never mix with the previous filter's.
+	function applyPage(result: ServiceErrors, pageOffset: number): void {
+		if (pageOffset === 0) seenKeys = new Set();
+		const fresh = result.rows.filter((row) => {
 			const key = row.traceId + row.spanId;
 			if (seenKeys.has(key)) return false;
 			seenKeys.add(key);
 			return true;
 		});
-		rows = [...rows, ...fresh];
+		rows = pageOffset === 0 ? fresh : [...rows, ...fresh];
+		offset = pageOffset + ERROR_PAGE_SIZE;
+		atEnd = !result.hasMore || offset > MAX_ERROR_OFFSET;
 	}
 
 	async function fetchPage(pageOffset: number, filters = scope) {
-		const token = guard.next();
 		failure = null;
 		inflight?.abort();
 		const controller = new AbortController();
@@ -117,15 +120,16 @@
 				offset: pageOffset,
 				signal: controller.signal
 			});
-			if (!guard.isCurrent(token)) return;
-			appendRows(result.rows);
-			offset = pageOffset + ERROR_PAGE_SIZE;
-			atEnd = !result.hasMore || offset > MAX_ERROR_OFFSET;
+			if (controller.signal.aborted) return;
+			applyPage(result, pageOffset);
 		} catch (error) {
-			if (!guard.isCurrent(token)) return;
+			if (controller.signal.aborted) return;
 			failure = error;
+			// A failed page-0 request must not leave a later retry appending onto rows from a
+			// previous, unrelated filter: mark "no page of the current request has loaded yet".
+			if (pageOffset === 0) offset = 0;
 		} finally {
-			if (guard.isCurrent(token)) {
+			if (!controller.signal.aborted) {
 				loading = false;
 				loadingMore = false;
 			}
@@ -135,16 +139,15 @@
 	$effect(() => {
 		loading = true;
 		loadingMore = false;
-		atEnd = false;
 		failure = null;
-		offset = 0;
-		rows = [];
-		seenKeys = new Set();
 		void fetchPage(0, scope);
 		return () => inflight?.abort();
 	});
 
-	/** Doubles as the retry handler: at offset 0 there is no list yet, so it reloads rather than appends. */
+	/**
+	 * Doubles as the retry handler: at offset 0 no page of the current request has loaded yet, so
+	 * it reloads rather than appends.
+	 */
 	function loadPage() {
 		if (offset === 0) loading = true;
 		else loadingMore = true;
@@ -239,7 +242,7 @@
 
 	{#if failure !== null && rows.length === 0}
 		<PanelError message="Couldn't load errors" error={failure} retry={loadPage} />
-	{:else if loading}
+	{:else if loading && rows.length === 0}
 		<div class="skeleton h-64 w-full" role="status" aria-label="Loading errors"></div>
 	{:else if rows.length === 0 && atEnd}
 		{@const filtered = operation !== null || kind !== null || httpStatus !== null}
@@ -254,7 +257,12 @@
 			{/if}
 		</EmptyPanel>
 	{:else}
-		<div class="border-line rounded-box overflow-x-auto border">
+		<div
+			class={[
+				'border-line rounded-box overflow-x-auto border',
+				(loading || (failure !== null && offset === 0)) && 'opacity-60'
+			]}
+		>
 			<div class="divide-line divide-y {minWidth}">
 				<div class="bg-base-200/70 section-label grid {columns} gap-3 px-4 py-2">
 					<span>Time</span>
@@ -309,12 +317,16 @@
 			</div>
 		</div>
 		{#if failure !== null}
-			<PanelError message="Couldn't load more errors" error={failure} retry={loadPage} />
+			<PanelError
+				message={offset === 0 ? "Couldn't load errors" : "Couldn't load more errors"}
+				error={failure}
+				retry={loadPage}
+			/>
 		{:else if !atEnd}
 			<button
 				type="button"
 				class="btn btn-ghost btn-sm self-center"
-				disabled={loadingMore}
+				disabled={loading || loadingMore}
 				onclick={loadPage}
 			>
 				{loadingMore ? 'Loading…' : 'Load more'}
