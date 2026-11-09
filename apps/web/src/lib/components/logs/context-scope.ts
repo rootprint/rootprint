@@ -24,7 +24,7 @@ const PRESETS: readonly Preset[] = ['service', 'pod', 'node'];
 // Quickwit's tokenizers drop tokens of 255 bytes or more, so a longer value can never match.
 const MAX_TERM_BYTES = 254;
 const utf8 = new TextEncoder();
-const UNQUERYABLE_PATH = /^-|[\s:()[\]{}'"!+^*`]/;
+const UNQUERYABLE_PATH = /^-|[\s:()[\]{}'"!+^*`\\]/;
 
 function isMatchable(value: unknown): value is string | number | boolean {
 	if (typeof value === 'number' || typeof value === 'boolean') return true;
