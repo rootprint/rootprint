@@ -3,6 +3,7 @@
 
 	let {
 		tags = $bindable(),
+		pending = $bindable(''),
 		placeholderEmpty,
 		addLabel,
 		normalize,
@@ -12,6 +13,8 @@
 		onError
 	}: {
 		tags: string[];
+		/** Typed text not yet added; after a blur, anything left here failed `validate` or was a reported duplicate. */
+		pending?: string;
 		placeholderEmpty: string;
 		addLabel: string;
 		normalize?: (raw: string) => string;
@@ -22,10 +25,8 @@
 		onError?: (message: string | null) => void;
 	} = $props();
 
-	let input = $state('');
-
 	function add() {
-		const raw = input.trim();
+		const raw = pending.trim();
 		if (!raw) return;
 		const value = normalize ? normalize(raw) : raw;
 		const invalid = validate?.(value);
@@ -39,11 +40,11 @@
 				return;
 			}
 			onError?.(null);
-			input = '';
+			pending = '';
 			return;
 		}
 		tags = [...tags, value];
-		input = '';
+		pending = '';
 		onError?.(null);
 	}
 
@@ -55,7 +56,7 @@
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			add();
-		} else if (e.key === 'Backspace' && input === '' && tags.length > 0) {
+		} else if (e.key === 'Backspace' && pending === '' && tags.length > 0) {
 			tags = tags.slice(0, -1);
 		}
 	}
@@ -80,11 +81,12 @@
 		</span>
 	{/each}
 	<input
-		bind:value={input}
+		bind:value={pending}
 		placeholder={tags.length === 0 ? placeholderEmpty : 'Add another…'}
 		autocomplete="off"
 		aria-label={addLabel}
 		class="placeholder:text-subtle min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
 		onkeydown={handleKeydown}
+		onblur={add}
 	/>
 </div>
