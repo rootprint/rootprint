@@ -3,7 +3,7 @@
 
 	import ToggleChip from '#lib/components/ui/ToggleChip.svelte';
 	import { pluralize } from '#lib/utils/format.js';
-	import type { ContextScope, ScopePill } from './context-loader.svelte';
+	import type { ContextScope, ScopePill } from '#lib/components/logs/context-scope.js';
 
 	let {
 		selected,

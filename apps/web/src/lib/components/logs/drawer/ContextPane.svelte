@@ -6,14 +6,14 @@
 	import ContextScopeBar from './context/ContextScopeBar.svelte';
 	import LogRow from '../LogRow.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import { ContextLoader } from './context/context-loader.svelte';
 	import {
-		ContextLoader,
 		availableScopes,
 		scopeFilters,
 		scopeMatches,
 		type ContextScope,
 		type ScopePill
-	} from './context/context-loader.svelte';
+	} from '#lib/components/logs/context-scope.js';
 	import {
 		buildGridTemplate,
 		computeColumnWidths,

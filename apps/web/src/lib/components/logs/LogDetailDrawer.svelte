@@ -12,7 +12,7 @@
 		resolveScope,
 		scopePills,
 		type ContextScope
-	} from './drawer/context/context-loader.svelte';
+	} from '#lib/components/logs/context-scope.js';
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
