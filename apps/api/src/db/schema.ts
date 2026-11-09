@@ -24,7 +24,6 @@ export const indexSettings = pgTable('index_settings', {
 	levelField: text('level_field').notNull().default('severity_text'),
 	messageField: text('message_field').notNull().default('body.message'),
 	tracebackField: text('traceback_field'),
-	contextFields: jsonb('context_fields').$type<string[] | null>(),
 	traceIdField: text('trace_id_field').notNull().default('trace_id'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')

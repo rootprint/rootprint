@@ -2,7 +2,7 @@ import type { IndexField } from '../../schemas/responses/indexes.js';
 import { logger } from '../logger.js';
 import { isHangup, quickwitUrl, requestSignal } from './client.js';
 
-type FieldCap = { type: string; aggregatable?: boolean };
+type FieldCap = { type: string; searchable?: boolean; aggregatable?: boolean };
 type FieldCapsBody = { fields?: Record<string, Record<string, FieldCap>> };
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -51,8 +51,10 @@ export async function fetchFieldCaps(
 				? rawName.slice(DYNAMIC_PREFIX.length)
 				: rawName;
 			if (name === '' || byName.has(name)) continue;
-			// `aggregatable` is the only fast-field signal _field_caps offers.
-			byName.set(name, { name, type, fast: true, description: null });
+			// `aggregatable` is the only fast-field signal _field_caps offers. A mixed-type leaf is
+			// filterable if any of its types is searchable.
+			const indexed = Object.values(caps).some((cap) => cap.searchable === true);
+			byName.set(name, { name, type, fast: true, indexed, description: null });
 		}
 
 		return [...byName.values()];

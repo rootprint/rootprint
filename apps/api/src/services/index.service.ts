@@ -39,7 +39,6 @@ export type IndexSettings = {
 	levelField: string;
 	messageField: string;
 	tracebackField: string | null;
-	contextFields: string[] | null;
 	traceIdField: string;
 };
 
@@ -60,11 +59,8 @@ const DEFAULT_SETTINGS: IndexSettings = {
 	levelField: 'severity_text',
 	messageField: 'body.message',
 	tracebackField: 'attributes.exception.stacktrace',
-	contextFields: null,
 	traceIdField: 'trace_id'
 };
-
-const DEFAULT_CONTEXT_FIELDS = ['service_name'];
 
 function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings {
 	return {
@@ -72,7 +68,6 @@ function toIndexSettings(row: typeof indexSettings.$inferSelect): IndexSettings 
 		levelField: row.levelField,
 		messageField: row.messageField,
 		tracebackField: row.tracebackField,
-		contextFields: row.contextFields,
 		traceIdField: row.traceIdField
 	};
 }
@@ -153,8 +148,7 @@ function resolveLogFields({ settings, index }: IndexMeta) {
 		levelField: index.fields.some((f) => f.name === settings.levelField) ? settings.levelField : '',
 		timestampField: index.timestampField,
 		messageField: settings.messageField,
-		tracebackField: settings.tracebackField,
-		contextFields: settings.contextFields ?? DEFAULT_CONTEXT_FIELDS
+		tracebackField: settings.tracebackField
 	};
 }
 
@@ -166,8 +160,8 @@ export async function getIndexConfig(
 	// A span schema has no level or message field, so the explorer would render an empty grid.
 	assertNotTraceIndex(indexId);
 	const meta = await getIndexMeta(db, qw, indexId);
-	// resolveLogFields also yields traceback/context fields for the view config; IndexConfig
-	// narrows them away because no log or export consumer reads them.
+	// resolveLogFields also yields the traceback field for the view config; IndexConfig
+	// narrows it away because no log or export consumer reads it.
 	return { indexId, ...resolveLogFields(meta) };
 }
 
@@ -177,7 +171,12 @@ export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
 		displayName: meta.settings.displayName,
 		...resolveLogFields(meta),
 		isOtel: meta.index.indexId.startsWith('otel-'),
-		traceIdField: meta.settings.traceIdField
+		traceIdField: meta.settings.traceIdField,
+		// Unindexed fast scalars still match through a fast-field scan; unindexed json never does.
+		// ponytail: unmapped paths count as filterable, wrong under dynamic_mapping.indexed: false.
+		unfilterableFields: meta.index.fields
+			.filter((f) => !f.indexed && (!f.fast || f.type.includes('json')))
+			.map((f) => f.name)
 	};
 }
 
@@ -190,7 +189,6 @@ export function getIndexDetail(meta: IndexMeta): IndexDetail {
 		levelField: settings.levelField,
 		messageField: settings.messageField,
 		tracebackField: settings.tracebackField,
-		contextFields: settings.contextFields,
 		traceIdField: settings.traceIdField,
 		indexUri: index.indexUri,
 		timestampField: index.timestampField,

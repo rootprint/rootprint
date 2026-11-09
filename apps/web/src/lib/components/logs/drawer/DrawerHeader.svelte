@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { Share2, X } from 'lucide-svelte';
+	import { ArrowLeft, Share2, X } from 'lucide-svelte';
 
 	import CopyButton from '#lib/components/ui/CopyButton.svelte';
 	import { levelColor } from '#lib/constants/level-colors.js';
@@ -17,6 +17,7 @@
 		meta,
 		onTabChange,
 		onShare,
+		onBack,
 		onClose
 	}: {
 		hit: LogHit;
@@ -26,6 +27,7 @@
 		meta?: Snippet;
 		onTabChange: (tab: DrawerTab) => void;
 		onShare: () => Promise<string | undefined>;
+		onBack?: () => void;
 		onClose: () => void;
 	} = $props();
 
@@ -45,7 +47,20 @@
 <header class="border-line border-b">
 	<div class="px-4 pt-3 pb-2.5">
 		<div class="flex items-center justify-between gap-3">
-			<p id="log-detail-title" class="section-label">Log event</p>
+			<div class="flex items-center gap-2">
+				{#if onBack}
+					<button
+						type="button"
+						class="btn btn-ghost btn-xs gap-1"
+						title="Back to the previous log"
+						onclick={onBack}
+					>
+						<ArrowLeft class="size-3" aria-hidden="true" />
+						Back
+					</button>
+				{/if}
+				<p id="log-detail-title" class="section-label">Log event</p>
+			</div>
 			<div class="flex items-center gap-1">
 				<CopyButton
 					text={onShare}

@@ -1,29 +1,41 @@
 <script lang="ts">
-	import { tick, untrack } from 'svelte';
+	import { tick } from 'svelte';
 	import { ArrowUp, ArrowDown } from 'lucide-svelte';
+	import { composeQuery } from 'api/query';
 
 	import ContextScopeBar from './context/ContextScopeBar.svelte';
 	import LogRow from '../LogRow.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
-	import { ContextLoader, seedChipsFromIndex } from './context/context-loader.svelte';
-	import { getByPath } from '#lib/components/logs/get-by-path.js';
+	import {
+		ContextLoader,
+		availableScopes,
+		scopeFilters,
+		scopeMatches,
+		type ContextScope,
+		type ScopePill
+	} from './context/context-loader.svelte';
 	import {
 		buildGridTemplate,
 		computeColumnWidths,
 		computeFieldWidth
 	} from '#lib/components/logs/column-width.js';
-	import { readStringArray, writeJSON } from '#lib/utils/safe-storage.js';
 	import type { LogHit } from '#lib/types.js';
 	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 
 	let {
 		hit,
 		store,
+		pills,
+		scope = $bindable(),
+		customFields = $bindable(),
 		onCloseDrawer,
 		onReplaceHit
 	}: {
 		hit: LogHit;
 		store: SearchStore;
+		pills: ScopePill[];
+		scope: ContextScope;
+		customFields: string[];
 		onCloseDrawer: () => void;
 		onReplaceHit: (hit: LogHit) => void;
 	} = $props();
@@ -36,30 +48,11 @@
 	let anchorVisible = $state(true);
 	let anchorAbove = $state(false);
 
-	const storageKey = (indexId: string) => `rootprint:context-fields:${indexId}`;
-
-	function readStoredFields(indexId: string | null): string[] {
-		return indexId ? readStringArray(storageKey(indexId)) : [];
-	}
-
-	/**
-	 * Fields the user toggled on; empty = "All" (unscoped). AND-joined into the context query.
-	 * Read from storage once at mount: safe because the drawer unmounts on index change
-	 * (+page.svelte clears selectedLog), so this component never survives an index switch.
-	 */
-	let selectedFields = $state(readStoredFields(untrack(() => store.selectedIndex)));
-
-	function hasValue(field: string): boolean {
-		const v = getByPath(hit.raw, field);
-		return v !== undefined && v !== null && !(typeof v === 'string' && v.length === 0);
-	}
-
-	const fieldTabs = $derived(
-		(store.fieldConfig?.contextFields ?? []).map((field) => ({
-			field,
-			disabled: !hasValue(field)
-		}))
-	);
+	const scopes = $derived(availableScopes(pills));
+	const matches = $derived(scopeMatches(pills, scope, customFields));
+	const filters = $derived(scopeFilters(matches));
+	// A string, so switching to Custom with the same fields ticked doesn't refetch.
+	const contextQuery = $derived(composeQuery('', filters));
 
 	const entryRaws = $derived(loader ? loader.entries.map((e) => e.raw) : []);
 	const messageField = $derived(store.fieldConfig?.messageField);
@@ -73,31 +66,25 @@
 		buildGridTemplate(store.activeFields, columnWidths, messageField, messageWidth, store.lineWrap)
 	);
 
-	function setSelectedFields(fields: string[]): void {
-		selectedFields = fields;
-		if (store.selectedIndex) writeJSON(storageKey(store.selectedIndex), fields);
-		if (loader) void loader.setChips(seedChipsFromIndex(hit.raw, fields));
+	function setScope(next: ContextScope): void {
+		if (next === scope) return;
+		if (next === 'custom') {
+			customFields = matches.map((p) => p.field);
+		}
+		scope = next;
+	}
+
+	function toggleField(field: string): void {
+		customFields = customFields.includes(field)
+			? customFields.filter((f) => f !== field)
+			: [...customFields, field];
 	}
 
 	$effect(() => {
 		const indexId = store.selectedIndex;
 		const fieldConfig = store.fieldConfig;
-		const anchor = hit;
 		if (!indexId || !fieldConfig) return;
-		const contextFields = new Set(fieldConfig.contextFields);
-		// Re-anchor keeps the toggled fields, minus any removed from config or missing on the new anchor.
-		// selectedFields is untracked so toggling doesn't rebuild the loader (setChips refetches instead).
-		const kept = untrack(() => {
-			const fields = selectedFields.filter((field) => contextFields.has(field) && hasValue(field));
-			if (fields.length !== selectedFields.length) selectedFields = fields;
-			return fields;
-		});
-		const next = new ContextLoader(
-			anchor,
-			indexId,
-			fieldConfig,
-			seedChipsFromIndex(anchor.raw, kept)
-		);
+		const next = new ContextLoader(hit, indexId, fieldConfig, contextQuery);
 		loader = next;
 		void next.init();
 		return () => {
@@ -105,12 +92,8 @@
 		};
 	});
 
-	// Scroll the anchor into view after every fresh initial fetch (drawer-open and chip-change both bump initEpoch).
 	$effect(() => {
-		if (!loader || !scrollEl) return;
-		// Subscribe to initEpoch so this effect re-runs after each fresh fetch.
-		const epoch = loader.initEpoch;
-		if (epoch === 0) return; // not yet initialized
+		if (!loader?.ready || !scrollEl) return;
 		void (async () => {
 			await tick();
 			const el = scrollEl?.querySelector<HTMLElement>('[data-anchor="true"]');
@@ -142,9 +125,7 @@
 
 	// Tracks anchor visibility so the floating "Back to hit" button can appear when it scrolls off-screen.
 	$effect(() => {
-		if (!scrollEl || !loader) return;
-		const epoch = loader.initEpoch;
-		if (epoch === 0) return; // anchor not yet in DOM
+		if (!scrollEl || !loader?.ready) return;
 		// Optimistically reset so a previous off-screen state doesn't bleed into the
 		// new loader's initial render before the observer fires its first callback.
 		anchorVisible = true;
@@ -194,12 +175,12 @@
 
 	function onOpenAsSearch(): void {
 		if (!loader) return;
-		const { query, start, end } = loader.getSearchHandoff();
+		const { start, end } = loader.getSearchHandoff();
 		store.navigateQuery(
 			{
-				query,
+				query: '',
 				timeRange: { type: 'absolute', start, end },
-				filters: []
+				filters
 			},
 			{ push: true }
 		);
@@ -211,11 +192,12 @@
 	{@const l = loader}
 	<div class="flex h-full flex-col">
 		<ContextScopeBar
-			selected={selectedFields}
-			{fieldTabs}
-			indexId={l.indexId}
-			disabled={l.loadingInitial}
-			onChange={setSelectedFields}
+			selected={scope}
+			{scopes}
+			{pills}
+			{matches}
+			onChange={setScope}
+			onToggleField={toggleField}
 			{onOpenAsSearch}
 		/>
 
@@ -223,7 +205,7 @@
 			<p class="text-warning-ink px-3 py-2 text-sm">{l.error}</p>
 		{/if}
 
-		{#if l.loadingInitial}
+		{#if !l.ready}
 			<div class="flex flex-1 items-center justify-center">
 				<span class="loading loading-spinner loading-sm"></span>
 			</div>

@@ -5,7 +5,7 @@
 	import FieldRow from '#lib/components/ui/FieldRow.svelte';
 	import SearchInput from '#lib/components/ui/SearchInput.svelte';
 	import type { FieldGroup, FieldGroupId } from '#lib/components/logs/drawer/hit-fields.js';
-	import { groupHitFields } from '#lib/components/logs/drawer/hit-fields.js';
+	import { groupHitFields, isUnfilterable } from '#lib/components/logs/drawer/hit-fields.js';
 	import type { FieldRowData, LogHit } from '#lib/types.js';
 	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 
@@ -136,10 +136,12 @@
 							<table class="w-full table-fixed border-collapse">
 								<tbody>
 									{#each group.fields as field}
+										{@const filterable =
+											store.fieldConfig !== null && !isUnfilterable(field.name, store.fieldConfig)}
 										<FieldRow
 											{field}
-											onFilterFor={(f) => applyFilter(f, false)}
-											onFilterOut={(f) => applyFilter(f, true)}
+											onFilterFor={filterable ? (f) => applyFilter(f, false) : undefined}
+											onFilterOut={filterable ? (f) => applyFilter(f, true) : undefined}
 										/>
 									{/each}
 								</tbody>

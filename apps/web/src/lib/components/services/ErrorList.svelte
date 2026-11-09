@@ -18,6 +18,7 @@
 		type ServiceHealthFailingOperation
 	} from '#lib/api/services.js';
 	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
+	import ToggleChip from '#lib/components/ui/ToggleChip.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
 	import { formatCount, formatDurationMs } from '#lib/utils/format.js';
 	import { readLastIndex } from '#lib/utils/last-index.js';
@@ -199,35 +200,23 @@
 	{#if operations.length > 0 || operation !== null}
 		<div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by operation">
 			<p class="text-muted mr-0.5 text-xs">Top operations</p>
-			<button
-				type="button"
-				class="border-line rounded border px-2 py-0.5 text-xs transition-colors {operation === null
-					? 'bg-base-content text-base-100'
-					: 'text-muted hover:bg-base-200'}"
-				aria-pressed={operation === null}
-				onclick={() => onFilterChange('operation', null)}
-			>
+			<ToggleChip pressed={operation === null} onclick={() => onFilterChange('operation', null)}>
 				All
-			</button>
+			</ToggleChip>
 			{#if !operationInTop && operation !== null}
-				<button
-					type="button"
-					class="bg-base-content text-base-100 border-line inline-flex max-w-48 items-center rounded border px-2 py-0.5 font-mono text-xs"
-					aria-pressed="true"
+				<ToggleChip
+					pressed
+					class="max-w-48 font-mono"
 					title={operation}
 					onclick={() => onFilterChange('operation', null)}
 				>
 					<span class="truncate">{operation}</span>
-				</button>
+				</ToggleChip>
 			{/if}
 			{#each operations as op (op.name)}
-				<button
-					type="button"
-					class="border-line inline-flex max-w-48 items-center rounded border px-2 py-0.5 font-mono text-xs transition-colors {operation ===
-					op.name
-						? 'bg-base-content text-base-100'
-						: 'text-muted hover:bg-base-200'}"
-					aria-pressed={operation === op.name}
+				<ToggleChip
+					pressed={operation === op.name}
+					class="max-w-48 font-mono"
 					title={op.name}
 					onclick={() => onFilterChange('operation', operation === op.name ? null : op.name)}
 				>
@@ -235,7 +224,7 @@
 					<span class={['ml-1 shrink-0 tabular-nums', operation !== op.name && 'text-muted']}
 						>{formatCount(op.errors)}</span
 					>
-				</button>
+				</ToggleChip>
 			{/each}
 		</div>
 	{/if}

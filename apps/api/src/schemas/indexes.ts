@@ -17,7 +17,6 @@ export const saveIndexConfigSchema = v.object({
 	levelField: v.optional(v.pipe(v.string(), v.minLength(1))),
 	messageField: v.optional(v.pipe(v.string(), v.minLength(1))),
 	tracebackField: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
-	contextFields: v.optional(v.nullable(v.array(v.string()))),
 	traceIdField: v.optional(v.pipe(v.string(), v.trim(), fieldName))
 });
 

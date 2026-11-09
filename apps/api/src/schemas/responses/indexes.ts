@@ -10,6 +10,7 @@ export const IndexFieldSchema = named(
 		name: v.string(),
 		type: v.string(),
 		fast: v.boolean(),
+		indexed: v.boolean(),
 		description: v.nullable(v.string())
 	})
 );
@@ -86,7 +87,6 @@ export const IndexDetailResponse = named(
 		levelField: v.string(),
 		messageField: v.string(),
 		tracebackField: v.nullable(v.string()),
-		contextFields: v.nullable(v.array(v.string())),
 		traceIdField: v.string(),
 		indexUri: v.nullable(v.string()),
 		timestampField: v.nullable(v.string()),
@@ -113,10 +113,10 @@ export const IndexViewConfigResponse = named(
 		levelField: v.string(),
 		messageField: v.string(),
 		tracebackField: v.nullable(v.string()),
-		contextFields: v.nullable(v.array(v.string())),
 		timestampField: v.string(),
 		isOtel: v.boolean(),
-		traceIdField: v.string()
+		traceIdField: v.string(),
+		unfilterableFields: v.array(v.string())
 	})
 );
 

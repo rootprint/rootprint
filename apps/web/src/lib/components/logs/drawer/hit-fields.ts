@@ -58,7 +58,12 @@ function expandValue(
 	}
 }
 
-const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
+export const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
+
+/** Also true under an unfilterable json parent. */
+export function isUnfilterable(path: string, config: FieldConfig): boolean {
+	return config.unfilterableFields.some((f) => path === f || path.startsWith(`${f}.`));
+}
 
 function sortByDisplayName(fields: FieldRowData[]): FieldRowData[] {
 	return fields.toSorted((a, b) => nameCollator.compare(a.displayName, b.displayName));
