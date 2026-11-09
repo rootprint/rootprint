@@ -150,7 +150,7 @@ export function readLogs(
 		indexConfig.indexId,
 		{ query: params.q ?? '', startTs: params.startTs, endTs: params.endTs },
 		() => searchLogs(quickwit, indexConfig, params),
-		(r) => (params.countAll ? r.numHits : null)
+		(r) => r.numHits
 	);
 }
 

@@ -152,7 +152,7 @@ export const LogSearchResponse = named(
 	'LogSearchResponse',
 	v.object({
 		hits: v.array(v.record(v.string(), v.unknown())),
-		numHits: v.number(),
+		numHits: v.nullable(v.number()),
 		elapsedTimeMicros: v.number()
 	})
 );
