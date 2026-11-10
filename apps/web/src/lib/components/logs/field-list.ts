@@ -1,4 +1,5 @@
 import type { LogField } from '#lib/types.js';
+import { nameCollator } from '#lib/components/logs/field-names.js';
 import { isOtelAttr, isOtelResourceAttr } from '#lib/utils/fields.js';
 
 export type SectionKey = 'pinned' | 'top' | 'attributes' | 'resource_attributes';
@@ -19,8 +20,6 @@ export type BuildFieldSectionsInput = {
 	/** Already trimmed and lowercased. Empty means the idle list. */
 	search: string;
 };
-
-const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 // ponytail: a dotted name is taken to be a json leaf — worth a row only once the data shows it.
 // Every otel-declared column is undotted; a schema with dotted columns needs a flag on IndexField.
@@ -72,7 +71,7 @@ export function buildFieldSections(input: BuildFieldSectionsInput): FieldSection
 	// Count first, so the fields this search actually has float to the top of every section.
 	const rank = (a: RankedField, b: RankedField) =>
 		b.count - a.count ||
-		collator.compare(a.label, b.label) ||
+		nameCollator.compare(a.label, b.label) ||
 		a.field.name.localeCompare(b.field.name);
 
 	return [

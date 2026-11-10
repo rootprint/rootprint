@@ -173,8 +173,8 @@ export function getIndexViewConfig(meta: IndexMeta): IndexViewConfig {
 		isOtel: meta.index.indexId.startsWith('otel-'),
 		traceIdField: meta.settings.traceIdField,
 		// Unindexed fast scalars still match through a fast-field scan; unindexed json never does.
-		// unmapped paths count as filterable, wrong under dynamic_mapping.indexed: false.
-		// an unindexed fast text field with a lowercase normalizer counts as filterable, but
+		// Unmapped paths count as filterable, which is wrong under dynamic_mapping.indexed: false.
+		// An unindexed fast text field with a lowercase normalizer counts as filterable, but
 		// Quickwit queries it raw, so mixed-case values miss; pass the normalizer here if one shows up.
 		unfilterableFields: meta.index.fields
 			.filter((f) => !f.indexed && (!f.fast || f.type.includes('json')))

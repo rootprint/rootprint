@@ -5,7 +5,8 @@
 	import FieldRow from '#lib/components/ui/FieldRow.svelte';
 	import SearchInput from '#lib/components/ui/SearchInput.svelte';
 	import type { FieldGroup, FieldGroupId } from '#lib/components/logs/drawer/hit-fields.js';
-	import { groupHitFields, isUnfilterable } from '#lib/components/logs/drawer/hit-fields.js';
+	import { groupHitFields } from '#lib/components/logs/drawer/hit-fields.js';
+	import { isUnfilterable } from '#lib/components/logs/field-names.js';
 	import type { FieldRowData, LogHit } from '#lib/types.js';
 	import type { SearchStore } from '#lib/components/logs/search.svelte.js';
 

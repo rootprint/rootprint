@@ -245,7 +245,7 @@
 							{messageField}
 							lineWrap={store.lineWrap}
 							isAnchor={entry.isAnchor}
-							onActivate={() => onReplaceHit(entry)}
+							onActivate={() => onReplaceHit(entry.isAnchor ? hit : entry)}
 						/>
 					{/each}
 

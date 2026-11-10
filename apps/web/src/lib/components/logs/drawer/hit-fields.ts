@@ -1,5 +1,6 @@
 import type { FieldConfig, FieldRowData } from '#lib/types.js';
 import { formatCell } from '#lib/components/logs/column-width.js';
+import { nameCollator } from '#lib/components/logs/field-names.js';
 import { getByPath } from '#lib/components/logs/get-by-path.js';
 import { stripOtelPrefix } from '#lib/utils/fields.js';
 import { isPlainObject } from '#lib/utils/object.js';
@@ -56,13 +57,6 @@ function expandValue(
 	for (const [key, child] of entries) {
 		expandValue(`${path}.${key}`, child, out, toDisplayName);
 	}
-}
-
-export const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
-
-/** Also true under an unfilterable json parent. */
-export function isUnfilterable(path: string, config: FieldConfig): boolean {
-	return config.unfilterableFields.some((f) => path === f || path.startsWith(`${f}.`));
 }
 
 function sortByDisplayName(fields: FieldRowData[]): FieldRowData[] {

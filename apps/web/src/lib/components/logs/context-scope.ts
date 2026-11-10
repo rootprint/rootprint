@@ -1,4 +1,4 @@
-import { isUnfilterable, nameCollator } from '#lib/components/logs/drawer/hit-fields.js';
+import { isUnfilterable, nameCollator } from '#lib/components/logs/field-names.js';
 import { displayNameFor, isOtelAttr, isOtelResourceAttr } from '#lib/utils/fields.js';
 import { isPlainObject } from '#lib/utils/object.js';
 import type { FieldConfig, Filter } from '#lib/types.js';
@@ -24,6 +24,8 @@ const PRESETS: readonly Preset[] = ['service', 'pod', 'node'];
 // Quickwit's tokenizers drop tokens of 255 bytes or more, so a longer value can never match.
 const MAX_TERM_BYTES = 254;
 const utf8 = new TextEncoder();
+// What tantivy's query grammar won't read as a field name: a leading `-`, or any of its
+// SPECIAL_CHARS. It accepts them backslash-escaped, but composeQuery writes the field as is.
 const UNQUERYABLE_PATH = /^-|[\s:()[\]{}'"!+^*`\\]/;
 
 function isMatchable(value: unknown): value is string | number | boolean {

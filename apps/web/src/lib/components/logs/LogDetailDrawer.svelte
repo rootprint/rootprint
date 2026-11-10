@@ -108,8 +108,11 @@
 	});
 
 	function goTo(next: LogHit, tab: DrawerTab): void {
-		ownNavigation = true;
-		onReplaceHit(next);
+		// The same log runs no anchor effect, so the flag would outlive this call.
+		if (next !== hit) {
+			ownNavigation = true;
+			onReplaceHit(next);
+		}
 		activeTab = tab;
 		queueMicrotask(() => dialogRef?.focus());
 	}
@@ -434,7 +437,7 @@
 					bind:customFields={contextCustomFields}
 					onCloseDrawer={close}
 					onReplaceHit={(h) => {
-						contextTrail = [...contextTrail, hit];
+						if (h !== hit) contextTrail = [...contextTrail, hit];
 						goTo(h, 'parameters');
 					}}
 				/>
