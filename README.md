@@ -71,6 +71,17 @@ Learn more: [Service health](https://docs.rootprint.io/traces/services)
 
 ## Quick Start
 
+Try it in one container, with Postgres and Quickwit inside:
+
+```bash
+docker run -p 8282:8282 -v rootprint:/data ghcr.io/rootprint/rootprint-aio
+```
+
+Opening it at another address than `localhost:8282`? Add `-e ORIGIN=http://<host>:<port>`, or
+sign-in fails. Add `-d --restart unless-stopped` to keep it running in the background.
+
+For a real install, run the three services with Docker Compose:
+
 ```bash
 curl -o docker-compose.yml https://docs.rootprint.io/files/docker-compose.full.yaml
 docker compose up -d

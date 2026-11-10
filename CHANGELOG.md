@@ -6,6 +6,10 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 
 ## [Unreleased]
 
+### Added
+
+- **All-in-one image.** `docker run -p 8282:8282 -v rootprint:/data ghcr.io/rootprint/rootprint-aio` runs Rootprint, Postgres 17 and Quickwit 0.9.1 in one container, for trying Rootprint without Docker Compose. Keep `/data` on a volume; Docker Compose stays the recommended install.
+
 ## [0.4.6] - 2026-10-20
 
 ### Highlights

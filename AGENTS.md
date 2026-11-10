@@ -39,5 +39,5 @@ docker compose up -d --wait db quickwit
 bun --filter api test
 bun --filter web build
 bun --filter api build
-docker build .
+docker build --target aio .   # CI also boots it and polls /api/health
 ```

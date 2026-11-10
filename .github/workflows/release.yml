@@ -22,6 +22,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # The aio stage runs apt-get on the target platform, so its arm64 build needs emulation.
+      - uses: docker/setup-qemu-action@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/metadata-action@v6
@@ -50,6 +54,28 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: docker/metadata-action@v6
+        id: meta-aio
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          images: ghcr.io/${{ github.repository }}-aio
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+
+      - uses: docker/build-push-action@v7
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          context: .
+          target: aio
+          build-args: VITE_GITHUB_STARS=${{ steps.stars.outputs.count }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-aio.outputs.tags }}
+          labels: ${{ steps.meta-aio.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
