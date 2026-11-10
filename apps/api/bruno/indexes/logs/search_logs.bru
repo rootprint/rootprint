@@ -23,3 +23,9 @@ params:query {
 auth:bearer {
   token: 
 }
+
+docs {
+  numHits is the exact match count only with countAll=true; without it numHits
+  is null, which skips counting splits that can't change the page. Readable
+  with a session cookie or a personal key bearer token.
+}

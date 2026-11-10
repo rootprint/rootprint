@@ -1666,7 +1666,14 @@
 						"type": "array"
 					},
 					"numHits": {
-						"type": "number"
+						"anyOf": [
+							{
+								"type": "number"
+							},
+							{
+								"type": "null"
+							}
+						]
 					}
 				},
 				"required": [

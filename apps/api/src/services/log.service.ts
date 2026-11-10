@@ -64,7 +64,8 @@ export async function searchLogs(
 		.catch(translateQuickwitError);
 	return {
 		hits: response.hits,
-		numHits: response.num_hits,
+		// Without countAll, Quickwit skips splits that can't reach the top hits, so num_hits is only a lower bound.
+		numHits: q.countAll ? response.num_hits : null,
 		elapsedTimeMicros: response.elapsed_time_micros
 	};
 }
