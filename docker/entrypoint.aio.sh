@@ -9,7 +9,7 @@ if [ ! -s "$pgdata/PG_VERSION" ]; then
 	setpriv --reuid=postgres --regid=postgres --init-groups \
 		"$pg_bin/initdb" -D "$pgdata" -U rootprint --auth=trust --encoding=UTF8 --locale=C.UTF-8 >/dev/null
 fi
-install -d -o bun -g bun /data/quickwit
+install -d -o bun -g bun "$QW_DATA_DIR"
 
 echo "Rootprint is starting at $ORIGIN"
 echo "ORIGIN must match the address in your browser. Using another one? Re-run with -e ORIGIN=http://<host>:<port>"

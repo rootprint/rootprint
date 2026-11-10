@@ -76,8 +76,9 @@ jobs:
           push: true
           tags: ${{ steps.meta-aio.outputs.tags }}
           labels: ${{ steps.meta-aio.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Own scope, or every edge push evicts the arm64 apt-get layer and releases redo it under QEMU.
+          cache-from: type=gha,scope=aio
+          cache-to: type=gha,mode=max,scope=aio
 
   release:
     name: GitHub Release
