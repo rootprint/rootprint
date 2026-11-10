@@ -2,6 +2,7 @@
 	import { Plus, Trash2 } from 'lucide-svelte';
 
 	import {
+		BYTES_FORMATS,
 		DATETIME_OUTPUT_FORMATS,
 		FAST_PRECISIONS,
 		FIELD_TYPES,
@@ -88,6 +89,7 @@
 						bind:value={field.tokenizer}
 						class="select select-sm w-36"
 						aria-label={`Field ${i + 1} tokenizer`}
+						disabled={!field.indexed}
 					>
 						{#each TOKENIZERS as tok (tok)}
 							<option value={tok}>{tok}</option>
@@ -97,6 +99,7 @@
 						bind:value={field.record}
 						class="select select-sm w-28"
 						aria-label={`Field ${i + 1} record`}
+						disabled={!field.indexed}
 					>
 						{#each RECORD_OPTIONS as r (r)}
 							<option value={r}>{r}</option>
@@ -133,7 +136,12 @@
 				{/if}
 				{#if field.type === 'text'}
 					<label class="flex items-center gap-1.5">
-						<input type="checkbox" class="checkbox checkbox-xs" bind:checked={field.fieldnorms} />
+						<input
+							type="checkbox"
+							class="checkbox checkbox-xs"
+							bind:checked={field.fieldnorms}
+							disabled={!field.indexed}
+						/>
 						fieldnorms
 					</label>
 				{:else if field.type === 'json'}
@@ -163,16 +171,45 @@
 							{/each}
 						</select>
 					</label>
+				{:else if field.type === 'bytes'}
+					<label class="flex items-center gap-1.5">
+						input
+						<select bind:value={field.bytesInputFormat} class="select select-xs w-24">
+							{#each BYTES_FORMATS as f (f)}
+								<option value={f}>{f}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="flex items-center gap-1.5">
+						output
+						<select bind:value={field.bytesOutputFormat} class="select select-xs w-24">
+							{#each BYTES_FORMATS as f (f)}
+								<option value={f}>{f}</option>
+							{/each}
+						</select>
+					</label>
 				{/if}
 				{#if showSearchDefault && (field.type === 'text' || field.type === 'json')}
-					<label class="ml-auto flex items-center gap-1.5">
-						<input
-							type="checkbox"
-							class="checkbox checkbox-xs"
-							bind:checked={field.searchDefault}
-						/>
-						default search
-					</label>
+					<div class="ml-auto flex items-center gap-2">
+						<label class="flex items-center gap-1.5">
+							<input
+								type="checkbox"
+								class="checkbox checkbox-xs"
+								bind:checked={field.searchDefault}
+							/>
+							default search
+						</label>
+						{#if field.type === 'json' && field.searchDefault}
+							<input
+								type="text"
+								bind:value={field.searchPath}
+								class="input input-xs w-28 font-mono"
+								placeholder="path"
+								autocomplete="off"
+								aria-label={`Field ${i + 1} default search path`}
+							/>
+						{/if}
+					</div>
 				{/if}
 			</div>
 

@@ -29,6 +29,7 @@ const DYNAMIC_MAPPING_DEFAULTS = {
 
 const FIELD_KEY_RENAME: Record<string, string> = {
 	inputFormats: 'input_formats',
+	inputFormat: 'input_format',
 	outputFormat: 'output_format',
 	fastPrecision: 'fast_precision',
 	expandDots: 'expand_dots'

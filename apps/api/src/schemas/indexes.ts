@@ -106,7 +106,17 @@ export const PutPreferencesBody = v.object({
 	displayMode: DisplayModeSchema
 });
 
-export const FIELD_TYPES = ['text', 'i64', 'u64', 'f64', 'bool', 'datetime', 'ip', 'json'] as const;
+export const FIELD_TYPES = [
+	'text',
+	'i64',
+	'u64',
+	'f64',
+	'bool',
+	'datetime',
+	'ip',
+	'json',
+	'bytes'
+] as const;
 
 export const TOKENIZERS = [
 	'raw',
@@ -131,6 +141,8 @@ export const DATETIME_OUTPUT_FORMATS = [
 	'unix_timestamp_micros',
 	'unix_timestamp_nanos'
 ] as const;
+
+export const BYTES_FORMATS = ['base64', 'hex'] as const;
 
 const indexId = v.pipe(
 	v.string(),
@@ -185,6 +197,14 @@ const f64Field = v.object({ name: fieldName, type: v.literal('f64'), ...numericF
 const boolField = v.object({ name: fieldName, type: v.literal('bool'), ...commonFieldOpts });
 const ipField = v.object({ name: fieldName, type: v.literal('ip'), ...commonFieldOpts });
 
+const bytesField = v.object({
+	name: fieldName,
+	type: v.literal('bytes'),
+	...commonFieldOpts,
+	inputFormat: v.optional(v.picklist(BYTES_FORMATS)),
+	outputFormat: v.optional(v.picklist(BYTES_FORMATS))
+});
+
 const fieldMapping = v.variant('type', [
 	textField,
 	i64Field,
@@ -193,7 +213,8 @@ const fieldMapping = v.variant('type', [
 	boolField,
 	datetimeField,
 	ipField,
-	jsonField
+	jsonField,
+	bytesField
 ]);
 
 export type FieldMappingInput = v.InferOutput<typeof fieldMapping>;

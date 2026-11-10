@@ -14,7 +14,8 @@ export {
 	RECORD_OPTIONS,
 	INDEX_MODES,
 	FAST_PRECISIONS,
-	DATETIME_OUTPUT_FORMATS
+	DATETIME_OUTPUT_FORMATS,
+	BYTES_FORMATS
 } from './indexes.js';
 export * from './service-accounts.js';
 export * from './settings.js';

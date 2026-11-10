@@ -11741,6 +11741,50 @@
 														"type"
 													],
 													"type": "object"
+												},
+												{
+													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"inputFormat": {
+															"enum": [
+																"base64",
+																"hex"
+															],
+															"type": "string"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"outputFormat": {
+															"enum": [
+																"base64",
+																"hex"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "bytes"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
 												}
 											]
 										},
@@ -13390,6 +13434,50 @@
 														},
 														"type": {
 															"const": "json"
+														}
+													},
+													"required": [
+														"name",
+														"type"
+													],
+													"type": "object"
+												},
+												{
+													"properties": {
+														"description": {
+															"maxLength": 1024,
+															"minLength": 1,
+															"type": "string"
+														},
+														"fast": {
+															"type": "boolean"
+														},
+														"indexed": {
+															"type": "boolean"
+														},
+														"inputFormat": {
+															"enum": [
+																"base64",
+																"hex"
+															],
+															"type": "string"
+														},
+														"name": {
+															"pattern": "^[@$_\\-a-zA-Z][@$_/.\\-a-zA-Z0-9]{0,254}$",
+															"type": "string"
+														},
+														"outputFormat": {
+															"enum": [
+																"base64",
+																"hex"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"type": "boolean"
+														},
+														"type": {
+															"const": "bytes"
 														}
 													},
 													"required": [
