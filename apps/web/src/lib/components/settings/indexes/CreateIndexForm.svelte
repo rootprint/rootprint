@@ -11,7 +11,12 @@
 	import { createIndexSchema, INDEX_MODES } from 'api/schemas';
 	import DynamicMappingFields from './DynamicMappingFields.svelte';
 	import FieldMappingsEditor from './FieldMappingsEditor.svelte';
-	import { emptyIndexForm, formToCreateInput } from './index-form';
+	import { emptyIndexForm, formToCreateInput, otelLogsIndexForm } from './index-form';
+
+	const TEMPLATES = [
+		{ label: 'Blank', build: emptyIndexForm },
+		{ label: 'OpenTelemetry logs', build: otelLogsIndexForm }
+	];
 
 	let form = $state(emptyIndexForm());
 	let submitting = $state(false);
@@ -24,6 +29,12 @@
 		formError = message;
 		await tick();
 		alertEl?.scrollIntoView({ block: 'nearest' });
+	}
+
+	function applyTemplate(build: typeof emptyIndexForm) {
+		form = build();
+		fieldErrors = {};
+		formError = null;
 	}
 
 	const datetimeFields = $derived(
@@ -74,6 +85,27 @@
 			{formError}
 		</div>
 	{/if}
+
+	<SettingsRow
+		plain
+		label="Start from"
+		hint="Replaces everything below. OpenTelemetry logs is the mapping OTLP log ingest needs."
+	>
+		<div class="flex gap-4 text-sm">
+			{#each TEMPLATES as t, i (t.label)}
+				<label class="flex items-center gap-2">
+					<input
+						type="radio"
+						class="radio radio-sm"
+						name="idx-template"
+						checked={i === 0}
+						onchange={() => applyTemplate(t.build)}
+					/>
+					{t.label}
+				</label>
+			{/each}
+		</div>
+	</SettingsRow>
 
 	<SettingsRow
 		id="idx-id"

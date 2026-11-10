@@ -1,4 +1,5 @@
 import {
+	BYTES_FORMATS,
 	DATETIME_OUTPUT_FORMATS,
 	FAST_PRECISIONS,
 	FIELD_TYPES,
@@ -17,6 +18,7 @@ type RecordOption = (typeof RECORD_OPTIONS)[number];
 export type IndexMode = (typeof INDEX_MODES)[number];
 type FastPrecision = (typeof FAST_PRECISIONS)[number];
 type DatetimeOutputFormat = (typeof DATETIME_OUTPUT_FORMATS)[number];
+type BytesFormat = (typeof BYTES_FORMATS)[number];
 
 export type DynamicMappingForm = {
 	indexed: boolean;
@@ -65,6 +67,8 @@ export type FieldRow = {
 	tokenizer: Tokenizer;
 	record: RecordOption;
 	searchDefault: boolean;
+	// A bare term only matches a JSON default search field at this path, never below it.
+	searchPath: string;
 	fieldnorms: boolean;
 	expandDots: boolean;
 	coerce: boolean;
@@ -72,6 +76,8 @@ export type FieldRow = {
 	inputFormatsCustom: string;
 	outputFormat: DatetimeOutputFormat;
 	fastPrecision: FastPrecision;
+	bytesInputFormat: BytesFormat;
+	bytesOutputFormat: BytesFormat;
 	description: string;
 };
 
@@ -104,6 +110,7 @@ export function emptyFieldRow(type: FieldType = 'text'): FieldRow {
 		tokenizer: type === 'json' ? 'raw' : 'default',
 		record: 'basic',
 		searchDefault: false,
+		searchPath: '',
 		fieldnorms: false,
 		expandDots: true,
 		coerce: true,
@@ -111,6 +118,8 @@ export function emptyFieldRow(type: FieldType = 'text'): FieldRow {
 		inputFormatsCustom: '',
 		outputFormat: 'rfc3339',
 		fastPrecision: 'seconds',
+		bytesInputFormat: 'base64',
+		bytesOutputFormat: 'base64',
 		description: ''
 	};
 }
@@ -137,6 +146,57 @@ export function emptyIndexForm(): IndexFormState {
 	};
 }
 
+// hand copy of Quickwit's OTEL_LOGS_INDEX_CONFIG
+// (quickwit-opentelemetry/src/otlp/logs.rs), the shape OTLP log ingest needs.
+// Re-sync on Quickwit upgrades.
+export function otelLogsIndexForm(): IndexFormState {
+	const row = (name: string, type: FieldType, opts: Partial<FieldRow> = {}): FieldRow => ({
+		...emptyFieldRow(type),
+		name,
+		fast: false,
+		...opts
+	});
+	const nanos: Partial<FieldRow> = {
+		inputFormatPresets: ['unix_timestamp'],
+		outputFormat: 'unix_timestamp_nanos'
+	};
+	const keyword: Partial<FieldRow> = { tokenizer: 'raw', fast: true };
+	const hex: Partial<FieldRow> = { bytesInputFormat: 'hex', bytesOutputFormat: 'hex' };
+	const unindexed: Partial<FieldRow> = { indexed: false };
+
+	return {
+		...emptyIndexForm(),
+		indexId: 'otel-logs-',
+		mode: 'strict',
+		timestampField: 'timestamp_nanos',
+		commitTimeoutSecs: '5',
+		fields: [
+			row('timestamp_nanos', 'datetime', {
+				...nanos,
+				...unindexed,
+				fast: true,
+				fastPrecision: 'milliseconds'
+			}),
+			row('observed_timestamp_nanos', 'datetime', nanos),
+			row('service_name', 'text', keyword),
+			row('severity_text', 'text', keyword),
+			row('severity_number', 'u64', { fast: true }),
+			row('body', 'json', { tokenizer: 'default', searchDefault: true, searchPath: 'message' }),
+			row('attributes', 'json', keyword),
+			row('dropped_attributes_count', 'u64', unindexed),
+			row('trace_id', 'bytes', hex),
+			row('span_id', 'bytes', hex),
+			row('trace_flags', 'u64', unindexed),
+			row('resource_attributes', 'json', keyword),
+			row('resource_dropped_attributes_count', 'u64', unindexed),
+			row('scope_name', 'text', unindexed),
+			row('scope_version', 'text', unindexed),
+			row('scope_attributes', 'json', unindexed),
+			row('scope_dropped_attributes_count', 'u64', unindexed)
+		]
+	};
+}
+
 export function fieldToMapping(field: FieldRow): FieldMappingInput {
 	const common: {
 		name: string;
@@ -153,23 +213,19 @@ export function fieldToMapping(field: FieldRow): FieldMappingInput {
 	const description = field.description.trim();
 	if (description) common.description = description;
 
+	// Quickwit rejects tokenizer, record and a true fieldnorms on a field that is not indexed.
+	const indexing = field.indexed ? { tokenizer: field.tokenizer, record: field.record } : {};
+
 	switch (field.type) {
 		case 'text':
 			return {
 				...common,
 				type: 'text',
-				tokenizer: field.tokenizer,
-				record: field.record,
-				fieldnorms: field.fieldnorms
+				...indexing,
+				fieldnorms: field.indexed && field.fieldnorms
 			};
 		case 'json':
-			return {
-				...common,
-				type: 'json',
-				tokenizer: field.tokenizer,
-				record: field.record,
-				expandDots: field.expandDots
-			};
+			return { ...common, type: 'json', ...indexing, expandDots: field.expandDots };
 		case 'datetime': {
 			const m: Extract<FieldMappingInput, { type: 'datetime' }> = {
 				...common,
@@ -189,6 +245,13 @@ export function fieldToMapping(field: FieldRow): FieldMappingInput {
 			return { ...common, type: 'bool' };
 		case 'ip':
 			return { ...common, type: 'ip' };
+		case 'bytes':
+			return {
+				...common,
+				type: 'bytes',
+				inputFormat: field.bytesInputFormat,
+				outputFormat: field.bytesOutputFormat
+			};
 	}
 }
 
@@ -207,7 +270,10 @@ export function formToCreateInput(form: IndexFormState): CreateIndexInput {
 		.filter(
 			(f) => (f.type === 'text' || f.type === 'json') && f.searchDefault && f.name.trim() !== ''
 		)
-		.map((f) => f.name.trim());
+		.map((f) => {
+			const path = f.searchPath.trim();
+			return path ? `${f.name.trim()}.${path}` : f.name.trim();
+		});
 	if (searchFields.length) input.defaultSearchFields = searchFields;
 
 	const tags = lines(form.tagFields);
