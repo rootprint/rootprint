@@ -27,8 +27,11 @@
 	const LABELS: Record<ContextScope, string> = {
 		all: 'All',
 		service: 'Service',
+		instance: 'Instance',
 		pod: 'Pod',
 		node: 'Node',
+		host: 'Host',
+		container: 'Container',
 		custom: 'Custom'
 	};
 
