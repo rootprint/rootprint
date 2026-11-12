@@ -135,7 +135,6 @@
 			Try a wider time range or fewer filters.
 		</EmptyPanel>
 	{:else}
-		<p class="text-muted text-xs tabular-nums">{total.toLocaleString()} spans</p>
 		<div
 			class={[
 				'border-line rounded-box overflow-x-auto border',
