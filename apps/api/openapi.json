@@ -1122,19 +1122,6 @@
 							}
 						]
 					},
-					"contextFields": {
-						"anyOf": [
-							{
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"defaultSearchFields": {
 						"anyOf": [
 							{
@@ -1325,7 +1312,6 @@
 					"levelField",
 					"messageField",
 					"tracebackField",
-					"contextFields",
 					"traceIdField",
 					"indexUri",
 					"timestampField",
@@ -1359,6 +1345,9 @@
 					"fast": {
 						"type": "boolean"
 					},
+					"indexed": {
+						"type": "boolean"
+					},
 					"name": {
 						"type": "string"
 					},
@@ -1370,6 +1359,7 @@
 					"name",
 					"type",
 					"fast",
+					"indexed",
 					"description"
 				],
 				"type": "object"
@@ -1526,19 +1516,6 @@
 			},
 			"IndexViewConfigResponse": {
 				"properties": {
-					"contextFields": {
-						"anyOf": [
-							{
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"displayName": {
 						"anyOf": [
 							{
@@ -1576,6 +1553,12 @@
 								"type": "null"
 							}
 						]
+					},
+					"unfilterableFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
@@ -1584,10 +1567,10 @@
 					"levelField",
 					"messageField",
 					"tracebackField",
-					"contextFields",
 					"timestampField",
 					"isOtel",
-					"traceIdField"
+					"traceIdField",
+					"unfilterableFields"
 				],
 				"type": "object"
 			},
@@ -12010,19 +11993,6 @@
 						"application/json": {
 							"schema": {
 								"properties": {
-									"contextFields": {
-										"anyOf": [
-											{
-												"items": {
-													"type": "string"
-												},
-												"type": "array"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
 									"displayName": {
 										"anyOf": [
 											{

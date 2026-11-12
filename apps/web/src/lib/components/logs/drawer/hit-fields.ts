@@ -1,16 +1,20 @@
 import type { FieldConfig, FieldRowData } from '#lib/types.js';
 import { formatCell } from '#lib/components/logs/column-width.js';
+import { canFilter, nameCollator } from '#lib/components/logs/field-names.js';
 import { getByPath } from '#lib/components/logs/get-by-path.js';
 import { stripOtelPrefix } from '#lib/utils/fields.js';
 import { isPlainObject } from '#lib/utils/object.js';
 
 export type FieldGroupId = 'attributes' | 'resource_attributes' | 'other' | 'all';
 
+/** A row of the hit's field table, plus whether a filter on its value can match. */
+export type HitField = FieldRowData & { filterable: boolean };
+
 export interface FieldGroup {
 	id: FieldGroupId;
 	/** Eyebrow label, e.g. "Attributes". `null` ⇒ render with no header (non-OTEL). */
 	label: string | null;
-	fields: FieldRowData[];
+	fields: HitField[];
 }
 
 export interface GroupedHit {
@@ -22,13 +26,19 @@ export interface GroupedHit {
 	groups: FieldGroup[];
 }
 
-function leafField(name: string, displayName: string, rawValue: unknown): FieldRowData {
+function leafField(
+	name: string,
+	displayName: string,
+	rawValue: unknown,
+	config: FieldConfig
+): HitField {
 	const value = formatCell(rawValue);
 	return {
 		name,
 		displayName,
 		value,
-		isEmpty: rawValue === null || rawValue === undefined || value === ''
+		isEmpty: rawValue === null || rawValue === undefined || value === '',
+		filterable: canFilter(name, rawValue, config)
 	};
 }
 
@@ -41,26 +51,31 @@ function leafField(name: string, displayName: string, rawValue: unknown): FieldR
 function expandValue(
 	path: string,
 	value: unknown,
-	out: FieldRowData[],
-	toDisplayName: (name: string) => string
+	out: HitField[],
+	toDisplayName: (name: string) => string,
+	config: FieldConfig
 ): void {
 	if (!isPlainObject(value)) {
-		out.push(leafField(path, toDisplayName(path), value));
+		out.push(leafField(path, toDisplayName(path), value, config));
 		return;
 	}
 	const entries = Object.entries(value);
 	if (entries.length === 0) {
-		out.push({ name: path, displayName: toDisplayName(path), value: '', isEmpty: true });
+		out.push({
+			name: path,
+			displayName: toDisplayName(path),
+			value: '',
+			isEmpty: true,
+			filterable: false
+		});
 		return;
 	}
 	for (const [key, child] of entries) {
-		expandValue(`${path}.${key}`, child, out, toDisplayName);
+		expandValue(`${path}.${key}`, child, out, toDisplayName, config);
 	}
 }
 
-const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
-
-function sortByDisplayName(fields: FieldRowData[]): FieldRowData[] {
+function sortByDisplayName(fields: HitField[]): HitField[] {
 	return fields.toSorted((a, b) => nameCollator.compare(a.displayName, b.displayName));
 }
 
@@ -74,12 +89,12 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 	const message = formatCell(messageRaw);
 
 	if (!fieldConfig.isOtel) {
-		const collected: FieldRowData[] = [];
+		const collected: HitField[] = [];
 		for (const [key, value] of Object.entries(raw)) {
 			if (isPlainObject(value)) {
-				expandValue(key, value, collected, identity);
+				expandValue(key, value, collected, identity, fieldConfig);
 			} else {
-				collected.push(leafField(key, key, value));
+				collected.push(leafField(key, key, value, fieldConfig));
 			}
 		}
 		const fields = sortByDisplayName(collected);
@@ -90,19 +105,19 @@ export function groupHitFields(raw: Record<string, unknown>, fieldConfig: FieldC
 		};
 	}
 
-	const rawAttributes: FieldRowData[] = [];
-	const rawResourceAttributes: FieldRowData[] = [];
-	const rawOther: FieldRowData[] = [];
+	const rawAttributes: HitField[] = [];
+	const rawResourceAttributes: HitField[] = [];
+	const rawOther: HitField[] = [];
 
 	for (const [key, value] of Object.entries(raw)) {
 		if (key === 'attributes' && isPlainObject(value)) {
-			expandValue(key, value, rawAttributes, stripOtelPrefix);
+			expandValue(key, value, rawAttributes, stripOtelPrefix, fieldConfig);
 		} else if (key === 'resource_attributes' && isPlainObject(value)) {
-			expandValue(key, value, rawResourceAttributes, stripOtelPrefix);
+			expandValue(key, value, rawResourceAttributes, stripOtelPrefix, fieldConfig);
 		} else if (isPlainObject(value)) {
-			expandValue(key, value, rawOther, identity);
+			expandValue(key, value, rawOther, identity, fieldConfig);
 		} else {
-			rawOther.push(leafField(key, key, value));
+			rawOther.push(leafField(key, key, value, fieldConfig));
 		}
 	}
 

@@ -138,8 +138,8 @@
 									{#each group.fields as field}
 										<FieldRow
 											{field}
-											onFilterFor={(f) => applyFilter(f, false)}
-											onFilterOut={(f) => applyFilter(f, true)}
+											onFilterFor={field.filterable ? (f) => applyFilter(f, false) : undefined}
+											onFilterOut={field.filterable ? (f) => applyFilter(f, true) : undefined}
 										/>
 									{/each}
 								</tbody>

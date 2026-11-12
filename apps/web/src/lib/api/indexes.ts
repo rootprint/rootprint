@@ -33,9 +33,9 @@ export async function getIndexConfig(indexId: string): Promise<FieldConfig> {
 		levelField: json.levelField,
 		messageField: json.messageField,
 		tracebackField: json.tracebackField ?? 'traceback',
-		contextFields: json.contextFields ?? [],
 		isOtel: json.isOtel,
-		traceIdField: json.traceIdField
+		traceIdField: json.traceIdField,
+		unfilterableFields: json.unfilterableFields
 	};
 }
 

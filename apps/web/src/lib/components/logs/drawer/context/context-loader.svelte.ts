@@ -1,9 +1,6 @@
 import { searchLogs } from '#lib/api/log-search.js';
-import { isAbortError } from '#lib/api/errors.js';
-import { getByPath } from '#lib/components/logs/get-by-path.js';
-import { escapeFilterValue } from 'api/query';
 import { hitTimestampSeconds, normalizeHit } from '#lib/components/logs/normalize-hit.js';
-import type { ContextChip, ContextEntry, FieldConfig, LogHit, SearchInput } from '#lib/types.js';
+import type { ContextEntry, FieldConfig, LogHit, SearchInput } from '#lib/types.js';
 
 const PAGE_SIZE = 200;
 const WINDOW_SECONDS = 15 * 60;
@@ -23,20 +20,6 @@ function createDirectionState(): {
 	return { loading: false, noMore: false, limited: false, error: null };
 }
 
-export function seedChipsFromIndex(
-	anchor: Record<string, unknown>,
-	fields: readonly string[]
-): ContextChip[] {
-	const out: ContextChip[] = [];
-	for (const field of fields) {
-		const value = getByPath(anchor, field);
-		if (value === undefined || value === null) continue;
-		if (typeof value === 'string' && value.length === 0) continue;
-		out.push({ field, value });
-	}
-	return out;
-}
-
 function hitKey(hit: Record<string, unknown>): string {
 	const id = hit['_id'];
 	if (typeof id === 'string' && id.length > 0) return id;
@@ -44,44 +27,36 @@ function hitKey(hit: Record<string, unknown>): string {
 }
 
 export class ContextLoader {
-	readonly anchor: LogHit;
 	readonly anchorTs: number; // seconds since epoch
 	readonly indexId: string;
 	readonly fieldConfig: FieldConfig;
+	readonly query: string;
 
-	chips = $state<ContextChip[]>([]);
 	entries = $state.raw<ContextEntry[]>([]);
 
-	loadingInitial = $state(false);
 	before = $state(createDirectionState());
 	after = $state(createDirectionState());
 	error = $state<string | null>(null);
-	/** Pane watches this to scroll to the anchor after initial results or a failure. */
-	initEpoch = $state(0);
+	/** The initial fetch settled, successfully or not. */
+	ready = $state(false);
 
 	// Each direction searches a 15-minute window; offset counts consumed hits in its boundary second.
-	#win = {
-		before: { bound: 0, offset: 0, empty: 0 },
-		after: { bound: 0, offset: 0, empty: 0 }
-	};
-	#seenKeys = new Set<string>();
-	#abort: AbortController | null = null;
-	#fetchSeq = 0;
+	#win: Record<Dir, { bound: number; offset: number; empty: number }>;
+	#seenKeys: Set<string>;
+	readonly #abort = new AbortController();
 	#nextEntryKey = 0;
-	readonly #anchorKey: string;
 
-	constructor(
-		anchor: LogHit,
-		indexId: string,
-		fieldConfig: FieldConfig,
-		initialChips: ContextChip[] = []
-	) {
-		this.anchor = anchor;
+	constructor(anchor: LogHit, indexId: string, fieldConfig: FieldConfig, query: string) {
 		this.indexId = indexId;
 		this.fieldConfig = fieldConfig;
+		this.query = query;
 		this.anchorTs = hitTimestampSeconds(anchor.raw, fieldConfig);
-		this.#anchorKey = hitKey(anchor.raw);
-		this.chips = initialChips;
+		this.#win = {
+			before: { bound: this.anchorTs, offset: 0, empty: 0 },
+			after: { bound: this.anchorTs, offset: 0, empty: 0 }
+		};
+		this.#seenKeys = new Set([hitKey(anchor.raw)]);
+		this.entries = [this.#toEntry(anchor.raw, true)];
 	}
 
 	#request(dir: Dir): SearchInput {
@@ -89,7 +64,7 @@ export class ContextLoader {
 		const desc = dir === 'before';
 		return {
 			indexId: this.indexId,
-			query: this.composedQuery,
+			query: this.query,
 			limit: PAGE_SIZE,
 			offset,
 			sortDirection: desc ? 'desc' : 'asc',
@@ -124,55 +99,26 @@ export class ContextLoader {
 		this[dir].noMore = w.empty >= MAX_EMPTY_SLIDES;
 	}
 
-	/** AND-joined chip query used by internal fetches; '*' when no chips. */
-	get composedQuery(): string {
-		return this.#buildChipClause() || '*';
-	}
-
-	#buildChipClause(): string {
-		return this.chips.map((c) => `${c.field}:${escapeFilterValue(String(c.value))}`).join(' AND ');
-	}
-
 	async init(): Promise<void> {
-		this.#abort?.abort();
-		this.#abort = new AbortController();
-		const thisSeq = ++this.#fetchSeq;
-		for (const dir of ['before', 'after'] as const) {
-			this[dir] = createDirectionState();
-			this.#win[dir] = { bound: this.anchorTs, offset: 0, empty: 0 };
-		}
-		this.error = null;
-		this.entries = [this.#toEntry(this.anchor.raw, true)];
-		this.#seenKeys = new Set([this.#anchorKey]);
 		if (!Number.isFinite(this.anchorTs)) {
 			this.error = 'This log has an invalid timestamp; surrounding context cannot be loaded.';
-			this.initEpoch++;
+			this.ready = true;
 			return;
 		}
-		this.loadingInitial = true;
 		await Promise.all([this.#loadPage('after'), this.#loadPage('before')]);
-		if (thisSeq !== this.#fetchSeq) return;
-		this.loadingInitial = false;
-		this.initEpoch++;
+		this.ready = true;
 	}
 
-	async setChips(chips: ContextChip[]): Promise<void> {
-		if (this.#abort === null) return; // disposed or not yet initialized
-		this.chips = chips;
-		await this.init();
-	}
-
-	/** Search-page handoff: chip clause + the ±15-minute absolute window centered on the anchor. */
-	getSearchHandoff(): { query: string; start: number; end: number } {
+	/** The ±15-minute absolute window centered on the anchor, for the search-page handoff. */
+	getSearchHandoff(): { start: number; end: number } {
 		return {
-			query: this.#buildChipClause(),
 			start: this.anchorTs - WINDOW_SECONDS,
 			end: this.anchorTs + WINDOW_SECONDS
 		};
 	}
 
 	async loadMore(dir: Dir, retry = false): Promise<void> {
-		if (this.#abort === null || this.loadingInitial || this.error) return;
+		if (this.#abort.signal.aborted || !this.ready || this.error) return;
 		const state = this[dir];
 		if (state.loading || state.noMore || state.limited) return;
 		if (state.error && !retry) return;
@@ -180,13 +126,13 @@ export class ContextLoader {
 	}
 
 	async #loadPage(dir: Dir): Promise<void> {
+		const { signal } = this.#abort;
 		const state = this[dir];
 		state.loading = true;
 		state.error = null;
-		const thisSeq = this.#fetchSeq;
 		try {
-			const result = await searchLogs(this.#request(dir), this.#abort?.signal);
-			if (thisSeq !== this.#fetchSeq) return;
+			const result = await searchLogs(this.#request(dir), signal);
+			if (signal.aborted) return;
 			const fresh = this.#toEntries(result.rawHits);
 			if (fresh.length > 0) {
 				this.entries =
@@ -194,18 +140,15 @@ export class ContextLoader {
 			}
 			this.#advance(dir, result.rawHits);
 		} catch (e) {
-			if (isAbortError(e)) return;
-			if (thisSeq !== this.#fetchSeq) return;
+			if (signal.aborted) return;
 			state.error = e;
 		} finally {
-			if (thisSeq === this.#fetchSeq) state.loading = false;
+			if (!signal.aborted) state.loading = false;
 		}
 	}
 
 	dispose(): void {
-		this.#fetchSeq++;
-		this.#abort?.abort();
-		this.#abort = null;
+		this.#abort.abort();
 	}
 
 	#toEntries(hits: Record<string, unknown>[]): ContextEntry[] {

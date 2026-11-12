@@ -56,6 +56,7 @@ function flattenFieldMappings(mappings: FieldMapping[], prefix = ''): IndexField
 				name: fullName,
 				type: f.type,
 				fast: isFastFieldEnabled(f),
+				indexed: f.indexed !== false,
 				description: f.description ?? null
 			});
 		}

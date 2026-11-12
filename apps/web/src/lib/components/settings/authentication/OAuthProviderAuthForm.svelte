@@ -36,6 +36,7 @@
 		clientSecret: null
 	});
 	let items = $state(untrack(() => [...initialItems]));
+	let pendingItem = $state('');
 	let submitting = $state(false);
 	let formError = $state<string | null>(null);
 	let fieldErrors = $state<Record<string, string>>({});
@@ -81,6 +82,8 @@
 
 	async function onsubmit(e: SubmitEvent) {
 		e.preventDefault();
+		// Blur already tried to add it and is showing why it couldn't; saving now would drop it.
+		if (pendingItem.trim() !== '') return;
 		formError = null;
 		fieldErrors = {};
 
@@ -268,6 +271,7 @@
 			{#snippet children({ invalid })}
 				<TagInput
 					bind:tags={items}
+					bind:pending={pendingItem}
 					placeholderEmpty={providerItems.placeholderEmpty}
 					addLabel={providerItems.addLabel}
 					normalize={providerItems.normalize}

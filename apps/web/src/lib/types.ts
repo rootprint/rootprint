@@ -80,10 +80,10 @@ export interface FieldConfig {
 	levelField: string;
 	messageField: string;
 	tracebackField: string;
-	/** Admin-configured field paths that should pre-pin as chips when the Context pane opens. */
-	contextFields: string[];
 	isOtel: boolean;
 	traceIdField: string;
+	/** Mapped fields a `field:value` filter fails on. */
+	unfilterableFields: string[];
 }
 
 export interface IndexOption {
@@ -117,12 +117,6 @@ export interface SearchInput {
 export interface SearchResult {
 	rawHits: Record<string, unknown>[];
 	elapsedTimeMicros: number;
-}
-
-/** A single scope filter pinned in the Context view. AND-joined into the query. */
-export interface ContextChip {
-	field: string;
-	value: unknown;
 }
 
 /** A log hit rendered inside the Context view. Same shape as LogHit with an anchor flag. */

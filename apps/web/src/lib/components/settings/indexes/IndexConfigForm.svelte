@@ -8,7 +8,6 @@
 	import { issuesToFieldErrors, toFormErrors } from '#lib/api/errors.js';
 	import { saveIndexConfig } from '#lib/api/indexes.js';
 	import SettingsRow from '#lib/components/ui/SettingsRow.svelte';
-	import TagInput from '#lib/components/ui/TagInput.svelte';
 	import { saveIndexConfigSchema, type SaveIndexConfigInput } from 'api/schemas';
 	import type { IndexDetail } from 'api/types';
 
@@ -20,7 +19,6 @@
 	let levelField = $state(initial.levelField);
 	let messageField = $state(initial.messageField);
 	let tracebackField = $state(initial.tracebackField ?? '');
-	let contextFieldTags = $state([...(initial.contextFields ?? [])]);
 	let traceIdField = $state(initial.traceIdField);
 
 	let submitting = $state(false);
@@ -45,7 +43,6 @@
 			levelField: levelField.trim(),
 			messageField: messageField.trim(),
 			tracebackField: tracebackField.trim() === '' ? null : tracebackField.trim(),
-			contextFields: contextFieldTags.length === 0 ? null : [...contextFieldTags],
 			traceIdField: traceIdField.trim()
 		};
 
@@ -183,22 +180,6 @@
 					autocomplete="off"
 					aria-invalid={invalid ? 'true' : undefined}
 					aria-describedby={describedBy}
-				/>
-			{/snippet}
-		</SettingsRow>
-
-		<SettingsRow
-			plain
-			label="Context fields"
-			hint="Fields used for log context search. Leave empty to use all fields. Supports dot-notation."
-			error={fieldErrors.contextFields}
-		>
-			{#snippet children({ invalid })}
-				<TagInput
-					bind:tags={contextFieldTags}
-					placeholderEmpty="service.name  (press Enter to add)"
-					addLabel="Add context field"
-					error={invalid}
 				/>
 			{/snippet}
 		</SettingsRow>

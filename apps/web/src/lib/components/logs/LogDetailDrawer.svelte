@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { ExternalLink, GripVertical, RotateCw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -6,6 +7,12 @@
 
 	import DrawerHeader, { type DrawerTab } from './drawer/DrawerHeader.svelte';
 	import ContextPane from './drawer/ContextPane.svelte';
+	import {
+		availableScopes,
+		resolveScope,
+		scopeFields,
+		type ContextScope
+	} from '#lib/components/logs/context-scope.js';
 	import JsonPane from './drawer/JsonPane.svelte';
 	import ParametersPane from './drawer/ParametersPane.svelte';
 	import TracebackPane from './drawer/TracebackPane.svelte';
@@ -62,6 +69,60 @@
 	} = $props();
 
 	let activeTab = $state<DrawerTab>('parameters');
+	// Owned here because a Context row click switches tabs, which unmounts ContextPane.
+	let contextScope = $state<ContextScope>('service');
+	let contextCustomFields = $state<string[]>([]);
+	const contextFields = $derived(
+		hit && store.fieldConfig ? scopeFields(hit.raw, store.fieldConfig) : []
+	);
+
+	// Runs on every anchor change, on any tab, so a dropped preset never comes back. Pre, so
+	// ContextPane's loader sees the result.
+	$effect.pre(() => {
+		const hasConfig = store.fieldConfig !== null;
+		const anchor = hit;
+		const fields = contextFields;
+		untrack(() => {
+			if (!anchor) {
+				contextScope = 'service';
+				contextCustomFields = [];
+				return;
+			}
+			if (!hasConfig) return;
+			contextScope = resolveScope(contextScope, availableScopes(fields));
+			const kept = contextCustomFields.filter((f) => fields.some((p) => p.field === f));
+			if (kept.length !== contextCustomFields.length) contextCustomFields = kept;
+		});
+	});
+
+	// Logs left through a Context row click, for Back. Any other log change clears it.
+	let contextTrail = $state.raw<LogHit[]>([]);
+	let ownNavigation = false;
+
+	$effect.pre(() => {
+		const anchor = hit;
+		untrack(() => {
+			if (anchor === null || !ownNavigation) contextTrail = [];
+			ownNavigation = false;
+		});
+	});
+
+	function goTo(next: LogHit, tab: DrawerTab): void {
+		// The same log runs no anchor effect, so the flag would outlive this call.
+		if (next !== hit) {
+			ownNavigation = true;
+			onReplaceHit(next);
+		}
+		activeTab = tab;
+		queueMicrotask(() => dialogRef?.focus());
+	}
+
+	function back(): void {
+		const previous = contextTrail.at(-1);
+		if (!previous) return;
+		contextTrail = contextTrail.slice(0, -1);
+		goTo(previous, 'context');
+	}
 
 	const traceback = $derived.by((): unknown => {
 		const path = store.fieldConfig?.tracebackField;
@@ -300,6 +361,7 @@
 				selectedSpanId = null;
 			}}
 			onShare={shareLog}
+			onBack={contextTrail.length > 0 ? back : undefined}
 			onClose={close}
 		/>
 
@@ -370,11 +432,13 @@
 				<ContextPane
 					{hit}
 					{store}
+					fields={contextFields}
+					bind:scope={contextScope}
+					bind:customFields={contextCustomFields}
 					onCloseDrawer={close}
 					onReplaceHit={(h) => {
-						onReplaceHit(h);
-						activeTab = 'parameters';
-						queueMicrotask(() => dialogRef?.focus());
+						if (h !== hit) contextTrail = [...contextTrail, hit];
+						goTo(h, 'parameters');
 					}}
 				/>
 			{:else}
