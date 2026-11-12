@@ -6,6 +6,55 @@ A release's optional `### Highlights` bullets (plain text, written for users) ar
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-11-12
+
+### Highlights
+
+- **Auto-refresh.** In Logs, the arrow beside **Run** reruns the search every 5 to 60 seconds.
+- **Log context scopes.** A log's **Context** tab narrows the surrounding lines to its service, pod, node, container or host, or to the fields you pick.
+- **OpenTelemetry logs template.** A new index can start from the mapping that OTLP log ingest needs.
+- **OpenID Connect from environment variables.** Keep the provider in your deployment config instead of **Settings → Authentication**.
+
+### ⚠️ Breaking
+
+- **The per-user, per-key and per-index activity endpoints are gone.** `GET /api/admin/activity/users/{userId}/…`, `/api-keys/{apiKeyId}/…` and `/indexes/{indexId}/…` return `404`. Pass `user`, `apiKey` or `index` as query parameters to `GET /api/admin/activity/summary`, `/latency` and `/top-actors`, and to the new `/recent` and `/indexes`. The `/volume` endpoints have no replacement: each `/latency` bucket carries its search `count`. ([#182](https://github.com/rootprint/rootprint/pull/182))
+- **`GET /api/indexes/{indexId}/logs` returns `numHits: null` without `countAll=true`**, instead of a number that could be lower than the real count. ([#197](https://github.com/rootprint/rootprint/pull/197))
+- **`GET /api/indexes/{indexId}/logs/histogram` requires `startTs` and `endTs`.** `interval` takes seconds, minutes, hours or days, not weeks, months or years, and the range divided by the interval can give at most 2,000 buckets. Anything else returns `400`. ([#190](https://github.com/rootprint/rootprint/pull/190))
+- **`GET /api/indexes/{indexId}/fields/values` accepts at most 50 filters** and no longer returns `elapsedTimeMicros`. The fields in one request share 65,000 values, so each field gets `limit` or its share of that, whichever is lower; `truncated` says which fields were cut short. ([#190](https://github.com/rootprint/rootprint/pull/190))
+- **The per-index Context fields setting is removed.** `GET /api/indexes/{indexId}` and `GET /api/indexes/{indexId}/config` no longer return `contextFields`, `PATCH /api/indexes/{indexId}` ignores it, and upgrading drops the saved values. The Context tab's scopes replace it. ([#196](https://github.com/rootprint/rootprint/pull/196))
+
+### Added
+
+- **Auto-refresh in Logs.** The arrow beside **Run** sets an interval of 5, 10, 15, 30 or 60 seconds. It runs on relative time ranges, sorts newest first, and pauses while you are scrolled down, the tab is in the background, or a fold or a log is open. A failed refresh keeps the rows and chart on screen and retries. ([#193](https://github.com/rootprint/rootprint/pull/193))
+- **Context scopes.** A log's **Context** tab offers **All**, **Service**, **Instance**, **Pod**, **Node**, **Container** and **Host**, each shown when the log has the fields for it, and **Custom**, which matches any of the log's fields you tick. **Open in search** carries the scope into Logs. ([#196](https://github.com/rootprint/rootprint/pull/196))
+- **Back button in the log drawer.** Clicking a line in **Context** opens that log, and **Back** returns to the previous one. ([#196](https://github.com/rootprint/rootprint/pull/196))
+- **OpenTelemetry logs template** under **Start from** when creating an index. ([#199](https://github.com/rootprint/rootprint/pull/199))
+- **`bytes` field type** in index mappings, with base64 or hex input and output formats, and a **default search path** for JSON fields. ([#199](https://github.com/rootprint/rootprint/pull/199))
+- **`OIDC_ISSUER_URL`, `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`** configure OpenID Connect from the environment. Set all three or none. They replace the provider saved in **Settings → Authentication**, which then shows it read-only, and `PUT` and `DELETE /api/settings/auth/oidc/credentials` return `409` with code `OIDC_MANAGED_BY_ENV`. Moving a provider from the UI to the variables unlinks every OpenID Connect account once. See [Configure with environment variables](https://docs.rootprint.io/configuration/oidc-auth#configure-with-environment-variables). ([#186](https://github.com/rootprint/rootprint/pull/186))
+- **`GET /api/admin/activity/recent` and `GET /api/admin/activity/indexes`** list recent searches and per-index usage, filtered by `user`, `apiKey` and `index`. Summary rows gain `displayName`. ([#182](https://github.com/rootprint/rootprint/pull/182))
+- **Search volume chart** on **Settings → Activity**, beside latency. ([#182](https://github.com/rootprint/rootprint/pull/182))
+- **`GET /api/indexes/{indexId}/fields` reports `indexed` per field**, and `GET /api/indexes/{indexId}/config` lists `unfilterableFields`. ([#196](https://github.com/rootprint/rootprint/pull/196))
+
+### Changed
+
+- **The API finishes in-flight requests before it exits** on `SIGTERM` or `SIGINT`. ([#192](https://github.com/rootprint/rootprint/pull/192))
+- **`GET /api/indexes/{indexId}/logs` returns `400` when `startTs` is not before `endTs`**, as the trace and service endpoints do. ([#194](https://github.com/rootprint/rootprint/pull/194))
+- **Settings → Overview reports a failed metrics refresh at once**, with the error and a retry, instead of after several failures. ([#179](https://github.com/rootprint/rootprint/pull/179))
+- **Service pages drop the heading that repeated each tab's name**, and the Overview tab says what its charts measure. ([#202](https://github.com/rootprint/rootprint/pull/202))
+- The Docker image runs on Bun 1.4.4. ([#188](https://github.com/rootprint/rootprint/pull/188))
+
+### Removed
+
+- **The span count above the trace explorer's span list.** ([#201](https://github.com/rootprint/rootprint/pull/201))
+
+### Fixed
+
+- **The field panel shows cut-off values for large fields** instead of failing with a `503` once its open fields together pass 65,000 values. ([#190](https://github.com/rootprint/rootprint/pull/190))
+- **Include and exclude are offered only on fields a filter can match.** The log drawer hides them on unindexed fields and on values Quickwit cannot match. ([#196](https://github.com/rootprint/rootprint/pull/196))
+- **Filters work on field names that contain spaces, parentheses or quotes.** ([#196](https://github.com/rootprint/rootprint/pull/196))
+- **A service's failing spans and the trace explorer's span list ignore answers to requests they cancelled.** Rows stay on screen while new ones load, and a failed first page can be retried. ([#195](https://github.com/rootprint/rootprint/pull/195))
+- **Sign-in provider forms keep text typed into a list field.** It is added when you leave the field, and the form does not save while text that could not be added remains. ([#196](https://github.com/rootprint/rootprint/pull/196))
+
 ## [0.4.6] - 2026-10-20
 
 ### Highlights
