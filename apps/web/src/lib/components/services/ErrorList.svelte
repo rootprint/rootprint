@@ -155,14 +155,11 @@
 	}
 </script>
 
-<section class="flex flex-col gap-2" aria-labelledby="error-list-heading">
-	<div class="flex flex-wrap items-start justify-between gap-3">
-		<div>
-			<h2 id="error-list-heading" class="section-label">Failing spans</h2>
-			<p class="text-subtle mt-1 text-xs">
-				Newest first across all span kinds. Error rate counts requests only.
-			</p>
-		</div>
+<section class="flex flex-col gap-2" aria-label="Failing spans">
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<p class="text-muted text-xs">
+			Newest first across all span kinds. Error rate counts requests only.
+		</p>
 		<div class="flex flex-wrap items-center gap-3">
 			<label class="flex items-center gap-1.5">
 				<span class="text-muted text-xs">Kind</span>

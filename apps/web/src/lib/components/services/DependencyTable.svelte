@@ -14,14 +14,11 @@
 	let { dependencies, service }: Props = $props();
 </script>
 
-<section class="flex flex-col gap-2" aria-labelledby="dependency-heading">
-	<div>
-		<h2 id="dependency-heading" class="section-label">Downstream calls</h2>
-		<p class="text-muted mt-1 text-xs">
-			Outbound client and producer spans emitted by
-			<span class="font-mono">{service}</span>, ranked by total time.
-		</p>
-	</div>
+<section class="flex flex-col gap-2" aria-label="Downstream calls">
+	<p class="text-muted text-xs">
+		Outbound client and producer spans emitted by
+		<span class="font-mono">{service}</span>, ranked by total time.
+	</p>
 	{#if dependencies.length === 0}
 		<EmptyPanel title="No outbound calls">
 			No client or producer spans from <span class="font-mono">{service}</span> in this range.

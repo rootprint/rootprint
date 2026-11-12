@@ -27,14 +27,11 @@
 	}
 </script>
 
-<section class="flex flex-col gap-2" aria-labelledby="endpoint-heading">
-	<div class="flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<h2 id="endpoint-heading" class="section-label">Operations</h2>
-			<p class="text-muted mt-1 text-xs">
-				Ranked by total time spent handling requests in the selected range.
-			</p>
-		</div>
+<section class="flex flex-col gap-2" aria-label="Operations">
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<p class="text-muted text-xs">
+			Ranked by total time spent handling requests in the selected range.
+		</p>
 		<RowLimitSelector value={limit} options={LIMITS} onChange={selectLimit} />
 	</div>
 	{#if endpoints.length === 0}

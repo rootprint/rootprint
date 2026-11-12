@@ -187,6 +187,9 @@
 
 					<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${tab}`}>
 						{#if tab === 'overview'}
+							<p class="text-muted mb-2 text-xs">
+								Rate, errors and latency of requests handled in the selected range.
+							</p>
 							{#if health.summary.requests === 0}
 								<EmptyPanel title="No request traffic">
 									No requests were received for <span class="font-mono">{data.service}</span> in this
