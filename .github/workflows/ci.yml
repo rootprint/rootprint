@@ -28,4 +28,15 @@ jobs:
       - run: bun --filter api test
       - run: bun --filter web build
       - run: bun --filter api build
-      - run: docker build .
+      # The aio stage extends the production image, so this builds both.
+      - run: docker build --target aio -t rootprint-aio .
+      - name: Smoke-test the all-in-one image
+        run: |
+          docker run -d --name aio -p 8282:8282 rootprint-aio
+          for _ in $(seq 90); do
+            curl -fsS http://localhost:8282/api/health && exit 0
+            [ "$(docker inspect -f '{{.State.Running}}' aio)" = true ] || break
+            sleep 2
+          done
+          docker logs --tail 200 aio
+          exit 1

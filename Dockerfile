@@ -39,3 +39,42 @@ EXPOSE 8282
 
 USER bun
 CMD ["bun", "run", "apps/api/dist/app.js"]
+
+# ---------- All-in-one: Postgres + Quickwit + Rootprint (build with --target aio) ----------
+# Keep in step with docker-compose.yml. A bump also upgrades all-in-one users' on-disk data, so
+# note it in CHANGELOG.md.
+FROM quickwit/quickwit:v0.9.1 AS quickwit
+
+FROM runtime AS aio
+USER root
+
+# The postgres UID is pinned because apt assigns whatever system UID is free, and Postgres refuses
+# a data dir owned by another UID after an image upgrade. Debian's package would otherwise also
+# create a default cluster that nothing uses.
+RUN groupadd --system --gid 999 postgres \
+ && useradd --system --uid 999 --gid postgres --home-dir /var/lib/postgresql postgres \
+ && mkdir -p /etc/postgresql-common/createcluster.d \
+ && echo 'create_main_cluster = false' > /etc/postgresql-common/createcluster.d/aio.conf \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-17 \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=quickwit /usr/local/bin/quickwit /usr/local/bin/quickwit
+COPY --from=quickwit /quickwit/config/quickwit.yaml /quickwit/config/quickwit.yaml
+COPY docker/entrypoint.aio.sh /usr/local/bin/entrypoint.aio.sh
+
+# QW_NODE_ID is pinned because Quickwit defaults it to the hostname, which changes per container.
+ENV DATABASE_URL=postgres://rootprint@127.0.0.1:5432/postgres \
+    QUICKWIT_URL=http://127.0.0.1:7280 \
+    ORIGIN=http://localhost:8282 \
+    QW_CONFIG=/quickwit/config/quickwit.yaml \
+    QW_DATA_DIR=/data/quickwit \
+    QW_LISTEN_ADDRESS=127.0.0.1 \
+    QW_NODE_ID=rootprint \
+    RUST_LOG=warn
+
+HEALTHCHECK --start-period=60s CMD ["bun", "-e", "fetch('http://127.0.0.1:8282/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+CMD ["entrypoint.aio.sh"]
+
+# A plain `docker build .` builds the last stage, so it stays the production image.
+FROM runtime
