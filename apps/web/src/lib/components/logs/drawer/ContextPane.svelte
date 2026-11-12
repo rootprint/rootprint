@@ -12,7 +12,7 @@
 		scopeFilters,
 		scopeMatches,
 		type ContextScope,
-		type ScopePill
+		type ScopeField
 	} from '#lib/components/logs/context-scope.js';
 	import {
 		buildGridTemplate,
@@ -25,7 +25,7 @@
 	let {
 		hit,
 		store,
-		pills,
+		fields,
 		scope = $bindable(),
 		customFields = $bindable(),
 		onCloseDrawer,
@@ -33,7 +33,7 @@
 	}: {
 		hit: LogHit;
 		store: SearchStore;
-		pills: ScopePill[];
+		fields: ScopeField[];
 		scope: ContextScope;
 		customFields: string[];
 		onCloseDrawer: () => void;
@@ -48,8 +48,8 @@
 	let anchorVisible = $state(true);
 	let anchorAbove = $state(false);
 
-	const scopes = $derived(availableScopes(pills));
-	const matches = $derived(scopeMatches(pills, scope, customFields));
+	const scopes = $derived(availableScopes(fields));
+	const matches = $derived(scopeMatches(fields, scope, customFields));
 	const filters = $derived(scopeFilters(matches));
 	// A string, so switching to Custom with the same fields ticked doesn't refetch.
 	const contextQuery = $derived(composeQuery('', filters));
@@ -194,7 +194,7 @@
 		<ContextScopeBar
 			selected={scope}
 			{scopes}
-			{pills}
+			{fields}
 			{matches}
 			onChange={setScope}
 			onToggleField={toggleField}

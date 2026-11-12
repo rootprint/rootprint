@@ -3,12 +3,12 @@
 
 	import ToggleChip from '#lib/components/ui/ToggleChip.svelte';
 	import { pluralize } from '#lib/utils/format.js';
-	import type { ContextScope, ScopePill } from '#lib/components/logs/context-scope.js';
+	import type { ContextScope, ScopeField } from '#lib/components/logs/context-scope.js';
 
 	let {
 		selected,
 		scopes,
-		pills,
+		fields,
 		matches,
 		onChange,
 		onToggleField,
@@ -16,9 +16,9 @@
 	}: {
 		selected: ContextScope;
 		scopes: ContextScope[];
-		pills: ScopePill[];
-		/** The pills the selected scope matches on. */
-		matches: ScopePill[];
+		fields: ScopeField[];
+		/** The fields the selected scope matches on. */
+		matches: ScopeField[];
 		onChange: (scope: ContextScope) => void;
 		onToggleField: (field: string) => void;
 		onOpenAsSearch: () => void;
@@ -34,8 +34,6 @@
 		container: 'Container',
 		custom: 'Custom'
 	};
-
-	const matchText = $derived(matches.map((p) => `${p.label} = ${p.value}`).join(', '));
 </script>
 
 <div class="border-line bg-base-100 border-b">
@@ -76,23 +74,19 @@
 				role="group"
 				aria-label="Fields to match"
 			>
-				{#each pills as pill (pill.field)}
+				{#each fields as scopeField (scopeField.field)}
 					<ToggleChip
-						pressed={matches.includes(pill)}
+						pressed={matches.includes(scopeField)}
 						class="max-w-full gap-1 font-mono"
-						title="{pill.field} = {pill.value}"
-						onclick={() => onToggleField(pill.field)}
+						title="{scopeField.field} = {scopeField.value}"
+						onclick={() => onToggleField(scopeField.field)}
 					>
-						<span class="truncate">{pill.label}</span>
+						<span class="truncate">{scopeField.label}</span>
 						<span aria-hidden="true">=</span>
-						<span class="max-w-48 truncate">{pill.value}</span>
+						<span class="max-w-48 truncate">{scopeField.value}</span>
 					</ToggleChip>
 				{/each}
 			</div>
 		</div>
-	{:else if matches.length > 0}
-		<p class="text-muted truncate px-3 pb-2 text-xs" title={matchText}>
-			Matching <span class="font-mono">{matchText}</span>
-		</p>
 	{/if}
 </div>

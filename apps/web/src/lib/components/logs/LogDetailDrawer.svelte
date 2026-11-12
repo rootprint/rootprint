@@ -10,7 +10,7 @@
 	import {
 		availableScopes,
 		resolveScope,
-		scopePills,
+		scopeFields,
 		type ContextScope
 	} from '#lib/components/logs/context-scope.js';
 	import JsonPane from './drawer/JsonPane.svelte';
@@ -72,8 +72,8 @@
 	// Owned here because a Context row click switches tabs, which unmounts ContextPane.
 	let contextScope = $state<ContextScope>('service');
 	let contextCustomFields = $state<string[]>([]);
-	const contextPills = $derived(
-		hit && store.fieldConfig ? scopePills(hit.raw, store.fieldConfig) : []
+	const contextFields = $derived(
+		hit && store.fieldConfig ? scopeFields(hit.raw, store.fieldConfig) : []
 	);
 
 	// Runs on every anchor change, on any tab, so a dropped preset never comes back. Pre, so
@@ -81,7 +81,7 @@
 	$effect.pre(() => {
 		const hasConfig = store.fieldConfig !== null;
 		const anchor = hit;
-		const pills = contextPills;
+		const fields = contextFields;
 		untrack(() => {
 			if (!anchor) {
 				contextScope = 'service';
@@ -89,8 +89,8 @@
 				return;
 			}
 			if (!hasConfig) return;
-			contextScope = resolveScope(contextScope, availableScopes(pills));
-			const kept = contextCustomFields.filter((f) => pills.some((p) => p.field === f));
+			contextScope = resolveScope(contextScope, availableScopes(fields));
+			const kept = contextCustomFields.filter((f) => fields.some((p) => p.field === f));
 			if (kept.length !== contextCustomFields.length) contextCustomFields = kept;
 		});
 	});
@@ -432,7 +432,7 @@
 				<ContextPane
 					{hit}
 					{store}
-					pills={contextPills}
+					fields={contextFields}
 					bind:scope={contextScope}
 					bind:customFields={contextCustomFields}
 					onCloseDrawer={close}

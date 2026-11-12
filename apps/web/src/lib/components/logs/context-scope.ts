@@ -1,4 +1,4 @@
-import { isUnfilterable, nameCollator } from '#lib/components/logs/field-names.js';
+import { canFilter, nameCollator } from '#lib/components/logs/field-names.js';
 import { displayNameFor, isOtelAttr, isOtelResourceAttr } from '#lib/utils/fields.js';
 import { isPlainObject } from '#lib/utils/object.js';
 import type { FieldConfig, Filter } from '#lib/types.js';
@@ -8,7 +8,7 @@ export type ContextScope =
 type Preset = Exclude<ContextScope, 'all' | 'custom'>;
 
 /** A `field = value` the anchor log offers to match on. */
-export interface ScopePill {
+export interface ScopeField {
 	field: string;
 	label: string;
 	value: string | number | boolean;
@@ -60,52 +60,40 @@ const DEFAULT_ORDER: readonly Preset[] = ['service', 'pod', 'container', 'host']
 // What SDKs and Quickwit write for a missing service name. Matching it joins every unlabelled log.
 const UNKNOWN_SERVICE = /^unknown_service(:|$)/;
 
-// Quickwit's tokenizers drop tokens of 255 bytes or more, so a longer value can never match.
-const MAX_TERM_BYTES = 254;
-const utf8 = new TextEncoder();
-// What tantivy's query grammar won't read as a field name: a leading `-`, or any of its
-// SPECIAL_CHARS. It accepts them backslash-escaped, but composeQuery writes the field as is.
-const UNQUERYABLE_PATH = /^-|[\s:()[\]{}'"!+^*`\\]/;
-
-function isMatchable(value: unknown): value is string | number | boolean {
-	if (typeof value === 'number' || typeof value === 'boolean') return true;
-	return typeof value === 'string' && value !== '' && utf8.encode(value).length <= MAX_TERM_BYTES;
-}
-
-function pillGroup(field: string): number {
+function fieldGroup(field: string): number {
 	if (isOtelResourceAttr(field)) return 0;
 	return isOtelAttr(field) ? 1 : 2;
 }
 
-export function scopePills(raw: Record<string, unknown>, config: FieldConfig): ScopePill[] {
+export function scopeFields(raw: Record<string, unknown>, config: FieldConfig): ScopeField[] {
 	const skipped = new Set([config.timestampField, config.messageField]);
 	// Keyed by path: `{"http.route": …}` and `{"http": {"route": …}}` are the same field to Quickwit.
-	const pills = new Map<string, ScopePill>();
+	const fields = new Map<string, ScopeField>();
 	const walk = (path: string, value: unknown): void => {
-		if (skipped.has(path) || isUnfilterable(path, config) || UNQUERYABLE_PATH.test(path)) return;
+		if (skipped.has(path)) return;
 		if (isPlainObject(value)) {
 			for (const [key, child] of Object.entries(value)) walk(`${path}.${key}`, child);
-		} else if (isMatchable(value)) {
-			pills.set(path, { field: path, label: displayNameFor(path, config.isOtel), value });
+		} else if (canFilter(path, value, config)) {
+			fields.set(path, { field: path, label: displayNameFor(path, config.isOtel), value });
 		}
 	};
 	for (const [key, value] of Object.entries(raw)) walk(key, value);
-	return [...pills.values()].toSorted(
-		(a, b) => pillGroup(a.field) - pillGroup(b.field) || nameCollator.compare(a.label, b.label)
+	return [...fields.values()].toSorted(
+		(a, b) => fieldGroup(a.field) - fieldGroup(b.field) || nameCollator.compare(a.label, b.label)
 	);
 }
 
-function presetFields(preset: Preset, pills: readonly ScopePill[]): string[] {
-	const find = (field: string) => pills.find((p) => p.field === field);
+function presetFields(preset: Preset, fields: readonly ScopeField[]): string[] {
+	const find = (field: string) => fields.find((p) => p.field === field);
 	const { oneOf, and = [], hiddenBy } = PRESET_RULES[preset];
 	const first = oneOf.map(find).find((p) => p !== undefined);
-	if (!first || (hiddenBy && presetFields(hiddenBy, pills).length > 0)) return [];
+	if (!first || (hiddenBy && presetFields(hiddenBy, fields).length > 0)) return [];
 	if (preset === 'service' && UNKNOWN_SERVICE.test(String(first.value))) return [];
 	return [first.field, ...and];
 }
 
-export function availableScopes(pills: readonly ScopePill[]): ContextScope[] {
-	return ['all', ...PRESETS.filter((p) => presetFields(p, pills).length > 0), 'custom'];
+export function availableScopes(fields: readonly ScopeField[]): ContextScope[] {
+	return ['all', ...PRESETS.filter((p) => presetFields(p, fields).length > 0), 'custom'];
 }
 
 export function resolveScope(
@@ -117,15 +105,15 @@ export function resolveScope(
 }
 
 export function scopeMatches(
-	pills: readonly ScopePill[],
+	fields: readonly ScopeField[],
 	scope: ContextScope,
 	customFields: readonly string[]
-): ScopePill[] {
+): ScopeField[] {
 	if (scope === 'all') return [];
-	const fields = scope === 'custom' ? customFields : presetFields(scope, pills);
-	return pills.filter((p) => fields.includes(p.field));
+	const names = scope === 'custom' ? customFields : presetFields(scope, fields);
+	return fields.filter((p) => names.includes(p.field));
 }
 
-export function scopeFilters(matches: readonly ScopePill[]): Filter[] {
+export function scopeFilters(matches: readonly ScopeField[]): Filter[] {
 	return matches.map((p) => ({ field: p.field, value: String(p.value), exclude: false }));
 }
