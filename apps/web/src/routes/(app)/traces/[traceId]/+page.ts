@@ -5,7 +5,6 @@ import type { PageLoad } from './$types';
 import { ApiError } from '#lib/api/errors.js';
 import { getIndexConfig, listIndexes, toLogIndexOptions } from '#lib/api/indexes.js';
 import { fetchTrace } from '#lib/api/traces.js';
-import { SpanLogCounts } from '#lib/components/traces/span-log-counts.svelte.js';
 import { buildTraceModel } from '#lib/components/traces/trace-model.js';
 import { safeReturnTo } from '#lib/return-to.js';
 import type { TraceLogsTarget } from '#lib/utils/trace-logs.js';
@@ -46,8 +45,7 @@ export const load: PageLoad = async ({ params, url }) => {
 			logsTarget,
 			returnTo: safeReturnTo(url.searchParams.get('returnTo')),
 			model,
-			truncated: trace.truncated,
-			spanLogCounts: logsTarget ? new SpanLogCounts(logsTarget) : null
+			truncated: trace.truncated
 		};
 	} catch (e) {
 		if (e instanceof ApiError) error(e.status, e.message);

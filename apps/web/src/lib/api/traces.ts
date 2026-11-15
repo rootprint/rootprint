@@ -27,17 +27,21 @@ export async function fetchTrace(traceId: string, opts: { signal?: AbortSignal }
 }
 
 export async function fetchSpanLogCounts(
-	input: Omit<TraceLogsTarget, 'spanId'>
+	input: Omit<TraceLogsTarget, 'spanId'>,
+	signal?: AbortSignal
 ): Promise<Map<string, number> | null> {
 	// A terms agg would avoid fetching documents, but `span_id` isn't a fast field.
-	const { rawHits } = await searchLogs({
-		indexId: input.indexId,
-		query: composeQuery('', traceLogsFilters(input)),
-		limit: SEARCH_MAX_LIMIT,
-		offset: 0,
-		sortDirection: 'desc',
-		...resolveWindow(traceLogsWindow(input))
-	});
+	const { rawHits } = await searchLogs(
+		{
+			indexId: input.indexId,
+			query: composeQuery('', traceLogsFilters(input)),
+			limit: SEARCH_MAX_LIMIT,
+			offset: 0,
+			sortDirection: 'desc',
+			...resolveWindow(traceLogsWindow(input))
+		},
+		signal
+	);
 
 	if (rawHits.length === SEARCH_MAX_LIMIT) {
 		console.warn(
