@@ -2,6 +2,7 @@ import * as v from 'valibot';
 
 import { SPAN_KINDS } from '../../constants.js';
 import { named } from '../../lib/openapi/describe.js';
+import { TelemetryStatusSchema } from './traces.js';
 
 export const ServiceHealthBucketSchema = named(
 	'ServiceHealthBucket',
@@ -114,7 +115,7 @@ export const ServiceErrorsResponseSchema = named(
 export const ServiceHealthResponseSchema = named(
 	'ServiceHealthResponse',
 	v.object({
-		telemetryStatus: v.picklist(['available', 'span_store_missing']),
+		telemetryStatus: TelemetryStatusSchema,
 		services: v.array(ServiceHealthServiceRowSchema),
 		serviceNames: v.array(v.string()),
 		servicesTruncated: v.boolean(),

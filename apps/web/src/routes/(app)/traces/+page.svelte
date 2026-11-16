@@ -11,6 +11,7 @@
 	import OperationsTable from '#lib/components/traces/OperationsTable.svelte';
 	import SpanTable from '#lib/components/traces/SpanTable.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import SpanStoreMissing from '#lib/components/ui/SpanStoreMissing.svelte';
 	import type { TimeRange } from '#lib/types.js';
 	import { paramOneOf, setTimeRangeParams } from '#lib/utils/query-params.js';
 
@@ -129,62 +130,66 @@
 	/>
 
 	<div class="flex min-h-0 flex-1 flex-col gap-5 overflow-x-hidden overflow-y-auto px-3 py-5">
-		{#if overviewFailed}
-			<PanelError message="Couldn't load the trace overview" error={overviewError} />
-		{:else if loading && overview === null}
-			<div class="grid gap-4 lg:grid-cols-3" role="status" aria-label="Loading charts">
-				<div class="skeleton h-44"></div>
-				<div class="skeleton h-44"></div>
-				<div class="skeleton h-44"></div>
+		{#if overview?.telemetryStatus === 'span_store_missing' && !overviewFailed}
+			<SpanStoreMissing />
+		{:else}
+			{#if overviewFailed}
+				<PanelError message="Couldn't load the trace overview" error={overviewError} />
+			{:else if loading && overview === null}
+				<div class="grid gap-4 lg:grid-cols-3" role="status" aria-label="Loading charts">
+					<div class="skeleton h-44"></div>
+					<div class="skeleton h-44"></div>
+					<div class="skeleton h-44"></div>
+				</div>
+			{:else if overview !== null && overview.summary.spans > 0}
+				<div class={['transition-opacity', loading && 'opacity-60']}>
+					<ExploreCharts
+						buckets={overview.buckets}
+						summary={overview.summary}
+						{xRange}
+						onBrush={brushRange}
+					/>
+				</div>
+			{/if}
+
+			<div
+				class="border-b-line flex min-w-0 border-b not-first:-mt-4"
+				role="tablist"
+				aria-label="Trace views"
+			>
+				{#each TABS as t (t.id)}
+					<button
+						type="button"
+						role="tab"
+						id={`${tabsetId}-${t.id}`}
+						aria-controls={panelId}
+						aria-selected={tab === t.id}
+						class="tab-underline h-9 shrink-0 px-3 text-xs"
+						onclick={() => setTab(t.id)}
+					>
+						{t.label}
+					</button>
+				{/each}
 			</div>
-		{:else if overview !== null && overview.summary.spans > 0}
-			<div class={['transition-opacity', loading && 'opacity-60']}>
-				<ExploreCharts
-					buckets={overview.buckets}
-					summary={overview.summary}
-					{xRange}
-					onBrush={brushRange}
-				/>
+
+			<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${tab}`}>
+				{#if tab === 'operations'}
+					<!-- A failed overview is reported once, above the tabs. -->
+					{#if loading && overview === null}
+						<div class="skeleton h-64 w-full" role="status" aria-label="Loading operations"></div>
+					{:else if overview !== null && !overviewFailed}
+						<div class={['transition-opacity', loading && 'opacity-60']}>
+							<OperationsTable
+								operations={overview.operations}
+								truncated={overview.operationsTruncated}
+								onSelect={selectOperation}
+							/>
+						</div>
+					{/if}
+				{:else}
+					<SpanTable filters={data.filters} {sort} onSort={setSort} />
+				{/if}
 			</div>
 		{/if}
-
-		<div
-			class="border-b-line flex min-w-0 border-b not-first:-mt-4"
-			role="tablist"
-			aria-label="Trace views"
-		>
-			{#each TABS as t (t.id)}
-				<button
-					type="button"
-					role="tab"
-					id={`${tabsetId}-${t.id}`}
-					aria-controls={panelId}
-					aria-selected={tab === t.id}
-					class="tab-underline h-9 shrink-0 px-3 text-xs"
-					onclick={() => setTab(t.id)}
-				>
-					{t.label}
-				</button>
-			{/each}
-		</div>
-
-		<div role="tabpanel" id={panelId} aria-labelledby={`${tabsetId}-${tab}`}>
-			{#if tab === 'operations'}
-				<!-- A failed overview is reported once, above the tabs. -->
-				{#if loading && overview === null}
-					<div class="skeleton h-64 w-full" role="status" aria-label="Loading operations"></div>
-				{:else if overview !== null && !overviewFailed}
-					<div class={['transition-opacity', loading && 'opacity-60']}>
-						<OperationsTable
-							operations={overview.operations}
-							truncated={overview.operationsTruncated}
-							onSelect={selectOperation}
-						/>
-					</div>
-				{/if}
-			{:else}
-				<SpanTable filters={data.filters} {sort} onSort={setSort} />
-			{/if}
-		</div>
 	</div>
 </div>

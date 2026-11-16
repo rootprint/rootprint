@@ -778,9 +778,17 @@
 					},
 					"summary": {
 						"$ref": "#/components/schemas/ExploreSummary"
+					},
+					"telemetryStatus": {
+						"enum": [
+							"available",
+							"span_store_missing"
+						],
+						"type": "string"
 					}
 				},
 				"required": [
+					"telemetryStatus",
 					"buckets",
 					"summary",
 					"operations",

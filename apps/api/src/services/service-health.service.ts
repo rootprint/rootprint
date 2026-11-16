@@ -28,6 +28,7 @@ import type {
 } from '../schemas/responses/services.js';
 import {
 	asBuckets,
+	bucketsOf,
 	metric,
 	P50,
 	P95,
@@ -40,22 +41,16 @@ import {
 	asRecord,
 	asText,
 	DURATION_FIELD,
+	ENTRY_SPANS,
 	ERROR_SPANS,
 	httpStatusOf,
 	NAME_FIELD,
 	NANOS_PER_MILLI,
 	orEmptyStore,
-	ROOT_SPANS,
 	SERVICE_FIELD,
 	SPAN_KIND_TAGS,
 	TIMESTAMP_FIELD
-} from './trace.service.js';
-
-/**
- * One span per request a service handles: an inbound call (SERVER, 2), a consumed message
- * (CONSUMER, 5), or a trace the service starts itself (root).
- */
-const ENTRY_SPANS = `(span_kind:IN [2 5] OR ${ROOT_SPANS})`;
+} from '../lib/quickwit/span-store.js';
 
 const HTTP_ROUTE_FIELD = 'span_attributes.http.route';
 const URL_PATH_FIELD = 'span_attributes.url.path';
@@ -234,14 +229,7 @@ function preferredEndpoints(
 ): ServiceHealthEndpoint[] {
 	const rowsOf = (results: SearchResponse[], errorCounts: Map<string, number>) =>
 		ENDPOINT_SOURCES.flatMap((source, index) =>
-			endpointRows(
-				source.field,
-				asBuckets(
-					results[index]?.aggregations?.[source.key] as BucketAggregationResult | undefined
-				),
-				service,
-				errorCounts
-			)
+			endpointRows(source.field, bucketsOf(results[index], source.key), service, errorCounts)
 		);
 	const errorCounts = new Map(
 		rowsOf(errorResponses, new Map()).map((row) => [row.id, row.requests])
@@ -517,13 +505,10 @@ export async function getServiceHealth(
 	] = responses;
 	const servicesAgg = servicesResponse.aggregations?.['services'] as
 		BucketAggregationResult | undefined;
-	const totalBuckets = asBuckets(
-		totalsResponse.aggregations?.['time'] as BucketAggregationResult | undefined
+	const buckets = mergeTimeBuckets(
+		bucketsOf(totalsResponse, 'time'),
+		bucketsOf(errorsResponse, 'time')
 	);
-	const errorBuckets = asBuckets(
-		errorsResponse.aggregations?.['time'] as BucketAggregationResult | undefined
-	);
-	const buckets = mergeTimeBuckets(totalBuckets, errorBuckets);
 	const summaryPct = totalsResponse.aggregations?.['summary'] as
 		PercentilesAggregationResult | undefined;
 	const summary = {
@@ -533,20 +518,13 @@ export async function getServiceHealth(
 		p50: summaryPercentile(summaryPct, P50),
 		p95: summaryPercentile(summaryPct, P95)
 	};
-	const serviceTimeBuckets = asBuckets(
-		servicesResponse.aggregations?.['service_time'] as BucketAggregationResult | undefined
-	);
+	const serviceTimeBuckets = bucketsOf(servicesResponse, 'service_time');
 
 	return {
 		telemetryStatus: 'available',
 		services:
 			service === undefined
-				? serviceRowsOf(
-						asBuckets(servicesAgg),
-						asBuckets(
-							errorsResponse.aggregations?.['error_services'] as BucketAggregationResult | undefined
-						)
-					)
+				? serviceRowsOf(asBuckets(servicesAgg), bucketsOf(errorsResponse, 'error_services'))
 				: [
 						{
 							name: service,
@@ -576,15 +554,7 @@ export async function getServiceHealth(
 						service,
 						params.endpointLimit
 					),
-		failingOperations: failingOperationsOf(
-			asBuckets(
-				allErrorsResponse.aggregations?.['error_ops'] as BucketAggregationResult | undefined
-			)
-		),
-		dependencies: dependenciesOf(
-			asBuckets(
-				dependencyResponse?.aggregations?.['dependencies'] as BucketAggregationResult | undefined
-			)
-		)
+		failingOperations: failingOperationsOf(bucketsOf(allErrorsResponse, 'error_ops')),
+		dependencies: dependenciesOf(bucketsOf(dependencyResponse, 'dependencies'))
 	};
 }

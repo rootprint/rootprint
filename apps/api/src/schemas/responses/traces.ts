@@ -4,6 +4,8 @@ import { named } from '../../lib/openapi/describe.js';
 
 const TraceAttributesSchema = v.record(v.string(), v.string());
 
+export const TelemetryStatusSchema = v.picklist(['available', 'span_store_missing']);
+
 export const SpanEventSchema = named(
 	'SpanEvent',
 	v.object({
@@ -98,6 +100,7 @@ export const ExploreOperationSchema = named(
 export const ExploreOverviewResponseSchema = named(
 	'ExploreOverviewResponse',
 	v.object({
+		telemetryStatus: TelemetryStatusSchema,
 		buckets: v.array(ExploreBucketSchema),
 		summary: ExploreSummarySchema,
 		operations: v.array(ExploreOperationSchema),

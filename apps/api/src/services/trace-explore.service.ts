@@ -3,8 +3,7 @@ import {
 	type AggregationBucket,
 	type BucketAggregationResult,
 	type PercentilesAggregationResult,
-	type QuickwitClient,
-	type SearchResponse
+	type QuickwitClient
 } from '@rootprint-io/quickwit-js';
 
 import { OPERATION_LIMIT, type ExploreSort } from '../constants.js';
@@ -19,6 +18,7 @@ import type {
 } from '../schemas/responses/traces.js';
 import {
 	asBuckets,
+	bucketsOf,
 	P50,
 	P95,
 	P99,
@@ -40,7 +40,7 @@ import {
 	ROOT_SPANS,
 	SERVICE_FIELD,
 	TIMESTAMP_FIELD
-} from './trace.service.js';
+} from '../lib/quickwit/span-store.js';
 
 const SORTS: Record<ExploreSort, [field: string, order: 'asc' | 'desc']> = {
 	'-start': [TIMESTAMP_FIELD, 'desc'],
@@ -146,17 +146,6 @@ const SERVICES_PER_OPERATION = 10;
 const SPARK_POINTS = 30;
 const FACET_SERVICE_LIMIT = 100;
 
-const emptyOverview = (): ExploreOverviewResponse => ({
-	buckets: [],
-	summary: { spans: 0, errors: 0, p50: null, p95: null, p99: null },
-	operations: [],
-	operationsTruncated: false,
-	facets: { services: [] }
-});
-
-const bucketsOf = (response: SearchResponse | undefined, name: string) =>
-	asBuckets(response?.aggregations?.[name] as BucketAggregationResult | undefined);
-
 const percentilesOf = (bucket: AggregationBucket) => ({
 	p50: percentile(bucket, P50),
 	p95: percentile(bucket, P95),
@@ -228,7 +217,16 @@ export async function getExploreOverview(
 		errorsQuery === undefined ? undefined : idx.search(errorsQuery, opts),
 		facetsQuery === undefined ? undefined : idx.search(facetsQuery, opts)
 	]).catch(orEmptyStore(traceIndexId, 'the trace explorer'));
-	if (responses === null) return emptyOverview();
+	if (responses === null) {
+		return {
+			telemetryStatus: 'span_store_missing',
+			buckets: [],
+			summary: { spans: 0, errors: 0, p50: null, p95: null, p99: null },
+			operations: [],
+			operationsTruncated: false,
+			facets: { services: [] }
+		};
+	}
 	const [totals, errors, facets] = responses;
 
 	const errorsAt = new Map(bucketsOf(errors, 'time').map((b) => [Number(b.key), b.doc_count]));
@@ -265,6 +263,7 @@ export async function getExploreOverview(
 
 	const summaryPct = totals.aggregations?.['pct'] as PercentilesAggregationResult | undefined;
 	return {
+		telemetryStatus: 'available',
 		buckets,
 		summary: {
 			spans: buckets.reduce((sum, bucket) => sum + bucket.spans, 0),
