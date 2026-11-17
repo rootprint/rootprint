@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { ArrowLeft, ScrollText } from 'lucide-svelte';
 
+	import { fetchSpanLogCounts } from '#lib/api/traces.js';
 	import SpanDetailPane from '#lib/components/traces/SpanDetailPane.svelte';
 	import TracePane from '#lib/components/traces/TracePane.svelte';
 	import { spanSearchText } from '#lib/components/traces/trace-model.js';
@@ -93,14 +94,30 @@
 
 	const traceLogsUrl = $derived(data.logsTarget && traceLogsHref(data.logsTarget));
 
+	let spanLogCounts = $state.raw<ReadonlyMap<string, number> | null | undefined>();
+	$effect(() => {
+		const target = data.logsTarget;
+		spanLogCounts = undefined;
+		if (!target) return;
+		const controller = new AbortController();
+		fetchSpanLogCounts(target, controller.signal).then(
+			(counts) => {
+				if (!controller.signal.aborted) spanLogCounts = counts;
+			},
+			() => {
+				if (!controller.signal.aborted) spanLogCounts = null;
+			}
+		);
+		return () => controller.abort();
+	});
+
 	const spanLogs = (span: SpanNode): { href: string; count: number | null } | null => {
-		const counts = data.spanLogCounts?.counts;
-		if (data.logsTarget === null || counts === undefined) return null;
-		const count = counts?.get(span.spanId) ?? 0;
-		if (counts !== null && count === 0) return null;
+		if (data.logsTarget === null || spanLogCounts === undefined) return null;
+		const count = spanLogCounts?.get(span.spanId) ?? 0;
+		if (spanLogCounts !== null && count === 0) return null;
 		return {
 			href: traceLogsHref({ ...data.logsTarget, spanId: span.spanId }),
-			count: counts === null ? null : count
+			count: spanLogCounts === null ? null : count
 		};
 	};
 
