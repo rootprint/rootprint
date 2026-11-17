@@ -13,6 +13,7 @@
 	import EmptyPanel from '#lib/components/ui/EmptyPanel.svelte';
 	import PageToolbar from '#lib/components/ui/PageToolbar.svelte';
 	import PanelError from '#lib/components/ui/PanelError.svelte';
+	import SpanStoreMissing from '#lib/components/ui/SpanStoreMissing.svelte';
 	import TimeRangePicker from '#lib/components/ui/TimeRangePicker.svelte';
 	import type { TimeRange } from '#lib/types.js';
 	import { servicesHref, setTimeRangeParams } from '#lib/utils/query-params.js';
@@ -80,10 +81,7 @@
 			</div>
 		{:then health}
 			{#if health.telemetryStatus === 'span_store_missing'}
-				<EmptyPanel title="Trace telemetry unavailable">
-					The configured span store could not be found. Check trace storage configuration and
-					ingestion.
-				</EmptyPanel>
+				<SpanStoreMissing />
 			{:else}
 				<div class="flex flex-col gap-5">
 					<ApmSummary service={null} services={health.services} summary={health.summary} {xRange} />

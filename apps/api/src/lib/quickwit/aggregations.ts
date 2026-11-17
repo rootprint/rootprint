@@ -2,7 +2,8 @@ import { AggregationBuilder } from '@rootprint-io/quickwit-js';
 import type {
 	AggregationBucket,
 	BucketAggregationResult,
-	PercentilesAggregationResult
+	PercentilesAggregationResult,
+	SearchResponse
 } from '@rootprint-io/quickwit-js';
 
 export function termsAgg(field: string, size: number) {
@@ -15,6 +16,9 @@ export function asBuckets(agg: BucketAggregationResult | undefined): Aggregation
 	if (buckets === undefined) return [];
 	return Array.isArray(buckets) ? buckets : Object.values(buckets);
 }
+
+export const bucketsOf = (response: SearchResponse | undefined, name: string) =>
+	asBuckets(response?.aggregations?.[name] as BucketAggregationResult | undefined);
 
 export const P50 = '50.0';
 export const P95 = '95.0';
