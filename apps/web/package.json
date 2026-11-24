@@ -31,7 +31,7 @@
 		"@iconify-svelte/logos": "^1.0.7",
 		"@iconify-svelte/simple-icons": "^1.0.44",
 		"@sveltejs/adapter-static": "^4.0.0",
-		"@sveltejs/kit": "^3.1.0",
+		"@sveltejs/kit": "^3.4.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"bun-types": "^1.4.3",
